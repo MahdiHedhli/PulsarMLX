@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-failure-to-repair-traceability/1.0.0",
+  "finding_id": "F017-S12-PREFLIGHT-001",
+  "rows": [
+    {
+      "failure": "SEALED_NINE_FIELD_OBJECT_REJECTED_BY_LEGACY_DICT_BOUNDARY",
+      "historical_source": "scripts/research/f017_event06_numerical_bridge_v1.py:209",
+      "successor_requirement": "EXACT_SEALED_PROMPT_BOUND_BRIDGE_INPUT",
+      "test": "sealed object accepted and caller-created mapping rejected",
+      "mutations": ["sealed-class substitution", "mapping projection", "mapping widening"],
+      "review_claim": "NINE_FIELD_SEALED_IDENTITY_INPUT"
+    },
+    {
+      "failure": "PROMPT_COMMIT_PATH_AND_SHA_DROPPED_BY_FIVE_FIELD_SCHEMA",
+      "historical_source": "scripts/research/f017_event06_numerical_bridge_v1.py:16",
+      "successor_requirement": "NINE_FIELD_DIGEST_AND_PROMPT_BINDING_CONTINUITY",
+      "test": "all nine fields individually and coordinately substituted",
+      "mutations": ["prompt commit", "prompt path", "prompt SHA", "complete digest"],
+      "review_claim": "IDENTITY_PLAN_DIGEST_CONTINUITY"
+    },
+    {
+      "failure": "FIVE_FIELD_PROJECTION_BREAKS_INSTALLED_AUTHORITY_DIGEST",
+      "historical_source": "scripts/research/f017_event06_numerical_bridge_v1.py:236",
+      "successor_requirement": "INSTALLED_EVENT_IDENTITY_DIGEST_EQUALS_SEALED_INPUT_DIGEST",
+      "test": "installed-authority and bridge digest equality",
+      "mutations": ["installed digest", "cross-package splice", "coordinated legacy projection"],
+      "review_claim": "INSTALLED_AUTHORITY_BINDING"
+    },
+    {
+      "failure": "COORDINATOR_PUBLIC_SIGNATURE_REQUIRES_PLAIN_DICT",
+      "historical_source": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py:298",
+      "successor_requirement": "FIXED_COORDINATOR_ACCEPTS_ONLY_EXACT_SEALED_INPUT",
+      "test": "public signature graph and no-access entrypoint rehearsal",
+      "mutations": ["dict", "mapping proxy", "subclass", "legacy adapter injection"],
+      "review_claim": "SUCCESSOR_BRIDGE_AND_COORDINATOR"
+    }
+  ],
+  "row_count": 4,
+  "scope_expansion": 0,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "PASS"
+}

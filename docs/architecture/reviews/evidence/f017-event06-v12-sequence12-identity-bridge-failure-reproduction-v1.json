@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-identity-bridge-failure-reproduction/1.0.0",
+  "finding_id": "F017-S12-PREFLIGHT-001",
+  "classification": "PROMPT_BOUND_EVENT_IDENTITY_PLAN_NOT_INSTANTIABLE_AT_NUMERICAL_BRIDGE",
+  "source_head": "3be5b731ef37d1817ca0569c8a4cbf53a2846654",
+  "source_tree": "2aa4b490558263b9e0bd1bd2b9f6af98ce0535ce",
+  "producer": {
+    "path": "scripts/research/f017_event06_production_installation_v3.py",
+    "sha256": "ef2527b3b80a1e487bc145318f6ffaf8d830fa9d6492af68fc8a9b619d6494e9",
+    "sealed_type": "PromptBoundEventIdentityPlanV2",
+    "schema": "pulsarmlx.f017.event06-v12-prompt-bound-event-identity-plan/2.0.0",
+    "field_count": 9,
+    "fields": ["schema", "authorization_id", "package_attempt_id", "primary_event_id", "secondary_event_id", "execution_plan_sha256", "prompt_repository_commit", "prompt_repository_path", "prompt_sha256"],
+    "synthetic_source_sha256": "ef0e002134c3c1efc00b0d2d33b0a2b1356fd4855d8760eea4ef4ebbe0ba36b8"
+  },
+  "legacy_bridge": {
+    "path": "scripts/research/f017_event06_numerical_bridge_v1.py",
+    "sha256": "b7d8eaedcd87d4d8363a14977750f59406b171677a87417aebe31d11ed04112e",
+    "schema": "pulsarmlx.f017.event06-event-identity-plan/1.0.0",
+    "field_count": 5,
+    "fields": ["schema", "package_attempt_id", "primary_event_id", "secondary_event_id", "execution_plan_sha256"],
+    "signature": "derive_bridge(installed, identity, execution, event_identity_plan: dict)"
+  },
+  "legacy_coordinator": {
+    "path": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+    "sha256": "aa99e0071c1654eace328cabfb12c02c99858dd1ffaaa7c53d2bea601949b5fd",
+    "identity_parameter": "event_identity_plan: dict"
+  },
+  "reproduction_cases": [
+    {"case": "SEALED_OBJECT", "exception_type": "ValueError", "message": "event identity plan", "result": "REJECTED"},
+    {"case": "NINE_FIELD_MAPPING", "exception_type": "ValueError", "message": "event identity plan", "result": "REJECTED"},
+    {"case": "FIVE_FIELD_PROJECTION", "exception_type": "ValueError", "message": "bridge provenance: installed event plan", "result": "REJECTED"}
+  ],
+  "sequence11_authority_dag_edges": 15,
+  "sequence11_public_signatures": 12,
+  "sequence11_scope_terminal": "DURABLE_PRODUCTION_INSTALLATION_V3",
+  "public_digest_preserving_successor_present": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "live_authority_created": false,
+  "event06_identities_consumed": 0,
+  "result": "PASS"
+}
