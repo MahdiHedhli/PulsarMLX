@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/1.0.0",
+  "prompt_commit": "01458953d113fdcab1685a509931fe4aef78bcea",
+  "prompt_sha256": "ff897246c633e90d8d502b2238f8cec17ec74eb0e8957df0ac87fb6ed9f11af5",
+  "source_starting_head": "eb85661ea3f1579f7566a9c23e469c7785557bd2",
+  "source_starting_tree": "938ca67a872591852b60c14de75fb1c0a47a6ee6",
+  "measured_implementation_head": "5b98e53e6d9c4e2c2a8ae91bd71f55001517f5d0",
+  "measured_implementation_tree": "e27590470ffb6ddf3885e8ae4e1a399e211aa27e",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v1.json": "0ab780bf9c2fdc0505174468151c0177fce5441be495fe5fdb88ad54650ac2fd",
+    "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v1.json": "e6b2d1847caffa2fa10880376fb86ed2f899964b4bdc9dc8b105f4693d118128",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e0-receipt-v1.json": "bcf80d15e930e5732ca268fbc5716fd144d0a30d65af639cf58737e6e75c3b93",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e1-receipt-v1.json": "1c800bcc07ae1d8f78ced8c718543888f331bc3ea1ffe19263310e957748998e",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e2-receipt-v1.json": "dc6badccb70259352f3e40c17b83ef0e6bb1da8e62714be01e1fee805e1190c2",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v1.json": "6d805ea6d5d3c614e47f60ee442775f5e822d8bac6f2777de25abccefd63a5df",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-challenge-ledger-v1.json": "d81298d987ea79df66744c3cc7fad08c8db027040260418cc28f92ffec067db1",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v1.json": "47d2274db7e100c2438d48a2fc89bebeade868c4dfc5f845f94c93708cb3d125",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-arbiter-ledger-v1.json": "2bc3b8b1573e381f70e6c499fb57896cda93804011e446f9088c7527c37cfc25"
+  },
+  "binding_count": 9,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "operator_approval_banked": false,
+  "candidate_constructed": false,
+  "live_authorization_installed": false,
+  "event_06_package_started": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}
