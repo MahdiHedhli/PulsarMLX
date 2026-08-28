@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-repair-loop-ledger/1.0.0",
+  "authorized_loops": 10,
+  "consumed_loops": 1,
+  "loops": [
+    {
+      "cycle": 1,
+      "trigger": "OPUS_CYCLE_01_REJECT",
+      "input_head": "60145ae35451333aba62f3027d52cfabb7718de2",
+      "output_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+      "findings_repaired": ["ARB-S11-B01", "ARB-S11-R01", "ARB-S11-R02", "ARB-S11-R03", "ARB-S11-R04", "ARB-S11-A01", "ARB-S11-A02", "ARB-S11-A03", "ARB-S11-A04", "ARB-S11-U01", "ARB-S11-U02"],
+      "finding_dispositioned_without_execution_change": ["ARB-S11-A05"],
+      "focused_tests": 74,
+      "applicable_f017_tests": 514,
+      "applicable_f017_subtests": 147,
+      "mutation_campaign": "339/339",
+      "checkpoint_access": 0,
+      "numerical_operations": 0,
+      "result": "PASS"
+    }
+  ],
+  "remaining_loops": 9,
+  "result": "PASS"
+}

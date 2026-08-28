@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "implementation_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "prompt_authority": {
+    "commit": "26998b7f0e840bbcdda5c792999b7eadd1ddd164",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/011__F017__Mac-Studio-M1-Ultra__Event-06-V12-live-GO-call-path-contract-repair-and-no-access-requalification__prompt.md",
+    "sha256": "3e0809171a44691f934b10ef75bdd609674e476645e2110d153f7ed13e96c624"
+  },
+  "bindings": [
+    {"role": "failure_reproduction", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-failure-reproduction-v1.json", "sha256": "de500375e90d6cb901fcc29f2a5a3483b287390e0e45985bb546235c0de06a66"},
+    {"role": "failure_to_repair_traceability", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-failure-to-repair-traceability-v1.json", "sha256": "dd58838bd99d209fdad916ae8a8f9648e69ab1b67cd6e7ee2b0ad09adefe0533"},
+    {"role": "preobservation_freeze", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-preobservation-freeze-v1.json", "sha256": "edc770e3ae3b7c8f6d1704fc28dd844b2b014dbb40dc469522df98e9265f5ce5"},
+    {"role": "prompt_provenance", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-prompt-authority-snapshot-provenance-v1.json", "sha256": "ecd15ac9a69beb3e219fe9ef8e0edde93fca80d48bb2ea76a5cdd04e76eccd78"},
+    {"role": "canonical_requirements", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-requirements-v1.json", "sha256": "215fce368a6ca300a3dc2754be3e6376f573a55603891a35cbe1fb2a98bde0de"},
+    {"role": "live_go_call_path_contract", "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-v3.json", "sha256": "f62ba967783a073bcaa5f0b453f655097165f45ba5d48709158f9201326104e2"},
+    {"role": "implementation_measurement", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-implementation-measurement-v1.json", "sha256": "24a3361d7590713d87545f547795d18a8377df6c1e22ee15bc58bdd647c6b941"},
+    {"role": "live_go_call_path_qualification", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json", "sha256": "4f9c49b3a28f68f5235804663b692c57ba72dcd58e8fda8f53332cae21368bab"},
+    {"role": "no_access_rehearsal", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-no-access-rehearsal-v1.json", "sha256": "1c895010fdadea25b6d58bfeac58b63d0e7a778a1a20fa71c6008c7afcfddcf9"},
+    {"role": "agy_cycle_1", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-agy-cycle01-normalized-result.json", "sha256": "b70467e0bbe3de6ebfc982a2cda951d4c8877cf41c8c1998bbe57e2e27dd0ba3"},
+    {"role": "opus_cycle_1", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-opus-cycle01-normalized-result.json", "sha256": "86a53631defdd3bf051daa06cecd7f0936541a3a0927f1401d7d45d562ae0214"},
+    {"role": "support_cycle_1", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-support-cycle01-v1.json", "sha256": "b09cf9670d5f70cf8b70874967d6fa440913f2861cd6e20ad6f6ae6f14d377e8"},
+    {"role": "repair_loop_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-repair-loop-ledger-v1.json", "sha256": "4b0d055c36d6b2e370b52c1eb365c254b5fb2eda5a58b6f379b1edcfc034d200"},
+    {"role": "agy_final", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-agy-cycle02-normalized-result.json", "sha256": "ed87ea52cca20a39ae306540d83dd3c28670d83ae645c09408da886aea208677"},
+    {"role": "opus_final", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-opus-cycle02-normalized-result.json", "sha256": "4a0ed4c116d58e83266a0d3cc2c256d9304f55ce4b9a35f38b327d42a869e047"},
+    {"role": "claim_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-claim-ledger-v1.json", "sha256": "b7eacf77240d2e79aa78a2f3dec1919ef088fd9c6614abbdf0e545f9c4b4d681"},
+    {"role": "full_native_ci", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-full-native-ci-v1.json", "sha256": "b748ae0df025d30aac7a4da0123e9f8e842f7880639c74f7868becacfd482bc4"}
+  ],
+  "binding_count": 17,
+  "all_bindings_verified": true,
+  "authority_dag_acyclic": true,
+  "self_references": 0,
+  "future_references": 0,
+  "event_06_executed": false,
+  "live_authority_created": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-implementation-measurement/1.0.0",
+  "implementation_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "implementation_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "paths": [
+    {"path": ".github/workflows/macos.yml", "sha256": "b4da7a2f9efdcdb09505a0985a83bf933751de09f3ce6c227152a9c636caf3e8"},
+    {"path": "scripts/research/f017_event06_live_go_contract_v3.py", "sha256": "df9777cd0e31adbcf4b0379a2cc3020988481d59bb8f24676ebed49e1e09aa87"},
+    {"path": "scripts/research/f017_event06_production_installation_v3.py", "sha256": "ef2527b3b80a1e487bc145318f6ffaf8d830fa9d6492af68fc8a9b619d6494e9"},
+    {"path": "scripts/research/generate_f017_event06_live_go_call_path_v3.py", "sha256": "eee038c46d213ee206fc61572198a4f117426515bdef7969c3134eed37e3af83"},
+    {"path": "scripts/research/validate_f017_event06_live_go_call_path_v3.py", "sha256": "932598cf937d0d0c54a72f01dc585ba34821f44f9e8aa673a70c6cfd4cbb3fb7"},
+    {"path": "scripts/research/tests/test_f017_event06_live_go_call_path_v3.py", "sha256": "d913502d5a5307c09ec61b7e246e4af6e9a2adb9b21d7ea98844fc3c136a05a8"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-requirements-v1.json", "sha256": "215fce368a6ca300a3dc2754be3e6376f573a55603891a35cbe1fb2a98bde0de"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-live-go-call-path-v3.json", "sha256": "f62ba967783a073bcaa5f0b453f655097165f45ba5d48709158f9201326104e2"}
+  ],
+  "historical_runtime_guards": [
+    {"path": "scripts/research/f017_event06_production_installation_v1.py", "sha256": "13579b0d5b8d27e84b2eb8c5e91e85eac648798b24847169458370da670a6d6d"},
+    {"path": "scripts/research/f017_event06_production_installation_v2.py", "sha256": "72fa96bd7bbc54baa257f18e928c179af8c1a8920e87aa132703581a0b1b7e05"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-future-go-capability-v2.json", "sha256": "35541cf33d29a809ba3ef960c59886829e3e4affe9b00d9eb3ebe8152eae9d8c"}
+  ],
+  "numerical_authority_drift": 0,
+  "result_authority_drift": 0,
+  "checkpoint_authority_drift": 0,
+  "historical_evidence_mutations": 0,
+  "result": "PASS"
+}
