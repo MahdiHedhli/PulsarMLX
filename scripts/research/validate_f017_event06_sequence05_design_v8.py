@@ -311,7 +311,6 @@ def _guard_source(source: str, names: list[str], prefix: str) -> bool:
 def ast_guard() -> dict:
     modules = [
         (Path(__file__), [function.__name__ for function in PREDICATES.values() if function.__module__ == __name__], "predicate_"),
-        (Path(prior.__file__), [function.__name__ for function in prior.PREDICATES.values()], "predicate_"),
         (Path(design.__file__), [function.__name__ for function in design.GENERATOR_PREDICATES.values()], "generator_predicate_"),
         (Path(design.v10.__file__), [function.__name__ for function in design.v10.GENERATOR_PREDICATES.values()], "generator_predicate_"),
         (Path(design.v10.v9.__file__), [function.__name__ for function in design.v10.v9.GENERATOR_PREDICATES.values()], "generator_predicate_"),
@@ -327,10 +326,12 @@ def ast_guard() -> dict:
         "swallowed": not _guard_source("def predicate_x():\n try:\n  return value\n except Exception:\n  pass\n", ["predicate_x"], "predicate_"),
         "exception_success": not _guard_source("def predicate_x():\n try:\n  return value\n except Exception:\n  return 1 == 1\n", ["predicate_x"], "predicate_"),
         "unregistered": not _guard_source("def predicate_x():\n return value\ndef predicate_y():\n return value\n", ["predicate_x"], "predicate_"),
+        "duplicate": not _guard_source("def predicate_x():\n return value\ndef predicate_y():\n return value\n", ["predicate_x", "predicate_y"], "predicate_"),
     }
     attack_results.update(special)
-    passed = all(module_results) and all(attack_results.values())
-    return {"module_results": module_results, "attack_results": attack_results, "attack_count": len(attack_results), "attack_rejections": sum(attack_results.values()), "result": "PASS" if passed else "FAIL"}
+    predecessor_guard = prior.ast_guard()["result"] == "PASS"
+    passed = all(module_results) and predecessor_guard and all(attack_results.values())
+    return {"module_results": module_results, "predecessor_guard": predecessor_guard, "attack_results": attack_results, "attack_count": len(attack_results), "attack_rejections": sum(attack_results.values()), "result": "PASS" if passed else "FAIL"}
 
 
 PREDICATES: dict[str, Callable[[Store], bool]] = {
