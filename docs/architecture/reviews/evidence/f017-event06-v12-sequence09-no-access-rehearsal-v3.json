@@ -1,0 +1,37 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-no-access-rehearsal/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-no-access-rehearsal-v2.json",
+  "qualification_head": "9cf107eb0de1034e37746fa4bacb95ca507af411",
+  "qualification_tree": "392509a20bb7237eb8732d3cc08098828ceeccbc",
+  "raw_result_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-raw-v3.json",
+  "raw_result_sha256": "3068bf1655ac473062665ccece353951d30e625d58ef37578e5aaea563545545",
+  "producer_harness": "scripts/research/run_f017_event06_sequence09_interposed_qualification_v1.py",
+  "execution_entry_points_actively_interposed": [
+    "primary_numerics.execute_outputs",
+    "secondary_numerics.execute_outputs",
+    "coordinator.bank_package_start",
+    "coordinator.execute_event06_bridge",
+    "primary_source.source_from_inherited_descriptors",
+    "secondary_source.source_from_inherited_descriptors"
+  ],
+  "interposition_census": {
+    "hash_stream": 0,
+    "id_consumption": 0,
+    "lease_creation": 0,
+    "live_commit": 0,
+    "mmap": 0,
+    "numerical_execute": 0,
+    "open": 0,
+    "package_start": 0,
+    "path_stat": 0,
+    "pread": 0,
+    "root_resolve": 0,
+    "tensor_source": 0
+  },
+  "package_starts": 0,
+  "numerical_operations": 0,
+  "checkpoint_access": 0,
+  "event_06_executed": false,
+  "terminal_dry_stop": "PASS",
+  "result": "PASS"
+}
