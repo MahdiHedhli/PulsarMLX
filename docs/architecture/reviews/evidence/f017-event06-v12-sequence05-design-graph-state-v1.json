@@ -1,0 +1,1 @@
+{"nodes":[{"id":"D0","name":"reproduction","status":"PASS"},{"id":"D1","name":"canonical readiness design","status":"PASS"},{"id":"D2","name":"production installation design","status":"PASS"},{"id":"D3","name":"independent design review","status":"PENDING"}],"original_checkpoint_access":0,"running_nodes":0,"schema":"pulsarmlx.f017.event06-v12-sequence05-design-graph-state/1.0.0"}
