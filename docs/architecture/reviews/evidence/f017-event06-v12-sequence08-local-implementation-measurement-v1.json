@@ -1,0 +1,124 @@
+{
+  "schema": "pulsarmlx.f017.event06-sequence08-local-implementation-measurement/1.0.0",
+  "program": "F017",
+  "sequence": 8,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "scope": "IMPLEMENTATION_ONLY_NO_CHECKPOINT_ACCESS",
+  "source_start": {
+    "head": "16686acc36492c9d8fe74528cf8a96653814a742",
+    "tree": "b29c486ecf77bf967a5df6f8560595c113e8a1e9"
+  },
+  "implementation": {
+    "head": "3a37d05fcd44ef56924f797b5427c8a488aed523",
+    "tree": "5639d6509b0d148ae9b16cea12ff377971ea253a",
+    "changed_paths": [
+      {
+        "path": "scripts/research/f017_corrected_oracle_authorization_v12_v2.py",
+        "sha256": "5b345e9a6c4e3e6a52a354732118b1c7207a013930ede4fbb95d9d9199c9bc2e"
+      },
+      {
+        "path": "scripts/research/f017_event06_production_installation_v1.py",
+        "sha256": "13579b0d5b8d27e84b2eb8c5e91e85eac648798b24847169458370da670a6d6d"
+      },
+      {
+        "path": "scripts/research/f017_event06_readiness_authority_v2.py",
+        "sha256": "86796c3f1f9fa4d85c3618340b88b4dd8fb316b251913a6cbf026a1186b38eb3"
+      },
+      {
+        "path": "scripts/research/f017_event06_sequence08_fixture_v1.py",
+        "sha256": "173cd1178185e051abf75e475e6b16925d1b777b80994d8bd12d2fcecc0124e6"
+      },
+      {
+        "path": "scripts/research/qualify_f017_event06_sequence08_implementation_v1.py",
+        "sha256": "09644bb35a5af38a0f6d138b7dfb748a33b6d87ffaa20a6896a09cbb1f966f74"
+      },
+      {
+        "path": "scripts/research/tests/test_f017_event06_sequence08_implementation_v1.py",
+        "sha256": "942136e80e1d8a1c92fdfacaac2738fd0965f903df82e86176b57ccb76e99f2c"
+      }
+    ]
+  },
+  "design_replay": {
+    "generator_check": "PASS",
+    "mechanical_predicates": {
+      "passed": 18,
+      "total": 18
+    },
+    "mutation_cases": {
+      "rejected": 9,
+      "total": 9
+    },
+    "ast_attacks": {
+      "rejected": 12,
+      "total": 12
+    }
+  },
+  "local_implementation_verification": {
+    "readiness_reconstructions": 20,
+    "readiness_unique_digest_count": 1,
+    "installation_reconstructions": 20,
+    "installation_unique_identity_set_count": 1,
+    "mutation_rejections": 324,
+    "unexpected_passes": 0,
+    "installation_failure_outcomes": 16,
+    "race_families": 10,
+    "sealed_object_attacks": 6,
+    "terminal": "PACKAGE_START_ELIGIBLE_DRY_STOP",
+    "result": "PASS_PENDING_QUALIFICATION_GRAPH"
+  },
+  "tests": {
+    "focused": {
+      "passed": 25,
+      "failed": 0
+    },
+    "related": {
+      "passed": 102,
+      "failed": 0,
+      "subtests_passed": 31
+    },
+    "full_applicable_f017": {
+      "passed": 501,
+      "failed": 0,
+      "subtests_passed": 147
+    },
+    "py_compile": "PASS",
+    "ruff_format": "PASS",
+    "ruff_check": "PASS",
+    "mypy_strict_execution_facing_modules": "PASS"
+  },
+  "repair_loops": {
+    "authorized": 10,
+    "consumed": 2,
+    "closed": 2
+  },
+  "not_performed": {
+    "full_native": "NOT_LAUNCHED",
+    "evidence_only": "NOT_LAUNCHED",
+    "post_implementation_independent_review": "NOT_RUN"
+  },
+  "safety": {
+    "event_04_retry": false,
+    "event_05_retry_or_resume": false,
+    "prior_event_06_retry_or_resume": false,
+    "event_06_executed": false,
+    "live_event_06_authorization_created": false,
+    "live_v12_installation_created": false,
+    "production_install_commit_success_calls": 0,
+    "event_06_package_started": false,
+    "primary_real_oracle_event06_executions": 0,
+    "secondary_real_oracle_event06_executions": 0,
+    "original_checkpoint_root_resolved": false,
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_mmaps_or_tensor_reads": 0,
+    "full_model_inference": "NONE",
+    "event06_identities_consumed": 0,
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "historical_master_ledger": 175,
+    "macbook_frontier_mutation": "NONE",
+    "shared_feature_state_mutation": "NONE"
+  },
+  "result": "PASS_PENDING_QUALIFICATION_GRAPH",
+  "next_safe_action": "PLANNER_REVIEW_THEN_SEPARATELY_ISSUED_NO_ACCESS_QUALIFICATION_CI_INDEPENDENT_REVIEW_AND_FINAL_READINESS_GRAPH"
+}
