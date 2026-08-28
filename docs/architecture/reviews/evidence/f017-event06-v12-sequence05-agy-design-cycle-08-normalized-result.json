@@ -1,0 +1,1 @@
+{"advisory_findings":0,"blocking_findings":4,"finding_ids":["C8-F1","C8-F2","C8-F3","C8-F4"],"required_findings":0,"reviewed_commit":"06013ba58fc2118016626065b075174dc2fd75bb","reviewed_tree":"3064e800759d74d53ab6fc5ec2cced02b7ce27e8","schema":"pulsarmlx.f017.event06-v12-sequence05-agy-design-result/1.5.0","unresolved_claims":0,"verdict":"REJECT"}
