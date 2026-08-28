@@ -85,6 +85,61 @@ def run() -> dict[str, object]:
     mmap.mmap = guarded_mmap  # type: ignore[assignment,misc]
     hashlib.file_digest = guarded_file_digest  # type: ignore[assignment]
 
+    # Import the future live execution modules only after the filesystem guards
+    # above are active, then interpose their actual entry points before loading
+    # the qualification driver.  These counters are observations, not declared
+    # zeros: any attempted live transition aborts the no-access process.
+    import execute_f017_corrected_oracle_event_v12_bridge as coordinator
+    import f017_corrected_oracle_primary_numerics_v3 as primary_numerics
+    import f017_corrected_oracle_primary_target_source_v11 as primary_source
+    import f017_corrected_oracle_primary_wrapper_v12 as primary_wrapper
+    import f017_corrected_oracle_secondary_numerics_v3 as secondary_numerics
+    import f017_corrected_oracle_secondary_target_source_v11 as secondary_source
+    import f017_corrected_oracle_secondary_wrapper_v12 as secondary_wrapper
+
+    def forbid(counter: str, transition: str) -> Any:
+        def guarded(*args: object, **kwargs: object) -> object:
+            del args, kwargs
+            census[counter] += 1
+            raise AssertionError(f"{transition} is outside Sequence 9 qualification authority")
+
+        return guarded
+
+    primary_numerics.execute_outputs = forbid(  # type: ignore[assignment]
+        "numerical_execute", "primary numerical execution"
+    )
+    secondary_numerics.execute_outputs = forbid(  # type: ignore[assignment]
+        "numerical_execute", "secondary numerical execution"
+    )
+    primary_wrapper.execute_bridge_and_bank = forbid(  # type: ignore[assignment]
+        "numerical_execute", "primary bridge execution"
+    )
+    secondary_wrapper.execute_bridge_and_bank = forbid(  # type: ignore[assignment]
+        "numerical_execute", "secondary bridge execution"
+    )
+    coordinator.execute_primary = primary_wrapper.execute_bridge_and_bank
+    coordinator.execute_secondary = secondary_wrapper.execute_bridge_and_bank
+
+    coordinator.bank_package_start = forbid(  # type: ignore[assignment]
+        "package_start", "package durable start"
+    )
+    coordinator.execute_event06_bridge = forbid(  # type: ignore[assignment]
+        "package_start", "Event 06 coordinator execution"
+    )
+
+    primary_source.source_from_inherited_descriptors = forbid(  # type: ignore[assignment]
+        "tensor_source", "primary tensor-source construction"
+    )
+    secondary_source.source_from_inherited_descriptors = forbid(  # type: ignore[assignment]
+        "tensor_source", "secondary tensor-source construction"
+    )
+    primary_wrapper.source_from_inherited_descriptors = (  # type: ignore[assignment]
+        primary_source.source_from_inherited_descriptors
+    )
+    secondary_wrapper.source_from_inherited_descriptors = (  # type: ignore[assignment]
+        secondary_source.source_from_inherited_descriptors
+    )
+
     import f017_event06_production_installation_v2 as production
 
     real_produce = production.produce_future_go_capability

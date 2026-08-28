@@ -203,6 +203,35 @@ def test_committed_interposed_qualification_harness() -> None:
     assert set(result["interposition_census"].values()) == {0}
 
 
+def test_committed_harness_interposes_every_reported_execution_counter() -> None:
+    path = (
+        ROOT
+        / "scripts/research/run_f017_event06_sequence09_interposed_qualification_v1.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=str(path))
+    counter_literals = {
+        node.args[0].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "forbid"
+        and node.args
+        and isinstance(node.args[0], ast.Constant)
+        and isinstance(node.args[0].value, str)
+    }
+    assert {"numerical_execute", "package_start", "tensor_source"} <= counter_literals
+    for target in (
+        "primary_numerics.execute_outputs",
+        "secondary_numerics.execute_outputs",
+        "coordinator.bank_package_start",
+        "coordinator.execute_event06_bridge",
+        "primary_source.source_from_inherited_descriptors",
+        "secondary_source.source_from_inherited_descriptors",
+    ):
+        assert target in source
+
+
 def test_caller_copy_pickle_and_constructor_attacks_fail() -> None:
     for cls in (FutureGoCapabilityV2, DurableTransactionResult):
         with pytest.raises(TypeError):
