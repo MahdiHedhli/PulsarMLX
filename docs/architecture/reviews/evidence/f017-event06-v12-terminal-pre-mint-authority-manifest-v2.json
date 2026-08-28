@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v1.json",
+  "prompt_commit": "01458953d113fdcab1685a509931fe4aef78bcea",
+  "prompt_sha256": "ff897246c633e90d8d502b2238f8cec17ec74eb0e8957df0ac87fb6ed9f11af5",
+  "source_starting_head": "eb85661ea3f1579f7566a9c23e469c7785557bd2",
+  "source_starting_tree": "938ca67a872591852b60c14de75fb1c0a47a6ee6",
+  "measured_implementation_head": "5b98e53e6d9c4e2c2a8ae91bd71f55001517f5d0",
+  "measured_implementation_tree": "e27590470ffb6ddf3885e8ae4e1a399e211aa27e",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v1.json": "efc8efd2388a1e75b0d103160d7b585195819fe7ed38843bf06d97ca35f4f10f",
+    "docs/architecture/reviews/evidence/f017-event06-v12-final-no-go-declaration-v1.json": "2fa6fc8954b1d9525d903df02911ec8b53463d38e92bd5cd198cdbf9f3063586",
+    "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json": "822752fae481657623411568d9ab4c04154af696a2ff176946f5fc68f9a56e46",
+    "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-incident-v1.json": "767dcf13811936fc9c811d0d07c2c9ef2f25ab5a79dac8223aa7df5cccfbe0e7",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e2-receipt-v2.json": "24d09cc481f2b901fdac91a5b5e4bfc9593537d466a869fe05ad88c2f54b9920",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v2.json": "0ed4ffd5604dfb7bdbefc86d98e39dc89a3eee5363375a4d9ff0e38037900cd9",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v2.json": "48c1eee74af111f1a3dff6d8ce3dba3b44cf66b9591b9c2629d97eff8b9c6656"
+  },
+  "binding_count": 7,
+  "failed_evidence_only_run": 33130725211,
+  "evidence_repair": "APPEND_ONLY_CORRECTION_BANKED",
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "operator_approval_banked": false,
+  "candidate_constructed": false,
+  "live_authorization_installed": false,
+  "event_06_package_started": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}

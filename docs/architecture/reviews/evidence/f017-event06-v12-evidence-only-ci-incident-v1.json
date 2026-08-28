@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-evidence-only-ci-incident/1.0.0",
+  "run": 33130725211,
+  "head": "d05140a701ef96f7ef79c9208a7a0b2a74ec220e",
+  "mode": "EVIDENCE_ONLY",
+  "native_jobs_launched": 0,
+  "result": "FAIL",
+  "failure": "The v1 cross-repository prompt authority used generic path and sha256 member names, causing the source-repository evidence validator to resolve the prompt path against the wrong repository.",
+  "execution_evidence_changed": false,
+  "runtime_bytes_changed": false,
+  "repair_scope": "APPEND_ONLY_EVIDENCE_CORRECTION",
+  "corrected_evidence_path": "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json"
+}
