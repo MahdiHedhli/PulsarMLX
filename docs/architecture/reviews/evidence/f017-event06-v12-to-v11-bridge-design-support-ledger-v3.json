@@ -1,0 +1,10 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-support-ledger/1.2.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-support-ledger-v2.json",
+  "cycle":3,
+  "rows":[
+    {"finding_id":"FINDING-F","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v3.json","resolution":"Secondary view now carries the exact primary terminal document and three SHA prerequisites required by unchanged execute_and_bank; provenance is post-primary and bound to the bridge bundle journal."},
+    {"finding_id":"FINDING-G","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v3.json","resolution":"Comparison view now carries authorization_id from the sealed bridge."}
+  ],
+  "supported":0,"repaired":2,"conceded":0,"unresolved":0,"result":"PASS"
+}

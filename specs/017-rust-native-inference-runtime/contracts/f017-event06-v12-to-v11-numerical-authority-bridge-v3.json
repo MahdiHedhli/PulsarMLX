@@ -1,0 +1,37 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-numerical-authority-bridge-contract/1.2.0",
+  "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json",
+  "correction_reason":"Close the exact secondary and comparison consumer signatures without widening any historical validator.",
+  "base_contract_sha256":"cc9705c4ca0ab98e188e89681a659a2f9d5827088848584d3cfc2846b56bba16",
+  "state":"DESIGN_REVIEW_REQUIRED",
+  "unchanged_sections":["generation_truth","historical_schema_policy","canonical_document","provenance_equalities","descriptor_record","shard_record","sealed_object_policy","transition_binding_journal","event_number_policy"],
+  "consumer_views": {
+    "PRIMARY_NUMERICAL_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","primary_numerical_sha256","tensor_catalog_path","tensor_catalog_sha256","shards","graph_descriptors","source_head","source_tree"],
+    "SECONDARY_NUMERICAL_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","secondary_numerical_sha256","tensor_catalog_path","tensor_catalog_sha256","shards","graph_descriptors","primary_terminal","primary_result_terminal_sha256","primary_receipt_sha256","primary_manifest_sha256","primary_bridge_bundle_binding_sha256","source_head","source_tree"],
+    "RESULT_BUNDLE_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","numerical_contract_sha256","durable_start_sha256","access_census_sha256"],
+    "COMPARISON_V11":["schema","bridge_sha256","authorization_id","package_attempt_id","primary_bridge_bundle_binding_sha256","secondary_bridge_bundle_binding_sha256","comparison_authority_sha256"],
+    "RELEASE":["schema","bridge_sha256","package_attempt_id","descriptor_identity_sha256","lease_owner","comparison_binding_sha256"],
+    "ACCOUNTING":["schema","bridge_sha256","authorization_id","package_attempt_id","primary_event_id","secondary_event_id","installed_authority_sha256","installation_receipt_sha256","release_binding_sha256"],
+    "PACKAGE_TERMINAL":["schema","bridge_sha256","package_attempt_id","binding_chain_head_sha256","v11_closure_root_sha256","accounting_binding_sha256"]
+  },
+  "post_primary_view_provenance": {
+    "primary_terminal":"validated_primary_consumer_terminal_document",
+    "primary_result_terminal_sha256":"validated_primary_bundle",
+    "primary_receipt_sha256":"validated_primary_bundle",
+    "primary_manifest_sha256":"validated_primary_bundle",
+    "all_four_must_pass_unchanged_require_primary_terminal":true,
+    "all_four_are_runtime_supplied_after_primary_terminal":true,
+    "none_are_part_of_pre_primary_bridge_digest":true,
+    "secondary_view_binds_bridge_and_primary_bundle_binding_sha256":true
+  },
+  "unchanged_consumer_invocation_projections": {
+    "primary_source_constructor":["shards","tensor_catalog_path","tensor_catalog_sha256","graph_descriptors","file_descriptors"],
+    "primary_execute_and_bank":["source","geometry","token","directory","position","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","durable_start_sha256","access_census_sha256"],
+    "secondary_source_constructor":["shards","tensor_catalog_path","tensor_catalog_sha256","graph_descriptors","file_descriptors"],
+    "secondary_execute_and_bank":["document","directory","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","durable_start_sha256","access_census_sha256","primary_terminal","primary_result_terminal_sha256","primary_receipt_sha256","primary_manifest_sha256","use_mlx","store"],
+    "comparison_scalar_authority":["authorization_id"]
+  },
+  "comparison_view_provenance":{"authorization_id":"sealed_bridge","bundle_artifacts":"validated_bridge_bundle_bindings"},
+  "consumer_view_rules":{"unknown_fields":"REJECT","missing_fields":"REJECT","type_coercion":"REJECT","each_view_is_role_limited":true,"v11_candidate_bytes_emitted":false,"v12_candidate_bytes_modified":false},
+  "result":"PROPOSED"
+}
