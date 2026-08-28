@@ -8,8 +8,11 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
+use std::ffi::{CStr, CString, OsStr, OsString};
 use std::fs::{self, File, OpenOptions};
 use std::io::{Read, Write};
+use std::os::fd::{AsRawFd, FromRawFd};
+use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::{FileExt, MetadataExt, OpenOptionsExt};
 use std::path::{Component, Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -23,15 +26,38 @@ const HEADER_MAGIC: &[u8; 8] = b"PMLXEX01";
 const FOOTER_MAGIC: &[u8; 8] = b"PMLXEND1";
 const CHECKPOINT_EXPECTED: &str =
     "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee";
-const INVENTORY_EXPECTED: &str =
-    "ca23db7459219acd39cd047eb6490c814ab40d472dd081424624ac8bf8fc5c9b";
+const INVENTORY_EXPECTED: &str = "ca23db7459219acd39cd047eb6490c814ab40d472dd081424624ac8bf8fc5c9b";
 const EXPECTED_SHARDS: [(&str, u64, &str); 6] = [
-    ("GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf", 9_423_744, "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18"),
-    ("GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf", 49_105_028_960, "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36"),
-    ("GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf", 49_143_176_640, "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b"),
-    ("GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf", 49_143_176_640, "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e"),
-    ("GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf", 49_143_176_640, "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d"),
-    ("GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf", 41_914_650_304, "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d"),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00001-of-00006.gguf",
+        9_423_744,
+        "7bf96eeabbe887e58b6c44364962731ddc9dc5bf46fec8d097c1dff64bea4a18",
+    ),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00002-of-00006.gguf",
+        49_105_028_960,
+        "d94adaa58ddd5abbcf2514192958084416b1aa36bd4d21409028a164341bac36",
+    ),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00003-of-00006.gguf",
+        49_143_176_640,
+        "1cd0b1a3d9d939ce5a184c548f1b1c42edafaf1856cb0d7e586a2884a366256b",
+    ),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00004-of-00006.gguf",
+        49_143_176_640,
+        "10f3965db697a46ba66494475045af183c1bcaf639984160930c91a377816d3e",
+    ),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00005-of-00006.gguf",
+        49_143_176_640,
+        "40d7d4524ff07e0f9af494fb13130dc7090184800cc5af0a1563188b076af50d",
+    ),
+    (
+        "GLM-5.2-UD-IQ2_XXS-00006-of-00006.gguf",
+        41_914_650_304,
+        "eeceb9084350e64be8eebcd1f19ab14bbbb6b40132c86d77ffc65e72f425044d",
+    ),
 ];
 
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -173,11 +199,14 @@ fn err(msg: impl Into<String>) -> Box<dyn std::error::Error + Send + Sync> {
 }
 
 fn checked_add(a: u64, b: u64, what: &str) -> Result<u64> {
-    a.checked_add(b).ok_or_else(|| err(format!("overflow adding {what}: {a}+{b}")))
+    a.checked_add(b)
+        .ok_or_else(|| err(format!("overflow adding {what}: {a}+{b}")))
 }
 
+#[cfg(test)]
 fn checked_mul(a: u64, b: u64, what: &str) -> Result<u64> {
-    a.checked_mul(b).ok_or_else(|| err(format!("overflow multiplying {what}: {a}*{b}")))
+    a.checked_mul(b)
+        .ok_or_else(|| err(format!("overflow multiplying {what}: {a}*{b}")))
 }
 
 fn align_up(value: u64, alignment: u64) -> Result<u64> {
@@ -204,7 +233,11 @@ fn hex(bytes: &[u8]) -> String {
 }
 
 fn decode_hex_32(s: &str) -> Result<[u8; 32]> {
-    if s.len() != 64 || !s.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase()) {
+    if s.len() != 64
+        || !s
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+    {
         return Err(err(format!("invalid lowercase sha256: {s}")));
     }
     let mut out = [0u8; 32];
@@ -218,11 +251,7 @@ fn validate_canonical_value(v: &Value) -> Result<()> {
     match v {
         Value::Bool(_) => Ok(()),
         Value::Number(n) if n.as_u64().is_some() => Ok(()),
-        Value::String(s)
-            if s.bytes().all(|b| (0x20..=0x7e).contains(&b)) =>
-        {
-            Ok(())
-        }
+        Value::String(s) if s.bytes().all(|b| (0x20..=0x7e).contains(&b)) => Ok(()),
         Value::Array(a) => a.iter().try_for_each(validate_canonical_value),
         Value::Object(m) => {
             let mut last: Option<&str> = None;
@@ -240,7 +269,9 @@ fn validate_canonical_value(v: &Value) -> Result<()> {
             }
             Ok(())
         }
-        _ => Err(err("canonical JSON permits only objects, arrays, ASCII strings, u64, and booleans")),
+        _ => Err(err(
+            "canonical JSON permits only objects, arrays, ASCII strings, u64, and booleans",
+        )),
     }
 }
 
@@ -286,7 +317,11 @@ pub fn parse_scope(spec: &str, shared: bool) -> Result<Vec<ScopeLayer>> {
     }
     Ok(out
         .into_iter()
-        .map(|(layer, routed)| ScopeLayer { layer, routed, shared })
+        .map(|(layer, routed)| ScopeLayer {
+            layer,
+            routed,
+            shared,
+        })
         .collect())
 }
 
@@ -306,8 +341,12 @@ fn type_id(name: &str) -> Result<u32> {
 }
 
 fn safe_relative(path: &Path) -> Result<()> {
-    if path.is_absolute()
-        || path.components().any(|c| !matches!(c, Component::Normal(_)))
+    if path.as_os_str().is_empty()
+        || path.as_os_str().as_bytes().contains(&b'\\')
+        || path.is_absolute()
+        || path
+            .components()
+            .any(|c| !matches!(c, Component::Normal(_)))
     {
         return Err(err(format!("unsafe relative path {}", path.display())));
     }
@@ -330,7 +369,10 @@ fn open_source(path: &Path) -> Result<(File, SourceStat)> {
         .open(path)?;
     let metadata = file.metadata()?;
     if !metadata.is_file() || metadata.nlink() != 1 {
-        return Err(err(format!("source is not a regular unique file: {}", path.display())));
+        return Err(err(format!(
+            "source is not a regular unique file: {}",
+            path.display()
+        )));
     }
     Ok((file, stat_from_metadata(&metadata)))
 }
@@ -374,7 +416,10 @@ fn load_authority(cfg: &RepackConfig) -> Result<(Inventory, Admission, String)> 
             || shard.sha256 != expected.2
             || shard.destination_stat.size != shard.size
         {
-            return Err(err(format!("checkpoint shard authority mismatch at {}", position + 1)));
+            return Err(err(format!(
+                "checkpoint shard authority mismatch at {}",
+                position + 1
+            )));
         }
         let path = cfg.checkpoint_dir.join(&shard.name);
         let (_file, got) = open_source(&path)?;
@@ -486,7 +531,8 @@ fn build_plans(
                         return Err(err(format!("component outside shard {}", t.shard)));
                     }
                     let bundle_offset = align_up(next_offset, FORMAT_ALIGNMENT)?;
-                    let end_bundle = checked_add(bundle_offset, t.plane_bytes, "bundle component end")?;
+                    let end_bundle =
+                        checked_add(bundle_offset, t.plane_bytes, "bundle component end")?;
                     let next_aligned = align_up(end_bundle, FORMAT_ALIGNMENT)?;
                     components.push(ComponentPlan {
                         role: role.to_string(),
@@ -524,7 +570,13 @@ fn build_plans(
             }
         }
     }
-    objects.sort_by_key(|o| (o.layer, if o.expert_class == "routed" { 0 } else { 1 }, o.expert));
+    objects.sort_by_key(|o| {
+        (
+            o.layer,
+            if o.expert_class == "routed" { 0 } else { 1 },
+            o.expert,
+        )
+    });
     let mut seen = BTreeSet::new();
     for o in &objects {
         if !seen.insert((o.layer, o.expert_class.clone(), o.expert)) {
@@ -553,11 +605,7 @@ fn plan_component_json(c: &ComponentPlan) -> Value {
     })
 }
 
-fn plan_projection(
-    inventory_sha: &str,
-    objects: &[ObjectPlan],
-    scope: &[ScopeLayer],
-) -> Value {
+fn plan_projection(inventory_sha: &str, objects: &[ObjectPlan], scope: &[ScopeLayer]) -> Value {
     let records: Vec<Value> = objects
         .iter()
         .map(|o| {
@@ -653,9 +701,384 @@ fn get_u64(src: &[u8], off: usize) -> u64 {
     u64::from_le_bytes(src[off..off + 8].try_into().unwrap())
 }
 
-fn sync_dir(path: &Path) -> Result<()> {
-    File::open(path)?.sync_all()?;
-    Ok(())
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct DirectoryIdentity {
+    device: u64,
+    inode: u64,
+    uid: u32,
+}
+
+#[derive(Debug)]
+struct PinnedDirectory {
+    file: File,
+    path: PathBuf,
+    identity: DirectoryIdentity,
+}
+
+fn c_name(name: &OsStr) -> Result<CString> {
+    let bytes = name.as_bytes();
+    if bytes.is_empty() || bytes == b"." || bytes == b".." || bytes.contains(&b'/') {
+        return Err(err("unsafe descriptor-relative name"));
+    }
+    Ok(CString::new(bytes)?)
+}
+
+fn io_error() -> std::io::Error {
+    std::io::Error::last_os_error()
+}
+
+#[cfg(target_os = "macos")]
+unsafe fn errno_location() -> *mut libc::c_int {
+    unsafe { libc::__error() }
+}
+
+#[cfg(not(target_os = "macos"))]
+unsafe fn errno_location() -> *mut libc::c_int {
+    unsafe { libc::__errno_location() }
+}
+
+fn directory_identity(metadata: &fs::Metadata) -> Result<DirectoryIdentity> {
+    if !metadata.is_dir() || metadata.uid() != unsafe { libc::getuid() } {
+        return Err(err(
+            "directory must be real and owned by the current process user",
+        ));
+    }
+    Ok(DirectoryIdentity {
+        device: metadata.dev(),
+        inode: metadata.ino(),
+        uid: metadata.uid(),
+    })
+}
+
+#[derive(Debug, Clone, Copy)]
+struct EntryMetadata {
+    device: u64,
+    inode: u64,
+    uid: u32,
+    links: u64,
+    mode: libc::mode_t,
+}
+
+impl EntryMetadata {
+    fn is_regular(self) -> bool {
+        self.mode & libc::S_IFMT == libc::S_IFREG
+    }
+
+    fn identifies(self, file: &File) -> Result<bool> {
+        let opened = file.metadata()?;
+        Ok(self.device == opened.dev() && self.inode == opened.ino())
+    }
+}
+
+impl PinnedDirectory {
+    fn open_root(path: &Path) -> Result<Self> {
+        let metadata = fs::symlink_metadata(path)?;
+        if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            return Err(err(format!(
+                "root must be a real directory: {}",
+                path.display()
+            )));
+        }
+        let file = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open(path)?;
+        let identity = directory_identity(&file.metadata()?)?;
+        let pinned = Self {
+            file,
+            path: path.to_path_buf(),
+            identity,
+        };
+        pinned.revalidate()?;
+        Ok(pinned)
+    }
+
+    fn from_child(file: File, display_path: PathBuf) -> Result<Self> {
+        let identity = directory_identity(&file.metadata()?)?;
+        Ok(Self {
+            file,
+            path: display_path,
+            identity,
+        })
+    }
+
+    fn revalidate(&self) -> Result<()> {
+        let metadata = fs::symlink_metadata(&self.path)?;
+        if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            return Err(err(format!(
+                "pinned directory path changed: {}",
+                self.path.display()
+            )));
+        }
+        let current = OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+            .open(&self.path)?;
+        if directory_identity(&current.metadata()?)? != self.identity {
+            return Err(err(format!(
+                "pinned directory identity changed: {}",
+                self.path.display()
+            )));
+        }
+        Ok(())
+    }
+
+    fn child(&self, relative: &Path, create: bool) -> Result<Self> {
+        self.revalidate()?;
+        safe_relative(relative)?;
+        let mut current = Self::from_child(self.file.try_clone()?, self.path.clone())?;
+        for component in relative.components() {
+            let Component::Normal(name) = component else {
+                return Err(err("unsafe child directory component"));
+            };
+            let c = c_name(name)?;
+            let mut fd = unsafe {
+                libc::openat(
+                    current.file.as_raw_fd(),
+                    c.as_ptr(),
+                    libc::O_RDONLY | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+                )
+            };
+            if fd < 0 && create && io_error().kind() == std::io::ErrorKind::NotFound {
+                if unsafe { libc::mkdirat(current.file.as_raw_fd(), c.as_ptr(), 0o700) } != 0
+                    && io_error().kind() != std::io::ErrorKind::AlreadyExists
+                {
+                    return Err(io_error().into());
+                }
+                fd = unsafe {
+                    libc::openat(
+                        current.file.as_raw_fd(),
+                        c.as_ptr(),
+                        libc::O_RDONLY | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+                    )
+                };
+            }
+            if fd < 0 {
+                return Err(io_error().into());
+            }
+            let file = unsafe { File::from_raw_fd(fd) };
+            current = Self::from_child(file, current.path.join(name))?;
+        }
+        Ok(current)
+    }
+
+    fn metadata(&self, name: &OsStr) -> Result<Option<EntryMetadata>> {
+        self.revalidate()?;
+        let c = c_name(name)?;
+        let mut stat = unsafe { std::mem::zeroed::<libc::stat>() };
+        if unsafe {
+            libc::fstatat(
+                self.file.as_raw_fd(),
+                c.as_ptr(),
+                &mut stat,
+                libc::AT_SYMLINK_NOFOLLOW,
+            )
+        } == 0
+        {
+            return Ok(Some(EntryMetadata {
+                device: stat.st_dev as u64,
+                inode: stat.st_ino as u64,
+                uid: stat.st_uid,
+                links: stat.st_nlink as u64,
+                mode: stat.st_mode,
+            }));
+        }
+        let error = io_error();
+        if error.kind() == std::io::ErrorKind::NotFound {
+            Ok(None)
+        } else {
+            Err(error.into())
+        }
+    }
+
+    fn open_existing_file(&self, name: &OsStr) -> Result<Option<File>> {
+        let Some(metadata) = self.metadata(name)? else {
+            return Ok(None);
+        };
+        if !metadata.is_regular()
+            || metadata.links != 1
+            || metadata.uid != unsafe { libc::getuid() }
+        {
+            return Err(err("existing file is unsafe or unexplained"));
+        }
+        let c = c_name(name)?;
+        let fd = unsafe {
+            libc::openat(
+                self.file.as_raw_fd(),
+                c.as_ptr(),
+                libc::O_RDONLY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+            )
+        };
+        if fd < 0 {
+            return Err(io_error().into());
+        }
+        let file = unsafe { File::from_raw_fd(fd) };
+        let opened = file.metadata()?;
+        if opened.dev() != metadata.device || opened.ino() != metadata.inode {
+            return Err(err("existing file identity changed during open"));
+        }
+        Ok(Some(file))
+    }
+
+    fn names(&self) -> Result<Vec<OsString>> {
+        self.revalidate()?;
+        let duplicate = unsafe { libc::dup(self.file.as_raw_fd()) };
+        if duplicate < 0 {
+            return Err(io_error().into());
+        }
+        let directory = unsafe { libc::fdopendir(duplicate) };
+        if directory.is_null() {
+            unsafe { libc::close(duplicate) };
+            return Err(io_error().into());
+        }
+        let mut names = Vec::new();
+        loop {
+            unsafe { *errno_location() = 0 };
+            let entry = unsafe { libc::readdir(directory) };
+            if entry.is_null() {
+                let code = unsafe { *errno_location() };
+                if code != 0 {
+                    unsafe { libc::closedir(directory) };
+                    return Err(std::io::Error::from_raw_os_error(code).into());
+                }
+                break;
+            }
+            let name = unsafe { CStr::from_ptr((*entry).d_name.as_ptr()) }.to_bytes();
+            if name != b"." && name != b".." {
+                names.push(OsStr::from_bytes(name).to_os_string());
+            }
+        }
+        if unsafe { libc::closedir(directory) } != 0 {
+            return Err(io_error().into());
+        }
+        names.sort();
+        Ok(names)
+    }
+
+    fn create_file(&self, name: &OsStr) -> Result<File> {
+        self.revalidate()?;
+        let c = c_name(name)?;
+        let fd = unsafe {
+            libc::openat(
+                self.file.as_raw_fd(),
+                c.as_ptr(),
+                libc::O_RDWR | libc::O_CREAT | libc::O_EXCL | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+                0o600,
+            )
+        };
+        if fd < 0 {
+            return Err(io_error().into());
+        }
+        Ok(unsafe { File::from_raw_fd(fd) })
+    }
+
+    fn publish(&self, temporary: &OsStr, expected: &File, final_name: &OsStr) -> Result<()> {
+        self.revalidate()?;
+        self.link_from(self, temporary, expected, final_name)?;
+        self.remove_file_if_matches(temporary, expected)?;
+        Ok(())
+    }
+
+    fn remove_file_if_matches(&self, name: &OsStr, expected: &File) -> Result<()> {
+        self.revalidate()?;
+        let Some(metadata) = self.metadata(name)? else {
+            return Err(err("expected file disappeared before removal"));
+        };
+        if !metadata.identifies(expected)? {
+            return Err(err("refuse removal after file identity changed"));
+        }
+        let c = c_name(name)?;
+        if unsafe { libc::unlinkat(self.file.as_raw_fd(), c.as_ptr(), 0) } != 0 {
+            return Err(io_error().into());
+        }
+        self.file.sync_all()?;
+        Ok(())
+    }
+
+    fn link_from(
+        &self,
+        source: &PinnedDirectory,
+        source_name: &OsStr,
+        expected: &File,
+        name: &OsStr,
+    ) -> Result<()> {
+        self.revalidate()?;
+        source.revalidate()?;
+        if self.metadata(name)?.is_some() {
+            return Err(err("refuse existing link destination"));
+        }
+        let Some(source_metadata) = source.metadata(source_name)? else {
+            return Err(err("link source disappeared"));
+        };
+        if !source_metadata.identifies(expected)? {
+            return Err(err("link source identity changed"));
+        }
+        let source_c = c_name(source_name)?;
+        let name_c = c_name(name)?;
+        if unsafe {
+            libc::linkat(
+                source.file.as_raw_fd(),
+                source_c.as_ptr(),
+                self.file.as_raw_fd(),
+                name_c.as_ptr(),
+                0,
+            )
+        } != 0
+        {
+            return Err(io_error().into());
+        }
+        let linked = self
+            .metadata(name)?
+            .ok_or_else(|| err("created quarantine link disappeared"))?;
+        if !linked.identifies(expected)? {
+            let _ = unsafe { libc::unlinkat(self.file.as_raw_fd(), name_c.as_ptr(), 0) };
+            return Err(err("created quarantine link has unexpected identity"));
+        }
+        self.file.sync_all()?;
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+struct SafePaths {
+    output: PinnedDirectory,
+    staging: PinnedDirectory,
+    summary_parent: PinnedDirectory,
+    summary_name: OsString,
+}
+
+impl SafePaths {
+    fn admit(cfg: &RepackConfig) -> Result<Self> {
+        let output = PinnedDirectory::open_root(&cfg.output_root)?;
+        let staging = PinnedDirectory::open_root(&cfg.staging_root)?;
+        if output.identity == staging.identity {
+            return Err(err("output and staging roots alias"));
+        }
+        let output_path = fs::canonicalize(&cfg.output_root)?;
+        let staging_path = fs::canonicalize(&cfg.staging_root)?;
+        output.revalidate()?;
+        staging.revalidate()?;
+        if output_path.starts_with(&staging_path) || staging_path.starts_with(&output_path) {
+            return Err(err("output and staging roots must not be nested"));
+        }
+        let summary_name = cfg
+            .summary_path
+            .file_name()
+            .ok_or_else(|| err("summary has no basename"))?
+            .to_os_string();
+        c_name(&summary_name)?;
+        let summary_parent = PinnedDirectory::open_root(
+            cfg.summary_path
+                .parent()
+                .ok_or_else(|| err("summary has no parent"))?,
+        )?;
+        Ok(Self {
+            output,
+            staging,
+            summary_parent,
+            summary_name,
+        })
+    }
 }
 
 fn nonce_hex() -> Result<String> {
@@ -666,7 +1089,9 @@ fn nonce_hex() -> Result<String> {
 
 fn validate_partial_nonce(payload_name: &str, prefix: &str, nonce: &str) -> Result<()> {
     if nonce.len() != 32
-        || !nonce.bytes().all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
+        || !nonce
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit() && !b.is_ascii_uppercase())
         || payload_name != format!("{prefix}{nonce}")
     {
         return Err(err("invalid or mismatched partial nonce"));
@@ -674,39 +1099,18 @@ fn validate_partial_nonce(payload_name: &str, prefix: &str, nonce: &str) -> Resu
     Ok(())
 }
 
-fn prepare_abandoned_root(staging_root: &Path) -> Result<PathBuf> {
-    fs::create_dir_all(staging_root)?;
-    let staging_metadata = fs::symlink_metadata(staging_root)?;
-    if staging_metadata.file_type().is_symlink() || !staging_metadata.is_dir() {
-        return Err(err("staging root must be a real directory"));
-    }
-    let canonical_staging = fs::canonicalize(staging_root)?;
-    let abandoned = staging_root.join("abandoned");
-    match fs::symlink_metadata(&abandoned) {
-        Ok(metadata) => {
-            if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                return Err(err("abandoned root must be a real directory"));
-            }
-        }
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => fs::create_dir(&abandoned)?,
-        Err(error) => return Err(error.into()),
-    }
-    let canonical_abandoned = fs::canonicalize(&abandoned)?;
-    if canonical_abandoned.parent() != Some(canonical_staging.as_path()) {
-        return Err(err("abandoned root escaped canonical staging root"));
-    }
-    Ok(canonical_abandoned)
+fn prepare_abandoned_root(staging_root: &PinnedDirectory) -> Result<PinnedDirectory> {
+    staging_root.revalidate()?;
+    staging_root.child(Path::new("abandoned"), true)
 }
 
-fn exclusive_publish(temp: &Path, final_path: &Path) -> Result<()> {
-    if final_path.exists() {
-        return Err(err(format!("refuse existing final {}", final_path.display())));
-    }
-    fs::hard_link(temp, final_path)?;
-    sync_dir(final_path.parent().ok_or_else(|| err("final has no parent"))?)?;
-    fs::remove_file(temp)?;
-    sync_dir(final_path.parent().unwrap())?;
-    Ok(())
+fn exclusive_publish(
+    parent: &PinnedDirectory,
+    temp: &OsStr,
+    expected: &File,
+    final_name: &OsStr,
+) -> Result<()> {
+    parent.publish(temp, expected, final_name)
 }
 
 fn partial_sidecar(
@@ -718,7 +1122,10 @@ fn partial_sidecar(
     final_name: &str,
 ) -> Value {
     let uid = unsafe { libc::getuid() } as u64;
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
     json!({
         "binary_version":env!("CARGO_PKG_VERSION"),"checkpoint_set_sha256":CHECKPOINT_EXPECTED,
         "created_utc":now,"final_basename":final_name,"inventory_sha256":inventory_sha,
@@ -730,8 +1137,9 @@ fn partial_sidecar(
 
 fn quarantine_partials(
     cfg: &RepackConfig,
+    paths: &SafePaths,
     o: &ObjectPlan,
-    parent: &Path,
+    parent: &PinnedDirectory,
     final_name: &str,
     inventory_sha: &str,
     plan_id: &str,
@@ -739,9 +1147,8 @@ fn quarantine_partials(
     let prefix = format!("{final_name}.partial.");
     let mut payloads = Vec::new();
     let mut sidecars = BTreeSet::new();
-    for entry in fs::read_dir(parent)? {
-        let entry = entry?;
-        let name = entry.file_name().to_string_lossy().to_string();
+    for entry in parent.names()? {
+        let name = entry.to_string_lossy().to_string();
         if name.starts_with(&prefix) {
             if name.ends_with(".owner.json") {
                 sidecars.insert(name);
@@ -762,18 +1169,25 @@ fn quarantine_partials(
     let payload_name = &payloads[0];
     let sidecar_name = format!("{payload_name}.owner.json");
     if sidecars != BTreeSet::from([sidecar_name.clone()]) {
-        return Err(err("partial payload/sidecar set is incomplete or unexplained"));
+        return Err(err(
+            "partial payload/sidecar set is incomplete or unexplained",
+        ));
     }
-    let payload = parent.join(payload_name);
-    let sidecar = parent.join(&sidecar_name);
+    let payload = parent
+        .open_existing_file(OsStr::new(payload_name))?
+        .ok_or_else(|| err("partial payload disappeared"))?;
+    let sidecar = parent
+        .open_existing_file(OsStr::new(&sidecar_name))?
+        .ok_or_else(|| err("partial sidecar disappeared"))?;
     let uid = unsafe { libc::getuid() };
-    for path in [&payload, &sidecar] {
-        let m = fs::symlink_metadata(path)?;
-        if m.file_type().is_symlink() || !m.is_file() || m.nlink() != 1 || m.uid() != uid {
-            return Err(err(format!("unsafe partial ownership: {}", path.display())));
+    for file in [&payload, &sidecar] {
+        let m = file.metadata()?;
+        if !m.is_file() || m.nlink() != 1 || m.uid() != uid {
+            return Err(err("unsafe partial ownership"));
         }
     }
-    let sidecar_bytes = fs::read(&sidecar)?;
+    let mut sidecar_bytes = Vec::new();
+    (&sidecar).read_to_end(&mut sidecar_bytes)?;
     let claim: Value = serde_json::from_slice(&sidecar_bytes)?;
     if canonical_json(&claim)? != sidecar_bytes
         || claim["schema"] != "r001.partial-owner.v1"
@@ -787,39 +1201,41 @@ fn quarantine_partials(
     {
         return Err(err("partial owner claim mismatch"));
     }
-    let nonce = claim["lease_nonce_hex"].as_str().ok_or_else(|| err("partial nonce missing"))?;
+    let nonce = claim["lease_nonce_hex"]
+        .as_str()
+        .ok_or_else(|| err("partial nonce missing"))?;
     validate_partial_nonce(payload_name, &prefix, nonce)?;
-    let abandoned_root = prepare_abandoned_root(&cfg.staging_root)?;
-    let abandoned = abandoned_root.join(nonce);
-    if abandoned.parent() != Some(abandoned_root.as_path()) {
-        return Err(err("abandoned partial escaped staging root"));
-    }
-    fs::create_dir(&abandoned)?;
-    let dst_payload = abandoned.join(payload_name);
-    let dst_sidecar = abandoned.join(sidecar_name);
-    if dst_payload.exists() || dst_sidecar.exists() {
-        return Err(err("abandoned partial destination already exists"));
-    }
-    fs::hard_link(&payload, &dst_payload)?;
-    fs::hard_link(&sidecar, &dst_sidecar)?;
-    sync_dir(&abandoned)?;
-    fs::remove_file(&payload)?;
-    fs::remove_file(&sidecar)?;
-    sync_dir(parent)?;
+    let abandoned_root = prepare_abandoned_root(&paths.staging)?;
+    let abandoned = abandoned_root.child(Path::new(nonce), true)?;
+    abandoned.link_from(
+        parent,
+        OsStr::new(payload_name),
+        &payload,
+        OsStr::new(payload_name),
+    )?;
+    abandoned.link_from(
+        parent,
+        OsStr::new(&sidecar_name),
+        &sidecar,
+        OsStr::new(&sidecar_name),
+    )?;
+    parent.remove_file_if_matches(OsStr::new(payload_name), &payload)?;
+    parent.remove_file_if_matches(OsStr::new(&sidecar_name), &sidecar)?;
     Ok(())
 }
 
 fn verify_existing_source_mapping(
     cfg: &RepackConfig,
-    path: &Path,
+    bundle: &File,
     o: &ObjectPlan,
     metadata: &Value,
 ) -> Result<()> {
-    let claims = metadata["components"].as_array().ok_or_else(|| err("missing components"))?;
+    let claims = metadata["components"]
+        .as_array()
+        .ok_or_else(|| err("missing components"))?;
     if claims.len() != o.components.len() {
         return Err(err("existing component count mismatch"));
     }
-    let bundle = File::open(path)?;
     let mut source_buf = vec![0u8; CHUNK];
     let mut bundle_buf = vec![0u8; CHUNK];
     for (claim, c) in claims.iter().zip(&o.components) {
@@ -841,7 +1257,7 @@ fn verify_existing_source_mapping(
         while done < c.length {
             let n = (c.length - done).min(CHUNK as u64) as usize;
             read_exact_at(&source, &mut source_buf[..n], c.source_offset + done)?;
-            read_exact_at(&bundle, &mut bundle_buf[..n], c.bundle_offset + done)?;
+            read_exact_at(bundle, &mut bundle_buf[..n], c.bundle_offset + done)?;
             if source_buf[..n] != bundle_buf[..n] {
                 return Err(err("existing final source-byte mismatch"));
             }
@@ -851,11 +1267,7 @@ fn verify_existing_source_mapping(
     Ok(())
 }
 
-fn component_identity_json(
-    c: &ComponentPlan,
-    component_sha: &str,
-    layout_sha: &str,
-) -> Value {
+fn component_identity_json(c: &ComponentPlan, component_sha: &str, layout_sha: &str) -> Value {
     json!({
         "block_bytes":c.block_bytes,"block_elements":c.block_elements,
         "bundle_offset":c.bundle_offset,"component_sha256":component_sha,"dims":c.dims,
@@ -867,61 +1279,84 @@ fn component_identity_json(
     })
 }
 
-fn full_hash(path: &Path) -> Result<String> {
+fn full_hash_file(file: &File) -> Result<String> {
     let mut h = Sha256::new();
-    let mut f = File::open(path)?;
     let mut buf = vec![0u8; CHUNK];
-    loop {
-        let n = f.read(&mut buf)?;
-        if n == 0 {
-            break;
-        }
+    let len = file.metadata()?.len();
+    let mut offset = 0u64;
+    while offset < len {
+        let n = (len - offset).min(CHUNK as u64) as usize;
+        read_exact_at(file, &mut buf[..n], offset)?;
         h.update(&buf[..n]);
+        offset += n as u64;
     }
     Ok(hex(&h.finalize()))
 }
 
+#[cfg(test)]
 fn write_bundle(
     cfg: &RepackConfig,
     o: &ObjectPlan,
     inventory_sha: &str,
     plan_id: &str,
 ) -> Result<CompleteObject> {
+    let paths = SafePaths::admit(cfg)?;
+    write_bundle_pinned(cfg, &paths, o, inventory_sha, plan_id)
+}
+
+fn write_bundle_pinned(
+    cfg: &RepackConfig,
+    paths: &SafePaths,
+    o: &ObjectPlan,
+    inventory_sha: &str,
+    plan_id: &str,
+) -> Result<CompleteObject> {
     let test_interrupt_after = cfg.test_interrupt_after_bytes;
-    let final_path = cfg.output_root.join(&o.relative_path);
     safe_relative(&o.relative_path)?;
-    if final_path.exists() {
-        let verified = verify_bundle(&final_path)?;
+    let relative_parent = o
+        .relative_path
+        .parent()
+        .ok_or_else(|| err("bundle has no parent"))?;
+    let parent = paths.output.child(relative_parent, true)?;
+    let final_name = o
+        .relative_path
+        .file_name()
+        .ok_or_else(|| err("bundle has no basename"))?;
+    if let Some(final_file) = parent.open_existing_file(final_name)? {
+        let verified = verify_bundle_file(&final_file)?;
         if verified["manifest_plan_id"] != plan_id
             || verified["layer"] != o.layer
             || verified["expert"] != o.expert
             || verified["expert_class"] != o.expert_class
         {
-            return Err(err(format!("existing final conflicts: {}", final_path.display())));
+            return Err(err("existing final conflicts"));
         }
-        verify_existing_source_mapping(cfg, &final_path, o, &verified)?;
+        verify_existing_source_mapping(cfg, &final_file, o, &verified)?;
         let metadata = verified;
-        let stored_len = final_path.metadata()?.len();
+        let stored_len = final_file.metadata()?.len();
         return Ok(CompleteObject {
             plan: o.clone(),
-            stored_sha256: full_hash(&final_path)?,
+            stored_sha256: full_hash_file(&final_file)?,
             canonical_payload_len: metadata["canonical_payload_len"].as_u64().unwrap(),
-            canonical_payload_sha256: metadata["canonical_payload_sha256"].as_str().unwrap().to_string(),
-            object_identity_sha256: metadata["object_identity_sha256"].as_str().unwrap().to_string(),
+            canonical_payload_sha256: metadata["canonical_payload_sha256"]
+                .as_str()
+                .unwrap()
+                .to_string(),
+            object_identity_sha256: metadata["object_identity_sha256"]
+                .as_str()
+                .unwrap()
+                .to_string(),
             metadata,
             stored_len,
             reused: true,
         });
     }
-    let parent = final_path.parent().ok_or_else(|| err("bundle has no parent"))?;
-    fs::create_dir_all(parent)?;
-    let final_name = final_path.file_name().unwrap().to_string_lossy().to_string();
-    quarantine_partials(cfg, o, parent, &final_name, inventory_sha, plan_id)?;
+    let final_name = final_name.to_string_lossy().to_string();
+    quarantine_partials(cfg, paths, o, &parent, &final_name, inventory_sha, plan_id)?;
     let nonce = nonce_hex()?;
     let partial_name = format!("{final_name}.partial.{nonce}");
-    let partial = parent.join(&partial_name);
-    let sidecar = parent.join(format!("{partial_name}.owner.json"));
-    let sidecar_tmp = parent.join(format!("{partial_name}.owner.json.tmp"));
+    let sidecar_name = format!("{partial_name}.owner.json");
+    let sidecar_tmp_name = format!("{partial_name}.owner.json.tmp");
     let sidecar_bytes = canonical_json(&partial_sidecar(
         o,
         inventory_sha,
@@ -930,13 +1365,17 @@ fn write_bundle(
         &partial_name,
         &final_name,
     ))?;
-    let mut sf = OpenOptions::new().write(true).create_new(true).open(&sidecar_tmp)?;
+    let mut sf = parent.create_file(OsStr::new(&sidecar_tmp_name))?;
     sf.write_all(&sidecar_bytes)?;
     sf.sync_all()?;
-    drop(sf);
-    exclusive_publish(&sidecar_tmp, &sidecar)?;
+    exclusive_publish(
+        &parent,
+        OsStr::new(&sidecar_tmp_name),
+        &sf,
+        OsStr::new(&sidecar_name),
+    )?;
 
-    let mut out = OpenOptions::new().read(true).write(true).create_new(true).open(&partial)?;
+    let mut out = parent.create_file(OsStr::new(&partial_name))?;
     out.write_all(&vec![0u8; HEADER_LEN as usize])?;
     let mut payload_hash = Sha256::new();
     payload_hash.update(b"PULSARMLX-R001-CANONICAL-PAYLOAD-V1");
@@ -998,10 +1437,19 @@ fn write_bundle(
     }
     let payload_sha = hex(&payload_hash.finalize());
     let physical_sha = hex(&physical_hash.finalize());
-    let payload_len = o.components.iter().try_fold(0u64, |a, c| checked_add(a, c.length, "payload length"))?;
+    let payload_len = o
+        .components
+        .iter()
+        .try_fold(0u64, |a, c| checked_add(a, c.length, "payload length"))?;
     let physical_len = footer_offset - HEADER_LEN;
     let file_len = checked_add(footer_offset, FOOTER_LEN, "file length")?;
-    let object_projection = object_identity_projection(o, inventory_sha, plan_id, &payload_sha, &complete_components);
+    let object_projection = object_identity_projection(
+        o,
+        inventory_sha,
+        plan_id,
+        &payload_sha,
+        &complete_components,
+    );
     let object_id = domain_hash(b"PULSARMLX-R001-OBJECT-V1", &object_projection)?;
     let metadata = json!({
         "architecture":"glm-dsa","canonical_payload_len":payload_len,
@@ -1028,7 +1476,11 @@ fn write_bundle(
     put_u32(&mut header, 20, 0);
     put_u32(&mut header, 24, o.layer);
     put_u32(&mut header, 28, o.expert);
-    put_u32(&mut header, 32, if o.expert_class == "routed" { 1 } else { 2 });
+    put_u32(
+        &mut header,
+        32,
+        if o.expert_class == "routed" { 1 } else { 2 },
+    );
     put_u32(&mut header, 36, 3);
     put_u32(&mut header, 40, FORMAT_ALIGNMENT as u32);
     put_u32(&mut header, 44, 0);
@@ -1056,15 +1508,19 @@ fn write_bundle(
     write_exact_at(&out, &footer, footer_offset)?;
     out.set_len(file_len)?;
     out.sync_all()?;
-    drop(out);
-    let verified = verify_bundle(&partial)?;
+    let verified = verify_bundle_file(&out)?;
     if verified != metadata {
         return Err(err("internal bundle verification metadata mismatch"));
     }
-    let stored_sha = full_hash(&partial)?;
-    exclusive_publish(&partial, &final_path)?;
-    fs::remove_file(&sidecar)?;
-    sync_dir(parent)?;
+    let stored_sha = full_hash_file(&out)?;
+    paths.output.revalidate()?;
+    exclusive_publish(
+        &parent,
+        OsStr::new(&partial_name),
+        &out,
+        OsStr::new(&final_name),
+    )?;
+    parent.remove_file_if_matches(OsStr::new(&sidecar_name), &sf)?;
     Ok(CompleteObject {
         plan: o.clone(),
         metadata,
@@ -1079,12 +1535,16 @@ fn write_bundle(
 
 pub fn verify_bundle(path: &Path) -> Result<Value> {
     let file = File::open(path)?;
+    verify_bundle_file(&file)
+}
+
+fn verify_bundle_file(file: &File) -> Result<Value> {
     let actual_len = file.metadata()?.len();
     if actual_len < HEADER_LEN + FOOTER_LEN {
         return Err(err("bundle truncated before header/footer"));
     }
     let mut header = vec![0u8; HEADER_LEN as usize];
-    read_exact_at(&file, &mut header, 0)?;
+    read_exact_at(file, &mut header, 0)?;
     if &header[..8] != HEADER_MAGIC
         || get_u16(&header, 8) != 1
         || get_u16(&header, 10) != 0
@@ -1102,7 +1562,10 @@ pub fn verify_bundle(path: &Path) -> Result<Value> {
     if metadata_len > HEADER_LEN as usize - PREAMBLE_LEN {
         return Err(err("metadata length out of bounds"));
     }
-    if header[PREAMBLE_LEN + metadata_len..].iter().any(|&b| b != 0) {
+    if header[PREAMBLE_LEN + metadata_len..]
+        .iter()
+        .any(|&b| b != 0)
+    {
         return Err(err("nonzero header padding"));
     }
     let metadata_bytes = &header[PREAMBLE_LEN..PREAMBLE_LEN + metadata_len];
@@ -1119,7 +1582,7 @@ pub fn verify_bundle(path: &Path) -> Result<Value> {
         return Err(err("bundle file length mismatch"));
     }
     let mut footer = vec![0u8; FOOTER_LEN as usize];
-    read_exact_at(&file, &mut footer, footer_offset)?;
+    read_exact_at(file, &mut footer, footer_offset)?;
     if &footer[..8] != FOOTER_MAGIC
         || get_u16(&footer, 8) != 1
         || get_u16(&footer, 10) != 0
@@ -1142,14 +1605,16 @@ pub fn verify_bundle(path: &Path) -> Result<Value> {
     let mut buf = vec![0u8; CHUNK];
     while offset < footer_offset {
         let n = (footer_offset - offset).min(buf.len() as u64) as usize;
-        read_exact_at(&file, &mut buf[..n], offset)?;
+        read_exact_at(file, &mut buf[..n], offset)?;
         physical.update(&buf[..n]);
         offset += n as u64;
     }
     if physical.finalize().as_slice() != &footer[56..88] {
         return Err(err("physical payload hash mismatch"));
     }
-    let components = metadata["components"].as_array().ok_or_else(|| err("missing components"))?;
+    let components = metadata["components"]
+        .as_array()
+        .ok_or_else(|| err("missing components"))?;
     if components.len() != 3 {
         return Err(err("component count mismatch"));
     }
@@ -1162,14 +1627,18 @@ pub fn verify_bundle(path: &Path) -> Result<Value> {
         if c["role"] != expected_role {
             return Err(err("component order mismatch"));
         }
-        let off = c["bundle_offset"].as_u64().ok_or_else(|| err("bad component offset"))?;
-        let len = c["length"].as_u64().ok_or_else(|| err("bad component length"))?;
+        let off = c["bundle_offset"]
+            .as_u64()
+            .ok_or_else(|| err("bad component offset"))?;
+        let len = c["length"]
+            .as_u64()
+            .ok_or_else(|| err("bad component length"))?;
         if off % FORMAT_ALIGNMENT != 0 || off < previous_end || off + len > footer_offset {
             return Err(err("component bounds/alignment mismatch"));
         }
         if off > previous_end {
             let mut pad = vec![0u8; (off - previous_end) as usize];
-            read_exact_at(&file, &mut pad, previous_end)?;
+            read_exact_at(file, &mut pad, previous_end)?;
             if pad.iter().any(|&b| b != 0) {
                 return Err(err("nonzero component padding"));
             }
@@ -1180,7 +1649,7 @@ pub fn verify_bundle(path: &Path) -> Result<Value> {
         let mut copied = 0u64;
         while copied < len {
             let n = (len - copied).min(buf.len() as u64) as usize;
-            read_exact_at(&file, &mut buf[..n], off + copied)?;
+            read_exact_at(file, &mut buf[..n], off + copied)?;
             ch.update(&buf[..n]);
             canonical.update(&buf[..n]);
             copied += n as u64;
@@ -1228,8 +1697,16 @@ fn manifest_object_record(c: &CompleteObject) -> Value {
     })
 }
 
+fn read_all_file(file: &File) -> Result<Vec<u8>> {
+    let mut bytes = Vec::new();
+    let mut reader = file;
+    reader.read_to_end(&mut bytes)?;
+    Ok(bytes)
+}
+
 fn publish_manifest(
     cfg: &RepackConfig,
+    paths: &SafePaths,
     inventory_sha: &str,
     plan_id: &str,
     completed: &[CompleteObject],
@@ -1261,45 +1738,44 @@ fn publish_manifest(
     bytes.extend(canonical_json(&footer)?);
     bytes.push(b'\n');
     let manifest_sha = sha256_bytes(&bytes);
-    let final_path = cfg.output_root.join("manifest.jsonl");
-    let detached = cfg.output_root.join("manifest.jsonl.sha256");
+    paths.output.revalidate()?;
+    let final_name = OsStr::new("manifest.jsonl");
+    let detached_name = OsStr::new("manifest.jsonl.sha256");
     let detached_bytes = format!("{manifest_sha}\n").into_bytes();
-    if final_path.exists() {
-        if fs::read(&final_path)? != bytes {
+    if let Some(final_file) = paths.output.open_existing_file(final_name)? {
+        if read_all_file(&final_file)? != bytes {
             return Err(err("existing completion manifest conflicts"));
         }
-        if detached.exists() {
-            if fs::read(&detached)? != detached_bytes {
+        if let Some(detached_file) = paths.output.open_existing_file(detached_name)? {
+            if read_all_file(&detached_file)? != detached_bytes {
                 return Err(err("existing detached manifest hash conflicts"));
             }
         } else {
             let nonce = nonce_hex()?;
-            let temp_hash = cfg.output_root.join(format!("manifest.jsonl.sha256.partial.{nonce}"));
-            let mut hf = OpenOptions::new().write(true).create_new(true).open(&temp_hash)?;
+            let temp_hash = format!("manifest.jsonl.sha256.partial.{nonce}");
+            let mut hf = paths.output.create_file(OsStr::new(&temp_hash))?;
             hf.write_all(&detached_bytes)?;
             hf.sync_all()?;
-            drop(hf);
-            exclusive_publish(&temp_hash, &detached)?;
+            exclusive_publish(&paths.output, OsStr::new(&temp_hash), &hf, detached_name)?;
         }
         return Ok(manifest_sha);
     }
-    fs::create_dir_all(&cfg.output_root)?;
     let nonce = nonce_hex()?;
-    let temp = cfg.output_root.join(format!("manifest.jsonl.partial.{nonce}"));
-    let mut f = OpenOptions::new().write(true).create_new(true).open(&temp)?;
+    let temp = format!("manifest.jsonl.partial.{nonce}");
+    let mut f = paths.output.create_file(OsStr::new(&temp))?;
     f.write_all(&bytes)?;
     f.sync_all()?;
-    drop(f);
-    exclusive_publish(&temp, &final_path)?;
+    exclusive_publish(&paths.output, OsStr::new(&temp), &f, final_name)?;
     if cfg.test_interrupt_after_manifest {
-        return Err(err("injected R001 test interruption after manifest publication"));
+        return Err(err(
+            "injected R001 test interruption after manifest publication",
+        ));
     }
-    let temp_hash = cfg.output_root.join(format!("manifest.jsonl.sha256.partial.{nonce}"));
-    let mut hf = OpenOptions::new().write(true).create_new(true).open(&temp_hash)?;
+    let temp_hash = format!("manifest.jsonl.sha256.partial.{nonce}");
+    let mut hf = paths.output.create_file(OsStr::new(&temp_hash))?;
     hf.write_all(&detached_bytes)?;
     hf.sync_all()?;
-    drop(hf);
-    exclusive_publish(&temp_hash, &detached)?;
+    exclusive_publish(&paths.output, OsStr::new(&temp_hash), &hf, detached_name)?;
     Ok(manifest_sha)
 }
 
@@ -1346,11 +1822,10 @@ pub fn run_repack(cfg: &RepackConfig) -> Result<Value> {
             "scope":scope_json(&cfg.scope),"status":"passed"
         }));
     }
-    fs::create_dir_all(&cfg.output_root)?;
-    fs::create_dir_all(&cfg.staging_root)?;
+    let paths = SafePaths::admit(cfg)?;
     let mut completed = Vec::with_capacity(plans.len());
     for (i, plan) in plans.iter().enumerate() {
-        let c = write_bundle(cfg, plan, &inventory_sha, &plan_id)?;
+        let c = write_bundle_pinned(cfg, &paths, plan, &inventory_sha, &plan_id)?;
         eprintln!(
             "pulsar-repack: {}/{} layer={} class={} expert={} reused={}",
             i + 1,
@@ -1362,7 +1837,7 @@ pub fn run_repack(cfg: &RepackConfig) -> Result<Value> {
         );
         completed.push(c);
     }
-    let manifest_sha = publish_manifest(cfg, &inventory_sha, &plan_id, &completed)?;
+    let manifest_sha = publish_manifest(cfg, &paths, &inventory_sha, &plan_id, &completed)?;
     let summary = json!({
         "checkpoint_set_sha256":CHECKPOINT_EXPECTED,"completed_unix_seconds":SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
         "duration_seconds":t0.elapsed().as_secs_f64().round() as u64,
@@ -1375,10 +1850,15 @@ pub fn run_repack(cfg: &RepackConfig) -> Result<Value> {
         "status":"passed","stored_bytes":completed.iter().map(|x|x.stored_len).sum::<u64>()
         ,"tool_version":env!("CARGO_PKG_VERSION")
     });
-    if cfg.summary_path.exists() {
-        return Err(err(format!("refuse existing summary {}", cfg.summary_path.display())));
+    paths.summary_parent.revalidate()?;
+    if paths
+        .summary_parent
+        .metadata(&paths.summary_name)?
+        .is_some()
+    {
+        return Err(err("refuse existing summary"));
     }
-    let mut f = OpenOptions::new().write(true).create_new(true).open(&cfg.summary_path)?;
+    let mut f = paths.summary_parent.create_file(&paths.summary_name)?;
     f.write_all(&canonical_json(&summary)?)?;
     f.write_all(b"\n")?;
     f.sync_all()?;
@@ -1396,9 +1876,15 @@ mod tests {
             String::from_utf8(canonical_json(&v).unwrap()).unwrap(),
             r#"{"a":0,"b":"x\\\"","c":[1,true]}"#
         );
-        assert_eq!(sha256_bytes(&canonical_json(&v).unwrap()), "1dc821aa6759740ae41a6a3feb610416c797f785dd200bd508a0892173f68304");
+        assert_eq!(
+            sha256_bytes(&canonical_json(&v).unwrap()),
+            "1dc821aa6759740ae41a6a3feb610416c797f785dd200bd508a0892173f68304"
+        );
         let layout = json!({"architecture":"glm-dsa","block_bytes":66,"block_elements":256,"dims":[6144,2048,256],"expert_class":"routed","plane_bytes":3244032,"role":"gate","row_bytes":1584,"schema":"pulsarmlx.r001.layout.v1","type_id":16,"type_name":"IQ2_XXS"});
-        assert_eq!(domain_hash(b"PULSARMLX-R001-LAYOUT-V1", &layout).unwrap(), "765aa7eadd6d8503feebdc5726d19e32703161bb202e207044b9296d5dbecacf");
+        assert_eq!(
+            domain_hash(b"PULSARMLX-R001-LAYOUT-V1", &layout).unwrap(),
+            "765aa7eadd6d8503feebdc5726d19e32703161bb202e207044b9296d5dbecacf"
+        );
     }
 
     #[test]
@@ -1411,13 +1897,19 @@ mod tests {
             h.update((bytes.len() as u64).to_le_bytes());
             h.update(bytes);
         }
-        assert_eq!(hex(&h.finalize()), "767a766d738dd34c2012ac9ec96a10908edefdff30805a6355901544313668d7");
+        assert_eq!(
+            hex(&h.finalize()),
+            "767a766d738dd34c2012ac9ec96a10908edefdff30805a6355901544313668d7"
+        );
     }
 
     #[test]
     fn plan_known_answer() {
         let value = json!({"alignment":16384,"architecture":"glm-dsa","checkpoint_set_sha256":"0000000000000000000000000000000000000000000000000000000000000000","format_major":1,"format_minor":0,"inventory_sha256":"1111111111111111111111111111111111111111111111111111111111111111","objects":[],"ordering":"layer,class,expert","schema":"pulsarmlx.r001.manifest-plan.v1","scope":{"layers":[40],"shared":true}});
-        assert_eq!(domain_hash(b"PULSARMLX-R001-MANIFEST-PLAN-V1", &value).unwrap(), "7cbae85aee9fcb77eae87af07705f4d291ed39cd16d91f4ecfa3194299446b35");
+        assert_eq!(
+            domain_hash(b"PULSARMLX-R001-MANIFEST-PLAN-V1", &value).unwrap(),
+            "7cbae85aee9fcb77eae87af07705f4d291ed39cd16d91f4ecfa3194299446b35"
+        );
     }
 
     #[test]
@@ -1443,21 +1935,32 @@ mod tests {
         let prefix = "expert-000.pmlxexp.partial.";
         assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, nonce).is_ok());
         assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "../escape").is_err());
-        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "0123456789ABCDEF0123456789ABCDEF").is_err());
-        assert!(validate_partial_nonce(&format!("{prefix}{nonce}"), prefix, "fedcba9876543210fedcba9876543210").is_err());
+        assert!(validate_partial_nonce(
+            &format!("{prefix}{nonce}"),
+            prefix,
+            "0123456789ABCDEF0123456789ABCDEF"
+        )
+        .is_err());
+        assert!(validate_partial_nonce(
+            &format!("{prefix}{nonce}"),
+            prefix,
+            "fedcba9876543210fedcba9876543210"
+        )
+        .is_err());
     }
-
 
     #[test]
     fn abandoned_root_symlink_is_rejected() {
         use std::os::unix::fs::symlink;
-        let root = std::env::temp_dir().join(format!("r001-abandoned-root-test-{}", nonce_hex().unwrap()));
+        let root =
+            std::env::temp_dir().join(format!("r001-abandoned-root-test-{}", nonce_hex().unwrap()));
         let staging = root.join("staging");
         let outside = root.join("outside");
         fs::create_dir_all(&staging).unwrap();
         fs::create_dir(&outside).unwrap();
         symlink(&outside, staging.join("abandoned")).unwrap();
-        assert!(prepare_abandoned_root(&staging).is_err());
+        let pinned = PinnedDirectory::open_root(&staging).unwrap();
+        assert!(prepare_abandoned_root(&pinned).is_err());
         assert!(outside.read_dir().unwrap().next().is_none());
         fs::remove_file(staging.join("abandoned")).unwrap();
         fs::remove_dir_all(root).unwrap();
@@ -1717,14 +2220,21 @@ mod tests {
         let plans = build_plans(&inventory, &admission, &scope).unwrap();
         assert_eq!(plans.len(), 19_532);
         assert_eq!(
-            plans.iter().map(|object| object.components.len()).sum::<usize>(),
+            plans
+                .iter()
+                .map(|object| object.components.len())
+                .sum::<usize>(),
             58_596
         );
         assert!(plans.windows(2).all(|pair| {
             let key = |object: &ObjectPlan| {
                 (
                     object.layer,
-                    if object.expert_class == "routed" { 0 } else { 1 },
+                    if object.expert_class == "routed" {
+                        0
+                    } else {
+                        1
+                    },
                     object.expert,
                 )
             };
@@ -1745,8 +2255,14 @@ mod tests {
                 .iter()
                 .all(|component| component.shard == object.components[0].shard));
             for component in &object.components {
-                let source_end = component.source_offset.checked_add(component.length).unwrap();
-                let bundle_end = component.bundle_offset.checked_add(component.length).unwrap();
+                let source_end = component
+                    .source_offset
+                    .checked_add(component.length)
+                    .unwrap();
+                let bundle_end = component
+                    .bundle_offset
+                    .checked_add(component.length)
+                    .unwrap();
                 assert!(source_end <= component.source_stat.size);
                 assert_eq!(component.source_offset % component.block_bytes, 0);
                 assert_eq!(component.length % component.block_bytes, 0);
@@ -1767,7 +2283,9 @@ mod tests {
             identity,
             "350ee7d581b425658f800c96cc877abdebd56e945a560d615ddfb38091b8f75a"
         );
-        assert!(identity.bytes().all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)));
+        assert!(identity
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)));
 
         let (mut reordered_inventory, reordered_admission, reordered_scope) =
             synthetic_complete_authority();
@@ -1775,12 +2293,8 @@ mod tests {
         for object in &mut reordered_inventory.objects {
             object.components.reverse();
         }
-        let reordered = build_plans(
-            &reordered_inventory,
-            &reordered_admission,
-            &reordered_scope,
-        )
-        .unwrap();
+        let reordered =
+            build_plans(&reordered_inventory, &reordered_admission, &reordered_scope).unwrap();
         assert_eq!(
             canonical_json(&plan_projection(
                 &admission.inventory_sha256,
@@ -1860,7 +2374,9 @@ mod tests {
         let (inventory, admission, scope) = synthetic_single_object();
         let plans = build_plans(&inventory, &admission, &scope).unwrap();
         let identity = plan_identity(&admission.inventory_sha256, &plans, &scope);
-        assert!(require_plan_identity(&identity, &admission.inventory_sha256, &plans, &scope).is_ok());
+        assert!(
+            require_plan_identity(&identity, &admission.inventory_sha256, &plans, &scope).is_ok()
+        );
         let mut mutated = plans.clone();
         mutated[0].components.swap(0, 1);
         assert_eq!(
@@ -1873,9 +2389,520 @@ mod tests {
 
     #[test]
     fn complete_scope_rejects_unsafe_relative_paths() {
-        for path in ["/absolute", ".", "..", "objects/../escape", "./objects"] {
+        for path in [
+            "",
+            "/absolute",
+            ".",
+            "..",
+            "objects/../escape",
+            "./objects",
+            "objects\\escape",
+        ] {
             assert!(safe_relative(Path::new(path)).is_err(), "accepted {path}");
         }
         assert!(safe_relative(Path::new("objects/layer-003/routed/expert-000.pmlxexp")).is_ok());
+    }
+
+    struct SyntheticWriteFixture {
+        root: PathBuf,
+        cfg: RepackConfig,
+        plan: ObjectPlan,
+        inventory_sha: String,
+        plan_id: String,
+    }
+
+    impl Drop for SyntheticWriteFixture {
+        fn drop(&mut self) {
+            if self.root.exists() {
+                fs::remove_dir_all(&self.root).unwrap();
+            }
+        }
+    }
+
+    fn synthetic_write_fixture(label: &str) -> SyntheticWriteFixture {
+        let root = std::env::temp_dir().join(format!("r001-{label}-{}", nonce_hex().unwrap()));
+        let source_root = root.join("source");
+        let output_root = root.join("output");
+        let staging_root = root.join("staging");
+        let summary_root = root.join("summary");
+        for path in [&source_root, &output_root, &staging_root, &summary_root] {
+            fs::create_dir_all(path).unwrap();
+        }
+        let source_path = source_root.join("synthetic-001.gguf");
+        fs::write(
+            &source_path,
+            (0..264).map(|value| value as u8).collect::<Vec<_>>(),
+        )
+        .unwrap();
+        let (inventory, mut admission, scope) = synthetic_single_object();
+        admission.shards[0].destination_stat =
+            stat_from_metadata(&fs::metadata(&source_path).unwrap());
+        let mut plans = build_plans(&inventory, &admission, &scope).unwrap();
+        let inventory_sha = "11".repeat(32);
+        let plan_id = domain_hash(
+            b"PULSARMLX-R001-MANIFEST-PLAN-V1",
+            &plan_projection(&inventory_sha, &plans, &scope),
+        )
+        .unwrap();
+        SyntheticWriteFixture {
+            root: root.clone(),
+            cfg: RepackConfig {
+                checkpoint_dir: source_root,
+                admission_path: root.join("unused-admission"),
+                inventory_path: root.join("unused-inventory"),
+                output_root,
+                staging_root,
+                scope,
+                summary_path: summary_root.join("summary.json"),
+                dry_run: false,
+                resume: false,
+                test_interrupt_after_bytes: None,
+                test_interrupt_after_manifest: false,
+            },
+            plan: plans.remove(0),
+            inventory_sha,
+            plan_id,
+        }
+    }
+
+    #[test]
+    fn d6r1_rejects_symlinked_output_root_without_write_through() {
+        use std::os::unix::fs::symlink;
+        let fixture = synthetic_write_fixture("symlink-output");
+        let outside = fixture.root.join("outside");
+        fs::create_dir(&outside).unwrap();
+        fs::remove_dir(&fixture.cfg.output_root).unwrap();
+        symlink(&outside, &fixture.cfg.output_root).unwrap();
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        assert!(outside.read_dir().unwrap().next().is_none());
+    }
+
+    #[test]
+    fn d6r1_rejects_invalid_root_and_summary_endpoint_types() {
+        use std::os::unix::fs::symlink;
+
+        for label in ["output-dangling", "staging-dangling"] {
+            let fixture = synthetic_write_fixture(label);
+            let root = if label.starts_with("output") {
+                fixture.cfg.output_root.clone()
+            } else {
+                fixture.cfg.staging_root.clone()
+            };
+            fs::remove_dir(&root).unwrap();
+            symlink(fixture.root.join("missing"), &root).unwrap();
+            assert!(write_bundle(
+                &fixture.cfg,
+                &fixture.plan,
+                &fixture.inventory_sha,
+                &fixture.plan_id
+            )
+            .is_err());
+        }
+
+        for label in ["output-file", "staging-file"] {
+            let fixture = synthetic_write_fixture(label);
+            let root = if label.starts_with("output") {
+                fixture.cfg.output_root.clone()
+            } else {
+                fixture.cfg.staging_root.clone()
+            };
+            fs::remove_dir(&root).unwrap();
+            fs::write(&root, b"unexplained").unwrap();
+            assert!(write_bundle(
+                &fixture.cfg,
+                &fixture.plan,
+                &fixture.inventory_sha,
+                &fixture.plan_id
+            )
+            .is_err());
+            assert_eq!(fs::read(&root).unwrap(), b"unexplained");
+        }
+
+        let fixture = synthetic_write_fixture("summary-parent-symlink");
+        let outside = fixture.root.join("outside-summary");
+        fs::create_dir(&outside).unwrap();
+        let summary_parent = fixture.cfg.summary_path.parent().unwrap();
+        fs::remove_dir(summary_parent).unwrap();
+        symlink(&outside, summary_parent).unwrap();
+        assert!(SafePaths::admit(&fixture.cfg).is_err());
+        assert!(outside.read_dir().unwrap().next().is_none());
+    }
+
+    #[test]
+    fn d6r1_rejects_unsafe_root_relationships_and_descendants() {
+        use std::os::unix::fs::symlink;
+        let mut alias = synthetic_write_fixture("alias-roots");
+        alias.cfg.staging_root = alias.cfg.output_root.clone();
+        assert!(write_bundle(
+            &alias.cfg,
+            &alias.plan,
+            &alias.inventory_sha,
+            &alias.plan_id
+        )
+        .is_err());
+
+        let mut nested = synthetic_write_fixture("nested-roots");
+        let nested_staging = nested.cfg.output_root.join("staging");
+        fs::create_dir(&nested_staging).unwrap();
+        nested.cfg.staging_root = nested_staging;
+        assert!(write_bundle(
+            &nested.cfg,
+            &nested.plan,
+            &nested.inventory_sha,
+            &nested.plan_id
+        )
+        .is_err());
+
+        let fixture = synthetic_write_fixture("intermediate-symlink");
+        let outside = fixture.root.join("outside");
+        fs::create_dir(&outside).unwrap();
+        symlink(&outside, fixture.cfg.output_root.join("objects")).unwrap();
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        assert!(outside.read_dir().unwrap().next().is_none());
+    }
+
+    #[test]
+    fn d6r1_pinned_root_detects_deterministic_replacement() {
+        let fixture = synthetic_write_fixture("root-swap");
+        let pinned = PinnedDirectory::open_root(&fixture.cfg.output_root).unwrap();
+        let original = fixture.root.join("output-original");
+        fs::rename(&fixture.cfg.output_root, &original).unwrap();
+        fs::create_dir(&fixture.cfg.output_root).unwrap();
+        assert!(pinned.revalidate().is_err());
+        assert!(pinned.create_file(OsStr::new("must-not-exist")).is_err());
+        assert!(!fixture.cfg.output_root.join("must-not-exist").exists());
+        assert!(!original.join("must-not-exist").exists());
+    }
+
+    #[test]
+    fn d6r1_publication_and_removal_reject_entry_substitution() {
+        let fixture = synthetic_write_fixture("entry-substitution");
+        let pinned = PinnedDirectory::open_root(&fixture.cfg.output_root).unwrap();
+        let expected = pinned.create_file(OsStr::new("owned.partial")).unwrap();
+        write_exact_at(&expected, b"owned", 0).unwrap();
+        expected.sync_all().unwrap();
+        fs::rename(
+            fixture.cfg.output_root.join("owned.partial"),
+            fixture.cfg.output_root.join("owned.moved"),
+        )
+        .unwrap();
+        fs::write(
+            fixture.cfg.output_root.join("owned.partial"),
+            b"unexplained",
+        )
+        .unwrap();
+
+        assert!(pinned
+            .publish(OsStr::new("owned.partial"), &expected, OsStr::new("final"))
+            .is_err());
+        assert!(!fixture.cfg.output_root.join("final").exists());
+        assert_eq!(
+            fs::read(fixture.cfg.output_root.join("owned.partial")).unwrap(),
+            b"unexplained"
+        );
+        assert!(pinned
+            .remove_file_if_matches(OsStr::new("owned.partial"), &expected)
+            .is_err());
+        assert_eq!(
+            fs::read(fixture.cfg.output_root.join("owned.partial")).unwrap(),
+            b"unexplained"
+        );
+    }
+
+    #[test]
+    fn d6r1_rejects_existing_bundle_targets_without_mutation() {
+        use std::os::unix::fs::symlink;
+
+        for kind in ["symlink", "file", "hardlink"] {
+            let fixture = synthetic_write_fixture(&format!("existing-{kind}"));
+            let final_path = fixture.cfg.output_root.join(&fixture.plan.relative_path);
+            fs::create_dir_all(final_path.parent().unwrap()).unwrap();
+            let outside = fixture.root.join("outside-target");
+            fs::write(&outside, b"preserve-me").unwrap();
+            match kind {
+                "symlink" => symlink(&outside, &final_path).unwrap(),
+                "file" => fs::write(&final_path, b"preserve-me").unwrap(),
+                "hardlink" => fs::hard_link(&outside, &final_path).unwrap(),
+                _ => unreachable!(),
+            }
+            assert!(write_bundle(
+                &fixture.cfg,
+                &fixture.plan,
+                &fixture.inventory_sha,
+                &fixture.plan_id
+            )
+            .is_err());
+            assert_eq!(fs::read(&outside).unwrap(), b"preserve-me");
+            assert_eq!(fs::read(&final_path).unwrap(), b"preserve-me");
+        }
+    }
+
+    #[test]
+    fn d6_round_trip_reuse_determinism_and_corruption() {
+        let first = synthetic_write_fixture("round-trip-a");
+        let completed = write_bundle(
+            &first.cfg,
+            &first.plan,
+            &first.inventory_sha,
+            &first.plan_id,
+        )
+        .unwrap();
+        assert_eq!(
+            completed.stored_sha256,
+            "0acf896dcbef305bce581b7b182351590ed74286a3d741d519485df74f23db80"
+        );
+        assert_eq!(
+            completed.canonical_payload_sha256,
+            "0b52f43809ff751645664addadd1912ad19a8e6846b4a35d07713fef4d8693ef"
+        );
+        assert_eq!(
+            completed.object_identity_sha256,
+            "4af52a251fed6bdffa64a2a8bf1c806014b2b4c23acad532e6a68f90cbc438fb"
+        );
+        let final_path = first.cfg.output_root.join(&first.plan.relative_path);
+        let original = fs::read(&final_path).unwrap();
+        assert_eq!(verify_bundle(&final_path).unwrap(), completed.metadata);
+        let reused = write_bundle(
+            &first.cfg,
+            &first.plan,
+            &first.inventory_sha,
+            &first.plan_id,
+        )
+        .unwrap();
+        assert!(reused.reused);
+        assert_eq!(fs::read(&final_path).unwrap(), original);
+
+        let second = synthetic_write_fixture("round-trip-b");
+        write_bundle(
+            &second.cfg,
+            &second.plan,
+            &second.inventory_sha,
+            &second.plan_id,
+        )
+        .unwrap();
+        assert_eq!(
+            fs::read(second.cfg.output_root.join(&second.plan.relative_path)).unwrap(),
+            original
+        );
+
+        let first_paths = SafePaths::admit(&first.cfg).unwrap();
+        let second_paths = SafePaths::admit(&second.cfg).unwrap();
+        publish_manifest(
+            &first.cfg,
+            &first_paths,
+            &first.inventory_sha,
+            &first.plan_id,
+            std::slice::from_ref(&completed),
+        )
+        .unwrap();
+        assert_eq!(
+            sha256_bytes(&fs::read(first.cfg.output_root.join("manifest.jsonl")).unwrap()),
+            "fe8ef7c82b436f842cf08b0ca64036538adedf203f31033d3ba0e109b36e6ab4"
+        );
+        assert_eq!(
+            String::from_utf8(
+                fs::read(first.cfg.output_root.join("manifest.jsonl.sha256")).unwrap()
+            )
+            .unwrap(),
+            "fe8ef7c82b436f842cf08b0ca64036538adedf203f31033d3ba0e109b36e6ab4\n"
+        );
+        let second_completed = write_bundle(
+            &second.cfg,
+            &second.plan,
+            &second.inventory_sha,
+            &second.plan_id,
+        )
+        .unwrap();
+        publish_manifest(
+            &second.cfg,
+            &second_paths,
+            &second.inventory_sha,
+            &second.plan_id,
+            &[second_completed],
+        )
+        .unwrap();
+        for name in ["manifest.jsonl", "manifest.jsonl.sha256"] {
+            assert_eq!(
+                fs::read(first.cfg.output_root.join(name)).unwrap(),
+                fs::read(second.cfg.output_root.join(name)).unwrap()
+            );
+        }
+
+        for (label, mutate) in [
+            ("header", 0usize),
+            ("payload", HEADER_LEN as usize),
+            ("footer", original.len() - FOOTER_LEN as usize),
+            ("padding", HEADER_LEN as usize + 66),
+        ] {
+            let mut corrupted = original.clone();
+            corrupted[mutate] ^= 1;
+            fs::write(&final_path, &corrupted).unwrap();
+            assert!(
+                verify_bundle(&final_path).is_err(),
+                "accepted {label} mutation"
+            );
+        }
+        fs::write(&final_path, &original[..original.len() - 1]).unwrap();
+        assert!(verify_bundle(&final_path).is_err());
+        let mut appended = original.clone();
+        appended.push(0);
+        fs::write(&final_path, appended).unwrap();
+        assert!(verify_bundle(&final_path).is_err());
+    }
+
+    #[test]
+    fn d6_reuse_rejects_plan_source_and_manifest_conflicts() {
+        let fixture = synthetic_write_fixture("reconcile");
+        let completed = write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+        )
+        .unwrap();
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &"44".repeat(32)
+        )
+        .is_err());
+
+        let source = fixture.cfg.checkpoint_dir.join("synthetic-001.gguf");
+        let mut source_bytes = fs::read(&source).unwrap();
+        source_bytes[0] ^= 1;
+        fs::write(&source, source_bytes).unwrap();
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+
+        let paths = SafePaths::admit(&fixture.cfg).unwrap();
+        publish_manifest(
+            &fixture.cfg,
+            &paths,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+            &[completed],
+        )
+        .unwrap();
+        let manifest = fixture.cfg.output_root.join("manifest.jsonl");
+        fs::write(&manifest, b"conflict\n").unwrap();
+        assert!(publish_manifest(
+            &fixture.cfg,
+            &paths,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+            &[]
+        )
+        .is_err());
+        assert_eq!(fs::read(manifest).unwrap(), b"conflict\n");
+    }
+
+    #[test]
+    fn d6_resume_rejects_unexplained_partial_hardlinks() {
+        let mut fixture = synthetic_write_fixture("partial-hardlink");
+        fixture.cfg.test_interrupt_after_bytes = Some(1);
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        let parent = fixture.cfg.output_root.join("objects/layer-003/routed");
+        let sidecar = fs::read_dir(&parent)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .find(|path| path.to_string_lossy().ends_with(".owner.json"))
+            .unwrap();
+        let unexplained = fixture.root.join("unexplained-hardlink");
+        fs::hard_link(&sidecar, &unexplained).unwrap();
+        let original = fs::read(&unexplained).unwrap();
+        fixture.cfg.test_interrupt_after_bytes = None;
+        fixture.cfg.resume = true;
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        assert_eq!(fs::read(unexplained).unwrap(), original);
+        assert!(sidecar.exists());
+    }
+
+    #[test]
+    fn d6_interruption_requires_resume_and_repairs_manifest_hash_only() {
+        let mut fixture = synthetic_write_fixture("resume");
+        fixture.cfg.test_interrupt_after_bytes = Some(1);
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        fixture.cfg.test_interrupt_after_bytes = None;
+        assert!(write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id
+        )
+        .is_err());
+        fixture.cfg.resume = true;
+        let completed = write_bundle(
+            &fixture.cfg,
+            &fixture.plan,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+        )
+        .unwrap();
+        let paths = SafePaths::admit(&fixture.cfg).unwrap();
+        fixture.cfg.test_interrupt_after_manifest = true;
+        assert!(publish_manifest(
+            &fixture.cfg,
+            &paths,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+            std::slice::from_ref(&completed)
+        )
+        .is_err());
+        assert!(fixture.cfg.output_root.join("manifest.jsonl").exists());
+        assert!(!fixture
+            .cfg
+            .output_root
+            .join("manifest.jsonl.sha256")
+            .exists());
+        fixture.cfg.test_interrupt_after_manifest = false;
+        publish_manifest(
+            &fixture.cfg,
+            &paths,
+            &fixture.inventory_sha,
+            &fixture.plan_id,
+            &[completed],
+        )
+        .unwrap();
+        assert!(fixture
+            .cfg
+            .output_root
+            .join("manifest.jsonl.sha256")
+            .exists());
     }
 }
