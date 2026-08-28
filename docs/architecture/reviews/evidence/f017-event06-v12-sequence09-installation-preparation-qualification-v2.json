@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-installation-preparation-qualification/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-installation-preparation-qualification-v1.json",
+  "qualification_head": "ef11571527b7d89f1d406c4d1866502913a66a48",
+  "qualification_tree": "fb6edcd88f46747a65f43ec5fae4433c35a15efd",
+  "reconstructions": 20,
+  "unique_identity_set_count": 1,
+  "transaction_successes_synthetic_non_authority": 10,
+  "transaction_failures": 10,
+  "future_go_rejections": 15,
+  "production_capability_instances": 0,
+  "production_commit_success_calls": 0,
+  "live_installations": 0,
+  "result": "PASS"
+}
