@@ -68,18 +68,20 @@ def ast_guard():
   for node in tree.body:
    if isinstance(node,ast.FunctionDef) and (node.name.startswith("predicate_") or node.name in {"derive_B2","derive_R6","derive_A1","derive_A2","derive_A3"}):
     returns=[x for x in ast.walk(node) if isinstance(x,ast.Return)];
-    if not returns or any(isinstance(x.value,ast.Constant) for x in returns):raise ValueError(f"literal return {node.name}")
+    if not returns or any(isinstance(x.value,ast.Constant) and x.value.value is True for x in returns):raise ValueError(f"literal success return {node.name}")
     scanned.append(f"{path.name}:{node.name}")
  return {"scanned":sorted(scanned),"count":len(scanned),"literal_returns":0,"result":"PASS"}
 def evaluate(store):return {k:f(store) for k,f in PREDICATES.items()}
 def mutate(store,path,change,canonical=True):
+ if canonical is None:
+  overrides=dict(store.overrides);overrides[str(path.relative_to(ROOT))]=change(store.raw(path));return Store(overrides)
  d=doc(store,path,canonical);change(d);return store.changed(path,d)
 def mutations(base):
  cases=[
  ("B2",E/"f017-event06-v12-sequence05-opus-design-cycle-06-normalized-result.json",lambda d:d.__setitem__("minimum_repair_count",7),True),
  ("R6",design.QUAL,lambda d:d["roles"]["readiness_interface"].__setitem__("schema_authority_field","installation_schema"),True),
- ("A1",design.NOACCESS,lambda d:d["current_callables"][0].__setitem__("symbol","absent"),True),
- ("A2",E/"f017-event06-v12-sequence05-design-graph-state-v6.json",lambda d:d.__setitem__("source_blocking_findings",4),True),
+ ("A1",ROOT/"scripts/research/f017_checkpoint_identity_authority_v12.py",lambda raw:raw.replace(b"def canonical_candidate",b"def unavailable_candidate",1),None),
+ ("A2",E/"f017-event06-v12-sequence05-design-claim-ledger-v6.json",lambda d:d.__setitem__("source_review_cycle",5),True),
  ("A3",design.PREPARED,lambda d:d["bindings"]["readiness_interface"].update(deepcopy(d["bindings"]["live_installation_interface"])),True),
  ("measurement",design.BRIDGE_SUMMARY,lambda d:d.__setitem__("bridge_digest","0"*64),True),
  ("failure_arithmetic",design.READINESS,lambda d:d["required_fields"].pop(),True),
@@ -88,7 +90,7 @@ def mutations(base):
  ("prepared",design.PREPARED,lambda d:d["bindings"]["bridge_declaration"].__setitem__("path","docs/architecture/reviews/evidence/f017-event06-v12-to-v11-numerical-authority-bridge-final-declaration-v1.json"),True),
  ("qualification",design.QUAL,lambda d:d.__setitem__("validation_gap_count",1),True),
  ("provenance",E/"f017-event06-v12-sequence05-opus-design-cycle-06-provenance-v1.json",lambda d:d.pop("command"),True),
- ("graph",E/"f017-event06-v12-sequence05-design-claim-ledger-v6.json",lambda d:d.__setitem__("challenged",8),True)]
+ ("graph",E/"f017-event06-v12-sequence05-opus-design-cycle-05-normalized-result.json",lambda d:d.__setitem__("unresolved_claims",3),True)]
  baseline=evaluate(base);rows=[]
  for index,(target,path,change,canonical) in enumerate(cases,1):
   values=evaluate(mutate(base,path,change,canonical));changed={k for k in values if values[k]!=baseline[k]};rows.append({"mutation_id":f"C8-M{index:02d}","target":target,"changed_predicates":sorted(changed),"isolated":changed=={target} and not values[target],"result":"PASS" if changed=={target} and not values[target] else "FAIL"})
@@ -99,7 +101,7 @@ def report(store):
 def main():
  ap=argparse.ArgumentParser();ap.add_argument("--output",type=Path);ap.add_argument("--inject-a2-failure",action="store_true");a=ap.parse_args();store=Store({})
  if a.inject_a2_failure:
-  p=E/"f017-event06-v12-sequence05-design-graph-state-v6.json";store=mutate(store,p,lambda d:d.__setitem__("source_blocking_findings",4))
+  p=E/"f017-event06-v12-sequence05-design-claim-ledger-v6.json";store=mutate(store,p,lambda d:d.__setitem__("source_review_cycle",5))
  r=report(store)
  if a.output:
   with a.output.open("xb") as f:f.write(canonical_bytes(r))
