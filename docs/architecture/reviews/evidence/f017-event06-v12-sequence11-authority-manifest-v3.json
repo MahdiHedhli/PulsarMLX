@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-authority-manifest/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-authority-manifest-v2.json",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "implementation_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "bindings": [
+    {"role": "qualified_authority_manifest", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-authority-manifest-v2.json", "sha256": "24c4cf2aa66b41e1637ac6650432196dbbc5ff4743ace1e9040a22f8f6b155b9"},
+    {"role": "manifest_bound_evidence_only_ci", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-evidence-only-ci-v1.json", "sha256": "c9657f109cdfc9c76795a8c14825c98c6933548bd48622807579e385b7451a69"},
+    {"role": "final_reconciliation", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-final-reconciliation-v1.json", "sha256": "e9a415045ad85233219d13e92499298fd9e97600736723ee861c7a0637e6db05"}
+  ],
+  "binding_count": 3,
+  "transitive_qualified_binding_count": 17,
+  "all_bindings_verified": true,
+  "authority_dag_acyclic": true,
+  "self_references": 0,
+  "future_references": 0,
+  "event_06_executed": false,
+  "live_authority_created": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}
