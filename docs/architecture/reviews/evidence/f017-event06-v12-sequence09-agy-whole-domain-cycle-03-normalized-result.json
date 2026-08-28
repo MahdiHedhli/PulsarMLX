@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-challenge-whole-domain-result/1.0.0",
+  "reviewed_commit": "f9c8229a06159bb0f390eff15df0448867e92195",
+  "reviewed_tree": "53025a4ff72b61288a9bb43c3c38fd15f2a2fc69",
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_claims": 0,
+  "findings": [],
+  "verdict": "NO_UNRESOLVED_MATERIAL_CHALLENGE",
+  "reproduction_report_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-reproduction-v3.json",
+  "reproduction_report_sha256": "561e0a0f1a9673c4c30d55fb3b9158f2059ce76b714cf29e7c3b3415e7efc6f5"
+}
