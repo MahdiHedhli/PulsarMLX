@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-support-ledger/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v1.json",
+  "cycle": 1,
+  "rows": [
+    {
+      "challenge_id": "G-C02",
+      "claim_id": "E-CALLPATH-001",
+      "disposition": "SUPPORTED_BY_COMMITTED_BYTES",
+      "response": "The V11 validators' tolerance of extra keys cannot supply missing mandatory values. The exact V12 candidate contains generation=V12 and omits active_generation plus role-specific numerical SHA fields; V11 validation therefore fails. Adding those fields is also impossible because the V12 validator enforces an exact 28-key census and rejects unknown fields.",
+      "evidence": [
+        "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+        "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+        "scripts/research/f017_checkpoint_identity_authority_v12.py",
+        "scripts/research/f017_corrected_oracle_authorization_v12.py"
+      ],
+      "remaining_state": "RESOLVED"
+    },
+    {
+      "challenge_id": "G-C04",
+      "claim_id": "E-SAFETY-001",
+      "disposition": "SUPPORTED_BY_CAUSAL_ABSENCE",
+      "response": "Expiry is established by the failed E2 frontier and complete absence of any E3 approval or event-plan artifact, not by comparing two approval timestamps. The pre-mint evidence records the observation time and zero approval, candidate, installed authority, package state, checkpoint access, numerical operation, and identity consumption.",
+      "evidence": [
+        "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json",
+        "docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e2-receipt-v2.json",
+        "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v2.json"
+      ],
+      "remaining_state": "RESOLVED"
+    }
+  ],
+  "supported": 2,
+  "repaired": 0,
+  "conceded": 0,
+  "unresolved": 0,
+  "runtime_bytes_changed": false,
+  "execution_evidence_changed": false,
+  "result": "PASS"
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-gemini-challenge-result/1.0.0",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "role": "CHALLENGE",
+  "reviewed_head": "29bbf1b1c0219821346402f5146fa0da74f20239",
+  "challenge_rows": [
+    {"id": "G-C01", "claim_id": "E-CALLPATH-001", "verdict": "SUPPORTED", "challenge": "Confirm that V12 wrapper aliases lead to V11 candidate validation."},
+    {"id": "G-C02", "claim_id": "E-CALLPATH-001", "verdict": "CHALLENGED", "challenge": "Test whether permissive V11 unknown-field handling permits a V12 candidate to pass."},
+    {"id": "G-C03", "claim_id": "E-CALLPATH-001", "verdict": "SUPPORTED", "challenge": "Search for a committed bridge or alternative authorized exact call path."},
+    {"id": "G-C04", "claim_id": "E-SAFETY-001", "verdict": "UNRESOLVED", "challenge": "Strengthen proof that GO expiration preceded approval."},
+    {"id": "G-C05", "claim_id": "E-SAFETY-001", "verdict": "SUPPORTED", "challenge": "Verify the zero side-effect census."},
+    {"id": "G-C06", "claim_id": "E-CI-001", "verdict": "SUPPORTED", "challenge": "Verify the failed and passing EVIDENCE_ONLY run characterization."}
+  ],
+  "supported_count": 4,
+  "challenged_count": 1,
+  "unresolved_count": 1,
+  "global_verdict": "TERMINAL_PRE_MINT_NO_GO_EVIDENCE_SUPPORTED",
+  "result": "CHALLENGE_COMPLETE"
+}
