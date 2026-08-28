@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-challenge-whole-domain-result/1.0.0",
+  "reviewed_commit": "6eab2292e989d590a44d3d2d4d9d6edc274c592a",
+  "reviewed_tree": "12e0229ce6dcdcda14256c3f78866a492133280e",
+  "blocking_findings": 1,
+  "non_blocking_required_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_claims": 1,
+  "findings": [
+    {
+      "id": "F017-S9-CHALLENGE-01",
+      "severity": "BLOCKING",
+      "disposition": "REPAIR_REQUIRED_ACTIVE_INTERPOSITION_FOR_THREE_EXECUTION_COUNTERS"
+    }
+  ],
+  "verdict": "CHALLENGE_REQUIRES_REPAIR",
+  "reproduction_report_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-reproduction-v2.json",
+  "reproduction_report_sha256": "22bb552968a9373334fa0c63f53d164ec22da3f52c01411e5e8ac32a38c462bd"
+}
