@@ -1,0 +1,1 @@
+{"checkpoint_access":0,"event_06_executed":false,"installation_failure_outcomes":16,"mutation_cases":326,"mutation_rejections":326,"race_families":10,"result":"PASS","schema":"pulsarmlx.f017.event06-v12-sequence05-failure-qualification/1.0.0","transaction_failure_families":10,"unexpected_passes":0}
