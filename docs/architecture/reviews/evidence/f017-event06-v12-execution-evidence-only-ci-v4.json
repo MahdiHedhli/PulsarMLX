@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-evidence-only-ci/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v3.json",
+  "head": "ba421ae23a543566a7f78a7862e01991c298f1a7",
+  "tree": "92e60cc6e5903d9870d7a08cea44942ca9aa53e3",
+  "run": 33131720120,
+  "workflow": "macOS baseline",
+  "mode": "EVIDENCE_ONLY",
+  "classification_result": "PASS",
+  "evidence_integrity_result": "PASS",
+  "native_jobs_launched": 0,
+  "aggregate_result": "PASS",
+  "result": "PASS"
+}
