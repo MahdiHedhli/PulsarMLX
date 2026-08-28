@@ -8,7 +8,7 @@ from types import MappingProxyType
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
-from f017_descriptor_lease_manager_v10 import validate_descriptors
+from f017_descriptor_lease_manager_v10 import LeaseSet, validate_descriptors
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 
 BRIDGE_SCHEMA = "pulsarmlx.f017.event06-v12-to-v11-numerical-authority-bridge/1.0.0"
@@ -18,6 +18,9 @@ VIEW_SCHEMA = "pulsarmlx.f017.event06-v12-to-v11-consumer-view/1.0.0"
 BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-transition-binding/1.0.0"
 PACKAGE_TERMINAL_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-package-terminal/1.0.0"
 BUNDLE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-result-bundle-binding/1.0.0"
+COMPARISON_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-comparison-binding/1.0.0"
+RELEASE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-release-binding/1.0.0"
+ACCOUNTING_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-accounting-binding/1.0.0"
 HEX64 = re.compile(r"[0-9a-f]{64}")
 HEX40 = re.compile(r"[0-9a-f]{40}")
 TYPED_ID = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,190}[A-Z0-9])?")
@@ -26,7 +29,21 @@ IDENTITY_KEYS = {
     "identity_manifest_sha256", "identity_terminal_sha256", "access_census_sha256",
     "descriptor_identity_sha256", "lease_owner", "graph_descriptors", "result",
 }
-EVENT_PLAN_KEYS = {"schema", "package_attempt_id", "primary_event_id", "secondary_event_id"}
+IDENTITY_REPORT_KEYS = {
+    "result", "authority_scope", "operation_class", "generation",
+    "ordered_shard_digests", "checkpoint_shard_opens", "checkpoint_identity_hash_reads",
+    "retained_lease_count", "identity_only_retained_count", "descriptor_identities",
+    "path_reopen_count", "evidence",
+}
+IDENTITY_EVIDENCE_KEYS = {
+    "access_journal_sha256", "shard_receipts_sha256", "lease_manifest_sha256",
+    "deterministic_core_sha256", "identity_manifest_sha256", "identity_receipt_sha256",
+    "identity_terminal_sha256", "identity_terminal_state",
+}
+EVENT_PLAN_KEYS = {
+    "schema", "package_attempt_id", "primary_event_id", "secondary_event_id",
+    "execution_plan_sha256",
+}
 DESCRIPTOR_KEYS = {"device", "inode", "mode", "size", "mtime_ns", "ctime_ns", "shard_ordinal", "role", "lease_id"}
 BRIDGE_KEYS = {
     "schema", "state", "identity_authority_generation", "numerical_consumer_generation",
@@ -55,6 +72,12 @@ PHASES = ("PACKAGE_START","IDENTITY_TERMINAL","PRIMARY_START","PRIMARY_RESULT_TE
           "SECONDARY_START","SECONDARY_RESULT_TERMINAL","COMPARISON_TERMINAL",
           "RELEASE_TERMINAL","ACCOUNTING_CLOSURE","V11_PACKAGE_CLOSURE")
 BINDING_KEYS = {"schema","phase","bridge_sha256","package_attempt_id","subject_artifact_kind","subject_sha256","predecessor_binding_sha256","state"}
+RELEASE_REPORT_KEYS = {
+    "release_pass", "expected_leases", "attempted_closures", "successful_closures",
+    "duplicate_closures", "unknown_leases", "live_leases_after_release",
+    "remaining_live_lease_ids", "lease_states", "close_events", "idempotent_noop",
+    "pending_close_evidence", "evidence_banking_failures", "result",
+}
 _SEAL = object()
 
 
@@ -135,16 +158,61 @@ def validate_identity_stage(value: object) -> ValidatedIdentityStage:
         raise ValueError("identity-stage descriptor keys")
     if hashlib.sha256(canonical_bytes(descriptors)).hexdigest() != value["descriptor_identity_sha256"]:
         raise ValueError("identity-stage descriptor digest")
-    if type(value["lease_owner"]) is not str or not value["lease_owner"]:
+    if (type(value["lease_owner"]) is not str
+            or value["lease_owner"] != value["package_attempt_id"]):
         raise ValueError("identity-stage lease owner")
+    for descriptor in descriptors:
+        expected = f"LEASE-{value['lease_owner']}-{descriptor['shard_ordinal']}"
+        if descriptor["lease_id"] != expected:
+            raise ValueError("identity-stage lease ownership")
     return ValidatedIdentityStage(_SEAL, value)
+
+
+def bind_identity_stage(installed: ValidatedIdentityAuthority, leases: LeaseSet,
+                        report: object) -> ValidatedIdentityStage:
+    """Adapt the real V12 identity producer result into the sealed bridge input."""
+    if (type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED"
+            or type(leases) is not LeaseSet):
+        raise TypeError("installed V12 authority and lease set required")
+    if type(report) is not dict or set(report) != IDENTITY_REPORT_KEYS:
+        raise ValueError("identity producer report census")
+    evidence = report["evidence"]
+    if type(evidence) is not dict or set(evidence) != IDENTITY_EVIDENCE_KEYS:
+        raise ValueError("identity producer evidence census")
+    if (report["result"] != "PASS" or report["generation"] != "V12"
+            or report["checkpoint_shard_opens"] != 6
+            or report["checkpoint_identity_hash_reads"] != 6
+            or report["retained_lease_count"] != 5
+            or report["identity_only_retained_count"] != 0
+            or report["path_reopen_count"] != 0
+            or evidence["identity_terminal_state"] != "COMPLETE"
+            or report["descriptor_identities"] != leases.descriptors):
+        raise ValueError("identity producer report posture")
+    installed_value = installed.as_dict()
+    descriptors = leases.descriptors
+    value = {
+        "schema": IDENTITY_SCHEMA,
+        "authorization_id": installed_value["authorization_id"],
+        "package_attempt_id": installed_value["package_attempt_id"],
+        "checkpoint_set_sha256": installed_value["checkpoint_set_sha256"],
+        "identity_manifest_sha256": evidence["identity_manifest_sha256"],
+        "identity_terminal_sha256": evidence["identity_terminal_sha256"],
+        "access_census_sha256": evidence["access_journal_sha256"],
+        "descriptor_identity_sha256": hashlib.sha256(canonical_bytes(descriptors)).hexdigest(),
+        "lease_owner": installed_value["package_attempt_id"],
+        "graph_descriptors": descriptors,
+        "result": "PASS",
+    }
+    return validate_identity_stage(value)
 
 
 def _validate_event_plan(value: object) -> str:
     if type(value) is not dict or set(value) != EVENT_PLAN_KEYS or value["schema"] != EVENT_PLAN_SCHEMA:
         raise ValueError("event identity plan")
-    if any(type(value[key]) is not str or not value[key] for key in EVENT_PLAN_KEYS - {"schema"}):
+    if any(type(value[key]) is not str or not value[key]
+           for key in EVENT_PLAN_KEYS - {"schema", "execution_plan_sha256"}):
         raise ValueError("event identity plan values")
+    _sha(value["execution_plan_sha256"], "event identity execution plan")
     if len({value["package_attempt_id"], value["primary_event_id"], value["secondary_event_id"]}) != 3:
         raise ValueError("event identity plan distinct IDs")
     return hashlib.sha256(canonical_bytes(value)).hexdigest()
@@ -166,11 +234,10 @@ def derive_bridge(installed: ValidatedIdentityAuthority, identity: ValidatedIden
         (installed_value["authorization_id"], identity.get("authorization_id"), "authorization identity"),
         (installed_value["checkpoint_set_sha256"], identity.get("checkpoint_set_sha256"), "checkpoint set"),
         (installed_value["event_identity_plan_sha256"], event_plan_sha, "installed event plan"),
-        (execution.get("event_identity_plan_sha256"), event_plan_sha, "execution event plan"),
+        (event_identity_plan["execution_plan_sha256"], execution.sha256, "event/execution plan"),
         (event_identity_plan["package_attempt_id"], execution.get("package_attempt_id"), "event plan package"),
         (event_identity_plan["primary_event_id"], execution.get("primary_event_id"), "primary event"),
         (event_identity_plan["secondary_event_id"], execution.get("secondary_event_id"), "secondary event"),
-        (installed_value["installation_receipt_sha256"], installed.get("installation_receipt_sha256"), "installation receipt"),
     )
     for left, right, name in equalities:
         if left != right:
@@ -209,10 +276,10 @@ def derive_bridge(installed: ValidatedIdentityAuthority, identity: ValidatedIden
         "secondary_target_source_sha256": execution.get("secondary_target_source_sha256"),
         "attempts": 1, "retries": 0, "resume": False,
     }
-    return validate_bridge_document(value)
+    return _validate_bridge_value(value)
 
 
-def validate_bridge_document(value: object) -> ValidatedNumericalBridge:
+def _validate_bridge_value(value: object) -> ValidatedNumericalBridge:
     if type(value) is not dict or set(value) != BRIDGE_KEYS:
         raise ValueError("bridge key census")
     if (value["schema"] != BRIDGE_SCHEMA or value["state"] != "VALIDATED"
@@ -247,8 +314,12 @@ def validate_bridge_document(value: object) -> ValidatedNumericalBridge:
         raise ValueError("bridge source head")
     if type(value["source_tree"]) is not str or HEX40.fullmatch(value["source_tree"]) is None:
         raise ValueError("bridge source tree")
-    if type(value["lease_owner"]) is not str or not value["lease_owner"]:
+    if (type(value["lease_owner"]) is not str
+            or value["lease_owner"] != value["package_attempt_id"]):
         raise ValueError("bridge lease owner")
+    for descriptor in value["graph_descriptors"]:
+        if descriptor["lease_id"] != f"LEASE-{value['lease_owner']}-{descriptor['shard_ordinal']}":
+            raise ValueError("bridge lease ownership")
     for key in ("tensor_catalog_path","numerical_contract_path","result_authority_path"):
         item = value[key]
         if type(item) is not str or not item or item.startswith("/") or "\\" in item or any(part in {"", ".", ".."} for part in item.split("/")):
@@ -260,12 +331,15 @@ def validate_bridge_document(value: object) -> ValidatedNumericalBridge:
     return ValidatedNumericalBridge(_SEAL, value)
 
 
-def reconstruct_bridge(raw: bytes) -> ValidatedNumericalBridge:
+def reconstruct_bridge(raw: bytes, expected_sha256: str) -> ValidatedNumericalBridge:
     from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
+    _sha(expected_sha256, "expected bridge")
     value = parse_artifact_bytes(raw)
-    bridge = validate_bridge_document(value)
+    bridge = _validate_bridge_value(value)
     if canonical_bytes(value) != raw:
         raise ValueError("bridge canonical bytes")
+    if bridge.sha256 != expected_sha256:
+        raise ValueError("bridge expected digest")
     return bridge
 
 
@@ -377,8 +451,103 @@ def source_projection(view: ValidatedConsumerView) -> tuple[dict, list[dict]]:
 
 
 def bundle_kwargs(view: ValidatedConsumerView) -> dict:
+    if type(view) is not ValidatedConsumerView or view.get("role") not in {"PRIMARY", "SECONDARY"}:
+        raise TypeError("result bundle consumer view required")
     return {key:view.get(key) for key in ("authorization_id","package_attempt_id","consumer_event_id",
         "producer_measurement_sha256","durable_start_sha256","access_census_sha256")}
+
+
+def build_comparison_binding(view: ValidatedConsumerView, summary: object) -> tuple[dict, str]:
+    if type(view) is not ValidatedConsumerView:
+        raise TypeError("sealed comparison view required")
+    try:
+        view.get("comparison_authority_sha256")
+    except KeyError as exc:
+        raise TypeError("sealed comparison view required") from exc
+    if (type(summary) is not dict
+            or summary.get("schema") != "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0"
+            or summary.get("classification") not in {
+                "EXACT_EXPECTED_TOKEN_STABLE", "NUMERICALLY_STABLE_TOP_K_ONLY",
+                "TOP1_UNSTABLE_WITHIN_FROZEN_UNCERTAINTY", "ORACLE_DISAGREEMENT",
+            }):
+        raise ValueError("comparison summary posture")
+    if (summary.get("authorization_id") != view.get("authorization_id")
+            or summary.get("package_attempt_id") != view.get("package_attempt_id")):
+        raise ValueError("comparison summary authority")
+    value = {
+        "schema": COMPARISON_BINDING_SCHEMA,
+        "bridge_sha256": view.get("bridge_sha256"),
+        "authorization_id": view.get("authorization_id"),
+        "package_attempt_id": view.get("package_attempt_id"),
+        "comparison_view_sha256": view.sha256,
+        "comparison_summary_sha256": hashlib.sha256(canonical_bytes(summary)).hexdigest(),
+        "result": "PASS",
+    }
+    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def build_release_binding(view: ValidatedConsumerView, report: object) -> tuple[dict, str]:
+    if type(view) is not ValidatedConsumerView:
+        raise TypeError("sealed release view required")
+    expected_lease_ids = [
+        f"LEASE-{view.get('lease_owner')}-{ordinal}" for ordinal in range(2, 7)
+    ]
+    if (type(report) is not dict or set(report) != RELEASE_REPORT_KEYS
+            or report.get("result") != "PASS"
+            or report.get("expected_leases") != 5 or report.get("attempted_closures") != 5
+            or report.get("successful_closures") != 5 or report.get("duplicate_closures") != 0
+            or report.get("unknown_leases") != 0 or report.get("live_leases_after_release") != 0
+            or report.get("remaining_live_lease_ids") != []
+            or report.get("pending_close_evidence") != []
+            or report.get("evidence_banking_failures") != 0
+            or report.get("idempotent_noop") is not False
+            or report.get("release_pass") != 1
+            or set(report.get("lease_states", {})) != set(expected_lease_ids)
+            or any(report["lease_states"].get(lease_id) != "CLOSED" for lease_id in expected_lease_ids)
+            or type(report.get("close_events")) is not list or len(report["close_events"]) != 5
+            or [event.get("lease_id") for event in report["close_events"]] != expected_lease_ids
+            or [event.get("shard_ordinal") for event in report["close_events"]] != list(range(2, 7))
+            or any(event.get("state") != "CLOSED" or event.get("result") != "PASS_CLOSE"
+                   or event.get("evidence_result") != "PASS" for event in report["close_events"])):
+        raise ValueError("release report posture")
+    value = {
+        "schema": RELEASE_BINDING_SCHEMA,
+        "bridge_sha256": view.get("bridge_sha256"),
+        "package_attempt_id": view.get("package_attempt_id"),
+        "comparison_binding_sha256": view.get("comparison_binding_sha256"),
+        "release_view_sha256": view.sha256,
+        "release_report_sha256": hashlib.sha256(canonical_bytes(report)).hexdigest(),
+        "result": "PASS",
+    }
+    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def build_accounting_binding(view: ValidatedConsumerView, release_binding: object) -> tuple[dict, str]:
+    if type(view) is not ValidatedConsumerView:
+        raise TypeError("sealed accounting view required")
+    if (type(release_binding) is not dict
+            or release_binding.get("schema") != RELEASE_BINDING_SCHEMA
+            or release_binding.get("bridge_sha256") != view.get("bridge_sha256")
+            or hashlib.sha256(canonical_bytes(release_binding)).hexdigest()
+            != view.get("release_binding_sha256")):
+        raise ValueError("accounting release binding")
+    value = {
+        "schema": ACCOUNTING_BINDING_SCHEMA,
+        "bridge_sha256": view.get("bridge_sha256"),
+        "authorization_id": view.get("authorization_id"),
+        "package_attempt_id": view.get("package_attempt_id"),
+        "primary_event_id": view.get("primary_event_id"),
+        "secondary_event_id": view.get("secondary_event_id"),
+        "installed_authority_sha256": view.get("installed_authority_sha256"),
+        "installation_receipt_sha256": view.get("installation_receipt_sha256"),
+        "release_binding_sha256": view.get("release_binding_sha256"),
+        "package_delta": 1,
+        "primary_delta": 1,
+        "secondary_delta": 1,
+        "historical_master_ledger": 175,
+        "result": "PASS",
+    }
+    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
 def comparison_view(bridge: ValidatedNumericalBridge, primary_binding_sha256: str,

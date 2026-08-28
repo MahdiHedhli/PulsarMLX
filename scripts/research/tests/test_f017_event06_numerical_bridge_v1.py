@@ -13,19 +13,21 @@ from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError
 from f017_corrected_oracle_primary_wrapper_v11 import validate_candidate_document as validate_primary_v11
 from f017_corrected_oracle_secondary_wrapper_v11 import validate_candidate_document as validate_secondary_v11
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_execution_plan
-from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
+from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
-    accounting_view, build_bundle_binding, build_package_terminal,
+    accounting_view, bind_identity_stage, build_bundle_binding, build_package_terminal,
     build_transition_binding, canonical_bridge_bytes, comparison_view,
-    numerical_view, package_terminal_view, primary_terminal_binding, reconstruct_bridge,
-    release_view, result_bundle_view, source_projection, validate_bridge_document,
+    bundle_kwargs, numerical_view, package_terminal_view, primary_terminal_binding, reconstruct_bridge,
+    release_view, result_bundle_view, source_projection,
     validate_consumer_view, validate_package_terminal,
     validate_transition_chain,
 )
 from execute_f017_corrected_oracle_event_v12_bridge import (
-    PRODUCTION_CALL_PATH, validate_no_access_call_path, validate_transition_order,
+    PRODUCTION_CALL_PATH, ValidatedBridgeExecutionResult, ValidatedDurableStart,
+    close_bridge_package, validate_no_access_call_path, validate_transition_order,
 )
+from qualify_f017_event06_bridge_call_path_v2 import qualify_call_path
 
 def primary_bundle_fixture():
     manifest_sha, receipt_sha, result_terminal_sha = "1" * 64, "2" * 64, "3" * 64
@@ -45,7 +47,8 @@ def test_bridge_is_deterministic_and_reconstructible():
     bridge, *_ = fixture_values()
     raw = canonical_bridge_bytes(bridge)
     assert len(json.loads(raw)) == 42
-    assert reconstruct_bridge(raw).sha256 == bridge.sha256
+    assert reconstruct_bridge(raw, bridge.sha256).sha256 == bridge.sha256
+    with pytest.raises(ValueError): reconstruct_bridge(raw, "f" * 64)
     assert all(fixture_values()[0].sha256 == bridge.sha256 for _ in range(20))
 
 
@@ -56,6 +59,9 @@ def test_sealed_authority_objects_reject_construction_copy_and_pickle():
     with pytest.raises(TypeError): copy.copy(bridge)
     with pytest.raises(TypeError): copy.deepcopy(bridge)
     with pytest.raises(TypeError): pickle.dumps(bridge)
+    with pytest.raises(TypeError): ValidatedBridgeExecutionResult()
+    with pytest.raises(TypeError): ValidatedDurableStart()
+    with pytest.raises(ValueError): close_bridge_package(bridge, {}, {}, None)
 
 
 def test_bridge_field_mutations_fail_closed():
@@ -66,7 +72,7 @@ def test_bridge_field_mutations_fail_closed():
         wrong = copy.deepcopy(value); wrong[key] = None
         alias = copy.deepcopy(value); alias[f"alias_{key}"] = alias[key]
         for mutation in (missing, wrong, alias):
-            with pytest.raises(Exception): validate_bridge_document(mutation)
+            with pytest.raises(Exception): reconstruct_bridge(canonical_bytes(mutation), bridge.sha256)
             rejected += 1
     assert rejected == 126
 
@@ -134,3 +140,53 @@ def test_complete_no_access_call_path_and_order():
     for mutation in (list(PRODUCTION_CALL_PATH[:-1]), list(reversed(PRODUCTION_CALL_PATH)),
                      list(PRODUCTION_CALL_PATH) + ["PRIMARY_SINGLE_CALL"]):
         with pytest.raises(ValueError): validate_transition_order(mutation)
+
+
+def test_real_identity_producer_adapter_is_exact_and_owner_bound():
+    expected, installed, leases, report, _plan, _event_plan = runtime_fixture_values()
+    identity = bind_identity_stage(installed, leases, report)
+    assert identity.get("lease_owner") == identity.get("package_attempt_id")
+    assert identity.get("access_census_sha256") == report["evidence"]["access_journal_sha256"]
+    assert expected.get("descriptor_identity_sha256") == identity.get("descriptor_identity_sha256")
+    for mutation in (
+        lambda value: value["evidence"].pop("access_journal_sha256"),
+        lambda value: value.update({"checkpoint_shard_opens":5}),
+        lambda value: value.update({"descriptor_identities":list(reversed(value["descriptor_identities"]))}),
+    ):
+        changed = copy.deepcopy(report); mutation(changed)
+        with pytest.raises(ValueError): bind_identity_stage(installed, leases, changed)
+
+
+def test_foreign_lease_owner_and_direct_bundle_mapping_fail_closed():
+    bridge, *_ = fixture_values(); document = json.loads(canonical_bridge_bytes(bridge))
+    document["lease_owner"] = "TOTALLY-DIFFERENT-OWNER"
+    with pytest.raises(ValueError): reconstruct_bridge(canonical_bytes(document), bridge.sha256)
+    with pytest.raises(TypeError): bundle_kwargs({})
+
+
+def test_valid_execution_plan_substitutions_break_installed_event_plan_binding():
+    _bridge, installed, identity, _plan, event_plan, plan_value = fixture_values()
+    for key in (
+        "source_head", "source_tree", "implementation_measurement_sha256",
+        "tensor_catalog_sha256", "primary_numerical_sha256", "secondary_numerical_sha256",
+        "numerical_contract_sha256", "result_authority_sha256",
+        "result_bundle_builder_sha256", "comparison_authority_sha256",
+        "release_authority_sha256", "accounting_authority_sha256",
+        "primary_target_source_sha256", "secondary_target_source_sha256",
+    ):
+        changed = copy.deepcopy(plan_value)
+        changed[key] = ("f" if changed[key] != "f" * len(changed[key]) else "e") * len(changed[key])
+        substituted = validate_execution_plan(changed)
+        with pytest.raises(ValueError):
+            from f017_event06_numerical_bridge_v1 import derive_bridge
+            derive_bridge(installed, identity, substituted, event_plan)
+
+
+def test_production_coordinator_is_instantiated_with_release_on_all_modeled_paths():
+    result = qualify_call_path()
+    assert result["production_coordinator_instantiated"] == "PASS"
+    assert result["primary_calls"] == result["secondary_calls"] == 1
+    assert result["success_release_passes"] == 1
+    assert result["failure_release_paths"] == 4
+    assert result["comparison_release_accounting_chain"] == "PASS"
+    assert result["original_checkpoint_access"] == result["numerical_operations"] == 0

@@ -15,7 +15,7 @@ HEX64 = re.compile(r"[0-9a-f]{64}")
 ID = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,190}[A-Z0-9])?")
 KEYS = {
     "schema", "package_attempt_id", "primary_event_id", "secondary_event_id",
-    "event_identity_plan_sha256", "source_head", "source_tree",
+    "source_head", "source_tree",
     "implementation_measurement_sha256", "tensor_catalog_path", "tensor_catalog_sha256",
     "primary_numerical_sha256", "secondary_numerical_sha256",
     "numerical_contract_path", "numerical_contract_sha256",

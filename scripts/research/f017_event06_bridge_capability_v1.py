@@ -9,7 +9,16 @@ ROOT = Path(__file__).resolve().parents[2]
 PURE = [ROOT / "scripts/research/f017_event06_execution_plan_v1.py",
         ROOT / "scripts/research/f017_event06_numerical_bridge_v1.py"]
 PROHIBITED_IMPORTS = {"os","subprocess","socket","mmap","importlib","ctypes","multiprocessing"}
-PROHIBITED_CALLS = {"open","eval","exec","compile","getattr","setattr","globals","locals","vars","__import__"}
+PROHIBITED_CALLS = {"open","eval","exec","compile","getattr","setattr","globals","locals","vars","__import__","__getattribute__"}
+PROHIBITED_ATTRIBUTE_CALLS = {"open","getattr","setattr","__getattribute__","__import__"}
+
+
+def _prohibited_call_name(node: ast.Call) -> str | None:
+    if isinstance(node.func, ast.Name):
+        return node.func.id if node.func.id in PROHIBITED_CALLS else None
+    if isinstance(node.func, ast.Attribute) and node.func.attr in PROHIBITED_ATTRIBUTE_CALLS:
+        return node.func.attr
+    return None
 
 
 def validate_capability() -> dict:
@@ -23,8 +32,8 @@ def validate_capability() -> dict:
                         violations.append(f"{path.name}:import:{alias.name}")
             elif isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] in PROHIBITED_IMPORTS:
                 violations.append(f"{path.name}:import:{node.module}")
-            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in PROHIBITED_CALLS:
-                violations.append(f"{path.name}:call:{node.func.id}")
+            elif isinstance(node, ast.Call) and _prohibited_call_name(node) is not None:
+                violations.append(f"{path.name}:call:{_prohibited_call_name(node)}")
             elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 names = [item.arg for item in node.args.args + node.args.kwonlyargs]
                 if any("callback" in name or name.startswith("on_") for name in names):

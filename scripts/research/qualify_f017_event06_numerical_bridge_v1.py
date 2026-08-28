@@ -14,9 +14,10 @@ from f017_event06_execution_plan_v1 import validate_execution_plan
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, build_transition_binding, canonical_bridge_bytes,
-    reconstruct_bridge, validate_bridge_document, validate_transition_chain,
+    derive_bridge, reconstruct_bridge, validate_transition_chain,
 )
 from execute_f017_corrected_oracle_event_v12_bridge import validate_no_access_call_path
+from qualify_f017_event06_bridge_call_path_v2 import qualify_call_path
 
 ROOT = Path(__file__).resolve().parents[2]
 IMMUTABLE = {
@@ -30,9 +31,14 @@ IMMUTABLE = {
 
 
 def _mutation_campaign():
-    bridge, *_, plan_value = fixture_values(); document = json.loads(canonical_bridge_bytes(bridge))
+    bridge, installed, identity, _plan, event_plan, plan_value = fixture_values()
+    document = json.loads(canonical_bridge_bytes(bridge))
     rejected = unexpected = 0
-    for base, validator in ((document, validate_bridge_document), (plan_value, validate_execution_plan)):
+    validators = (
+        (document, lambda value: reconstruct_bridge(canonical_bytes(value), bridge.sha256)),
+        (plan_value, validate_execution_plan),
+    )
+    for base, validator in validators:
         for key in sorted(base):
             cases = []
             missing = copy.deepcopy(base); missing.pop(key); cases.append(missing)
@@ -42,6 +48,25 @@ def _mutation_campaign():
                 try: validator(case)
                 except Exception: rejected += 1
                 else: unexpected += 1
+    provenance_substitutions = 0
+    for key in (
+        "source_head", "source_tree", "implementation_measurement_sha256",
+        "tensor_catalog_sha256", "primary_numerical_sha256", "secondary_numerical_sha256",
+        "numerical_contract_sha256", "result_authority_sha256",
+        "result_bundle_builder_sha256", "comparison_authority_sha256",
+        "release_authority_sha256", "accounting_authority_sha256",
+        "primary_target_source_sha256", "secondary_target_source_sha256",
+    ):
+        changed = copy.deepcopy(plan_value)
+        changed[key] = ("f" if changed[key] != "f" * len(changed[key]) else "e") * len(changed[key])
+        substituted = validate_execution_plan(changed)
+        try:
+            derive_bridge(installed, identity, substituted, event_plan)
+        except Exception:
+            rejected += 1
+            provenance_substitutions += 1
+        else:
+            unexpected += 1
     predecessor = "0" * 64; chain = []
     for index, phase in enumerate(PHASES):
         record, predecessor = build_transition_binding(bridge, phase, f"KIND-{index}", f"{index+1:x}" * 64, predecessor)
@@ -59,7 +84,7 @@ def _mutation_campaign():
         try: validate_transition_chain(bridge, changed)
         except Exception: rejected += 1
         else: unexpected += 1
-    return rejected, unexpected, len(BRIDGE_KEYS), len(plan_value)
+    return rejected, unexpected, len(BRIDGE_KEYS), len(plan_value), provenance_substitutions
 
 
 def qualify() -> dict:
@@ -69,20 +94,28 @@ def qualify() -> dict:
         run = subprocess.run([sys.executable, __file__, "--digest"], cwd=ROOT,
             check=True, capture_output=True, text=True)
         digests.append(run.stdout.strip())
-    rejected, unexpected, bridge_fields, plan_fields = _mutation_campaign()
+    rejected, unexpected, bridge_fields, plan_fields, provenance_substitutions = _mutation_campaign()
     no_access = validate_no_access_call_path()
+    call_path = qualify_call_path()
     drift = {path:hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected
              for path, expected in IMMUTABLE.items()}
-    lifecycle = json.loads((ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v3.json").read_text())
+    lifecycle = json.loads((ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v4.json").read_text())
+    lifecycle_outcomes = json.loads((ROOT / lifecycle["outcomes_inherited_unchanged_from"]).read_text())["outcomes"]
     result = {
-        "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-qualification/1.0.0",
+        "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-qualification/1.1.0",
         "bridge_sha256":bridge.sha256,"bridge_field_count":bridge_fields,"execution_plan_field_count":plan_fields,
         "fresh_process_repetitions":len(digests),"unique_fresh_process_digests":len(set(digests)),
-        "canonical_reconstruction":"PASS" if reconstruct_bridge(raw).sha256 == bridge.sha256 else "FAIL",
+        "canonical_reconstruction":"PASS" if reconstruct_bridge(raw, bridge.sha256).sha256 == bridge.sha256 else "FAIL",
         "mutation_cases_rejected":rejected,"unexpected_passes":unexpected,
-        "transition_phases":len(PHASES),"lifecycle_outcomes":len(lifecycle["outcomes"]),
-        "real_consumer_signatures_bound":no_access["real_signatures_bound"],
-        "complete_call_path":"PASS" if no_access["result"] == "PASS" else "FAIL",
+        "valid_provenance_substitutions_rejected":provenance_substitutions,
+        "transition_phases":len(PHASES),"lifecycle_release_paths":len(lifecycle["implemented_release_paths"]),
+        "lifecycle_outcomes":len(lifecycle_outcomes),
+        "producer_adapter":no_access["producer_adapter"],
+        "authority_chain":no_access["authority_chain"],
+        "real_consumer_invocations":call_path["primary_calls"] + call_path["secondary_calls"],
+        "complete_call_path":call_path["production_coordinator_instantiated"],
+        "failure_release_paths":call_path["failure_release_paths"],
+        "comparison_release_accounting_chain":call_path["comparison_release_accounting_chain"],
         "numerical_and_result_drift":sum(not passed for passed in drift.values()),
         "immutable_bindings":drift,"original_checkpoint_access":0,"checkpoint_root_resolved":False,
         "checkpoint_opens":0,"checkpoint_hash_reads":0,"checkpoint_payload_reads":0,"checkpoint_mmaps":0,
