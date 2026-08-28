@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/7.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v6.json",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v6.json": "c1ebc7181be5b88ed4f32e2f9e421aefbf69b45c9bdfd07f057442c74d86e0fa",
+    "docs/architecture/reviews/evidence/f017-event06-v12-opus-arbiter-cycle-03-request.md": "7e911372f59ff4e93734298ebb6518ccfbe44d673f633b3f52fbaac0c090ecfc",
+    "docs/architecture/reviews/evidence/f017-event06-v12-opus-arbiter-cycle-03-normalized-result.json": "9a4344490b62c2059960665fd7d6eea4e87c98f4690e310d645b18296bc200a9",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v6.json": "b39e936af174ee86cb070fc3df6219c58845e0acd378cc20de74a1ea4d609f37",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-arbiter-ledger-v4.json": "a62dc7bb61e4009dc7058da63b0af7a570b9c6c478258dec124c1d70e8cf91d4",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v5.json": "d2994dc9f5b3ee113d6705f1f33c6fb6126e5c0335c8ef2a5e0dfed97c341159",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v7.json": "52cf52623afb6d9fe486a69b8cfb5d99923a8e38a1489745e79be5562dc25cb6",
+    "docs/architecture/reviews/evidence/f017-event06-v12-final-no-go-declaration-v3.json": "a4b99d92e211add78f7865263b1c214bdd13d60ca350513c2a9fb508af58562e"
+  },
+  "binding_count": 8,
+  "evidence_only_run": 33132517810,
+  "evidence_only_native_jobs": 0,
+  "opus_cycle": 3,
+  "blocking_findings": 0,
+  "unresolved_claims": 0,
+  "global_execution_evidence_verdict": "REJECT",
+  "terminal_no_go_evidence_verdict": "ACCEPT_TERMINAL_PRE_MINT_NO_GO_EVIDENCE_AS_TRUTHFUL_AND_COMPLETE",
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_06_executed": false,
+  "event_06_package_started": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}
