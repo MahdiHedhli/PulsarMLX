@@ -1,0 +1,1 @@
+{"axes_disjoint":true,"derived_cases":18,"independent_structural_locations":["top_level_field","nested_object_field","nested_array_record"],"schema":"pulsarmlx.f017.event06-sequence05-alias-axis-authority/1.0.0","semantic_families":["duplicate_semantics","unknown_aliases","type_coercions","path_substitutions","sha_substitutions","canonical_encoding"]}
