@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-failure-qualification/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-failure-qualification-v1.json",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "modeled_failure_classes": 38,
+  "unique_failure_outcomes": 38,
+  "substantive_mutation_cases": 395,
+  "lifecycle_outcomes": 9,
+  "lifecycle_release_paths": 5,
+  "implemented_failure_release_paths": 4,
+  "success_release_passes": 1,
+  "phase_specific_outcomes": "PASS",
+  "comparison_release_accounting_chain": "PASS",
+  "generic_fallback": "PROHIBITED",
+  "unexpected_passes": 0,
+  "retries": 0,
+  "resume": false,
+  "original_checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event06_ids_consumed": 0,
+  "event06_executed": false,
+  "result": "PASS"
+}

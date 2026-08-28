@@ -1,0 +1,8 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-node-receipt/1.1.0",
+  "node": "B3_BRIDGE_IMPLEMENTATION",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "implementation_tree": "4ea92265360b7130948e52b8497f2802a7526702",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-node-b3-receipt-v1.json",
+  "status": "PASS"
+}

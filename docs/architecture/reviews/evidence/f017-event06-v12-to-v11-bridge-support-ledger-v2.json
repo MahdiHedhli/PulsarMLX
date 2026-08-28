@@ -1,0 +1,38 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-support-ledger/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-support-ledger-v1.json",
+  "review_cycle": "OPUS_WHOLE_DOMAIN_CYCLE_01",
+  "reviewed_implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "repair_implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "dispositions": [
+    {
+      "claim_id": "C-BRIDGE-PROV-001",
+      "finding": "identity-stage producer output was not consumed by a real adapter and execution-plan provenance did not close through installed authority",
+      "disposition": "REPAIRED",
+      "evidence": ["scripts/research/f017_event06_numerical_bridge_v1.py", "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py", "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-call-path-qualification-v1.json"]
+    },
+    {
+      "claim_id": "C-BRIDGE-CALLPATH-001",
+      "finding": "qualification did not exercise the production coordinator with real signatures and authority derivation",
+      "disposition": "REPAIRED",
+      "evidence": ["scripts/research/qualify_f017_event06_bridge_call_path_v2.py", "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-call-path-qualification-v1.json"]
+    },
+    {
+      "claim_id": "C-BRIDGE-LIFE-001",
+      "finding": "descriptor release and comparison-release-accounting closure were not implemented on all post-identity paths",
+      "disposition": "REPAIRED",
+      "evidence": ["scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py", "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v4.json", "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-failure-qualification-v2.json"]
+    },
+    {
+      "claim_id": "C-BRIDGE-QUAL-001",
+      "finding": "synthetic qualification did not establish real call sites, sealed durable starts, release paths, or provenance substitutions",
+      "disposition": "REPAIRED",
+      "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-qualification-v2.json", "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-full-native-ci-v2.json"]
+    }
+  ],
+  "rejected_evidence_preserved": true,
+  "blocking_findings_remaining": 0,
+  "required_findings_remaining": 0,
+  "unresolved_findings": 0,
+  "result": "REPAIRED_PENDING_FRESH_WHOLE_DOMAIN_REVIEW"
+}

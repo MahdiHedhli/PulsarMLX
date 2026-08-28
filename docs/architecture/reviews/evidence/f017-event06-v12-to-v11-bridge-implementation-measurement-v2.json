@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-implementation-measurement/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-implementation-measurement-v1.json",
+  "source_starting_head": "9aebdb79c3fa69c3f905ad135429a9b89bc681b1",
+  "source_starting_tree": "47eecd7c0d5edeb9ad522872749b0411e68348de",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "implementation_tree": "4ea92265360b7130948e52b8497f2802a7526702",
+  "bridge_digest": "b7f473d7066a3420170cb6fde73bdfd4955f1912d3d8977d9ca0b003c83c06cd",
+  "paths": {
+    ".github/workflows/macos.yml": "5c22a312a6764d0b7876a8f1ae87f29a90e7068e312897b3cecc3fbe792b4ba7",
+    "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py": "aa99e0071c1654eace328cabfb12c02c99858dd1ffaaa7c53d2bea601949b5fd",
+    "scripts/research/f017_event06_bridge_capability_v1.py": "f022182fb4be845a8f03cda372ffff1bb25526c1c1f79f44f6e17e4445eccc7f",
+    "scripts/research/f017_event06_bridge_synthetic_fixture_v1.py": "95d0643efaf1d0f06e874b38f58d7557abdc4ba5874d81735ee29fb5848a97ea",
+    "scripts/research/f017_event06_execution_plan_v1.py": "e6bc9020eb0262bca9ce9bc39b526337f1068da4e77edf854ebfbcf6cc1fd499",
+    "scripts/research/f017_event06_numerical_bridge_v1.py": "b7d8eaedcd87d4d8363a14977750f59406b171677a87417aebe31d11ed04112e",
+    "scripts/research/generate_f017_event06_bridge_authority_v1.py": "a5ff3a4b0cfc1c95d42894666f5e3d0b212d2d752e1afcbf5af75c87b09098fc",
+    "scripts/research/qualify_f017_event06_bridge_call_path_v2.py": "92bf457c0ee7d84f8590f8a879f4ecd985e7f997c10fa3ca71746ff3023555aa",
+    "scripts/research/qualify_f017_event06_bridge_failures_v1.py": "bd17fc101f5adde1a005b66214773a2c5d30335a7193528e5c74de03e76882d6",
+    "scripts/research/qualify_f017_event06_numerical_bridge_v1.py": "4d033619dbf9f15ec7663bc79ca94ee5b6f8f72fbba606bdaa49508df2c05c0c",
+    "scripts/research/rehearse_f017_event06_bridge_no_access_v1.py": "dac5dd06481998761315e365a231c19a36835b7855226abdb981342992d1da7b",
+    "scripts/research/tests/test_f017_event06_numerical_bridge_v1.py": "ee8723ca31c54d8250b9ca8bce7eceee297d5753b4244d1d03bc9d3495f59421",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v4.json": "4479d35a348b10c0f68122599e3e46e6f4a0a1bb4414ba81efcbdfeac5fa2343",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v4.json": "6b01b3a41ebe1c88c594c37acd76bff5a96ae33d6ebbdab0204ae48241c03b9c"
+  },
+  "historical_v4_numerical_authority_drift": 0,
+  "historical_v11_result_authority_drift": 0,
+  "original_checkpoint_access": 0,
+  "live_authority_created": false,
+  "event_06_executed": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

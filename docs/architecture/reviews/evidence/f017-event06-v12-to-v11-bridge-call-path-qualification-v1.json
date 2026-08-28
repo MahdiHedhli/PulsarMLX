@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-bridge-call-path-qualification/2.0.0",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "production_coordinator_instantiated": "PASS",
+  "producer_adapter": "PASS",
+  "primary_calls": 1,
+  "secondary_calls": 1,
+  "sealed_durable_starts": 3,
+  "caller_supplied_start_digests": 0,
+  "sealed_execution_result": "PASS",
+  "comparison_release_accounting_chain": "PASS",
+  "success_release_passes": 1,
+  "failure_release_paths": 4,
+  "package_terminal": "PASS",
+  "original_checkpoint_root_resolved": false,
+  "original_checkpoint_access": 0,
+  "numerical_operations": 0,
+  "live_state_created": false,
+  "live_authority_installed": false,
+  "event06_ids_consumed": 0,
+  "event06_executed": false,
+  "result": "PASS"
+}
