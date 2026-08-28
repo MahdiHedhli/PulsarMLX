@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-design-node-receipt/1.0.0",
+  "node": "D2_PRODUCER_CONSUMER_LIFECYCLE_CAPABILITY_PLAN",
+  "dependencies": ["D0_STARTING_AUTHORITY_AND_FAILURE_REPRODUCTION","D1_BRIDGE_CONTRACT_AND_DATA_MODEL"],
+  "outputs": [
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v1.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v1.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-capability-v1.json",
+    "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-v1.md"
+  ],
+  "numerical_bytes_changed": false,
+  "result_authority_bytes_changed": false,
+  "checkpoint_access": 0,
+  "event06_executed": false,
+  "result": "PASS"
+}
