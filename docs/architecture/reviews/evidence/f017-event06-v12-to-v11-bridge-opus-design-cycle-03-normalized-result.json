@@ -1,0 +1,8 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-opus-design-result/1.0.0",
+  "reviewed_design_head":"933100ae8a59e5c9b23548c0fda6754880425e4e","model":"claude-opus-5","effort":"high","cycle":3,
+  "closed_findings":["FINDING-A","FINDING-B","FINDING-C","FINDING-D","FINDING-E","FINDING-F","FINDING-G","ADVISORY-MANIFEST"],
+  "claim_verdicts":{"C-BRIDGE-GEN-001":"ACCEPT","C-BRIDGE-PROV-001":"ACCEPT","C-BRIDGE-DIGEST-001":"ACCEPT","C-BRIDGE-LEGACY-001":"ACCEPT","C-BRIDGE-CALLPATH-001":"ACCEPT","C-BRIDGE-LIFE-001":"ACCEPT","C-BRIDGE-CAP-001":"ACCEPT","C-BRIDGE-DRIFT-001":"ACCEPT"},
+  "accepted_claims":8,"rejected_claims":0,"unresolved_claims":0,"blocking":0,"required":0,
+  "global_verdict":"ACCEPT_F017_EVENT06_V12_TO_V11_BRIDGE_DESIGN_FOR_IMPLEMENTATION"
+}

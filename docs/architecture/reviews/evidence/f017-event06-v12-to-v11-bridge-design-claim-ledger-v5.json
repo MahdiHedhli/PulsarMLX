@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-claim-ledger/1.4.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-claim-ledger-v4.json","cycle":3,
+  "claims":[
+    {"claim_id":"C-BRIDGE-GEN-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-PROV-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DIGEST-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LEGACY-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CALLPATH-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LIFE-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CAP-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DRIFT-001","state":"ACCEPTED","arbiter_verdict":"ACCEPT","readiness_critical":true}
+  ],
+  "accepted":8,"rejected":0,"unresolved":0,"blocking":0,"required":0,"result":"ACCEPT_F017_EVENT06_V12_TO_V11_BRIDGE_DESIGN_FOR_IMPLEMENTATION"
+}
