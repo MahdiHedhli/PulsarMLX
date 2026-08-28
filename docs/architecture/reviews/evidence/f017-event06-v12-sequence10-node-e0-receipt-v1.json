@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-node-receipt/1.0.0",
+  "node_id": "E0_PROMPT_BYTES_PARENT_DUPLICATE_AND_CONCURRENT_LANE_GUARD",
+  "completed_at_utc": "2026-08-28T21:37:18Z",
+  "prompt_repository_commit": "c8198731fff7e73d94e28d44b8e3e2d918b1034f",
+  "prompt_repository_locator": "Prompts/F017/Mac-Studio-M1-Ultra/010__F017__Mac-Studio-M1-Ultra__Event-06-V12-corrected-full-checkpoint-oracle-one-shot-go__prompt.md",
+  "prompt_digest": "23f6079c432e6012a00c4f4f9c3b59f50828bb0109d294d0e3c029fb8e185cd6",
+  "prompt_sidecar": "PASS",
+  "prompt_commit_ancestor_of_live_main": true,
+  "human_go_bytes": "Go approved",
+  "human_go_digest": "b6a5cafed69e38d4549073738abe71bd552c28cd0f88257107f7af1a332b57c3",
+  "sequence_9_parent": {
+    "prompt_repository_commit": "aa60089ed0f029d7fba9ddf5923b9e6f2ee75442",
+    "repository_locator": "Prompts/F017/Mac-Studio-M1-Ultra/009__F017__Mac-Studio-M1-Ultra__Event-06-V12-no-access-qualification-CI-review-final-readiness__response.md",
+    "digest": "56695660dfe70d800454b16b48b5985530ad330c394267b6192477f1b14961dc",
+    "operationally_ratified": true,
+    "ready_for_fresh_go": true
+  },
+  "freeze_transition_table": {
+    "prompt_repository_commit": "ba3312668ffdea22f1dd292097001595456e7574",
+    "repository_locator": "Prompts/F017/Mac-Studio-M1-Ultra/010__F017__Mac-Studio-M1-Ultra__Event-06-V12-one-shot-execution__freeze-transition-table.json",
+    "digest": "db30bdc8f4679f66f0200f6875886203236bdb952e798508488065733640703b",
+    "mode": "PLANNER_PREDECLARED_IRREVERSIBLE_ONE_SHOT_TRANSITIONS",
+    "transition_count": 11
+  },
+  "duplicate_guard": {
+    "sequence_10_response_absent": true,
+    "sequence_10_checksum_absent": true,
+    "v12_3_identities_absent": true
+  },
+  "concurrent_lane_guard": {
+    "macbook_frontier_mutation": "NONE",
+    "shared_feature_state_mutation": "NONE",
+    "shared_feature_state_issuance_digest": "7e118e4a45240ad6b600030d21869f10db9fd48a631dab87796f0ef9da239878"
+  },
+  "side_effects": {
+    "checkpoint_root_resolved": false,
+    "checkpoint_access": 0,
+    "numerical_operations": 0,
+    "state_created": false
+  },
+  "result": "PASS"
+}

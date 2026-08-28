@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-node-receipt/1.0.0",
+  "node_id": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_CALL_PATH_PROOF",
+  "completed_at_utc": "2026-08-28T21:37:18Z",
+  "failure_classification": "END_TO_END_EXECUTION_CALL_PATH_NOT_INSTANTIABLE",
+  "failure_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-end-to-end-call-path-instantiability-failure-v1.json",
+    "sha256": "f7158c7812924facd6e793718a1783d207242fec530ec2e2ddee713805d09266"
+  },
+  "pre_mint_memory": "BLOCKED_BY_PRIOR_CALL_PATH_FAILURE",
+  "checkpoint_root_resolved": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "approval_created": false,
+  "capability_created": false,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "result": "TERMINAL_FAILURE"
+}
