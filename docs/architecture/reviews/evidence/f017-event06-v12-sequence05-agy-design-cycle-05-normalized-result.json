@@ -1,0 +1,1 @@
+{"advisory_findings":0,"blocking_findings":0,"conversation_id":"54e4eba6-311b-4cc4-8422-9997cdb25f38","findings":[],"model":"Gemini 3.1 Pro (High)","required_findings":0,"reviewed_commit":"e92c8162302edb609c8bef69921ab71887cca525","schema":"pulsarmlx.f017.event06-v12-sequence05-agy-design-result/1.2.0","unresolved_claims":0,"verdict":"ACCEPT_DESIGN_FOR_IMPLEMENTATION"}
