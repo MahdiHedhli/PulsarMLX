@@ -1,0 +1,20 @@
+```json
+{
+  "verdict": "NO_UNRESOLVED_MATERIAL_CHALLENGE",
+  "findings": [],
+  "counts": {
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "advisory_findings": 0,
+    "unresolved_claims": 0
+  }
+}
+```
+
+### Evidence Notes
+
+*   **Prequalification Findings (Points 1, 2, 3):** Findings `F017-S9-PREQUAL-001` and `F017-S9-PREQUAL-002` are mechanically verified as resolved in runtime code. Code review of `f017_event06_production_installation_v2.py` and `f017_event06_durable_installation_transaction_v1.py` confirms that the true Future-GO token capability serves as the absolute gate to production. The production implementation uses a rigid `O_CREAT | O_EXCL` transactional write path with fsync, precise inode readback validation, and directory-level fsyncs, strictly segregating the true capability from synthetic or candidate execution paths.
+*   **Synthetic Validations & Mutations (Points 6, 7):** Direct execution of `qualify_f017_event06_sequence09_no_access_v1.py` passed cleanly without live execution authority. It executed the synthetic qualification routines and perfectly matched the claimed outcomes: exactly 326 mutation rejection cases, 16 installation failures, 10 transaction race injection failures, 6 sealed object capability attacks, and 11 future-GO rejections. `interposition_installed_before_execution_facing_imports` was `true`, successfully intercepting operations to enforce exactly 0 checkpoint/mmap accesses and 0 numerical runs.
+*   **Manifest & Contract Consistency (Points 4, 5, 8, 9):** Synthetic execution of `validate_f017_event06_sequence09_authority_v1.py --profile final` succeeded and independently proved the integrity of the 21-role manifest without cycles. It verified causality between installation preparation and candidate receipt constraints. Field alignments, including the strict 86-field requirements for readiness bytes, cleanly matched with no missing or stale bindings. Historical (Event 05 and V11/V4) authorities remained undisturbed.
+*   **CI Execution (Point 10):** The `f017-event06-v12-sequence09-full-native-ci-v1.json` evidence receipt confirms FULL_NATIVE execution for run ID `33193441295`. It correctly exhibits success across both critical required CI pathways (the MLX small fixture validation and Apple Silicon workspace baseline) and exactly 0 unexpected or required native skips.
+*   **Policy Freeze Compliance (Points 11, 12):** Based on the `f017-event06-v12-sequence09-freeze-transition-receipt-v1.json`, the implementation strictly adhered to the Freeze Transition Table. The deployment correctly identified its node as `Q2_PREOBSERVATION_FREEZE`, labeling it `TEMPORALLY_FROZEN_NOT_OPERATIONALLY_RATIFIED` with `operationally_ratified: false`. As required, `event_06_executed` and `live_event_06_authorization_created` were completely suppressed during Sequence 9.
