@@ -40,7 +40,7 @@ the Rust packer's mapping implementation.
 
 ## Current state
 
-`R001_DESIGN_ACCEPTED`
+`R001_FOUNDATION_ACCEPTED`
 
 The live checkpoint and design gates passed. Production implementation is
 admitted for the bounded 269-object foundation scope only. Full-store repack,

@@ -422,6 +422,33 @@ fn build_plans(
                             layer.layer
                         ))
                     })?;
+                let mut role_counts = [0u32; 3];
+                let mut unknown_roles = BTreeSet::new();
+                for component in &object.components {
+                    match component.role.as_str() {
+                        "gate" => role_counts[0] += 1,
+                        "up" => role_counts[1] += 1,
+                        "down" => role_counts[2] += 1,
+                        other => {
+                            unknown_roles.insert(other);
+                        }
+                    }
+                }
+                if let Some(role) = unknown_roles.first() {
+                    return Err(err(format!(
+                        "unknown component role layer {} {class} expert {expert} {role}",
+                        layer.layer
+                    )));
+                }
+                for (role, count) in ["gate", "up", "down"].into_iter().zip(role_counts) {
+                    if count != 1 {
+                        let category = if count == 0 { "missing" } else { "duplicate" };
+                        return Err(err(format!(
+                            "{category} component role layer {} {class} expert {expert} {role}",
+                            layer.layer
+                        )));
+                    }
+                }
                 let mut components = Vec::new();
                 let mut next_offset = HEADER_LEN;
                 for role in ["gate", "up", "down"] {
@@ -1434,5 +1461,421 @@ mod tests {
         assert!(outside.read_dir().unwrap().next().is_none());
         fs::remove_file(staging.join("abandoned")).unwrap();
         fs::remove_dir_all(root).unwrap();
+    }
+
+    fn synthetic_component(role: &str, shard: &str, offset: u64) -> InventoryComponent {
+        InventoryComponent {
+            role: role.to_string(),
+            tensor: format!("synthetic.{role}.{offset}"),
+            shard: shard.to_string(),
+            gguf_type: "IQ2_XXS".to_string(),
+            dims: vec![256, 1],
+            type_block_elements: 256,
+            type_block_bytes: 66,
+            row_bytes: 66,
+            plane_bytes: 66,
+            data_offset_abs: offset,
+            data_end_abs: offset + 66,
+        }
+    }
+
+    fn synthetic_single_object() -> (Inventory, Admission, Vec<ScopeLayer>) {
+        let shard = "synthetic-001.gguf";
+        let object = InventoryObject {
+            layer: 3,
+            expert: 0,
+            expert_class: "routed".to_string(),
+            components: vec![
+                synthetic_component("gate", shard, 0),
+                synthetic_component("up", shard, 66),
+                synthetic_component("down", shard, 132),
+            ],
+        };
+        let inventory = Inventory {
+            schema: "synthetic-r001-v1".to_string(),
+            checkpoint_set_sha256: CHECKPOINT_EXPECTED.to_string(),
+            architecture: "glm-dsa".to_string(),
+            expert_tensor_count: 3,
+            logical_object_count: 1,
+            expert_payload_bytes: 198,
+            objects: vec![object],
+        };
+        let admission = Admission {
+            schema: "synthetic-admission-v1".to_string(),
+            checkpoint_set_sha256: CHECKPOINT_EXPECTED.to_string(),
+            inventory_sha256: "11".repeat(32),
+            total_bytes: 264,
+            shards: vec![AdmissionShard {
+                index: 1,
+                name: shard.to_string(),
+                size: 264,
+                sha256: "22".repeat(32),
+                destination_stat: SourceStat {
+                    device: 1,
+                    size: 264,
+                    mtime_ns: 1,
+                    inode: 1,
+                },
+            }],
+        };
+        let scope = vec![ScopeLayer {
+            layer: 3,
+            routed: vec![0],
+            shared: false,
+        }];
+        (inventory, admission, scope)
+    }
+
+    fn role_error(roles: &[&str]) -> String {
+        let (mut inventory, admission, scope) = synthetic_single_object();
+        let original = inventory.objects[0].components.clone();
+        inventory.objects[0].components = roles
+            .iter()
+            .enumerate()
+            .map(|(index, role)| {
+                let mut component = original[index.min(original.len() - 1)].clone();
+                component.role = (*role).to_string();
+                component
+            })
+            .collect();
+        build_plans(&inventory, &admission, &scope)
+            .unwrap_err()
+            .to_string()
+    }
+
+    #[test]
+    fn build_plans_rejects_duplicate_gate_role() {
+        assert_eq!(
+            role_error(&["gate", "gate", "up", "down"]),
+            "duplicate component role layer 3 routed expert 0 gate"
+        );
+    }
+
+    #[test]
+    fn build_plans_rejects_duplicate_up_role() {
+        assert_eq!(
+            role_error(&["gate", "up", "up", "down"]),
+            "duplicate component role layer 3 routed expert 0 up"
+        );
+    }
+
+    #[test]
+    fn build_plans_rejects_duplicate_down_role() {
+        assert_eq!(
+            role_error(&["gate", "up", "down", "down"]),
+            "duplicate component role layer 3 routed expert 0 down"
+        );
+    }
+
+    #[test]
+    fn build_plans_rejects_unknown_role_without_ignoring_it() {
+        assert_eq!(
+            role_error(&["gate", "up", "down", "other"]),
+            "unknown component role layer 3 routed expert 0 other"
+        );
+    }
+
+    #[test]
+    fn build_plans_preserves_specific_missing_role_errors() {
+        for (roles, missing) in [
+            (&["up", "down"][..], "gate"),
+            (&["gate", "down"][..], "up"),
+            (&["gate", "up"][..], "down"),
+        ] {
+            assert_eq!(
+                role_error(roles),
+                format!("missing component role layer 3 routed expert 0 {missing}")
+            );
+        }
+    }
+
+    #[test]
+    fn build_plans_valid_exact_roles_preserve_baseline_projection() {
+        let (inventory, admission, scope) = synthetic_single_object();
+        let plans = build_plans(&inventory, &admission, &scope).unwrap();
+        assert_eq!(plans.len(), 1);
+        assert_eq!(
+            plans[0]
+                .components
+                .iter()
+                .map(|component| component.role.as_str())
+                .collect::<Vec<_>>(),
+            ["gate", "up", "down"]
+        );
+        let expected = json!({
+            "alignment":FORMAT_ALIGNMENT,"architecture":"glm-dsa",
+            "checkpoint_set_sha256":CHECKPOINT_EXPECTED,"format_major":1,"format_minor":0,
+            "inventory_sha256":"11".repeat(32),
+            "objects":[{"class":"routed","components":[
+                {"block_bytes":66,"block_elements":256,"dims":[256,1,256],"length":66,"role":"gate","row_bytes":66,"source_length":66,"source_offset":0,"source_shard":"synthetic-001.gguf","source_shard_ordinal":1,"tensor":"synthetic.gate.0","type_id":16,"type_name":"IQ2_XXS"},
+                {"block_bytes":66,"block_elements":256,"dims":[256,1,256],"length":66,"role":"up","row_bytes":66,"source_length":66,"source_offset":66,"source_shard":"synthetic-001.gguf","source_shard_ordinal":1,"tensor":"synthetic.up.66","type_id":16,"type_name":"IQ2_XXS"},
+                {"block_bytes":66,"block_elements":256,"dims":[256,1,256],"length":66,"role":"down","row_bytes":66,"source_length":66,"source_offset":132,"source_shard":"synthetic-001.gguf","source_shard_ordinal":1,"tensor":"synthetic.down.132","type_id":16,"type_name":"IQ2_XXS"}
+            ],"expert":0,"layer":3,"relative_path":"objects/layer-003/routed/expert-000.pmlxexp"}],
+            "ordering":"layer,class,expert","schema":"pulsarmlx.r001.manifest-plan.v1",
+            "scope":[{"layer":3,"routed_experts":[0],"shared":false}]
+        });
+        assert_eq!(
+            canonical_json(&plan_projection(&"11".repeat(32), &plans, &scope)).unwrap(),
+            canonical_json(&expected).unwrap()
+        );
+    }
+
+    fn synthetic_complete_authority() -> (Inventory, Admission, Vec<ScopeLayer>) {
+        let shard_names: Vec<String> = (1..=6)
+            .map(|index| format!("synthetic-{index:03}.gguf"))
+            .collect();
+        let mut offsets = [0u64; 6];
+        let mut objects = Vec::with_capacity(19_532);
+        let mut scope = Vec::with_capacity(76);
+        for layer in 3..=78 {
+            let shard_index = (layer - 3) as usize % shard_names.len();
+            for (class, experts) in [("routed", 256u32), ("shared", 1u32)] {
+                for expert in 0..experts {
+                    let components = ["gate", "up", "down"]
+                        .into_iter()
+                        .map(|role| {
+                            let offset = offsets[shard_index];
+                            offsets[shard_index] += 66;
+                            synthetic_component(role, &shard_names[shard_index], offset)
+                        })
+                        .collect();
+                    objects.push(InventoryObject {
+                        layer,
+                        expert,
+                        expert_class: class.to_string(),
+                        components,
+                    });
+                }
+            }
+            scope.push(ScopeLayer {
+                layer,
+                routed: (0..256).collect(),
+                shared: true,
+            });
+        }
+        let shards = shard_names
+            .into_iter()
+            .enumerate()
+            .map(|(index, name)| AdmissionShard {
+                index: index as u32 + 1,
+                name,
+                size: offsets[index],
+                sha256: format!("{:064x}", index + 1),
+                destination_stat: SourceStat {
+                    device: 1,
+                    size: offsets[index],
+                    mtime_ns: 1,
+                    inode: index as u64 + 1,
+                },
+            })
+            .collect::<Vec<_>>();
+        let total_bytes = shards.iter().map(|shard| shard.size).sum();
+        (
+            Inventory {
+                schema: "synthetic-r001-complete-v1".to_string(),
+                checkpoint_set_sha256: CHECKPOINT_EXPECTED.to_string(),
+                architecture: "glm-dsa".to_string(),
+                expert_tensor_count: 456,
+                logical_object_count: 19_532,
+                expert_payload_bytes: total_bytes,
+                objects,
+            },
+            Admission {
+                schema: "synthetic-admission-v1".to_string(),
+                checkpoint_set_sha256: CHECKPOINT_EXPECTED.to_string(),
+                inventory_sha256: "33".repeat(32),
+                total_bytes,
+                shards,
+            },
+            scope,
+        )
+    }
+
+    fn plan_identity(inventory_sha: &str, plans: &[ObjectPlan], scope: &[ScopeLayer]) -> String {
+        domain_hash(
+            b"PULSARMLX-R001-MANIFEST-PLAN-V1",
+            &plan_projection(inventory_sha, plans, scope),
+        )
+        .unwrap()
+    }
+
+    fn require_plan_identity(
+        expected: &str,
+        inventory_sha: &str,
+        plans: &[ObjectPlan],
+        scope: &[ScopeLayer],
+    ) -> Result<()> {
+        if plan_identity(inventory_sha, plans, scope) != expected {
+            return Err(err("manifest plan identity mismatch"));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn complete_scope_is_deterministic_bounded_and_block_aligned() {
+        let (inventory, admission, scope) = synthetic_complete_authority();
+        let plans = build_plans(&inventory, &admission, &scope).unwrap();
+        assert_eq!(plans.len(), 19_532);
+        assert_eq!(
+            plans.iter().map(|object| object.components.len()).sum::<usize>(),
+            58_596
+        );
+        assert!(plans.windows(2).all(|pair| {
+            let key = |object: &ObjectPlan| {
+                (
+                    object.layer,
+                    if object.expert_class == "routed" { 0 } else { 1 },
+                    object.expert,
+                )
+            };
+            key(&pair[0]) < key(&pair[1])
+        }));
+        let mut ranges = BTreeMap::<&str, Vec<(u64, u64)>>::new();
+        for object in &plans {
+            assert_eq!(
+                object
+                    .components
+                    .iter()
+                    .map(|component| component.role.as_str())
+                    .collect::<Vec<_>>(),
+                ["gate", "up", "down"]
+            );
+            assert!(object
+                .components
+                .iter()
+                .all(|component| component.shard == object.components[0].shard));
+            for component in &object.components {
+                let source_end = component.source_offset.checked_add(component.length).unwrap();
+                let bundle_end = component.bundle_offset.checked_add(component.length).unwrap();
+                assert!(source_end <= component.source_stat.size);
+                assert_eq!(component.source_offset % component.block_bytes, 0);
+                assert_eq!(component.length % component.block_bytes, 0);
+                assert_eq!(component.bundle_offset % FORMAT_ALIGNMENT, 0);
+                assert!(bundle_end <= align_up(bundle_end, FORMAT_ALIGNMENT).unwrap());
+                ranges
+                    .entry(&component.shard)
+                    .or_default()
+                    .push((component.source_offset, source_end));
+            }
+        }
+        for shard_ranges in ranges.values_mut() {
+            shard_ranges.sort_unstable();
+            assert!(shard_ranges.windows(2).all(|pair| pair[0].1 <= pair[1].0));
+        }
+        let identity = plan_identity(&admission.inventory_sha256, &plans, &scope);
+        assert_eq!(
+            identity,
+            "350ee7d581b425658f800c96cc877abdebd56e945a560d615ddfb38091b8f75a"
+        );
+        assert!(identity.bytes().all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)));
+
+        let (mut reordered_inventory, reordered_admission, reordered_scope) =
+            synthetic_complete_authority();
+        reordered_inventory.objects.reverse();
+        for object in &mut reordered_inventory.objects {
+            object.components.reverse();
+        }
+        let reordered = build_plans(
+            &reordered_inventory,
+            &reordered_admission,
+            &reordered_scope,
+        )
+        .unwrap();
+        assert_eq!(
+            canonical_json(&plan_projection(
+                &admission.inventory_sha256,
+                &plans,
+                &scope
+            ))
+            .unwrap(),
+            canonical_json(&plan_projection(
+                &reordered_admission.inventory_sha256,
+                &reordered,
+                &reordered_scope
+            ))
+            .unwrap()
+        );
+        assert_eq!(
+            identity,
+            plan_identity(
+                &reordered_admission.inventory_sha256,
+                &reordered,
+                &reordered_scope
+            )
+        );
+    }
+
+    #[test]
+    fn complete_scope_rejects_duplicate_object_keys() {
+        let (mut inventory, admission, scope) = synthetic_single_object();
+        inventory.objects.push(inventory.objects[0].clone());
+        assert_eq!(
+            build_plans(&inventory, &admission, &scope)
+                .unwrap_err()
+                .to_string(),
+            "duplicate inventory object layer 3 routed expert 0"
+        );
+    }
+
+    #[test]
+    fn complete_scope_rejects_checked_source_overflow() {
+        let (mut inventory, admission, scope) = synthetic_single_object();
+        inventory.objects[0].components[0].data_offset_abs = u64::MAX;
+        assert!(build_plans(&inventory, &admission, &scope)
+            .unwrap_err()
+            .to_string()
+            .starts_with("overflow adding source component end"));
+    }
+
+    #[test]
+    fn complete_scope_rejects_checked_bundle_alignment_overflow() {
+        let (mut inventory, mut admission, scope) = synthetic_single_object();
+        let length = u64::MAX - (u64::MAX % 66);
+        let component = &mut inventory.objects[0].components[0];
+        component.plane_bytes = length;
+        component.data_end_abs = length;
+        admission.shards[0].size = u64::MAX;
+        admission.shards[0].destination_stat.size = u64::MAX;
+        assert!(build_plans(&inventory, &admission, &scope)
+            .unwrap_err()
+            .to_string()
+            .starts_with("overflow adding bundle component end"));
+    }
+
+    #[test]
+    fn complete_scope_rejects_component_beyond_shard() {
+        let (inventory, mut admission, scope) = synthetic_single_object();
+        admission.shards[0].size = 65;
+        admission.shards[0].destination_stat.size = 65;
+        assert_eq!(
+            build_plans(&inventory, &admission, &scope)
+                .unwrap_err()
+                .to_string(),
+            "component outside shard synthetic-001.gguf"
+        );
+    }
+
+    #[test]
+    fn complete_scope_rejects_stale_identity_and_incorrect_order() {
+        let (inventory, admission, scope) = synthetic_single_object();
+        let plans = build_plans(&inventory, &admission, &scope).unwrap();
+        let identity = plan_identity(&admission.inventory_sha256, &plans, &scope);
+        assert!(require_plan_identity(&identity, &admission.inventory_sha256, &plans, &scope).is_ok());
+        let mut mutated = plans.clone();
+        mutated[0].components.swap(0, 1);
+        assert_eq!(
+            require_plan_identity(&identity, &admission.inventory_sha256, &mutated, &scope)
+                .unwrap_err()
+                .to_string(),
+            "manifest plan identity mismatch"
+        );
+    }
+
+    #[test]
+    fn complete_scope_rejects_unsafe_relative_paths() {
+        for path in ["/absolute", ".", "..", "objects/../escape", "./objects"] {
+            assert!(safe_relative(Path::new(path)).is_err(), "accepted {path}");
+        }
+        assert!(safe_relative(Path::new("objects/layer-003/routed/expert-000.pmlxexp")).is_ok());
     }
 }
