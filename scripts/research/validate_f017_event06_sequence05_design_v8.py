@@ -115,7 +115,7 @@ def predicate_posture_mapping(store: Store) -> bool:
 
 def predicate_cycle10_repair(store: Store) -> bool:
     ledger = store.document(design.CYCLE10_REPAIR)
-    normalized = store.document(ROOT / ledger["source_normalized_path"])
+    normalized = store.document(ROOT / ledger["source_normalized_path"], canonical=False)
     response = store.raw(ROOT / ledger["source_response_path"]).decode()
     ids = [row["finding_id"] for row in ledger["rows"]]
     return (
