@@ -644,6 +644,39 @@ jobs:
           assert rehearsal["numerical_operations"] == 0
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 live-GO production call path
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_live_go_call_path_v3.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_live_go_call_path_v3.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/validate_f017_event06_live_go_call_path_v3.py \
+            > "$RUNNER_TEMP/f017-event06-live-go-call-path-v3.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "f017-event06-live-go-call-path-v3.json").read_text()
+          )
+          assert result["result"] == "PASS"
+          assert result["deterministic_reconstructions"] >= 20
+          assert result["real_public_signatures"]["real_signatures_bound"] == 12
+          assert result["mutation_campaign"]["total"] >= 200
+          assert result["mutation_campaign"]["rejected"] == result["mutation_campaign"]["total"]
+          assert result["unexpected_passes"] == 0
+          assert all(value == 0 for value in result["side_effect_census"].values())
+          assert result["event_06_executed"] is False
+          assert result["live_event_06_authority_created"] is False
+          assert result["event_06_package_started"] is False
+          assert result["original_checkpoint_access"] == 0
+          assert result["numerical_operations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify Event 06 V12-to-V11 numerical authority bridge
         run: |
           set -euo pipefail
