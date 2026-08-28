@@ -644,6 +644,65 @@ jobs:
           assert rehearsal["numerical_operations"] == 0
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 V12-to-V11 numerical authority bridge
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_bridge_authority_v1.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_numerical_bridge_v1.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_numerical_bridge_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_bridge_failures_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-failure-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/rehearse_f017_event06_bridge_no_access_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-no-access-rehearsal.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/f017_event06_bridge_capability_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-capability.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-event06-bridge-qualification.json").read_text())
+          failures = json.loads((root / "f017-event06-bridge-failure-qualification.json").read_text())
+          rehearsal = json.loads((root / "f017-event06-bridge-no-access-rehearsal.json").read_text())
+          capability = json.loads((root / "f017-event06-bridge-capability.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["bridge_field_count"] == 42
+          assert qualification["execution_plan_field_count"] == 26
+          assert qualification["fresh_process_repetitions"] >= 20
+          assert qualification["unique_fresh_process_digests"] == 1
+          assert qualification["mutation_cases_rejected"] >= 350
+          assert qualification["unexpected_passes"] == 0
+          assert qualification["transition_phases"] == 10
+          assert qualification["lifecycle_outcomes"] == 9
+          assert qualification["real_consumer_signatures_bound"] == 10
+          assert qualification["complete_call_path"] == "PASS"
+          assert qualification["numerical_and_result_drift"] == 0
+          assert qualification["original_checkpoint_access"] == 0
+          assert qualification["numerical_operations"] == 0
+          assert failures["result"] == "PASS"
+          assert failures["modeled_failure_classes"] >= 38
+          assert failures["substantive_mutation_cases"] >= 350
+          assert failures["unexpected_passes"] == 0
+          assert failures["original_checkpoint_access"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["state_created"] is False
+          assert rehearsal["checkpoint_root_resolved"] is False
+          assert rehearsal["checkpoint_opens"] == 0
+          assert rehearsal["checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          assert capability["result"] == "PASS"
+          assert capability["violations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
