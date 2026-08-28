@@ -1,0 +1,1 @@
+{"aggregate_result":"FAIL","ci_mode":"EVIDENCE_ONLY","evidence_integrity_result":"FAIL","failed_head":"66fc5933d37c2fc20ce65d1032c7d06ae86b1fee","failure":"EXTERNAL_PROMPT_REPOSITORY_COORDINATE_MISINTERPRETED_AS_SOURCE_REPOSITORY_BINDING","native_jobs_launched":0,"run_id":33147807668,"schema":"pulsarmlx.f017.event06-v12-bridge-sequence04-evidence-only-ci-failure/1.0.0"}
