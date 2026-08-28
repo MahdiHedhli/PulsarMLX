@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-index-restoration/1.0.0",
+  "affected_request_commit": "7aca5e2bc3f90b586fc701a5abe916fd3638daa3",
+  "last_complete_evidence_commit": "8f943e67ffccd8b59c85f4bb05e00ed0fc18e943",
+  "classification": "ORPHANED_EXTERNAL_INDEX_REWROTE_TRACKED_CENSUS",
+  "content_loss": false,
+  "worktree_evidence_files_retained": 14,
+  "retained_bytes_match_last_complete_evidence_commit": true,
+  "repair": "READD_EXACT_RETAINED_BYTES_APPEND_ONLY",
+  "history_rewritten": false,
+  "force_push_used": false,
+  "measured_execution_bytes_changed": false,
+  "original_checkpoint_root_resolved": false,
+  "original_checkpoint_access": 0,
+  "live_authority_created": false,
+  "package_started": false,
+  "event_06_executed": false,
+  "result": "RESTORED_WITHOUT_DATA_LOSS"
+}
