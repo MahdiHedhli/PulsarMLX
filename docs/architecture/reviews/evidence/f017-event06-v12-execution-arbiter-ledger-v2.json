@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-arbiter-ledger/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-arbiter-ledger-v1.json",
+  "cycle": 1,
+  "model": "claude-opus-5",
+  "reviewed_head": "077bce3c4a288a7fbeb0f3b82f5a852be7f69246",
+  "claims": [
+    {"claim_id": "E-PROMPT-001", "verdict": "UNRESOLVED"},
+    {"claim_id": "E-REF-001", "verdict": "ACCEPT"},
+    {"claim_id": "E-CALLPATH-001", "verdict": "REJECT"},
+    {"claim_id": "E-SAFETY-001", "verdict": "ACCEPT"},
+    {"claim_id": "E-CI-001", "verdict": "UNRESOLVED"}
+  ],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 4,
+  "unresolved_claims": 2,
+  "global_execution_evidence_verdict": "REJECT",
+  "terminal_no_go_evidence_verdict": "ACCEPT_TERMINAL_PRE_MINT_NO_GO_EVIDENCE_AS_TRUTHFUL_AND_COMPLETE",
+  "smallest_rejected_claim": "E-CALLPATH-001",
+  "result": "REPAIR_REQUIRED"
+}

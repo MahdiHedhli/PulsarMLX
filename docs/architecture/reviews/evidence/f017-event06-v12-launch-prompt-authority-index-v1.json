@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-launch-prompt-authority-index/1.0.0",
+  "prompt_repository": "MahdiHedhli/PulsarMLX-Prompts",
+  "prompt_source_commit": "01458953d113fdcab1685a509931fe4aef78bcea",
+  "prompt_source_tree": "581108cb6a94e2602c30b8820ac905495fd8b6d9",
+  "prompt_source_blob": "7a8b0d7efa774595c84acdb3cfe752f081f928b6",
+  "external_repository_relative_prompt_path": "Prompts/F017/Mac-Studio-M1-Ultra/002__F017__Mac-Studio-M1-Ultra__Event-06-V12-corrected-full-checkpoint-oracle-one-shot-execution-go__prompt.md",
+  "external_content_sha256": "ff897246c633e90d8d502b2238f8cec17ec74eb0e8957df0ac87fb6ed9f11af5",
+  "snapshot_path": "docs/architecture/reviews/evidence/f017-event06-v12-launch-prompt-snapshot-v1.md",
+  "snapshot_sha256": "ff897246c633e90d8d502b2238f8cec17ec74eb0e8957df0ac87fb6ed9f11af5",
+  "adjacent_sidecar_value": "ff897246c633e90d8d502b2238f8cec17ec74eb0e8957df0ac87fb6ed9f11af5",
+  "launcher_match": true,
+  "adjacent_sidecar_match": true,
+  "prompt_control_main_head_at_guard": "8b88bfbc20ae074ab780da67052629661de9eef1",
+  "prompt_commit_ancestor_of_prompt_control_main": true,
+  "paired_response_absent_at_guard": true,
+  "paired_response_checksum_absent_at_guard": true,
+  "sequence_2_handoff_absent_at_guard": true,
+  "sequence_2_terminal_absent_at_guard": true,
+  "shared_state_modified": false,
+  "result": "PASS"
+}
