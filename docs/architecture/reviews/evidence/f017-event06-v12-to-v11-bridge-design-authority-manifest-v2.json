@@ -1,0 +1,19 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-authority-manifest/1.1.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-authority-manifest-v1.json",
+  "source_starting_head":"9aebdb79c3fa69c3f905ad135429a9b89bc681b1",
+  "source_starting_tree":"47eecd7c0d5edeb9ad522872749b0411e68348de",
+  "prompt_commit":"3631aab694b4ec958a6021967541920d6ed11f3b",
+  "prompt_sha256":"5576cfbf345e637fab30ae6559e0036d37d2cf3d2962d7ade1a81227331692ea",
+  "active_design_bindings":[
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json","sha256":"cc9705c4ca0ab98e188e89681a659a2f9d5827088848584d3cfc2846b56bba16"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v3.json","sha256":"5832eb52250bfd29ea3f31e39e250e82be4123f401616300430883b6df93d7d5"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-capability-v1.json","sha256":"b922850c1480d178df250131881c5637cf20ea1d2a0f0b5d23379b2186da5592"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-v2.md","sha256":"c10d69ecc63875fbab391fc8b38515be74fe9d75e6c2460b1345d6f53e2204a9"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-support-ledger-v2.json","sha256":"e0b56c65d346871fd24dc26ca1fc7237b8624f1eec7ba135b0bb40f18ab8008a"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-opus-design-cycle-01-normalized-result.json","sha256":"9c75c732aac162c35b640305ccc7176e178b2b7e6d1ccf6d2396d7128bfd114a"}
+  ],
+  "immutable_runtime_bindings":{"primary_numerical_v4_sha256":"56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6","secondary_numerical_v4_sha256":"c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3","numerical_contract_v4_sha256":"a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2","result_authority_v11_sha256":"4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101","result_bundle_builder_v11_sha256":"296fc64befb92fc47db4458d19df444a645bfd62e269d911e9c4a46b9773d145","comparison_authority_v11_sha256":"10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352"},
+  "event06_executed":false,"live_event06_authority_created":false,"original_checkpoint_access":0,"p1_attempt_2_executed":false,"historical_master_ledger":175,
+  "design_review_state":"PENDING_OPUS_CYCLE_02","result":"PROPOSED"
+}

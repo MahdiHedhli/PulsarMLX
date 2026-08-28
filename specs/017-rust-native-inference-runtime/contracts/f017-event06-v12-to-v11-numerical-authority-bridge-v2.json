@@ -1,0 +1,66 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-numerical-authority-bridge-contract/1.1.0",
+  "supersedes": "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v1.json",
+  "state": "DESIGN_REVIEW_REQUIRED",
+  "generation_truth": {"identity_authority_generation":"V12","numerical_consumer_generation":"V11","numerical_contract_generation":"V4","result_authority_generation":"V11"},
+  "historical_schema_policy": {"v12_candidate_field_count":28,"v12_installed_field_count":30,"v12_schema_changed":false,"v11_candidate_schema_changed":false,"fake_v11_candidate_permitted":false,"union_candidate_schema_permitted":false},
+  "canonical_document": {
+    "unknown_fields":"REJECT","missing_fields":"REJECT","duplicate_json_keys":"REJECT","type_coercion":"REJECT",
+    "canonical_serialization":"UTF8_SORTED_KEYS_COMPACT_JSON_WITH_TRAILING_NEWLINE",
+    "digest":"SHA256_OF_CANONICAL_SERIALIZATION_EXCLUDING_NO_FIELDS",
+    "fields": [
+      "schema","state","identity_authority_generation","numerical_consumer_generation","numerical_contract_generation","result_authority_generation",
+      "authorization_id","package_attempt_id","primary_event_id","secondary_event_id","source_head","source_tree","implementation_measurement_sha256",
+      "installed_authority_sha256","installation_receipt_sha256","event_identity_plan_sha256","execution_plan_sha256",
+      "identity_manifest_sha256","identity_terminal_sha256","access_census_sha256","checkpoint_set_sha256","descriptor_identity_sha256","lease_owner","graph_descriptors","shards",
+      "tensor_catalog_path","tensor_catalog_sha256","primary_numerical_sha256","secondary_numerical_sha256","numerical_contract_path","numerical_contract_sha256",
+      "result_authority_path","result_authority_sha256","result_bundle_builder_sha256","comparison_authority_sha256","release_authority_sha256","accounting_authority_sha256",
+      "primary_target_source_sha256","secondary_target_source_sha256","attempts","retries","resume"
+    ],
+    "field_types": {
+      "schema":"exact_enum","state":"exact_enum:VALIDATED","identity_authority_generation":"exact_enum:V12","numerical_consumer_generation":"exact_enum:V11","numerical_contract_generation":"exact_enum:V4","result_authority_generation":"exact_enum:V11",
+      "authorization_id":"nonempty_string","package_attempt_id":"nonempty_string","primary_event_id":"nonempty_string","secondary_event_id":"nonempty_string","source_head":"lower_hex_40","source_tree":"lower_hex_40",
+      "hash_fields":"lower_hex_64","path_fields":"canonical_repository_relative_path","graph_descriptors":"array_exactly_5","shards":"array_exactly_6","attempts":"integer_exactly_1_nonboolean","retries":"integer_exactly_0_nonboolean","resume":"boolean_false"
+    },
+    "hash_fields":["implementation_measurement_sha256","installed_authority_sha256","installation_receipt_sha256","event_identity_plan_sha256","execution_plan_sha256","identity_manifest_sha256","identity_terminal_sha256","access_census_sha256","checkpoint_set_sha256","descriptor_identity_sha256","tensor_catalog_sha256","primary_numerical_sha256","secondary_numerical_sha256","numerical_contract_sha256","result_authority_sha256","result_bundle_builder_sha256","comparison_authority_sha256","release_authority_sha256","accounting_authority_sha256","primary_target_source_sha256","secondary_target_source_sha256"],
+    "path_fields":["tensor_catalog_path","numerical_contract_path","result_authority_path"]
+  },
+  "provenance_equalities": [
+    "installed.package_attempt_id == execution_plan.package_attempt_id",
+    "installed.event_identity_plan_sha256 == execution_plan.event_identity_plan_sha256",
+    "event_identity_plan.primary_event_id == execution_plan.primary_event_id",
+    "event_identity_plan.secondary_event_id == execution_plan.secondary_event_id",
+    "installed.checkpoint_set_sha256 == identity_terminal.checkpoint_set_sha256",
+    "identity_terminal.descriptor_identity_sha256 == sha256(canonical(graph_descriptors))",
+    "execution_plan.source_head == measured_source_head",
+    "execution_plan.source_tree == measured_source_tree"
+  ],
+  "descriptor_record": {
+    "field_census":["device","inode","mode","size","mtime_ns","ctime_ns","shard_ordinal","role","lease_id"],
+    "ordinals":[2,3,4,5,6],"role":"GRAPH_PAYLOAD","unknown_fields":"REJECT","matches_unchanged_v11_descriptor_validator":true,"file_descriptor_number_is_authority":false
+  },
+  "shard_record": {"field_census":["filename","size_bytes","sha256","role"],"count":6,"roles":["IDENTITY_ONLY","GRAPH_PAYLOAD","GRAPH_PAYLOAD","GRAPH_PAYLOAD","GRAPH_PAYLOAD","GRAPH_PAYLOAD"],"unknown_fields":"REJECT"},
+  "sealed_object_policy": {"direct_construction":"REJECT","copy":"REJECT","deepcopy":"REJECT","pickle":"REJECT","mutable_mapping_export":"REJECT","caller_callback":"REJECT","environment_policy":"REJECT","unchecked_path":"REJECT","ambient_global":"REJECT"},
+  "consumer_views": {
+    "PRIMARY_NUMERICAL_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","primary_numerical_sha256","tensor_catalog_path","tensor_catalog_sha256","shards","graph_descriptors","source_head","source_tree"],
+    "SECONDARY_NUMERICAL_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","secondary_numerical_sha256","tensor_catalog_path","tensor_catalog_sha256","shards","graph_descriptors","primary_terminal_sha256","source_head","source_tree"],
+    "RESULT_BUNDLE_V11":["schema","role","bridge_sha256","authorization_id","package_attempt_id","consumer_event_id","producer_measurement_sha256","numerical_contract_sha256","durable_start_sha256","access_census_sha256"],
+    "COMPARISON_V11":["schema","bridge_sha256","package_attempt_id","primary_bridge_bundle_binding_sha256","secondary_bridge_bundle_binding_sha256","comparison_authority_sha256"],
+    "RELEASE":["schema","bridge_sha256","package_attempt_id","descriptor_identity_sha256","lease_owner","comparison_binding_sha256"],
+    "ACCOUNTING":["schema","bridge_sha256","authorization_id","package_attempt_id","primary_event_id","secondary_event_id","installed_authority_sha256","installation_receipt_sha256","release_binding_sha256"],
+    "PACKAGE_TERMINAL":["schema","bridge_sha256","package_attempt_id","binding_chain_head_sha256","v11_closure_root_sha256","accounting_binding_sha256"]
+  },
+  "consumer_view_rules": {"unknown_fields":"REJECT","missing_fields":"REJECT","each_view_is_role_limited":true,"v11_candidate_bytes_emitted":false,"v12_candidate_bytes_modified":false},
+  "transition_binding_journal": {
+    "schema":"pulsarmlx.f017.event06-v12-bridge-transition-binding/1.0.0",
+    "field_census":["schema","phase","bridge_sha256","package_attempt_id","subject_artifact_kind","subject_sha256","predecessor_binding_sha256","state"],
+    "first_predecessor":"64_LOWERCASE_ZEROES","state":"COMPLETE","unknown_fields":"REJECT",
+    "phases":["PACKAGE_START","IDENTITY_TERMINAL","PRIMARY_START","PRIMARY_RESULT_TERMINAL","SECONDARY_START","SECONDARY_RESULT_TERMINAL","COMPARISON_TERMINAL","RELEASE_TERMINAL","ACCOUNTING_CLOSURE","V11_PACKAGE_CLOSURE"],
+    "modifies_v11_artifact":false,
+    "pre_bridge_artifact_bindings_are_banked_after_bridge_derivation_before_primary_start":true,
+    "v12_package_terminal_is_not_a_journal_subject":true,
+    "v12_package_terminal_binds_chain_head_and_v11_closure":true
+  },
+  "event_number_policy":"DATA_NOT_CAPABILITY_BRANCH",
+  "result":"PROPOSED"
+}

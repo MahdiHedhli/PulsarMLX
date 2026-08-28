@@ -1,0 +1,16 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-claim-ledger/1.2.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-claim-ledger-v2.json",
+  "cycle":2,
+  "claims":[
+    {"claim_id":"C-BRIDGE-GEN-001","state":"SUPPORTED","prior_opus_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-PROV-001","state":"REPAIRED","prior_opus_verdict":"REJECT","repair_findings":["FINDING-A","FINDING-C"],"readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DIGEST-001","state":"REPAIRED","prior_opus_verdict":"REJECT","repair_findings":["FINDING-B","FINDING-E"],"readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LEGACY-001","state":"SUPPORTED","prior_opus_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CALLPATH-001","state":"REPAIRED","prior_opus_verdict":"REJECT","repair_findings":["FINDING-A"],"readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LIFE-001","state":"REPAIRED","prior_opus_verdict":"REJECT","repair_findings":["FINDING-D"],"readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CAP-001","state":"SUPPORTED","prior_opus_verdict":"ACCEPT","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DRIFT-001","state":"SUPPORTED","prior_opus_verdict":"ACCEPT","readiness_critical":true}
+  ],
+  "blocking":0,"required":0,"unresolved":0,"result":"READY_FOR_OPUS_DESIGN_REARBITRATION"
+}

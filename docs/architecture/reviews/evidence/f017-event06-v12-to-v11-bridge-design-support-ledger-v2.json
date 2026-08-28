@@ -1,0 +1,14 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-support-ledger/1.1.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-support-ledger-v1.json",
+  "cycle":2,
+  "rows":[
+    {"finding_id":"FINDING-A","disposition":"REPAIRED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json","docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-v2.md"],"resolution":"Use the exact nine-field descriptor validator census, include the exact six-shard source geometry, and call unchanged source plus execute_and_bank without candidate fabrication."},
+    {"finding_id":"FINDING-B","disposition":"REPAIRED","evidence":["specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json","docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-v2.md"],"resolution":"Use an adjacent V12 transition-binding journal and V12 package terminal; leave every V11 artifact byte unchanged."},
+    {"finding_id":"FINDING-C","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json","resolution":"Bind event-identity-plan and execution-plan digests and enforce package and event ID equality edges."},
+    {"finding_id":"FINDING-D","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v3.json","resolution":"Add exact durable-package-start failure outcomes before descriptor acquisition."},
+    {"finding_id":"FINDING-E","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v2.json","resolution":"Enumerate a closed field census for all seven role-specific consumer views."},
+    {"finding_id":"ADVISORY-MANIFEST","disposition":"REPAIRED","evidence":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-authority-manifest-v2.json","resolution":"Supersede the design authority manifest with active V2/V3 bindings."}
+  ],
+  "supported":0,"repaired":6,"conceded":0,"unresolved":0,"result":"PASS"
+}
