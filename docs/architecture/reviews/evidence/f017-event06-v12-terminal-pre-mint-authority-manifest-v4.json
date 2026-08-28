@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v3.json",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v3.json": "5deff05cbeaeddf606e2bb57f43c75354c63ceaa125cb39b6bc1c420e704f7ff",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v3.json": "35eb006cf3990e851315988f3663cddd0614d61ea080dc5cd3a8087a0d9053c2",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v4.json": "dbd4612d475547e7b30b7278f9d561263d2e3b1136605f8e804fba82776f5ee6",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v5.json": "12058b40bbaf7c2a5a691628719d893f5ba366f9590cd708b3cfa88d636123df"
+  },
+  "binding_count": 4,
+  "evidence_only_run": 33131629611,
+  "evidence_only_native_jobs": 0,
+  "opus_cycle_01_findings_repaired": 4,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_06_executed": false,
+  "event_06_package_started": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}
