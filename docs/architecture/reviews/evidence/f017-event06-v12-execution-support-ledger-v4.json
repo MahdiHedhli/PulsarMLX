@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-support-ledger/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v3.json",
+  "cycle": 2,
+  "rows": [
+    {"finding_id": "O-E06-C02-001", "disposition": "REPAIRED", "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-gemini-challenge-cycle-01-request.md", "docs/architecture/reviews/evidence/f017-event06-v12-gemini-challenge-cycle-01-exact-response.md", "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v1.json", "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v3.json", "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v2.json"], "runtime_bytes_changed": false},
+    {"finding_id": "O-E06-C02-002", "disposition": "REPAIRED", "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-execution-challenge-ledger-v3.json", "runtime_bytes_changed": false}
+  ],
+  "supported": 0,
+  "repaired": 2,
+  "conceded": 0,
+  "unresolved": 0,
+  "runtime_bytes_changed": false,
+  "execution_evidence_changed": false,
+  "result": "PASS"
+}

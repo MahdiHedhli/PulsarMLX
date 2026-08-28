@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-challenge-ledger/3.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-challenge-ledger-v2.json",
+  "cycle": 1,
+  "model": "gemini-3.1-pro-high",
+  "reviewed_head": "29bbf1b1c0219821346402f5146fa0da74f20239",
+  "rows": [
+    {"challenge_id": "G-C01", "claim_id": "E-CALLPATH-001", "state": "SUPPORTED"},
+    {"challenge_id": "G-C02", "claim_id": "E-CALLPATH-001", "state": "SUPPORTED", "support": "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v2.json"},
+    {"challenge_id": "G-C03", "claim_id": "E-CALLPATH-001", "state": "SUPPORTED"},
+    {"challenge_id": "G-C04", "claim_id": "E-SAFETY-001", "state": "SUPPORTED", "support": "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v2.json"},
+    {"challenge_id": "G-C05", "claim_id": "E-SAFETY-001", "state": "SUPPORTED"},
+    {"challenge_id": "G-C06", "claim_id": "E-CI-001", "state": "SUPPORTED"}
+  ],
+  "challenge_count": 6,
+  "supported_count": 6,
+  "challenged_count": 0,
+  "unresolved_count": 0,
+  "global_verdict": "TERMINAL_PRE_MINT_NO_GO_EVIDENCE_SUPPORTED",
+  "result": "PASS"
+}

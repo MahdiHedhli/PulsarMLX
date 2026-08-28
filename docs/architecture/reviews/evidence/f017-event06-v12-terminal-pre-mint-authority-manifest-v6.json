@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/6.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v5.json",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v5.json": "cd45cd4764dcf8e2bf68a136c38d4f3d56956850c6d6ba2324feb25d48345014",
+    "docs/architecture/reviews/evidence/f017-event06-v12-gemini-challenge-cycle-01-request.md": "29cbda4615d960a277408be861d15c90713dd4e1de928e89f522d091e3632c9e",
+    "docs/architecture/reviews/evidence/f017-event06-v12-gemini-challenge-cycle-01-exact-response.md": "e6a1f4bb67540e65a0c25ee5fd2fd46e206bc4afde3006e4e61a7d30d2b8ec6f",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v1.json": "dd61c7565ac05462aa6770c8ef23b6f68ca526369566b6a00bce219833ad6fa1",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v3.json": "53e8fc2f240e75708218c496117a7eb933c76d001fb7ca1c7b642e91048f1c16",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v2.json": "66471a82bbf40cad8b43d1435132f7805dfcb3a01bce354dba9b41c35834a8e8",
+    "docs/architecture/reviews/evidence/f017-event06-v12-opus-arbiter-cycle-02-request.md": "7f8d9c4c45bd16e1fb69cfd386c2d30058e6074dcac86ba5be51ceaccccbd16d",
+    "docs/architecture/reviews/evidence/f017-event06-v12-opus-arbiter-cycle-02-normalized-result.json": "9f7a0257dc160ae604622a6a01cad06c818193ec718bce8cac010f1628539550",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-challenge-ledger-v3.json": "268dd62d267755dc8aa5d2720ce66096cdfaa55e9b6fec006b66a19a47fc70e7",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-arbiter-ledger-v3.json": "fe54315fdc6dd7fc6346cffa39f0332e1ebcdc06a33b7c22a725db330eaf16da",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v4.json": "4418cf351ca3f6388662dbe7761ae286851dfbab23a1ec9db930229ea3460cde",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v5.json": "6fac87288234c3001f2b71aeed5f0b49bc4c49e7044a0ec679671ca5f500ee00",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v6.json": "18cc0e3f51bc5624ca695e4020c687696056e0612f7f743a9cfeca8a00337e2c"
+  },
+  "binding_count": 13,
+  "evidence_only_run": 33131876716,
+  "evidence_only_native_jobs": 0,
+  "opus_cycle_02_findings_repaired": 2,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_06_executed": false,
+  "event_06_package_started": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}
