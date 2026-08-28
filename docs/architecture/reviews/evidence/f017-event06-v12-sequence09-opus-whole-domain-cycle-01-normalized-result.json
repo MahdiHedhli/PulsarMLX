@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-opus-whole-domain-result/1.0.0",
+  "reviewed_commit": "695494ae2e2a68901a34504a9ea045483413ecb5",
+  "reviewed_tree": "94ae1a5f045706f0ea6f59e11da07fbabca668a8",
+  "verdict": "REJECT",
+  "blocking_findings": 3,
+  "non_blocking_required_findings": 4,
+  "advisory_findings": 3,
+  "unresolved_claims": 3,
+  "claim_verdicts": [
+    {"claim_id": "C-PREQUAL-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-CAPABILITY-001", "verdict": "REJECT", "invalidation_disposition": "INVALIDATE_Q1_CAPABILITY_GATE"},
+    {"claim_id": "C-TRANSACTION-001", "verdict": "REJECT", "invalidation_disposition": "INVALIDATE_Q1_TRANSACTION_FAULT_MODEL"},
+    {"claim_id": "C-READINESS-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-INSTALL-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-PROVENANCE-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-MUTATION-001", "verdict": "REJECT", "invalidation_disposition": "INVALIDATE_Q3_MUTATION_COVERAGE"},
+    {"claim_id": "C-OUTCOME-001", "verdict": "REJECT", "invalidation_disposition": "INVALIDATE_Q3_OUTCOME_COVERAGE"},
+    {"claim_id": "C-NOACCESS-001", "verdict": "ACCEPT", "invalidation_disposition": "REPAIR_EVIDENCE_PRODUCER"},
+    {"claim_id": "C-CORPUS-001", "verdict": "UNRESOLVED", "invalidation_disposition": "INVALIDATE_Q3_CORPUS_REPRODUCTION"},
+    {"claim_id": "C-CI-001", "verdict": "UNRESOLVED", "invalidation_disposition": "BANK_RAW_GITHUB_QUERY_ENVELOPE"},
+    {"claim_id": "C-REVIEW-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-FREEZE-001", "verdict": "UNRESOLVED", "invalidation_disposition": "SUPPLY_COMMITTED_PROMPT_AUTHORITY_BYTES"},
+    {"claim_id": "C-HISTORY-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-SAFETY-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-LAYERING-001", "verdict": "ACCEPT", "invalidation_disposition": "CLARIFY_RATIFICATION_LAYERING"}
+  ],
+  "finding_ids": [
+    "F-OPUS-S9-001",
+    "F-OPUS-S9-002",
+    "F-OPUS-S9-003",
+    "F-OPUS-S9-004",
+    "F-OPUS-S9-005",
+    "F-OPUS-S9-006",
+    "F-OPUS-S9-007",
+    "F-OPUS-S9-008",
+    "F-OPUS-S9-009",
+    "F-OPUS-S9-010"
+  ],
+  "reproduction_report_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-reproduction-v1.json",
+  "reproduction_report_sha256": "c34fcd22af710b1c85c5242212fecc32a1980bf2a4ecd488226bfa0892444753"
+}
