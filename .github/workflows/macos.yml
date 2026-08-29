@@ -849,6 +849,56 @@ jobs:
           assert qualification["historical_master_ledger"] == 175
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 package-scoped terminal uniqueness
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_authority_dag_v2.py --check
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/validate_f017_event06_authority_dag_v2.py \
+            > "$RUNNER_TEMP/f017-event06-authority-dag-v2.json"
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_package_transaction_v2.py \
+            > "$RUNNER_TEMP/f017-event06-package-transaction-v2.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          dag = json.loads((root / "f017-event06-authority-dag-v2.json").read_text())
+          qualification = json.loads((root / "f017-event06-package-transaction-v2.json").read_text())
+          assert dag["result"] == "PASS"
+          assert dag["source_typed_boundaries_total"] == dag["dag_edges_total"]
+          assert dag["dag_edges_with_composition_tests"] == dag["dag_edges_total"]
+          assert dag["uncovered_typed_boundaries"] == 0
+          assert dag["extraneous_dag_edges"] == 0
+          assert dag["live_terminal_boundaries_with_composition_tests"] == dag["live_terminal_boundaries_total"]
+          assert qualification["result"] == "PASS"
+          assert qualification["production_public_registry_root_inputs"] == 0
+          assert qualification["production_public_generic_keyword_inputs"] == 0
+          assert qualification["production_authority_accepted_by_qualification_api"] == 0
+          assert qualification["qualification_authority_accepted_by_production_api"] == 0
+          assert qualification["cross_mode_reservation_or_sink_substitutions_accepted"] == 0
+          assert qualification["package_uniqueness"]["package_reservation_winners_per_identity"] == 1
+          assert qualification["package_uniqueness"]["package_terminal_claim_winners_per_identity"] == 1
+          assert qualification["package_uniqueness"]["competing_terminal_outcomes_accepted"] == 0
+          assert qualification["package_uniqueness"]["ambiguous_accounting_outcomes"] == 0
+          assert qualification["qualification_full_call_path_no_access"] == "PASS"
+          assert qualification["qualification_full_call_path_repetitions"] >= 20
+          assert qualification["production_fixed_root_interception_rehearsal"] == "PASS"
+          assert qualification["production_live_registry_creates_or_writes"] == 0
+          assert qualification["mutation_campaign"]["passed"] == qualification["mutation_campaign"]["total"]
+          assert qualification["mutation_campaign"]["unexpected_passes"] == 0
+          assert qualification["original_checkpoint_access"] == "NONE"
+          assert qualification["full_model_inference"] == "NONE"
+          assert qualification["event06_executed"] is False
+          assert qualification["historical_master_ledger"] == 175
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
