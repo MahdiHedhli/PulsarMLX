@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-causal-failure-reproduction/1.0.0",
+  "defective_requirements": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-requirements-v1.json",
+    "sha256": "1e7f3a1269127bf2c40cdd2eae69133f806dd094bc1fb777ad7beff4154aa5fd"
+  },
+  "defective_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-v2.json",
+    "sha256": "fdf3485232a763da602bf15afe0514e4b39b012e28d88194aeb207dd1132fb0b"
+  },
+  "defective_freeze": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-preobservation-freeze-v1.json",
+    "sha256": "4e9352a860ad828213a85dbe1b0cb95db05784d3190d9593a0cd9087ef858afe"
+  },
+  "observed_order": [
+    "INSTALLED_V12_AUTHORITY",
+    "SEALED_PROMPT_BOUND_BRIDGE_INPUT",
+    "SUCCESSOR_NUMERICAL_BRIDGE",
+    "SUCCESSOR_FIXED_EVENT06_COORDINATOR",
+    "PACKAGE_START",
+    "V12_IDENTITY_AND_LEASES"
+  ],
+  "bridge_required_identity_derived_fields": [
+    "identity_terminal_sha256",
+    "checkpoint_set_sha256",
+    "access_census_sha256",
+    "descriptor_identity_set_sha256",
+    "lease_manifest_sha256",
+    "lease_owner_id"
+  ],
+  "first_available_stage": "V12_IDENTITY_AND_LEASES",
+  "bridge_stage": "SUCCESSOR_NUMERICAL_BRIDGE",
+  "future_reference": true,
+  "private_reseal_or_legacy_projection_required_to_instantiate": true,
+  "classification": "CAUSAL_CONSTRUCTIBILITY_AND_PUBLIC_EXACT_TYPE_PROVENANCE_FAILURE",
+  "production_execution_invoked": false,
+  "checkpoint_access": 0,
+  "result": "REPRODUCED"
+}

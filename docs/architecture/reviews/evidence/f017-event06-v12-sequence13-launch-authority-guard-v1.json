@@ -1,0 +1,57 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-launch-authority-guard/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt": {
+    "commit": "298f5a9a417f199d11d7e6dd1388045e45d163fb",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/013__F017__Mac-Studio-M1-Ultra__Event-06-V12-causal-bridge-contract-supersession-and-preobservation-freeze__prompt.md",
+    "sha256": "f4bdd562e9f97e4c18a6d124fd61b400d0305bcdde238dfe6f6a09b81b75f0f5",
+    "launcher_digest_match": true,
+    "basename_sidecar_match": true,
+    "live_main_ancestor": true
+  },
+  "parent": {
+    "commit": "33c80cf7a66c35260ae41ceac6132c1493d3787a",
+    "sha256": "652b0e110b9c13aaefc31fc7c3d4f8605f586ba744dd7267d657200cfed964c6",
+    "terminal": "F017_EVENT06_V12_PROMPT_BOUND_IDENTITY_BRIDGE: DECLARATION_REQUIRED",
+    "readiness": false,
+    "verified": true
+  },
+  "policy": {
+    "commit": "e5ff7286047dfaeae5b4d0ecfb96c58bdc5b24f3",
+    "sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+    "verified": true
+  },
+  "planner_supersession_directive": {
+    "commit": "339f09f3bb6346a81f77ddefe5b8a30c31f995ac",
+    "sha256": "879e409134e888355e906094a6777aae80f122fd6e8a00b28b7a8f33819c4ad4",
+    "verified": true
+  },
+  "freeze_transition_table": {
+    "commit": "339f09f3bb6346a81f77ddefe5b8a30c31f995ac",
+    "sha256": "6d8ce7fe538231f30ca2d623b10816e5e19c5fc76f72d778c08fa7a65305fdbb",
+    "transition_count": 8,
+    "verified": true
+  },
+  "source": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "eabc45800406a903f4748c18cbcaedb2e86a23e7",
+    "tree": "18a6f78b6e0fb28df8262a107dbfa67e43ee4a7f",
+    "local_detached_authority_exact": true,
+    "remote_branch_exact": true,
+    "clean": true,
+    "competing_event06_processes": 0
+  },
+  "prompt_control": {
+    "sequence13_response_present_before_start": false,
+    "sequence13_response_sidecar_present_before_start": false,
+    "mac_studio_latest_sequence": 13,
+    "macbook_latest_sequence": 25,
+    "state_json_sha256_at_start": "3f8ce8907d47df8efeb5e73061388aebfd05b76e0626c1be45a447066c3d9bc4"
+  },
+  "original_checkpoint_root_resolved": false,
+  "original_checkpoint_access": 0,
+  "event06_execution": false,
+  "live_authority_created": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-opus-finding-design-dispositions/1.0.0",
+  "source_arbitration_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-opus-arbitration-v1.json",
+  "source_arbitration_sha256": "b263be4d5fe81edd61e8914d11caf537d4bc3f3f364eec9b0c857db9f53c027e",
+  "finding_count": 10,
+  "operationally_closed": 0,
+  "findings": [
+    {"id": "S12-ARB-001", "severity": "BLOCKING", "design_disposition": "DESIGN_PRECONDITION_SPECIFIED_PENDING_IMPLEMENTATION_AND_QUALIFICATION", "future_gate": "production-shaped no-access dry stop through real public successor boundaries"},
+    {"id": "S12-ARB-002", "severity": "BLOCKING", "design_disposition": "DESIGN_CENSUS_FIELDS_SPECIFIED_PENDING_OBSERVATIONAL_QUALIFICATION", "future_gate": "observed complete checkpoint and execution side-effect census"},
+    {"id": "S12-ARB-003", "severity": "BLOCKING", "design_disposition": "DESIGN_CAUSALITY_REPAIRED_BY_18_NODE_34_EDGE_POST_IDENTITY_DAG", "future_gate": "implementation exact-type instantiability and full no-access requalification"},
+    {"id": "S12-ARB-004", "severity": "BLOCKING", "design_disposition": "DESIGN_SPLICE_RESISTANCE_SUPPORTED_PENDING_IMPLEMENTATION", "future_gate": "real checkpoint-set substitution campaign across bridge and all downstream consumers"},
+    {"id": "S12-ARB-005", "severity": "BLOCKING", "design_disposition": "DESIGN_PUBLIC_VERSION_FORWARD_TYPES_SPECIFIED_WITHOUT_PRIVATE_RESEAL_OR_LEGACY_PROJECTION", "future_gate": "real public producer-consumer implementation and exact-type qualification"},
+    {"id": "S12-ARB-006", "severity": "REQUIRED", "design_disposition": "COORDINATOR_OWNED_ACCOUNTING_AND_TERMINAL_TYPES_REQUIRED_BY_DESIGN", "future_gate": "constructor ownership and caller-mapping rejection qualification"},
+    {"id": "S12-ARB-007", "severity": "REQUIRED", "design_disposition": "DESIGN_CHECKER_MUTATIONS_PASS_PENDING_REAL_BOUNDARY_CAMPAIGN", "future_gate": "production public-boundary mutation and restart campaign"},
+    {"id": "S12-ARB-008", "severity": "ADVISORY", "design_disposition": "REAL_INSTALLED_AUTHORITY_INPUT_REQUIRED_BY_DESIGN_PENDING_FIXTURE", "future_gate": "real installed-authority fixture path qualification"},
+    {"id": "S12-ARB-009", "severity": "ADVISORY", "design_disposition": "INDEPENDENT_CHECKER_EXISTS_PENDING_REPOSITORY_PATH_EQUIVALENCE", "future_gate": "independent repository-path validation equivalence"},
+    {"id": "S12-ARB-010", "severity": "UNRESOLVED", "design_disposition": "PINNED_PROMPT_PROVENANCE_VERIFIED_CI_PENDING_AT_CANDIDATE_STAGE", "future_gate": "exact-head evidence-only CI and published response provenance"}
+  ],
+  "all_findings_have_design_disposition": true,
+  "all_non_design_findings_have_future_gate": true,
+  "result": "10_OF_10_TRUTHFULLY_DISPOSITIONED"
+}

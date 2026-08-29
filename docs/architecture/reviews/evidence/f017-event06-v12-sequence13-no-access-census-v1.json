@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-no-access-census/1.0.0",
+  "scope": "DESIGN_ONLY",
+  "production_modules_imported": 0,
+  "original_checkpoint_root_resolved": false,
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_identity_hash_reads": 0,
+  "original_checkpoint_payload_reads": 0,
+  "original_checkpoint_mmaps_or_tensor_reads": 0,
+  "event06_identities_instantiated": 0,
+  "event06_identities_consumed": 0,
+  "live_event06_authorization_created": false,
+  "live_v12_installation_created": false,
+  "event06_package_started": false,
+  "primary_real_oracle_event06_executions": 0,
+  "secondary_real_oracle_event06_executions": 0,
+  "numerical_operations": 0,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}
