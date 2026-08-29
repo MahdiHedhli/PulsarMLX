@@ -36,8 +36,13 @@ def _git(root: Path, *arguments: str) -> str:
     return subprocess.check_output(["git", *arguments], cwd=root, text=True).strip()
 
 
-def build_readiness_fixture(root: Path) -> tuple[bytes, Path, dict[str, object]]:
+def build_readiness_fixture(
+    root: Path, *, fixture_variant: str = "sequence-9"
+) -> tuple[bytes, Path, dict[str, object]]:
     """Build a closed 86-field declaration without any checkpoint coordinate."""
+
+    if not fixture_variant or not fixture_variant.isascii() or not fixture_variant.replace("-", "").isalnum():
+        raise ValueError("fixture variant")
 
     root.mkdir(parents=True, exist_ok=True)
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
@@ -47,7 +52,7 @@ def build_readiness_fixture(root: Path) -> tuple[bytes, Path, dict[str, object]]
         cwd=root,
         check=True,
     )
-    (root / "base.txt").write_text("sequence-9\n", encoding="utf-8")
+    (root / "base.txt").write_text(f"{fixture_variant}\n", encoding="utf-8")
     subprocess.run(["git", "add", "base.txt"], cwd=root, check=True)
     environment = dict(os.environ)
     environment.update(

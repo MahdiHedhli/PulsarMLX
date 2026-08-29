@@ -5,9 +5,9 @@
   "fields": [
     {"name": "schema", "necessity": "selects one exact decoder and field census", "duplicative": false},
     {"name": "decision", "necessity": "records one direct Event 06 human decision", "duplicative": false},
-    {"name": "human_decision_sha256", "necessity": "binds the exact sanitized human bytes", "duplicative": false},
+    {"name": "human_decision_sha256", "necessity": "binds the exact sanitized human bytes and is the durable reservation uniqueness unit", "duplicative": false},
     {"name": "release_authority_sha256", "necessity": "transitively binds the accepted release", "duplicative": false},
-    {"name": "one_shot_nonce_sha256", "necessity": "forms the deterministic one-shot token identity", "duplicative": false},
+    {"name": "one_shot_nonce_sha256", "necessity": "forms the deterministic token identity but never expands one human decision into another reservation", "duplicative": false},
     {"name": "issued_at_unix_ns", "necessity": "opens the bounded authority window", "duplicative": false},
     {"name": "expires_at_unix_ns", "necessity": "closes the bounded authority window", "duplicative": false},
     {"name": "scope", "necessity": "freezes one package, one primary, one secondary, zero retry, and no resume", "duplicative": false}

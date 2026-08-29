@@ -37,6 +37,7 @@
   "observer_owner": "scripts/research/f017_event06_collapsed_go_path_v1.py",
   "synthetic_one_shot_reservation": "DURABLE_NO_REPLACE_READBACK_VERIFIED",
   "cross_process_replay_rejections": "19/19",
+  "cross_readiness_replay_rejections": "19/19",
   "live_one_shot_registry_created": false,
   "original_checkpoint_root_resolved": false,
   "event06_executed": false,

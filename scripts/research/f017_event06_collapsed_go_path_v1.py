@@ -265,7 +265,12 @@ class OneShotCompositionStateV1:
     def _issue(self, digest: str, decision_digest: str, nonce_digest: str) -> None:
         if digest in self._issued:
             raise ValueError("duplicate one-shot token")
-        marker_name = f"one-shot-{nonce_digest}.json"
+        if HEX64.fullmatch(decision_digest) is None or HEX64.fullmatch(nonce_digest) is None:
+            raise ValueError("one-shot reservation digest")
+        # The direct human decision, not a decision/release pair, is the
+        # uniqueness unit.  A later readiness revision must never turn the
+        # same human GO into another package attempt.
+        marker_name = f"human-decision-{decision_digest}.json"
         marker_value = {
             "schema": "pulsarmlx.f017.event06-v12-one-shot-reservation/1.0.0",
             "human_decision_sha256": decision_digest,

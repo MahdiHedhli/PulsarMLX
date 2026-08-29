@@ -44,10 +44,17 @@
       "failed_repairs_for_root_cause": 1,
       "repair": "REJECT_REINITIALIZATION_AND_REVALIDATE_THE_EXACT_CLASS_SEAL_IN_INITIALIZER_WITH_SIX_PERMANENT_MUTATIONS",
       "result": "PASS"
+    },
+    {
+      "loop": 7,
+      "root_cause": "DURABLE_RESERVATION_KEYED_DECISION_AND_READINESS_PAIR_INSTEAD_OF_DIRECT_HUMAN_DECISION",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "KEY_EXCLUSIVE_DURABLE_RESERVATION_BY_HUMAN_DECISION_DIGEST_AND_ADD_CROSS_READINESS_FRESH_PROCESS_REPLAY_CAMPAIGN",
+      "result": "PASS"
     }
   ],
-  "loops_consumed": 6,
-  "loops_remaining": 4,
+  "loops_consumed": 7,
+  "loops_remaining": 3,
   "same_root_cause_failed_repair_cap": 2,
   "cap_exceeded": false
 }

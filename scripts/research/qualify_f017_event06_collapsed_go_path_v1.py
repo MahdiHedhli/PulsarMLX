@@ -77,8 +77,11 @@ def _human_value(nonce: str = "f" * 64) -> dict[str, object]:
 def _build(
     root: Path, *, reservation_root: Path | None = None,
     human_nonce: str = "f" * 64,
+    readiness_variant: str = "sequence-9",
 ) -> dict[str, object]:
-    readiness_raw, interface_path, _ = build_readiness_fixture(root / "readiness")
+    readiness_raw, interface_path, _ = build_readiness_fixture(
+        root / "readiness", fixture_variant=readiness_variant
+    )
     readiness = validate_event06_readiness_declaration_v3(
         readiness_raw,
         repository_root=root / "readiness",
@@ -154,12 +157,14 @@ def _build(
 
 
 def _single_result(
-    *, reservation_root: Path | None = None, human_nonce: str = "f" * 64
+    *, reservation_root: Path | None = None, human_nonce: str = "f" * 64,
+    readiness_variant: str = "sequence-9",
 ) -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="f017-collapsed-go-") as directory:
         package = _build(
             Path(directory), reservation_root=reservation_root,
             human_nonce=human_nonce,
+            readiness_variant=readiness_variant,
         )
         state = package["state"].snapshot()
         forbidden = {
@@ -354,6 +359,25 @@ def _mutations() -> dict[str, object]:
                 state=second_state,
             ),
         )
+        cross_readiness_registry = mutation_root / "cross-readiness-registry"
+        cross_readiness_registry.mkdir()
+        first_package = _build(
+            mutation_root / "cross-readiness-first",
+            reservation_root=cross_readiness_registry,
+            human_nonce="c" * 64,
+            readiness_variant="readiness-a",
+        )
+        reject(
+            "cross_readiness_durable_replay",
+            lambda: _build(
+                mutation_root / "cross-readiness-second",
+                reservation_root=cross_readiness_registry,
+                human_nonce="c" * 64,
+                readiness_variant="readiness-b",
+            ),
+        )
+        if first_package["readiness"].source_sha256 == readiness.source_sha256:
+            raise AssertionError("cross-readiness fixture did not vary authority")
         reconstructed_state = fresh_state()
         reconstructed_go = reconstruct_collapsed_one_shot_go(
             go.source_bytes(), decision, readiness,
@@ -468,6 +492,7 @@ def _mutations() -> dict[str, object]:
 def qualify() -> dict[str, object]:
     repetitions = []
     replay_rejections = 0
+    cross_readiness_rejections = 0
     with tempfile.TemporaryDirectory(prefix="f017-collapsed-fresh-process-") as directory:
         process_root = Path(directory)
         for index in range(20):
@@ -500,6 +525,33 @@ def qualify() -> dict[str, object]:
             ):
                 raise AssertionError("cross-process one-shot replay passed")
             replay_rejections += 1
+        cross_readiness_registry = process_root / "shared-cross-readiness-registry"
+        first_cross_readiness_command = [
+            sys.executable, str(Path(__file__).resolve()), "--single",
+            "--registry-root", str(cross_readiness_registry),
+            "--human-nonce", "c" * 64,
+            "--readiness-variant", "readiness-0",
+        ]
+        subprocess.run(
+            first_cross_readiness_command, cwd=ROOT, check=True, text=True,
+            capture_output=True,
+        )
+        for index in range(1, 20):
+            command = [
+                sys.executable, str(Path(__file__).resolve()), "--single",
+                "--registry-root", str(cross_readiness_registry),
+                "--human-nonce", "c" * 64,
+                "--readiness-variant", f"readiness-{index}",
+            ]
+            completed = subprocess.run(
+                command, cwd=ROOT, check=False, text=True, capture_output=True
+            )
+            if (
+                completed.returncode == 0
+                or "human decision already consumed" not in completed.stderr
+            ):
+                raise AssertionError("cross-readiness one-shot replay passed")
+            cross_readiness_rejections += 1
     stable = {
         tuple(
             item[key] for key in (
@@ -521,6 +573,8 @@ def qualify() -> dict[str, object]:
         "distinct_composition_sha_sets": len(stable),
         "cross_process_replay_attempts": 19,
         "cross_process_replay_rejections": replay_rejections,
+        "cross_readiness_replay_attempts": 19,
+        "cross_readiness_replay_rejections": cross_readiness_rejections,
         "mutation_campaign": mutations,
         "observed_no_access_counters": repetitions[0]["observed_counters"],
         "checkpoint_access": 0,
@@ -536,12 +590,14 @@ def main() -> int:
     parser.add_argument("--single", action="store_true")
     parser.add_argument("--registry-root", type=Path)
     parser.add_argument("--human-nonce", default="f" * 64)
+    parser.add_argument("--readiness-variant", default="sequence-9")
     parser.add_argument("--output", type=Path)
     arguments = parser.parse_args()
     result = (
         _single_result(
             reservation_root=arguments.registry_root,
             human_nonce=arguments.human_nonce,
+            readiness_variant=arguments.readiness_variant,
         )
         if arguments.single else qualify()
     )
