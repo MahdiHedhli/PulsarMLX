@@ -14,7 +14,7 @@
     {"id": "C7_OPERATIONAL_RATIFICATION", "status": "PENDING"}
   ],
   "running_nodes": 1,
-  "repair_loops_consumed": 5,
+  "repair_loops_consumed": 6,
   "authority_posture": "INSTANTIABLE_PENDING_OPERATIONAL_RATIFICATION",
   "event06_execution": false,
   "live_event06_authority": false,

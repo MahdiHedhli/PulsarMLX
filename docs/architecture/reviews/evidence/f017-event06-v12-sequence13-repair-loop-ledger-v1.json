@@ -37,10 +37,17 @@
       "failed_repairs_for_root_cause": 1,
       "repair": "BIND_EACH_EXACT_ARTIFACT_CLASS_TO_ONE_DISTINCT_SEAL_AND_ADD_FULL_CROSS_SEAL_MUTATION_MATRIX",
       "result": "PASS"
+    },
+    {
+      "loop": 6,
+      "root_cause": "SEALED_ARTIFACT_INITIALIZER_COULD_REENTER_AN_ALREADY_LOCKED_INSTANCE",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "REJECT_REINITIALIZATION_AND_REVALIDATE_THE_EXACT_CLASS_SEAL_IN_INITIALIZER_WITH_SIX_PERMANENT_MUTATIONS",
+      "result": "PASS"
     }
   ],
-  "loops_consumed": 5,
-  "loops_remaining": 5,
+  "loops_consumed": 6,
+  "loops_remaining": 4,
   "same_root_cause_failed_repair_cap": 2,
   "cap_exceeded": false
 }

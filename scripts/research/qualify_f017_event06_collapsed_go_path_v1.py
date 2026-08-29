@@ -431,6 +431,21 @@ def _mutations() -> dict[str, object]:
                         seal, {"schema": "FORGED"}, b"{}"
                     ),
                 )
+        sealed_instances = {
+            package["decision"]: collapsed._DECISION_SEAL,
+            package["go"]: collapsed._GO_SEAL,
+            package["approval"]: collapsed._APPROVAL_SEAL,
+            package["preparation"]: collapsed._PREPARATION_SEAL,
+            package["identity"]: collapsed._IDENTITY_SEAL,
+            package["eligibility"]: collapsed._ELIGIBILITY_SEAL,
+        }
+        for artifact, matching_seal in sealed_instances.items():
+            reject(
+                "sealed_object_reinitialization",
+                lambda value=artifact, seal=matching_seal: value.__init__(
+                    seal, {"schema": "FORGED"}, b"{}"
+                ),
+            )
 
         source = (ROOT / "scripts/research/f017_event06_collapsed_go_path_v1.py").read_text()
         prohibited = ("sys._getframe", "settrace(", "setprofile(", "inspect.currentframe", "caller_callback")

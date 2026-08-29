@@ -117,7 +117,10 @@ class _ClosedArtifact:
         return super().__new__(cls)
 
     def __init__(self, seal: object, value: dict[str, object], raw: bytes) -> None:
-        del seal
+        if getattr(self, "_locked", False):
+            raise TypeError("authority artifacts cannot be reinitialized")
+        if _ARTIFACT_SEALS.get(type(self)) is not seal:
+            raise TypeError("artifact seal does not match exact class")
         object.__setattr__(self, "_items", tuple(sorted(value.items())))
         object.__setattr__(self, "_raw", raw)
         object.__setattr__(self, "source_sha256", _sha(raw))
@@ -262,7 +265,7 @@ class OneShotCompositionStateV1:
     def _issue(self, digest: str, decision_digest: str, nonce_digest: str) -> None:
         if digest in self._issued:
             raise ValueError("duplicate one-shot token")
-        marker_name = f"human-decision-{decision_digest}.json"
+        marker_name = f"one-shot-{nonce_digest}.json"
         marker_value = {
             "schema": "pulsarmlx.f017.event06-v12-one-shot-reservation/1.0.0",
             "human_decision_sha256": decision_digest,
