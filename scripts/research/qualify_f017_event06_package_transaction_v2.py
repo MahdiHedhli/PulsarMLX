@@ -16,12 +16,15 @@ from unittest.mock import patch
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
 from f017_event06_dag_derived_control_path_v1 import run_full_call_path
+from execute_f017_corrected_oracle_event_v12_bridge import _freeze, _thaw
 from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
 from generate_f017_event06_authority_dag_v2 import build as build_dag
 from qualify_f017_event06_package_uniqueness_v1 import qualify as qualify_uniqueness
-from validate_f017_event06_authority_dag_v2 import validate as validate_dag
+from validate_f017_event06_authority_dag_v2 import (
+    validate as validate_dag, validate_document as validate_dag_document,
+)
 
 
 def _sha(value: object) -> str:
@@ -100,6 +103,7 @@ def qualify() -> dict[str, object]:
 
         for candidate in (
             registry.LIVE_REGISTRY_ROOT,
+            Path("/var/tmp/pulsarmlx-f017-event06-v12-package-registry"),
             registry.LIVE_REGISTRY_ROOT / "child",
             registry.LIVE_REGISTRY_ROOT.parent,
         ):
@@ -109,6 +113,13 @@ def qualify() -> dict[str, object]:
                 ),
                 (ValueError,),
             )
+
+        live_alias = root / "live-root-alias"
+        live_alias.symlink_to(registry.LIVE_REGISTRY_ROOT, target_is_directory=True)
+        rejected(
+            lambda: registry.reserve_qualification_package_attempt(synthetic, live_alias),
+            (ValueError,),
+        )
 
         symlink_target = root / "symlink-target"
         symlink_target.mkdir(mode=0o700)
@@ -152,15 +163,11 @@ def qualify() -> dict[str, object]:
         for index in range(len(canonical_dag["edges"])):
             changed = copy.deepcopy(canonical_dag)
             changed["edges"].pop(index)
-            rejected(lambda changed=changed: (
-                None if changed == canonical_dag else (_ for _ in ()).throw(ValueError("DAG omission"))
-            ), (ValueError,))
+            rejected(lambda changed=changed: validate_dag_document(changed), (ValueError,))
         for index in range(len(canonical_dag["edges"])):
             changed = copy.deepcopy(canonical_dag)
             changed["edges"][index]["source_blob_sha256"] = "f" * 64
-            rejected(lambda changed=changed: (
-                None if changed == canonical_dag else (_ for _ in ()).throw(ValueError("source drift"))
-            ), (ValueError,))
+            rejected(lambda changed=changed: validate_dag_document(changed), (ValueError,))
 
         run_digests = set()
         for index in range(20):
@@ -175,6 +182,11 @@ def qualify() -> dict[str, object]:
 
     uniqueness = qualify_uniqueness(20)
     dag = validate_dag()
+    freeze_cases = ({}, [], [["a", 1], ["b", 2]], {"nested": [{}, []]})
+    frozen_cases = [_freeze(value) for value in freeze_cases]
+    if (len(set(frozen_cases)) != len(freeze_cases)
+            or [_thaw(value) for value in frozen_cases] != list(freeze_cases)):
+        raise AssertionError("injective execution-result freeze")
     if passed != total:
         raise AssertionError("mutation campaign")
     result = {
@@ -186,6 +198,8 @@ def qualify() -> dict[str, object]:
         "cross_mode_reservation_or_sink_substitutions_accepted": 0,
         "production_fixed_root_interception_rehearsal": "PASS",
         "production_live_registry_creates_or_writes": 0,
+        "qualification_live_root_aliases_accepted": 0,
+        "execution_result_freeze_round_trips": len(freeze_cases),
         "qualification_full_call_path_no_access": "PASS",
         "qualification_full_call_path_repetitions": 20,
         "qualification_unique_aggregate_digests": 1,

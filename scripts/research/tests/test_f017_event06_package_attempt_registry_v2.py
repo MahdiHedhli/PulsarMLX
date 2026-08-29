@@ -66,11 +66,52 @@ def test_cross_mode_authority_and_root_intersections_fail_before_observation(tmp
     synthetic = fixture_values()[1]
     for root in (
         registry.LIVE_REGISTRY_ROOT,
+        Path("/var/tmp/pulsarmlx-f017-event06-v12-package-registry"),
         registry.LIVE_REGISTRY_ROOT / "child",
         registry.LIVE_REGISTRY_ROOT.parent,
     ):
         with pytest.raises(ValueError, match="intersects live registry"):
             registry.reserve_qualification_package_attempt(synthetic, root)
+
+
+def test_darwin_alias_and_symlink_alias_reject_before_registry_creation(tmp_path):
+    synthetic = fixture_values()[1]
+    observed = []
+    alias = Path("/var/tmp/pulsarmlx-f017-event06-v12-package-registry")
+    with patch.object(registry, "_secure_directory", lambda path: observed.append(path)):
+        with pytest.raises(ValueError, match="intersects live registry"):
+            registry.reserve_qualification_package_attempt(synthetic, alias)
+    assert observed == []
+
+    stand_in = tmp_path / "stand-in-live"
+    link = tmp_path / "qualification-alias"
+    stand_in.mkdir()
+    link.symlink_to(stand_in, target_is_directory=True)
+    with patch.object(registry, "LIVE_REGISTRY_ROOT", stand_in):
+        with pytest.raises(ValueError, match="resolves into live registry"):
+            registry.reserve_qualification_package_attempt(synthetic, link)
+
+
+def test_registry_key_is_mode_and_package_scoped_only(tmp_path):
+    production, qualification = _production_and_qualification(tmp_path)
+    live = registry._reservation_value(production, "LIVE_CANONICAL")
+    dry = registry._reservation_value(qualification.authority, "QUALIFICATION_ONLY")
+    assert live["registry_key_sha256"] != dry["registry_key_sha256"]
+    changed = production.as_dict()
+    changed["authorization_id"] = "F017-DIFFERENT-AUTHORIZATION"
+    assert registry._sha({
+        "authority_mode": "LIVE_CANONICAL",
+        "package_attempt_id": changed["package_attempt_id"],
+    }) == live["registry_key_sha256"]
+
+
+def test_execution_result_freeze_is_injective_for_empty_and_pair_lists():
+    from execute_f017_corrected_oracle_event_v12_bridge import _freeze, _thaw
+
+    values = ({}, [], [["a", 1], ["b", 2]], {"nested": [{}, [], ["x", 3]]})
+    frozen = [_freeze(value) for value in values]
+    assert len(set(frozen)) == len(values)
+    assert [_thaw(value) for value in frozen] == list(values)
 
 
 def test_production_fixed_root_is_internal_and_intercepted_before_creation(tmp_path):

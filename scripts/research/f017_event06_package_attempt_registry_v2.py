@@ -37,9 +37,17 @@ def _lexical(path: Path) -> Path:
     return Path(os.path.abspath(os.fspath(path)))
 
 
+def _canonical_lexical(path: Path) -> Path:
+    """Normalize Darwin's stable /var and /tmp aliases without touching disk."""
+    lexical = _lexical(path)
+    if len(lexical.parts) > 1 and lexical.parts[1] in {"var", "tmp"}:
+        return Path("/private", *lexical.parts[1:])
+    return lexical
+
+
 def _intersects(first: Path, second: Path) -> bool:
-    first = _lexical(first)
-    second = _lexical(second)
+    first = _canonical_lexical(first)
+    second = _canonical_lexical(second)
     return first == second or first in second.parents or second in first.parents
 
 
@@ -50,9 +58,7 @@ def _secure_directory(path: Path) -> Path:
     lexical = _lexical(path)
     if lexical.is_symlink():
         raise ValueError("package registry symlink component")
-    expected = lexical
-    if len(lexical.parts) > 1 and lexical.parts[1] == "var":
-        expected = Path("/private", *lexical.parts[1:])
+    expected = _canonical_lexical(lexical)
     resolved_before_create = Path(os.path.realpath(lexical))
     if resolved_before_create != expected:
         raise ValueError("package registry ancestor substitution")
@@ -88,6 +94,11 @@ def _prepare_qualification_registry(root: Path) -> Path:
     # creating either path.  No live-root filesystem observation occurs here.
     if _intersects(root, LIVE_REGISTRY_ROOT):
         raise ValueError("qualification registry intersects live registry")
+    # A symlinked qualification root or ancestor can be a second spelling of
+    # the fixed namespace even when its lexical spelling is unrelated.
+    resolved = Path(os.path.realpath(_lexical(root)))
+    if _intersects(resolved, LIVE_REGISTRY_ROOT):
+        raise ValueError("qualification registry resolves into live registry")
     return _secure_directory(root)
 
 
@@ -130,7 +141,8 @@ class _Reservation(_ImmutableRecord):
 
     def __new__(cls, seal=None, *args):
         del args
-        if seal is not _RESERVATION_SEALS.get(cls._MODE):
+        expected = _RESERVATION_SEALS.get(cls._MODE)
+        if expected is None or seal is not expected:
             raise TypeError("package reservations are registry-created")
         return super().__new__(cls)
 
@@ -160,7 +172,8 @@ class _TerminalSink(_ImmutableRecord):
 
     def __new__(cls, seal=None, *args):
         del args
-        if seal is not _SINK_SEALS.get(cls._MODE):
+        expected = _SINK_SEALS.get(cls._MODE)
+        if expected is None or seal is not expected:
             raise TypeError("terminal sinks are registry-created")
         return super().__new__(cls)
 
@@ -192,10 +205,8 @@ class ValidatedQualificationPackageTerminalSink(_TerminalSink):
 def _reservation_value(installed: ValidatedIdentityAuthority, mode: str) -> dict:
     authority = installed.as_dict()
     key = _sha({
-        "authorization_id": authority["authorization_id"],
+        "authority_mode": mode,
         "package_attempt_id": authority["package_attempt_id"],
-        "installed_authority_sha256": installed.source_sha256,
-        "checkpoint_set_sha256": authority["checkpoint_set_sha256"],
     })
     return {
         "schema": "pulsarmlx.f017.event06-v12-package-attempt-reservation/1.1.0",

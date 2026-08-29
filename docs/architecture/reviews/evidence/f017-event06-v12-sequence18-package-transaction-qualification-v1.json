@@ -1,5 +1,5 @@
 {
-  "aggregate_sha256": "1f2dfb42d7aa7430365b2ccdbab31e4fb522b8d3bc758544b5eccad8ee5c5c45",
+  "aggregate_sha256": "2089840f9aa6c4e2385e2eedbd7b525bbc8d0639339bed04960960268742b790",
   "authorization_package_primary_secondary_accounting": [
     0,
     0,
@@ -12,18 +12,19 @@
     0,
     0
   ],
+  "execution_result_freeze_round_trips": 4,
   "full_model_inference": "NONE",
   "historical_master_ledger": 175,
   "mutation_campaign": {
-    "passed": 121,
-    "total": 121,
+    "passed": 123,
+    "total": 123,
     "unexpected_passes": 0
   },
   "new_human_go_document_created": false,
   "original_checkpoint_access": "NONE",
   "original_checkpoint_root_resolved": false,
   "package_uniqueness": {
-    "aggregate_sha256": "63bf265e73fa4ff8dbc0756a93f7ba8a5865a288f726ab42b94f3f2e8f0beea0",
+    "aggregate_sha256": "8fce08a40663c4366a058d1826a1b1900603d2f732be11a03ec13a0b1bf73e7d",
     "ambiguous_accounting_outcomes": 0,
     "competing_terminal_outcomes_accepted": 0,
     "contenders": 20,
@@ -31,7 +32,7 @@
     "package_reservation_winners_per_identity": 1,
     "package_terminal_claim_winners_per_identity": 1,
     "platform_process_start_method": "spawn",
-    "reconstructed_reservation_sha256": "adb3d05b14928940d44701237b24853e9c7eac418294bb397683eb1d6397828d",
+    "reconstructed_reservation_sha256": "0759ccd48c16619150f44a605eb1ad030d58f403d7ea4e0537556c01a74209b4",
     "reservation_losers": 19,
     "result": "PASS",
     "schema": "pulsarmlx.f017.event06-v12-package-uniqueness-qualification/1.0.0",
@@ -47,6 +48,7 @@
   "qualification_authority_accepted_by_production_api": 0,
   "qualification_full_call_path_no_access": "PASS",
   "qualification_full_call_path_repetitions": 20,
+  "qualification_live_root_aliases_accepted": 0,
   "qualification_unique_aggregate_digests": 1,
   "result": "PASS",
   "schema": "pulsarmlx.f017.event06-v12-package-transaction-qualification/2.0.0",
@@ -58,8 +60,8 @@
     "live_terminal_boundaries_total": 3,
     "live_terminal_boundaries_with_composition_tests": 3,
     "result": "PASS",
-    "reviewers_first_to_find_noncomposition": false,
-    "schema": "pulsarmlx.f017.event06-v12-authority-dag-validation/2.0.0",
+    "reviewers_first_to_find_noncomposition": true,
+    "schema": "pulsarmlx.f017.event06-v12-authority-dag-validation/2.1.0",
     "source_blob_drift": 0,
     "source_typed_boundaries_total": 47,
     "uncovered_typed_boundaries": 0,

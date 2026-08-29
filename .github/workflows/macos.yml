@@ -891,6 +891,8 @@ jobs:
           assert qualification["qualification_full_call_path_repetitions"] >= 20
           assert qualification["production_fixed_root_interception_rehearsal"] == "PASS"
           assert qualification["production_live_registry_creates_or_writes"] == 0
+          assert qualification["qualification_live_root_aliases_accepted"] == 0
+          assert qualification["execution_result_freeze_round_trips"] >= 4
           assert qualification["mutation_campaign"]["passed"] == qualification["mutation_campaign"]["total"]
           assert qualification["mutation_campaign"]["unexpected_passes"] == 0
           assert qualification["original_checkpoint_access"] == "NONE"

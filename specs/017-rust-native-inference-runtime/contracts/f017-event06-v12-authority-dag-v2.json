@@ -4,6 +4,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_event06_readiness_declaration_v3-produce_bound_sanitized_human_decision",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "produce_bound_sanitized_human_decision",
       "destination_node": "DECISION",
@@ -26,6 +32,12 @@
     {
       "accepted_input_type_or_schema": "BoundSanitizedHumanDecisionV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_bound_sanitized_human_decision-seal_bound_collapsed_one_shot_go",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "seal_bound_collapsed_one_shot_go",
       "destination_node": "COLLAPSED_GO",
@@ -48,6 +60,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedOneShotGoV1",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-seal_bound_collapsed_one_shot_go-derive_production_event_identities",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "derive_production_event_identities",
       "destination_node": "EXECUTION_PLAN",
@@ -70,6 +88,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedExecutionPlan",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_execution_plan-produce_collapsed_live_approval",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "produce_collapsed_live_approval",
       "destination_node": "APPROVAL",
@@ -92,6 +116,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedLiveApprovalV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_collapsed_live_approval-seal_collapsed_live_preparation",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "seal_collapsed_live_preparation",
       "destination_node": "PREPARATION",
@@ -114,6 +144,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedLivePreparationV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-seal_collapsed_live_preparation-produce_collapsed_live_prompt_identity",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "produce_collapsed_live_prompt_identity",
       "destination_node": "PROMPT_IDENTITY",
@@ -136,6 +172,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedLivePromptIdentityV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_collapsed_live_prompt_identity-produce_checkpoint_bound_candidate_bundle",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "produce_checkpoint_bound_candidate_bundle",
       "destination_node": "CANDIDATE_BUNDLE",
@@ -158,6 +200,12 @@
     {
       "accepted_input_type_or_schema": "CheckpointBoundCandidateBundleV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_checkpoint_bound_candidate_bundle-prepare_collapsed_production_installation",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "prepare_collapsed_production_installation",
       "destination_node": "PREPARED_INSTALLATION",
@@ -180,6 +228,12 @@
     {
       "accepted_input_type_or_schema": "PreparedCollapsedInstallationV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-prepare_collapsed_production_installation-produce_qualification_installation_capability",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "produce_qualification_installation_capability",
       "destination_node": "INSTALL_CAPABILITY",
@@ -202,6 +256,12 @@
     {
       "accepted_input_type_or_schema": "QualificationInstallationCapabilityV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_qualification_installation_capability-commit_qualification_collapsed_installation",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "commit_qualification_collapsed_installation",
       "destination_node": "DURABLE_TRANSACTION",
@@ -224,6 +284,12 @@
     {
       "accepted_input_type_or_schema": "DurableTransactionResult",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-commit_qualification_collapsed_installation-validate_collapsed_installed_triple",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
       "consumer_symbol": "validate_collapsed_installed_triple",
       "destination_node": "INSTALLED_TRIPLE",
@@ -246,6 +312,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedInstalledTripleV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_collapsed_installed_triple-validate_collapsed_installed_package_gate",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12.py",
       "consumer_symbol": "validate_collapsed_installed_package_gate",
       "destination_node": "PACKAGE_GATE",
@@ -268,6 +340,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedIdentityAuthority",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_collapsed_installed_triple-bind_identity_stage",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "bind_identity_stage",
       "destination_node": "IDENTITY_STAGE",
@@ -290,6 +368,12 @@
     {
       "accepted_input_type_or_schema": "LeaseSet",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-_synthetic_identity_stage-bind_identity_stage",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "bind_identity_stage",
       "destination_node": "IDENTITY_STAGE",
@@ -312,6 +396,12 @@
     {
       "accepted_input_type_or_schema": "CollapsedLivePromptIdentityV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_collapsed_live_prompt_identity-produce_identity_bridge_input",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "produce_identity_bridge_input",
       "destination_node": "BRIDGE_INPUT",
@@ -334,6 +424,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedIdentityAuthority",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_collapsed_installed_triple-produce_identity_bridge_input",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "produce_identity_bridge_input",
       "destination_node": "BRIDGE_INPUT",
@@ -356,6 +452,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedExecutionPlan",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-validate_execution_plan-produce_identity_bridge_input",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "produce_identity_bridge_input",
       "destination_node": "BRIDGE_INPUT",
@@ -378,6 +480,12 @@
     {
       "accepted_input_type_or_schema": "PromptBoundIdentityBridgeInputV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-produce_identity_bridge_input-derive_bridge",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "derive_bridge",
       "destination_node": "NUMERICAL_BRIDGE",
@@ -400,6 +508,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedIdentityStage",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-bind_identity_stage-derive_bridge",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "derive_bridge",
       "destination_node": "NUMERICAL_BRIDGE",
@@ -422,6 +536,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedNumericalBridge",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-historical_bridge-numerical_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "numerical_view",
       "destination_node": "PRIMARY_NUMERICAL",
@@ -444,6 +564,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-numerical_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "PRIMARY_NUMERICAL",
@@ -466,6 +592,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedNumericalBridge",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-historical_bridge-result_bundle_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "result_bundle_view",
       "destination_node": "PRIMARY_RESULT",
@@ -488,6 +620,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-result_bundle_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "PRIMARY_RESULT",
@@ -510,6 +648,12 @@
     {
       "accepted_input_type_or_schema": "dict",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-_synthetic_bundle-primary_terminal_binding",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "primary_terminal_binding",
       "destination_node": "PRIMARY_TERMINAL",
@@ -532,6 +676,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-primary_terminal_binding-numerical_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "numerical_view",
       "destination_node": "SECONDARY_NUMERICAL",
@@ -554,6 +704,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-numerical_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "SECONDARY_NUMERICAL",
@@ -576,6 +732,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-result_bundle_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "SECONDARY_RESULT",
@@ -598,6 +760,12 @@
     {
       "accepted_input_type_or_schema": "tuple[ValidatedBundleBinding,ValidatedBundleBinding]",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-build_bundle_binding-comparison_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "comparison_view",
       "destination_node": "COMPARISON",
@@ -620,6 +788,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-comparison_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "COMPARISON",
@@ -642,6 +816,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedComparisonBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-build_comparison_binding-release_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "release_view",
       "destination_node": "RELEASE",
@@ -664,6 +844,12 @@
     {
       "accepted_input_type_or_schema": "dict",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-release-build_release_binding",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "build_release_binding",
       "destination_node": "RELEASE_BINDING",
@@ -686,6 +872,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedReleaseBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-build_release_binding-accounting_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "accounting_view",
       "destination_node": "ACCOUNTING",
@@ -708,6 +900,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-accounting_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "ACCOUNTING",
@@ -730,6 +928,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedAccountingBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-build_accounting_binding-package_terminal_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "package_terminal_view",
       "destination_node": "PACKAGE_TERMINAL",
@@ -752,6 +956,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedConsumerView",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "composition_evidence": {
+        "case_id": "SEQ17-package_terminal_view-consumer_view",
+        "kind": "QUALIFICATION_RUNTIME_TRACE",
+        "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+        "test_symbol": "qualify"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "consumer_view",
       "destination_node": "PACKAGE_TERMINAL",
@@ -774,6 +984,12 @@
     {
       "accepted_input_type_or_schema": "ValidatedDurableStart",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_package_start-execute_event06_bridge",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "consumer_symbol": "execute_event06_bridge",
       "destination_node": "LIVE_PACKAGE_START",
@@ -790,12 +1006,18 @@
       "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "producer_symbol": "bank_live_package_start",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "aef2737e9d72707593463959cb0f614c6453191d8d811f099a29a5187ffed56d",
+      "source_blob_sha256": "0a1d3f56255d596e31ae10d987508bac403bbbe57c527f91c090291a6e4f2235",
       "source_node": "LIVE_PACKAGE_RESERVATION"
     },
     {
       "accepted_input_type_or_schema": "ValidatedDurableStart",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_package_start-execute_event06_bridge",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
       "consumer_symbol": "execute_event06_bridge",
       "destination_node": "LIVE_PACKAGE_START",
@@ -812,12 +1034,18 @@
       "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "producer_symbol": "bank_live_package_start",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "aef2737e9d72707593463959cb0f614c6453191d8d811f099a29a5187ffed56d",
+      "source_blob_sha256": "0a1d3f56255d596e31ae10d987508bac403bbbe57c527f91c090291a6e4f2235",
       "source_node": "LIVE_PACKAGE_RESERVATION"
     },
     {
       "accepted_input_type_or_schema": "str",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_terminal-build_package_terminal",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
@@ -834,12 +1062,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
       "accepted_input_type_or_schema": "str",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_terminal-build_package_terminal",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
@@ -856,12 +1090,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
       "accepted_input_type_or_schema": "str",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_qualification_terminal-build_package_terminal",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
@@ -878,12 +1118,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
       "accepted_input_type_or_schema": "str",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_qualification_terminal-build_package_terminal",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
@@ -900,12 +1146,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
       "accepted_input_type_or_schema": "ValidatedLivePackageTerminalSink",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim_live_terminal_sinks-close_bridge_package",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "consumer_symbol": "close_bridge_package",
       "destination_node": "LIVE_TERMINAL_CLAIM",
@@ -922,12 +1174,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_live_terminal_sinks",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "LIVE_EXECUTION_AND_ACCOUNTING_CLOSURE"
     },
     {
       "accepted_input_type_or_schema": "ValidatedQualificationPackageTerminalSink",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim_qualification_terminal_sinks-close_bridge_package",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "consumer_symbol": "close_bridge_package",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
@@ -944,12 +1202,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
       "accepted_input_type_or_schema": "ValidatedQualificationPackageTerminalSink",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim_qualification_terminal_sinks-run_full_call_path",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_dag_derived_control_path_v1.py",
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
@@ -966,12 +1230,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
       "accepted_input_type_or_schema": "ValidatedLivePackageAttemptReservation",
       "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-reserve_live_package_attempt-bank_live_package_start",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "consumer_symbol": "bank_live_package_start",
       "destination_node": "LIVE_PACKAGE_RESERVATION",
@@ -988,12 +1258,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_live_package_attempt",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "INSTALLED_AUTHORITY"
     },
     {
       "accepted_input_type_or_schema": "ValidatedQualificationPackageAttemptReservation",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-reserve_qualification_package_attempt-bank_qualification_package_start",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "consumer_symbol": "bank_qualification_package_start",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
@@ -1010,12 +1286,18 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     },
     {
       "accepted_input_type_or_schema": "ValidatedQualificationPackageAttemptReservation",
       "authority_mode": "QUALIFICATION_ONLY",
+      "composition_evidence": {
+        "case_id": "SEQ18-reserve_qualification_package_attempt-run_full_call_path",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
       "consumer_module": "scripts/research/f017_event06_dag_derived_control_path_v1.py",
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
@@ -1032,7 +1314,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "483d75d235dd918c7a401c83e10c15bc794dcc4864f645c1588dc9166e25b16e",
+      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     }
   ],

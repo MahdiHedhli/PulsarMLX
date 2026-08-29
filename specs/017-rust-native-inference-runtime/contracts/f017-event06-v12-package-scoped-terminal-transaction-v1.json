@@ -22,12 +22,15 @@
     ],
     "production_authority_accepted": false,
     "live_root_equal_child_or_parent_intersection_accepted": false,
+    "darwin_var_alias_of_live_root_accepted": false,
+    "symlink_or_realpath_alias_of_live_root_accepted": false,
     "reservation_type": "ValidatedQualificationPackageAttemptReservation",
     "terminal_sink_type": "ValidatedQualificationPackageTerminalSink"
   },
   "package_transaction": {
     "reservation_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
     "terminal_claim_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
+    "registry_key_fields": ["authority_mode", "package_attempt_id"],
     "attempts": 1,
     "retries": 0,
     "resume": false,

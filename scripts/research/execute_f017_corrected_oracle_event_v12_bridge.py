@@ -49,21 +49,63 @@ _START_SEAL = object()
 
 def _freeze(value):
     if type(value) is dict:
-        return tuple((key, _freeze(value[key])) for key in sorted(value))
+        return ("DICT", tuple((key, _freeze(value[key])) for key in sorted(value)))
     if type(value) is list:
-        return tuple(_freeze(item) for item in value)
-    return value
+        return ("LIST", tuple(_freeze(item) for item in value))
+    if type(value) is tuple:
+        return ("TUPLE", tuple(_freeze(item) for item in value))
+    if type(value) is bytes:
+        return ("BYTES", value)
+    if value is None:
+        return ("NONE", None)
+    if type(value) is bool:
+        return ("BOOL", value)
+    if type(value) is int:
+        return ("INT", value)
+    if type(value) is float:
+        return ("FLOAT", value)
+    if type(value) is str:
+        return ("STR", value)
+    as_dict = getattr(value, "as_dict", None)
+    digest = getattr(value, "sha256", None)
+    if callable(as_dict) and type(digest) is str and len(digest) == 64:
+        document = as_dict()
+        if type(document) is not dict or _sha(document) != digest:
+            raise ValueError("sealed execution-result authority digest")
+        return (
+            "SEALED",
+            (type(value).__module__, type(value).__qualname__, digest, value),
+        )
+    raise TypeError(f"unsupported execution-result value: {type(value).__name__}")
 
 
 def _thaw(value):
-    if type(value) is tuple:
-        if value and all(
-            type(item) is tuple and len(item) == 2 and type(item[0]) is str
-            for item in value
-        ):
-            return {key: _thaw(item) for key, item in value}
-        return [_thaw(item) for item in value]
-    return value
+    if type(value) is not tuple or len(value) != 2 or type(value[0]) is not str:
+        raise TypeError("invalid frozen execution-result value")
+    tag, payload = value
+    if tag == "DICT":
+        return {key: _thaw(item) for key, item in payload}
+    if tag == "LIST":
+        return [_thaw(item) for item in payload]
+    if tag == "TUPLE":
+        return tuple(_thaw(item) for item in payload)
+    if tag == "BYTES" and type(payload) is bytes:
+        return payload
+    if tag == "SEALED" and type(payload) is tuple and len(payload) == 4:
+        module, name, digest, authority = payload
+        if (type(authority).__module__ != module
+                or type(authority).__qualname__ != name
+                or getattr(authority, "sha256", None) != digest
+                or _sha(authority.as_dict()) != digest):
+            raise ValueError("sealed execution-result authority continuity")
+        return authority
+    exact = {
+        "NONE": type(None), "BOOL": bool, "INT": int,
+        "FLOAT": float, "STR": str,
+    }
+    if tag in exact and type(payload) is exact[tag]:
+        return payload
+    raise TypeError("invalid frozen execution-result tag")
 
 
 class ValidatedDurableStart:
@@ -119,7 +161,10 @@ class ValidatedBridgeExecutionResult:
         return super().__new__(cls)
 
     def __init__(self, seal, value):
-        object.__setattr__(self, "_value", _freeze(value))
+        frozen = _freeze(value)
+        if _thaw(frozen) != value:
+            raise ValueError("execution-result freeze round trip")
+        object.__setattr__(self, "_value", frozen)
 
     def __setattr__(self, name, value):
         del name, value
@@ -130,13 +175,17 @@ class ValidatedBridgeExecutionResult:
         raise TypeError("bridge execution results are immutable")
 
     def get(self, key, default=None):
-        for name, value in self._value:
+        if self._value[0] != "DICT":
+            raise TypeError("execution-result root")
+        for name, value in self._value[1]:
             if name == key:
                 return _thaw(value)
         return default
 
     def __getitem__(self, key):
-        for name, value in self._value:
+        if self._value[0] != "DICT":
+            raise TypeError("execution-result root")
+        for name, value in self._value[1]:
             if name == key:
                 return _thaw(value)
         raise KeyError(key)

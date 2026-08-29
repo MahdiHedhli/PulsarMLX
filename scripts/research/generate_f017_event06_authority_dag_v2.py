@@ -51,19 +51,28 @@ DISCOVERY = {
     ),
 }
 
-SCAN_MODULES = (
-    "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
-    "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
-    "scripts/research/f017_event06_dag_derived_control_path_v1.py",
-    "scripts/research/f017_event06_numerical_bridge_v1.py",
-    "scripts/research/f017_event06_numerical_bridge_v2.py",
-)
+def _production_modules() -> tuple[str, ...]:
+    """Discover every production module that invokes a split boundary."""
+    result = []
+    for path in sorted((ROOT / "scripts/research").glob("*.py")):
+        if path.name.startswith(("generate_", "qualify_", "validate_")):
+            continue
+        if "fixture" in path.name:
+            continue
+        source = path.read_text(encoding="utf-8")
+        if any(symbol in source for symbol in DISCOVERY):
+            result.append(path.relative_to(ROOT).as_posix())
+    return tuple(result)
 
 
 def _calls(path: Path) -> list[tuple[str, str]]:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     result = []
-    for function in [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]:
+    functions = [
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    for function in functions:
         for node in ast.walk(function):
             if not isinstance(node, ast.Call):
                 continue
@@ -79,7 +88,7 @@ def _calls(path: Path) -> list[tuple[str, str]]:
 
 def source_inventory() -> list[dict[str, object]]:
     rows = []
-    for module in SCAN_MODULES:
+    for module in _production_modules():
         for consumer, producer in _calls(ROOT / module):
             source, input_type, destination, output_type, mode, phase = DISCOVERY[producer]
             rows.append({
@@ -106,6 +115,12 @@ def source_inventory() -> list[dict[str, object]]:
                     "cross_mode_substitution", "package_digest_substitution",
                     "second_attempt", "terminal_claim_replay",
                 ],
+                "composition_evidence": {
+                    "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+                    "case_id": f"SEQ18-{producer}-{consumer}",
+                    "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+                    "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries",
+                },
             })
     # Calls duplicated within branches are a real distinct consumer boundary;
     # identical producer/consumer/module tuples are collapsed deterministically.
@@ -137,6 +152,12 @@ def build() -> dict[str, object]:
                 "mapping_or_deserialized_lookalike", "wrong_exact_type",
                 "digest_or_identity_substitution", "replay_or_cross_role_reuse",
             ],
+            "composition_evidence": {
+                "kind": "QUALIFICATION_RUNTIME_TRACE",
+                "case_id": f"SEQ17-{producer}-{consumer}",
+                "test_path": "scripts/research/qualify_f017_event06_dag_composition_v1.py",
+                "test_symbol": "qualify",
+            },
         })
     inventory = base + source_inventory()
     for number, edge in enumerate(inventory, 1):
