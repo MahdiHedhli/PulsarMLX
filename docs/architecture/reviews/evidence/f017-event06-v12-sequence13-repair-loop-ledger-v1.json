@@ -16,10 +16,17 @@
       "failed_repairs_for_root_cause": 1,
       "repair": "REQUIRE_EXACT_EXPECTED_ISSUED_AND_EXPIRY_VALUES",
       "result": "PASS"
+    },
+    {
+      "loop": 3,
+      "root_cause": "NO_ACCESS_OBSERVER_CENSUS_OMITTED_CAPABILITY_AND_ACCOUNTING_COUNTERS",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "OBSERVE_CAPABILITY_INSTALL_PACKAGE_ID_ACCOUNTING_RETRY_INFERENCE_AND_P1_COUNTERS",
+      "result": "PASS"
     }
   ],
-  "loops_consumed": 2,
-  "loops_remaining": 8,
+  "loops_consumed": 3,
+  "loops_remaining": 7,
   "same_root_cause_failed_repair_cap": 2,
   "cap_exceeded": false
 }

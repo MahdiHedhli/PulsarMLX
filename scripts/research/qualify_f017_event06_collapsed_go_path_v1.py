@@ -153,10 +153,17 @@ def _single_result() -> dict[str, object]:
         forbidden = {
             name: state[name]
             for name in (
-                "live_authority_installs", "package_starts",
+                "installation_commit_calls", "live_authorities_created",
+                "live_capabilities_created", "live_authority_installs",
+                "package_starts",
                 "checkpoint_root_resolutions", "checkpoint_opens",
                 "checkpoint_identity_reads", "checkpoint_payload_reads",
-                "numerical_operations", "event_ids_consumed",
+                "numerical_operations", "full_model_inferences",
+                "live_event_ids_instantiated", "live_event_ids_consumed",
+                "authorization_delta", "package_delta", "primary_delta",
+                "secondary_delta", "event04_retries",
+                "event05_retries_or_resumes", "prior_event06_retries_or_resumes",
+                "p1_actions",
             )
         }
         if any(forbidden.values()):

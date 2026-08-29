@@ -196,6 +196,9 @@ class OneShotCompositionStateV1:
             "prompt_identities_produced": 0,
             "candidate_validations": 0,
             "eligibilities_produced": 0,
+            "installation_commit_calls": 0,
+            "live_authorities_created": 0,
+            "live_capabilities_created": 0,
             "live_authority_installs": 0,
             "package_starts": 0,
             "checkpoint_root_resolutions": 0,
@@ -203,7 +206,17 @@ class OneShotCompositionStateV1:
             "checkpoint_identity_reads": 0,
             "checkpoint_payload_reads": 0,
             "numerical_operations": 0,
-            "event_ids_consumed": 0,
+            "full_model_inferences": 0,
+            "live_event_ids_instantiated": 0,
+            "live_event_ids_consumed": 0,
+            "authorization_delta": 0,
+            "package_delta": 0,
+            "primary_delta": 0,
+            "secondary_delta": 0,
+            "event04_retries": 0,
+            "event05_retries_or_resumes": 0,
+            "prior_event06_retries_or_resumes": 0,
+            "p1_actions": 0,
         })
         object.__setattr__(self, "_locked", True)
 
@@ -333,10 +346,10 @@ def derived_event_identities(go: CollapsedOneShotGoV1) -> MappingProxyType[str, 
         raise TypeError("exact collapsed GO required")
     suffix = go.source_sha256[:24].upper()
     return MappingProxyType({
-        "authorization_id": f"F017-EVENT06-AUTH-{suffix}",
-        "package_attempt_id": f"F017-EVENT06-PACKAGE-{suffix}",
-        "primary_event_id": f"F017-EVENT06-PRIMARY-{suffix}",
-        "secondary_event_id": f"F017-EVENT06-SECONDARY-{suffix}",
+        "authorization_id": f"F017-SEQUENCE13-INERT-AUTH-{suffix}",
+        "package_attempt_id": f"F017-SEQUENCE13-INERT-PACKAGE-{suffix}",
+        "primary_event_id": f"F017-SEQUENCE13-INERT-PRIMARY-{suffix}",
+        "secondary_event_id": f"F017-SEQUENCE13-INERT-SECONDARY-{suffix}",
     })
 
 
