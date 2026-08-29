@@ -70,6 +70,46 @@ def validate_package_start(candidate_path: Path, installed_path: Path, receipt_p
     }
 
 
+def validate_collapsed_installed_package_gate(
+    installed,
+    candidate_bundle,
+    execution_plan,
+    *,
+    state,
+):
+    """Exact collapsed-GO installed-triple boundary before package start.
+
+    This function is the future production coordinator consumer.  It validates
+    the existing checkpoint-identity capability but deliberately does not bank
+    a package claim, start a package, or touch a checkpoint.
+    """
+
+    from f017_event06_collapsed_live_installation_v2 import (
+        CheckpointBoundCandidateBundleV2,
+        CollapsedInstalledTripleV2,
+        CollapsedLiveIntegrationStateV2,
+        _produce_package_start_gate,
+    )
+    from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
+
+    if type(installed) is not CollapsedInstalledTripleV2:
+        raise TypeError("exact collapsed installed triple required")
+    if type(candidate_bundle) is not CheckpointBoundCandidateBundleV2:
+        raise TypeError("exact checkpoint-bound candidate bundle required")
+    if type(execution_plan) is not ValidatedExecutionPlan:
+        raise TypeError("exact Event 06 execution plan required")
+    if type(state) is not CollapsedLiveIntegrationStateV2:
+        raise TypeError("exact collapsed integration state required")
+    capability = validate_capability()
+    return _produce_package_start_gate(
+        installed,
+        candidate_bundle,
+        execution_plan,
+        identity_capability_result=capability["result"],
+        state=state,
+    )
+
+
 def run_identity_stage(installed_authority, *, package_attempt_id: str, package_durable_start: bool,
                        evidence_directory: Path | None = None):
     return produce(installed_authority, package_attempt_id=package_attempt_id,
