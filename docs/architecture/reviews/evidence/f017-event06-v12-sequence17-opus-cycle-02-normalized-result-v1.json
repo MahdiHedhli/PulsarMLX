@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-opus-cycle-02-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "transport": "authenticated Claude CLI",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "b02992a9405cb48e4c9757676a6316523e5b3a6c",
+  "reviewed_tree": "94c03a589881866aab96d8519c210c7474fb9ee1",
+  "implementation_head": "77b5c0831f2ee199fc5c5b3f36190116bdc48466",
+  "implementation_tree": "d9dc86bc7c0d917cade6034aecc0c80e9803bbe0",
+  "tests_passed": 545,
+  "subtests_passed": 147,
+  "blocking_findings": [
+    {"id": "BF1", "summary": "The public raw consumer-view constructor could forge comparison, release, accounting, and terminal views from bare digests."},
+    {"id": "BF2", "summary": "Legacy sealed authority slot fields were writable after construction."},
+    {"id": "BF3", "summary": "The successor package-terminal builder did not validate the complete legacy package terminal or accounting continuity."},
+    {"id": "BF4", "summary": "Bundle binding accepted an arbitrary result-PASS mapping without exact schema, role, package, event, and hash continuity."}
+  ],
+  "unresolved_findings": [
+    "package-terminal transition-chain and V11 closure inputs remained bare digests",
+    "primary terminal binding accepted a raw bundle and bare binding digest",
+    "the pure terminal builder could create multiple documents for one package identity"
+  ],
+  "advisory_findings": 4,
+  "global_verdict": "REJECT",
+  "result": "FAIL",
+  "disposition": "REPAIRED_BY_0DCD07185D794B464FFEF5E57A4C2F8E5828FE74"
+}
