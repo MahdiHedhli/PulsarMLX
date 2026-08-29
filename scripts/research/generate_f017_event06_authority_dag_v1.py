@@ -46,6 +46,11 @@ ROWS = (
     ("ACCOUNTING_LEGACY_VIEW", "accounting_view", "ValidatedConsumerView", "ACCOUNTING", "consumer_view", "ACCOUNTING"),
     ("ACCOUNTING", "build_accounting_binding", "ValidatedAccountingBinding", "PACKAGE_TERMINAL", "package_terminal_view", "TERMINAL"),
     ("PACKAGE_TERMINAL_LEGACY", "package_terminal_view", "ValidatedConsumerView", "PACKAGE_TERMINAL", "consumer_view", "TERMINAL"),
+    ("INSTALLED_AUTHORITY", "validate_collapsed_installed_triple", "ValidatedIdentityAuthority", "PACKAGE_ATTEMPT_RESERVATION", "reserve_package_attempt", "PACKAGE_GATE"),
+    ("PACKAGE_ATTEMPT_RESERVATION", "reserve_package_attempt", "ValidatedPackageAttemptReservation", "TERMINAL_SINK_CLAIM", "claim_qualification_terminal_sinks", "TERMINAL"),
+    ("PACKAGE_TERMINAL_LEGACY", "package_terminal_view", "ValidatedConsumerView", "TERMINAL_SINK_CLAIM", "claim_qualification_terminal_sinks", "TERMINAL"),
+    ("TERMINAL_SINK_CLAIM", "claim_qualification_terminal_sinks", "ValidatedPackageTerminalSink", "LEGACY_PACKAGE_TERMINAL", "bank_terminal", "TERMINAL"),
+    ("TERMINAL_SINK_CLAIM", "claim_qualification_terminal_sinks", "ValidatedPackageTerminalSink", "PROMPT_BOUND_PACKAGE_TERMINAL", "build_package_terminal", "TERMINAL"),
     ("PACKAGE_TERMINAL_VIEW", "consumer_view", "PromptBoundConsumerViewV2", "PACKAGE_TERMINAL", "build_package_terminal", "TERMINAL"),
     ("ACCOUNTING_CLOSURE", "build_accounting_closure", "ValidatedAccountingClosureV2", "PACKAGE_TERMINAL", "build_package_terminal", "TERMINAL"),
     ("PRIMARY_BUNDLE_BINDING", "build_bundle_binding", "ValidatedBundleBinding", "PRIMARY_TERMINAL", "primary_terminal_binding", "PRIMARY"),
@@ -91,6 +96,9 @@ MODULES = {
     "bind_v11_closure": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "package_terminal_view": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "build_package_terminal": "scripts/research/f017_event06_numerical_bridge_v2.py",
+    "reserve_package_attempt": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+    "claim_qualification_terminal_sinks": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+    "bank_terminal": "scripts/research/f017_event06_package_attempt_registry_v1.py",
 }
 
 

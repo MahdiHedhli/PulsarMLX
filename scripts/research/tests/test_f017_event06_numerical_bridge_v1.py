@@ -14,6 +14,9 @@ from f017_corrected_oracle_primary_wrapper_v11 import validate_candidate_documen
 from f017_corrected_oracle_secondary_wrapper_v11 import validate_candidate_document as validate_secondary_v11
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_execution_plan
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
+from f017_event06_package_attempt_registry_v1 import (
+    LIVE_REGISTRY_ROOT, claim_qualification_terminal_sinks, reserve_package_attempt,
+)
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
     accounting_view, bind_identity_stage, bind_v11_closure, build_accounting_binding, build_bundle_binding,
@@ -94,7 +97,7 @@ def test_sealed_authority_objects_reject_construction_copy_and_pickle():
     with pytest.raises(TypeError): del bridge.sha256
     with pytest.raises(TypeError): ValidatedBridgeExecutionResult()
     with pytest.raises(TypeError): ValidatedDurableStart()
-    with pytest.raises(ValueError): close_bridge_package(bridge, {}, {}, None)
+    with pytest.raises(ValueError): close_bridge_package(bridge, {}, {})
 
 
 def test_bridge_field_mutations_fail_closed():
@@ -122,7 +125,7 @@ def test_plan_field_mutations_fail_closed():
 
 
 def test_views_close_exact_consumer_authority(tmp_path):
-    bridge, *_ = fixture_values()
+    bridge, installed, *_ = fixture_values()
     primary = numerical_view(bridge, "PRIMARY")
     primary_result = result_bundle_view(bridge, "PRIMARY", "a" * 64)
     fake_bundle = primary_bundle_fixture()
@@ -157,13 +160,34 @@ def test_views_close_exact_consumer_authority(tmp_path):
     closure = _closure_fixture()
     closure_binding = bind_v11_closure(bridge, closure, accounting_binding)
     terminal_view = package_terminal_view(bridge, chain, closure_binding, accounting_binding)
-    terminal, terminal_sha = build_package_terminal(
-        terminal_view, bridge, tmp_path / "package-terminal.json"
+    reservation = reserve_package_attempt(
+        installed, qualification_root=tmp_path / "package-attempt-registry"
     )
-    assert terminal_sha == validate_package_terminal(terminal, bridge)
+    assert reservation.get("authority_mode") == "QUALIFICATION_ONLY"
+    with pytest.raises(ValueError, match="overlap live registry"):
+        reserve_package_attempt(installed, qualification_root=LIVE_REGISTRY_ROOT)
+    with pytest.raises(FileExistsError):
+        reserve_package_attempt(
+            installed, qualification_root=tmp_path / "package-attempt-registry"
+        )
+    terminal_sink, _ = claim_qualification_terminal_sinks(
+        reservation, bridge, terminal_view
+    )
+    terminal, terminal_sha = build_package_terminal(
+        terminal_view, bridge, terminal_sink
+    )
+    assert terminal_sha == validate_package_terminal(terminal, bridge, terminal_sink)
     assert terminal_sha == hashlib.sha256(canonical_bytes(terminal)).hexdigest()
     with pytest.raises(FileExistsError):
-        build_package_terminal(terminal_view, bridge, tmp_path / "package-terminal.json")
+        build_package_terminal(terminal_view, bridge, terminal_sink)
+    changed_records = [dict(record) for record in records]
+    changed_records[-1]["subject_sha256"] = "e" * 64
+    changed_chain = validate_transition_chain(bridge, changed_records)
+    changed_view = package_terminal_view(
+        bridge, changed_chain, closure_binding, accounting_binding
+    )
+    with pytest.raises(TypeError, match="terminal sink"):
+        build_package_terminal(changed_view, bridge, terminal_sink)
     for view in (primary, primary_result, secondary, secondary_result, compare, release, accounting, terminal_view):
         assert view.get("bridge_sha256") == bridge.sha256
     assert binding_doc.get("bridge_sha256") == bridge.sha256
@@ -196,7 +220,9 @@ def test_bundle_binding_requires_exact_producer_kinds_and_authority_mode():
 
 def test_durable_start_terminalization_is_one_shot(tmp_path):
     _bridge, installed, *_ = fixture_values()
-    start = bank_package_start(installed, tmp_path / "package-start.json")
+    start = bank_package_start(
+        installed, qualification_registry_root=tmp_path / "package-attempt-registry"
+    )
     start.claim_terminalization()
     with pytest.raises(RuntimeError):
         start.claim_terminalization()

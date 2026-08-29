@@ -61,7 +61,6 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
     transition_chain = authorities["transition_chain"]
     v11_closure = authorities["v11_closure_binding"]
     package_view = authorities["package_view"]
-    terminal_root = Path(tempfile.mkdtemp(prefix="f017-seq17-terminal-mutations-"))
     changed_identity = authorities["identity_stage"].as_dict()
     changed_identity["checkpoint_set_sha256"] = "f" * 64
     substituted_identity = legacy.validate_identity_stage(changed_identity)
@@ -100,14 +99,20 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
         ("mutate_primary_bundle_sha", lambda: setattr(primary, "sha256", secondary.sha256)),
         ("successor_terminal_raw_closure", lambda: build_prompt_bound_package_terminal(
             bridge, package_view, authorities["legacy_terminal"], closure.as_dict(),
-            terminal_root / "raw-closure.json")),
+            authorities["successor_terminal_sink"])),
         ("successor_terminal_wrong_sealed_type", lambda: build_prompt_bound_package_terminal(
             bridge, package_view, authorities["legacy_terminal"], accounting,
-            terminal_root / "wrong-type.json")),
+            authorities["successor_terminal_sink"])),
         ("successor_terminal_invalid_legacy_terminal", lambda: build_prompt_bound_package_terminal(
             bridge, package_view,
             authorities["legacy_terminal"] | {"result": "ABORTED_NOT_COMPLETE"}, closure,
-            terminal_root / "invalid-legacy.json")),
+            authorities["successor_terminal_sink"])),
+        ("successor_terminal_legacy_sink", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view, authorities["legacy_terminal"], closure,
+            authorities["legacy_terminal_sink"])),
+        ("successor_terminal_raw_sink", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view, authorities["legacy_terminal"], closure,
+            {"terminal_layer": "PROMPT_BOUND_V12_CLOSURE"})),
     )
     rejected = []
     unexpected = []

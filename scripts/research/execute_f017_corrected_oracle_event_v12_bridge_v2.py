@@ -257,20 +257,21 @@ def execute_event06_bridge(
     receipt_path: Path,
     *,
     package_attempt_id: str,
-    package_start_path: Path,
+    qualification_registry_root: Path | None = None,
     identity_evidence_directory: Path,
     execution_plan: ValidatedExecutionPlan,
     bridge_input: PromptBoundIdentityBridgeInputV2,
     primary_directory: Path,
     secondary_directory: Path,
     package_directory: Path,
-    terminal_path: Path,
 ) -> dict[str, object]:
     """One fixed production entrypoint; accepts no identity mapping or adapter."""
     gate = legacy_coordinator.validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
     validate_pre_package_bridge_input(bridge_input, installed, execution_plan)
-    package_start = legacy_coordinator.bank_package_start(installed, package_start_path)
+    package_start = legacy_coordinator.bank_package_start(
+        installed, qualification_registry_root=qualification_registry_root
+    )
     leases, identity_report = legacy_coordinator.run_identity_stage(
         installed, package_attempt_id=package_attempt_id, package_durable_start=True,
         evidence_directory=identity_evidence_directory,
@@ -299,7 +300,7 @@ def execute_event06_bridge(
     )
     _bank(package_directory / "prompt-bound-accounting-closure.json", accounting.as_dict(), accounting_sha)
     legacy_package = legacy_coordinator.close_bridge_package(
-        bridge.legacy_bridge, package_start, execution, terminal_path
+        bridge.legacy_bridge, package_start, execution
     )
     historical_package_view = legacy_bridge.package_terminal_view(
         bridge.legacy_bridge, legacy_package["transition_chain"],
@@ -309,7 +310,7 @@ def execute_event06_bridge(
     views["PACKAGE_TERMINAL"] = package_view
     terminal, terminal_sha = build_package_terminal(
         bridge, package_view, legacy_package["terminal"], accounting,
-        package_directory / "prompt-bound-package-terminal.json",
+        legacy_package["successor_terminal_sink"],
     )
     for role, view in views.items():
         value = view.as_dict()

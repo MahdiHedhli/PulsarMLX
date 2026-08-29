@@ -22,6 +22,9 @@ from f017_event06_dag_derived_control_path_v1 import _synthetic_bundle
 from qualify_f017_event06_bridge_call_path_v2 import _release_report
 import f017_event06_numerical_bridge_v1 as legacy
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator
+from f017_event06_package_attempt_registry_v1 import (
+    claim_qualification_terminal_sinks, reserve_package_attempt,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUIREMENTS = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-requirements-v1.json"
@@ -55,7 +58,7 @@ def _bundle(role: str) -> dict:
 
 
 def _baseline_documents():
-    bridge, bridge_input, _event_identity, _installed, _leases, _report, _identity, _plan = runtime_fixture_values()
+    bridge, bridge_input, _event_identity, installed, _leases, _report, _identity, _plan = runtime_fixture_values()
     historical = bridge.legacy_bridge
     primary_bundle = _synthetic_bundle("PRIMARY", historical)
     primary_numerical = legacy.numerical_view(historical, "PRIMARY")
@@ -147,12 +150,18 @@ def _baseline_documents():
     )
     with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-v2-") as directory:
         root = Path(directory)
+        reservation = reserve_package_attempt(
+            installed, qualification_root=root / "package-attempt-registry"
+        )
+        legacy_sink, successor_sink = claim_qualification_terminal_sinks(
+            reservation, historical, package_terminal
+        )
         legacy_terminal, _ = legacy.build_package_terminal(
-            package_terminal, historical, root / "legacy-terminal.json"
+            package_terminal, historical, legacy_sink
         )
         terminal, _ = build_package_terminal(
             bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting,
-            root / "prompt-bound-terminal.json",
+            successor_sink,
         )
     documents = {
         "identity_input": bridge_input.as_dict(), "numerical_bridge": bridge.as_dict(),

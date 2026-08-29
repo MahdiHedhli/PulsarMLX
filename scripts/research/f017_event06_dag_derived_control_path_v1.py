@@ -25,9 +25,12 @@ from f017_event06_numerical_bridge_v2 import (
     produce_identity_bridge_input,
 )
 import f017_event06_numerical_bridge_v1 as legacy
+from f017_event06_package_attempt_registry_v1 import (
+    claim_qualification_terminal_sinks, reserve_package_attempt,
+)
 
 
-EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 41))
+EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 46))
 
 
 def _sha(value: object) -> str:
@@ -292,17 +295,30 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     )
     _trace(trace, EDGE_IDS[34], package_legacy_view)
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", package_legacy_view)
-    _trace(trace, EDGE_IDS[35], package_view)
-    legacy_terminal, legacy_terminal_sha = legacy.build_package_terminal(
-        package_legacy_view, historical, root / "legacy-package-terminal.json"
+    package_reservation = reserve_package_attempt(
+        package["installed"].authority,
+        qualification_root=root / "package-attempt-registry",
     )
-    _trace(trace, EDGE_IDS[36], accounting_closure)
-    _trace(trace, EDGE_IDS[37], primary_bundle_binding)
-    _trace(trace, EDGE_IDS[38], transition_chain)
-    _trace(trace, EDGE_IDS[39], v11_closure_binding)
+    _trace(trace, EDGE_IDS[35], package["installed"].authority)
+    _trace(trace, EDGE_IDS[36], package_reservation)
+    _trace(trace, EDGE_IDS[37], package_legacy_view)
+    terminal_sinks = claim_qualification_terminal_sinks(
+        package_reservation, historical, package_legacy_view
+    )
+    legacy_terminal_sink, successor_terminal_sink = terminal_sinks
+    _trace(trace, EDGE_IDS[38], legacy_terminal_sink)
+    _trace(trace, EDGE_IDS[39], successor_terminal_sink)
+    legacy_terminal, legacy_terminal_sha = legacy.build_package_terminal(
+        package_legacy_view, historical, legacy_terminal_sink
+    )
+    _trace(trace, EDGE_IDS[40], package_view)
+    _trace(trace, EDGE_IDS[41], accounting_closure)
+    _trace(trace, EDGE_IDS[42], primary_bundle_binding)
+    _trace(trace, EDGE_IDS[43], transition_chain)
+    _trace(trace, EDGE_IDS[44], v11_closure_binding)
     package_terminal, package_terminal_sha = build_prompt_bound_package_terminal(
         bridge, package_view, legacy_terminal, accounting_closure,
-        root / "prompt-bound-package-terminal.json",
+        successor_terminal_sink,
     )
 
     counters = package["state"].snapshot()
@@ -399,6 +415,8 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
             "v11_closure_binding": v11_closure_binding,
             "package_view": package_view,
             "legacy_terminal": legacy_terminal,
+            "legacy_terminal_sink": legacy_terminal_sink,
+            "successor_terminal_sink": successor_terminal_sink,
         }
     return result
 

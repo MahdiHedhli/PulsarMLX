@@ -16,7 +16,7 @@ IDENTITY_SCHEMA = "pulsarmlx.f017.event06-v12-identity-stage-binding/1.0.0"
 EVENT_PLAN_SCHEMA = "pulsarmlx.f017.event06-event-identity-plan/1.0.0"
 VIEW_SCHEMA = "pulsarmlx.f017.event06-v12-to-v11-consumer-view/1.0.0"
 BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-transition-binding/1.0.0"
-PACKAGE_TERMINAL_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-package-terminal/1.0.0"
+PACKAGE_TERMINAL_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-package-terminal/1.1.0"
 BUNDLE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-result-bundle-binding/1.0.0"
 COMPARISON_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-comparison-binding/1.0.0"
 RELEASE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-release-binding/1.0.0"
@@ -857,37 +857,72 @@ def bind_v11_closure(bridge: ValidatedNumericalBridge, closure: object,
     return ValidatedV11ClosureBinding(_SEAL, value)
 
 
-def _package_terminal_document(view: ValidatedConsumerView) -> dict:
+def _package_terminal_document(view: ValidatedConsumerView, sink) -> dict:
+    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
     if type(view) is not ValidatedConsumerView:
         raise TypeError("package terminal view")
+    if (type(sink) is not ValidatedPackageTerminalSink
+            or sink.get("terminal_layer") != "LEGACY_V11_CLOSURE"
+            or sink.get("package_attempt_id") != view.get("package_attempt_id")
+            or sink.get("binding_chain_head_sha256")
+            != view.get("binding_chain_head_sha256")
+            or sink.get("v11_closure_root_sha256")
+            != view.get("v11_closure_root_sha256")
+            or sink.get("accounting_binding_sha256")
+            != view.get("accounting_binding_sha256")):
+        raise TypeError("exact legacy package terminal sink required")
     expected = VIEW_KEYS["PACKAGE_TERMINAL"]
     value = {key:view.get(key) for key in expected}
     if set(value) != expected:
         raise ValueError("bridge package terminal census")
-    return value | {"schema":PACKAGE_TERMINAL_SCHEMA,"result":"COMPLETE"}
+    return value | {
+        "schema":PACKAGE_TERMINAL_SCHEMA,
+        "authority_mode":sink.get("authority_mode"),
+        "package_attempt_reservation_sha256":sink.get("package_attempt_reservation_sha256"),
+        "terminal_claim_sha256":sink.get("terminal_claim_sha256"),
+        "terminal_sink_sha256":sink.sha256,
+        "result":"COMPLETE",
+    }
 
 
 def build_package_terminal(view: ValidatedConsumerView, bridge: ValidatedNumericalBridge,
-                           terminal_path) -> tuple[dict, str]:
+                           terminal_sink) -> tuple[dict, str]:
     """Construct, validate, and exclusively bank the sole package terminal."""
-    from pathlib import Path
-    from f017_canonical_serialization_v10 import bank_exclusive
-    if not isinstance(terminal_path, Path):
-        raise TypeError("exact package terminal path required")
-    value = _package_terminal_document(view)
-    digest = validate_package_terminal(value, bridge)
-    if bank_exclusive(terminal_path, value) != digest:
+    from f017_event06_package_attempt_registry_v1 import bank_terminal
+    value = _package_terminal_document(view, terminal_sink)
+    digest = validate_package_terminal(value, bridge, terminal_sink)
+    if bank_terminal(terminal_sink, value) != digest:
         raise ValueError("bridge package terminal banking")
     return value, digest
 
 
-def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge) -> str:
+def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge,
+                              terminal_sink=None) -> str:
+    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
     keys = {"schema","bridge_sha256","package_attempt_id","binding_chain_head_sha256",
-            "v11_closure_root_sha256","accounting_binding_sha256","result"}
+            "v11_closure_root_sha256","accounting_binding_sha256","authority_mode",
+            "package_attempt_reservation_sha256","terminal_claim_sha256",
+            "terminal_sink_sha256","result"}
     if (type(value) is not dict or set(value) != keys or value["schema"] != PACKAGE_TERMINAL_SCHEMA
             or value["result"] != "COMPLETE" or value["bridge_sha256"] != bridge.sha256
             or value["package_attempt_id"] != bridge.get("package_attempt_id")):
         raise ValueError("bridge package terminal")
-    for key in ("binding_chain_head_sha256","v11_closure_root_sha256","accounting_binding_sha256"):
+    if (type(terminal_sink) is not ValidatedPackageTerminalSink
+            or terminal_sink.get("terminal_layer") not in {
+                "LEGACY_V11_CLOSURE", "PROMPT_BOUND_V12_CLOSURE"}
+            or value["authority_mode"] != terminal_sink.get("authority_mode")
+            or value["package_attempt_reservation_sha256"]
+            != terminal_sink.get("package_attempt_reservation_sha256")
+            or value["terminal_claim_sha256"] != terminal_sink.get("terminal_claim_sha256")):
+        raise TypeError("bridge package terminal sink continuity")
+    for key in ("binding_chain_head_sha256", "v11_closure_root_sha256",
+                "accounting_binding_sha256"):
+        if value[key] != terminal_sink.get(key):
+            raise TypeError("bridge package terminal claimed closure continuity")
+    if (terminal_sink.get("terminal_layer") == "LEGACY_V11_CLOSURE"
+            and value["terminal_sink_sha256"] != terminal_sink.sha256):
+        raise TypeError("bridge package terminal exact sink continuity")
+    for key in ("binding_chain_head_sha256","v11_closure_root_sha256","accounting_binding_sha256",
+                "package_attempt_reservation_sha256","terminal_claim_sha256","terminal_sink_sha256"):
         _sha(value[key], key)
     return hashlib.sha256(canonical_bytes(value)).hexdigest()

@@ -122,16 +122,15 @@ def qualify_call_path() -> dict:
             result = coordinator.execute_event06_bridge(
                 root / "candidate", root / "installed", root / "receipt",
                 package_attempt_id=expected.get("package_attempt_id"),
-                package_start_path=root / "package-start.json",
+                qualification_registry_root=root / "package-attempt-registry",
                 identity_evidence_directory=root / "identity",
                 execution_plan=plan, event_identity_plan=event_plan,
                 primary_directory=root / "primary", secondary_directory=root / "secondary",
-                package_directory=root / "package", terminal_path=root / "package-terminal.json",
+                package_directory=root / "package",
             )
             try:
                 coordinator.close_bridge_package(
                     result["bridge"], result["package_start"], result["execution"],
-                    root / "replacement-package-terminal.json",
                 )
             except RuntimeError as exc:
                 if "terminalization already claimed" not in str(exc):
@@ -166,11 +165,10 @@ def qualify_call_path() -> dict:
                 coordinator.execute_event06_bridge(
                     root / "candidate", root / "installed", root / "receipt",
                     package_attempt_id=_bridge.get("package_attempt_id"),
-                    package_start_path=root / "package-start.json",
+                    qualification_registry_root=root / "package-attempt-registry",
                     identity_evidence_directory=root / "identity", execution_plan=bridge_plan,
                     event_identity_plan=bridge_event_plan, primary_directory=root / "primary",
-                    secondary_directory=root / "secondary", package_directory=root / "package",
-                    terminal_path=root / "package-terminal.json")
+                    secondary_directory=root / "secondary", package_directory=root / "package")
             except ValueError:
                 pass
             else:

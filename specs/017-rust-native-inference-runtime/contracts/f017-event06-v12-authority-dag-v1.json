@@ -4,7 +4,7 @@
     "synthetic primary and secondary receipts at real numerical kernels"
   ],
   "coverage_count_source": "DERIVED_FROM_EDGES_ARRAY",
-  "edge_count": 40,
+  "edge_count": 45,
   "edges": [
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
@@ -742,13 +742,118 @@
       "source_node": "PACKAGE_TERMINAL_LEGACY"
     },
     {
+      "accepted_input_type_or_schema": "ValidatedIdentityAuthority",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "consumer_symbol": "reserve_package_attempt",
+      "destination_node": "PACKAGE_ATTEMPT_RESERVATION",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-036",
+      "lifecycle_phase": "PACKAGE_GATE",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedIdentityAuthority",
+      "producer_module": "scripts/research/f017_event06_collapsed_live_installation_v2.py",
+      "producer_symbol": "validate_collapsed_installed_triple",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "INSTALLED_AUTHORITY"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedPackageAttemptReservation",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "consumer_symbol": "claim_qualification_terminal_sinks",
+      "destination_node": "TERMINAL_SINK_CLAIM",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-037",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedPackageAttemptReservation",
+      "producer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "producer_symbol": "reserve_package_attempt",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "PACKAGE_ATTEMPT_RESERVATION"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedConsumerView",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "consumer_symbol": "claim_qualification_terminal_sinks",
+      "destination_node": "TERMINAL_SINK_CLAIM",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-038",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedConsumerView",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "package_terminal_view",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "PACKAGE_TERMINAL_LEGACY"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedPackageTerminalSink",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "consumer_symbol": "bank_terminal",
+      "destination_node": "LEGACY_PACKAGE_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-039",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedPackageTerminalSink",
+      "producer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "producer_symbol": "claim_qualification_terminal_sinks",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "TERMINAL_SINK_CLAIM"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedPackageTerminalSink",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
+      "consumer_symbol": "build_package_terminal",
+      "destination_node": "PROMPT_BOUND_PACKAGE_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-040",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedPackageTerminalSink",
+      "producer_module": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+      "producer_symbol": "claim_qualification_terminal_sinks",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "TERMINAL_SINK_CLAIM"
+    },
+    {
       "accepted_input_type_or_schema": "PromptBoundConsumerViewV2",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "consumer_symbol": "build_package_terminal",
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG-036",
+      "edge_id": "F017-DAG-041",
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -769,7 +874,7 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG-037",
+      "edge_id": "F017-DAG-042",
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -790,7 +895,7 @@
       "consumer_symbol": "primary_terminal_binding",
       "destination_node": "PRIMARY_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG-038",
+      "edge_id": "F017-DAG-043",
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -811,7 +916,7 @@
       "consumer_symbol": "package_terminal_view",
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG-039",
+      "edge_id": "F017-DAG-044",
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -832,7 +937,7 @@
       "consumer_symbol": "package_terminal_view",
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG-040",
+      "edge_id": "F017-DAG-045",
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",

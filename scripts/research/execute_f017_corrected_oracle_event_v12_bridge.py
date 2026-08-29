@@ -22,6 +22,12 @@ from f017_event06_numerical_bridge_v1 import (
     validate_package_terminal, validate_transition_chain,
 )
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
+from f017_event06_package_attempt_registry_v1 import (
+    ValidatedPackageAttemptReservation,
+    claim_qualification_terminal_sinks,
+    claim_terminal_sinks,
+    reserve_package_attempt,
+)
 from f017_result_artifacts_v11 import closure_root
 from execute_f017_corrected_oracle_event_v12 import run_identity_stage, validate_package_start
 
@@ -40,16 +46,18 @@ _START_SEAL = object()
 
 class ValidatedDurableStart:
     """Coordinator-created durable start bound to the installed authority."""
-    __slots__ = ("_terminalization_claimed", "_value", "sha256")
+    __slots__ = ("_reservation", "_terminalization_claimed", "_value", "sha256")
 
-    def __new__(cls, seal=None, value=None):
+    def __new__(cls, seal=None, value=None, reservation=None):
+        del reservation
         if seal is not _START_SEAL:
             raise TypeError("durable starts are coordinator-created")
         return super().__new__(cls)
 
-    def __init__(self, seal, value):
+    def __init__(self, seal, value, reservation=None):
         object.__setattr__(self, "_value", MappingProxyType(dict(value)))
         object.__setattr__(self, "sha256", _sha(value))
+        object.__setattr__(self, "_reservation", reservation)
         object.__setattr__(self, "_terminalization_claimed", False)
 
     def __setattr__(self, name, value):
@@ -62,6 +70,12 @@ class ValidatedDurableStart:
 
     def get(self, key, default=None):
         return self._value.get(key, default)
+
+    @property
+    def reservation(self) -> ValidatedPackageAttemptReservation:
+        if type(self._reservation) is not ValidatedPackageAttemptReservation:
+            raise TypeError("durable start has no package-attempt reservation")
+        return self._reservation
 
     def claim_terminalization(self) -> None:
         """Consume the process-local half of the durable one-shot close gate."""
@@ -135,21 +149,26 @@ def _bank_checked(path: Path, value: dict, expected_sha256: str) -> None:
         raise ValueError("Event 06 bridge artifact banking")
 
 
-def bank_package_start(installed: ValidatedIdentityAuthority,
-                       path: Path) -> ValidatedDurableStart:
+def bank_package_start(installed: ValidatedIdentityAuthority, *,
+                       qualification_registry_root: Path | None = None) -> ValidatedDurableStart:
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
         raise TypeError("validated installed authority required")
     authority = installed.as_dict()
+    reservation = reserve_package_attempt(
+        installed, qualification_root=qualification_registry_root
+    )
     value = {
-        "schema":"pulsarmlx.f017.event06-v12-bridge-package-durable-start/1.0.0",
+        "schema":"pulsarmlx.f017.event06-v12-bridge-package-durable-start/1.1.0",
+        "authority_mode":reservation.get("authority_mode"),
         "authorization_id":authority["authorization_id"],
         "package_attempt_id":authority["package_attempt_id"],
         "installed_authority_sha256":installed.source_sha256,
         "installation_receipt_sha256":authority["installation_receipt_sha256"],
+        "package_attempt_reservation_sha256":reservation.sha256,
         "attempts":1,"retries":0,"resume":False,"state":"DURABLE_START",
     }
-    start = ValidatedDurableStart(_START_SEAL, value)
-    _bank_checked(path, value, start.sha256)
+    start = ValidatedDurableStart(_START_SEAL, value, reservation)
+    _bank_checked(reservation.root / "package-durable-start.json", value, start.sha256)
     return start
 
 
@@ -305,15 +324,18 @@ def derive_bridge_from_identity_output(installed_authority, leases: LeaseSet,
 
 
 def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_path: Path, *,
-                           package_attempt_id: str, package_start_path: Path,
+                           package_attempt_id: str,
+                           qualification_registry_root: Path | None = None,
                            identity_evidence_directory: Path,
                            execution_plan: ValidatedExecutionPlan, event_identity_plan: dict,
                            primary_directory: Path, secondary_directory: Path,
-                           package_directory: Path, terminal_path: Path) -> dict:
+                           package_directory: Path) -> dict:
     """Single fixed production call path from V12 package gate through terminal."""
     gate = validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
-    package_start = bank_package_start(installed, package_start_path)
+    package_start = bank_package_start(
+        installed, qualification_registry_root=qualification_registry_root
+    )
     leases, identity_report = run_identity_stage(
         installed, package_attempt_id=package_attempt_id, package_durable_start=True,
         evidence_directory=identity_evidence_directory,
@@ -334,7 +356,7 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
     result = execute_consumers(
         bridge, leases, primary_directory, secondary_directory, package_directory,
     )
-    closure = close_bridge_package(bridge, package_start, result, terminal_path)
+    closure = close_bridge_package(bridge, package_start, result)
     return {"bridge":bridge,"package_start":package_start,
             "identity_report":identity_report,"execution":result,
             "package":closure,"result":"PASS"}
@@ -360,8 +382,7 @@ def bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBrid
 
 
 def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: ValidatedDurableStart,
-                         execution_result: ValidatedBridgeExecutionResult,
-                         terminal_path: Path) -> dict:
+                         execution_result: ValidatedBridgeExecutionResult) -> dict:
     """Derive terminal inputs from the validated execution result; accept no digest strings."""
     if (type(bridge) is not ValidatedNumericalBridge
             or type(package_start) is not ValidatedDurableStart
@@ -380,6 +401,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         if start_value != bridge_value:
             raise ValueError(f"package start/bridge {name}")
     package_start.claim_terminalization()
+    reservation = package_start.reservation
     _sha256 = lambda value: hashlib.sha256(canonical_bytes(value)).hexdigest()
     primary = execution_result["primary"]
     secondary = execution_result["secondary"]
@@ -396,14 +418,25 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         ("V11_PACKAGE_CLOSURE", execution_result["v11_closure_sha256"]),
     ]
     records, transition_chain = bank_bridge_transition_chain(
-        terminal_path.parent / "bridge-transition-chain", bridge, subjects
+        reservation.root / "bridge-transition-chain", bridge, subjects
     )
     view = package_terminal_view(
         bridge, transition_chain, execution_result["v11_closure_binding"],
         execution_result["accounting_binding"]
     )
-    terminal, terminal_sha = build_package_terminal(view, bridge, terminal_path)
+    if reservation.get("authority_mode") == "LIVE_CANONICAL":
+        legacy_sink, successor_sink = claim_terminal_sinks(
+            reservation, package_start, bridge, execution_result, view
+        )
+    elif reservation.get("authority_mode") == "QUALIFICATION_ONLY":
+        legacy_sink, successor_sink = claim_qualification_terminal_sinks(
+            reservation, bridge, view
+        )
+    else:
+        raise ValueError("package terminal authority mode")
+    terminal, terminal_sha = build_package_terminal(view, bridge, legacy_sink)
     return {"transition_records":records,
             "transition_chain":transition_chain,
             "chain_head_sha256":transition_chain.get("chain_head_sha256"),
-            "terminal":terminal,"terminal_sha256":terminal_sha,"result":"PASS"}
+            "terminal":terminal,"terminal_sha256":terminal_sha,
+            "successor_terminal_sink":successor_sink,"result":"PASS"}

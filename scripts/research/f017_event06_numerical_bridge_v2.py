@@ -13,8 +13,9 @@ import hashlib
 import re
 from pathlib import Path, PurePosixPath
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
-from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
+from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 from f017_event06_identity_bridge_contract_v2 import (
@@ -27,6 +28,9 @@ from f017_event06_identity_bridge_contract_v2 import (
 )
 from f017_event06_collapsed_live_installation_v2 import CollapsedLivePromptIdentityV2
 import f017_event06_numerical_bridge_v1 as legacy
+
+if TYPE_CHECKING:
+    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
 
 HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
@@ -407,8 +411,11 @@ def build_package_terminal(
     package_view: PromptBoundConsumerViewV2,
     legacy_package_terminal: dict[str, object],
     accounting_closure: ValidatedAccountingClosureV2,
-    terminal_path: Path,
+    terminal_sink: "ValidatedPackageTerminalSink",
 ) -> tuple[dict[str, object], str]:
+    from f017_event06_package_attempt_registry_v1 import (
+        ValidatedPackageTerminalSink, bank_terminal,
+    )
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(package_view) is not PromptBoundConsumerViewV2:
         raise TypeError("sealed package terminal authorities required")
     if package_view.get("role") != "PACKAGE_TERMINAL" or package_view.get("bridge_sha256") != bridge.sha256:
@@ -419,7 +426,18 @@ def build_package_terminal(
             or accounting_closure.get("result") != "PASS"):
         raise TypeError("sealed accounting closure continuity")
     historical = historical_bridge(bridge)
-    legacy.validate_package_terminal(legacy_package_terminal, historical)
+    if (type(terminal_sink) is not ValidatedPackageTerminalSink
+            or terminal_sink.get("terminal_layer") != "PROMPT_BOUND_V12_CLOSURE"
+            or terminal_sink.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or terminal_sink.get("authority_mode") != bridge.get("authority_mode")
+            or terminal_sink.get("binding_chain_head_sha256")
+            != package_view.legacy_view.get("binding_chain_head_sha256")
+            or terminal_sink.get("v11_closure_root_sha256")
+            != package_view.legacy_view.get("v11_closure_root_sha256")
+            or terminal_sink.get("accounting_binding_sha256")
+            != package_view.legacy_view.get("accounting_binding_sha256")):
+        raise TypeError("exact prompt-bound package terminal sink required")
+    legacy.validate_package_terminal(legacy_package_terminal, historical, terminal_sink)
     if (legacy_package_terminal.get("bridge_sha256") != bridge.get("legacy_bridge_sha256")
             or legacy_package_terminal.get("accounting_binding_sha256")
             != accounting_closure.get("legacy_accounting_binding_sha256")
@@ -443,8 +461,6 @@ def build_package_terminal(
     }
     _exact(value, PACKAGE_TERMINAL_FIELDS, PACKAGE_TERMINAL_TYPES, PACKAGE_TERMINAL_SCHEMA, "package terminal")
     digest = hashlib.sha256(canonical_bytes(value)).hexdigest()
-    if not isinstance(terminal_path, Path):
-        raise TypeError("exact successor terminal path required")
-    if bank_exclusive(terminal_path, value) != digest:
+    if bank_terminal(terminal_sink, value) != digest:
         raise ValueError("successor package terminal banking")
     return value, digest
