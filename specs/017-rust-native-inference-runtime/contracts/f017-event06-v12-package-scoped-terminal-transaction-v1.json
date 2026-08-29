@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-package-scoped-terminal-transaction/1.0.0",
+  "generation": "V12",
+  "repair_generation": 1,
+  "classification": "PACKAGE_SCOPED_TERMINAL_UNIQUENESS_AND_NO_SECOND_ATTEMPT",
+  "production": {
+    "reservation_symbol": "reserve_live_package_attempt",
+    "accepted_authority_type": "ValidatedIdentityAuthority",
+    "required_posture": "INSTALLED",
+    "required_authority_scope": "PRODUCTION",
+    "caller_registry_root_inputs": 0,
+    "generic_keyword_inputs": 0,
+    "registry_root_policy": "FIXED_MEASURED_INTERNAL_LITERAL",
+    "reservation_type": "ValidatedLivePackageAttemptReservation",
+    "terminal_sink_type": "ValidatedLivePackageTerminalSink"
+  },
+  "qualification": {
+    "reservation_symbol": "reserve_qualification_package_attempt",
+    "accepted_authority_types": [
+      "CollapsedInstalledTripleV2:QUALIFICATION_ONLY",
+      "ValidatedIdentityAuthority:SYNTHETIC_OR_SYNTHETIC_NON_AUTHORITY"
+    ],
+    "production_authority_accepted": false,
+    "live_root_equal_child_or_parent_intersection_accepted": false,
+    "reservation_type": "ValidatedQualificationPackageAttemptReservation",
+    "terminal_sink_type": "ValidatedQualificationPackageTerminalSink"
+  },
+  "package_transaction": {
+    "reservation_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
+    "terminal_claim_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
+    "attempts": 1,
+    "retries": 0,
+    "resume": false,
+    "legacy_and_successor_terminals": "TWO_PROJECTIONS_ONE_CLAIM",
+    "terminal_publication_revalidates_claim": true,
+    "terminal_publication_revalidates_sink": true,
+    "terminal_publication_revalidates_package": true
+  },
+  "historical_shared_entrypoints": "SUPERSEDED_FAIL_CLOSED",
+  "original_checkpoint_access_permitted": false,
+  "event06_execution_permitted": false,
+  "new_human_go_permitted": false,
+  "p1_attempt_2_permitted": false,
+  "historical_master_ledger": 175
+}

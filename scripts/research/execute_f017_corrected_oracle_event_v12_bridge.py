@@ -22,11 +22,14 @@ from f017_event06_numerical_bridge_v1 import (
     validate_package_terminal, validate_transition_chain,
 )
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
-from f017_event06_package_attempt_registry_v1 import (
-    ValidatedPackageAttemptReservation,
+from f017_event06_collapsed_live_installation_v2 import CollapsedInstalledTripleV2
+from f017_event06_package_attempt_registry_v2 import (
+    ValidatedLivePackageAttemptReservation,
+    ValidatedQualificationPackageAttemptReservation,
     claim_qualification_terminal_sinks,
-    claim_terminal_sinks,
-    reserve_package_attempt,
+    claim_live_terminal_sinks,
+    reserve_live_package_attempt,
+    reserve_qualification_package_attempt,
 )
 from f017_result_artifacts_v11 import closure_root
 from execute_f017_corrected_oracle_event_v12 import run_identity_stage, validate_package_start
@@ -42,6 +45,25 @@ PRODUCTION_CALL_PATH = (
 )
 _EXECUTION_RESULT_SEAL = object()
 _START_SEAL = object()
+
+
+def _freeze(value):
+    if type(value) is dict:
+        return tuple((key, _freeze(value[key])) for key in sorted(value))
+    if type(value) is list:
+        return tuple(_freeze(item) for item in value)
+    return value
+
+
+def _thaw(value):
+    if type(value) is tuple:
+        if value and all(
+            type(item) is tuple and len(item) == 2 and type(item[0]) is str
+            for item in value
+        ):
+            return {key: _thaw(item) for key, item in value}
+        return [_thaw(item) for item in value]
+    return value
 
 
 class ValidatedDurableStart:
@@ -72,8 +94,11 @@ class ValidatedDurableStart:
         return self._value.get(key, default)
 
     @property
-    def reservation(self) -> ValidatedPackageAttemptReservation:
-        if type(self._reservation) is not ValidatedPackageAttemptReservation:
+    def reservation(self) -> ValidatedLivePackageAttemptReservation | ValidatedQualificationPackageAttemptReservation:
+        if type(self._reservation) not in {
+                ValidatedLivePackageAttemptReservation,
+                ValidatedQualificationPackageAttemptReservation,
+        }:
             raise TypeError("durable start has no package-attempt reservation")
         return self._reservation
 
@@ -94,7 +119,7 @@ class ValidatedBridgeExecutionResult:
         return super().__new__(cls)
 
     def __init__(self, seal, value):
-        object.__setattr__(self, "_value", MappingProxyType(dict(value)))
+        object.__setattr__(self, "_value", _freeze(value))
 
     def __setattr__(self, name, value):
         del name, value
@@ -105,10 +130,16 @@ class ValidatedBridgeExecutionResult:
         raise TypeError("bridge execution results are immutable")
 
     def get(self, key, default=None):
-        return self._value.get(key, default)
+        for name, value in self._value:
+            if name == key:
+                return _thaw(value)
+        return default
 
     def __getitem__(self, key):
-        return self._value[key]
+        for name, value in self._value:
+            if name == key:
+                return _thaw(value)
+        raise KeyError(key)
 
 
 def validate_transition_order(trace: object) -> dict:
@@ -149,14 +180,10 @@ def _bank_checked(path: Path, value: dict, expected_sha256: str) -> None:
         raise ValueError("Event 06 bridge artifact banking")
 
 
-def bank_package_start(installed: ValidatedIdentityAuthority, *,
-                       qualification_registry_root: Path | None = None) -> ValidatedDurableStart:
+def _bank_package_start(installed: ValidatedIdentityAuthority, reservation) -> ValidatedDurableStart:
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
         raise TypeError("validated installed authority required")
     authority = installed.as_dict()
-    reservation = reserve_package_attempt(
-        installed, qualification_root=qualification_registry_root
-    )
     value = {
         "schema":"pulsarmlx.f017.event06-v12-bridge-package-durable-start/1.1.0",
         "authority_mode":reservation.get("authority_mode"),
@@ -170,6 +197,31 @@ def bank_package_start(installed: ValidatedIdentityAuthority, *,
     start = ValidatedDurableStart(_START_SEAL, value, reservation)
     _bank_checked(reservation.root / "package-durable-start.json", value, start.sha256)
     return start
+
+
+def bank_live_package_start(
+    installed: ValidatedIdentityAuthority,
+) -> ValidatedDurableStart:
+    """Production start: fixed registry root and no caller path capability."""
+    return _bank_package_start(installed, reserve_live_package_attempt(installed))
+
+
+def bank_qualification_package_start(
+    installed: CollapsedInstalledTripleV2,
+    qualification_registry_root: Path,
+) -> ValidatedDurableStart:
+    """Disposable qualification start with a non-substitutable authority."""
+    if type(installed) is not CollapsedInstalledTripleV2:
+        raise TypeError("exact qualification installed triple required")
+    reservation = reserve_qualification_package_attempt(
+        installed, qualification_registry_root
+    )
+    return _bank_package_start(installed.authority, reservation)
+
+
+def bank_package_start(*args, **kwargs):
+    del args, kwargs
+    raise RuntimeError("superseded shared package-start API")
 
 
 def bank_consumer_start(bridge: ValidatedNumericalBridge, role: str, path: Path, *,
@@ -325,7 +377,6 @@ def derive_bridge_from_identity_output(installed_authority, leases: LeaseSet,
 
 def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_path: Path, *,
                            package_attempt_id: str,
-                           qualification_registry_root: Path | None = None,
                            identity_evidence_directory: Path,
                            execution_plan: ValidatedExecutionPlan, event_identity_plan: dict,
                            primary_directory: Path, secondary_directory: Path,
@@ -333,9 +384,7 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
     """Single fixed production call path from V12 package gate through terminal."""
     gate = validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
-    package_start = bank_package_start(
-        installed, qualification_registry_root=qualification_registry_root
-    )
+    package_start = bank_live_package_start(installed)
     leases, identity_report = run_identity_stage(
         installed, package_attempt_id=package_attempt_id, package_durable_start=True,
         evidence_directory=identity_evidence_directory,
@@ -424,11 +473,11 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         bridge, transition_chain, execution_result["v11_closure_binding"],
         execution_result["accounting_binding"]
     )
-    if reservation.get("authority_mode") == "LIVE_CANONICAL":
-        legacy_sink, successor_sink = claim_terminal_sinks(
+    if type(reservation) is ValidatedLivePackageAttemptReservation:
+        legacy_sink, successor_sink = claim_live_terminal_sinks(
             reservation, package_start, bridge, execution_result, records, view
         )
-    elif reservation.get("authority_mode") == "QUALIFICATION_ONLY":
+    elif type(reservation) is ValidatedQualificationPackageAttemptReservation:
         legacy_sink, successor_sink = claim_qualification_terminal_sinks(
             reservation, bridge, view
         )

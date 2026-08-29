@@ -20,14 +20,18 @@ PROMPT_COMMIT = "1" * 40
 PROMPT_PATH = "Prompts/F017/SYNTHETIC-NON-AUTHORITY-SEQUENCE-12.md"
 
 
-def runtime_fixture_values():
+def runtime_fixture_values(*, qualification_root: Path | None = None):
     """Compose the accepted collapsed producer with the numerical bridge.
 
     The checkpoint boundary is interposed after the real installed triple.  No
     checkpoint alias or original path is resolved; descriptor identities and
     identity receipts are deterministic qualification-only values.
     """
-    fixture_root = Path(tempfile.gettempdir()) / "f017-seq17-bridge-runtime-fixture"
+    fixture_root = (
+        qualification_root
+        if qualification_root is not None
+        else Path(tempfile.gettempdir()) / "f017-seq17-bridge-runtime-fixture"
+    )
     if fixture_root.exists():
         shutil.rmtree(fixture_root)
     try:
@@ -36,24 +40,30 @@ def runtime_fixture_values():
         )
         event_identity = package["identity"]
         plan = package["plan"]
-        actual_installed = package["installed"].authority
+        installed_triple = package["installed"]
+        actual_installed = installed_triple.authority
     finally:
-        if fixture_root.exists():
+        if qualification_root is None and fixture_root.exists():
             shutil.rmtree(fixture_root)
-    installed_value = {
-        "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.1.0",
-        "generation": "V12",
-        "authorization_id": event_identity.get("authorization_id"),
-        "package_attempt_id": event_identity.get("package_attempt_id"),
-        "checkpoint_set_sha256": actual_installed.get("checkpoint_set_sha256"),
-        "event_identity_plan_sha256": event_identity.source_sha256,
-        "installation_receipt_sha256": "b" * 64,
-    }
-    installed = ValidatedIdentityAuthority(
-        tuple(sorted(installed_value.items())),
-        hashlib.sha256(canonical_bytes(installed_value)).hexdigest(),
-        "INSTALLED",
-    )
+    if qualification_root is None:
+        installed_value = {
+            "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.1.0",
+            "generation": "V12",
+            "authority_scope": "SYNTHETIC_NON_AUTHORITY",
+            "operation_class": "QUALIFICATION_ONLY",
+            "authorization_id": event_identity.get("authorization_id"),
+            "package_attempt_id": event_identity.get("package_attempt_id"),
+            "checkpoint_set_sha256": actual_installed.get("checkpoint_set_sha256"),
+            "event_identity_plan_sha256": event_identity.source_sha256,
+            "installation_receipt_sha256": "b" * 64,
+        }
+        installed = ValidatedIdentityAuthority(
+            tuple(sorted(installed_value.items())),
+            hashlib.sha256(canonical_bytes(installed_value)).hexdigest(),
+            "INSTALLED",
+        )
+    else:
+        installed = actual_installed
     package_attempt_id = plan.get("package_attempt_id")
     shards = plan.get("shards")
     descriptors = [{
@@ -85,7 +95,10 @@ def runtime_fixture_values():
     identity_stage = bind_identity_stage(installed, leases, report)
     bridge_input = produce_identity_bridge_input(event_identity, installed, plan)
     bridge = derive_bridge(bridge_input, installed, identity_stage, plan)
-    return bridge, bridge_input, event_identity, installed, leases, report, identity_stage, plan
+    values = (bridge, bridge_input, event_identity, installed, leases, report, identity_stage, plan)
+    if qualification_root is not None:
+        return values + (installed_triple,)
+    return values
 
 
 if __name__ == "__main__":

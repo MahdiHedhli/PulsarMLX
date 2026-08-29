@@ -858,10 +858,16 @@ def bind_v11_closure(bridge: ValidatedNumericalBridge, closure: object,
 
 
 def _package_terminal_document(view: ValidatedConsumerView, sink) -> dict:
-    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
+    from f017_event06_package_attempt_registry_v2 import (
+        ValidatedLivePackageTerminalSink,
+        ValidatedQualificationPackageTerminalSink,
+    )
     if type(view) is not ValidatedConsumerView:
         raise TypeError("package terminal view")
-    if (type(sink) is not ValidatedPackageTerminalSink
+    if (type(sink) not in {
+                ValidatedLivePackageTerminalSink,
+                ValidatedQualificationPackageTerminalSink,
+            }
             or sink.get("terminal_layer") != "LEGACY_V11_CLOSURE"
             or sink.get("package_attempt_id") != view.get("package_attempt_id")
             or sink.get("binding_chain_head_sha256")
@@ -888,17 +894,31 @@ def _package_terminal_document(view: ValidatedConsumerView, sink) -> dict:
 def build_package_terminal(view: ValidatedConsumerView, bridge: ValidatedNumericalBridge,
                            terminal_sink) -> tuple[dict, str]:
     """Construct, validate, and exclusively bank the sole package terminal."""
-    from f017_event06_package_attempt_registry_v1 import bank_terminal
+    from f017_event06_package_attempt_registry_v2 import (
+        ValidatedLivePackageTerminalSink,
+        ValidatedQualificationPackageTerminalSink,
+        bank_live_terminal,
+        bank_qualification_terminal,
+    )
     value = _package_terminal_document(view, terminal_sink)
     digest = validate_package_terminal(value, bridge, terminal_sink)
-    if bank_terminal(terminal_sink, value) != digest:
+    if type(terminal_sink) is ValidatedLivePackageTerminalSink:
+        observed = bank_live_terminal(terminal_sink, value)
+    elif type(terminal_sink) is ValidatedQualificationPackageTerminalSink:
+        observed = bank_qualification_terminal(terminal_sink, value)
+    else:
+        raise TypeError("exact package terminal sink required")
+    if observed != digest:
         raise ValueError("bridge package terminal banking")
     return value, digest
 
 
 def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge,
                               terminal_sink=None) -> str:
-    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
+    from f017_event06_package_attempt_registry_v2 import (
+        ValidatedLivePackageTerminalSink,
+        ValidatedQualificationPackageTerminalSink,
+    )
     keys = {"schema","bridge_sha256","package_attempt_id","binding_chain_head_sha256",
             "v11_closure_root_sha256","accounting_binding_sha256","authority_mode",
             "package_attempt_reservation_sha256","terminal_claim_sha256",
@@ -907,7 +927,10 @@ def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge,
             or value["result"] != "COMPLETE" or value["bridge_sha256"] != bridge.sha256
             or value["package_attempt_id"] != bridge.get("package_attempt_id")):
         raise ValueError("bridge package terminal")
-    if (type(terminal_sink) is not ValidatedPackageTerminalSink
+    if (type(terminal_sink) not in {
+                ValidatedLivePackageTerminalSink,
+                ValidatedQualificationPackageTerminalSink,
+            }
             or terminal_sink.get("terminal_layer") not in {
                 "LEGACY_V11_CLOSURE", "PROMPT_BOUND_V12_CLOSURE"}
             or value["authority_mode"] != terminal_sink.get("authority_mode")

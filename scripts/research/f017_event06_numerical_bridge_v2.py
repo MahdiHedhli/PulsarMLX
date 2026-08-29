@@ -30,7 +30,10 @@ from f017_event06_collapsed_live_installation_v2 import CollapsedLivePromptIdent
 import f017_event06_numerical_bridge_v1 as legacy
 
 if TYPE_CHECKING:
-    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
+    from f017_event06_package_attempt_registry_v2 import (
+        ValidatedLivePackageTerminalSink,
+        ValidatedQualificationPackageTerminalSink,
+    )
 
 HEX40 = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
@@ -411,11 +414,17 @@ def build_package_terminal(
     package_view: PromptBoundConsumerViewV2,
     legacy_package_terminal: dict[str, object],
     accounting_closure: ValidatedAccountingClosureV2,
-    terminal_sink: "ValidatedPackageTerminalSink",
+    terminal_sink: "ValidatedLivePackageTerminalSink | ValidatedQualificationPackageTerminalSink",
 ) -> tuple[dict[str, object], str]:
-    from f017_event06_package_attempt_registry_v1 import (
-        ValidatedPackageTerminalSink, bank_terminal,
+    from f017_event06_package_attempt_registry_v1 import ValidatedPackageTerminalSink
+    from f017_event06_package_attempt_registry_v2 import (
+        ValidatedLivePackageTerminalSink,
+        ValidatedQualificationPackageTerminalSink,
+        bank_live_terminal,
+        bank_qualification_terminal,
     )
+    if type(terminal_sink) is ValidatedPackageTerminalSink:
+        raise TypeError("superseded package terminal sink")
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(package_view) is not PromptBoundConsumerViewV2:
         raise TypeError("sealed package terminal authorities required")
     if package_view.get("role") != "PACKAGE_TERMINAL" or package_view.get("bridge_sha256") != bridge.sha256:
@@ -426,7 +435,10 @@ def build_package_terminal(
             or accounting_closure.get("result") != "PASS"):
         raise TypeError("sealed accounting closure continuity")
     historical = historical_bridge(bridge)
-    if (type(terminal_sink) is not ValidatedPackageTerminalSink
+    if (type(terminal_sink) not in {
+                ValidatedLivePackageTerminalSink,
+                ValidatedQualificationPackageTerminalSink,
+            }
             or terminal_sink.get("terminal_layer") != "PROMPT_BOUND_V12_CLOSURE"
             or terminal_sink.get("package_attempt_id") != bridge.get("package_attempt_id")
             or terminal_sink.get("authority_mode") != bridge.get("authority_mode")
@@ -461,6 +473,12 @@ def build_package_terminal(
     }
     _exact(value, PACKAGE_TERMINAL_FIELDS, PACKAGE_TERMINAL_TYPES, PACKAGE_TERMINAL_SCHEMA, "package terminal")
     digest = hashlib.sha256(canonical_bytes(value)).hexdigest()
-    if bank_terminal(terminal_sink, value) != digest:
+    if type(terminal_sink) is ValidatedLivePackageTerminalSink:
+        observed = bank_live_terminal(terminal_sink, value)
+    elif type(terminal_sink) is ValidatedQualificationPackageTerminalSink:
+        observed = bank_qualification_terminal(terminal_sink, value)
+    else:
+        raise TypeError("exact package terminal sink required")
+    if observed != digest:
         raise ValueError("successor package terminal banking")
     return value, digest

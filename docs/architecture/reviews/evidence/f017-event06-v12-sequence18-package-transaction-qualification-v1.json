@@ -1,0 +1,68 @@
+{
+  "aggregate_sha256": "1f2dfb42d7aa7430365b2ccdbab31e4fb522b8d3bc758544b5eccad8ee5c5c45",
+  "authorization_package_primary_secondary_accounting": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "cross_mode_reservation_or_sink_substitutions_accepted": 0,
+  "event06_executed": false,
+  "event06_identities_instantiated_or_consumed": [
+    0,
+    0
+  ],
+  "full_model_inference": "NONE",
+  "historical_master_ledger": 175,
+  "mutation_campaign": {
+    "passed": 121,
+    "total": 121,
+    "unexpected_passes": 0
+  },
+  "new_human_go_document_created": false,
+  "original_checkpoint_access": "NONE",
+  "original_checkpoint_root_resolved": false,
+  "package_uniqueness": {
+    "aggregate_sha256": "63bf265e73fa4ff8dbc0756a93f7ba8a5865a288f726ab42b94f3f2e8f0beea0",
+    "ambiguous_accounting_outcomes": 0,
+    "competing_terminal_outcomes_accepted": 0,
+    "contenders": 20,
+    "errors": 0,
+    "package_reservation_winners_per_identity": 1,
+    "package_terminal_claim_winners_per_identity": 1,
+    "platform_process_start_method": "spawn",
+    "reconstructed_reservation_sha256": "adb3d05b14928940d44701237b24853e9c7eac418294bb397683eb1d6397828d",
+    "reservation_losers": 19,
+    "result": "PASS",
+    "schema": "pulsarmlx.f017.event06-v12-package-uniqueness-qualification/1.0.0",
+    "second_attempts_reaching_checkpoint_or_numerical_boundary": 0,
+    "second_attempts_reaching_package_start": 0,
+    "terminal_claim_losers": 19
+  },
+  "production_authority_accepted_by_qualification_api": 0,
+  "production_fixed_root_interception_rehearsal": "PASS",
+  "production_live_registry_creates_or_writes": 0,
+  "production_public_generic_keyword_inputs": 0,
+  "production_public_registry_root_inputs": 0,
+  "qualification_authority_accepted_by_production_api": 0,
+  "qualification_full_call_path_no_access": "PASS",
+  "qualification_full_call_path_repetitions": 20,
+  "qualification_unique_aggregate_digests": 1,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-package-transaction-qualification/2.0.0",
+  "source_derived_dag": {
+    "dag_edges_total": 47,
+    "dag_edges_with_composition_tests": 47,
+    "duplicate_edge_ids": 0,
+    "extraneous_dag_edges": 0,
+    "live_terminal_boundaries_total": 3,
+    "live_terminal_boundaries_with_composition_tests": 3,
+    "result": "PASS",
+    "reviewers_first_to_find_noncomposition": false,
+    "schema": "pulsarmlx.f017.event06-v12-authority-dag-validation/2.0.0",
+    "source_blob_drift": 0,
+    "source_typed_boundaries_total": 47,
+    "uncovered_typed_boundaries": 0,
+    "unresolved_public_symbols": 0
+  }
+}

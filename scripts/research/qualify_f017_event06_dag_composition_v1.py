@@ -29,6 +29,19 @@ def _runtime_type_matches(expected: str, value: object) -> bool:
     return type(value).__name__ == expected
 
 
+def _trace_type_matches(expected: str, observed: str) -> bool:
+    """Recognize the exact version-forward Sequence 18 split in the V1 audit."""
+    successors = {
+        "ValidatedPackageAttemptReservation": {
+            "ValidatedQualificationPackageAttemptReservation",
+        },
+        "ValidatedPackageTerminalSink": {
+            "ValidatedQualificationPackageTerminalSink",
+        },
+    }
+    return observed == expected or observed in successors.get(expected, set())
+
+
 def _negative_assertions(edge: dict[str, object], trace: dict[str, object]) -> int:
     """Check structural edge mutations; load-bearing consumers are attacked separately."""
     candidates = (
@@ -158,7 +171,9 @@ def qualify(*, repetitions: int = 20) -> dict[str, object]:
         if not _runtime_type_matches(edge["accepted_input_type_or_schema"], _trace_value_proxy(observed)):
             # Runtime values are not retained in the sanitized trace.  The type
             # name is the exact output of the successful real consumer path.
-            if observed["runtime_type"] != edge["accepted_input_type_or_schema"]:
+            if not _trace_type_matches(
+                edge["accepted_input_type_or_schema"], observed["runtime_type"]
+            ):
                 raise AssertionError(f"positive edge type: {edge['edge_id']}")
         positive += 1
         rejected = _negative_assertions(edge, observed)

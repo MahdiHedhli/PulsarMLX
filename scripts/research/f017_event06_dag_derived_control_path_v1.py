@@ -25,8 +25,8 @@ from f017_event06_numerical_bridge_v2 import (
     produce_identity_bridge_input,
 )
 import f017_event06_numerical_bridge_v1 as legacy
-from f017_event06_package_attempt_registry_v1 import (
-    claim_qualification_terminal_sinks, reserve_package_attempt,
+from f017_event06_package_attempt_registry_v2 import (
+    claim_qualification_terminal_sinks, reserve_qualification_package_attempt,
 )
 
 
@@ -295,9 +295,8 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     )
     _trace(trace, EDGE_IDS[34], package_legacy_view)
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", package_legacy_view)
-    package_reservation = reserve_package_attempt(
-        package["installed"].authority,
-        qualification_root=root / "package-attempt-registry",
+    package_reservation = reserve_qualification_package_attempt(
+        package["installed"], root / "package-attempt-registry",
     )
     _trace(trace, EDGE_IDS[35], package["installed"].authority)
     _trace(trace, EDGE_IDS[36], package_reservation)

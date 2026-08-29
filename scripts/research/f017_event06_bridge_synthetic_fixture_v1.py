@@ -46,6 +46,8 @@ def fixture_values():
     installed_value = {"schema":"pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.1.0",
         "generation":"V12","authorization_id":"F017-BRIDGE-AUTH-01",
         "package_attempt_id":package_attempt_id,"checkpoint_set_sha256":fixed,
+        "authority_scope":"SYNTHETIC_NON_AUTHORITY",
+        "operation_class":"QUALIFICATION_ONLY",
         "event_identity_plan_sha256":event_sha,"installation_receipt_sha256":"b" * 64}
     installed = ValidatedIdentityAuthority(tuple(sorted(installed_value.items())),
         hashlib.sha256(canonical_bytes(installed_value)).hexdigest(), "INSTALLED")

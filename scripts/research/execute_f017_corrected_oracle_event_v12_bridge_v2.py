@@ -257,7 +257,6 @@ def execute_event06_bridge(
     receipt_path: Path,
     *,
     package_attempt_id: str,
-    qualification_registry_root: Path | None = None,
     identity_evidence_directory: Path,
     execution_plan: ValidatedExecutionPlan,
     bridge_input: PromptBoundIdentityBridgeInputV2,
@@ -269,9 +268,7 @@ def execute_event06_bridge(
     gate = legacy_coordinator.validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
     validate_pre_package_bridge_input(bridge_input, installed, execution_plan)
-    package_start = legacy_coordinator.bank_package_start(
-        installed, qualification_registry_root=qualification_registry_root
-    )
+    package_start = legacy_coordinator.bank_live_package_start(installed)
     leases, identity_report = legacy_coordinator.run_identity_stage(
         installed, package_attempt_id=package_attempt_id, package_durable_start=True,
         evidence_directory=identity_evidence_directory,

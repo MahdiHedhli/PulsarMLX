@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,8 +23,8 @@ from f017_event06_dag_derived_control_path_v1 import _synthetic_bundle
 from qualify_f017_event06_bridge_call_path_v2 import _release_report
 import f017_event06_numerical_bridge_v1 as legacy
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator
-from f017_event06_package_attempt_registry_v1 import (
-    claim_qualification_terminal_sinks, reserve_package_attempt,
+from f017_event06_package_attempt_registry_v2 import (
+    claim_qualification_terminal_sinks, reserve_qualification_package_attempt,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -58,7 +59,11 @@ def _bundle(role: str) -> dict:
 
 
 def _baseline_documents():
-    bridge, bridge_input, _event_identity, installed, _leases, _report, _identity, _plan = runtime_fixture_values()
+    fixture_root = Path(tempfile.mkdtemp(prefix="f017-event06-bridge-v2-authority-"))
+    (bridge, bridge_input, _event_identity, installed, _leases, _report,
+     _identity, _plan, installed_triple) = runtime_fixture_values(
+        qualification_root=fixture_root
+    )
     historical = bridge.legacy_bridge
     primary_bundle = _synthetic_bundle("PRIMARY", historical)
     primary_numerical = legacy.numerical_view(historical, "PRIMARY")
@@ -150,8 +155,8 @@ def _baseline_documents():
     )
     with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-v2-") as directory:
         root = Path(directory)
-        reservation = reserve_package_attempt(
-            installed, qualification_root=root / "package-attempt-registry"
+        reservation = reserve_qualification_package_attempt(
+            installed_triple, root / "package-attempt-registry"
         )
         legacy_sink, successor_sink = claim_qualification_terminal_sinks(
             reservation, historical, package_terminal
@@ -168,6 +173,7 @@ def _baseline_documents():
         "accounting_closure": accounting.as_dict(), "package_terminal": terminal,
     }
     documents.update({f"consumer_view:{role}": view.as_dict() for role, view in views.items()})
+    shutil.rmtree(fixture_root)
     return bridge, bridge_input, documents
 
 

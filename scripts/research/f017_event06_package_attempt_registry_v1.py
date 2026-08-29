@@ -97,6 +97,9 @@ def reserve_package_attempt(
     *,
     qualification_root: Path | None = None,
 ) -> ValidatedPackageAttemptReservation:
+    raise RuntimeError(
+        "superseded shared package reservation API; use exact live or qualification V2 API"
+    )
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
         raise TypeError("exact installed authority required")
     authority = installed.as_dict()
@@ -151,6 +154,7 @@ def claim_terminal_sinks(
     package_terminal_view: "ValidatedConsumerView",
 ) -> tuple[ValidatedPackageTerminalSink, ValidatedPackageTerminalSink]:
     """Consume the sole live terminal claim from exact coordinator outputs."""
+    raise RuntimeError("superseded terminal claim API; use package-scoped V2 live claim")
     from execute_f017_corrected_oracle_event_v12_bridge import (
         ValidatedBridgeExecutionResult,
         ValidatedDurableStart,
@@ -213,6 +217,9 @@ def claim_qualification_terminal_sinks(
     package_terminal_view: "ValidatedConsumerView",
 ) -> tuple[ValidatedPackageTerminalSink, ValidatedPackageTerminalSink]:
     """Produce explicitly non-live sinks for the no-access composition path."""
+    raise RuntimeError(
+        "superseded terminal claim API; use package-scoped V2 qualification claim"
+    )
     from f017_event06_numerical_bridge_v1 import (
         ValidatedConsumerView,
         ValidatedNumericalBridge,
@@ -283,6 +290,7 @@ def _bank_terminal_claim(reservation, package_start_sha256, bridge_sha256,
 
 
 def bank_terminal(sink: ValidatedPackageTerminalSink, value: dict) -> str:
+    raise RuntimeError("superseded generic terminal writer; use exact V2 mode writer")
     if type(sink) is not ValidatedPackageTerminalSink:
         raise TypeError("exact package terminal sink required")
     digest = _sha(value)

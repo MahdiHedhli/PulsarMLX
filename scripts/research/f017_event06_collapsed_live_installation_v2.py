@@ -1458,7 +1458,7 @@ def commit_collapsed_live_installation(
 class CollapsedInstalledTripleV2:
     __slots__ = (
         "authority", "candidate_sha256", "receipt_sha256", "installed_sha256",
-        "eligibility_sha256", "transaction_sha256", "source_sha256", "_locked",
+        "eligibility_sha256", "transaction_sha256", "source_sha256", "mode", "_locked",
     )
 
     def __new__(cls, seal: object = None, *args: object) -> Self:
@@ -1481,6 +1481,7 @@ class CollapsedInstalledTripleV2:
         object.__setattr__(self, "installed_sha256", prepared.installed_sha256)
         object.__setattr__(self, "eligibility_sha256", prepared.eligibility_sha256)
         object.__setattr__(self, "transaction_sha256", transaction.transaction_sha256)
+        object.__setattr__(self, "mode", prepared.mode)
         object.__setattr__(self, "source_sha256", _sha(canonical_bytes({
             "candidate_sha256": prepared.candidate_sha256,
             "receipt_sha256": prepared.receipt_sha256,

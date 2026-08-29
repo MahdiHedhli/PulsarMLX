@@ -14,8 +14,9 @@ from f017_corrected_oracle_primary_wrapper_v11 import validate_candidate_documen
 from f017_corrected_oracle_secondary_wrapper_v11 import validate_candidate_document as validate_secondary_v11
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_execution_plan
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
-from f017_event06_package_attempt_registry_v1 import (
-    LIVE_REGISTRY_ROOT, claim_qualification_terminal_sinks, reserve_package_attempt,
+from f017_event06_package_attempt_registry_v2 import (
+    LIVE_REGISTRY_ROOT, claim_qualification_terminal_sinks,
+    reserve_qualification_package_attempt,
 )
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
@@ -29,7 +30,7 @@ from f017_event06_numerical_bridge_v1 import (
 )
 from execute_f017_corrected_oracle_event_v12_bridge import (
     PRODUCTION_CALL_PATH, ValidatedBridgeExecutionResult, ValidatedDurableStart,
-    bank_package_start, close_bridge_package, validate_no_access_call_path,
+    bank_qualification_package_start, close_bridge_package, validate_no_access_call_path,
     validate_transition_order,
 )
 from qualify_f017_event06_bridge_call_path_v2 import _release_report, qualify_call_path
@@ -160,15 +161,15 @@ def test_views_close_exact_consumer_authority(tmp_path):
     closure = _closure_fixture()
     closure_binding = bind_v11_closure(bridge, closure, accounting_binding)
     terminal_view = package_terminal_view(bridge, chain, closure_binding, accounting_binding)
-    reservation = reserve_package_attempt(
-        installed, qualification_root=tmp_path / "package-attempt-registry"
+    reservation = reserve_qualification_package_attempt(
+        installed, tmp_path / "package-attempt-registry"
     )
     assert reservation.get("authority_mode") == "QUALIFICATION_ONLY"
-    with pytest.raises(ValueError, match="overlap live registry"):
-        reserve_package_attempt(installed, qualification_root=LIVE_REGISTRY_ROOT)
+    with pytest.raises(ValueError, match="intersects live registry"):
+        reserve_qualification_package_attempt(installed, LIVE_REGISTRY_ROOT)
     with pytest.raises(FileExistsError):
-        reserve_package_attempt(
-            installed, qualification_root=tmp_path / "package-attempt-registry"
+        reserve_qualification_package_attempt(
+            installed, tmp_path / "package-attempt-registry"
         )
     terminal_sink, _ = claim_qualification_terminal_sinks(
         reservation, bridge, terminal_view
@@ -219,9 +220,12 @@ def test_bundle_binding_requires_exact_producer_kinds_and_authority_mode():
 
 
 def test_durable_start_terminalization_is_one_shot(tmp_path):
-    _bridge, installed, *_ = fixture_values()
-    start = bank_package_start(
-        installed, qualification_registry_root=tmp_path / "package-attempt-registry"
+    from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
+    package = build_sequence14_qualification(
+        tmp_path / "qualification", now_unix_ns=4_000_000_000_000_000_000
+    )
+    start = bank_qualification_package_start(
+        package["installed"], tmp_path / "package-attempt-registry"
     )
     start.claim_terminalization()
     with pytest.raises(RuntimeError):

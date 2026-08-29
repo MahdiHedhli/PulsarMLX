@@ -1,0 +1,51 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-root-downgrade-reproduction/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt_commit": "1582afb528acf2b97d823239c671ff0f0b7c5f62",
+  "prompt_sha256": "7f6a871af9ec6be65d0c4ebc15bc9ca50a3f85a35a1ec4c1587e76f9884f1489",
+  "source_head": "272292154c3c3229569793da86700cae027df1fd",
+  "source_tree": "3a571a59bf1459aae791d3c285d795edefbcb5ea",
+  "registry_path": "scripts/research/f017_event06_package_attempt_registry_v1.py",
+  "registry_sha256": "818aac613d01f98a077bb5a7d2706b6f916d86c0a6dea227136633a79dc7ea63",
+  "reserve_signature": "(installed: ValidatedIdentityAuthority, *, qualification_root: Path | None = None) -> ValidatedPackageAttemptReservation",
+  "branch_order": "QUALIFICATION_ROOT_BEFORE_AUTHORITY_SCOPE",
+  "installed_posture": "INSTALLED",
+  "installed_authority_scope": "PRODUCTION",
+  "canonical_package_identity": "F017-BRIDGE-PACKAGE-01",
+  "distinct_caller_roots": 2,
+  "same_package_key_across_roots": true,
+  "reservation_modes": [
+    "QUALIFICATION_ONLY",
+    "QUALIFICATION_ONLY"
+  ],
+  "live_claim_present_in_dag": false,
+  "qualification_claim_present_in_dag": true,
+  "terminal_bank_present_in_dag": true,
+  "interposed_operations": {
+    "secure_directory_calls": 4,
+    "exclusive_bank_calls": 2,
+    "actual_filesystem_operations": 0
+  },
+  "persistent_artifacts_created": 0,
+  "live_registry_creates_or_writes": 0,
+  "checkpoint_root_resolved": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event06_identities_instantiated_or_consumed": [
+    0,
+    0
+  ],
+  "authorization_package_primary_secondary_accounting": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "historical_master_ledger": 175,
+  "predecessor_structural_repairs_failed": "3/3",
+  "sequence18_architectural_repair_generation": 1,
+  "sequence18_repair_loops_authorized": 10,
+  "sequence18_repair_loops_consumed_at_start": 0,
+  "escalation_class": "CALLER_CONTROLLED_PRODUCTION_REGISTRY_AUTHORITY",
+  "result": "PASS"
+}
