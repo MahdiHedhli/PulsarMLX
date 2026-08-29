@@ -1284,6 +1284,8 @@ class CollapsedLiveInstallationCapabilityV2(_InstallationCapability):
 
 _ISSUED_QUALIFICATION_CAPABILITIES: dict[int, QualificationInstallationCapabilityV2] = {}
 _ISSUED_LIVE_CAPABILITIES: dict[int, CollapsedLiveInstallationCapabilityV2] = {}
+_QUALIFICATION_PREPARED_CAPABILITIES: set[str] = set()
+_LIVE_PREPARED_CAPABILITIES: set[str] = set()
 
 
 def _capability_inputs(
@@ -1310,6 +1312,9 @@ def produce_qualification_installation_capability(
     _capability_inputs(prepared, bundle, expires_at_unix_ns)
     if type(target) is not QualificationInstallationTargetV2 or prepared.mode != "QUALIFICATION_ONLY":
         raise TypeError("qualification target/capability mode")
+    if prepared.prepared_sha256 in _QUALIFICATION_PREPARED_CAPABILITIES:
+        raise ValueError("prepared installation capability already issued")
+    _QUALIFICATION_PREPARED_CAPABILITIES.add(prepared.prepared_sha256)
     capability = QualificationInstallationCapabilityV2(_QUALIFICATION_CAPABILITY_SEAL)
     capability._initialize(
         prepared, bundle, target, target_leaf, expires_at_unix_ns, "QUALIFICATION_ONLY"
@@ -1330,6 +1335,9 @@ def produce_collapsed_live_installation_capability(
     _capability_inputs(prepared, bundle, expires_at_unix_ns)
     if type(target) is not LiveInstallationTargetV2 or prepared.mode != "LIVE_CANONICAL" or state._mode != "LIVE_CANONICAL":
         raise TypeError("live target/capability mode")
+    if prepared.prepared_sha256 in _LIVE_PREPARED_CAPABILITIES:
+        raise ValueError("prepared installation capability already issued")
+    _LIVE_PREPARED_CAPABILITIES.add(prepared.prepared_sha256)
     capability = CollapsedLiveInstallationCapabilityV2(_LIVE_CAPABILITY_SEAL)
     capability._initialize(
         prepared, bundle, target, target_leaf, expires_at_unix_ns, "LIVE_CANONICAL"
@@ -1376,7 +1384,11 @@ def commit_collapsed_live_installation(
     if state._mode != "LIVE_CANONICAL" or capability.prepared_sha256 != prepared.prepared_sha256 or capability.expires_at_unix_ns <= time.time_ns():
         raise ValueError("live capability binding or expiry")
     state._record("live_installation_commit_calls")
-    marker = f"F017-COLLAPSED-GO-CONSUMED-{capability.source_sha256}"
+    # The durable marker is preparation-bound, not capability-bound.  Even if
+    # a process crashes after minting a capability, reconstructing a capability
+    # with another leaf or expiry cannot turn one prepared package into a
+    # second installation attempt.
+    marker = f"F017-COLLAPSED-GO-CONSUMED-{prepared.prepared_sha256}"
     return _commit_bound_production_transaction(
         capability._target._validated_path(),
         capability.target_leaf,

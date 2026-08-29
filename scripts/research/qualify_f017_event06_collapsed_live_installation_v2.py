@@ -397,6 +397,14 @@ def _security_mutations(
             state=package["state"],
         ),
     )
+    campaign.reject(
+        "second_capability_for_one_prepared_package",
+        "capability_replay",
+        lambda: produce_qualification_installation_capability(
+            package["prepared"], package["bundle"], package["target"],
+            target_leaf="second-installation-attempt", expires_at_unix_ns=2**62,
+        ),
+    )
 
     public_wrong_args = (
         lambda: produce_collapsed_live_approval(object(), package["go"], package["readiness"], package["plan"], now_unix_ns=FIXED_NOW),

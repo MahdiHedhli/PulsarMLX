@@ -25,6 +25,7 @@ from f017_event06_collapsed_live_installation_v2 import (
     commit_qualification_collapsed_installation,
     produce_checkpoint_bound_candidate_bundle,
     produce_collapsed_live_installation_capability,
+    produce_qualification_installation_capability,
     resolve_live_checkpoint_root_authority,
 )
 from f017_event06_production_installation_v2 import FutureGoCapabilityV2
@@ -142,6 +143,20 @@ class CollapsedLiveInstallationV2Tests(unittest.TestCase):
                 commit_qualification_collapsed_installation(
                     package["prepared"], object.__new__(QualificationInstallationCapabilityV2),
                     state=package["state"],
+                )
+
+    def test_one_prepared_package_cannot_issue_a_second_capability(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="f017-seq14-capability-") as directory:
+            package = build_sequence14_qualification(Path(directory))
+            with self.assertRaisesRegex(
+                ValueError, "prepared installation capability already issued"
+            ):
+                produce_qualification_installation_capability(
+                    package["prepared"],
+                    package["bundle"],
+                    package["target"],
+                    target_leaf="second-installation-attempt",
+                    expires_at_unix_ns=2**62,
                 )
 
     def test_production_shaped_rehearsal_stops_before_every_live_boundary(self) -> None:
