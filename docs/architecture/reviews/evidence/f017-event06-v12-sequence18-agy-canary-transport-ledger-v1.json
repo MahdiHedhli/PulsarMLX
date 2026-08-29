@@ -1,0 +1,42 @@
+{
+  "attempts": [
+    {
+      "attempt": 1,
+      "model_session_started": false,
+      "result": "FAIL_PRINT_FLAG_PARSE"
+    },
+    {
+      "attempt": 2,
+      "model_session_started": true,
+      "result": "FAIL_PERMISSION_NO_STRUCTURED_RESPONSE",
+      "transport_model": "gemini-3.1-pro-high"
+    },
+    {
+      "attempt": 3,
+      "consequence_term": "SECOND_ATTEMPT",
+      "exit_status": 0,
+      "model_session_started": true,
+      "nonce_echo": "PASS",
+      "payload_digest_echo": "PASS",
+      "result": "PASS",
+      "schema": "PASS",
+      "seeded_symbol": "reserve_live_package_attempt",
+      "terminal_marker": "PASS",
+      "transport_model": "gemini-3.1-pro-high",
+      "verdict": "REJECT"
+    }
+  ],
+  "candidate_head": "1b62d0feaef37d38ca25e6bb32465d1164b06608",
+  "candidate_tree": "a539fd6aa1fe314e84442f4f0546b75e45ed0b77",
+  "exact_response_sha256": "3e7f8bae168a5c91cb4e148f1000cb31673021b200af0c1569de0180da9678d8",
+  "payload_sha256": "0cc29bb029ecf6f62cb7d7a5cb0f223281052c77d4a6b51eccf70758a85a5610",
+  "private_raw_receipt_sha256": "627238f376ef74ddd278a3c9a1db4fc7dd1ee1f72a7af13a9faa03f1e4c4f703",
+  "provider_envelope_sha256": "ac1bae7396c9a0908ab998c8bbdf916414223f7ae0de63b66264a4ab743163df",
+  "request_kind": "KNOWN_DEFECT_CANARY",
+  "result": "PASS",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-transport-ledger/1.0.0",
+  "successful_nonce": "2a888d7a3e314ad9bb79c56b36abb4b81b0f5561bebb36a2593b65cd5003559e",
+  "third_failure_occurred": false,
+  "transport_failures": 2
+}

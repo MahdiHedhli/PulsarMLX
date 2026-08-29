@@ -1,0 +1,30 @@
+{
+  "candidate_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "candidate_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "dispositions": [
+    {
+      "disposition": "OUTSIDE_SEQUENCE18_EVENT06_PRODUCTION_CLOSURE",
+      "finding_id": "F017-VULN-ROOT-1",
+      "reviewer_claim_id": "S18-C-ROOT-001",
+      "reviewer_symbol": "bounded_p1",
+      "support": "Sequence 18 S18-C-ROOT-001 governs the V12 Event 06 package registry and terminal closure enumerated by the source-derived storage census. crates/f017-native/src/bin/bounded_p1.rs is a historical P1 executor, is absent from that closure, and P1 attempt 2 is prohibited by this graph."
+    },
+    {
+      "disposition": "OUTSIDE_SEQUENCE18_EVENT06_PRODUCTION_CLOSURE",
+      "finding_id": "F017-VULN-DAG-1",
+      "reviewer_claim_id": "S18-C-DAG-001",
+      "reviewer_symbol": "execute_evidenced_bounded_p1_once",
+      "support": "Sequence 18 S18-C-DAG-001 governs the generated Event 06 V12 reservation, package-start, terminal-claim, and terminal-bank DAG. The P1 executor symbol is absent from the 49-edge Event 06 DAG and cannot affect Event 06 package uniqueness or accounting."
+    }
+  ],
+  "event06_execution": false,
+  "finding_count": 2,
+  "finding_count_within_defined_sequence18_safety_scope": 0,
+  "historical_master_ledger": 175,
+  "original_checkpoint_access": "NONE",
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "repair_loop": 5,
+  "required_follow_up": "FRESH_AGY_CANARY_AND_REAL_PAIR_WITH_EXPLICIT_EVENT06_CLOSURE_SCOPE",
+  "result": "SUPPORT_REVIEW_REQUIRED",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-support-ledger/1.0.0"
+}

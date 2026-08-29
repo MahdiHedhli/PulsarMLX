@@ -152,6 +152,8 @@ def test_views_close_exact_consumer_authority(tmp_path):
     release_binding, _ = build_release_binding(release, _release_report(bridge.get("package_attempt_id")))
     accounting = accounting_view(bridge, release_binding)
     accounting_binding, _ = build_accounting_binding(accounting, release_binding)
+    assert accounting_binding.get("authorization_delta") == 0
+    assert accounting_binding.get("package_delta") == 1
     predecessor = "0" * 64; records = []
     for index, phase in enumerate(PHASES):
         record, predecessor = build_transition_binding(

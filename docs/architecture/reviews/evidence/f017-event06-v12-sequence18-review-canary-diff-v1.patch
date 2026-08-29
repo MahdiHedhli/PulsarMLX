@@ -1,0 +1,21 @@
+diff --git a/scripts/research/f017_event06_package_attempt_registry_v2.py b/scripts/research/f017_event06_package_attempt_registry_v2.py
+index d2c5341f..5f1aa724 100644
+--- a/scripts/research/f017_event06_package_attempt_registry_v2.py
++++ b/scripts/research/f017_event06_package_attempt_registry_v2.py
+@@ -216,13 +216,14 @@ def _load_reservation(installed: ValidatedIdentityAuthority, mode: str,
+
+ def reserve_live_package_attempt(
+     installed: ValidatedIdentityAuthority,
++    registry_root: Path,
+ ) -> ValidatedLivePackageAttemptReservation:
+-    """Reserve production exactly once under the internal fixed live root."""
++    """KNOWN-DEFECT CANARY: caller selects the production registry root."""
+     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
+         raise TypeError("exact installed production authority required")
+     if installed.as_dict().get("authority_scope") != "PRODUCTION":
+         raise ValueError("live package reservation requires production authority")
+-    registry = _prepare_live_registry()
++    registry = _secure_directory(registry_root)
+     return _bank_reservation(
+         installed, "LIVE_CANONICAL", registry, ValidatedLivePackageAttemptReservation
+     )

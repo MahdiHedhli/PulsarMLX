@@ -1,0 +1,16 @@
+{
+  "base_candidate_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "base_candidate_head_present": true,
+  "base_candidate_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "canary_head": "1b62d0feaef37d38ca25e6bb32465d1164b06608",
+  "canary_head_in_remaining_worktrees": false,
+  "canary_tree": "a539fd6aa1fe314e84442f4f0546b75e45ed0b77",
+  "canonical_diff_sha256": "d0e38b41ac6dda0d033933d1921401a3f6145fc358882bd820a256713ef11a90",
+  "disposable_tree_deleted": true,
+  "merged_to_named_ref": false,
+  "refs_containing_canary_count": 0,
+  "remaining_worktree_count": 38,
+  "result": "PASS",
+  "sanitized_worktree_listing": "COUNTS_AND_TARGET_HEAD_MEMBERSHIP_ONLY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-canary-disposal/1.0.0"
+}

@@ -20,7 +20,7 @@ PACKAGE_TERMINAL_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-package-terminal/1.
 BUNDLE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-result-bundle-binding/1.0.0"
 COMPARISON_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-comparison-binding/1.0.0"
 RELEASE_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-release-binding/1.0.0"
-ACCOUNTING_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-accounting-binding/1.0.0"
+ACCOUNTING_BINDING_SCHEMA = "pulsarmlx.f017.event06-v12-bridge-accounting-binding/1.0.1"
 HEX64 = re.compile(r"[0-9a-f]{64}")
 HEX40 = re.compile(r"[0-9a-f]{40}")
 TYPED_ID = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,190}[A-Z0-9])?")
@@ -603,6 +603,7 @@ def build_accounting_binding(view: ValidatedConsumerView, release_binding: objec
         "installed_authority_sha256": view.get("installed_authority_sha256"),
         "installation_receipt_sha256": view.get("installation_receipt_sha256"),
         "release_binding_sha256": view.get("release_binding_sha256"),
+        "authorization_delta": 0,
         "package_delta": 1,
         "primary_delta": 1,
         "secondary_delta": 1,

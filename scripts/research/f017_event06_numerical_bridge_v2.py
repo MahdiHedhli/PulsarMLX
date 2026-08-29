@@ -154,6 +154,8 @@ def _valid_type(value: object, category: str) -> bool:
         return type(value) is str and HEX40.fullmatch(value) is not None
     if category == "typed_id":
         return type(value) is str and TYPED_ID.fullmatch(value) is not None
+    if category == "non_boolean_integer":
+        return type(value) is int and value >= 0
     if category == "repository_path":
         return _repo_path(value)
     return False
@@ -402,6 +404,11 @@ def build_accounting_closure(
         "secondary_event_id": bridge.get("secondary_event_id"),
         "installed_authority_sha256": bridge.get("installed_authority_sha256"),
         "installation_receipt_sha256": bridge.get("installation_receipt_sha256"),
+        "authorization_delta": legacy_accounting_binding.get("authorization_delta"),
+        "package_delta": legacy_accounting_binding.get("package_delta"),
+        "primary_delta": legacy_accounting_binding.get("primary_delta"),
+        "secondary_delta": legacy_accounting_binding.get("secondary_delta"),
+        "historical_master_ledger": legacy_accounting_binding.get("historical_master_ledger"),
         "result": "PASS",
     }
     _exact(value, ACCOUNTING_FIELDS, ACCOUNTING_TYPES, ACCOUNTING_SCHEMA, "accounting closure")

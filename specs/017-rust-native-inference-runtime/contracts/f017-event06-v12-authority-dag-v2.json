@@ -520,7 +520,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "producer_symbol": "produce_identity_bridge_input",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "3806473b43659e0fa97a0bfcabb8bf40d2be84e7d295dfe27c59a72f8e728bd6",
+      "source_blob_sha256": "617a3915ea358b7341ba127fd517e357c3757809e2ebffe9edb7a9ac611e7abd",
       "source_node": "BRIDGE_INPUT"
     },
     {
@@ -549,7 +549,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "bind_identity_stage",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "IDENTITY_STAGE"
     },
     {
@@ -578,7 +578,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "producer_symbol": "historical_bridge",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "3806473b43659e0fa97a0bfcabb8bf40d2be84e7d295dfe27c59a72f8e728bd6",
+      "source_blob_sha256": "617a3915ea358b7341ba127fd517e357c3757809e2ebffe9edb7a9ac611e7abd",
       "source_node": "NUMERICAL_BRIDGE"
     },
     {
@@ -607,7 +607,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "numerical_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "PRIMARY_LEGACY_VIEW"
     },
     {
@@ -636,7 +636,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
       "producer_symbol": "historical_bridge",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "3806473b43659e0fa97a0bfcabb8bf40d2be84e7d295dfe27c59a72f8e728bd6",
+      "source_blob_sha256": "617a3915ea358b7341ba127fd517e357c3757809e2ebffe9edb7a9ac611e7abd",
       "source_node": "NUMERICAL_BRIDGE"
     },
     {
@@ -665,7 +665,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "result_bundle_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "PRIMARY_RESULT_LEGACY"
     },
     {
@@ -723,7 +723,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "primary_terminal_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "PRIMARY_TERMINAL"
     },
     {
@@ -752,7 +752,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "numerical_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "SECONDARY_LEGACY_VIEW"
     },
     {
@@ -781,7 +781,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "result_bundle_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "SECONDARY_NUMERICAL"
     },
     {
@@ -810,7 +810,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_bundle_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "SECONDARY_RESULT"
     },
     {
@@ -839,7 +839,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "comparison_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "COMPARISON_LEGACY_VIEW"
     },
     {
@@ -868,7 +868,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_comparison_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "COMPARISON"
     },
     {
@@ -926,7 +926,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_release_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "RELEASE_BINDING"
     },
     {
@@ -955,7 +955,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "accounting_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "ACCOUNTING_LEGACY_VIEW"
     },
     {
@@ -984,7 +984,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_accounting_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "ACCOUNTING"
     },
     {
@@ -1013,7 +1013,7 @@
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "package_terminal_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f77f696f9547c2926c7964a80b6911db035020ef1c511c8f45edee7bab4db200",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
       "source_node": "PACKAGE_TERMINAL_LEGACY"
     },
     {

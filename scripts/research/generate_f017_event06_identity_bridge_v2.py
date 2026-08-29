@@ -14,7 +14,7 @@ MODULE = ROOT / "scripts/research/f017_event06_identity_bridge_contract_v2.py"
 
 def _contract(requirements: dict[str, object]) -> dict[str, object]:
     return {
-        "schema": "pulsarmlx.f017.event06-v12-identity-to-numerical-bridge-contract/2.1.0",
+        "schema": "pulsarmlx.f017.event06-v12-identity-to-numerical-bridge-contract/2.1.1",
         "requirements": REQUIREMENTS.relative_to(ROOT).as_posix(),
         "generation": requirements["generation"],
         "numerical_authority": requirements["numerical_authority"],

@@ -1,0 +1,18 @@
+{
+  "distinct_transport_models": [
+    "gemini-3.1-pro-high"
+  ],
+  "duration_seconds": 321.982798,
+  "exit_status": 0,
+  "num_turns": 1,
+  "raw_stdout_sha256": "1a5ded731c5819e7f775aad284256f5f97f115a4df9a4c3740fd15451804fc4d",
+  "requested_model": "gemini-3.1-pro-high",
+  "result": "PASS",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-provider-envelope/1.0.0",
+  "status": "SUCCESS",
+  "structured_output_sha256": "3e7f8bae168a5c91cb4e148f1000cb31673021b200af0c1569de0180da9678d8",
+  "terminal_event": "result",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "transport_model": "gemini-3.1-pro-high"
+}

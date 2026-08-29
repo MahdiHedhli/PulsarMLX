@@ -1,0 +1,22 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-ROOT-001",
+      "consequence_term": "SECOND_ATTEMPT",
+      "finding_id": "F-S18-ROOT-001",
+      "seeded_symbol_or_edge": "reserve_live_package_attempt",
+      "statement": "The function reserve_live_package_attempt takes registry_root from the caller, which violates the requirement that no public or indirect production input selects a safety-authoritative storage location. This enables an attacker to supply a different directory, bypassing the exclusivity check and allowing a second package attempt."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "2a888d7a3e314ad9bb79c56b36abb4b81b0f5561bebb36a2593b65cd5003559e",
+  "payload_sha256_echo": "0cc29bb029ecf6f62cb7d7a5cb0f223281052c77d4a6b51eccf70758a85a5610",
+  "reviewed_head": "1b62d0feaef37d38ca25e6bb32465d1164b06608",
+  "reviewed_tree": "a539fd6aa1fe314e84442f4f0546b75e45ed0b77",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "The repository was verified at the exact candidate head and tree. Inspection reveals a single seeded defect: a caller-controlled production registry location in reserve_live_package_attempt. This violates claim S18-C-ROOT-001 and enables a second package attempt.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

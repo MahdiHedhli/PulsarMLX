@@ -1,0 +1,10 @@
+{
+  "candidate_head": "1b62d0feaef37d38ca25e6bb32465d1164b06608",
+  "candidate_tree": "a539fd6aa1fe314e84442f4f0546b75e45ed0b77",
+  "nonce": "2a888d7a3e314ad9bb79c56b36abb4b81b0f5561bebb36a2593b65cd5003559e",
+  "payload_sha256": "0cc29bb029ecf6f62cb7d7a5cb0f223281052c77d4a6b51eccf70758a85a5610",
+  "prior_transport_failures": 2,
+  "request_kind": "KNOWN_DEFECT_CANARY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-sidecar/1.0.0",
+  "status": "READY_AFTER_NONCE_BANK"
+}

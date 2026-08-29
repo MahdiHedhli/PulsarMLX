@@ -153,6 +153,11 @@ def _baseline_documents():
     accounting, accounting_sha = build_accounting_closure(
         bridge, views["ACCOUNTING"], legacy_accounting
     )
+    assert accounting.get("authorization_delta") == 0
+    assert accounting.get("package_delta") == 1
+    assert accounting.get("primary_delta") == 1
+    assert accounting.get("secondary_delta") == 1
+    assert accounting.get("historical_master_ledger") == 175
     with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-v2-") as directory:
         root = Path(directory)
         reservation = reserve_qualification_package_attempt(
@@ -182,6 +187,7 @@ def _type_ok(value: object, category: str) -> bool:
     if category == "sha256": return type(value) is str and HEX64.fullmatch(value) is not None
     if category == "git_object": return type(value) is str and HEX40.fullmatch(value) is not None
     if category == "typed_id": return type(value) is str and TYPED_ID.fullmatch(value) is not None
+    if category == "non_boolean_integer": return type(value) is int and value >= 0
     if category == "repository_path":
         return type(value) is str and bool(value) and not value.startswith("/") and "\\" not in value and ".." not in value.split("/")
     return False
@@ -208,6 +214,8 @@ def _alternate(value: object) -> object:
         if HEX40.fullmatch(value): return ("0" if value[0] != "0" else "1") + value[1:]
         if TYPED_ID.fullmatch(value): return value + "-MUTATED"
         return value + "-mutated"
+    if type(value) is int:
+        return value + 1
     raise TypeError("unsupported qualification value")
 
 
@@ -239,7 +247,9 @@ def qualify() -> dict[str, object]:
             mutations = []
             missing = copy.deepcopy(baseline); del missing[field]; mutations.append(missing)
             extra = copy.deepcopy(baseline); extra[f"unknown_{field}"] = "x"; mutations.append(extra)
-            wrong_type = copy.deepcopy(baseline); wrong_type[field] = 1; mutations.append(wrong_type)
+            wrong_type = copy.deepcopy(baseline)
+            wrong_type[field] = "1" if type(baseline[field]) is int else 1
+            mutations.append(wrong_type)
             substitution = copy.deepcopy(baseline); substitution[field] = _alternate(baseline[field]); mutations.append(substitution)
             for mutation in mutations:
                 total += 1

@@ -1,0 +1,11 @@
+{
+  "candidate_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "candidate_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "generated_at_utc": "2026-08-29T22:29:08Z",
+  "generator": "GRAPH_OWNED_CSPRNG_OPENSSL_RAND_256_BITS",
+  "nonce": "26bdc78fafeb0a4b53a47ac5d42037cfe8dbe98f87282262c13461aca06d091d",
+  "nonce_bits": 256,
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-nonce-event/1.0.0",
+  "status": "BANKED_AFTER_CANARY_TERMINAL_AND_BEFORE_REQUEST_CONSTRUCTION"
+}

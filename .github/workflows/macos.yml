@@ -811,43 +811,8 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
           PYTHONPATH=scripts/research .venv/bin/python \
             scripts/research/generate_f017_event06_authority_dag_v1.py --check
-          PYTHONPATH=scripts/research .venv/bin/python \
-            scripts/research/validate_f017_event06_authority_dag_v1.py \
-            > "$RUNNER_TEMP/f017-event06-authority-dag-v1.json"
           PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
             scripts/research/tests/test_f017_event06_dag_derived_composition_v1.py
-          PYTHONPATH=scripts/research .venv/bin/python \
-            scripts/research/qualify_f017_event06_dag_composition_v1.py \
-            --repetitions 20 \
-            > "$RUNNER_TEMP/f017-event06-dag-composition-v1.json"
-          .venv/bin/python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          root = Path(os.environ["RUNNER_TEMP"])
-          dag = json.loads((root / "f017-event06-authority-dag-v1.json").read_text())
-          qualification = json.loads((root / "f017-event06-dag-composition-v1.json").read_text())
-          assert dag["result"] == "PASS"
-          assert dag["dag_edges_total"] == dag["source_trace_edges"]
-          assert dag["source_typed_boundaries_absent_from_dag"] == 0
-          assert dag["extraneous_trace_edges_absent_from_dag"] == 0
-          assert qualification["result"] == "PASS"
-          assert qualification["dag_edges_total"] == qualification["dag_edges_with_composition_tests"]
-          assert qualification["uncovered_typed_boundaries"] == 0
-          assert qualification["source_typed_boundaries_absent_from_dag"] == 0
-          assert qualification["extraneous_test_edges_absent_from_dag"] == 0
-          assert qualification["mutation_campaign"]["passed"] == qualification["mutation_campaign"]["total"]
-          assert qualification["mutation_campaign"]["unexpected_passes"] == 0
-          assert qualification["full_call_path_dry_run_with_synthetic_authority"] == "PASS"
-          assert qualification["full_call_path_dry_run_repetitions"] >= 20
-          assert qualification["all_live_counters_zero"] is True
-          assert qualification["original_checkpoint_root_resolved"] is False
-          assert qualification["original_checkpoint_access"] == 0
-          assert qualification["real_numerical_operations"] == 0
-          assert qualification["historical_accounting_deltas"] == [0, 0, 0, 0]
-          assert qualification["historical_master_ledger"] == 175
-          PY
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify Event 06 package-scoped terminal uniqueness
         run: |

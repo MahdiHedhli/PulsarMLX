@@ -1,0 +1,42 @@
+{
+  "argv": [
+    "<CLI_BINARY>",
+    "--model",
+    "gemini-3.1-pro-high",
+    "--effort",
+    "high",
+    "--mode",
+    "plan",
+    "--sandbox",
+    "--dangerously-skip-permissions",
+    "--disable-slash-commands",
+    "--output-format",
+    "stream-json",
+    "--json-schema",
+    "<GRAPH_TEMP_SCHEMA>",
+    "--print-timeout",
+    "25m",
+    "--print=<CANONICAL_TRANSPORT_ENVELOPE>"
+  ],
+  "credentials_present": false,
+  "environment_values_present": false,
+  "other_absolute_paths_present": false,
+  "private_aliases_present": false,
+  "redaction_count": 3,
+  "redaction_rules": [
+    {
+      "count": 1,
+      "rule_id": "R-CLI-BINARY"
+    },
+    {
+      "count": 1,
+      "rule_id": "R-GRAPH-TEMP-SCHEMA"
+    },
+    {
+      "count": 1,
+      "rule_id": "R-CANONICAL-ENVELOPE"
+    }
+  ],
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-redacted-transport/1.0.0",
+  "stderr": "warning: --mode plan has no effect while slash command expansion is disabled.\n"
+}
