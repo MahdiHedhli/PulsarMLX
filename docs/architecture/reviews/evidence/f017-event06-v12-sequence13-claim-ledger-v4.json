@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-claim-ledger/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-claim-ledger-v3.json",
+  "claims": [
+    {"id": "C-COLLAPSE-001", "state": "ACCEPTED"},
+    {"id": "C-COMPOSE-001", "state": "ACCEPTED"},
+    {"id": "C-ONESHOT-001", "state": "ACCEPTED"},
+    {"id": "C-NOACCESS-001", "state": "ACCEPTED"},
+    {"id": "C-FROZEN-001", "state": "ACCEPTED"},
+    {"id": "C-CI-001", "state": "ACCEPTED"},
+    {"id": "C-REVIEW-001", "state": "ACCEPTED"},
+    {"id": "C-RATIFY-001", "state": "ACCEPTED"}
+  ],
+  "accepted_claims": 8,
+  "rejected_claims": 0,
+  "unresolved_claims": 0,
+  "result": "PASS"
+}

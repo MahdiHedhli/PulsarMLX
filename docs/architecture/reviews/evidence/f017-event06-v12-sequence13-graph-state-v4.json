@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-graph-state/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-graph-state-v3.json",
+  "nodes": [
+    {"id": "C0_INVENTORY_AND_FROZEN_INVARIANTS", "status": "PASS"},
+    {"id": "C1_SMALLEST_COLLAPSED_GO_TOKEN", "status": "PASS"},
+    {"id": "C2_REAL_PUBLIC_COMPOSITION_PATH", "status": "PASS"},
+    {"id": "C3_END_TO_END_COMPOSITION_AND_NEGATIVE_TESTS", "status": "PASS"},
+    {"id": "C4_NO_ACCESS_PRODUCTION_COMPOSITION_REHEARSAL", "status": "PASS"},
+    {"id": "C5_TESTS_THREAT_CAMPAIGN_AND_CI", "status": "PASS"},
+    {"id": "C6_EXACT_HEAD_DUAL_REVIEW", "status": "PASS"},
+    {"id": "C7_OPERATIONAL_RATIFICATION", "status": "PASS"}
+  ],
+  "running_nodes": 0,
+  "repair_loops_consumed": 7,
+  "authority_posture": "OPERATIONALLY_RATIFIED",
+  "event06_executed": false,
+  "live_event06_authority": false,
+  "checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

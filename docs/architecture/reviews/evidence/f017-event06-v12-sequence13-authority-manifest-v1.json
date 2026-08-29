@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "0b518e33520a4840ba91c497353330ea2b9e1480",
+  "implementation_tree": "97f1964cf4bdd602ce86cb3893ccfd8099be6297",
+  "prompt_authority": {
+    "original_commit": "298f5a9a417f199d11d7e6dd1388045e45d163fb",
+    "original_sha256": "f4bdd562e9f97e4c18a6d124fd61b400d0305bcdde238dfe6f6a09b81b75f0f5",
+    "amendment_commit": "14dea268f8f05597aa7433576f4cfa1d6fea7533",
+    "amendment_sha256": "9fd76073d8a282cd90b087babb8fcba517b383ddbc3262fe69139659c58349ae",
+    "classification_correction_commit": "a24e6763ba9d0f3d3d6596419ea9c94825faf784",
+    "classification_correction_sha256": "9e590c6c37155a455ae7baf17d67085cfb9d02c23fa397d54ecee38095c52e23",
+    "transition_table_v2_sha256": "49b610570550a0efc6f7b07af250da2eabbdbadb663457234c68820ccce03ebe"
+  },
+  "bindings": [
+    {"role": "collapsed_go_contract", "path": "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-collapsed-go-path-v1.json", "sha256": "c7ea10d9ab9c09ff1e6fa5d5c0b847ec0318cc1863f44b63c6d67bec00ba1778"},
+    {"role": "implementation_measurement", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-implementation-measurement-v1.json", "sha256": "589d6e8d962f4980db3be3ab7e7ca14fabd46f83feb7be87241eaff0d7a5281d"},
+    {"role": "composition_qualification", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-collapsed-go-qualification-v1.json", "sha256": "386e4f7f78db02b51ea65d80008f258fe0ec8bfb9f9fb05cb7bbdee50b57c632"},
+    {"role": "no_access_rehearsal", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-no-access-rehearsal-v2.json", "sha256": "8b14937b797459fa63068a87dac3133a46da708dc68addededf3d2739194e48b"},
+    {"role": "repair_loop_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-repair-loop-ledger-v1.json", "sha256": "00c1a7bfae4cffccf6d8dee336cec54e744851d03ce6c5fda4f286b125fc0d90"},
+    {"role": "full_native_ci", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-full-native-ci-v1.json", "sha256": "4c1103eafc1318796f82eb4afd9cf66a7528a3a1b3061b88859cf4042bb0e889"},
+    {"role": "agy_challenge", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-agy-final-normalized-result-v1.json", "sha256": "ba7428d5208a0ac7924c932fbdba47176a6ef297a00c8576e1b0e163c4d3f596"},
+    {"role": "opus_arbitration", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-opus-final-normalized-result-v1.json", "sha256": "b58dcdc5143c278e7da32a70ba38b5cca5f1688332adc26a8f5b83dc8a388cd7"},
+    {"role": "challenge_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-challenge-ledger-v1.json", "sha256": "5813897c34a9daa7542ebb267f4edf43dfa26b19e0cfe843004b31a0d4c5f3b7"},
+    {"role": "support_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-support-ledger-v1.json", "sha256": "96f26ed3f38471cfc669d4ec579ab7fb263c8f839b509db9f4997e808e13d298"},
+    {"role": "arbiter_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-arbiter-ledger-v1.json", "sha256": "3fe54f5e4e2920a67ea930d2f143d215a9bea8063eeefec54945a1105b5ceb78"},
+    {"role": "evidence_only_ci", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-evidence-only-ci-v1.json", "sha256": "4818d157f6468be30ebd63c0bb00ab50af47fcdbfa2721bc97f246f36750a7c8"},
+    {"role": "final_graph_state", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-graph-state-v4.json", "sha256": "1eac8d86c6d4a6571ce7fc110bce260196c96274a1b20c49d08b60709358cdcd"},
+    {"role": "final_claim_ledger", "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-claim-ledger-v4.json", "sha256": "9421dd2a1d7da2134a878e75ac7796cc9ddb518de01c1234b960e25140085c4f"}
+  ],
+  "binding_count": 14,
+  "all_bindings_verified": true,
+  "authority_dag_acyclic": true,
+  "self_references": 0,
+  "future_references": 0,
+  "event_06_executed": false,
+  "new_human_go_document_created": false,
+  "live_event06_authority_created": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}
