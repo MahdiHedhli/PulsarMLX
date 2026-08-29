@@ -17,6 +17,8 @@ from f017_event06_bridge_synthetic_fixture_v2 import runtime_fixture_values
 from f017_event06_numerical_bridge_v2 import (
     build_accounting_closure, build_package_terminal, consumer_view,
 )
+from f017_event06_dag_derived_control_path_v1 import _synthetic_bundle
+from qualify_f017_event06_bridge_call_path_v2 import _release_report
 import f017_event06_numerical_bridge_v1 as legacy
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator
 
@@ -54,30 +56,57 @@ def _bundle(role: str) -> dict:
 def _baseline_documents():
     bridge, bridge_input, _event_identity, _installed, _leases, _report, _identity, _plan = runtime_fixture_values()
     historical = bridge.legacy_bridge
-    primary_bundle = _bundle("PRIMARY")
-    primary_binding = legacy.primary_terminal_binding(primary_bundle, historical.sha256, "6" * 64)
+    primary_bundle = _synthetic_bundle("PRIMARY", historical)
+    primary_numerical = legacy.numerical_view(historical, "PRIMARY")
+    primary_result = legacy.result_bundle_view(historical, "PRIMARY", "7" * 64)
+    primary_bundle_binding, primary_bundle_sha = legacy.build_bundle_binding(
+        primary_numerical, primary_result, primary_bundle["index"]
+    )
+    primary_binding = legacy.primary_terminal_binding(primary_bundle, historical.sha256, primary_bundle_sha)
+    secondary_numerical = legacy.numerical_view(historical, "SECONDARY", primary_binding=primary_binding)
+    secondary_result = legacy.result_bundle_view(historical, "SECONDARY", "8" * 64)
+    secondary_bundle = _synthetic_bundle("SECONDARY", historical)
+    secondary_bundle_binding, _ = legacy.build_bundle_binding(
+        secondary_numerical, secondary_result, secondary_bundle["index"]
+    )
+    comparison = legacy.comparison_view(historical, primary_bundle_binding, secondary_bundle_binding)
+    comparison_summary = {
+        "schema": "pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
+        "authorization_id": historical.get("authorization_id"),
+        "package_attempt_id": historical.get("package_attempt_id"),
+        "classification": "EXACT_EXPECTED_TOKEN_STABLE",
+    }
+    comparison_binding, _ = legacy.build_comparison_binding(comparison, comparison_summary)
+    release = legacy.release_view(historical, comparison_binding)
+    release_binding, _ = legacy.build_release_binding(
+        release, _release_report(historical.get("package_attempt_id"))
+    )
+    accounting_view = legacy.accounting_view(historical, release_binding)
+    legacy_accounting, _ = legacy.build_accounting_binding(accounting_view, release_binding)
+    package_terminal = legacy.package_terminal_view(
+        historical, "d" * 64, "e" * 64, legacy_accounting
+    )
     historical_views = {
-        "PRIMARY_NUMERICAL": legacy.numerical_view(historical, "PRIMARY"),
-        "PRIMARY_RESULT": legacy.result_bundle_view(historical, "PRIMARY", "7" * 64),
-        "SECONDARY_NUMERICAL": legacy.numerical_view(historical, "SECONDARY", primary_binding=primary_binding),
-        "SECONDARY_RESULT": legacy.result_bundle_view(historical, "SECONDARY", "8" * 64),
-        "COMPARISON": legacy.comparison_view(historical, "9" * 64, "a" * 64),
-        "RELEASE": legacy.release_view(historical, "b" * 64),
-        "ACCOUNTING": legacy.accounting_view(historical, "c" * 64),
-        "PACKAGE_TERMINAL": legacy.package_terminal_view(historical, "d" * 64, "e" * 64, "f" * 64),
+        "PRIMARY_NUMERICAL": primary_numerical,
+        "PRIMARY_RESULT": primary_result,
+        "SECONDARY_NUMERICAL": secondary_numerical,
+        "SECONDARY_RESULT": secondary_result,
+        "COMPARISON": comparison,
+        "RELEASE": release,
+        "ACCOUNTING": accounting_view,
+        "PACKAGE_TERMINAL": package_terminal,
     }
     views = {role: consumer_view(bridge, role, value) for role, value in historical_views.items()}
-    legacy_accounting = {"bridge_sha256": historical.sha256, "result": "PASS"}
     accounting, accounting_sha = build_accounting_closure(
         bridge, views["ACCOUNTING"], legacy_accounting
     )
     legacy_terminal = {"bridge_sha256": historical.sha256, "result": "COMPLETE"}
     terminal, _ = build_package_terminal(
-        bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting_sha
+        bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting
     )
     documents = {
         "identity_input": bridge_input.as_dict(), "numerical_bridge": bridge.as_dict(),
-        "accounting_closure": accounting, "package_terminal": terminal,
+        "accounting_closure": accounting.as_dict(), "package_terminal": terminal,
     }
     documents.update({f"consumer_view:{role}": view.as_dict() for role, view in views.items()})
     return bridge, bridge_input, documents

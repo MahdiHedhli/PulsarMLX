@@ -121,6 +121,17 @@ class PromptBoundConsumerViewV2(_Sealed):
         return self._inner
 
 
+class ValidatedAccountingClosureV2(_Sealed):
+    __slots__ = ()
+
+
+def historical_bridge(bridge: ValidatedNumericalBridgeV2) -> legacy.ValidatedNumericalBridge:
+    """Return the exact sealed historical bridge consumed by V11 surfaces."""
+    if type(bridge) is not ValidatedNumericalBridgeV2:
+        raise TypeError("exact successor numerical bridge required")
+    return bridge.legacy_bridge
+
+
 def _repo_path(value: object) -> bool:
     if type(value) is not str or not value or value.startswith("/") or "\\" in value:
         return False
@@ -339,13 +350,15 @@ def consumer_view(
 def build_accounting_closure(
     bridge: ValidatedNumericalBridgeV2,
     accounting: PromptBoundConsumerViewV2,
-    legacy_accounting_binding: dict[str, object],
-) -> tuple[dict[str, object], str]:
+    legacy_accounting_binding: legacy.ValidatedAccountingBinding,
+) -> tuple[ValidatedAccountingClosureV2, str]:
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(accounting) is not PromptBoundConsumerViewV2:
         raise TypeError("sealed accounting authorities required")
     if accounting.get("role") != "ACCOUNTING" or accounting.get("bridge_sha256") != bridge.sha256:
         raise ValueError("accounting consumer continuity")
-    legacy_sha = hashlib.sha256(canonical_bytes(legacy_accounting_binding)).hexdigest()
+    if type(legacy_accounting_binding) is not legacy.ValidatedAccountingBinding:
+        raise TypeError("sealed legacy accounting binding required")
+    legacy_sha = legacy_accounting_binding.sha256
     if legacy_accounting_binding.get("bridge_sha256") != bridge.get("legacy_bridge_sha256"):
         raise ValueError("legacy accounting bridge")
     value = {
@@ -367,27 +380,31 @@ def build_accounting_closure(
         "result": "PASS",
     }
     _exact(value, ACCOUNTING_FIELDS, ACCOUNTING_TYPES, ACCOUNTING_SCHEMA, "accounting closure")
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    closure = ValidatedAccountingClosureV2(_SEAL, value)
+    return closure, closure.sha256
 
 
 def build_package_terminal(
     bridge: ValidatedNumericalBridgeV2,
     package_view: PromptBoundConsumerViewV2,
     legacy_package_terminal: dict[str, object],
-    accounting_closure_sha256: str,
+    accounting_closure: ValidatedAccountingClosureV2,
 ) -> tuple[dict[str, object], str]:
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(package_view) is not PromptBoundConsumerViewV2:
         raise TypeError("sealed package terminal authorities required")
     if package_view.get("role") != "PACKAGE_TERMINAL" or package_view.get("bridge_sha256") != bridge.sha256:
         raise ValueError("package terminal consumer continuity")
-    if type(accounting_closure_sha256) is not str or HEX64.fullmatch(accounting_closure_sha256) is None:
-        raise ValueError("accounting closure digest")
+    if (type(accounting_closure) is not ValidatedAccountingClosureV2
+            or accounting_closure.get("bridge_sha256") != bridge.sha256
+            or accounting_closure.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or accounting_closure.get("result") != "PASS"):
+        raise TypeError("sealed accounting closure continuity")
     if legacy_package_terminal.get("bridge_sha256") != bridge.get("legacy_bridge_sha256"):
         raise ValueError("legacy package terminal bridge")
     value = {
         "schema": PACKAGE_TERMINAL_SCHEMA, "bridge_sha256": bridge.sha256,
         "legacy_package_terminal_sha256": hashlib.sha256(canonical_bytes(legacy_package_terminal)).hexdigest(),
-        "accounting_closure_sha256": accounting_closure_sha256,
+        "accounting_closure_sha256": accounting_closure.sha256,
         "event_identity_plan_sha256": bridge.get("event_identity_plan_sha256"),
         "preparation_sha256": bridge.get("preparation_sha256"),
         "collapsed_go_sha256": bridge.get("collapsed_go_sha256"),

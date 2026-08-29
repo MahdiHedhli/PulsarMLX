@@ -40,7 +40,7 @@ def execute_bridge_and_bank(numerical_view: ValidatedConsumerView,
         source, geometry, token, directory, position=position, **bundle_kwargs(result_view)
     )
     binding, binding_sha = build_bundle_binding(numerical_view, result_view, bundle["index"])
-    observed_sha = bank_exclusive(directory / "primary-bridge-bundle-binding.json", binding)
+    observed_sha = bank_exclusive(directory / "primary-bridge-bundle-binding.json", binding.as_dict())
     if observed_sha != binding_sha:
         raise ValueError("primary bridge bundle binding")
     return {**bundle, "bridge_bundle_binding":binding,

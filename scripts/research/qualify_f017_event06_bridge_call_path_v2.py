@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v1 import runtime_fixture_values
+from f017_event06_numerical_bridge_v1 import build_bundle_binding
 import execute_f017_corrected_oracle_event_v12_bridge as coordinator
 
 
@@ -72,13 +73,17 @@ def qualify_call_path() -> dict:
         calls.append("PRIMARY_SINGLE_CALL")
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("primary bridge authority")
-        return _bundle("PRIMARY", "6" * 64)
+        bundle = _bundle("PRIMARY", "6" * 64)
+        binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+        return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
     def secondary(*args):
         calls.append("SECONDARY_SINGLE_CALL")
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("secondary bridge authority")
-        return _bundle("SECONDARY", "7" * 64)
+        bundle = _bundle("SECONDARY", "7" * 64)
+        binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+        return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
     def compare(*_args):
         calls.append("INDEPENDENT_COMPARISON")
@@ -163,12 +168,16 @@ def qualify_call_path() -> dict:
             released += 1
             return _release_report(bridge.get("package_attempt_id"))
         failure_leases.release = failure_release
-        def primary_stage(*_args):
+        def primary_stage(*args):
             if failed_stage == "PRIMARY": raise RuntimeError("modeled primary failure")
-            return _bundle("PRIMARY", "6" * 64)
-        def secondary_stage(*_args):
+            bundle = _bundle("PRIMARY", "6" * 64)
+            binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+            return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
+        def secondary_stage(*args):
             if failed_stage == "SECONDARY": raise RuntimeError("modeled secondary failure")
-            return _bundle("SECONDARY", "7" * 64)
+            bundle = _bundle("SECONDARY", "7" * 64)
+            binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+            return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
         def comparison_stage(*_args):
             if failed_stage == "COMPARISON": raise RuntimeError("modeled comparison failure")
             return _summary(bridge)

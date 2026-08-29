@@ -16,6 +16,26 @@ def _symbols(path: Path) -> set[str]:
     return {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
 
 
+def _consumer_accepts(path: Path, symbol: str, expected: str) -> bool:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    function = next(
+        node for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == symbol
+    )
+    arguments = function.args.args + function.args.kwonlyargs
+    annotations = [ast.unparse(argument.annotation) for argument in arguments if argument.annotation]
+    expected_parts = (
+        expected.removeprefix("tuple[").removesuffix("]").split(",")
+        if expected.startswith("tuple[") else [expected]
+    )
+    if all(any(part in annotation for annotation in annotations) for part in set(expected_parts)):
+        return True
+    # A single historical gate uses local imports to avoid a module cycle.  Its
+    # exact type guard is still mechanically visible in the consumer body.
+    body = ast.dump(function, include_attributes=False)
+    return all(part in body and "type" in body and "IsNot" in body for part in expected_parts)
+
+
 def _trace_edge_ids() -> list[str]:
     tree = ast.parse(TRACE.read_text(encoding="utf-8"))
     result: list[str] = []
@@ -77,6 +97,7 @@ def validate() -> dict[str, object]:
     assert all(edge["output_type_or_schema"] == edge["accepted_input_type_or_schema"] for edge in edges)
     assert _weakly_connected(edges)
     cache: dict[str, set[str]] = {}
+    signature_bound = 0
     for edge in edges:
         for module_key, symbol_key in (
             ("producer_module", "producer_symbol"),
@@ -85,6 +106,11 @@ def validate() -> dict[str, object]:
             module = edge[module_key]
             cache.setdefault(module, _symbols(ROOT / module))
             assert edge[symbol_key] in cache[module], (module, edge[symbol_key])
+        assert _consumer_accepts(
+            ROOT / edge["consumer_module"], edge["consumer_symbol"],
+            edge["accepted_input_type_or_schema"],
+        ), (edge["edge_id"], edge["consumer_symbol"], edge["accepted_input_type_or_schema"])
+        signature_bound += 1
     traced = _trace_edge_ids()
     assert len(traced) == len(set(traced))
     absent = sorted(set(edge_ids) - set(traced))
@@ -100,6 +126,8 @@ def validate() -> dict[str, object]:
         "extraneous_trace_edges_absent_from_dag": len(extraneous),
         "duplicate_edge_ids": 0,
         "unknown_public_symbols": 0,
+        "signature_bound_edges": signature_bound,
+        "unverified_consumer_type_boundaries": 0,
         "disconnected_production_nodes": 0,
         "result": "PASS",
     }

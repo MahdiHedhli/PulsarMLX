@@ -10,6 +10,8 @@ import tempfile
 from pathlib import Path
 
 from f017_event06_dag_derived_control_path_v1 import EDGE_IDS, run_full_call_path
+import f017_event06_numerical_bridge_v1 as legacy
+from f017_event06_numerical_bridge_v2 import build_package_terminal as build_prompt_bound_package_terminal
 from validate_f017_event06_authority_dag_v1 import DAG, validate as validate_dag
 
 
@@ -22,7 +24,7 @@ def _runtime_type_matches(expected: str, value: object) -> bool:
 
 
 def _negative_assertions(edge: dict[str, object], trace: dict[str, object]) -> int:
-    """Execute the declared mutation family against the derived edge gate."""
+    """Check structural edge mutations; load-bearing consumers are attacked separately."""
     expected = edge["accepted_input_type_or_schema"]
     original_digest = trace["digest"]
     candidates = (
@@ -44,6 +46,52 @@ def _negative_assertions(edge: dict[str, object], trace: dict[str, object]) -> i
     return rejected
 
 
+def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, object]:
+    """Invoke the real downstream consumers with substituted producer objects."""
+    bridge = authorities["bridge"]
+    historical = bridge.legacy_bridge
+    primary = authorities["primary_bundle_binding"]
+    secondary = authorities["secondary_bundle_binding"]
+    comparison = authorities["comparison_binding"]
+    release = authorities["release_binding"]
+    accounting = authorities["accounting_binding"]
+    closure = authorities["accounting_closure"]
+    package_view = authorities["package_view"]
+    cases = (
+        ("comparison_raw_documents", lambda: legacy.comparison_view(historical, primary.as_dict(), secondary.as_dict())),
+        ("comparison_swapped_roles", lambda: legacy.comparison_view(historical, secondary, primary)),
+        ("comparison_primary_self_pair", lambda: legacy.comparison_view(historical, primary, primary)),
+        ("comparison_secondary_self_pair", lambda: legacy.comparison_view(historical, secondary, secondary)),
+        ("release_raw_document", lambda: legacy.release_view(historical, comparison.as_dict())),
+        ("release_wrong_sealed_type", lambda: legacy.release_view(historical, primary)),
+        ("accounting_raw_document", lambda: legacy.accounting_view(historical, release.as_dict())),
+        ("accounting_wrong_sealed_type", lambda: legacy.accounting_view(historical, comparison)),
+        ("terminal_raw_accounting", lambda: legacy.package_terminal_view(
+            historical, package_view.legacy_view.get("binding_chain_head_sha256"),
+            package_view.legacy_view.get("v11_closure_root_sha256"), accounting.as_dict())),
+        ("terminal_wrong_sealed_type", lambda: legacy.package_terminal_view(
+            historical, package_view.legacy_view.get("binding_chain_head_sha256"),
+            package_view.legacy_view.get("v11_closure_root_sha256"), release)),
+        ("successor_terminal_raw_closure", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view, authorities["legacy_terminal"], closure.as_dict())),
+        ("successor_terminal_wrong_sealed_type", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view, authorities["legacy_terminal"], accounting)),
+    )
+    rejected = []
+    unexpected = []
+    for case_id, operation in cases:
+        try:
+            operation()
+        except Exception:
+            rejected.append(case_id)
+        else:
+            unexpected.append(case_id)
+    if unexpected:
+        raise AssertionError(f"load-bearing binding mutation passes: {unexpected}")
+    return {"passed": len(rejected), "total": len(cases), "unexpected_passes": 0,
+            "rejected_case_ids": rejected}
+
+
 def qualify(*, repetitions: int = 20) -> dict[str, object]:
     dag_validation = validate_dag()
     dag = json.loads(DAG.read_text(encoding="utf-8"))
@@ -51,13 +99,14 @@ def qualify(*, repetitions: int = 20) -> dict[str, object]:
     if repetitions < 1:
         raise ValueError("positive repetition count")
     runs = []
-    for _ in range(repetitions):
+    for index in range(repetitions):
         with tempfile.TemporaryDirectory(prefix="f017-seq17-full-path-") as directory:
-            runs.append(run_full_call_path(Path(directory)))
+            runs.append(run_full_call_path(Path(directory), retain_authorities=index == 0))
     aggregate_digests = {run["aggregate_sha256"] for run in runs}
     if len(aggregate_digests) != 1:
         raise AssertionError("fresh-process-equivalent reconstruction digest")
     trace = {item["edge_id"]: item for item in runs[0]["trace"]}
+    real_binding_mutations = _binding_consumer_mutations(runs[0].pop("_authorities"))
     if set(trace) != set(EDGE_IDS):
         raise AssertionError("runtime trace/DAG mismatch")
     positive = 0
@@ -92,6 +141,7 @@ def qualify(*, repetitions: int = 20) -> dict[str, object]:
         "extraneous_test_edges_absent_from_dag": len(set(trace) - {edge["edge_id"] for edge in edges}),
         "per_edge": per_edge,
         "mutation_campaign": {"passed": negative, "total": len(edges) * 4, "unexpected_passes": 0},
+        "real_binding_consumer_mutations": real_binding_mutations,
         "full_call_path_dry_run_with_synthetic_authority": "PASS",
         "full_call_path_dry_run_repetitions": repetitions,
         "aggregate_sha256": next(iter(aggregate_digests)),

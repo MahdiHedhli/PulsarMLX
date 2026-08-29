@@ -16,7 +16,8 @@ from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_exec
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
-    accounting_view, bind_identity_stage, build_bundle_binding, build_package_terminal,
+    accounting_view, bind_identity_stage, build_accounting_binding, build_bundle_binding,
+    build_comparison_binding, build_package_terminal, build_release_binding,
     build_transition_binding, canonical_bridge_bytes, comparison_view,
     bundle_kwargs, numerical_view, package_terminal_view, primary_terminal_binding, reconstruct_bridge,
     release_view, result_bundle_view, source_projection,
@@ -27,16 +28,17 @@ from execute_f017_corrected_oracle_event_v12_bridge import (
     PRODUCTION_CALL_PATH, ValidatedBridgeExecutionResult, ValidatedDurableStart,
     close_bridge_package, validate_no_access_call_path, validate_transition_order,
 )
-from qualify_f017_event06_bridge_call_path_v2 import qualify_call_path
+from qualify_f017_event06_bridge_call_path_v2 import _release_report, qualify_call_path
 
-def primary_bundle_fixture():
+def primary_bundle_fixture(role="PRIMARY"):
     manifest_sha, receipt_sha, result_terminal_sha = "1" * 64, "2" * 64, "3" * 64
     terminal = {"schema":"pulsarmlx.f017.corrected-oracle-consumer-terminal/11.0.0",
-        "role":"PRIMARY","result":"COMPLETE","result_terminal_sha256":result_terminal_sha,
-        "result_receipt_sha256":receipt_sha,"payload_manifest_sha256":manifest_sha,"secondary_eligible":True}
-    index = {"schema":"pulsarmlx.f017.corrected-oracle-result-bundle-index/11.0.0","role":"PRIMARY",
+        "role":role,"result":"COMPLETE","result_terminal_sha256":result_terminal_sha,
+        "result_receipt_sha256":receipt_sha,"payload_manifest_sha256":manifest_sha,"secondary_eligible":role == "PRIMARY"}
+    event = "PRIMARY" if role == "PRIMARY" else "SECONDARY"
+    index = {"schema":"pulsarmlx.f017.corrected-oracle-result-bundle-index/11.0.0","role":role,
         "authorization_id":"F017-BRIDGE-AUTH-01","package_attempt_id":"F017-BRIDGE-PACKAGE-01",
-        "consumer_event_id":"F017-BRIDGE-PRIMARY-01","manifest_sha256":manifest_sha,
+        "consumer_event_id":f"F017-BRIDGE-{event}-01","manifest_sha256":manifest_sha,
         "top32_summary_sha256":"4"*64,"routing_manifest_sha256":"5"*64,
         "result_receipt_sha256":receipt_sha,"result_terminal_sha256":result_terminal_sha,
         "consumer_terminal_sha256":"6"*64,"payload_sha256s":["7"*64,"8"*64,"9"*64],"result":"PASS"}
@@ -102,15 +104,38 @@ def test_views_close_exact_consumer_authority():
     assert set(source_projection(primary)[0]) == {"shards","tensor_catalog_path","tensor_catalog_sha256"}
     assert secondary.get("primary_terminal")["secondary_eligible"] is True
     assert secondary_result.get("bridge_sha256") == bridge.sha256
-    compare = comparison_view(bridge, binding_sha, "c" * 64)
-    release = release_view(bridge, "d" * 64)
-    accounting = accounting_view(bridge, "e" * 64)
-    terminal_view = package_terminal_view(bridge, "1" * 64, "2" * 64, "3" * 64)
+    secondary_bundle = primary_bundle_fixture("SECONDARY")
+    secondary_binding, _ = build_bundle_binding(secondary, secondary_result, secondary_bundle["index"])
+    compare = comparison_view(bridge, binding_doc, secondary_binding)
+    summary = {"schema":"pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
+        "authorization_id":bridge.get("authorization_id"),
+        "package_attempt_id":bridge.get("package_attempt_id"),
+        "classification":"EXACT_EXPECTED_TOKEN_STABLE"}
+    comparison_binding, _ = build_comparison_binding(compare, summary)
+    release = release_view(bridge, comparison_binding)
+    release_binding, _ = build_release_binding(release, _release_report(bridge.get("package_attempt_id")))
+    accounting = accounting_view(bridge, release_binding)
+    accounting_binding, _ = build_accounting_binding(accounting, release_binding)
+    terminal_view = package_terminal_view(bridge, "1" * 64, "2" * 64, accounting_binding)
     terminal = build_package_terminal(terminal_view)
     assert validate_package_terminal(terminal, bridge) == hashlib.sha256(canonical_bytes(terminal)).hexdigest()
     for view in (primary, primary_result, secondary, secondary_result, compare, release, accounting, terminal_view):
         assert view.get("bridge_sha256") == bridge.sha256
-    assert binding_doc["bridge_sha256"] == bridge.sha256
+    assert binding_doc.get("bridge_sha256") == bridge.sha256
+    for left, right in (
+        (binding_doc.as_dict(), secondary_binding.as_dict()),
+        (binding_doc, binding_doc),
+        (secondary_binding, secondary_binding),
+        (secondary_binding, binding_doc),
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            comparison_view(bridge, left, right)
+    with pytest.raises(TypeError):
+        release_view(bridge, comparison_binding.as_dict())
+    with pytest.raises(TypeError):
+        accounting_view(bridge, release_binding.as_dict())
+    with pytest.raises(TypeError):
+        package_terminal_view(bridge, "1" * 64, "2" * 64, accounting_binding.as_dict())
 
 
 def test_transition_chain_is_exact_and_mutation_closed():

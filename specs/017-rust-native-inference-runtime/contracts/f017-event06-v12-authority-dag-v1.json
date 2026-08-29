@@ -4,7 +4,7 @@
     "synthetic primary and secondary receipts at real numerical kernels"
   ],
   "coverage_count_source": "DERIVED_FROM_EDGES_ARRAY",
-  "edge_count": 36,
+  "edge_count": 37,
   "edges": [
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
@@ -406,7 +406,7 @@
       "source_node": "IDENTITY_STAGE"
     },
     {
-      "accepted_input_type_or_schema": "ValidatedNumericalBridgeV2",
+      "accepted_input_type_or_schema": "ValidatedNumericalBridge",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "numerical_view",
@@ -420,9 +420,9 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "ValidatedNumericalBridgeV2",
+      "output_type_or_schema": "ValidatedNumericalBridge",
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
-      "producer_symbol": "derive_bridge",
+      "producer_symbol": "historical_bridge",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
       "source_node": "NUMERICAL_BRIDGE"
     },
@@ -448,7 +448,7 @@
       "source_node": "PRIMARY_LEGACY_VIEW"
     },
     {
-      "accepted_input_type_or_schema": "ValidatedNumericalBridgeV2",
+      "accepted_input_type_or_schema": "ValidatedNumericalBridge",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "result_bundle_view",
@@ -462,9 +462,9 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "ValidatedNumericalBridgeV2",
+      "output_type_or_schema": "ValidatedNumericalBridge",
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
-      "producer_symbol": "derive_bridge",
+      "producer_symbol": "historical_bridge",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
       "source_node": "NUMERICAL_BRIDGE"
     },
@@ -574,7 +574,7 @@
       "source_node": "SECONDARY_NUMERICAL"
     },
     {
-      "accepted_input_type_or_schema": "list",
+      "accepted_input_type_or_schema": "tuple[ValidatedBundleBinding,ValidatedBundleBinding]",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "comparison_view",
@@ -588,7 +588,7 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "list",
+      "output_type_or_schema": "tuple[ValidatedBundleBinding,ValidatedBundleBinding]",
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_bundle_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
@@ -616,7 +616,7 @@
       "source_node": "COMPARISON_LEGACY_VIEW"
     },
     {
-      "accepted_input_type_or_schema": "dict",
+      "accepted_input_type_or_schema": "ValidatedComparisonBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "release_view",
@@ -630,7 +630,7 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "dict",
+      "output_type_or_schema": "ValidatedComparisonBinding",
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_comparison_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
@@ -658,7 +658,7 @@
       "source_node": "RELEASE"
     },
     {
-      "accepted_input_type_or_schema": "dict",
+      "accepted_input_type_or_schema": "ValidatedReleaseBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "accounting_view",
@@ -672,7 +672,7 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "dict",
+      "output_type_or_schema": "ValidatedReleaseBinding",
       "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "producer_symbol": "build_release_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
@@ -700,7 +700,7 @@
       "source_node": "ACCOUNTING_LEGACY_VIEW"
     },
     {
-      "accepted_input_type_or_schema": "dict",
+      "accepted_input_type_or_schema": "ValidatedAccountingBinding",
       "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
       "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
       "consumer_symbol": "package_terminal_view",
@@ -714,9 +714,9 @@
         "digest_or_identity_substitution",
         "replay_or_cross_role_reuse"
       ],
-      "output_type_or_schema": "dict",
-      "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
-      "producer_symbol": "build_accounting_closure",
+      "output_type_or_schema": "ValidatedAccountingBinding",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "build_accounting_binding",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
       "source_node": "ACCOUNTING"
     },
@@ -761,6 +761,27 @@
       "producer_symbol": "consumer_view",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
       "source_node": "PACKAGE_TERMINAL_VIEW"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedAccountingClosureV2",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
+      "consumer_symbol": "build_package_terminal",
+      "destination_node": "PACKAGE_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-037",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedAccountingClosureV2",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v2.py",
+      "producer_symbol": "build_accounting_closure",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "ACCOUNTING_CLOSURE"
     }
   ],
   "generation": "V12",

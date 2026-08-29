@@ -118,6 +118,9 @@ class _Sealed:
     def immutable_view(self):
         return MappingProxyType({name: _freeze(value) for name, value in self._items})
 
+    def as_dict(self):
+        return {name: _thaw(value) for name, value in self._items}
+
     def __copy__(self):
         raise TypeError("sealed authority cannot be copied")
 
@@ -137,6 +140,22 @@ class ValidatedNumericalBridge(_Sealed):
 
 
 class ValidatedConsumerView(_Sealed):
+    pass
+
+
+class ValidatedBundleBinding(_Sealed):
+    pass
+
+
+class ValidatedComparisonBinding(_Sealed):
+    pass
+
+
+class ValidatedReleaseBinding(_Sealed):
+    pass
+
+
+class ValidatedAccountingBinding(_Sealed):
     pass
 
 
@@ -392,7 +411,8 @@ def _base_view(bridge: ValidatedNumericalBridge) -> dict:
             "package_attempt_id": bridge.get("package_attempt_id")}
 
 
-def numerical_view(bridge: ValidatedNumericalBridge, role: str, *, primary_binding=None) -> ValidatedConsumerView:
+def numerical_view(bridge: ValidatedNumericalBridge, role: str, *,
+                   primary_binding: ValidatedConsumerView | None = None) -> ValidatedConsumerView:
     if role not in {"PRIMARY", "SECONDARY"}:
         raise ValueError("numerical bridge role")
     value = _base_view(bridge) | {
@@ -457,7 +477,7 @@ def bundle_kwargs(view: ValidatedConsumerView) -> dict:
         "producer_measurement_sha256","durable_start_sha256","access_census_sha256")}
 
 
-def build_comparison_binding(view: ValidatedConsumerView, summary: object) -> tuple[dict, str]:
+def build_comparison_binding(view: ValidatedConsumerView, summary: object) -> tuple[ValidatedComparisonBinding, str]:
     if type(view) is not ValidatedConsumerView:
         raise TypeError("sealed comparison view required")
     try:
@@ -483,10 +503,11 @@ def build_comparison_binding(view: ValidatedConsumerView, summary: object) -> tu
         "comparison_summary_sha256": hashlib.sha256(canonical_bytes(summary)).hexdigest(),
         "result": "PASS",
     }
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    binding = ValidatedComparisonBinding(_SEAL, value)
+    return binding, binding.sha256
 
 
-def build_release_binding(view: ValidatedConsumerView, report: object) -> tuple[dict, str]:
+def build_release_binding(view: ValidatedConsumerView, report: dict) -> tuple[ValidatedReleaseBinding, str]:
     if type(view) is not ValidatedConsumerView:
         raise TypeError("sealed release view required")
     expected_lease_ids = [
@@ -519,17 +540,17 @@ def build_release_binding(view: ValidatedConsumerView, report: object) -> tuple[
         "release_report_sha256": hashlib.sha256(canonical_bytes(report)).hexdigest(),
         "result": "PASS",
     }
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    binding = ValidatedReleaseBinding(_SEAL, value)
+    return binding, binding.sha256
 
 
-def build_accounting_binding(view: ValidatedConsumerView, release_binding: object) -> tuple[dict, str]:
+def build_accounting_binding(view: ValidatedConsumerView, release_binding: object) -> tuple[ValidatedAccountingBinding, str]:
     if type(view) is not ValidatedConsumerView:
         raise TypeError("sealed accounting view required")
-    if (type(release_binding) is not dict
+    if (type(release_binding) is not ValidatedReleaseBinding
             or release_binding.get("schema") != RELEASE_BINDING_SCHEMA
             or release_binding.get("bridge_sha256") != view.get("bridge_sha256")
-            or hashlib.sha256(canonical_bytes(release_binding)).hexdigest()
-            != view.get("release_binding_sha256")):
+            or release_binding.sha256 != view.get("release_binding_sha256")):
         raise ValueError("accounting release binding")
     value = {
         "schema": ACCOUNTING_BINDING_SCHEMA,
@@ -547,56 +568,87 @@ def build_accounting_binding(view: ValidatedConsumerView, release_binding: objec
         "historical_master_ledger": 175,
         "result": "PASS",
     }
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    binding = ValidatedAccountingBinding(_SEAL, value)
+    return binding, binding.sha256
 
 
-def comparison_view(bridge: ValidatedNumericalBridge, primary_binding_sha256: str,
-                    secondary_binding_sha256: str) -> ValidatedConsumerView:
-    _sha(primary_binding_sha256, "primary bridge bundle binding")
-    _sha(secondary_binding_sha256, "secondary bridge bundle binding")
+def comparison_view(bridge: ValidatedNumericalBridge, primary_binding: ValidatedBundleBinding,
+                    secondary_binding: ValidatedBundleBinding) -> ValidatedConsumerView:
+    if type(primary_binding) is not ValidatedBundleBinding or type(secondary_binding) is not ValidatedBundleBinding:
+        raise TypeError("sealed primary and secondary bundle bindings required")
+    for binding, role, event_key in (
+        (primary_binding, "PRIMARY", "primary_event_id"),
+        (secondary_binding, "SECONDARY", "secondary_event_id"),
+    ):
+        if (binding.get("schema") != BUNDLE_BINDING_SCHEMA
+                or binding.get("role") != role
+                or binding.get("bridge_sha256") != bridge.sha256
+                or binding.get("authorization_id") != bridge.get("authorization_id")
+                or binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+                or binding.get("consumer_event_id") != bridge.get(event_key)
+                or binding.get("result") != "PASS"):
+            raise ValueError(f"{role.lower()} bundle binding continuity")
+    if primary_binding.sha256 == secondary_binding.sha256:
+        raise ValueError("primary and secondary bundle bindings must be distinct")
     value = _base_view(bridge) | {
-        "primary_bridge_bundle_binding_sha256":primary_binding_sha256,
-        "secondary_bridge_bundle_binding_sha256":secondary_binding_sha256,
+        "primary_bridge_bundle_binding_sha256":primary_binding.sha256,
+        "secondary_bridge_bundle_binding_sha256":secondary_binding.sha256,
         "comparison_authority_sha256":bridge.get("comparison_authority_sha256"),
     }
     return validate_consumer_view("COMPARISON_V11", value)
 
 
-def release_view(bridge: ValidatedNumericalBridge, comparison_binding_sha256: str) -> ValidatedConsumerView:
-    _sha(comparison_binding_sha256, "comparison binding")
+def release_view(bridge: ValidatedNumericalBridge, comparison_binding: ValidatedComparisonBinding) -> ValidatedConsumerView:
+    if (type(comparison_binding) is not ValidatedComparisonBinding
+            or comparison_binding.get("schema") != COMPARISON_BINDING_SCHEMA
+            or comparison_binding.get("bridge_sha256") != bridge.sha256
+            or comparison_binding.get("authorization_id") != bridge.get("authorization_id")
+            or comparison_binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or comparison_binding.get("result") != "PASS"):
+        raise TypeError("sealed comparison binding continuity")
     value = {"schema":VIEW_SCHEMA,"bridge_sha256":bridge.sha256,
         "package_attempt_id":bridge.get("package_attempt_id"),
         "descriptor_identity_sha256":bridge.get("descriptor_identity_sha256"),
-        "lease_owner":bridge.get("lease_owner"),"comparison_binding_sha256":comparison_binding_sha256}
+        "lease_owner":bridge.get("lease_owner"),"comparison_binding_sha256":comparison_binding.sha256}
     return validate_consumer_view("RELEASE", value)
 
 
-def accounting_view(bridge: ValidatedNumericalBridge, release_binding_sha256: str) -> ValidatedConsumerView:
-    _sha(release_binding_sha256, "release binding")
+def accounting_view(bridge: ValidatedNumericalBridge, release_binding: ValidatedReleaseBinding) -> ValidatedConsumerView:
+    if (type(release_binding) is not ValidatedReleaseBinding
+            or release_binding.get("schema") != RELEASE_BINDING_SCHEMA
+            or release_binding.get("bridge_sha256") != bridge.sha256
+            or release_binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or release_binding.get("result") != "PASS"):
+        raise TypeError("sealed release binding continuity")
     value = _base_view(bridge) | {"primary_event_id":bridge.get("primary_event_id"),
         "secondary_event_id":bridge.get("secondary_event_id"),
         "installed_authority_sha256":bridge.get("installed_authority_sha256"),
         "installation_receipt_sha256":bridge.get("installation_receipt_sha256"),
-        "release_binding_sha256":release_binding_sha256}
+        "release_binding_sha256":release_binding.sha256}
     return validate_consumer_view("ACCOUNTING", value)
 
 
 def package_terminal_view(bridge: ValidatedNumericalBridge, binding_chain_head_sha256: str,
                           v11_closure_root_sha256: str,
-                          accounting_binding_sha256: str) -> ValidatedConsumerView:
-    for name, value in (("chain head",binding_chain_head_sha256),("V11 closure",v11_closure_root_sha256),
-                        ("accounting binding",accounting_binding_sha256)):
+                          accounting_binding: ValidatedAccountingBinding) -> ValidatedConsumerView:
+    for name, value in (("chain head",binding_chain_head_sha256),("V11 closure",v11_closure_root_sha256)):
         _sha(value, name)
+    if (type(accounting_binding) is not ValidatedAccountingBinding
+            or accounting_binding.get("schema") != ACCOUNTING_BINDING_SCHEMA
+            or accounting_binding.get("bridge_sha256") != bridge.sha256
+            or accounting_binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or accounting_binding.get("result") != "PASS"):
+        raise TypeError("sealed accounting binding continuity")
     value = {"schema":VIEW_SCHEMA,"bridge_sha256":bridge.sha256,
         "package_attempt_id":bridge.get("package_attempt_id"),
         "binding_chain_head_sha256":binding_chain_head_sha256,
         "v11_closure_root_sha256":v11_closure_root_sha256,
-        "accounting_binding_sha256":accounting_binding_sha256}
+        "accounting_binding_sha256":accounting_binding.sha256}
     return validate_consumer_view("PACKAGE_TERMINAL", value)
 
 
 def build_bundle_binding(numerical: ValidatedConsumerView, bundle: ValidatedConsumerView,
-                         bundle_index: dict) -> tuple[dict, str]:
+                         bundle_index: dict) -> tuple[ValidatedBundleBinding, str]:
     if type(numerical) is not ValidatedConsumerView or type(bundle) is not ValidatedConsumerView:
         raise TypeError("sealed bundle views required")
     if numerical.get("bridge_sha256") != bundle.get("bridge_sha256"):
@@ -609,7 +661,8 @@ def build_bundle_binding(numerical: ValidatedConsumerView, bundle: ValidatedCons
         "bridge_sha256":numerical.get("bridge_sha256"),"authorization_id":bundle.get("authorization_id"),
         "package_attempt_id":bundle.get("package_attempt_id"),"consumer_event_id":bundle.get("consumer_event_id"),
         "bundle_index_sha256":hashlib.sha256(canonical_bytes(bundle_index)).hexdigest(),"result":"PASS"}
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    binding = ValidatedBundleBinding(_SEAL, value)
+    return binding, binding.sha256
 
 
 def build_transition_binding(bridge: ValidatedNumericalBridge, phase: str, subject_artifact_kind: str,

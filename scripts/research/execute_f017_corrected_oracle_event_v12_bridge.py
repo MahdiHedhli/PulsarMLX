@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import tempfile
 from pathlib import Path
 
 from f017_binary_comparison_authority_v11 import derive_summary, validate_summary
@@ -81,36 +82,18 @@ def validate_transition_order(trace: object) -> dict:
 
 
 def validate_no_access_call_path() -> dict:
-    """Instantiate the real producer adapter and authority chain without capabilities."""
-    from f017_event06_bridge_synthetic_fixture_v1 import runtime_fixture_values
-    expected_bridge, installed, leases, report, plan, event_plan = runtime_fixture_values()
-    identity = bind_identity_stage(installed, leases, report)
-    bridge = derive_bridge(installed, identity, plan, event_plan)
-    if bridge.sha256 != expected_bridge.sha256:
-        raise ValueError("Event 06 bridge producer adapter drift")
-    primary = numerical_view(bridge, "PRIMARY")
-    primary_result = result_bundle_view(bridge, "PRIMARY", "1" * 64)
-    comparison = comparison_view(bridge, "2" * 64, "3" * 64)
-    summary = {"schema":"pulsarmlx.f017.corrected-oracle-binary-comparison-summary/11.0.0",
-               "authorization_id":bridge.get("authorization_id"),
-               "package_attempt_id":bridge.get("package_attempt_id"),
-               "classification":"EXACT_EXPECTED_TOKEN_STABLE"}
-    comparison_binding, comparison_sha = build_comparison_binding(comparison, summary)
-    release = release_view(bridge, comparison_sha)
-    release_report = leases.release(close_function=lambda _descriptor, _lease_id: None)
-    release_binding, release_sha = build_release_binding(release, release_report)
-    accounting = accounting_view(bridge, release_sha)
-    accounting_binding, accounting_sha = build_accounting_binding(accounting, release_binding)
-    if (primary.get("bridge_sha256") != bridge.sha256
-            or primary_result.get("bridge_sha256") != bridge.sha256
-            or comparison_binding["bridge_sha256"] != bridge.sha256
-            or release_binding["bridge_sha256"] != bridge.sha256
-            or accounting_binding["bridge_sha256"] != bridge.sha256):
+    """Run the canonical complete synthetic authority path without capabilities."""
+    from f017_event06_dag_derived_control_path_v1 import run_full_call_path
+    with tempfile.TemporaryDirectory(prefix="f017-event06-no-access-") as directory:
+        full = run_full_call_path(Path(directory))
+    counters = full["live_counters"]
+    if full["result"] != "PASS" or any(counters.values()):
         raise ValueError("Event 06 bridge authority chain")
     order = validate_transition_order(list(PRODUCTION_CALL_PATH))
     return {
         "result":"PASS", "producer_adapter":"PASS", "authority_chain":"PASS",
-        "release_binding_sha256":release_sha, "accounting_binding_sha256":accounting_sha,
+        "release_binding_sha256":full["release_binding_sha256"],
+        "accounting_binding_sha256":full["legacy_accounting_binding_sha256"],
         "real_signatures_bound":0, "transition_count":order["transition_count"],
         "checkpoint_root_resolved":False,"checkpoint_opens":0,"checkpoint_hash_reads":0,
         "checkpoint_payload_reads":0,"checkpoint_mmaps":0,"tensor_reads":0,
@@ -201,8 +184,8 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
                                       leases.inherited_fds(), secondary_directory)
         completed_phase = "SECONDARY_RESULT_TERMINAL"
         compare_authority = comparison_view(
-            bridge, primary["bridge_bundle_binding_sha256"],
-            secondary["bridge_bundle_binding_sha256"],
+            bridge, primary["bridge_bundle_binding"],
+            secondary["bridge_bundle_binding"],
         )
         pa, sa = primary["artifacts"], secondary["artifacts"]
         comparison = derive_summary(
@@ -220,7 +203,7 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
             compare_authority.get("authorization_id"),
         )
         comparison_binding, comparison_binding_sha = build_comparison_binding(compare_authority, comparison)
-        _bank_checked(package_directory / "bridge-comparison-binding.json", comparison_binding,
+        _bank_checked(package_directory / "bridge-comparison-binding.json", comparison_binding.as_dict(),
                       comparison_binding_sha)
     except Exception:
         release_report = leases.release()
@@ -232,14 +215,14 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
                       _sha(failure_release))
         raise
 
-    release_authority = release_view(bridge, comparison_binding_sha)
+    release_authority = release_view(bridge, comparison_binding)
     release_report = leases.release()
     release_binding, release_binding_sha = build_release_binding(release_authority, release_report)
     _bank_checked(package_directory / "bridge-release-report.json", release_report, _sha(release_report))
-    _bank_checked(package_directory / "bridge-release-binding.json", release_binding, release_binding_sha)
-    accounting_authority = accounting_view(bridge, release_binding_sha)
+    _bank_checked(package_directory / "bridge-release-binding.json", release_binding.as_dict(), release_binding_sha)
+    accounting_authority = accounting_view(bridge, release_binding)
     accounting_binding, accounting_binding_sha = build_accounting_binding(accounting_authority, release_binding)
-    _bank_checked(package_directory / "bridge-accounting-binding.json", accounting_binding,
+    _bank_checked(package_directory / "bridge-accounting-binding.json", accounting_binding.as_dict(),
                   accounting_binding_sha)
 
     comparison_receipt = {"schema":"pulsarmlx.f017.event06-bridge-comparison-receipt/1.0.0",
@@ -389,7 +372,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
     )
     view = package_terminal_view(
         bridge, chain_head_sha256, execution_result["v11_closure_sha256"],
-        execution_result["accounting_binding_sha256"]
+        execution_result["accounting_binding"]
     )
     terminal = build_package_terminal(view)
     terminal_sha = validate_package_terminal(terminal, bridge)

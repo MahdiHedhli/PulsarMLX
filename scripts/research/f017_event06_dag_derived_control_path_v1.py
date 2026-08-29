@@ -21,12 +21,13 @@ from f017_event06_numerical_bridge_v2 import (
     build_package_terminal as build_prompt_bound_package_terminal,
     consumer_view,
     derive_bridge,
+    historical_bridge,
     produce_identity_bridge_input,
 )
 import f017_event06_numerical_bridge_v1 as legacy
 
 
-EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 37))
+EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 38))
 
 
 def _sha(value: object) -> str:
@@ -113,13 +114,17 @@ def _synthetic_bundle(role: str, bridge: legacy.ValidatedNumericalBridge) -> dic
 
 def _trace(trace: list[dict[str, object]], edge_id: str, value: object) -> object:
     digest = getattr(value, "source_sha256", getattr(value, "sha256", None))
+    runtime_type = type(value).__name__
+    if type(value) is tuple and all(hasattr(item, "sha256") for item in value):
+        runtime_type = "tuple[" + ",".join(type(item).__name__ for item in value) + "]"
+        digest = _sha([item.sha256 for item in value])
     if digest is None and type(value) in {dict, list}:
         digest = _sha(value)
-    trace.append({"edge_id": edge_id, "runtime_type": type(value).__name__, "digest": digest})
+    trace.append({"edge_id": edge_id, "runtime_type": runtime_type, "digest": digest})
     return value
 
 
-def run_full_call_path(root: Path) -> dict[str, object]:
+def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[str, object]:
     """Run one deterministic complete control path without irreversible work."""
     package = build_sequence14_qualification(
         root, now_unix_ns=4_000_000_000_000_000_000
@@ -149,32 +154,33 @@ def run_full_call_path(root: Path) -> dict[str, object]:
     bridge = derive_bridge(
         bridge_input, package["installed"].authority, identity_stage, package["plan"]
     )
+    historical = historical_bridge(bridge)
     _trace(trace, EDGE_IDS[17], bridge_input)
     _trace(trace, EDGE_IDS[18], identity_stage)
 
-    primary_numerical_legacy = legacy.numerical_view(bridge.legacy_bridge, "PRIMARY")
-    _trace(trace, EDGE_IDS[19], bridge)
+    primary_numerical_legacy = legacy.numerical_view(historical, "PRIMARY")
+    _trace(trace, EDGE_IDS[19], historical)
     primary_numerical = consumer_view(
         bridge, "PRIMARY_NUMERICAL", primary_numerical_legacy
     )
     _trace(trace, EDGE_IDS[20], primary_numerical_legacy)
     primary_result_legacy = legacy.result_bundle_view(
-        bridge.legacy_bridge, "PRIMARY", _sha({"primary": "DURABLE_SYNTHETIC_START"})
+        historical, "PRIMARY", _sha({"primary": "DURABLE_SYNTHETIC_START"})
     )
-    _trace(trace, EDGE_IDS[21], bridge)
+    _trace(trace, EDGE_IDS[21], historical)
     primary_result = consumer_view(bridge, "PRIMARY_RESULT", primary_result_legacy)
     _trace(trace, EDGE_IDS[22], primary_result_legacy)
-    primary_bundle = _synthetic_bundle("PRIMARY", bridge.legacy_bridge)
+    primary_bundle = _synthetic_bundle("PRIMARY", historical)
     primary_bundle_binding, primary_bundle_binding_sha = legacy.build_bundle_binding(
         primary_numerical_legacy, primary_result_legacy, primary_bundle["index"]
     )
     primary_terminal_binding = legacy.primary_terminal_binding(
-        primary_bundle, bridge.legacy_bridge.sha256, primary_bundle_binding_sha
+        primary_bundle, historical.sha256, primary_bundle_binding_sha
     )
     _trace(trace, EDGE_IDS[23], primary_bundle)
 
     secondary_numerical_legacy = legacy.numerical_view(
-        bridge.legacy_bridge, "SECONDARY", primary_binding=primary_terminal_binding
+        historical, "SECONDARY", primary_binding=primary_terminal_binding
     )
     _trace(trace, EDGE_IDS[24], primary_terminal_binding)
     secondary_numerical = consumer_view(
@@ -182,19 +188,19 @@ def run_full_call_path(root: Path) -> dict[str, object]:
     )
     _trace(trace, EDGE_IDS[25], secondary_numerical_legacy)
     secondary_result_legacy = legacy.result_bundle_view(
-        bridge.legacy_bridge, "SECONDARY", _sha({"secondary": "DURABLE_SYNTHETIC_START"})
+        historical, "SECONDARY", _sha({"secondary": "DURABLE_SYNTHETIC_START"})
     )
     secondary_result = consumer_view(bridge, "SECONDARY_RESULT", secondary_result_legacy)
     _trace(trace, EDGE_IDS[26], secondary_result_legacy)
-    secondary_bundle = _synthetic_bundle("SECONDARY", bridge.legacy_bridge)
+    secondary_bundle = _synthetic_bundle("SECONDARY", historical)
     secondary_bundle_binding, secondary_bundle_binding_sha = legacy.build_bundle_binding(
         secondary_numerical_legacy, secondary_result_legacy, secondary_bundle["index"]
     )
 
     comparison_legacy = legacy.comparison_view(
-        bridge.legacy_bridge, primary_bundle_binding_sha, secondary_bundle_binding_sha
+        historical, primary_bundle_binding, secondary_bundle_binding
     )
-    _trace(trace, EDGE_IDS[27], [primary_bundle_binding, secondary_bundle_binding])
+    _trace(trace, EDGE_IDS[27], (primary_bundle_binding, secondary_bundle_binding))
     comparison = consumer_view(bridge, "COMPARISON", comparison_legacy)
     _trace(trace, EDGE_IDS[28], comparison_legacy)
     comparison_summary = {
@@ -207,7 +213,7 @@ def run_full_call_path(root: Path) -> dict[str, object]:
     comparison_binding, comparison_binding_sha = legacy.build_comparison_binding(
         comparison_legacy, comparison_summary
     )
-    release_legacy = legacy.release_view(bridge.legacy_bridge, comparison_binding_sha)
+    release_legacy = legacy.release_view(historical, comparison_binding)
     _trace(trace, EDGE_IDS[29], comparison_binding)
     release = consumer_view(bridge, "RELEASE", release_legacy)
     close_event = lambda event: _sha({"qualification_close_event": event})
@@ -219,7 +225,7 @@ def run_full_call_path(root: Path) -> dict[str, object]:
     release_binding, release_binding_sha = legacy.build_release_binding(
         release_legacy, release_report
     )
-    accounting_legacy = legacy.accounting_view(bridge.legacy_bridge, release_binding_sha)
+    accounting_legacy = legacy.accounting_view(historical, release_binding)
     _trace(trace, EDGE_IDS[31], release_binding)
     accounting = consumer_view(bridge, "ACCOUNTING", accounting_legacy)
     legacy_accounting_binding, legacy_accounting_sha = legacy.build_accounting_binding(
@@ -229,35 +235,36 @@ def run_full_call_path(root: Path) -> dict[str, object]:
     accounting_closure, accounting_closure_sha = build_accounting_closure(
         bridge, accounting, legacy_accounting_binding
     )
-    _trace(trace, EDGE_IDS[33], accounting_closure)
+    _trace(trace, EDGE_IDS[33], legacy_accounting_binding)
 
     predecessor = "0" * 64
     transitions: list[dict[str, object]] = []
     for phase in legacy.PHASES:
         transition, predecessor = legacy.build_transition_binding(
-            bridge.legacy_bridge,
+            historical,
             phase,
             "QUALIFICATION_ONLY_SYNTHETIC_RECEIPT",
             _sha({"phase": phase, "authority_mode": "QUALIFICATION_ONLY"}),
             predecessor,
         )
         transitions.append(transition)
-    chain_head = legacy.validate_transition_chain(bridge.legacy_bridge, transitions)
+    chain_head = legacy.validate_transition_chain(historical, transitions)
     package_legacy_view = legacy.package_terminal_view(
-        bridge.legacy_bridge,
+        historical,
         chain_head,
         _sha({"v11_closure": "QUALIFICATION_ONLY"}),
-        legacy_accounting_sha,
+        legacy_accounting_binding,
     )
     _trace(trace, EDGE_IDS[34], package_legacy_view)
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", package_legacy_view)
     _trace(trace, EDGE_IDS[35], package_view)
     legacy_terminal = legacy.build_package_terminal(package_legacy_view)
     legacy_terminal_sha = legacy.validate_package_terminal(
-        legacy_terminal, bridge.legacy_bridge
+        legacy_terminal, historical
     )
+    _trace(trace, EDGE_IDS[36], accounting_closure)
     package_terminal, package_terminal_sha = build_prompt_bound_package_terminal(
-        bridge, package_view, legacy_terminal, accounting_closure_sha
+        bridge, package_view, legacy_terminal, accounting_closure
     )
 
     counters = package["state"].snapshot()
@@ -283,9 +290,12 @@ def run_full_call_path(root: Path) -> dict[str, object]:
         "identity_report": identity_report,
         "primary_receipt": primary_bundle["index"],
         "secondary_receipt": secondary_bundle["index"],
-        "comparison_receipt": comparison_binding,
-        "release_receipt": release_binding,
-        "accounting_receipt": accounting_closure,
+        "comparison_receipt": comparison_binding.as_dict(),
+        "comparison_binding_sha256": comparison_binding_sha,
+        "release_receipt": release_binding.as_dict(),
+        "release_binding_sha256": release_binding_sha,
+        "accounting_receipt": accounting_closure.as_dict(),
+        "legacy_accounting_binding_sha256": legacy_accounting_sha,
         "package_terminal": package_terminal,
         "package_terminal_sha256": package_terminal_sha,
         "legacy_package_terminal_sha256": legacy_terminal_sha,
@@ -313,6 +323,18 @@ def run_full_call_path(root: Path) -> dict[str, object]:
         "full_model_inference": "NONE",
         "package_terminal_result": package_terminal["result"],
     })
+    if retain_authorities:
+        result["_authorities"] = {
+            "bridge": bridge,
+            "primary_bundle_binding": primary_bundle_binding,
+            "secondary_bundle_binding": secondary_bundle_binding,
+            "comparison_binding": comparison_binding,
+            "release_binding": release_binding,
+            "accounting_binding": legacy_accounting_binding,
+            "accounting_closure": accounting_closure,
+            "package_view": package_view,
+            "legacy_terminal": legacy_terminal,
+        }
     return result
 
 

@@ -120,8 +120,8 @@ def execute_consumers(
         )
         completed_phase = "SECONDARY_RESULT_TERMINAL"
         comparison_historical = legacy_bridge.comparison_view(
-            historical, primary["bridge_bundle_binding_sha256"],
-            secondary["bridge_bundle_binding_sha256"],
+            historical, primary["bridge_bundle_binding"],
+            secondary["bridge_bundle_binding"],
         )
         comparison_authority = consumer_view(bridge, "COMPARISON", comparison_historical)
         pa, sa = primary["artifacts"], secondary["artifacts"]
@@ -142,7 +142,7 @@ def execute_consumers(
         comparison_binding, comparison_binding_sha = legacy_bridge.build_comparison_binding(
             comparison_historical, comparison
         )
-        _bank(package_directory / "bridge-comparison-binding.json", comparison_binding, comparison_binding_sha)
+        _bank(package_directory / "bridge-comparison-binding.json", comparison_binding.as_dict(), comparison_binding_sha)
     except Exception:
         release_report = leases.release()
         failure = {
@@ -156,20 +156,20 @@ def execute_consumers(
         _bank(package_directory / "prompt-bound-consumer-failure.json", failure, _sha(failure))
         raise
 
-    release_historical = legacy_bridge.release_view(historical, comparison_binding_sha)
+    release_historical = legacy_bridge.release_view(historical, comparison_binding)
     release_authority = consumer_view(bridge, "RELEASE", release_historical)
     release_report = leases.release()
     release_binding, release_binding_sha = legacy_bridge.build_release_binding(
         release_historical, release_report
     )
     _bank(package_directory / "bridge-release-report.json", release_report, _sha(release_report))
-    _bank(package_directory / "bridge-release-binding.json", release_binding, release_binding_sha)
-    accounting_historical = legacy_bridge.accounting_view(historical, release_binding_sha)
+    _bank(package_directory / "bridge-release-binding.json", release_binding.as_dict(), release_binding_sha)
+    accounting_historical = legacy_bridge.accounting_view(historical, release_binding)
     accounting_authority = consumer_view(bridge, "ACCOUNTING", accounting_historical)
     accounting_binding, accounting_binding_sha = legacy_bridge.build_accounting_binding(
         accounting_historical, release_binding
     )
-    _bank(package_directory / "bridge-accounting-binding.json", accounting_binding, accounting_binding_sha)
+    _bank(package_directory / "bridge-accounting-binding.json", accounting_binding.as_dict(), accounting_binding_sha)
 
     comparison_receipt = {
         "schema": "pulsarmlx.f017.event06-bridge-comparison-receipt/1.0.0",
@@ -289,18 +289,18 @@ def execute_event06_bridge(
     accounting, accounting_sha = build_accounting_closure(
         bridge, views["ACCOUNTING"], execution["accounting_binding"]
     )
-    _bank(package_directory / "prompt-bound-accounting-closure.json", accounting, accounting_sha)
+    _bank(package_directory / "prompt-bound-accounting-closure.json", accounting.as_dict(), accounting_sha)
     legacy_package = legacy_coordinator.close_bridge_package(
         bridge.legacy_bridge, package_start, execution, terminal_path
     )
     historical_package_view = legacy_bridge.package_terminal_view(
         bridge.legacy_bridge, legacy_package["chain_head_sha256"],
-        execution["v11_closure_sha256"], execution["accounting_binding_sha256"],
+        execution["v11_closure_sha256"], execution["accounting_binding"],
     )
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", historical_package_view)
     views["PACKAGE_TERMINAL"] = package_view
     terminal, terminal_sha = build_package_terminal(
-        bridge, package_view, legacy_package["terminal"], accounting_sha
+        bridge, package_view, legacy_package["terminal"], accounting
     )
     _bank(package_directory / "prompt-bound-package-terminal.json", terminal, terminal_sha)
     for role, view in views.items():
