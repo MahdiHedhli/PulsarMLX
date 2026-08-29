@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-agy-cycle-03-normalized-result/1.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "ad702e32ba6d32b96e217f077aec0ac26b20f947",
+  "reviewed_tree": "6b8a85461715cc523a37452013db9d1f6f33924b",
+  "implementation_head": "0dcd07185d794b464ffef5e57a4c2f8e5828fe74",
+  "implementation_tree": "1ba69ff2f8d4b0bc110930413aa35e7f5f4dcc26",
+  "full_native_run": 33264313283,
+  "tests_passed": 545,
+  "subtests_passed": 147,
+  "challenge_rows": 175,
+  "blocking_findings": 0,
+  "unresolved_findings": 0,
+  "advisory_findings": [
+    "Preserve the accepted no-access and one-shot invariants during later evidence banking."
+  ],
+  "global_verdict": "ACCEPT",
+  "result": "PASS",
+  "disposition": "SUPERSEDED_BY_OPUS_CYCLE_03_PRODUCTION_PATH_FINDINGS"
+}
