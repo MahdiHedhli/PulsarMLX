@@ -1,0 +1,70 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-collapsed-go-path-contract/1.0.0",
+  "state": "LIQUID_UNTIL_INSTANTIABLE",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "public_path": [
+    "SANITIZED_HUMAN_DECISION",
+    "COLLAPSED_ONE_SHOT_GO",
+    "COLLAPSED_GO_APPROVAL",
+    "COLLAPSED_PREPARATION",
+    "PROMPT_BOUND_IDENTITY",
+    "CANDIDATE_VALIDATION",
+    "PACKAGE_START_ELIGIBILITY"
+  ],
+  "go_token": {
+    "schema": "pulsarmlx.f017.event06-v12-collapsed-one-shot-go/1.0.0",
+    "field_count": 8,
+    "fields": [
+      "schema",
+      "decision",
+      "human_decision_sha256",
+      "release_authority_sha256",
+      "one_shot_nonce_sha256",
+      "issued_at_unix_ns",
+      "expires_at_unix_ns",
+      "scope"
+    ],
+    "unknown_fields": "REJECT",
+    "aliases": "REJECT",
+    "coercions": "REJECT"
+  },
+  "field_necessity": {
+    "schema": "selects one exact decoder and field census",
+    "decision": "records the direct human decision class",
+    "human_decision_sha256": "binds exact sanitized human bytes",
+    "release_authority_sha256": "transitively binds the accepted release",
+    "one_shot_nonce_sha256": "supplies the deterministic one-shot identity",
+    "issued_at_unix_ns": "opens the bounded authority window",
+    "expires_at_unix_ns": "closes the bounded authority window",
+    "scope": "freezes one package, one primary, one secondary, zero retry, no resume"
+  },
+  "prohibited_boundaries": [
+    "CALLER_MAPPING",
+    "PRIVATE_RESEAL",
+    "LEGACY_PROJECTION",
+    "CALLER_CALLBACK",
+    "MONKEYPATCH",
+    "SCHEMA_UNION",
+    "ALIAS",
+    "COERCION",
+    "OPTIONAL_FIELD",
+    "UNKNOWN_FIELD"
+  ],
+  "qualification_boundary": {
+    "live_authority_install": false,
+    "package_start": false,
+    "checkpoint_root_resolution": false,
+    "checkpoint_access": 0,
+    "numerical_operations": 0,
+    "event_identity_consumption": 0
+  },
+  "frozen_invariants": {
+    "numerical_authority": "V4",
+    "result_authority": "V11",
+    "checkpoint_identity_authority": "V12",
+    "historical_master_ledger": 175,
+    "event05_retry": false,
+    "event06_executed": false,
+    "p1_attempt2_executed": false
+  }
+}

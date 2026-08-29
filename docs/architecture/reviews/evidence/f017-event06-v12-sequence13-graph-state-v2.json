@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-graph-state/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence13-graph-state-v1.json",
+  "amendment_commit": "14dea268f8f05597aa7433576f4cfa1d6fea7533",
+  "old_design_state": "LIQUID_UNTIL_INSTANTIABLE",
+  "nodes": [
+    {"id": "C0_INVENTORY_AND_FROZEN_INVARIANTS", "status": "PASS"},
+    {"id": "C1_SMALLEST_COLLAPSED_GO_TOKEN", "status": "PASS"},
+    {"id": "C2_REAL_PUBLIC_COMPOSITION_PATH", "status": "PASS"},
+    {"id": "C3_END_TO_END_COMPOSITION_AND_NEGATIVE_TESTS", "status": "PASS"},
+    {"id": "C4_NO_ACCESS_PRODUCTION_COMPOSITION_REHEARSAL", "status": "PASS"},
+    {"id": "C5_TESTS_THREAT_CAMPAIGN_AND_CI", "status": "RUNNING"},
+    {"id": "C6_EXACT_HEAD_DUAL_REVIEW", "status": "PENDING"},
+    {"id": "C7_OPERATIONAL_RATIFICATION", "status": "PENDING"}
+  ],
+  "running_nodes": 1,
+  "repair_loops_consumed": 2,
+  "authority_posture": "INSTANTIABLE_PENDING_OPERATIONAL_RATIFICATION",
+  "event06_execution": false,
+  "live_event06_authority": false,
+  "checkpoint_access": 0,
+  "historical_master_ledger": 175
+}

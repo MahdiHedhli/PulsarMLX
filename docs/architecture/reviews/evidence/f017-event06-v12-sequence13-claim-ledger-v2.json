@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-claim-ledger/2.0.0",
+  "claims": [
+    {"id": "C-COLLAPSE-001", "statement": "The GO token has exactly eight nonduplicative fields.", "state": "SUPPORTED", "evidence": ["specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-collapsed-go-path-v1.json"]},
+    {"id": "C-COMPOSE-001", "statement": "The real public sealer-to-coordinator path composes without adapters or private resealing.", "state": "SUPPORTED", "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-sequence13-collapsed-go-qualification-v1.json"]},
+    {"id": "C-ONESHOT-001", "statement": "Duplicate, consumed, retry, resume, second-attempt, and identity substitutions fail closed.", "state": "SUPPORTED", "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-sequence13-collapsed-go-qualification-v1.json"]},
+    {"id": "C-NOACCESS-001", "statement": "Composition creates no live authority or package state and performs no checkpoint or numerical access.", "state": "SUPPORTED", "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-sequence13-no-access-rehearsal-v2.json"]},
+    {"id": "C-FROZEN-001", "statement": "Numerical V4, result V11, checkpoint identity V12, accounting, and stop-boundary authorities remain unchanged.", "state": "SUPPORTED", "evidence": ["scripts/research/tests/test_f017_event06_collapsed_go_path_v1.py"]},
+    {"id": "C-CI-001", "statement": "Exact-head FULL_NATIVE passes with zero required skips.", "state": "PROPOSED", "evidence": []},
+    {"id": "C-REVIEW-001", "statement": "AGY challenge and Opus arbitration accept the exact tested head under corrected blocking scope.", "state": "PROPOSED", "evidence": []},
+    {"id": "C-RATIFY-001", "statement": "The collapsed GO path is operationally ratified for a future fresh Event 06 GO.", "state": "PROPOSED", "evidence": []}
+  ]
+}

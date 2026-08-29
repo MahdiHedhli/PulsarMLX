@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-collapsed-go-field-necessity-ledger/1.0.0",
+  "token_schema": "pulsarmlx.f017.event06-v12-collapsed-one-shot-go/1.0.0",
+  "field_count": 8,
+  "fields": [
+    {"name": "schema", "necessity": "selects one exact decoder and field census", "duplicative": false},
+    {"name": "decision", "necessity": "records one direct Event 06 human decision", "duplicative": false},
+    {"name": "human_decision_sha256", "necessity": "binds the exact sanitized human bytes", "duplicative": false},
+    {"name": "release_authority_sha256", "necessity": "transitively binds the accepted release", "duplicative": false},
+    {"name": "one_shot_nonce_sha256", "necessity": "forms the deterministic one-shot token identity", "duplicative": false},
+    {"name": "issued_at_unix_ns", "necessity": "opens the bounded authority window", "duplicative": false},
+    {"name": "expires_at_unix_ns", "necessity": "closes the bounded authority window", "duplicative": false},
+    {"name": "scope", "necessity": "freezes one package, one primary, one secondary, zero retry, and no resume", "duplicative": false}
+  ],
+  "downstream_identity_rule": "AUTHORIZATION_PACKAGE_PRIMARY_AND_SECONDARY_IDS_DERIVE_FROM_TOKEN_DIGEST_AND_ARE_NOT_GO_FIELDS",
+  "result": "PASS"
+}

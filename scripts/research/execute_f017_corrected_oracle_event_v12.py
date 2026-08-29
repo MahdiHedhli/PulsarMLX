@@ -9,6 +9,28 @@ from f017_checkpoint_identity_producer_v12 import produce
 from validate_f017_corrected_oracle_access_v12 import validate_candidate_triple, validate_installed_triple
 
 
+def validate_collapsed_pre_package_eligibility(eligibility) -> dict:
+    """Coordinator-owned dry boundary before installation or package start."""
+    from f017_event06_collapsed_go_path_v1 import PackageStartEligibilityV1
+    if type(eligibility) is not PackageStartEligibilityV1:
+        raise TypeError("exact collapsed package-start eligibility required")
+    if (eligibility.get("result") != "PASS"
+            or eligibility.get("package_start_eligible") is not True
+            or eligibility.get("package_started") is not False
+            or eligibility.get("checkpoint_access") != 0):
+        raise ValueError("collapsed package-start eligibility posture")
+    return {
+        "package_claim_eligible": True,
+        "package_started": False,
+        "live_authority_installed": False,
+        "state_created": False,
+        "checkpoint_opens": 0,
+        "checkpoint_reads": 0,
+        "numerical_operations": 0,
+        "result": "PASS",
+    }
+
+
 def validate_package_start(candidate_path: Path, installed_path: Path, receipt_path: Path) -> dict:
     candidate = validate_candidate_triple(candidate_path)
     installed = validate_installed_triple(installed_path, receipt_path, candidate["authority"])

@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-repair-loop-ledger/1.0.0",
+  "budget": 10,
+  "amendment_application_consumed_loop": false,
+  "loops": [
+    {
+      "loop": 1,
+      "root_cause": "QUALIFICATION_CANDIDATE_INCLUDED_PROCESS_LOCAL_TEMPORARY_PATH",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "USE_FIXED_NONEXISTENT_CANONICAL_QUALIFICATION_PATH",
+      "result": "PASS"
+    },
+    {
+      "loop": 2,
+      "root_cause": "DURABLE_RECONSTRUCTION_DID_NOT_BIND_ORIGINAL_AUTHORITY_WINDOW",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "REQUIRE_EXACT_EXPECTED_ISSUED_AND_EXPIRY_VALUES",
+      "result": "PASS"
+    }
+  ],
+  "loops_consumed": 2,
+  "loops_remaining": 8,
+  "same_root_cause_failed_repair_cap": 2,
+  "cap_exceeded": false
+}
