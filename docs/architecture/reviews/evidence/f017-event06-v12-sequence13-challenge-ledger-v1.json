@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-challenge-ledger/1.0.0",
+  "cycles": [
+    {"cycle": 1, "reviewed_head": "6f432f9161d853662a5a940d7b0f16cfd35a270d", "blocking_findings": 2, "disposition": "REPAIRED_BY_LOOPS_4_AND_5"},
+    {"cycle": 2, "reviewed_head": "7e4026c2d00a114c791222604bfc5706bf7ebddf", "blocking_findings": 1, "advisory_findings": 5, "disposition": "BLOCKING_FINDING_REPAIRED_BY_LOOP_7_ADVISORIES_BANKED"},
+    {"cycle": 3, "reviewed_head": "0b518e33520a4840ba91c497353330ea2b9e1480", "agy_blocking_findings": 0, "opus_blocking_findings": 0, "opus_advisory_findings": 6, "unresolved_findings": 0, "disposition": "ACCEPTED"}
+  ],
+  "transport_events": [
+    {"reviewer": "AGY", "cycle": 2, "attempts": 2, "result": "COMPLETE_IDENTICAL_SUBSTANTIVE_RESPONSE_WITH_POST_RESPONSE_STREAM_INTERRUPTION"},
+    {"reviewer": "AGY", "cycle": 3, "attempts": 1, "result": "CLEAN_COMPLETION"},
+    {"reviewer": "OPUS", "cycle": 3, "attempts": 1, "result": "CLEAN_COMPLETION"}
+  ],
+  "reviewers_first_to_find_noncomposition": false,
+  "final_blocking_findings": 0,
+  "final_unresolved_findings": 0,
+  "result": "PASS"
+}

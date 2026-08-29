@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-opus-final-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "0b518e33520a4840ba91c497353330ea2b9e1480",
+  "reviewed_tree": "97f1964cf4bdd602ce86cb3893ccfd8099be6297",
+  "composition_reproduced": true,
+  "claim_verdicts": {
+    "COLLAPSED_TOKEN": "ACCEPT",
+    "REAL_COMPOSITION": "ACCEPT",
+    "ONE_SHOT_ACCOUNTING": "ACCEPT",
+    "NO_ACCESS": "ACCEPT",
+    "FROZEN_AUTHORITY": "ACCEPT",
+    "FULL_NATIVE": "ACCEPT"
+  },
+  "findings": [
+    {"id": "A-01", "classification": "ADVISORY", "summary": "Sanitized-human-decision authenticity is an upstream control not defined by this public path."},
+    {"id": "A-02", "classification": "ADVISORY", "summary": "Same-process reconstruction can duplicate intermediate approval artifacts but cannot produce a second eligibility or accounting attempt."},
+    {"id": "A-03", "classification": "ADVISORY", "summary": "Prompt provenance is shape and continuity validated but not independently resolved at its repository commit."},
+    {"id": "A-04", "classification": "ADVISORY", "summary": "An unregistered future _ClosedArtifact subclass would require an explicit seal-table membership guard."},
+    {"id": "A-05", "classification": "ADVISORY", "summary": "Qualification factory accepts any existing absolute directory and should later exclude the live registry root for availability hardening."},
+    {"id": "A-06", "classification": "ADVISORY", "summary": "Mutation floors permit coverage shrinkage even though any unexpected mutation pass remains exact-fail."}
+  ],
+  "blocking_findings": 0,
+  "advisory_findings": 6,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_GO_PATH_OPERATIONAL_RATIFICATION",
+  "result": "PASS"
+}

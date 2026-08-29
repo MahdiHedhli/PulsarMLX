@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-agy-final-normalized-result/1.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "0b518e33520a4840ba91c497353330ea2b9e1480",
+  "reviewed_tree": "97f1964cf4bdd602ce86cb3893ccfd8099be6297",
+  "composition_reproduced": true,
+  "tests_run": ["scripts/research/tests/test_f017_event06_collapsed_go_path_v1.py"],
+  "claim_verdicts": {
+    "COLLAPSED_TOKEN": "ACCEPT",
+    "REAL_COMPOSITION": "ACCEPT",
+    "ONE_SHOT_ACCOUNTING": "ACCEPT",
+    "NO_ACCESS": "ACCEPT",
+    "FROZEN_AUTHORITY": "ACCEPT",
+    "FULL_NATIVE": "ACCEPT"
+  },
+  "blocking_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_GO_PATH_OPERATIONAL_RATIFICATION",
+  "result": "PASS"
+}

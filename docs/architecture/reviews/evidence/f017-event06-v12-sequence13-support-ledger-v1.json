@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-support-ledger/1.0.0",
+  "dispositions": [
+    {"finding": "PROCESS_LOCAL_ONE_SHOT_REPLAY", "repair_loop": 4, "result": "CLOSED"},
+    {"finding": "SIBLING_SEAL_ARTIFACT_FORGERY", "repair_loop": 5, "result": "CLOSED"},
+    {"finding": "SEALED_OBJECT_INITIALIZER_REENTRY", "repair_loop": 6, "result": "CLOSED"},
+    {"finding": "SAME_HUMAN_DECISION_DIFFERENT_READINESS_REPLAY", "repair_loop": 7, "result": "CLOSED"}
+  ],
+  "authorized_repair_loops": 10,
+  "repair_loops_consumed": 7,
+  "loops_remaining": 3,
+  "same_root_cause_failed_repair_cap": 2,
+  "cap_exceeded": false,
+  "advisory_findings_banked": 6,
+  "blocking_findings_remaining": 0,
+  "unresolved_findings": 0,
+  "result": "PASS"
+}
