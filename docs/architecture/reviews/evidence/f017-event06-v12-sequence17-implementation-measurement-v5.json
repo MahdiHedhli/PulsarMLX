@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-implementation-measurement/1.4.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "implementation_head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+  "implementation_tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce",
+  "changed_path_measurements": [
+    {"path":"scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py","sha256":"7d660c3b39fdd1c266af7f218a02de079ebe589d8507d24a0944f62988293d76"},
+    {"path":"scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py","sha256":"161cb7b4c392634ec85b8d210421c66d77a09958ae3e944f86a10092f7078277"},
+    {"path":"scripts/research/f017_corrected_oracle_primary_wrapper_v12.py","sha256":"a58bf2d572e20f4b6510df024c2cedeeedf3622e8a277dbfda586bfa1376c754"},
+    {"path":"scripts/research/f017_corrected_oracle_primary_wrapper_v12_bridge_v2.py","sha256":"6caebcf58a610dfa253375c5264a6b2aba1a65e127af3ce14d3ae2e7f8c41620"},
+    {"path":"scripts/research/f017_corrected_oracle_secondary_wrapper_v12.py","sha256":"ad1f63c4b99e70919f32f9f632feddee36ed1d96790f9da3373fa28d59bf24fe"},
+    {"path":"scripts/research/f017_corrected_oracle_secondary_wrapper_v12_bridge_v2.py","sha256":"6f241947e12a4922653b23ea74d3873d7d307a09c6f5a0209246d27fbe45df5a"},
+    {"path":"scripts/research/f017_event06_dag_derived_control_path_v1.py","sha256":"168cf3ba2c0c1834e6526a02ef47e1db205dfb2a854e7cf6f0ae7cfae03aad60"},
+    {"path":"scripts/research/f017_event06_numerical_bridge_v1.py","sha256":"f2da48653af5977317769ea35f4c0b59f17966fad34c3fd85d7f054a0c91c24e"},
+    {"path":"scripts/research/f017_event06_numerical_bridge_v2.py","sha256":"6fd8d64b55b50b245f698418d7590ef6f7f769f752188b00de03d67631de1617"},
+    {"path":"scripts/research/f017_event06_package_attempt_registry_v1.py","sha256":"818aac613d01f98a077bb5a7d2706b6f916d86c0a6dea227136633a79dc7ea63"},
+    {"path":"scripts/research/generate_f017_event06_authority_dag_v1.py","sha256":"1c9bc23d299f6f4a2da3eb4be0ced608740d3fee73ee636d4fd62b82af5ff046"},
+    {"path":"scripts/research/qualify_f017_event06_bridge_call_path_v2.py","sha256":"b6e310202f55a6ed5aada320f1464f84116b3a1113497ba5429987d4b3e7b2d0"},
+    {"path":"scripts/research/qualify_f017_event06_dag_composition_v1.py","sha256":"dc37636d8c785ee5a860db322adae77ca3ababa99e508068aa088a14eb2469b2"},
+    {"path":"scripts/research/qualify_f017_event06_identity_bridge_v2.py","sha256":"30ec2962834547d925f627b28f77baefbfb9884ae9ac8630c6c6fede30d6956e"},
+    {"path":"scripts/research/validate_f017_event06_authority_dag_v1.py","sha256":"da68275246e541e96101f0a53503b321e03bb8a5f9b01a444bddbca030119998"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v1.json","sha256":"cf714051b53e61014d9d8688ae1864b1255fe4c3e325c003918d55d49e59cb8b"}
+  ],
+  "frozen_authority_measurements": [
+    {"path":"scripts/research/f017_corrected_oracle_primary_numerics_v3.py","sha256":"56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6"},
+    {"path":"scripts/research/f017_corrected_oracle_secondary_numerics_v3.py","sha256":"c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json","sha256":"a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json","sha256":"4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101"}
+  ],
+  "frozen_authority_drift": 0,
+  "result": "PASS"
+}
