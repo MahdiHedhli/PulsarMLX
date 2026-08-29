@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import os
 import pickle
 import re
 from pathlib import Path, PurePosixPath
@@ -81,6 +82,9 @@ _PREPARATION_SEAL = object()
 _IDENTITY_SEAL = object()
 _ELIGIBILITY_SEAL = object()
 _STATE_SEAL = object()
+_LIVE_RESERVATION_ROOT: Final = Path(
+    "/Users/Shared/PulsarMLX/f017-event06-v12/one-shot-reservations"
+)
 
 
 def _sha(raw: bytes) -> str:
@@ -108,10 +112,7 @@ class _ClosedArtifact:
 
     def __new__(cls, seal: object = None, value: object = None, raw: object = None):
         del value, raw
-        if seal not in {
-            _DECISION_SEAL, _GO_SEAL, _APPROVAL_SEAL, _PREPARATION_SEAL,
-            _IDENTITY_SEAL, _ELIGIBILITY_SEAL,
-        }:
+        if _ARTIFACT_SEALS.get(cls) is not seal:
             raise TypeError("authority artifacts are producer-created")
         return super().__new__(cls)
 
@@ -174,23 +175,49 @@ class PackageStartEligibilityV1(_ClosedArtifact):
     pass
 
 
+_ARTIFACT_SEALS: Final = {
+    SanitizedHumanDecisionV1: _DECISION_SEAL,
+    CollapsedOneShotGoV1: _GO_SEAL,
+    CollapsedGoApprovalV1: _APPROVAL_SEAL,
+    CollapsedPreparationV1: _PREPARATION_SEAL,
+    CollapsedPromptIdentityV1: _IDENTITY_SEAL,
+    PackageStartEligibilityV1: _ELIGIBILITY_SEAL,
+}
+
+
 class OneShotCompositionStateV1:
-    """Process-local qualification witness; future durable install owns consumption."""
+    """Durably reserves one human decision before emitting operational authority."""
 
-    __slots__ = ("_issued", "_consumed", "_counts", "_locked")
+    __slots__ = (
+        "_issued", "_consumed", "_counts", "_reservation_root",
+        "_reservation_mode", "_locked",
+    )
 
-    def __new__(cls, seal: object = None):
+    def __new__(cls, seal: object = None, *args: object):
+        del args
         if seal is not _STATE_SEAL:
             raise TypeError("composition state is factory-created")
         return super().__new__(cls)
 
-    def __init__(self, seal: object) -> None:
+    def __init__(self, seal: object, reservation_root: Path, mode: str) -> None:
         del seal
-        object.__setattr__(self, "_issued", set())
-        object.__setattr__(self, "_consumed", set())
-        object.__setattr__(self, "_counts", {
+        if (
+            not isinstance(reservation_root, Path)
+            or not reservation_root.is_absolute()
+            or not reservation_root.is_dir()
+            or reservation_root.is_symlink()
+            or mode not in {"QUALIFICATION_ONLY", "LIVE_CANONICAL"}
+        ):
+            raise ValueError("exact durable reservation authority required")
+        object.__setattr__(self, "_issued", MappingProxyType({}))
+        object.__setattr__(self, "_consumed", frozenset())
+        object.__setattr__(self, "_reservation_root", reservation_root)
+        object.__setattr__(self, "_reservation_mode", mode)
+        object.__setattr__(self, "_counts", MappingProxyType({
             "human_decisions_validated": 0,
             "go_tokens_sealed": 0,
+            "go_tokens_reconstructed_validation_only": 0,
+            "durable_one_shot_reservations": 0,
             "approvals_produced": 0,
             "preparations_sealed": 0,
             "prompt_identities_produced": 0,
@@ -217,7 +244,7 @@ class OneShotCompositionStateV1:
             "event05_retries_or_resumes": 0,
             "prior_event06_retries_or_resumes": 0,
             "p1_actions": 0,
-        })
+        }))
         object.__setattr__(self, "_locked", True)
 
     def __setattr__(self, name: str, value: object) -> Never:
@@ -228,21 +255,81 @@ class OneShotCompositionStateV1:
         return MappingProxyType(dict(self._counts))
 
     def _record(self, key: str) -> None:
-        self._counts[key] += 1
+        updated = dict(self._counts)
+        updated[key] += 1
+        object.__setattr__(self, "_counts", MappingProxyType(updated))
 
-    def _issue(self, digest: str) -> None:
+    def _issue(self, digest: str, decision_digest: str, nonce_digest: str) -> None:
         if digest in self._issued:
             raise ValueError("duplicate one-shot token")
-        self._issued.add(digest)
+        marker_name = f"human-decision-{decision_digest}.json"
+        marker_value = {
+            "schema": "pulsarmlx.f017.event06-v12-one-shot-reservation/1.0.0",
+            "human_decision_sha256": decision_digest,
+            "collapsed_go_sha256": digest,
+            "one_shot_nonce_sha256": nonce_digest,
+            "reservation_mode": self._reservation_mode,
+            "state": "CONSUMED_FOR_EXACTLY_ONE_COLLAPSED_GO",
+        }
+        marker_raw = canonical_bytes(marker_value)
+        directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+        directory = os.open(self._reservation_root, directory_flags)
+        descriptor = None
+        try:
+            flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                descriptor = os.open(marker_name, flags, 0o400, dir_fd=directory)
+            except FileExistsError as exc:
+                raise ValueError("human decision already consumed") from exc
+            offset = 0
+            while offset < len(marker_raw):
+                written = os.write(descriptor, marker_raw[offset:])
+                if written <= 0:
+                    raise OSError("short one-shot reservation write")
+                offset += written
+            os.fsync(descriptor)
+            observed = os.pread(descriptor, len(marker_raw) + 1, 0)
+            if observed != marker_raw:
+                raise OSError("one-shot reservation readback mismatch")
+            os.fsync(directory)
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+            os.close(directory)
+        issued = dict(self._issued)
+        issued[digest] = _sha(marker_raw)
+        object.__setattr__(self, "_issued", MappingProxyType(issued))
+        self._record("durable_one_shot_reservations")
 
     def _consume(self, digest: str) -> None:
         if digest not in self._issued or digest in self._consumed:
             raise ValueError("unissued or consumed one-shot token")
-        self._consumed.add(digest)
+        object.__setattr__(self, "_consumed", self._consumed | {digest})
+
+    def _reservation_sha256(self, digest: str) -> str:
+        try:
+            return self._issued[digest]
+        except KeyError as exc:
+            raise ValueError("GO lacks durable one-shot reservation") from exc
+
+    def _mode(self) -> str:
+        return self._reservation_mode
 
 
-def begin_no_access_composition() -> OneShotCompositionStateV1:
-    return OneShotCompositionStateV1(_STATE_SEAL)
+def begin_no_access_composition(
+    *, reservation_root: Path
+) -> OneShotCompositionStateV1:
+    return OneShotCompositionStateV1(
+        _STATE_SEAL, reservation_root, "QUALIFICATION_ONLY"
+    )
+
+
+def begin_live_one_shot_composition() -> OneShotCompositionStateV1:
+    """Future-GO entrypoint; Sequence 13 never calls or creates this root."""
+
+    return OneShotCompositionStateV1(
+        _STATE_SEAL, _LIVE_RESERVATION_ROOT, "LIVE_CANONICAL"
+    )
 
 
 def validate_sanitized_human_decision(
@@ -313,7 +400,9 @@ def seal_collapsed_one_shot_go(
     if type(now_unix_ns) is not int or now_unix_ns < issued_at_unix_ns or now_unix_ns >= expires_at_unix_ns:
         raise ValueError("GO expired or not yet valid")
     raw = canonical_bytes(value)
-    state._issue(_sha(raw))
+    state._issue(
+        _sha(raw), decision.source_sha256, str(value["one_shot_nonce_sha256"])
+    )
     state._record("go_tokens_sealed")
     return CollapsedOneShotGoV1(_GO_SEAL, value, raw)
 
@@ -336,8 +425,7 @@ def reconstruct_collapsed_one_shot_go(
     )
     if value != expected or now_unix_ns < value["issued_at_unix_ns"] or now_unix_ns >= value["expires_at_unix_ns"]:
         raise ValueError("collapsed GO binding or expiry")
-    state._issue(_sha(raw))
-    state._record("go_tokens_sealed")
+    state._record("go_tokens_reconstructed_validation_only")
     return CollapsedOneShotGoV1(_GO_SEAL, value, raw)
 
 
@@ -361,6 +449,7 @@ def produce_collapsed_approval(
 ) -> CollapsedGoApprovalV1:
     if type(go) is not CollapsedOneShotGoV1 or type(execution_plan) is not ValidatedExecutionPlan:
         raise TypeError("exact GO and execution plan required")
+    state._reservation_sha256(go.source_sha256)
     readiness = assert_readiness_v3_sealed(readiness)
     if go.get("release_authority_sha256") != readiness.source_sha256:
         raise ValueError("GO release substitution")
@@ -470,8 +559,9 @@ def validate_collapsed_package_start_eligibility(
         raise TypeError("exact execution plan required")
     if now_unix_ns < go.get("issued_at_unix_ns") or now_unix_ns >= go.get("expires_at_unix_ns"):
         raise ValueError("GO expired before eligibility")
-    if checkpoint_root.exists():
-        raise ValueError("qualification checkpoint root must remain absent")
+    state._consume(go.source_sha256)
+    if checkpoint_root != Path("/NONEXISTENT/F017/EVENT06/SEQUENCE13-COLLAPSED-GO"):
+        raise ValueError("exact non-access checkpoint sentinel required")
     ids = derived_event_identities(go)
     if (
         identity.get("prompt_sha256") != _sha(prompt_bytes)
@@ -501,15 +591,17 @@ def validate_collapsed_package_start_eligibility(
     secondary = validate_secondary_identity(candidate, posture="CANDIDATE")
     if primary.get("result") != "PASS" or secondary.get("result") != "PASS":
         raise ValueError("consumer candidate validation")
-    state._consume(go.source_sha256)
     state._record("candidate_validations")
     state._record("eligibilities_produced")
     value = {
         "schema": ELIGIBILITY_SCHEMA,
         "collapsed_go_sha256": go.source_sha256,
+        "one_shot_nonce_sha256": go.get("one_shot_nonce_sha256"),
         "preparation_sha256": preparation.source_sha256,
         "prompt_identity_sha256": identity.source_sha256,
         "candidate_sha256": candidate.source_sha256,
+        "one_shot_reservation_sha256": state._reservation_sha256(go.source_sha256),
+        "one_shot_reservation_mode": state._mode(),
         "authorization_id": ids["authorization_id"],
         "package_attempt_id": ids["package_attempt_id"],
         "primary_validation": "PASS",

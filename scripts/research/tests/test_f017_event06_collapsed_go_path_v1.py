@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import hashlib
-import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -22,10 +21,16 @@ class CollapsedGoPathV1Tests(unittest.TestCase):
         self.assertEqual(result["real_public_composition"], "PASS")
         self.assertEqual(result["fresh_process_repetitions"], 20)
         self.assertEqual(result["distinct_composition_sha_sets"], 1)
-        self.assertGreaterEqual(result["mutation_campaign"]["total"], 200)
+        self.assertEqual(result["cross_process_replay_attempts"], 19)
+        self.assertEqual(result["cross_process_replay_rejections"], 19)
+        self.assertGreaterEqual(result["mutation_campaign"]["total"], 230)
         self.assertEqual(result["mutation_campaign"]["unexpected_passes"], 0)
-        self.assertEqual(result["checkpoint_access"], 0)
-        self.assertEqual(result["numerical_operations"], 0)
+        counters = result["observed_no_access_counters"]
+        self.assertEqual(counters["checkpoint_opens"], 0)
+        self.assertEqual(counters["checkpoint_identity_reads"], 0)
+        self.assertEqual(counters["checkpoint_payload_reads"], 0)
+        self.assertEqual(counters["numerical_operations"], 0)
+        self.assertEqual(counters["durable_one_shot_reservations"], 1)
 
     def test_go_token_has_exactly_eight_fields(self) -> None:
         self.assertEqual(len(COLLAPSED_GO_FIELDS), 8)

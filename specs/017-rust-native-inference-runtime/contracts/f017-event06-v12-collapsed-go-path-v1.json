@@ -1,6 +1,6 @@
 {
   "schema": "pulsarmlx.f017.event06-v12-collapsed-go-path-contract/1.0.0",
-  "state": "LIQUID_UNTIL_INSTANTIABLE",
+  "state": "INSTANTIABLE_PENDING_OPERATIONAL_RATIFICATION",
   "target_machine": "MAC_STUDIO_M1_ULTRA",
   "public_path": [
     "SANITIZED_HUMAN_DECISION",
@@ -33,10 +33,24 @@
     "decision": "records the direct human decision class",
     "human_decision_sha256": "binds exact sanitized human bytes",
     "release_authority_sha256": "transitively binds the accepted release",
-    "one_shot_nonce_sha256": "supplies the deterministic one-shot identity",
+    "one_shot_nonce_sha256": "supplies the deterministic key bound by the durable no-replace reservation",
     "issued_at_unix_ns": "opens the bounded authority window",
     "expires_at_unix_ns": "closes the bounded authority window",
     "scope": "freezes one package, one primary, one secondary, zero retry, no resume"
+  },
+  "one_shot_enforcement": {
+    "live_registry_root": "/Users/Shared/PulsarMLX/f017-event06-v12/one-shot-reservations",
+    "live_registry_root_caller_selectable": false,
+    "reservation_key": "human_decision_sha256",
+    "creation": "EXCLUSIVE_NO_REPLACE_DESCRIPTOR_RELATIVE",
+    "file_fsync": true,
+    "directory_fsync": true,
+    "readback_required": true,
+    "cross_process_replay": "REJECT",
+    "reconstruction_authority": "VALIDATION_ONLY_CANNOT_PRODUCE_APPROVAL",
+    "qualification_registry_mode": "QUALIFICATION_ONLY",
+    "live_registry_mode": "LIVE_CANONICAL",
+    "coordinator_cross_mode_substitution": "REJECT"
   },
   "prohibited_boundaries": [
     "CALLER_MAPPING",
@@ -56,7 +70,9 @@
     "checkpoint_root_resolution": false,
     "checkpoint_access": 0,
     "numerical_operations": 0,
-    "event_identity_consumption": 0
+    "event_identity_consumption": 0,
+    "synthetic_one_shot_reservation": true,
+    "live_one_shot_registry_created": false
   },
   "frozen_invariants": {
     "numerical_authority": "V4",
