@@ -4,7 +4,7 @@
     "synthetic primary and secondary receipts at real numerical kernels"
   ],
   "coverage_count_source": "DERIVED_FROM_EDGES_ARRAY",
-  "edge_count": 37,
+  "edge_count": 40,
   "edges": [
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
@@ -782,6 +782,69 @@
       "producer_symbol": "build_accounting_closure",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
       "source_node": "ACCOUNTING_CLOSURE"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedBundleBinding",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "consumer_symbol": "primary_terminal_binding",
+      "destination_node": "PRIMARY_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-038",
+      "lifecycle_phase": "PRIMARY",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedBundleBinding",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "build_bundle_binding",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "PRIMARY_BUNDLE_BINDING"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedTransitionChain",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "consumer_symbol": "package_terminal_view",
+      "destination_node": "PACKAGE_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-039",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedTransitionChain",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "validate_transition_chain",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "TRANSITION_CHAIN"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedV11ClosureBinding",
+      "authority_mode": "QUALIFICATION_ONLY_NO_LIVE_AUTHORITY",
+      "consumer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "consumer_symbol": "package_terminal_view",
+      "destination_node": "PACKAGE_TERMINAL",
+      "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG-040",
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "mapping_or_deserialized_lookalike",
+        "wrong_exact_type",
+        "digest_or_identity_substitution",
+        "replay_or_cross_role_reuse"
+      ],
+      "output_type_or_schema": "ValidatedV11ClosureBinding",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "bind_v11_closure",
+      "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
+      "source_node": "V11_CLOSURE_BINDING"
     }
   ],
   "generation": "V12",

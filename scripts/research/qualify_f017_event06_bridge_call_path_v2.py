@@ -28,8 +28,11 @@ def _bundle(role: str, bridge_sha256: str) -> dict:
         "secondary_eligible":role == "PRIMARY"}
     artifacts = {"manifest":manifest,"receipt":receipt,"consumer_terminal":terminal,
         "routing":{},"top32":{}}
-    index = {"result_terminal_sha256":result_terminal_sha,"result_receipt_sha256":receipt_sha,
-        "manifest_sha256":manifest_sha,"result":"PASS"}
+    index = {
+        "schema":"pulsarmlx.f017.event06-v12-qualification-bundle-index/1.0.0",
+        "role":role,"bridge_sha256":bridge_sha256,
+        "result_terminal_sha256":result_terminal_sha,"result_receipt_sha256":receipt_sha,
+        "manifest_sha256":manifest_sha,"qualification_only":True,"result":"PASS"}
     return {"artifacts":artifacts,"index":index,"bridge_bundle_binding_sha256":bridge_sha256,
             "result":"PASS"}
 
@@ -73,7 +76,7 @@ def qualify_call_path() -> dict:
         calls.append("PRIMARY_SINGLE_CALL")
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("primary bridge authority")
-        bundle = _bundle("PRIMARY", "6" * 64)
+        bundle = _bundle("PRIMARY", args[0].get("bridge_sha256"))
         binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
         return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
@@ -81,7 +84,7 @@ def qualify_call_path() -> dict:
         calls.append("SECONDARY_SINGLE_CALL")
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("secondary bridge authority")
-        bundle = _bundle("SECONDARY", "7" * 64)
+        bundle = _bundle("SECONDARY", args[0].get("bridge_sha256"))
         binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
         return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
@@ -170,12 +173,12 @@ def qualify_call_path() -> dict:
         failure_leases.release = failure_release
         def primary_stage(*args):
             if failed_stage == "PRIMARY": raise RuntimeError("modeled primary failure")
-            bundle = _bundle("PRIMARY", "6" * 64)
+            bundle = _bundle("PRIMARY", args[0].get("bridge_sha256"))
             binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
             return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
         def secondary_stage(*args):
             if failed_stage == "SECONDARY": raise RuntimeError("modeled secondary failure")
-            bundle = _bundle("SECONDARY", "7" * 64)
+            bundle = _bundle("SECONDARY", args[0].get("bridge_sha256"))
             binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
             return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
         def comparison_stage(*_args):

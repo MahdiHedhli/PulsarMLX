@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import json
 from pathlib import Path
 
@@ -78,6 +79,54 @@ def _weakly_connected(edges: list[dict[str, object]]) -> bool:
     return visited == set(adjacency)
 
 
+def _connected_components(edges: list[dict[str, object]]) -> int:
+    adjacency: dict[str, set[str]] = {}
+    for edge in edges:
+        adjacency.setdefault(edge["source_node"], set()).add(edge["destination_node"])
+        adjacency.setdefault(edge["destination_node"], set()).add(edge["source_node"])
+    remaining = set(adjacency)
+    components = 0
+    while remaining:
+        components += 1
+        frontier = [next(iter(remaining))]
+        while frontier:
+            node = frontier.pop()
+            if node not in remaining:
+                continue
+            remaining.remove(node)
+            frontier.extend(adjacency[node] & remaining)
+    return components
+
+
+def validate_runtime_boundary(edge: dict[str, object], candidate: object,
+                              expected_digest: str) -> None:
+    """Fail closed on an exact traced edge type and producer digest."""
+    expected = edge["accepted_input_type_or_schema"]
+    if expected.startswith("tuple["):
+        parts = expected.removeprefix("tuple[").removesuffix("]").split(",")
+        exact_type = (type(candidate) is tuple and len(candidate) == len(parts)
+                      and all(type(item).__name__ == part
+                              for item, part in zip(candidate, parts, strict=True)))
+        digest = (hashlib.sha256(json.dumps([item.sha256 for item in candidate],
+                  sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                  if exact_type else None)
+    else:
+        exact_type = ((expected == "dict" and type(candidate) is dict)
+                      or (expected == "list" and type(candidate) is list)
+                      or type(candidate).__name__ == expected)
+        if not exact_type:
+            digest = None
+        elif hasattr(candidate, "sha256"):
+            digest = candidate.sha256
+        elif type(candidate) in {dict, list}:
+            from f017_canonical_serialization_v10 import canonical_bytes
+            digest = hashlib.sha256(canonical_bytes(candidate)).hexdigest()
+        else:
+            digest = None
+    if not exact_type or digest != expected_digest:
+        raise TypeError("DAG runtime boundary type or digest mismatch")
+
+
 def validate() -> dict[str, object]:
     value = json.loads(DAG.read_text(encoding="utf-8"))
     edges = value["edges"]
@@ -95,9 +144,12 @@ def validate() -> dict[str, object]:
     assert len(edge_ids) == len(set(edge_ids))
     assert edge_ids == [f"F017-DAG-{number:03d}" for number in range(1, len(edges) + 1)]
     assert all(edge["output_type_or_schema"] == edge["accepted_input_type_or_schema"] for edge in edges)
-    assert _weakly_connected(edges)
+    components = _connected_components(edges)
+    assert components == 1 and _weakly_connected(edges)
     cache: dict[str, set[str]] = {}
     signature_bound = 0
+    unknown_symbols = []
+    unverified_boundaries = []
     for edge in edges:
         for module_key, symbol_key in (
             ("producer_module", "producer_symbol"),
@@ -105,12 +157,14 @@ def validate() -> dict[str, object]:
         ):
             module = edge[module_key]
             cache.setdefault(module, _symbols(ROOT / module))
-            assert edge[symbol_key] in cache[module], (module, edge[symbol_key])
-        assert _consumer_accepts(
-            ROOT / edge["consumer_module"], edge["consumer_symbol"],
-            edge["accepted_input_type_or_schema"],
-        ), (edge["edge_id"], edge["consumer_symbol"], edge["accepted_input_type_or_schema"])
+            if edge[symbol_key] not in cache[module]:
+                unknown_symbols.append((module, edge[symbol_key]))
+        if not _consumer_accepts(
+                ROOT / edge["consumer_module"], edge["consumer_symbol"],
+                edge["accepted_input_type_or_schema"]):
+            unverified_boundaries.append(edge["edge_id"])
         signature_bound += 1
+    assert not unknown_symbols and not unverified_boundaries
     traced = _trace_edge_ids()
     assert len(traced) == len(set(traced))
     absent = sorted(set(edge_ids) - set(traced))
@@ -124,11 +178,11 @@ def validate() -> dict[str, object]:
         "source_trace_edges": len(traced),
         "source_typed_boundaries_absent_from_dag": len(absent),
         "extraneous_trace_edges_absent_from_dag": len(extraneous),
-        "duplicate_edge_ids": 0,
-        "unknown_public_symbols": 0,
+        "duplicate_edge_ids": len(edge_ids) - len(set(edge_ids)),
+        "unknown_public_symbols": len(unknown_symbols),
         "signature_bound_edges": signature_bound,
-        "unverified_consumer_type_boundaries": 0,
-        "disconnected_production_nodes": 0,
+        "unverified_consumer_type_boundaries": len(unverified_boundaries),
+        "disconnected_production_nodes": max(0, components - 1),
         "result": "PASS",
     }
 

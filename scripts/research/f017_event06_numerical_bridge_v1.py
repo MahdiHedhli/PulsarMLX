@@ -106,8 +106,16 @@ class _Sealed:
         return super().__new__(cls)
 
     def __init__(self, seal, value):
-        self._items = _freeze(value)
-        self.sha256 = hashlib.sha256(canonical_bytes(value)).hexdigest()
+        object.__setattr__(self, "_items", _freeze(value))
+        object.__setattr__(self, "sha256", hashlib.sha256(canonical_bytes(value)).hexdigest())
+
+    def __setattr__(self, name, value):
+        del name, value
+        raise TypeError("sealed authority is immutable")
+
+    def __delattr__(self, name):
+        del name
+        raise TypeError("sealed authority is immutable")
 
     def get(self, key):
         for name, value in self._items:
@@ -156,6 +164,14 @@ class ValidatedReleaseBinding(_Sealed):
 
 
 class ValidatedAccountingBinding(_Sealed):
+    pass
+
+
+class ValidatedTransitionChain(_Sealed):
+    pass
+
+
+class ValidatedV11ClosureBinding(_Sealed):
     pass
 
 
@@ -368,7 +384,12 @@ def canonical_bridge_bytes(bridge: ValidatedNumericalBridge) -> bytes:
     return canonical_bytes({name:_thaw(value) for name, value in bridge._items})
 
 
-def validate_consumer_view(role: str, value: object) -> ValidatedConsumerView:
+def _validated_consumer_view_from_producer(role: str, value: object) -> ValidatedConsumerView:
+    """Seal a view assembled by this module's typed producer functions.
+
+    This deliberately is not a public raw-document validation boundary.  Live
+    callers can obtain views only from the role-specific producer functions.
+    """
     keys = VIEW_KEYS.get(role)
     if keys is None or type(value) is not dict or set(value) != keys:
         raise ValueError("bridge consumer view census")
@@ -431,7 +452,7 @@ def numerical_view(bridge: ValidatedNumericalBridge, role: str, *,
             raise ValueError("primary terminal bridge mismatch")
         for key in ("primary_terminal","primary_result_terminal_sha256","primary_receipt_sha256","primary_manifest_sha256","primary_bridge_bundle_binding_sha256"):
             value[key] = primary_binding.get(key)
-    return validate_consumer_view(f"{role}_NUMERICAL_V11", value)
+    return _validated_consumer_view_from_producer(f"{role}_NUMERICAL_V11", value)
 
 
 def result_bundle_view(bridge: ValidatedNumericalBridge, role: str, durable_start_sha256: str) -> ValidatedConsumerView:
@@ -440,22 +461,31 @@ def result_bundle_view(bridge: ValidatedNumericalBridge, role: str, durable_star
         "producer_measurement_sha256": bridge.get("implementation_measurement_sha256"),
         "numerical_contract_sha256": bridge.get("numerical_contract_sha256"),
         "durable_start_sha256": durable_start_sha256, "access_census_sha256": bridge.get("access_census_sha256")}
-    return validate_consumer_view("RESULT_BUNDLE_V11", value)
+    return _validated_consumer_view_from_producer("RESULT_BUNDLE_V11", value)
 
 
-def primary_terminal_binding(bundle: dict, bridge_sha256: str,
-                             bridge_bundle_binding_sha256: str) -> ValidatedConsumerView:
+def primary_terminal_binding(bundle: dict, bridge: ValidatedNumericalBridge,
+                             bridge_bundle_binding: ValidatedBundleBinding) -> ValidatedConsumerView:
     from f017_result_artifacts_v11 import require_primary_terminal
     if type(bundle) is not dict or not {"artifacts", "index"}.issubset(bundle):
         raise ValueError("primary bundle binding")
     artifacts, index = bundle["artifacts"], bundle["index"]
     terminal = artifacts["consumer_terminal"]
-    _sha(bridge_sha256, "primary terminal bridge")
-    _sha(bridge_bundle_binding_sha256, "primary bundle binding")
-    values = {"schema":VIEW_SCHEMA,"role":"PRIMARY_TERMINAL_BINDING","bridge_sha256":bridge_sha256,
+    if type(bridge) is not ValidatedNumericalBridge:
+        raise TypeError("sealed bridge required")
+    if (type(bridge_bundle_binding) is not ValidatedBundleBinding
+            or bridge_bundle_binding.get("role") != "PRIMARY"
+            or bridge_bundle_binding.get("bridge_sha256") != bridge.sha256
+            or bridge_bundle_binding.get("authorization_id") != bridge.get("authorization_id")
+            or bridge_bundle_binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or bridge_bundle_binding.get("consumer_event_id") != bridge.get("primary_event_id")
+            or bridge_bundle_binding.get("bundle_index_sha256")
+            != hashlib.sha256(canonical_bytes(index)).hexdigest()):
+        raise ValueError("primary sealed bundle binding continuity")
+    values = {"schema":VIEW_SCHEMA,"role":"PRIMARY_TERMINAL_BINDING","bridge_sha256":bridge.sha256,
         "primary_terminal":terminal,"primary_result_terminal_sha256":index["result_terminal_sha256"],
         "primary_receipt_sha256":index["result_receipt_sha256"],"primary_manifest_sha256":index["manifest_sha256"],
-        "primary_bridge_bundle_binding_sha256":bridge_bundle_binding_sha256}
+        "primary_bridge_bundle_binding_sha256":bridge_bundle_binding.sha256}
     require_primary_terminal(terminal, values["primary_result_terminal_sha256"], values["primary_receipt_sha256"], values["primary_manifest_sha256"])
     keys = {"schema","role","bridge_sha256","primary_terminal","primary_result_terminal_sha256","primary_receipt_sha256","primary_manifest_sha256","primary_bridge_bundle_binding_sha256"}
     if set(values) != keys:
@@ -595,7 +625,7 @@ def comparison_view(bridge: ValidatedNumericalBridge, primary_binding: Validated
         "secondary_bridge_bundle_binding_sha256":secondary_binding.sha256,
         "comparison_authority_sha256":bridge.get("comparison_authority_sha256"),
     }
-    return validate_consumer_view("COMPARISON_V11", value)
+    return _validated_consumer_view_from_producer("COMPARISON_V11", value)
 
 
 def release_view(bridge: ValidatedNumericalBridge, comparison_binding: ValidatedComparisonBinding) -> ValidatedConsumerView:
@@ -610,7 +640,7 @@ def release_view(bridge: ValidatedNumericalBridge, comparison_binding: Validated
         "package_attempt_id":bridge.get("package_attempt_id"),
         "descriptor_identity_sha256":bridge.get("descriptor_identity_sha256"),
         "lease_owner":bridge.get("lease_owner"),"comparison_binding_sha256":comparison_binding.sha256}
-    return validate_consumer_view("RELEASE", value)
+    return _validated_consumer_view_from_producer("RELEASE", value)
 
 
 def accounting_view(bridge: ValidatedNumericalBridge, release_binding: ValidatedReleaseBinding) -> ValidatedConsumerView:
@@ -625,14 +655,23 @@ def accounting_view(bridge: ValidatedNumericalBridge, release_binding: Validated
         "installed_authority_sha256":bridge.get("installed_authority_sha256"),
         "installation_receipt_sha256":bridge.get("installation_receipt_sha256"),
         "release_binding_sha256":release_binding.sha256}
-    return validate_consumer_view("ACCOUNTING", value)
+    return _validated_consumer_view_from_producer("ACCOUNTING", value)
 
 
-def package_terminal_view(bridge: ValidatedNumericalBridge, binding_chain_head_sha256: str,
-                          v11_closure_root_sha256: str,
+def package_terminal_view(bridge: ValidatedNumericalBridge,
+                          transition_chain: ValidatedTransitionChain,
+                          v11_closure: ValidatedV11ClosureBinding,
                           accounting_binding: ValidatedAccountingBinding) -> ValidatedConsumerView:
-    for name, value in (("chain head",binding_chain_head_sha256),("V11 closure",v11_closure_root_sha256)):
-        _sha(value, name)
+    if (type(transition_chain) is not ValidatedTransitionChain
+            or transition_chain.get("bridge_sha256") != bridge.sha256
+            or transition_chain.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or transition_chain.get("result") != "PASS"):
+        raise TypeError("sealed transition chain continuity")
+    if (type(v11_closure) is not ValidatedV11ClosureBinding
+            or v11_closure.get("bridge_sha256") != bridge.sha256
+            or v11_closure.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or v11_closure.get("result") != "PASS"):
+        raise TypeError("sealed V11 closure continuity")
     if (type(accounting_binding) is not ValidatedAccountingBinding
             or accounting_binding.get("schema") != ACCOUNTING_BINDING_SCHEMA
             or accounting_binding.get("bridge_sha256") != bridge.sha256
@@ -641,10 +680,57 @@ def package_terminal_view(bridge: ValidatedNumericalBridge, binding_chain_head_s
         raise TypeError("sealed accounting binding continuity")
     value = {"schema":VIEW_SCHEMA,"bridge_sha256":bridge.sha256,
         "package_attempt_id":bridge.get("package_attempt_id"),
-        "binding_chain_head_sha256":binding_chain_head_sha256,
-        "v11_closure_root_sha256":v11_closure_root_sha256,
+        "binding_chain_head_sha256":transition_chain.get("chain_head_sha256"),
+        "v11_closure_root_sha256":v11_closure.get("v11_closure_root_sha256"),
         "accounting_binding_sha256":accounting_binding.sha256}
-    return validate_consumer_view("PACKAGE_TERMINAL", value)
+    if v11_closure.get("accounting_binding_sha256") != accounting_binding.sha256:
+        raise ValueError("V11 closure/accounting binding continuity")
+    return _validated_consumer_view_from_producer("PACKAGE_TERMINAL", value)
+
+
+def _validate_bundle_index(index: object, numerical: ValidatedConsumerView,
+                           bundle: ValidatedConsumerView) -> None:
+    if type(index) is not dict:
+        raise ValueError("bundle index")
+    production_keys = {
+        "schema", "role", "authorization_id", "package_attempt_id", "consumer_event_id",
+        "manifest_sha256", "top32_summary_sha256", "routing_manifest_sha256",
+        "result_receipt_sha256", "result_terminal_sha256", "consumer_terminal_sha256",
+        "payload_sha256s", "result",
+    }
+    qualification_keys = {
+        "schema", "role", "bridge_sha256", "manifest_sha256",
+        "result_receipt_sha256", "result_terminal_sha256", "qualification_only", "result",
+    }
+    role = numerical.get("role")
+    common = (
+        index.get("role") == role
+        and index.get("result") == "PASS"
+        and bundle.get("role") == role
+    )
+    if index.get("schema") == "pulsarmlx.f017.corrected-oracle-result-bundle-index/11.0.0":
+        if (set(index) != production_keys or not common
+                or index.get("authorization_id") != bundle.get("authorization_id")
+                or index.get("package_attempt_id") != bundle.get("package_attempt_id")
+                or index.get("consumer_event_id") != bundle.get("consumer_event_id")
+                or type(index.get("payload_sha256s")) is not list
+                or len(index["payload_sha256s"]) != 3):
+            raise ValueError("production bundle index continuity")
+        for key in production_keys - {"schema", "role", "authorization_id",
+                                      "package_attempt_id", "consumer_event_id",
+                                      "payload_sha256s", "result"}:
+            _sha(index[key], f"bundle index {key}")
+        for value in index["payload_sha256s"]:
+            _sha(value, "bundle payload")
+    elif index.get("schema") == "pulsarmlx.f017.event06-v12-qualification-bundle-index/1.0.0":
+        if (set(index) != qualification_keys or not common
+                or index.get("bridge_sha256") != numerical.get("bridge_sha256")
+                or index.get("qualification_only") is not True):
+            raise ValueError("qualification bundle index continuity")
+        for key in ("manifest_sha256", "result_receipt_sha256", "result_terminal_sha256"):
+            _sha(index[key], f"qualification bundle index {key}")
+    else:
+        raise ValueError("bundle index schema")
 
 
 def build_bundle_binding(numerical: ValidatedConsumerView, bundle: ValidatedConsumerView,
@@ -655,8 +741,7 @@ def build_bundle_binding(numerical: ValidatedConsumerView, bundle: ValidatedCons
         raise ValueError("bundle bridge mismatch")
     if numerical.get("role") != bundle.get("role"):
         raise ValueError("bundle role mismatch")
-    if type(bundle_index) is not dict or bundle_index.get("result") != "PASS":
-        raise ValueError("bundle index")
+    _validate_bundle_index(bundle_index, numerical, bundle)
     value = {"schema":BUNDLE_BINDING_SCHEMA,"role":numerical.get("role"),
         "bridge_sha256":numerical.get("bridge_sha256"),"authorization_id":bundle.get("authorization_id"),
         "package_attempt_id":bundle.get("package_attempt_id"),"consumer_event_id":bundle.get("consumer_event_id"),
@@ -678,7 +763,8 @@ def build_transition_binding(bridge: ValidatedNumericalBridge, phase: str, subje
     return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
 
 
-def validate_transition_chain(bridge: ValidatedNumericalBridge, records: list[dict]) -> str:
+def validate_transition_chain(bridge: ValidatedNumericalBridge,
+                              records: list[dict]) -> ValidatedTransitionChain:
     if type(records) is not list or len(records) != len(PHASES):
         raise ValueError("bridge transition chain census")
     predecessor = "0" * 64
@@ -688,7 +774,69 @@ def validate_transition_chain(bridge: ValidatedNumericalBridge, records: list[di
         if record["bridge_sha256"] != bridge.sha256 or record["predecessor_binding_sha256"] != predecessor:
             raise ValueError("bridge transition continuity")
         predecessor = hashlib.sha256(canonical_bytes(record)).hexdigest()
-    return predecessor
+    value = {
+        "schema": "pulsarmlx.f017.event06-v12-validated-transition-chain/1.0.0",
+        "bridge_sha256": bridge.sha256,
+        "package_attempt_id": bridge.get("package_attempt_id"),
+        "record_sha256s": [hashlib.sha256(canonical_bytes(record)).hexdigest()
+                           for record in records],
+        "chain_head_sha256": predecessor,
+        "result": "PASS",
+    }
+    return ValidatedTransitionChain(_SEAL, value)
+
+
+def bind_v11_closure(bridge: ValidatedNumericalBridge, closure: object,
+                     accounting_binding: ValidatedAccountingBinding) -> ValidatedV11ClosureBinding:
+    closure_keys = {
+        "schema", "primary", "secondary", "comparison", "release",
+        "package_receipt_sha256", "payload_count", "result",
+    }
+    if type(bridge) is not ValidatedNumericalBridge:
+        raise TypeError("sealed bridge required")
+    if (type(accounting_binding) is not ValidatedAccountingBinding
+            or accounting_binding.get("bridge_sha256") != bridge.sha256
+            or accounting_binding.get("package_attempt_id") != bridge.get("package_attempt_id")
+            or accounting_binding.get("result") != "PASS"):
+        raise TypeError("sealed accounting binding required")
+    if (type(closure) is not dict or set(closure) != closure_keys
+            or closure.get("schema")
+            != "pulsarmlx.f017.corrected-oracle-package-result-closure/11.0.0"
+            or closure.get("payload_count") != 6 or closure.get("result") != "COMPLETE"):
+        raise ValueError("V11 closure census")
+    for role in ("primary", "secondary"):
+        part = closure.get(role)
+        if (type(part) is not dict or set(part) != {
+                "manifest_sha256", "receipt_sha256", "terminal_sha256",
+                "result_terminal_sha256", "routing_manifest_sha256", "payload_sha256s"}
+                or type(part.get("payload_sha256s")) is not list
+                or len(part["payload_sha256s"]) != 3):
+            raise ValueError(f"V11 closure {role}")
+        for key, item in part.items():
+            if key == "payload_sha256s":
+                for digest in item:
+                    _sha(digest, f"V11 closure {role} payload")
+            else:
+                _sha(item, f"V11 closure {role} {key}")
+    for section, keys in (
+        ("comparison", {"summary_sha256", "receipt_sha256", "terminal_sha256"}),
+        ("release", {"start_sha256", "report_sha256", "receipt_sha256", "terminal_sha256"}),
+    ):
+        part = closure.get(section)
+        if type(part) is not dict or set(part) != keys:
+            raise ValueError(f"V11 closure {section}")
+        for key, item in part.items():
+            _sha(item, f"V11 closure {section} {key}")
+    _sha(closure["package_receipt_sha256"], "V11 closure package receipt")
+    value = {
+        "schema": "pulsarmlx.f017.event06-v12-validated-v11-closure-binding/1.0.0",
+        "bridge_sha256": bridge.sha256,
+        "package_attempt_id": bridge.get("package_attempt_id"),
+        "v11_closure_root_sha256": hashlib.sha256(canonical_bytes(closure)).hexdigest(),
+        "accounting_binding_sha256": accounting_binding.sha256,
+        "result": "PASS",
+    }
+    return ValidatedV11ClosureBinding(_SEAL, value)
 
 
 def build_package_terminal(view: ValidatedConsumerView) -> dict:

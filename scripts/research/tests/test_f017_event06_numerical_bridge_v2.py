@@ -75,8 +75,18 @@ def test_versioned_wrappers_receive_prompt_bound_views():
     assert len(primary_calls) == 1
     assert type(primary_calls[0][0]) is legacy.ValidatedConsumerView
 
-    bundle = _primary_bundle()
-    primary_binding = legacy.primary_terminal_binding(bundle, bridge.legacy_bridge.sha256, "6" * 64)
+    from f017_event06_dag_derived_control_path_v1 import _synthetic_bundle
+    bundle = _synthetic_bundle("PRIMARY", bridge.legacy_bridge)
+    historical_primary = legacy.numerical_view(bridge.legacy_bridge, "PRIMARY")
+    historical_result = legacy.result_bundle_view(
+        bridge.legacy_bridge, "PRIMARY", "1" * 64
+    )
+    bundle_binding, _ = legacy.build_bundle_binding(
+        historical_primary, historical_result, bundle["index"]
+    )
+    primary_binding = legacy.primary_terminal_binding(
+        bundle, bridge.legacy_bridge, bundle_binding
+    )
     secondary_numerical = consumer_view(
         bridge, "SECONDARY_NUMERICAL",
         legacy.numerical_view(bridge.legacy_bridge, "SECONDARY", primary_binding=primary_binding),

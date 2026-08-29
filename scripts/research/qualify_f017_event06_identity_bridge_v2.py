@@ -62,7 +62,9 @@ def _baseline_documents():
     primary_bundle_binding, primary_bundle_sha = legacy.build_bundle_binding(
         primary_numerical, primary_result, primary_bundle["index"]
     )
-    primary_binding = legacy.primary_terminal_binding(primary_bundle, historical.sha256, primary_bundle_sha)
+    primary_binding = legacy.primary_terminal_binding(
+        primary_bundle, historical, primary_bundle_binding
+    )
     secondary_numerical = legacy.numerical_view(historical, "SECONDARY", primary_binding=primary_binding)
     secondary_result = legacy.result_bundle_view(historical, "SECONDARY", "8" * 64)
     secondary_bundle = _synthetic_bundle("SECONDARY", historical)
@@ -83,8 +85,50 @@ def _baseline_documents():
     )
     accounting_view = legacy.accounting_view(historical, release_binding)
     legacy_accounting, _ = legacy.build_accounting_binding(accounting_view, release_binding)
+    predecessor = "0" * 64
+    transitions = []
+    for index, phase in enumerate(legacy.PHASES):
+        record, predecessor = legacy.build_transition_binding(
+            historical, phase, f"QUALIFICATION-{index}", f"{index + 1:x}" * 64, predecessor
+        )
+        transitions.append(record)
+    transition_chain = legacy.validate_transition_chain(historical, transitions)
+    closure = {
+        "schema": "pulsarmlx.f017.corrected-oracle-package-result-closure/11.0.0",
+        "primary": {
+            "manifest_sha256": primary_bundle["index"]["manifest_sha256"],
+            "receipt_sha256": primary_bundle["index"]["result_receipt_sha256"],
+            "terminal_sha256": _sha(primary_bundle["artifacts"]["consumer_terminal"]),
+            "result_terminal_sha256": primary_bundle["index"]["result_terminal_sha256"],
+            "routing_manifest_sha256": "1" * 64,
+            "payload_sha256s": ["2" * 64, "3" * 64, "4" * 64],
+        },
+        "secondary": {
+            "manifest_sha256": secondary_bundle["index"]["manifest_sha256"],
+            "receipt_sha256": secondary_bundle["index"]["result_receipt_sha256"],
+            "terminal_sha256": _sha(secondary_bundle["artifacts"]["consumer_terminal"]),
+            "result_terminal_sha256": secondary_bundle["index"]["result_terminal_sha256"],
+            "routing_manifest_sha256": "5" * 64,
+            "payload_sha256s": ["6" * 64, "7" * 64, "8" * 64],
+        },
+        "comparison": {
+            "summary_sha256": comparison_binding.get("comparison_summary_sha256"),
+            "receipt_sha256": "9" * 64,
+            "terminal_sha256": "a" * 64,
+        },
+        "release": {
+            "start_sha256": "b" * 64,
+            "report_sha256": release_binding.get("release_report_sha256"),
+            "receipt_sha256": "c" * 64,
+            "terminal_sha256": "d" * 64,
+        },
+        "package_receipt_sha256": "e" * 64,
+        "payload_count": 6,
+        "result": "COMPLETE",
+    }
+    v11_closure = legacy.bind_v11_closure(historical, closure, legacy_accounting)
     package_terminal = legacy.package_terminal_view(
-        historical, "d" * 64, "e" * 64, legacy_accounting
+        historical, transition_chain, v11_closure, legacy_accounting
     )
     historical_views = {
         "PRIMARY_NUMERICAL": primary_numerical,
@@ -100,7 +144,7 @@ def _baseline_documents():
     accounting, accounting_sha = build_accounting_closure(
         bridge, views["ACCOUNTING"], legacy_accounting
     )
-    legacy_terminal = {"bridge_sha256": historical.sha256, "result": "COMPLETE"}
+    legacy_terminal = legacy.build_package_terminal(package_terminal)
     terminal, _ = build_package_terminal(
         bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting
     )

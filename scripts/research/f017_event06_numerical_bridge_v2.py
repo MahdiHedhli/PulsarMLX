@@ -399,8 +399,16 @@ def build_package_terminal(
             or accounting_closure.get("package_attempt_id") != bridge.get("package_attempt_id")
             or accounting_closure.get("result") != "PASS"):
         raise TypeError("sealed accounting closure continuity")
-    if legacy_package_terminal.get("bridge_sha256") != bridge.get("legacy_bridge_sha256"):
-        raise ValueError("legacy package terminal bridge")
+    historical = historical_bridge(bridge)
+    legacy.validate_package_terminal(legacy_package_terminal, historical)
+    if (legacy_package_terminal.get("bridge_sha256") != bridge.get("legacy_bridge_sha256")
+            or legacy_package_terminal.get("accounting_binding_sha256")
+            != accounting_closure.get("legacy_accounting_binding_sha256")
+            or legacy_package_terminal.get("binding_chain_head_sha256")
+            != package_view.legacy_view.get("binding_chain_head_sha256")
+            or legacy_package_terminal.get("v11_closure_root_sha256")
+            != package_view.legacy_view.get("v11_closure_root_sha256")):
+        raise ValueError("legacy package terminal continuity")
     value = {
         "schema": PACKAGE_TERMINAL_SCHEMA, "bridge_sha256": bridge.sha256,
         "legacy_package_terminal_sha256": hashlib.sha256(canonical_bytes(legacy_package_terminal)).hexdigest(),

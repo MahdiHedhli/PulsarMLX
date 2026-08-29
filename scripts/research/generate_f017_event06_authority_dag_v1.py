@@ -48,6 +48,9 @@ ROWS = (
     ("PACKAGE_TERMINAL_LEGACY", "package_terminal_view", "ValidatedConsumerView", "PACKAGE_TERMINAL", "consumer_view", "TERMINAL"),
     ("PACKAGE_TERMINAL_VIEW", "consumer_view", "PromptBoundConsumerViewV2", "PACKAGE_TERMINAL", "build_package_terminal", "TERMINAL"),
     ("ACCOUNTING_CLOSURE", "build_accounting_closure", "ValidatedAccountingClosureV2", "PACKAGE_TERMINAL", "build_package_terminal", "TERMINAL"),
+    ("PRIMARY_BUNDLE_BINDING", "build_bundle_binding", "ValidatedBundleBinding", "PRIMARY_TERMINAL", "primary_terminal_binding", "PRIMARY"),
+    ("TRANSITION_CHAIN", "validate_transition_chain", "ValidatedTransitionChain", "PACKAGE_TERMINAL", "package_terminal_view", "TERMINAL"),
+    ("V11_CLOSURE_BINDING", "bind_v11_closure", "ValidatedV11ClosureBinding", "PACKAGE_TERMINAL", "package_terminal_view", "TERMINAL"),
 )
 
 MODULES = {
@@ -84,6 +87,8 @@ MODULES = {
     "accounting_view": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "build_accounting_binding": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "build_accounting_closure": "scripts/research/f017_event06_numerical_bridge_v2.py",
+    "validate_transition_chain": "scripts/research/f017_event06_numerical_bridge_v1.py",
+    "bind_v11_closure": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "package_terminal_view": "scripts/research/f017_event06_numerical_bridge_v1.py",
     "build_package_terminal": "scripts/research/f017_event06_numerical_bridge_v2.py",
 }

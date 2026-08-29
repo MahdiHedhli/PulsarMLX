@@ -101,7 +101,7 @@ def execute_consumers(
         )
         completed_phase = "PRIMARY_RESULT_TERMINAL"
         primary_binding = legacy_bridge.primary_terminal_binding(
-            primary, historical.sha256, primary["bridge_bundle_binding_sha256"]
+            primary, historical, primary["bridge_bundle_binding"]
         )
         secondary_start = legacy_coordinator.bank_consumer_start(
             historical, "SECONDARY", package_directory / "bridge-secondary-durable-start.json",
@@ -294,8 +294,8 @@ def execute_event06_bridge(
         bridge.legacy_bridge, package_start, execution, terminal_path
     )
     historical_package_view = legacy_bridge.package_terminal_view(
-        bridge.legacy_bridge, legacy_package["chain_head_sha256"],
-        execution["v11_closure_sha256"], execution["accounting_binding"],
+        bridge.legacy_bridge, legacy_package["transition_chain"],
+        execution["v11_closure_binding"], execution["accounting_binding"],
     )
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", historical_package_view)
     views["PACKAGE_TERMINAL"] = package_view

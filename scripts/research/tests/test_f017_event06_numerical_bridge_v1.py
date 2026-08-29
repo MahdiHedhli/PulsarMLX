@@ -16,12 +16,12 @@ from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_exec
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
-    accounting_view, bind_identity_stage, build_accounting_binding, build_bundle_binding,
+    accounting_view, bind_identity_stage, bind_v11_closure, build_accounting_binding, build_bundle_binding,
     build_comparison_binding, build_package_terminal, build_release_binding,
     build_transition_binding, canonical_bridge_bytes, comparison_view,
     bundle_kwargs, numerical_view, package_terminal_view, primary_terminal_binding, reconstruct_bridge,
     release_view, result_bundle_view, source_projection,
-    validate_consumer_view, validate_package_terminal,
+    validate_package_terminal,
     validate_transition_chain,
 )
 from execute_f017_corrected_oracle_event_v12_bridge import (
@@ -45,6 +45,31 @@ def primary_bundle_fixture(role="PRIMARY"):
     return {"artifacts":{"consumer_terminal":terminal},"index":index,"result":"PASS"}
 
 
+def _closure_fixture():
+    def role(symbols):
+        return {
+            "manifest_sha256": symbols[0] * 64,
+            "receipt_sha256": symbols[1] * 64,
+            "terminal_sha256": symbols[2] * 64,
+            "result_terminal_sha256": symbols[3] * 64,
+            "routing_manifest_sha256": symbols[4] * 64,
+            "payload_sha256s": [symbol * 64 for symbol in symbols[5:]],
+        }
+    return {
+        "schema": "pulsarmlx.f017.corrected-oracle-package-result-closure/11.0.0",
+        "primary": role("12345678"),
+        "secondary": role("9abcdef0"),
+        "comparison": {"summary_sha256": "1" * 64,
+                       "receipt_sha256": "2" * 64,
+                       "terminal_sha256": "3" * 64},
+        "release": {"start_sha256": "4" * 64, "report_sha256": "5" * 64,
+                    "receipt_sha256": "6" * 64, "terminal_sha256": "7" * 64},
+        "package_receipt_sha256": "8" * 64,
+        "payload_count": 6,
+        "result": "COMPLETE",
+    }
+
+
 def test_bridge_is_deterministic_and_reconstructible():
     bridge, *_ = fixture_values()
     raw = canonical_bridge_bytes(bridge)
@@ -55,12 +80,17 @@ def test_bridge_is_deterministic_and_reconstructible():
 
 
 def test_sealed_authority_objects_reject_construction_copy_and_pickle():
+    import f017_event06_numerical_bridge_v1 as bridge_module
     bridge, *_ = fixture_values()
+    assert not hasattr(bridge_module, "validate_consumer_view")
     for constructor in (ValidatedExecutionPlan, ValidatedNumericalBridge, ValidatedConsumerView):
         with pytest.raises(TypeError): constructor()
     with pytest.raises(TypeError): copy.copy(bridge)
     with pytest.raises(TypeError): copy.deepcopy(bridge)
     with pytest.raises(TypeError): pickle.dumps(bridge)
+    with pytest.raises(TypeError): bridge._items = ()
+    with pytest.raises(TypeError): bridge.sha256 = "0" * 64
+    with pytest.raises(TypeError): del bridge.sha256
     with pytest.raises(TypeError): ValidatedBridgeExecutionResult()
     with pytest.raises(TypeError): ValidatedDurableStart()
     with pytest.raises(ValueError): close_bridge_package(bridge, {}, {}, None)
@@ -96,7 +126,7 @@ def test_views_close_exact_consumer_authority():
     primary_result = result_bundle_view(bridge, "PRIMARY", "a" * 64)
     fake_bundle = primary_bundle_fixture()
     binding_doc, binding_sha = build_bundle_binding(primary, primary_result, fake_bundle["index"])
-    primary_gate = primary_terminal_binding(fake_bundle, bridge.sha256, binding_sha)
+    primary_gate = primary_terminal_binding(fake_bundle, bridge, binding_doc)
     secondary = numerical_view(bridge, "SECONDARY", primary_binding=primary_gate)
     secondary_result = result_bundle_view(bridge, "SECONDARY", "b" * 64)
     _, descriptors = source_projection(primary)
@@ -116,7 +146,16 @@ def test_views_close_exact_consumer_authority():
     release_binding, _ = build_release_binding(release, _release_report(bridge.get("package_attempt_id")))
     accounting = accounting_view(bridge, release_binding)
     accounting_binding, _ = build_accounting_binding(accounting, release_binding)
-    terminal_view = package_terminal_view(bridge, "1" * 64, "2" * 64, accounting_binding)
+    predecessor = "0" * 64; records = []
+    for index, phase in enumerate(PHASES):
+        record, predecessor = build_transition_binding(
+            bridge, phase, f"KIND-{index}", f"{index + 1:x}" * 64, predecessor
+        )
+        records.append(record)
+    chain = validate_transition_chain(bridge, records)
+    closure = _closure_fixture()
+    closure_binding = bind_v11_closure(bridge, closure, accounting_binding)
+    terminal_view = package_terminal_view(bridge, chain, closure_binding, accounting_binding)
     terminal = build_package_terminal(terminal_view)
     assert validate_package_terminal(terminal, bridge) == hashlib.sha256(canonical_bytes(terminal)).hexdigest()
     for view in (primary, primary_result, secondary, secondary_result, compare, release, accounting, terminal_view):
@@ -135,7 +174,7 @@ def test_views_close_exact_consumer_authority():
     with pytest.raises(TypeError):
         accounting_view(bridge, release_binding.as_dict())
     with pytest.raises(TypeError):
-        package_terminal_view(bridge, "1" * 64, "2" * 64, accounting_binding.as_dict())
+        package_terminal_view(bridge, chain, closure_binding, accounting_binding.as_dict())
 
 
 def test_transition_chain_is_exact_and_mutation_closed():
@@ -143,7 +182,7 @@ def test_transition_chain_is_exact_and_mutation_closed():
     for index, phase in enumerate(PHASES):
         record, predecessor = build_transition_binding(bridge, phase, f"KIND-{index}", f"{index+1:x}" * 64, predecessor)
         records.append(record)
-    assert validate_transition_chain(bridge, records) == predecessor
+    assert validate_transition_chain(bridge, records).get("chain_head_sha256") == predecessor
     for index in range(len(records)):
         changed = copy.deepcopy(records); changed[index]["bridge_sha256"] = "f" * 64
         with pytest.raises(ValueError): validate_transition_chain(bridge, changed)

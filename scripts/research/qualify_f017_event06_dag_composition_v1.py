@@ -12,7 +12,9 @@ from pathlib import Path
 from f017_event06_dag_derived_control_path_v1 import EDGE_IDS, run_full_call_path
 import f017_event06_numerical_bridge_v1 as legacy
 from f017_event06_numerical_bridge_v2 import build_package_terminal as build_prompt_bound_package_terminal
-from validate_f017_event06_authority_dag_v1 import DAG, validate as validate_dag
+from validate_f017_event06_authority_dag_v1 import (
+    DAG, validate as validate_dag, validate_runtime_boundary,
+)
 
 
 def _runtime_type_matches(expected: str, value: object) -> bool:
@@ -25,8 +27,6 @@ def _runtime_type_matches(expected: str, value: object) -> bool:
 
 def _negative_assertions(edge: dict[str, object], trace: dict[str, object]) -> int:
     """Check structural edge mutations; load-bearing consumers are attacked separately."""
-    expected = edge["accepted_input_type_or_schema"]
-    original_digest = trace["digest"]
     candidates = (
         {"mapping_or_deserialized_lookalike": True},
         object(),
@@ -35,11 +35,9 @@ def _negative_assertions(edge: dict[str, object], trace: dict[str, object]) -> i
     )
     rejected = 0
     for candidate in candidates:
-        exact_type = _runtime_type_matches(expected, candidate)
-        digest_continuity = False
-        if exact_type and type(candidate) in {dict, list}:
-            digest_continuity = candidate == original_digest
-        if not (exact_type and digest_continuity):
+        try:
+            validate_runtime_boundary(edge, candidate, trace["digest"])
+        except (TypeError, ValueError):
             rejected += 1
     if rejected != len(edge["negative_mutation_family"]):
         raise AssertionError(f"unexpected edge mutation pass: {edge['edge_id']}")
@@ -56,6 +54,8 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
     release = authorities["release_binding"]
     accounting = authorities["accounting_binding"]
     closure = authorities["accounting_closure"]
+    transition_chain = authorities["transition_chain"]
+    v11_closure = authorities["v11_closure_binding"]
     package_view = authorities["package_view"]
     cases = (
         ("comparison_raw_documents", lambda: legacy.comparison_view(historical, primary.as_dict(), secondary.as_dict())),
@@ -67,15 +67,25 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
         ("accounting_raw_document", lambda: legacy.accounting_view(historical, release.as_dict())),
         ("accounting_wrong_sealed_type", lambda: legacy.accounting_view(historical, comparison)),
         ("terminal_raw_accounting", lambda: legacy.package_terminal_view(
-            historical, package_view.legacy_view.get("binding_chain_head_sha256"),
-            package_view.legacy_view.get("v11_closure_root_sha256"), accounting.as_dict())),
+            historical, transition_chain, v11_closure, accounting.as_dict())),
         ("terminal_wrong_sealed_type", lambda: legacy.package_terminal_view(
-            historical, package_view.legacy_view.get("binding_chain_head_sha256"),
-            package_view.legacy_view.get("v11_closure_root_sha256"), release)),
+            historical, transition_chain, v11_closure, release)),
+        ("terminal_raw_transition_chain", lambda: legacy.package_terminal_view(
+            historical, transition_chain.as_dict(), v11_closure, accounting)),
+        ("terminal_raw_v11_closure", lambda: legacy.package_terminal_view(
+            historical, transition_chain, v11_closure.as_dict(), accounting)),
+        ("bundle_unrelated_index", lambda: legacy.build_bundle_binding(
+            authorities["primary_numerical_view"], authorities["primary_result_view"],
+            {"schema": "totally.unrelated/0", "role": "PRIMARY", "result": "PASS"})),
+        ("mutate_primary_bundle_items", lambda: setattr(primary, "_items", secondary._items)),
+        ("mutate_primary_bundle_sha", lambda: setattr(primary, "sha256", secondary.sha256)),
         ("successor_terminal_raw_closure", lambda: build_prompt_bound_package_terminal(
             bridge, package_view, authorities["legacy_terminal"], closure.as_dict())),
         ("successor_terminal_wrong_sealed_type", lambda: build_prompt_bound_package_terminal(
             bridge, package_view, authorities["legacy_terminal"], accounting)),
+        ("successor_terminal_invalid_legacy_terminal", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view,
+            authorities["legacy_terminal"] | {"result": "ABORTED_NOT_COMPLETE"}, closure)),
     )
     rejected = []
     unexpected = []

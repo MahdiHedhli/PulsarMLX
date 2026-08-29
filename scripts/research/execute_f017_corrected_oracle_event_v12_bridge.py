@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import tempfile
 from pathlib import Path
+from types import MappingProxyType
 
 from f017_binary_comparison_authority_v11 import derive_summary, validate_summary
 from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
@@ -14,7 +15,7 @@ from f017_descriptor_lease_manager_v10 import LeaseSet
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_numerical_bridge_v1 import (
     PHASES, ValidatedIdentityStage, ValidatedNumericalBridge,
-    accounting_view, bind_identity_stage, build_accounting_binding,
+    accounting_view, bind_identity_stage, bind_v11_closure, build_accounting_binding,
     build_comparison_binding, build_package_terminal, build_release_binding,
     build_transition_binding, comparison_view, derive_bridge, numerical_view, package_terminal_view,
     primary_terminal_binding, release_view, result_bundle_view,
@@ -47,8 +48,16 @@ class ValidatedDurableStart:
         return super().__new__(cls)
 
     def __init__(self, seal, value):
-        self._value = value
-        self.sha256 = _sha(value)
+        object.__setattr__(self, "_value", MappingProxyType(dict(value)))
+        object.__setattr__(self, "sha256", _sha(value))
+
+    def __setattr__(self, name, value):
+        del name, value
+        raise TypeError("durable starts are immutable")
+
+    def __delattr__(self, name):
+        del name
+        raise TypeError("durable starts are immutable")
 
     def get(self, key, default=None):
         return self._value.get(key, default)
@@ -64,7 +73,15 @@ class ValidatedBridgeExecutionResult:
         return super().__new__(cls)
 
     def __init__(self, seal, value):
-        self._value = value
+        object.__setattr__(self, "_value", MappingProxyType(dict(value)))
+
+    def __setattr__(self, name, value):
+        del name, value
+        raise TypeError("bridge execution results are immutable")
+
+    def __delattr__(self, name):
+        del name
+        raise TypeError("bridge execution results are immutable")
 
     def get(self, key, default=None):
         return self._value.get(key, default)
@@ -172,7 +189,7 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
         primary = execute_primary(primary_numerical, primary_result, leases.inherited_fds(), primary_directory)
         completed_phase = "PRIMARY_RESULT_TERMINAL"
         primary_binding = primary_terminal_binding(
-            primary, bridge.sha256, primary["bridge_bundle_binding_sha256"]
+            primary, bridge, primary["bridge_bundle_binding"]
         )
         secondary_start = bank_consumer_start(
             bridge, "SECONDARY", package_directory / "bridge-secondary-durable-start.json",
@@ -257,6 +274,7 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
         _sha(release_start), _sha(release_report), _sha(release_receipt),
         _sha(release_terminal), _sha(package_receipt),
     )
+    v11_closure_binding = bind_v11_closure(bridge, v11_closure, accounting_binding)
     value = {"bridge_sha256":bridge.sha256,"primary":primary,"secondary":secondary,
             "primary_start_sha256":primary_start.sha256,"secondary_start_sha256":secondary_start.sha256,
             "comparison":comparison,"comparison_view":compare_authority,
@@ -265,6 +283,7 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
             "release_binding":release_binding,"release_binding_sha256":release_binding_sha,
             "release_terminal":release_terminal,"accounting_binding":accounting_binding,
             "accounting_binding_sha256":accounting_binding_sha,"v11_closure":v11_closure,
+            "v11_closure_binding":v11_closure_binding,
             "v11_closure_sha256":_sha(v11_closure),"result":"PASS"}
     return ValidatedBridgeExecutionResult(_EXECUTION_RESULT_SEAL, value)
 
@@ -315,7 +334,7 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
 
 
 def bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBridge,
-                                 subjects: list[tuple[str, str]]) -> tuple[list[dict], str]:
+                                 subjects: list[tuple[str, str]]):
     """Bank ten adjacent V12 bindings around unchanged V11 artifacts."""
     if type(subjects) is not list or len(subjects) != len(PHASES):
         raise ValueError("bridge transition subjects")
@@ -327,9 +346,10 @@ def bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBrid
         if observed != record_sha:
             raise ValueError("bridge transition banking")
         records.append(record); predecessor = record_sha
-    if validate_transition_chain(bridge, records) != predecessor:
+    chain = validate_transition_chain(bridge, records)
+    if chain.get("chain_head_sha256") != predecessor:
         raise ValueError("bridge transition reconstruction")
-    return records, predecessor
+    return records, chain
 
 
 def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: ValidatedDurableStart,
@@ -367,16 +387,18 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         ("ACCOUNTING_BINDING", execution_result["accounting_binding_sha256"]),
         ("V11_PACKAGE_CLOSURE", execution_result["v11_closure_sha256"]),
     ]
-    records, chain_head_sha256 = bank_bridge_transition_chain(
+    records, transition_chain = bank_bridge_transition_chain(
         terminal_path.parent / "bridge-transition-chain", bridge, subjects
     )
     view = package_terminal_view(
-        bridge, chain_head_sha256, execution_result["v11_closure_sha256"],
+        bridge, transition_chain, execution_result["v11_closure_binding"],
         execution_result["accounting_binding"]
     )
     terminal = build_package_terminal(view)
     terminal_sha = validate_package_terminal(terminal, bridge)
     if bank_exclusive(terminal_path, terminal) != terminal_sha:
         raise ValueError("bridge package terminal banking")
-    return {"transition_records":records,"chain_head_sha256":chain_head_sha256,
+    return {"transition_records":records,
+            "transition_chain":transition_chain,
+            "chain_head_sha256":transition_chain.get("chain_head_sha256"),
             "terminal":terminal,"terminal_sha256":terminal_sha,"result":"PASS"}

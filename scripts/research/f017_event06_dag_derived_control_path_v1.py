@@ -27,7 +27,7 @@ from f017_event06_numerical_bridge_v2 import (
 import f017_event06_numerical_bridge_v1 as legacy
 
 
-EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 38))
+EDGE_IDS = tuple(f"F017-DAG-{number:03d}" for number in range(1, 41))
 
 
 def _sha(value: object) -> str:
@@ -175,7 +175,7 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
         primary_numerical_legacy, primary_result_legacy, primary_bundle["index"]
     )
     primary_terminal_binding = legacy.primary_terminal_binding(
-        primary_bundle, historical.sha256, primary_bundle_binding_sha
+        primary_bundle, historical, primary_bundle_binding
     )
     _trace(trace, EDGE_IDS[23], primary_bundle)
 
@@ -248,12 +248,45 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
             predecessor,
         )
         transitions.append(transition)
-    chain_head = legacy.validate_transition_chain(historical, transitions)
+    transition_chain = legacy.validate_transition_chain(historical, transitions)
+    v11_closure = {
+        "schema": "pulsarmlx.f017.corrected-oracle-package-result-closure/11.0.0",
+        "primary": {
+            "manifest_sha256": primary_bundle["index"]["manifest_sha256"],
+            "receipt_sha256": primary_bundle["index"]["result_receipt_sha256"],
+            "terminal_sha256": _sha(primary_bundle["artifacts"]["consumer_terminal"]),
+            "result_terminal_sha256": primary_bundle["index"]["result_terminal_sha256"],
+            "routing_manifest_sha256": _sha({"role": "PRIMARY", "routing": "INTERPOSED"}),
+            "payload_sha256s": [_sha({"role": "PRIMARY", "payload": index}) for index in range(3)],
+        },
+        "secondary": {
+            "manifest_sha256": secondary_bundle["index"]["manifest_sha256"],
+            "receipt_sha256": secondary_bundle["index"]["result_receipt_sha256"],
+            "terminal_sha256": _sha(secondary_bundle["artifacts"]["consumer_terminal"]),
+            "result_terminal_sha256": secondary_bundle["index"]["result_terminal_sha256"],
+            "routing_manifest_sha256": _sha({"role": "SECONDARY", "routing": "INTERPOSED"}),
+            "payload_sha256s": [_sha({"role": "SECONDARY", "payload": index}) for index in range(3)],
+        },
+        "comparison": {
+            "summary_sha256": comparison_binding.get("comparison_summary_sha256"),
+            "receipt_sha256": _sha({"comparison": "QUALIFICATION_RECEIPT"}),
+            "terminal_sha256": _sha({"comparison": "QUALIFICATION_TERMINAL"}),
+        },
+        "release": {
+            "start_sha256": _sha({"release": "QUALIFICATION_START"}),
+            "report_sha256": release_binding.get("release_report_sha256"),
+            "receipt_sha256": _sha({"release": "QUALIFICATION_RECEIPT"}),
+            "terminal_sha256": _sha({"release": "QUALIFICATION_TERMINAL"}),
+        },
+        "package_receipt_sha256": _sha({"package": "QUALIFICATION_RECEIPT"}),
+        "payload_count": 6,
+        "result": "COMPLETE",
+    }
+    v11_closure_binding = legacy.bind_v11_closure(
+        historical, v11_closure, legacy_accounting_binding
+    )
     package_legacy_view = legacy.package_terminal_view(
-        historical,
-        chain_head,
-        _sha({"v11_closure": "QUALIFICATION_ONLY"}),
-        legacy_accounting_binding,
+        historical, transition_chain, v11_closure_binding, legacy_accounting_binding,
     )
     _trace(trace, EDGE_IDS[34], package_legacy_view)
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", package_legacy_view)
@@ -263,6 +296,9 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
         legacy_terminal, historical
     )
     _trace(trace, EDGE_IDS[36], accounting_closure)
+    _trace(trace, EDGE_IDS[37], primary_bundle_binding)
+    _trace(trace, EDGE_IDS[38], transition_chain)
+    _trace(trace, EDGE_IDS[39], v11_closure_binding)
     package_terminal, package_terminal_sha = build_prompt_bound_package_terminal(
         bridge, package_view, legacy_terminal, accounting_closure
     )
@@ -326,12 +362,16 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     if retain_authorities:
         result["_authorities"] = {
             "bridge": bridge,
+            "primary_numerical_view": primary_numerical_legacy,
+            "primary_result_view": primary_result_legacy,
             "primary_bundle_binding": primary_bundle_binding,
             "secondary_bundle_binding": secondary_bundle_binding,
             "comparison_binding": comparison_binding,
             "release_binding": release_binding,
             "accounting_binding": legacy_accounting_binding,
             "accounting_closure": accounting_closure,
+            "transition_chain": transition_chain,
+            "v11_closure_binding": v11_closure_binding,
             "package_view": package_view,
             "legacy_terminal": legacy_terminal,
         }
