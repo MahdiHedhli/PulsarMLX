@@ -7,7 +7,7 @@
   "implementation_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
   "implementation_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
   "artifacts": [
-    {"role":"launch_authority_guard","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-launch-authority-guard-v1.json","sha256":"9b15df877b30ad878ee6664ca84cbcca8f5109b5d570d774665ab08b1d6cdf66"},
+    {"role":"launch_authority_guard","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-launch-authority-guard-v1.json","sha256":"ccfe02497ff5ce7f2692fce7cc99e6134c4a6475add20a95e052ec2513ba1b34"},
     {"role":"causal_reproduction","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-causal-reproduction-v1.json","sha256":"3d9afd573f6a3dfa0338c1cbd5aca835c5190376d27963d61a04aa1430160a33"},
     {"role":"implementation_measurement","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-implementation-measurement-v1.json","sha256":"a7688293d1043b615791e6a2f963fc604fb589d97265ed22789d7b64045429d2"},
     {"role":"qualification","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-collapsed-live-installation-qualification-v1.json","sha256":"2adc0aa06cc980e3aeacd43aff5ff756a3e9ad53b48605c24df215862c5e441c"},

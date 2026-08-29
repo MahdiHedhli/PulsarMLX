@@ -3,8 +3,8 @@
   "target_machine": "MAC_STUDIO_M1_ULTRA",
   "prompt": {
     "commit": "cd7ead3b9753440ffe745c8835cf3fa4c93b5847",
-    "path": "Prompts/F017/Mac-Studio-M1-Ultra/014__F017__Mac-Studio-M1-Ultra__Event-06-V12-collapsed-GO-live-installation-integration-repair-and-no-access-requalification__prompt.md",
-    "sha256": "562bdc8e2bec0efe1798f6ce04a71ba5a123c45ecb94924cef40ca5aef1d0045",
+    "external_prompt_repository_path": "Prompts/F017/Mac-Studio-M1-Ultra/014__F017__Mac-Studio-M1-Ultra__Event-06-V12-collapsed-GO-live-installation-integration-repair-and-no-access-requalification__prompt.md",
+    "external_prompt_sha256": "562bdc8e2bec0efe1798f6ce04a71ba5a123c45ecb94924cef40ca5aef1d0045",
     "utf8": true,
     "basename_sidecar_match": true,
     "prompt_control_base_ancestor": true,
