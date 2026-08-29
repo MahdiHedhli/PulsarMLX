@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-opus-final-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "transport": "claude-cli",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+  "reviewed_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
+  "full_native_run": 33239842492,
+  "focused_tests": "11/11 PASS",
+  "pytest_full_suite": "914 PASS AND 555 SUBTESTS PASS",
+  "mutation_campaign": "211/211 REJECTED",
+  "unexpected_passes": 0,
+  "independent_attack_probes": 45,
+  "attack_outcomes": {
+    "capability_leaf_or_expiry_replay": "REJECTED",
+    "cross_process_durable_marker_replay": "REJECTED",
+    "qualification_decision_to_live_root": "REJECTED",
+    "qualification_chain_to_live_preparation": "REJECTED",
+    "second_bundle_from_one_go": "REJECTED",
+    "second_go_from_one_human_decision": "REJECTED"
+  },
+  "claim_verdicts": {
+    "COLLAPSED_TOKEN": "ACCEPT",
+    "HUMAN_GO_AUTHENTICITY": "ACCEPT",
+    "ROOT_TYPE_SEPARATION": "ACCEPT",
+    "CHECKPOINT_BOUND_COMPOSITION": "ACCEPT",
+    "ONE_SHOT_ACCOUNTING": "ACCEPT",
+    "NO_ACCESS": "ACCEPT",
+    "FROZEN_AUTHORITY": "ACCEPT",
+    "FULL_NATIVE": "ACCEPT"
+  },
+  "advisory_findings": [
+    {
+      "id": "OPUS-FINAL-A1",
+      "summary": "Downstream preparation does not rebind readiness to the collapsed GO release-authority digest; the one-shot and attempt identity remain exact.",
+      "disposition": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-FINAL-A2",
+      "summary": "Package-start validation gates are deterministic and package_started false but always use the qualification counter label and can be revalidated.",
+      "disposition": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-FINAL-A3",
+      "summary": "Python object.__new__ reflection can form incomplete exact-type instances, but cannot bypass the durable human-decision reservation, capability registry, or installation marker into a second attempt.",
+      "disposition": "BANKED_FORWARD_HARDENING"
+    }
+  ],
+  "test_count_reconciliation": {
+    "unittest_discover": "499 METHODS AND 555 SUBTESTS PASS",
+    "pytest_prescribed": "914 TESTS AND 555 SUBTESTS PASS",
+    "disposition": "RESOLVED_DISTINCT_COLLECTION_MODELS"
+  },
+  "blocking_findings": 0,
+  "advisory_finding_count": 3,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_LIVE_INSTALLATION_OPERATIONAL_RATIFICATION",
+  "result": "PASS"
+}

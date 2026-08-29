@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-authority-manifest/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "8379e7bba73d39786c22c624a9f05e8acbddd87f",
+  "starting_tree": "dc5963efdf9f2ad1c74cdf195ebe46ca5cf14056",
+  "implementation_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+  "implementation_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
+  "artifacts": [
+    {"role":"launch_authority_guard","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-launch-authority-guard-v1.json","sha256":"9b15df877b30ad878ee6664ca84cbcca8f5109b5d570d774665ab08b1d6cdf66"},
+    {"role":"causal_reproduction","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-causal-reproduction-v1.json","sha256":"3d9afd573f6a3dfa0338c1cbd5aca835c5190376d27963d61a04aa1430160a33"},
+    {"role":"implementation_measurement","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-implementation-measurement-v1.json","sha256":"a7688293d1043b615791e6a2f963fc604fb589d97265ed22789d7b64045429d2"},
+    {"role":"qualification","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-collapsed-live-installation-qualification-v1.json","sha256":"2adc0aa06cc980e3aeacd43aff5ff756a3e9ad53b48605c24df215862c5e441c"},
+    {"role":"no_access_rehearsal","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-production-shaped-no-access-rehearsal-v1.json","sha256":"ab947c93a41cc430e23f9d26f80d8c47715004ea147cdab2c185ec906bc07a56"},
+    {"role":"full_native_ci","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-full-native-ci-v1.json","sha256":"07a0362da168bfc7b12d79f463a1c9afd618bc977c5f072d1446789530248d78"},
+    {"role":"challenge_ledger","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-challenge-ledger-v1.json","sha256":"fc55e5ba402d00c0af9c38c743de730bc1915a5c6cfe1ad5e9fcfc2c07e47c5e"},
+    {"role":"support_ledger","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-support-ledger-v1.json","sha256":"ab6ead673661093a20e7f72b06e542c6ffc36ba8632c435a199e6f0ca014d3cd"},
+    {"role":"repair_loop_ledger","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-repair-loop-ledger-v1.json","sha256":"4a9de3cd02d0a0566865b032723dcd45d99c33d307913246c3b95c10cc10b013"},
+    {"role":"agy_cycle_01","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-agy-cycle-01-normalized-result-v1.json","sha256":"157c761fdcd0cc3de361ab13a7ae48a05183cefc27968690405b9103fb1416a1"},
+    {"role":"opus_cycle_01","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-opus-cycle-01-normalized-result-v1.json","sha256":"0a3e222e4eef0dfb844accceec94ef42dc283e30a393f242330080e5fab57ee1"},
+    {"role":"opus_cycle_02","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-opus-cycle-02-normalized-result-v1.json","sha256":"4ea5e7827873b28781c1b158eb9a8a00484b1fdcea9f48784c40ed64da557321"},
+    {"role":"agy_final","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-agy-final-normalized-result-v2.json","sha256":"5657e24981ba62a8b0174b0b5dee2048073f2a31d41ac42a7217d7fa0882a3e4"},
+    {"role":"opus_final","path":"docs/architecture/reviews/evidence/f017-event06-v12-sequence14-opus-final-normalized-result-v1.json","sha256":"284e94dcd8999f7b76ab84543b2e684861c402b50886e1aa52593dd750ed1392"}
+  ],
+  "artifact_count": 14,
+  "blocking_findings": 0,
+  "unresolved_findings": 0,
+  "result": "PASS"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-agy-cycle-01-normalized-result/1.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "fccadecc0a439deedf4b225d4c2842e7c9ad8332",
+  "reviewed_tree": "f0a16e7ef7aed284e2c5816b9dcf64091a279df0",
+  "full_native_run": 33238262841,
+  "blocking_replay_reproduced_after_repair": false,
+  "second_capability_rejection": "PASS",
+  "claim_verdicts": {
+    "COLLAPSED_TOKEN": "ACCEPT",
+    "HUMAN_GO_AUTHENTICITY": "ACCEPT",
+    "ROOT_TYPE_SEPARATION": "ACCEPT",
+    "CHECKPOINT_BOUND_COMPOSITION": "ACCEPT",
+    "ONE_SHOT_ACCOUNTING": "ACCEPT",
+    "NO_ACCESS": "ACCEPT",
+    "FROZEN_AUTHORITY": "ACCEPT",
+    "FULL_NATIVE": "ACCEPT"
+  },
+  "blocking_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_LIVE_INSTALLATION_OPERATIONAL_RATIFICATION",
+  "result": "PASS",
+  "disposition": "SUPERSEDED_BY_OPUS_CYCLE_02_CROSS_MODE_FINDING"
+}

@@ -1,0 +1,72 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-launch-authority-guard/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt": {
+    "commit": "cd7ead3b9753440ffe745c8835cf3fa4c93b5847",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/014__F017__Mac-Studio-M1-Ultra__Event-06-V12-collapsed-GO-live-installation-integration-repair-and-no-access-requalification__prompt.md",
+    "sha256": "562bdc8e2bec0efe1798f6ce04a71ba5a123c45ecb94924cef40ca5aef1d0045",
+    "utf8": true,
+    "basename_sidecar_match": true,
+    "prompt_control_base_ancestor": true,
+    "live_main_ancestor": true
+  },
+  "sequence13_parent": {
+    "commit": "9b41304c0ec155383aaa6c7abc7c330a96e78c03",
+    "sha256": "a1bbca6ddd6385b737a2985011833786f28dc4c50328cf66c5fd26e90caf4077",
+    "terminal": "OPERATIONALLY_RATIFIED",
+    "readiness": true,
+    "verified": true
+  },
+  "planner_readiness_acceptance": {
+    "commit": "743269f70a87ed3fb8824a4e0256b4e21d988d7e",
+    "sha256": "8a65d6f8ced52543bdb5d7dbfca7834119ade7ca6513b5a139289dcbece2dbc7",
+    "verified": true
+  },
+  "expired_go": {
+    "commit": "7f5f029ca8066f2466565d67155ba8fd96fc79ae",
+    "record_sha256": "e35a66b2de3deccc89bb9c8ac8b1be4bc7fe7be9e0664088e5848ce46ecd1c69",
+    "direct_human_bytes_sha256": "a83b2549b5622d33590b76d4f6786e345401658f7d2818f84de8908a2748886b",
+    "disposition": "EXPIRED_UNCONSUMED_BEFORE_PROMPT_ISSUANCE",
+    "all_live_counters_zero": true,
+    "verified": true
+  },
+  "freeze_transition_table": {
+    "commit": "7f5f029ca8066f2466565d67155ba8fd96fc79ae",
+    "sha256": "35d30c2a06de0930758f79d2ff2663b20947dc449e0dffde2e2a8c5105b89629",
+    "verified": true
+  },
+  "overnight_disposition": {
+    "commit": "2f2ed021205a4f85eccd2c474e6289e4435d5c1d",
+    "sha256": "46d8e966300cccd10f03b7d9f83351036d96dfe79c20ae398573ec973091caff",
+    "repair_loops": 10,
+    "post_repair_go_preauthorization": false,
+    "event_06_execution": "PROHIBITED",
+    "success_terminal": "HUMAN_REQUIRED",
+    "verified": true
+  },
+  "authority_freezing_policy": {
+    "commit": "e5ff7286047dfaeae5b4d0ecfb96c58bdc5b24f3",
+    "sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+    "verified": true
+  },
+  "source": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "starting_head": "8379e7bba73d39786c22c624a9f05e8acbddd87f",
+    "starting_tree": "dc5963efdf9f2ad1c74cdf195ebe46ca5cf14056",
+    "local_remote_exact": true,
+    "clean": true,
+    "competing_event06_owners": 0
+  },
+  "prompt_control": {
+    "mac_studio_latest_sequence": 14,
+    "sequence14_response_present_before_start": false,
+    "shared_feature_state_modified": false,
+    "macbook_frontier_modified": false
+  },
+  "original_checkpoint_root_resolved": false,
+  "original_checkpoint_access": 0,
+  "event_06_executed": false,
+  "live_authority_created": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

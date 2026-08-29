@@ -1,0 +1,91 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-challenge-ledger/1.0.0",
+  "cycles": 3,
+  "challenges": [
+    {
+      "id": "OPUS-C1-F1-F3",
+      "severity": "BLOCKING",
+      "root_cause": "MULTIPLE_CAPABILITY_IDENTITIES_COULD_BE_DERIVED_FROM_ONE_PREPARED_PACKAGE",
+      "reviewed_head": "3eeaf91d20463e9e1baf25ba75ae0ebf247f7463",
+      "status": "REPAIRED",
+      "repair_head": "fccadecc0a439deedf4b225d4c2842e7c9ad8332"
+    },
+    {
+      "id": "OPUS-C1-A1",
+      "severity": "ADVISORY",
+      "summary": "Production identity census is accepted by the derivation helper but is not yet armed by the future live entry point.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-C1-A2",
+      "severity": "ADVISORY",
+      "summary": "Several no-access counters are structural zero fields without local increment sites.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-C1-A3",
+      "severity": "ADVISORY",
+      "summary": "Package gate accounting uses the qualification label in both modes.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-C1-A4",
+      "severity": "ADVISORY",
+      "summary": "Caller-supplied validation time can burn a durable reservation before the real-clock capability check.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-C1-A5",
+      "severity": "ADVISORY",
+      "summary": "The mutation oracle accepts any exception rather than a preregistered exception class.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-C1-A6",
+      "severity": "INFORMATIONAL",
+      "summary": "Cross-readiness replay protection correctly keys the durable reservation to the human-decision digest.",
+      "status": "SUPPORTED"
+    },
+    {
+      "id": "OPUS-C1-A7",
+      "severity": "INFORMATIONAL",
+      "summary": "Live canonical roots were absent during the no-access review.",
+      "status": "SUPPORTED"
+    },
+    {
+      "id": "OPUS-C2-F1-F3",
+      "severity": "BLOCKING",
+      "root_cause": "QUALIFICATION_AUTHORITY_MODE_NOT_TRANSITIVELY_BOUND_TO_LIVE_PREPARATION_AND_RESOLVER_BOUNDARIES",
+      "reviewed_head": "fccadecc0a439deedf4b225d4c2842e7c9ad8332",
+      "status": "REPAIRED",
+      "repair_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7"
+    },
+    {
+      "id": "OPUS-C2-A1-A7",
+      "severity": "ADVISORY",
+      "summary": "Seven forward-hardening observations covering reverse mutation coverage, synthetic durability scope, bounded process registries, explicit workflow commands, literal ledger binding, private coordinator imports, and caller-supplied authority commit identity.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-FINAL-A1",
+      "severity": "ADVISORY",
+      "summary": "Downstream readiness attestation is not rejoined to the collapsed GO release-authority digest; one-shot identity and counts remain exact.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-FINAL-A2",
+      "severity": "ADVISORY",
+      "summary": "Package-start validation is deterministic and nonstarting but uses a qualification counter label and permits repeated validation.",
+      "status": "BANKED_FORWARD_HARDENING"
+    },
+    {
+      "id": "OPUS-FINAL-A3",
+      "severity": "ADVISORY",
+      "summary": "Python reflection can form incomplete exact-type objects but did not bypass durable one-shot or installation markers into an attempt.",
+      "status": "BANKED_FORWARD_HARDENING"
+    }
+  ],
+  "blocking_open": 0,
+  "unresolved": 0,
+  "result": "PASS"
+}

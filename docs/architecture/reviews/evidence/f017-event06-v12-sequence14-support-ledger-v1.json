@@ -1,0 +1,44 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-support-ledger/1.0.0",
+  "support_rows": [
+    {
+      "challenge_id": "OPUS-C1-F1-F3",
+      "repair_head": "fccadecc0a439deedf4b225d4c2842e7c9ad8332",
+      "source_changes": [
+        "one capability issuance per prepared_sha256",
+        "durable production marker bound to prepared_sha256"
+      ],
+      "regression_test": "test_one_prepared_package_cannot_issue_a_second_capability",
+      "mutation_case": "second_capability_for_one_prepared_package",
+      "focused_tests": "14/14 PASS",
+      "full_local_suite": "913 tests and 555 subtests PASS",
+      "mutation_campaign": "209/209 rejected",
+      "full_native_run": 33238262841,
+      "status": "SUPPORTED_AND_REPAIRED"
+    },
+    {
+      "challenge_id": "OPUS-C2-F1-F3",
+      "repair_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+      "source_changes": [
+        "sealed authority mode on the bound human decision",
+        "transitive authority-mode bindings across approval, preparation, prompt identity, root authority, eligibility, and installation preparation",
+        "live root and target resolution reject qualification decisions before any canonical path resolution"
+      ],
+      "regression_test": "test_qualification_chain_cannot_cross_into_live_mode",
+      "mutation_cases": [
+        "qualification_decision_to_live_root_resolver",
+        "qualification_chain_to_live_preparation"
+      ],
+      "focused_tests": "11/11 PASS",
+      "full_local_suite": "914 tests and 555 subtests PASS",
+      "mutation_campaign": "211/211 rejected",
+      "full_native_run": 33239842492,
+      "status": "SUPPORTED_AND_REPAIRED"
+    }
+  ],
+  "blocking_supported": 2,
+  "blocking_repaired": 2,
+  "blocking_conceded": 0,
+  "blocking_unresolved": 0,
+  "result": "PASS"
+}
