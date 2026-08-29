@@ -17,12 +17,13 @@ from f017_event06_collapsed_go_path_v1 import COLLAPSED_GO_FIELDS
 from f017_event06_collapsed_live_installation_v2 import (
     BoundSanitizedHumanDecisionV2,
     CheckpointBoundCandidateBundleV2,
+    CollapsedLiveIntegrationStateV2,
     CollapsedLiveInstallationCapabilityV2,
     LiveCheckpointRootAuthorityV2,
     QualificationCheckpointRootAuthorityV2,
     QualificationInstallationCapabilityV2,
-    begin_live_collapsed_installation,
     commit_qualification_collapsed_installation,
+    prepare_collapsed_production_installation,
     produce_checkpoint_bound_candidate_bundle,
     produce_collapsed_live_installation_capability,
     produce_qualification_installation_capability,
@@ -105,6 +106,27 @@ class CollapsedLiveInstallationV2Tests(unittest.TestCase):
             with self.assertRaises(TypeError):
                 resolve_live_checkpoint_root_authority(
                     package["decision"], state=package["state"]
+                )
+
+    def test_qualification_chain_cannot_cross_into_live_mode(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="f017-seq14-cross-mode-") as directory:
+            package = build_sequence14_qualification(Path(directory))
+            live_state = object.__new__(CollapsedLiveIntegrationStateV2)
+            object.__setattr__(live_state, "_mode", "LIVE_CANONICAL")
+            with self.assertRaises(TypeError):
+                resolve_live_checkpoint_root_authority(
+                    package["decision"], state=live_state
+                )
+            with self.assertRaises(ValueError):
+                prepare_collapsed_production_installation(
+                    package["decision"],
+                    package["go"],
+                    package["approval"],
+                    package["preparation"],
+                    package["bundle"],
+                    package["readiness"],
+                    package["plan"],
+                    state=live_state,
                 )
             with self.assertRaises(TypeError):
                 produce_collapsed_live_installation_capability(

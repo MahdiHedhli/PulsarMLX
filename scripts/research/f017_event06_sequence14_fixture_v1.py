@@ -249,10 +249,10 @@ def build_sequence14_qualification(
     plan_value["secondary_event_id"] = ids["secondary_event_id"]
     plan = validate_execution_plan(plan_value)
     approval = produce_collapsed_live_approval(
-        decision, go, readiness, plan, now_unix_ns=now
+        decision, go, readiness, plan, now_unix_ns=now, state=state
     )
     preparation = seal_collapsed_live_preparation(
-        approval, decision, go, readiness, plan
+        approval, decision, go, readiness, plan, state=state
     )
     identity = produce_collapsed_live_prompt_identity(
         preparation,
@@ -261,6 +261,7 @@ def build_sequence14_qualification(
         prompt_bytes=PROMPT_BYTES,
         prompt_repository_commit=human["prompt_commit"],
         prompt_repository_path=PROMPT_PATH,
+        state=state,
     )
     root_authority = produce_qualification_checkpoint_root_authority(
         checkpoint_root

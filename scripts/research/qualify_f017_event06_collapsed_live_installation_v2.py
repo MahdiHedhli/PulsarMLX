@@ -24,6 +24,7 @@ from f017_event06_collapsed_live_installation_v2 import (
     CollapsedInstallationEligibilityV2,
     CollapsedInstalledTripleV2,
     CollapsedLiveApprovalV2,
+    CollapsedLiveIntegrationStateV2,
     CollapsedLiveInstallationCapabilityV2,
     CollapsedLivePreparationV2,
     CollapsedLivePromptIdentityV2,
@@ -405,13 +406,31 @@ def _security_mutations(
             target_leaf="second-installation-attempt", expires_at_unix_ns=2**62,
         ),
     )
+    live_state = object.__new__(CollapsedLiveIntegrationStateV2)
+    object.__setattr__(live_state, "_mode", "LIVE_CANONICAL")
+    campaign.reject(
+        "qualification_decision_to_live_root_resolver",
+        "reverse_mode_substitution",
+        lambda: resolve_live_checkpoint_root_authority(
+            package["decision"], state=live_state
+        ),
+    )
+    campaign.reject(
+        "qualification_chain_to_live_preparation",
+        "reverse_mode_substitution",
+        lambda: prepare_collapsed_production_installation(
+            package["decision"], package["go"], package["approval"],
+            package["preparation"], package["bundle"], package["readiness"],
+            package["plan"], state=live_state,
+        ),
+    )
 
     public_wrong_args = (
-        lambda: produce_collapsed_live_approval(object(), package["go"], package["readiness"], package["plan"], now_unix_ns=FIXED_NOW),
-        lambda: produce_collapsed_live_approval(package["decision"], object(), package["readiness"], package["plan"], now_unix_ns=FIXED_NOW),
-        lambda: seal_collapsed_live_preparation(object(), package["decision"], package["go"], package["readiness"], package["plan"]),
-        lambda: seal_collapsed_live_preparation(package["approval"], object(), package["go"], package["readiness"], package["plan"]),
-        lambda: produce_collapsed_live_prompt_identity(object(), package["go"], package["plan"], prompt_bytes=PROMPT_BYTES, prompt_repository_commit=package["human"]["prompt_commit"], prompt_repository_path=PROMPT_PATH),
+        lambda: produce_collapsed_live_approval(object(), package["go"], package["readiness"], package["plan"], now_unix_ns=FIXED_NOW, state=package["state"]),
+        lambda: produce_collapsed_live_approval(package["decision"], object(), package["readiness"], package["plan"], now_unix_ns=FIXED_NOW, state=package["state"]),
+        lambda: seal_collapsed_live_preparation(object(), package["decision"], package["go"], package["readiness"], package["plan"], state=package["state"]),
+        lambda: seal_collapsed_live_preparation(package["approval"], object(), package["go"], package["readiness"], package["plan"], state=package["state"]),
+        lambda: produce_collapsed_live_prompt_identity(object(), package["go"], package["plan"], prompt_bytes=PROMPT_BYTES, prompt_repository_commit=package["human"]["prompt_commit"], prompt_repository_path=PROMPT_PATH, state=package["state"]),
         lambda: produce_checkpoint_bound_candidate_bundle(object(), package["identity"], package["go"], package["readiness"], package["plan"], package["root_authority"], state=package["state"]),
         lambda: produce_checkpoint_bound_candidate_bundle(package["preparation"], object(), package["go"], package["readiness"], package["plan"], package["root_authority"], state=package["state"]),
         lambda: prepare_collapsed_production_installation(object(), package["go"], package["approval"], package["preparation"], package["bundle"], package["readiness"], package["plan"], state=package["state"]),
@@ -435,8 +454,8 @@ def _security_mutations(
             Path(directory), now_unix_ns=FIXED_NOW + 10_000_000
         )
         splices = (
-            lambda: seal_collapsed_live_preparation(package["approval"], other["decision"], package["go"], package["readiness"], package["plan"]),
-            lambda: produce_collapsed_live_prompt_identity(other["preparation"], package["go"], package["plan"], prompt_bytes=PROMPT_BYTES, prompt_repository_commit=package["human"]["prompt_commit"], prompt_repository_path=PROMPT_PATH),
+            lambda: seal_collapsed_live_preparation(package["approval"], other["decision"], package["go"], package["readiness"], package["plan"], state=package["state"]),
+            lambda: produce_collapsed_live_prompt_identity(other["preparation"], package["go"], package["plan"], prompt_bytes=PROMPT_BYTES, prompt_repository_commit=package["human"]["prompt_commit"], prompt_repository_path=PROMPT_PATH, state=package["state"]),
             lambda: produce_checkpoint_bound_candidate_bundle(package["preparation"], other["identity"], package["go"], package["readiness"], package["plan"], package["root_authority"], state=package["state"]),
             lambda: prepare_collapsed_production_installation(package["decision"], package["go"], package["approval"], package["preparation"], other["bundle"], package["readiness"], package["plan"], state=package["state"]),
             lambda: produce_qualification_installation_capability(package["prepared"], other["bundle"], package["target"], target_leaf="splice", expires_at_unix_ns=2**62),

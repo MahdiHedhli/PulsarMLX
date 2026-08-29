@@ -209,7 +209,7 @@ class _ClosedArtifact:
 
 
 class BoundSanitizedHumanDecisionV2(_ClosedArtifact):
-    __slots__ = ("_collapsed_decision",)
+    __slots__ = ("_collapsed_decision", "mode")
 
     def __new__(cls, seal: object = None, *args: object) -> Self:
         del args
@@ -223,10 +223,14 @@ class BoundSanitizedHumanDecisionV2(_ClosedArtifact):
         value: dict[str, object],
         raw: bytes,
         collapsed_decision: SanitizedHumanDecisionV1,
+        mode: str,
     ) -> None:
         del seal
+        if mode not in {"QUALIFICATION_ONLY", "LIVE_CANONICAL"}:
+            raise TypeError("exact decision authority mode")
         self._initialize(value, raw)
         object.__setattr__(self, "_collapsed_decision", collapsed_decision)
+        object.__setattr__(self, "mode", mode)
 
     def _decision(self) -> SanitizedHumanDecisionV1:
         return self._collapsed_decision
@@ -614,7 +618,7 @@ def produce_bound_sanitized_human_decision(
     safe_value = dict(authority)
     safe_value["human_go_record_sha256"] = _sha(human_go_record_bytes)
     return BoundSanitizedHumanDecisionV2(
-        _HUMAN_AUTHORITY_SEAL, safe_value, authority_raw, collapsed
+        _HUMAN_AUTHORITY_SEAL, safe_value, authority_raw, collapsed, state._mode
     )
 
 
@@ -627,7 +631,11 @@ def seal_bound_collapsed_one_shot_go(
     now_unix_ns: int,
     state: CollapsedLiveIntegrationStateV2,
 ) -> CollapsedOneShotGoV1:
-    if type(decision) is not BoundSanitizedHumanDecisionV2:
+    if (
+        type(decision) is not BoundSanitizedHumanDecisionV2
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or decision.mode != state._mode
+    ):
         raise TypeError("exact bound sanitized decision required")
     go = seal_collapsed_one_shot_go(
         decision._decision(),
@@ -680,8 +688,14 @@ def produce_collapsed_live_approval(
     execution_plan: ValidatedExecutionPlan,
     *,
     now_unix_ns: int,
+    state: CollapsedLiveIntegrationStateV2,
 ) -> CollapsedLiveApprovalV2:
-    if type(decision) is not BoundSanitizedHumanDecisionV2 or type(go) is not CollapsedOneShotGoV1:
+    if (
+        type(decision) is not BoundSanitizedHumanDecisionV2
+        or type(go) is not CollapsedOneShotGoV1
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or decision.mode != state._mode
+    ):
         raise TypeError("exact decision and collapsed GO required")
     readiness = assert_readiness_v3_sealed(readiness)
     if type(execution_plan) is not ValidatedExecutionPlan:
@@ -700,6 +714,7 @@ def produce_collapsed_live_approval(
         "collapsed_go_sha256": go.source_sha256,
         "readiness_sha256": readiness.source_sha256,
         "execution_plan_sha256": execution_plan.sha256,
+        "authority_mode": state._mode,
         "authorization_id": ids["authorization_id"],
         "package_attempt_id": ids["package_attempt_id"],
         "state": "APPROVED_FOR_COLLAPSED_PREPARATION_ONLY",
@@ -714,11 +729,19 @@ def seal_collapsed_live_preparation(
     go: CollapsedOneShotGoV1,
     readiness: ValidatedEvent06ReadinessV3,
     execution_plan: ValidatedExecutionPlan,
+    *,
+    state: CollapsedLiveIntegrationStateV2,
 ) -> CollapsedLivePreparationV2:
     if type(approval) is not CollapsedLiveApprovalV2 or type(decision) is not BoundSanitizedHumanDecisionV2:
         raise TypeError("exact approval and decision required")
     readiness = assert_readiness_v3_sealed(readiness)
-    if type(go) is not CollapsedOneShotGoV1 or type(execution_plan) is not ValidatedExecutionPlan:
+    if (
+        type(go) is not CollapsedOneShotGoV1
+        or type(execution_plan) is not ValidatedExecutionPlan
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or decision.mode != state._mode
+        or approval.get("authority_mode") != state._mode
+    ):
         raise TypeError("exact GO and plan required")
     checks = (
         approval.get("human_authority_sha256") == decision.source_sha256,
@@ -735,6 +758,7 @@ def seal_collapsed_live_preparation(
         "collapsed_go_sha256": go.source_sha256,
         "readiness_sha256": readiness.source_sha256,
         "execution_plan_sha256": execution_plan.sha256,
+        "authority_mode": state._mode,
         "state": "PREPARED_NOT_INSTALLED",
     }
     raw = canonical_bytes(value)
@@ -749,10 +773,15 @@ def produce_collapsed_live_prompt_identity(
     prompt_bytes: bytes,
     prompt_repository_commit: str,
     prompt_repository_path: str,
+    state: CollapsedLiveIntegrationStateV2,
 ) -> CollapsedLivePromptIdentityV2:
     if type(preparation) is not CollapsedLivePreparationV2 or type(go) is not CollapsedOneShotGoV1:
         raise TypeError("exact preparation and GO required")
-    if type(execution_plan) is not ValidatedExecutionPlan:
+    if (
+        type(execution_plan) is not ValidatedExecutionPlan
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or preparation.get("authority_mode") != state._mode
+    ):
         raise TypeError("exact execution plan required")
     if (
         type(prompt_bytes) is not bytes
@@ -769,6 +798,7 @@ def produce_collapsed_live_prompt_identity(
         "preparation_sha256": preparation.source_sha256,
         "collapsed_go_sha256": go.source_sha256,
         "execution_plan_sha256": execution_plan.sha256,
+        "authority_mode": state._mode,
         **dict(ids),
         "prompt_repository_commit": prompt_repository_commit,
         "prompt_repository_path": prompt_repository_path,
@@ -873,7 +903,12 @@ def resolve_live_checkpoint_root_authority(
 ) -> LiveCheckpointRootAuthorityV2:
     """Resolve the configured alias only after a future fresh live GO."""
 
-    if type(decision) is not BoundSanitizedHumanDecisionV2 or state._mode != "LIVE_CANONICAL":
+    if (
+        type(decision) is not BoundSanitizedHumanDecisionV2
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or decision.mode != "LIVE_CANONICAL"
+        or state._mode != "LIVE_CANONICAL"
+    ):
         raise TypeError("fresh live decision and live state required")
     resolved = _LIVE_CHECKPOINT_ROOT.resolve(strict=True)
     state._record("live_checkpoint_root_resolutions")
@@ -945,7 +980,11 @@ def produce_checkpoint_bound_candidate_bundle(
 ) -> CheckpointBoundCandidateBundleV2:
     if type(preparation) is not CollapsedLivePreparationV2 or type(identity) is not CollapsedLivePromptIdentityV2:
         raise TypeError("exact preparation and prompt identity required")
-    if type(go) is not CollapsedOneShotGoV1 or type(execution_plan) is not ValidatedExecutionPlan:
+    if (
+        type(go) is not CollapsedOneShotGoV1
+        or type(execution_plan) is not ValidatedExecutionPlan
+        or type(state) is not CollapsedLiveIntegrationStateV2
+    ):
         raise TypeError("exact GO and execution plan required")
     readiness = assert_readiness_v3_sealed(readiness)
     expected_root_type = (
@@ -955,7 +994,12 @@ def produce_checkpoint_bound_candidate_bundle(
     )
     if type(root_authority) is not expected_root_type:
         raise TypeError("checkpoint root mode/type substitution")
-    if preparation.get("collapsed_go_sha256") != go.source_sha256 or identity.get("preparation_sha256") != preparation.source_sha256:
+    if (
+        preparation.get("collapsed_go_sha256") != go.source_sha256
+        or identity.get("preparation_sha256") != preparation.source_sha256
+        or preparation.get("authority_mode") != state._mode
+        or identity.get("authority_mode") != state._mode
+    ):
         raise ValueError("candidate predecessor splice")
     ids = derive_production_event_identities(go)
     candidate = build_identity_candidate_from_readiness_v3(
@@ -983,6 +1027,7 @@ def produce_checkpoint_bound_candidate_bundle(
         "execution_plan_sha256": execution_plan.sha256,
         "root_authority_sha256": root_authority.source_sha256,
         "root_authority_mode": root_authority.mode,
+        "authority_mode": state._mode,
         "candidate_sha256": candidate.source_sha256,
         "authorization_id": ids["authorization_id"],
         "package_attempt_id": ids["package_attempt_id"],
@@ -1087,6 +1132,8 @@ def prepare_collapsed_production_installation(
         raise TypeError("exact approval and preparation required")
     if type(bundle) is not CheckpointBoundCandidateBundleV2 or type(execution_plan) is not ValidatedExecutionPlan:
         raise TypeError("exact bundle and plan required")
+    if type(state) is not CollapsedLiveIntegrationStateV2:
+        raise TypeError("exact integration state required")
     readiness = assert_readiness_v3_sealed(readiness)
     candidate = bundle.candidate
     candidate_raw = canonical_bytes(candidate.as_dict())
@@ -1098,6 +1145,12 @@ def prepare_collapsed_production_installation(
         bundle.eligibility.get("candidate_sha256") == candidate.source_sha256,
         bundle.eligibility.get("readiness_sha256") == readiness.source_sha256,
         bundle.eligibility.get("execution_plan_sha256") == execution_plan.sha256,
+        decision.mode == state._mode,
+        approval.get("authority_mode") == state._mode,
+        preparation.get("authority_mode") == state._mode,
+        bundle.prompt_identity.get("authority_mode") == state._mode,
+        bundle.eligibility.get("authority_mode") == state._mode,
+        bundle.eligibility.get("root_authority_mode") == state._mode,
     )
     if not all(checks):
         raise ValueError("prepared installation causal binding")
@@ -1203,7 +1256,12 @@ def resolve_live_installation_target(
     *,
     state: CollapsedLiveIntegrationStateV2,
 ) -> LiveInstallationTargetV2:
-    if type(decision) is not BoundSanitizedHumanDecisionV2 or state._mode != "LIVE_CANONICAL":
+    if (
+        type(decision) is not BoundSanitizedHumanDecisionV2
+        or type(state) is not CollapsedLiveIntegrationStateV2
+        or decision.mode != "LIVE_CANONICAL"
+        or state._mode != "LIVE_CANONICAL"
+    ):
         raise TypeError("fresh live decision and live state required")
     return LiveInstallationTargetV2(
         _TARGET_SEAL, _LIVE_INSTALLATION_ROOT.resolve(strict=True)
