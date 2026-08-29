@@ -173,6 +173,7 @@ def run() -> dict[str, object]:
             "qualification_result": qualification["result"],
             "production_live_registry_creates_or_writes": 0,
             "original_checkpoint_access": "NONE",
+            "event06_executed": False,
             "result": "PASS" if (
                 not pre_exists and not post_probe_exists and not post_exists
                 and probe.returncode != 0 and exit_status == 0
