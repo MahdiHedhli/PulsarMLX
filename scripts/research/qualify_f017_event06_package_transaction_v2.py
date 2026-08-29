@@ -18,6 +18,7 @@ from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
 from f017_event06_dag_derived_control_path_v1 import run_full_call_path
 from execute_f017_corrected_oracle_event_v12_bridge import _freeze, _thaw
 from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
+from f017_event06_storage_authority_v1 import fixed_live_registry_root
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
 from generate_f017_event06_authority_dag_v2 import build as build_dag
@@ -73,7 +74,7 @@ def qualify() -> dict[str, object]:
                 lambda: registry.reserve_live_package_attempt(production),
                 (RuntimeError,),
             )
-        if observed_roots != [registry.LIVE_REGISTRY_ROOT]:
+        if observed_roots != [fixed_live_registry_root()]:
             raise AssertionError("fixed live registry derivation")
 
         for name in (
@@ -102,10 +103,10 @@ def qualify() -> dict[str, object]:
             raise AssertionError("production authority reached qualification root")
 
         for candidate in (
-            registry.LIVE_REGISTRY_ROOT,
+            fixed_live_registry_root(),
             Path("/var/tmp/pulsarmlx-f017-event06-v12-package-registry"),
-            registry.LIVE_REGISTRY_ROOT / "child",
-            registry.LIVE_REGISTRY_ROOT.parent,
+            fixed_live_registry_root() / "child",
+            fixed_live_registry_root().parent,
         ):
             rejected(
                 lambda candidate=candidate: registry.reserve_qualification_package_attempt(
@@ -115,7 +116,7 @@ def qualify() -> dict[str, object]:
             )
 
         live_alias = root / "live-root-alias"
-        live_alias.symlink_to(registry.LIVE_REGISTRY_ROOT, target_is_directory=True)
+        live_alias.symlink_to(fixed_live_registry_root(), target_is_directory=True)
         rejected(
             lambda: registry.reserve_qualification_package_attempt(synthetic, live_alias),
             (ValueError,),

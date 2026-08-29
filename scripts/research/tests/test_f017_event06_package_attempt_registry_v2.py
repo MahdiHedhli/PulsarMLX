@@ -11,6 +11,7 @@ import pytest
 
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
+import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator_v2
 from execute_f017_corrected_oracle_event_v12_bridge import (
     bank_live_package_start,
     bank_qualification_package_start,
@@ -19,6 +20,9 @@ from execute_f017_corrected_oracle_event_v12_bridge import (
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
 from f017_event06_dag_derived_control_path_v1 import run_full_call_path
 from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
+from f017_event06_storage_authority_v1 import fixed_live_registry_root
+from f017_event06_sequence18_storage_census_v1 import census as storage_census
+from f017_event06_sequence18_vfs_v1 import InMemorySafetyFilesystem
 from qualify_f017_event06_package_uniqueness_v1 import qualify as qualify_uniqueness
 from validate_f017_event06_authority_dag_v2 import validate as validate_dag_v2
 
@@ -43,6 +47,8 @@ def test_public_production_signature_has_no_storage_or_generic_input():
         any(word in name for word in prohibited)
         for name in coordinator.parameters
     )
+    successor = inspect.signature(coordinator_v2.execute_event06_bridge)
+    assert tuple(successor.parameters) == ("installed", "execution_plan", "bridge_input")
 
 
 def test_cross_mode_authority_and_root_intersections_fail_before_observation(tmp_path):
@@ -65,10 +71,10 @@ def test_cross_mode_authority_and_root_intersections_fail_before_observation(tmp
 
     synthetic = fixture_values()[1]
     for root in (
-        registry.LIVE_REGISTRY_ROOT,
+        fixed_live_registry_root(),
         Path("/var/tmp/pulsarmlx-f017-event06-v12-package-registry"),
-        registry.LIVE_REGISTRY_ROOT / "child",
-        registry.LIVE_REGISTRY_ROOT.parent,
+        fixed_live_registry_root() / "child",
+        fixed_live_registry_root().parent,
     ):
         with pytest.raises(ValueError, match="intersects live registry"):
             registry.reserve_qualification_package_attempt(synthetic, root)
@@ -87,21 +93,22 @@ def test_darwin_alias_and_symlink_alias_reject_before_registry_creation(tmp_path
     link = tmp_path / "qualification-alias"
     stand_in.mkdir()
     link.symlink_to(stand_in, target_is_directory=True)
-    with patch.object(registry, "LIVE_REGISTRY_ROOT", stand_in):
+    with patch.object(registry, "_LIVE_REGISTRY_ROOT", stand_in):
         with pytest.raises(ValueError, match="resolves into live registry"):
             registry.reserve_qualification_package_attempt(synthetic, link)
 
 
-def test_registry_key_is_mode_and_package_scoped_only(tmp_path):
+def test_registry_key_is_one_package_identity_across_reinstallations(tmp_path):
     production, qualification = _production_and_qualification(tmp_path)
     live = registry._reservation_value(production, "LIVE_CANONICAL")
     dry = registry._reservation_value(qualification.authority, "QUALIFICATION_ONLY")
-    assert live["registry_key_sha256"] != dry["registry_key_sha256"]
+    assert live["registry_key_sha256"] == dry["registry_key_sha256"]
     changed = production.as_dict()
-    changed["authorization_id"] = "F017-DIFFERENT-AUTHORIZATION"
+    changed["installed_authority_sha256"] = "f" * 64
     assert registry._sha({
-        "authority_mode": "LIVE_CANONICAL",
+        "authorization_id": changed["authorization_id"],
         "package_attempt_id": changed["package_attempt_id"],
+        "checkpoint_set_sha256": changed["checkpoint_set_sha256"],
     }) == live["registry_key_sha256"]
 
 
@@ -125,7 +132,7 @@ def test_production_fixed_root_is_internal_and_intercepted_before_creation(tmp_p
     with patch.object(registry, "_secure_directory", abort):
         with pytest.raises(RuntimeError, match="INTERPOSED_BEFORE_CREATE"):
             registry.reserve_live_package_attempt(production)
-    assert observed == [registry.LIVE_REGISTRY_ROOT]
+    assert observed == [fixed_live_registry_root()]
 
 
 def test_qualification_types_are_sealed_and_not_live_substitutes(tmp_path):
@@ -198,7 +205,7 @@ def test_environment_and_cwd_cannot_select_production_registry(tmp_path, monkeyp
     ):
         with pytest.raises(RuntimeError, match="STOP"):
             registry.reserve_live_package_attempt(production)
-    assert observed == [registry.LIVE_REGISTRY_ROOT]
+    assert observed == [fixed_live_registry_root()]
 
 
 def test_twenty_process_reservation_and_terminal_claim_races_have_one_winner():
@@ -207,6 +214,32 @@ def test_twenty_process_reservation_and_terminal_claim_races_have_one_winner():
     assert result["package_terminal_claim_winners_per_identity"] == 1
     assert result["competing_terminal_outcomes_accepted"] == 0
     assert result["ambiguous_accounting_outcomes"] == 0
+    assert result["losing_contenders_with_pre_package_start_abort_proof"] == 19
+    assert len(result["loser_records"]) == 19
+
+
+def test_whole_closure_storage_and_legacy_writer_census_passes():
+    result = storage_census()
+    assert result["result"] == "PASS"
+    assert result["production_public_storage_location_inputs"] == 0
+    assert result["production_indirect_storage_location_inputs"] == 0
+    assert result["legacy_production_writers_total"] == (
+        result["legacy_production_writers_removed"]
+        + result["legacy_production_writers_fail_closed_proven"]
+    )
+    assert result["legacy_production_writers_reachable_to_safety_state"] == 0
+    assert result["reservation_reclaim_expire_unlock_or_override_symbols_reachable"] == 0
+
+
+def test_live_package_key_and_start_are_exclusive_in_process_vfs(tmp_path):
+    production, _qualification = _production_and_qualification(tmp_path)
+    filesystem = InMemorySafetyFilesystem()
+    with filesystem.installed():
+        start = bank_live_package_start(production)
+        with pytest.raises(FileExistsError):
+            bank_live_package_start(production)
+    assert start.get("authority_mode") == "LIVE_CANONICAL"
+    assert filesystem.snapshot()["file_count"] == 2
 
 
 def test_source_derived_dag_covers_split_and_live_terminal_boundaries():

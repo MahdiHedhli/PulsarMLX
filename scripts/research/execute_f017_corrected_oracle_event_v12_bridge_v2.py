@@ -12,7 +12,7 @@ import hashlib
 from pathlib import Path
 
 from f017_binary_comparison_authority_v11 import derive_summary, validate_summary
-from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
+from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_corrected_oracle_primary_wrapper_v12_bridge_v2 import execute_bridge_and_bank as execute_primary
 from f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 import execute_bridge_and_bank as execute_secondary
@@ -25,6 +25,8 @@ from f017_event06_numerical_bridge_v2 import (
 )
 import f017_event06_numerical_bridge_v1 as legacy_bridge
 import execute_f017_corrected_oracle_event_v12_bridge as legacy_coordinator
+from f017_event06_storage_authority_v1 import package_storage_layout
+import f017_event06_storage_primitives_v1 as safety_storage
 from f017_result_artifacts_v11 import closure_root
 
 SUCCESSOR_CALL_PATH = (
@@ -41,7 +43,7 @@ def _sha(value: dict[str, object]) -> str:
 
 
 def _bank(path: Path, value: dict[str, object], expected: str) -> None:
-    if bank_exclusive(path, value) != expected:
+    if safety_storage.bank_exclusive(path, value) != expected:
         raise ValueError("prompt-bound bridge banking")
 
 
@@ -72,7 +74,7 @@ def validate_pre_package_bridge_input(
         raise ValueError("pre-package prompt-bound bridge continuity")
 
 
-def execute_consumers(
+def _execute_consumers(
     bridge: ValidatedNumericalBridgeV2,
     leases: LeaseSet,
     primary_directory: Path,
@@ -83,10 +85,10 @@ def execute_consumers(
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(leases) is not LeaseSet:
         raise TypeError("validated successor bridge and lease set required")
     historical = bridge.legacy_bridge
-    package_directory.mkdir(parents=True, exist_ok=True)
+    safety_storage.secure_directory(package_directory)
     completed_phase = "IDENTITY_TERMINAL"
     try:
-        primary_start = legacy_coordinator.bank_consumer_start(
+        primary_start = legacy_coordinator._bank_consumer_start(
             historical, "PRIMARY", package_directory / "bridge-primary-durable-start.json"
         )
         primary_numerical = consumer_view(
@@ -103,7 +105,7 @@ def execute_consumers(
         primary_binding = legacy_bridge.primary_terminal_binding(
             primary, historical, primary["bridge_bundle_binding"]
         )
-        secondary_start = legacy_coordinator.bank_consumer_start(
+        secondary_start = legacy_coordinator._bank_consumer_start(
             historical, "SECONDARY", package_directory / "bridge-secondary-durable-start.json",
             primary_terminal_binding_sha256=primary_binding.sha256,
         )
@@ -251,7 +253,7 @@ def execute_consumers(
     )
 
 
-def execute_event06_bridge(
+def execute_event06_bridge_qualification(
     candidate_path: Path,
     installed_path: Path,
     receipt_path: Path,
@@ -264,7 +266,7 @@ def execute_event06_bridge(
     secondary_directory: Path,
     package_directory: Path,
 ) -> dict[str, object]:
-    """One fixed production entrypoint; accepts no identity mapping or adapter."""
+    """Historical no-access qualification harness with disposable paths."""
     gate = legacy_coordinator.validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
     validate_pre_package_bridge_input(bridge_input, installed, execution_plan)
@@ -288,7 +290,7 @@ def execute_event06_bridge(
         }
         _bank(package_directory / "prompt-bound-bridge-failure.json", failure, _sha(failure))
         raise
-    execution = execute_consumers(
+    execution = _execute_consumers(
         bridge, leases, primary_directory, secondary_directory, package_directory
     )
     views = execution["consumer_views"]
@@ -312,6 +314,79 @@ def execute_event06_bridge(
     for role, view in views.items():
         value = view.as_dict()
         _bank(package_directory / f"prompt-bound-{role.lower().replace('_', '-')}-view.json", value, view.sha256)
+    return {
+        "bridge_input": bridge_input, "bridge": bridge, "package_start": package_start,
+        "identity_report": identity_report, "execution": execution,
+        "legacy_package": legacy_package, "consumer_views": views,
+        "accounting_closure": accounting, "accounting_closure_sha256": accounting_sha,
+        "terminal": terminal, "terminal_sha256": terminal_sha, "result": "PASS",
+    }
+
+
+def execute_event06_bridge(
+    installed: ValidatedIdentityAuthority,
+    execution_plan: ValidatedExecutionPlan,
+    bridge_input: PromptBoundIdentityBridgeInputV2,
+) -> dict[str, object]:
+    """Prompt-bound live path with sealed, package-derived storage only."""
+    validate_pre_package_bridge_input(bridge_input, installed, execution_plan)
+    authority = installed.as_dict()
+    if authority.get("authority_scope") != "PRODUCTION":
+        raise ValueError("production Event 06 authority required")
+    package_start = legacy_coordinator.bank_live_package_start(installed)
+    layout = package_storage_layout(package_start.reservation.root)
+    leases, identity_report = legacy_coordinator.run_identity_stage(
+        installed,
+        package_attempt_id=authority["package_attempt_id"],
+        package_durable_start=True,
+        evidence_directory=layout["identity"],
+    )
+    try:
+        identity = legacy_bridge.bind_identity_stage(installed, leases, identity_report)
+        bridge = derive_bridge(bridge_input, installed, identity, execution_plan)
+    except Exception:
+        release_report = leases.release()
+        failure = {
+            "schema": "pulsarmlx.f017.event06-v12-prompt-bound-bridge-failure/2.1.0",
+            "identity_bridge_input_sha256": bridge_input.sha256,
+            "event_identity_plan_sha256": bridge_input.get("event_identity_plan_sha256"),
+            "package_attempt_id": authority["package_attempt_id"],
+            "completed_phase": "IDENTITY_TERMINAL",
+            "release_report": release_report,
+            "result": "TERMINAL_FAILURE",
+        }
+        _bank(layout["package"] / "prompt-bound-bridge-failure.json", failure, _sha(failure))
+        raise
+    execution = _execute_consumers(
+        bridge, leases, layout["primary"], layout["secondary"], layout["package"]
+    )
+    views = execution["consumer_views"]
+    accounting, accounting_sha = build_accounting_closure(
+        bridge, views["ACCOUNTING"], execution["accounting_binding"]
+    )
+    _bank(
+        layout["package"] / "prompt-bound-accounting-closure.json",
+        accounting.as_dict(), accounting_sha,
+    )
+    legacy_package = legacy_coordinator.close_bridge_package(
+        bridge.legacy_bridge, package_start, execution
+    )
+    historical_package_view = legacy_bridge.package_terminal_view(
+        bridge.legacy_bridge, legacy_package["transition_chain"],
+        execution["v11_closure_binding"], execution["accounting_binding"],
+    )
+    package_view = consumer_view(bridge, "PACKAGE_TERMINAL", historical_package_view)
+    views["PACKAGE_TERMINAL"] = package_view
+    terminal, terminal_sha = build_package_terminal(
+        bridge, package_view, legacy_package["terminal"], accounting,
+        legacy_package["successor_terminal_sink"],
+    )
+    for role, view in views.items():
+        value = view.as_dict()
+        _bank(
+            layout["package"] / f"prompt-bound-{role.lower().replace('_', '-')}-view.json",
+            value, view.sha256,
+        )
     return {
         "bridge_input": bridge_input, "bridge": bridge, "package_start": package_start,
         "identity_report": identity_report, "execution": execution,

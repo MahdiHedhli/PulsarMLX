@@ -1,5 +1,5 @@
 {
-  "edge_count": 47,
+  "edge_count": 49,
   "edges": [
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
@@ -15,6 +15,7 @@
       "destination_node": "DECISION",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-001",
+      "generated_lifecycle_order": 1,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -43,6 +44,7 @@
       "destination_node": "COLLAPSED_GO",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-002",
+      "generated_lifecycle_order": 2,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -71,6 +73,7 @@
       "destination_node": "EXECUTION_PLAN",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-003",
+      "generated_lifecycle_order": 3,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -99,6 +102,7 @@
       "destination_node": "APPROVAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-004",
+      "generated_lifecycle_order": 4,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -127,6 +131,7 @@
       "destination_node": "PREPARATION",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-005",
+      "generated_lifecycle_order": 5,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -155,6 +160,7 @@
       "destination_node": "PROMPT_IDENTITY",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-006",
+      "generated_lifecycle_order": 6,
       "lifecycle_phase": "PREPARATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -183,6 +189,7 @@
       "destination_node": "CANDIDATE_BUNDLE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-007",
+      "generated_lifecycle_order": 7,
       "lifecycle_phase": "CANDIDATE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -211,6 +218,7 @@
       "destination_node": "PREPARED_INSTALLATION",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-008",
+      "generated_lifecycle_order": 8,
       "lifecycle_phase": "INSTALLATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -239,6 +247,7 @@
       "destination_node": "INSTALL_CAPABILITY",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-009",
+      "generated_lifecycle_order": 9,
       "lifecycle_phase": "INSTALLATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -267,6 +276,7 @@
       "destination_node": "DURABLE_TRANSACTION",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-010",
+      "generated_lifecycle_order": 10,
       "lifecycle_phase": "INSTALLATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -295,6 +305,7 @@
       "destination_node": "INSTALLED_TRIPLE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-011",
+      "generated_lifecycle_order": 11,
       "lifecycle_phase": "INSTALLATION",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -323,6 +334,7 @@
       "destination_node": "PACKAGE_GATE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-012",
+      "generated_lifecycle_order": 12,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -351,6 +363,7 @@
       "destination_node": "IDENTITY_STAGE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-013",
+      "generated_lifecycle_order": 13,
       "lifecycle_phase": "IDENTITY_INTERPOSE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -379,6 +392,7 @@
       "destination_node": "IDENTITY_STAGE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-014",
+      "generated_lifecycle_order": 14,
       "lifecycle_phase": "IDENTITY_INTERPOSE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -390,7 +404,7 @@
       "producer_module": "scripts/research/f017_event06_dag_derived_control_path_v1.py",
       "producer_symbol": "_synthetic_identity_stage",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f76fce37e4bac509d5ad1f4991f7aa9a8e62188785f7399421ab6dba4685de33",
+      "source_blob_sha256": "10bb3b98072c33b26203e95682fd9f96e7b71d746fdb9e04373146f31bca29b4",
       "source_node": "SYNTHETIC_LEASES"
     },
     {
@@ -407,6 +421,7 @@
       "destination_node": "BRIDGE_INPUT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-015",
+      "generated_lifecycle_order": 15,
       "lifecycle_phase": "BRIDGE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -435,6 +450,7 @@
       "destination_node": "BRIDGE_INPUT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-016",
+      "generated_lifecycle_order": 16,
       "lifecycle_phase": "BRIDGE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -463,6 +479,7 @@
       "destination_node": "BRIDGE_INPUT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-017",
+      "generated_lifecycle_order": 17,
       "lifecycle_phase": "BRIDGE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -491,6 +508,7 @@
       "destination_node": "NUMERICAL_BRIDGE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-018",
+      "generated_lifecycle_order": 18,
       "lifecycle_phase": "BRIDGE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -519,6 +537,7 @@
       "destination_node": "NUMERICAL_BRIDGE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-019",
+      "generated_lifecycle_order": 19,
       "lifecycle_phase": "BRIDGE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -547,6 +566,7 @@
       "destination_node": "PRIMARY_NUMERICAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-020",
+      "generated_lifecycle_order": 20,
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -575,6 +595,7 @@
       "destination_node": "PRIMARY_NUMERICAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-021",
+      "generated_lifecycle_order": 21,
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -603,6 +624,7 @@
       "destination_node": "PRIMARY_RESULT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-022",
+      "generated_lifecycle_order": 22,
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -631,6 +653,7 @@
       "destination_node": "PRIMARY_RESULT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-023",
+      "generated_lifecycle_order": 23,
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -659,6 +682,7 @@
       "destination_node": "PRIMARY_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-024",
+      "generated_lifecycle_order": 24,
       "lifecycle_phase": "PRIMARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -670,7 +694,7 @@
       "producer_module": "scripts/research/f017_event06_dag_derived_control_path_v1.py",
       "producer_symbol": "_synthetic_bundle",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "f76fce37e4bac509d5ad1f4991f7aa9a8e62188785f7399421ab6dba4685de33",
+      "source_blob_sha256": "10bb3b98072c33b26203e95682fd9f96e7b71d746fdb9e04373146f31bca29b4",
       "source_node": "PRIMARY_RESULT"
     },
     {
@@ -687,6 +711,7 @@
       "destination_node": "SECONDARY_NUMERICAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-025",
+      "generated_lifecycle_order": 25,
       "lifecycle_phase": "SECONDARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -715,6 +740,7 @@
       "destination_node": "SECONDARY_NUMERICAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-026",
+      "generated_lifecycle_order": 26,
       "lifecycle_phase": "SECONDARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -743,6 +769,7 @@
       "destination_node": "SECONDARY_RESULT",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-027",
+      "generated_lifecycle_order": 27,
       "lifecycle_phase": "SECONDARY",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -771,6 +798,7 @@
       "destination_node": "COMPARISON",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-028",
+      "generated_lifecycle_order": 28,
       "lifecycle_phase": "COMPARISON",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -799,6 +827,7 @@
       "destination_node": "COMPARISON",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-029",
+      "generated_lifecycle_order": 29,
       "lifecycle_phase": "COMPARISON",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -827,6 +856,7 @@
       "destination_node": "RELEASE",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-030",
+      "generated_lifecycle_order": 30,
       "lifecycle_phase": "RELEASE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -855,6 +885,7 @@
       "destination_node": "RELEASE_BINDING",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-031",
+      "generated_lifecycle_order": 31,
       "lifecycle_phase": "RELEASE",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -883,6 +914,7 @@
       "destination_node": "ACCOUNTING",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-032",
+      "generated_lifecycle_order": 32,
       "lifecycle_phase": "ACCOUNTING",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -911,6 +943,7 @@
       "destination_node": "ACCOUNTING",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-033",
+      "generated_lifecycle_order": 33,
       "lifecycle_phase": "ACCOUNTING",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -939,6 +972,7 @@
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-034",
+      "generated_lifecycle_order": 34,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -967,6 +1001,7 @@
       "destination_node": "PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PRODUCER_OBJECT_AND_BOUND_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-035",
+      "generated_lifecycle_order": 35,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "mapping_or_deserialized_lookalike",
@@ -995,6 +1030,7 @@
       "destination_node": "LIVE_PACKAGE_START",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
       "edge_id": "F017-DAG2-036",
+      "generated_lifecycle_order": 200,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1006,7 +1042,36 @@
       "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "producer_symbol": "bank_live_package_start",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a1d3f56255d596e31ae10d987508bac403bbbe57c527f91c090291a6e4f2235",
+      "source_blob_sha256": "0d1c6b72123f1ee410c0cf78f1380483757096722d837f80e26ee5b095a6f8bc",
+      "source_node": "LIVE_PACKAGE_RESERVATION"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedDurableStart",
+      "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_package_start-execute_event06_bridge_qualification",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
+      "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "consumer_symbol": "execute_event06_bridge_qualification",
+      "destination_node": "LIVE_PACKAGE_START",
+      "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-037",
+      "generated_lifecycle_order": 200,
+      "lifecycle_phase": "PACKAGE_GATE",
+      "negative_mutation_family": [
+        "cross_mode_substitution",
+        "package_digest_substitution",
+        "second_attempt",
+        "terminal_claim_replay"
+      ],
+      "output_type_or_schema": "ValidatedDurableStart",
+      "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "producer_symbol": "bank_live_package_start",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "0d1c6b72123f1ee410c0cf78f1380483757096722d837f80e26ee5b095a6f8bc",
       "source_node": "LIVE_PACKAGE_RESERVATION"
     },
     {
@@ -1022,7 +1087,8 @@
       "consumer_symbol": "execute_event06_bridge",
       "destination_node": "LIVE_PACKAGE_START",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-037",
+      "edge_id": "F017-DAG2-038",
+      "generated_lifecycle_order": 200,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1034,7 +1100,36 @@
       "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
       "producer_symbol": "bank_live_package_start",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a1d3f56255d596e31ae10d987508bac403bbbe57c527f91c090291a6e4f2235",
+      "source_blob_sha256": "0d1c6b72123f1ee410c0cf78f1380483757096722d837f80e26ee5b095a6f8bc",
+      "source_node": "LIVE_PACKAGE_RESERVATION"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedDurableStart",
+      "authority_mode": "LIVE_CANONICAL",
+      "composition_evidence": {
+        "case_id": "SEQ18-bank_live_package_start-execute_event06_bridge_qualification",
+        "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_source_derived_dag_covers_split_and_live_terminal_boundaries"
+      },
+      "consumer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
+      "consumer_symbol": "execute_event06_bridge_qualification",
+      "destination_node": "LIVE_PACKAGE_START",
+      "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-039",
+      "generated_lifecycle_order": 200,
+      "lifecycle_phase": "PACKAGE_GATE",
+      "negative_mutation_family": [
+        "cross_mode_substitution",
+        "package_digest_substitution",
+        "second_attempt",
+        "terminal_claim_replay"
+      ],
+      "output_type_or_schema": "ValidatedDurableStart",
+      "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "producer_symbol": "bank_live_package_start",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "0d1c6b72123f1ee410c0cf78f1380483757096722d837f80e26ee5b095a6f8bc",
       "source_node": "LIVE_PACKAGE_RESERVATION"
     },
     {
@@ -1050,7 +1145,8 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-038",
+      "edge_id": "F017-DAG2-040",
+      "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1062,7 +1158,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
@@ -1078,7 +1174,8 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-039",
+      "edge_id": "F017-DAG2-041",
+      "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1090,7 +1187,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
@@ -1106,7 +1203,8 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-040",
+      "edge_id": "F017-DAG2-042",
+      "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1118,7 +1216,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
@@ -1134,7 +1232,8 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-041",
+      "edge_id": "F017-DAG2-043",
+      "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1146,7 +1245,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
@@ -1162,7 +1261,8 @@
       "consumer_symbol": "close_bridge_package",
       "destination_node": "LIVE_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-042",
+      "edge_id": "F017-DAG2-044",
+      "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1174,7 +1274,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_live_terminal_sinks",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "LIVE_EXECUTION_AND_ACCOUNTING_CLOSURE"
     },
     {
@@ -1190,7 +1290,8 @@
       "consumer_symbol": "close_bridge_package",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-043",
+      "edge_id": "F017-DAG2-045",
+      "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1202,7 +1303,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
@@ -1218,7 +1319,8 @@
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-044",
+      "edge_id": "F017-DAG2-046",
+      "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1230,7 +1332,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
@@ -1246,7 +1348,8 @@
       "consumer_symbol": "bank_live_package_start",
       "destination_node": "LIVE_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-045",
+      "edge_id": "F017-DAG2-047",
+      "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1258,7 +1361,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_live_package_attempt",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "INSTALLED_AUTHORITY"
     },
     {
@@ -1274,7 +1377,8 @@
       "consumer_symbol": "bank_qualification_package_start",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-046",
+      "edge_id": "F017-DAG2-048",
+      "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1286,7 +1390,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     },
     {
@@ -1302,7 +1406,8 @@
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-047",
+      "edge_id": "F017-DAG2-049",
+      "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
         "cross_mode_substitution",
@@ -1314,17 +1419,85 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "0a525337e7174fa986fc33164869ac63e99a924935e6c9a319568d75a4bae96a",
+      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     }
   ],
   "extraneous_dag_edges": 0,
   "generation": "V12",
+  "legacy_production_writers_reachable_to_safety_state": 0,
+  "legacy_production_writers_total": 5,
   "live_terminal_boundaries_total": 3,
   "original_checkpoint_access_permitted": false,
+  "production_indirect_storage_location_inputs": 0,
+  "production_public_storage_location_inputs": 0,
   "repair_generation": 1,
+  "safety_storage_inventory": {
+    "fixed_authority_runtime_digest_verified": true,
+    "fixed_live_registry_root_canonical_utf8_length": 60,
+    "fixed_live_registry_root_canonical_utf8_sha256": "e9628d51208d2340d67885b471bf87a5cfa0a372a759e095378f5609c1843e83",
+    "legacy_production_writers_fail_closed_proven": 5,
+    "legacy_production_writers_reachable_to_safety_state": 0,
+    "legacy_production_writers_removed": 0,
+    "legacy_production_writers_total": 5,
+    "legacy_writer_rows": [
+      {
+        "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+        "module": "f017_event06_package_attempt_registry_v1",
+        "symbol": "reserve_package_attempt"
+      },
+      {
+        "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+        "module": "f017_event06_package_attempt_registry_v1",
+        "symbol": "claim_terminal_sinks"
+      },
+      {
+        "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+        "module": "f017_event06_package_attempt_registry_v1",
+        "symbol": "claim_qualification_terminal_sinks"
+      },
+      {
+        "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+        "module": "f017_event06_package_attempt_registry_v1",
+        "symbol": "bank_terminal"
+      },
+      {
+        "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+        "module": "execute_f017_corrected_oracle_event_v12_bridge",
+        "symbol": "bank_package_start"
+      }
+    ],
+    "production_closure_modules": [
+      "scripts/research/f017_event06_storage_authority_v1.py",
+      "scripts/research/f017_event06_storage_primitives_v1.py",
+      "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
+      "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "scripts/research/f017_event06_numerical_bridge_v2.py"
+    ],
+    "production_entrypoints": [
+      "f017_event06_package_attempt_registry_v2:reserve_live_package_attempt",
+      "f017_event06_package_attempt_registry_v2:load_live_package_attempt",
+      "f017_event06_package_attempt_registry_v2:claim_live_terminal_sinks",
+      "f017_event06_package_attempt_registry_v2:bank_live_terminal",
+      "execute_f017_corrected_oracle_event_v12_bridge:bank_live_package_start",
+      "execute_f017_corrected_oracle_event_v12_bridge:execute_event06_bridge",
+      "execute_f017_corrected_oracle_event_v12_bridge_v2:execute_event06_bridge"
+    ],
+    "production_indirect_storage_location_findings": [],
+    "production_indirect_storage_location_inputs": 0,
+    "production_public_storage_location_findings": [],
+    "production_public_storage_location_inputs": 0,
+    "production_storage_authority_source": "scripts/research/f017_event06_storage_authority_v1.py:24:fixed_live_registry_root",
+    "production_storage_authority_source_blob_sha256": "e1d3ef694ea4ac6396041bf171d838d45a5206493a2a76b7cd3a7150eaf90f19",
+    "reclaim_findings": [],
+    "reservation_reclaim_expire_unlock_or_override_symbols_reachable": 0,
+    "result": "PASS",
+    "schema": "pulsarmlx.f017.event06-v12-sequence18-storage-authority-census/1.0.0"
+  },
   "schema": "pulsarmlx.f017.event06-v12-authority-dag/2.0.0",
   "source_inventory_method": "AST_PUBLIC_CALL_AND_SIGNATURE_EXTRACTION",
-  "source_typed_boundaries_total": 47,
+  "source_typed_boundaries_total": 49,
   "uncovered_typed_boundaries": 0
 }

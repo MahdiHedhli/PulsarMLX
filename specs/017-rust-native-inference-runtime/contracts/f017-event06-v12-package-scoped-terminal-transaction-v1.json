@@ -1,5 +1,5 @@
 {
-  "schema": "pulsarmlx.f017.event06-v12-package-scoped-terminal-transaction/1.0.0",
+  "schema": "pulsarmlx.f017.event06-v12-package-scoped-terminal-transaction/1.1.0",
   "generation": "V12",
   "repair_generation": 1,
   "classification": "PACKAGE_SCOPED_TERMINAL_UNIQUENESS_AND_NO_SECOND_ATTEMPT",
@@ -13,6 +13,15 @@
     "registry_root_policy": "FIXED_MEASURED_INTERNAL_LITERAL",
     "reservation_type": "ValidatedLivePackageAttemptReservation",
     "terminal_sink_type": "ValidatedLivePackageTerminalSink"
+  },
+  "storage_authority": {
+    "source_symbol": "f017_event06_storage_authority_v1.fixed_live_registry_root",
+    "canonical_utf8_sha256": "e9628d51208d2340d67885b471bf87a5cfa0a372a759e095378f5609c1843e83",
+    "canonical_utf8_length": 60,
+    "public_storage_location_inputs": 0,
+    "indirect_storage_location_inputs": 0,
+    "reclaim_expire_unlock_or_override_symbols": 0,
+    "live_coordinator_storage": "DERIVED_FROM_SEALED_PACKAGE_RESERVATION"
   },
   "qualification": {
     "reservation_symbol": "reserve_qualification_package_attempt",
@@ -30,7 +39,7 @@
   "package_transaction": {
     "reservation_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
     "terminal_claim_create": "EXCLUSIVE_NO_REPLACE_DURABLE",
-    "registry_key_fields": ["authority_mode", "package_attempt_id"],
+    "registry_key_fields": ["authorization_id", "package_attempt_id", "checkpoint_set_sha256"],
     "attempts": 1,
     "retries": 0,
     "resume": false,
@@ -40,6 +49,11 @@
     "terminal_publication_revalidates_package": true
   },
   "historical_shared_entrypoints": "SUPERSEDED_FAIL_CLOSED",
+  "no_access_qualification": {
+    "strict_abort": "BEFORE_DIRECTORY_CREATE",
+    "composition": "PROCESS_LOCAL_IN_MEMORY_OS_STORAGE_INTERPOSITION",
+    "independent_mechanism": "MACOS_SANDBOX_EXEC_DEFAULT_DENY_PLUS_OUT_OF_PROCESS_MONITOR"
+  },
   "original_checkpoint_access_permitted": false,
   "event06_execution_permitted": false,
   "new_human_go_permitted": false,

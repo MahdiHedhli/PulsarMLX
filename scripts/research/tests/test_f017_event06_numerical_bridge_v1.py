@@ -15,9 +15,10 @@ from f017_corrected_oracle_secondary_wrapper_v11 import validate_candidate_docum
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan, validate_execution_plan
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values, runtime_fixture_values
 from f017_event06_package_attempt_registry_v2 import (
-    LIVE_REGISTRY_ROOT, claim_qualification_terminal_sinks,
+    claim_qualification_terminal_sinks,
     reserve_qualification_package_attempt,
 )
+from f017_event06_storage_authority_v1 import fixed_live_registry_root
 from f017_event06_numerical_bridge_v1 import (
     BRIDGE_KEYS, PHASES, ValidatedConsumerView, ValidatedNumericalBridge,
     accounting_view, bind_identity_stage, bind_v11_closure, build_accounting_binding, build_bundle_binding,
@@ -166,7 +167,7 @@ def test_views_close_exact_consumer_authority(tmp_path):
     )
     assert reservation.get("authority_mode") == "QUALIFICATION_ONLY"
     with pytest.raises(ValueError, match="intersects live registry"):
-        reserve_qualification_package_attempt(installed, LIVE_REGISTRY_ROOT)
+        reserve_qualification_package_attempt(installed, fixed_live_registry_root())
     with pytest.raises(FileExistsError):
         reserve_qualification_package_attempt(
             installed, tmp_path / "package-attempt-registry"

@@ -31,6 +31,8 @@ from f017_event06_package_attempt_registry_v2 import (
     reserve_live_package_attempt,
     reserve_qualification_package_attempt,
 )
+from f017_event06_storage_authority_v1 import package_storage_layout
+import f017_event06_storage_primitives_v1 as safety_storage
 from f017_result_artifacts_v11 import closure_root
 from execute_f017_corrected_oracle_event_v12 import run_identity_stage, validate_package_start
 
@@ -225,7 +227,7 @@ def _sha(value: dict) -> str:
 
 
 def _bank_checked(path: Path, value: dict, expected_sha256: str) -> None:
-    if bank_exclusive(path, value) != expected_sha256:
+    if safety_storage.bank_exclusive(path, value) != expected_sha256:
         raise ValueError("Event 06 bridge artifact banking")
 
 
@@ -273,7 +275,7 @@ def bank_package_start(*args, **kwargs):
     raise RuntimeError("superseded shared package-start API")
 
 
-def bank_consumer_start(bridge: ValidatedNumericalBridge, role: str, path: Path, *,
+def _bank_consumer_start(bridge: ValidatedNumericalBridge, role: str, path: Path, *,
                         primary_terminal_binding_sha256: str | None = None) -> ValidatedDurableStart:
     if type(bridge) is not ValidatedNumericalBridge or role not in {"PRIMARY", "SECONDARY"}:
         raise TypeError("validated bridge and consumer role required")
@@ -297,7 +299,7 @@ def bank_consumer_start(bridge: ValidatedNumericalBridge, role: str, path: Path,
     return start
 
 
-def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
+def _execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
                       primary_directory: Path, secondary_directory: Path,
                       package_directory: Path) -> ValidatedBridgeExecutionResult:
     """Future live path: exactly one primary and one secondary invocation."""
@@ -305,10 +307,10 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
         raise TypeError("validated bridge and lease set required")
     if not isinstance(package_directory, Path):
         raise TypeError("package evidence directory required")
-    package_directory.mkdir(parents=True, exist_ok=True)
+    safety_storage.secure_directory(package_directory)
     completed_phase = "IDENTITY_TERMINAL"
     try:
-        primary_start = bank_consumer_start(
+        primary_start = _bank_consumer_start(
             bridge, "PRIMARY", package_directory / "bridge-primary-durable-start.json"
         )
         primary_numerical = numerical_view(bridge, "PRIMARY")
@@ -318,7 +320,7 @@ def execute_consumers(bridge: ValidatedNumericalBridge, leases: LeaseSet,
         primary_binding = primary_terminal_binding(
             primary, bridge, primary["bridge_bundle_binding"]
         )
-        secondary_start = bank_consumer_start(
+        secondary_start = _bank_consumer_start(
             bridge, "SECONDARY", package_directory / "bridge-secondary-durable-start.json",
             primary_terminal_binding_sha256=primary_binding.sha256,
         )
@@ -424,13 +426,13 @@ def derive_bridge_from_identity_output(installed_authority, leases: LeaseSet,
     return derive_bridge(installed_authority, identity, execution_plan, event_identity_plan)
 
 
-def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_path: Path, *,
-                           package_attempt_id: str,
+def execute_event06_bridge_qualification(candidate_path: Path, installed_path: Path,
+                           receipt_path: Path, *, package_attempt_id: str,
                            identity_evidence_directory: Path,
                            execution_plan: ValidatedExecutionPlan, event_identity_plan: dict,
                            primary_directory: Path, secondary_directory: Path,
                            package_directory: Path) -> dict:
-    """Single fixed production call path from V12 package gate through terminal."""
+    """Historical qualification harness; never a production storage authority."""
     gate = validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
     package_start = bank_live_package_start(installed)
@@ -443,7 +445,7 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
             installed, leases, identity_report, execution_plan, event_identity_plan
         )
     except Exception:
-        package_directory.mkdir(parents=True, exist_ok=True)
+        safety_storage.secure_directory(package_directory)
         release_report = leases.release()
         failure_release = {"schema":"pulsarmlx.f017.event06-bridge-failure-release/1.0.0",
             "package_attempt_id":package_attempt_id,"completed_phase":"IDENTITY_TERMINAL",
@@ -451,7 +453,7 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
         _bank_checked(package_directory / "bridge-failure-release.json", failure_release,
                       _sha(failure_release))
         raise
-    result = execute_consumers(
+    result = _execute_consumers(
         bridge, leases, primary_directory, secondary_directory, package_directory,
     )
     closure = close_bridge_package(bridge, package_start, result)
@@ -460,16 +462,71 @@ def execute_event06_bridge(candidate_path: Path, installed_path: Path, receipt_p
             "package":closure,"result":"PASS"}
 
 
-def bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBridge,
+def execute_event06_bridge(
+    installed: ValidatedIdentityAuthority,
+    execution_plan: ValidatedExecutionPlan,
+    event_identity_plan: dict,
+) -> dict:
+    """Live transaction with every storage leaf derived from its reservation.
+
+    The upstream collapsed-GO gate supplies one exact installed authority.  No
+    path, root, directory, provider, resolver, callback, or option can select a
+    safety-state namespace at this boundary.
+    """
+    if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
+        raise TypeError("exact installed Event 06 authority required")
+    authority = installed.as_dict()
+    if authority.get("authority_scope") != "PRODUCTION":
+        raise ValueError("production Event 06 authority required")
+    package_start = bank_live_package_start(installed)
+    layout = package_storage_layout(package_start.reservation.root)
+    leases, identity_report = run_identity_stage(
+        installed,
+        package_attempt_id=authority["package_attempt_id"],
+        package_durable_start=True,
+        evidence_directory=layout["identity"],
+    )
+    try:
+        bridge = derive_bridge_from_identity_output(
+            installed, leases, identity_report, execution_plan, event_identity_plan
+        )
+    except Exception:
+        release_report = leases.release()
+        failure = {
+            "schema": "pulsarmlx.f017.event06-bridge-failure-release/1.1.0",
+            "package_attempt_id": authority["package_attempt_id"],
+            "completed_phase": "IDENTITY_TERMINAL",
+            "release_report": release_report,
+            "result": "TERMINAL_FAILURE",
+        }
+        _bank_checked(layout["package"] / "bridge-failure-release.json", failure, _sha(failure))
+        raise
+    result = _execute_consumers(
+        bridge, leases, layout["primary"], layout["secondary"], layout["package"]
+    )
+    closure = close_bridge_package(bridge, package_start, result)
+    return {
+        "bridge": bridge,
+        "package_start": package_start,
+        "identity_report": identity_report,
+        "execution": result,
+        "package": closure,
+        "result": "PASS",
+    }
+
+
+def _bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBridge,
                                  subjects: list[tuple[str, str]]):
     """Bank ten adjacent V12 bindings around unchanged V11 artifacts."""
     if type(subjects) is not list or len(subjects) != len(PHASES):
         raise ValueError("bridge transition subjects")
-    directory.mkdir(parents=True, exist_ok=True)
+    safety_storage.secure_directory(directory)
     predecessor = "0" * 64; records = []
     for phase, (kind, digest) in zip(PHASES, subjects, strict=True):
         record, record_sha = build_transition_binding(bridge, phase, kind, digest, predecessor)
-        observed = bank_exclusive(directory / f"bridge-transition-{len(records)+1:02d}.json", record)
+        observed = safety_storage.bank_exclusive(
+            directory / f"bridge-transition-{len(records)+1:02d}.json", record
+        )
         if observed != record_sha:
             raise ValueError("bridge transition banking")
         records.append(record); predecessor = record_sha
@@ -515,7 +572,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         ("ACCOUNTING_BINDING", execution_result["accounting_binding_sha256"]),
         ("V11_PACKAGE_CLOSURE", execution_result["v11_closure_sha256"]),
     ]
-    records, transition_chain = bank_bridge_transition_chain(
+    records, transition_chain = _bank_bridge_transition_chain(
         reservation.root / "bridge-transition-chain", bridge, subjects
     )
     view = package_terminal_view(

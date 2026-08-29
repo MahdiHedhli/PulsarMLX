@@ -863,6 +863,12 @@ jobs:
           PYTHONPATH=scripts/research .venv/bin/python \
             scripts/research/qualify_f017_event06_package_transaction_v2.py \
             > "$RUNNER_TEMP/f017-event06-package-transaction-v2.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_sequence18_amendment_v1.py \
+            > "$RUNNER_TEMP/f017-event06-sequence18-amendment-v1.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/run_f017_event06_sequence18_sandbox_v1.py \
+            --output "$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json"
           .venv/bin/python - <<'PY'
           import json
           import os
@@ -871,6 +877,8 @@ jobs:
           root = Path(os.environ["RUNNER_TEMP"])
           dag = json.loads((root / "f017-event06-authority-dag-v2.json").read_text())
           qualification = json.loads((root / "f017-event06-package-transaction-v2.json").read_text())
+          amendment = json.loads((root / "f017-event06-sequence18-amendment-v1.json").read_text())
+          sandbox = json.loads((root / "f017-event06-sequence18-sandbox-v1.json").read_text())
           assert dag["result"] == "PASS"
           assert dag["source_typed_boundaries_total"] == dag["dag_edges_total"]
           assert dag["dag_edges_with_composition_tests"] == dag["dag_edges_total"]
@@ -899,6 +907,33 @@ jobs:
           assert qualification["full_model_inference"] == "NONE"
           assert qualification["event06_executed"] is False
           assert qualification["historical_master_ledger"] == 175
+          assert amendment["result"] == "PASS"
+          assert amendment["package_identity_keys_per_identity"] == 1
+          storage = amendment["storage_authority_census"]
+          assert storage["result"] == "PASS"
+          assert storage["production_public_storage_location_inputs"] == 0
+          assert storage["production_indirect_storage_location_inputs"] == 0
+          assert storage["production_storage_authority_source"].endswith(":fixed_live_registry_root")
+          assert storage["legacy_production_writers_fail_closed_proven"] == 5
+          assert storage["legacy_production_writers_reachable_to_safety_state"] == 0
+          assert amendment["contention_contenders"] == 20
+          assert amendment["contention_winners"] == 1
+          assert amendment["losing_contenders_with_pre_package_start_abort_proof"] == "19/19"
+          assert amendment["mutation_campaign"]["passed"] == amendment["mutation_campaign"]["total"]
+          assert amendment["mutation_campaign"]["survivors"] == []
+          assert amendment["frozen_authority_census"]["frozen_authority_drift"] == 0
+          assert amendment["production_live_registry_creates_or_writes"] == 0
+          assert amendment["original_checkpoint_access"] == "NONE"
+          assert amendment["event06_executed"] is False
+          assert sandbox["result"] == "PASS"
+          assert sandbox["mechanism"] == "MACOS_SANDBOX_EXEC_DEFAULT_DENY_PLUS_OUT_OF_PROCESS_MONITOR"
+          assert sandbox["denial_probe_exit_status"] != 0
+          assert sandbox["denial_probe_fixed_root_created"] is False
+          assert sandbox["child_exit_status"] == 0
+          assert sandbox["fixed_root_fd_mentions"] == 0
+          assert sandbox["checkpoint_filename_fd_mentions"] == 0
+          assert sandbox["original_checkpoint_access"] == "NONE"
+          assert sandbox["event06_executed"] is False
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks

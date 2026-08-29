@@ -10,21 +10,20 @@ from __future__ import annotations
 
 import copy
 import hashlib
-import os
-import stat
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from f017_bounded_artifact_decode_v1 import read_artifact
-from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
+from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_collapsed_live_installation_v2 import CollapsedInstalledTripleV2
+from f017_event06_storage_authority_v1 import fixed_live_registry_root
+import f017_event06_storage_primitives_v1 as storage
 
 if TYPE_CHECKING:
     from f017_event06_numerical_bridge_v1 import ValidatedConsumerView
 
-LIVE_REGISTRY_ROOT = Path("/private/var/tmp/pulsarmlx-f017-event06-v12-package-registry")
+_LIVE_REGISTRY_ROOT = fixed_live_registry_root()
 _RESERVATION_SEALS = {"LIVE_CANONICAL": object(), "QUALIFICATION_ONLY": object()}
 _SINK_SEALS = {"LIVE_CANONICAL": object(), "QUALIFICATION_ONLY": object()}
 
@@ -34,15 +33,11 @@ def _sha(value: object) -> str:
 
 
 def _lexical(path: Path) -> Path:
-    return Path(os.path.abspath(os.fspath(path)))
+    return storage.canonical_identity(path)
 
 
 def _canonical_lexical(path: Path) -> Path:
-    """Normalize Darwin's stable /var and /tmp aliases without touching disk."""
-    lexical = _lexical(path)
-    if len(lexical.parts) > 1 and lexical.parts[1] in {"var", "tmp"}:
-        return Path("/private", *lexical.parts[1:])
-    return lexical
+    return storage.canonical_identity(path)
 
 
 def _intersects(first: Path, second: Path) -> bool:
@@ -52,39 +47,14 @@ def _intersects(first: Path, second: Path) -> bool:
 
 
 def _secure_directory(path: Path) -> Path:
-    """Create one private, nonsymlink directory and verify final identity."""
-    if not isinstance(path, Path):
-        raise TypeError("package registry root type")
-    lexical = _lexical(path)
-    if lexical.is_symlink():
-        raise ValueError("package registry symlink component")
-    expected = _canonical_lexical(lexical)
-    resolved_before_create = Path(os.path.realpath(lexical))
-    if resolved_before_create != expected:
-        raise ValueError("package registry ancestor substitution")
-    lexical.mkdir(mode=0o700, parents=True, exist_ok=True)
-    observed = Path(os.path.realpath(lexical))
-    metadata = os.lstat(observed)
-    if (stat.S_ISLNK(metadata.st_mode) or not stat.S_ISDIR(metadata.st_mode)
-            or metadata.st_uid != os.getuid() or metadata.st_mode & 0o077):
-        raise ValueError("package registry directory identity")
-    if observed != expected:
-        raise ValueError("package registry canonical identity")
-    return observed
+    return storage.secure_directory(path)
 
 
 def _prepare_live_registry() -> Path:
     """The sole production root selector; callers cannot supply a pathname."""
-    if os.fspath(LIVE_REGISTRY_ROOT) != "/private/var/tmp/pulsarmlx-f017-event06-v12-package-registry":
-        raise ValueError("live registry fixed spelling")
-    cursor = Path("/")
-    for component in LIVE_REGISTRY_ROOT.parts[1:-1]:
-        cursor = cursor / component
-        if cursor.exists() or cursor.is_symlink():
-            metadata = os.lstat(cursor)
-            if stat.S_ISLNK(metadata.st_mode):
-                raise ValueError("live registry ancestor substitution")
-    return _secure_directory(LIVE_REGISTRY_ROOT)
+    if _LIVE_REGISTRY_ROOT != fixed_live_registry_root():
+        raise ValueError("live registry fixed authority")
+    return _secure_directory(_LIVE_REGISTRY_ROOT)
 
 
 def _prepare_qualification_registry(root: Path) -> Path:
@@ -92,12 +62,12 @@ def _prepare_qualification_registry(root: Path) -> Path:
         raise TypeError("qualification registry root")
     # Reject equality, child, and parent intersections before resolving or
     # creating either path.  No live-root filesystem observation occurs here.
-    if _intersects(root, LIVE_REGISTRY_ROOT):
+    if _intersects(root, _LIVE_REGISTRY_ROOT):
         raise ValueError("qualification registry intersects live registry")
     # A symlinked qualification root or ancestor can be a second spelling of
     # the fixed namespace even when its lexical spelling is unrelated.
-    resolved = Path(os.path.realpath(_lexical(root)))
-    if _intersects(resolved, LIVE_REGISTRY_ROOT):
+    resolved = storage.resolved_identity(root)
+    if _intersects(resolved, _LIVE_REGISTRY_ROOT):
         raise ValueError("qualification registry resolves into live registry")
     return _secure_directory(root)
 
@@ -205,8 +175,9 @@ class ValidatedQualificationPackageTerminalSink(_TerminalSink):
 def _reservation_value(installed: ValidatedIdentityAuthority, mode: str) -> dict:
     authority = installed.as_dict()
     key = _sha({
-        "authority_mode": mode,
+        "authorization_id": authority["authorization_id"],
         "package_attempt_id": authority["package_attempt_id"],
+        "checkpoint_set_sha256": authority["checkpoint_set_sha256"],
     })
     return {
         "schema": "pulsarmlx.f017.event06-v12-package-attempt-reservation/1.1.0",
@@ -228,7 +199,7 @@ def _bank_reservation(installed: ValidatedIdentityAuthority, mode: str,
     value = _reservation_value(installed, mode)
     root = _secure_directory(registry / value["registry_key_sha256"])
     reservation = reservation_type(_RESERVATION_SEALS[mode], value, root)
-    if bank_exclusive(root / "package-attempt-reservation.json", value) != reservation.sha256:
+    if storage.bank_exclusive(root / "package-attempt-reservation.json", value) != reservation.sha256:
         raise ValueError("package attempt reservation banking")
     return reservation
 
@@ -237,7 +208,7 @@ def _load_reservation(installed: ValidatedIdentityAuthority, mode: str,
                       registry: Path, reservation_type: type[_Reservation]) -> _Reservation:
     value = _reservation_value(installed, mode)
     root = registry / value["registry_key_sha256"]
-    observed = read_artifact(root / "package-attempt-reservation.json")
+    observed = storage.read_artifact(root / "package-attempt-reservation.json")
     if observed != value:
         raise ValueError("package attempt reservation reconstruction")
     return reservation_type(_RESERVATION_SEALS[mode], value, root)
@@ -351,7 +322,7 @@ def _claim(reservation: _Reservation, package_start_sha256: str | None,
         "state": "TERMINALIZATION_CLAIMED",
     }
     claim_sha = _sha(claim)
-    if bank_exclusive(reservation.root / "package-terminal-claim.json", claim) != claim_sha:
+    if storage.bank_exclusive(reservation.root / "package-terminal-claim.json", claim) != claim_sha:
         raise ValueError("package terminal claim banking")
     base = {
         "schema": "pulsarmlx.f017.event06-v12-package-terminal-sink/1.1.0",
@@ -449,7 +420,7 @@ def claim_qualification_terminal_sinks(
 
 
 def _validate_claim(sink: _TerminalSink) -> dict:
-    claim = read_artifact(sink.root / "package-terminal-claim.json")
+    claim = storage.read_artifact(sink.root / "package-terminal-claim.json")
     if (_sha(claim) != sink.get("terminal_claim_sha256")
             or claim.get("package_attempt_id") != sink.get("package_attempt_id")
             or claim.get("package_attempt_reservation_sha256")
@@ -483,7 +454,7 @@ def _bank_terminal(sink: _TerminalSink, value: dict) -> str:
             if value.get(key) != sink.get(key):
                 raise ValueError("legacy package terminal closure continuity")
     elif layer == "PROMPT_BOUND_V12_CLOSURE":
-        legacy = read_artifact(sink.root / "legacy-package-terminal.json")
+        legacy = storage.read_artifact(sink.root / "legacy-package-terminal.json")
         if (legacy.get("terminal_sink_sha256")
                 != sink.get("legacy_terminal_sink_sha256")
                 or value.get("legacy_package_terminal_sha256") != _sha(legacy)):
@@ -491,7 +462,7 @@ def _bank_terminal(sink: _TerminalSink, value: dict) -> str:
     else:
         raise ValueError("package terminal layer")
     digest = _sha(value)
-    if bank_exclusive(sink.path, value) != digest:
+    if storage.bank_exclusive(sink.path, value) != digest:
         raise ValueError("package terminal banking")
     return digest
 
@@ -511,7 +482,6 @@ def bank_qualification_terminal(
 
 
 __all__ = [
-    "LIVE_REGISTRY_ROOT",
     "ValidatedLivePackageAttemptReservation",
     "ValidatedQualificationPackageAttemptReservation",
     "ValidatedLivePackageTerminalSink",

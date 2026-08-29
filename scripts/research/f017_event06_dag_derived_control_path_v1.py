@@ -319,6 +319,32 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
         bridge, package_view, legacy_terminal, accounting_closure,
         successor_terminal_sink,
     )
+    from execute_f017_corrected_oracle_event_v12_bridge import (
+        ValidatedBridgeExecutionResult, _EXECUTION_RESULT_SEAL,
+    )
+    execution_result = ValidatedBridgeExecutionResult(
+        _EXECUTION_RESULT_SEAL,
+        {
+            "bridge_sha256": historical.sha256,
+            "primary": primary_bundle,
+            "secondary": secondary_bundle,
+            "primary_start_sha256": primary_result_legacy.get("durable_start_sha256"),
+            "secondary_start_sha256": secondary_result_legacy.get("durable_start_sha256"),
+            "comparison_terminal": {
+                "schema": "pulsarmlx.f017.event06-v12-qualification-comparison-terminal/1.0.0",
+                "result": "COMPLETE",
+            },
+            "release_terminal": {
+                "schema": "pulsarmlx.f017.event06-v12-qualification-release-terminal/1.0.0",
+                "result": "COMPLETE",
+            },
+            "accounting_binding": legacy_accounting_binding,
+            "accounting_binding_sha256": legacy_accounting_sha,
+            "v11_closure_binding": v11_closure_binding,
+            "v11_closure_sha256": _sha(v11_closure),
+            "result": "PASS",
+        },
+    )
 
     counters = package["state"].snapshot()
     live_zero = {
@@ -395,6 +421,7 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     if retain_authorities:
         result["_authorities"] = {
             "bridge": bridge,
+            "historical_bridge": historical,
             "bridge_input": bridge_input,
             "installed_authority": package["installed"].authority,
             "identity_stage": identity_stage,
@@ -416,6 +443,7 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
             "legacy_terminal": legacy_terminal,
             "legacy_terminal_sink": legacy_terminal_sink,
             "successor_terminal_sink": successor_terminal_sink,
+            "execution_result": execution_result,
         }
     return result
 

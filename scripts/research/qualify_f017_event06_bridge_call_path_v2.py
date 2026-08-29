@@ -127,7 +127,7 @@ def qualify_call_path() -> dict:
               patch.object(coordinator, "derive_summary", compare),
               patch.object(coordinator, "validate_summary", validate_compare),
               patch.object(coordinator, "bank_exclusive", bank)):
-            result = coordinator.execute_event06_bridge(
+            result = coordinator.execute_event06_bridge_qualification(
                 root / "candidate", root / "installed", root / "receipt",
                 package_attempt_id=expected.get("package_attempt_id"),
                 identity_evidence_directory=root / "identity",
@@ -176,7 +176,7 @@ def qualify_call_path() -> dict:
               patch.object(coordinator, "run_identity_stage", lambda *_args, **_kwargs: (bridge_leases, bridge_report)),
               patch.object(coordinator, "bank_exclusive", bank)):
             try:
-                coordinator.execute_event06_bridge(
+                coordinator.execute_event06_bridge_qualification(
                     root / "candidate", root / "installed", root / "receipt",
                     package_attempt_id=_bridge.get("package_attempt_id"),
                     identity_evidence_directory=root / "identity", execution_plan=bridge_plan,
@@ -223,7 +223,7 @@ def qualify_call_path() -> dict:
                   patch.object(coordinator, "validate_summary", lambda *_args: {"result":"PASS"}),
                   patch.object(coordinator, "bank_exclusive", bank)):
                 try:
-                    coordinator.execute_consumers(bridge, failure_leases, root / "primary",
+                    coordinator._execute_consumers(bridge, failure_leases, root / "primary",
                         root / "secondary", root / "package")
                 except RuntimeError:
                     pass

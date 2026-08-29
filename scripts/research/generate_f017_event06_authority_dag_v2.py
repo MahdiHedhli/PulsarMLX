@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 import generate_f017_event06_authority_dag_v1 as predecessor
+from f017_event06_sequence18_storage_census_v1 import census as storage_census
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
@@ -160,12 +161,25 @@ def build() -> dict[str, object]:
             },
         })
     inventory = base + source_inventory()
+    lifecycle_order = {
+        "reserve_live_package_attempt": 100,
+        "reserve_qualification_package_attempt": 100,
+        "bank_live_package_start": 200,
+        "claim_live_terminal_sinks": 900,
+        "claim_qualification_terminal_sinks": 900,
+        "bank_live_terminal": 1000,
+        "bank_qualification_terminal": 1000,
+    }
     for number, edge in enumerate(inventory, 1):
         edge["edge_id"] = f"F017-DAG2-{number:03d}"
+        edge["generated_lifecycle_order"] = lifecycle_order.get(
+            edge["producer_symbol"], number
+        )
         edge["source_blob_sha256"] = hashlib.sha256(
             (ROOT / edge["producer_module"]).read_bytes()
         ).hexdigest()
     live = [edge for edge in inventory if edge["authority_mode"] == "LIVE_CANONICAL"]
+    storage = storage_census()
     return {
         "schema": "pulsarmlx.f017.event06-v12-authority-dag/2.0.0",
         "generation": "V12",
@@ -179,6 +193,17 @@ def build() -> dict[str, object]:
         ),
         "uncovered_typed_boundaries": 0,
         "extraneous_dag_edges": 0,
+        "safety_storage_inventory": storage,
+        "legacy_production_writers_total": storage["legacy_production_writers_total"],
+        "legacy_production_writers_reachable_to_safety_state": storage[
+            "legacy_production_writers_reachable_to_safety_state"
+        ],
+        "production_public_storage_location_inputs": storage[
+            "production_public_storage_location_inputs"
+        ],
+        "production_indirect_storage_location_inputs": storage[
+            "production_indirect_storage_location_inputs"
+        ],
         "original_checkpoint_access_permitted": False,
     }
 

@@ -88,7 +88,7 @@ def test_successor_bridge_rejects_checkpoint_set_substitution():
 
 
 def test_successor_coordinator_binds_v11_closure_before_return():
-    source = inspect.getsource(coordinator.execute_consumers)
+    source = inspect.getsource(coordinator._execute_consumers)
     assert "legacy_bridge.bind_v11_closure" in source
     assert '"v11_closure_binding": v11_closure_binding' in source
 
@@ -113,7 +113,7 @@ def test_successor_execute_consumers_returns_exact_sealed_v11_closure(tmp_path):
           patch.object(coordinator, "execute_secondary", stage),
           patch.object(coordinator, "derive_summary", lambda *_args: _summary(bridge.legacy_bridge)),
           patch.object(coordinator, "validate_summary", lambda *_args: {"result": "PASS"})):
-        result = coordinator.execute_consumers(
+        result = coordinator._execute_consumers(
             bridge, leases, tmp_path / "primary", tmp_path / "secondary",
             tmp_path / "package",
         )

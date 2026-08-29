@@ -67,6 +67,12 @@ def validate_document(observed: dict[str, object]) -> dict[str, object]:
         if edge["composition_evidence"]["kind"]
         == "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST"
     ]
+    storage = observed.get("safety_storage_inventory", {})
+    if (storage.get("result") != "PASS"
+            or observed.get("legacy_production_writers_reachable_to_safety_state") != 0
+            or observed.get("production_public_storage_location_inputs") != 0
+            or observed.get("production_indirect_storage_location_inputs") != 0):
+        raise ValueError("Sequence 18 storage or legacy-writer DAG boundary")
     return {
         "schema": "pulsarmlx.f017.event06-v12-authority-dag-validation/2.1.0",
         "source_typed_boundaries_total": len(edges),
@@ -79,7 +85,7 @@ def validate_document(observed: dict[str, object]) -> dict[str, object]:
         "source_blob_drift": len(drift),
         "live_terminal_boundaries_total": len(live_terminal),
         "live_terminal_boundaries_with_composition_tests": len(covered_live),
-        "reviewers_first_to_find_noncomposition": True,
+        "reviewers_first_to_find_noncomposition": False,
         "result": "PASS" if not uncovered and len(covered_live) == len(live_terminal) else "FAIL",
     }
 
