@@ -147,6 +147,7 @@ def claim_terminal_sinks(
     package_start,
     bridge,
     execution_result,
+    transition_records: list[dict],
     package_terminal_view: "ValidatedConsumerView",
 ) -> tuple[ValidatedPackageTerminalSink, ValidatedPackageTerminalSink]:
     """Consume the sole live terminal claim from exact coordinator outputs."""
@@ -155,8 +156,11 @@ def claim_terminal_sinks(
         ValidatedDurableStart,
     )
     from f017_event06_numerical_bridge_v1 import (
+        PHASES,
         ValidatedConsumerView,
         ValidatedNumericalBridge,
+        package_terminal_view as derive_package_terminal_view,
+        validate_transition_chain,
     )
 
     if (type(reservation) is not ValidatedPackageAttemptReservation
@@ -173,6 +177,31 @@ def claim_terminal_sinks(
             or package_start.get("package_attempt_id") != bridge.get("package_attempt_id")
             or execution_result.get("bridge_sha256") != bridge.sha256):
         raise ValueError("live terminal claim continuity")
+    primary = execution_result["primary"]
+    secondary = execution_result["secondary"]
+    expected_subjects = [
+        ("PACKAGE_DURABLE_START", package_start.sha256),
+        ("IDENTITY_TERMINAL", bridge.get("identity_terminal_sha256")),
+        ("PRIMARY_DURABLE_START", execution_result["primary_start_sha256"]),
+        ("PRIMARY_RESULT_TERMINAL", primary["index"]["result_terminal_sha256"]),
+        ("SECONDARY_DURABLE_START", execution_result["secondary_start_sha256"]),
+        ("SECONDARY_RESULT_TERMINAL", secondary["index"]["result_terminal_sha256"]),
+        ("COMPARISON_TERMINAL", _sha(execution_result["comparison_terminal"])),
+        ("RELEASE_TERMINAL", _sha(execution_result["release_terminal"])),
+        ("ACCOUNTING_BINDING", execution_result["accounting_binding_sha256"]),
+        ("V11_PACKAGE_CLOSURE", execution_result["v11_closure_sha256"]),
+    ]
+    if (type(transition_records) is not list or len(transition_records) != len(PHASES)
+            or [(record.get("subject_artifact_kind"), record.get("subject_sha256"))
+                for record in transition_records] != expected_subjects):
+        raise ValueError("live terminal subjects do not derive from execution result")
+    chain = validate_transition_chain(bridge, transition_records)
+    expected_view = derive_package_terminal_view(
+        bridge, chain, execution_result["v11_closure_binding"],
+        execution_result["accounting_binding"],
+    )
+    if expected_view.sha256 != package_terminal_view.sha256:
+        raise ValueError("live terminal view does not derive from execution result")
     return _bank_terminal_claim(
         reservation, package_start.sha256, bridge.sha256, package_terminal_view
     )
@@ -228,24 +257,29 @@ def _bank_terminal_claim(reservation, package_start_sha256, bridge_sha256,
     claim_sha = _sha(claim)
     if bank_exclusive(reservation.root / "package-terminal-claim.json", claim) != claim_sha:
         raise ValueError("package terminal claim banking")
-    sinks = []
-    for layer, filename in (
-        ("LEGACY_V11_CLOSURE", "legacy-package-terminal.json"),
-        ("PROMPT_BOUND_V12_CLOSURE", "prompt-bound-package-terminal.json"),
-    ):
-        value = {
-            "schema": "pulsarmlx.f017.event06-v12-package-terminal-sink/1.0.0",
-            "authority_mode": reservation.get("authority_mode"),
-            "package_attempt_id": reservation.get("package_attempt_id"),
-            "package_attempt_reservation_sha256": reservation.sha256,
-            "terminal_claim_sha256": claim_sha,
-            "terminal_layer": layer,
-            "binding_chain_head_sha256": claim["binding_chain_head_sha256"],
-            "v11_closure_root_sha256": claim["v11_closure_root_sha256"],
-            "accounting_binding_sha256": claim["accounting_binding_sha256"],
-        }
-        sinks.append(ValidatedPackageTerminalSink(_SINK_SEAL, value, reservation.root / filename))
-    return sinks[0], sinks[1]
+    base = {
+        "schema": "pulsarmlx.f017.event06-v12-package-terminal-sink/1.0.0",
+        "authority_mode": reservation.get("authority_mode"),
+        "package_attempt_id": reservation.get("package_attempt_id"),
+        "package_attempt_reservation_sha256": reservation.sha256,
+        "terminal_claim_sha256": claim_sha,
+        "binding_chain_head_sha256": claim["binding_chain_head_sha256"],
+        "v11_closure_root_sha256": claim["v11_closure_root_sha256"],
+        "accounting_binding_sha256": claim["accounting_binding_sha256"],
+    }
+    legacy = ValidatedPackageTerminalSink(
+        _SINK_SEAL, base | {"terminal_layer": "LEGACY_V11_CLOSURE"},
+        reservation.root / "legacy-package-terminal.json",
+    )
+    successor = ValidatedPackageTerminalSink(
+        _SINK_SEAL,
+        base | {
+            "terminal_layer": "PROMPT_BOUND_V12_CLOSURE",
+            "legacy_terminal_sink_sha256": legacy.sha256,
+        },
+        reservation.root / "prompt-bound-package-terminal.json",
+    )
+    return legacy, successor
 
 
 def bank_terminal(sink: ValidatedPackageTerminalSink, value: dict) -> str:

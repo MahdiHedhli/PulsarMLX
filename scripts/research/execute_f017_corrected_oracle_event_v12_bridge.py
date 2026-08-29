@@ -426,7 +426,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
     )
     if reservation.get("authority_mode") == "LIVE_CANONICAL":
         legacy_sink, successor_sink = claim_terminal_sinks(
-            reservation, package_start, bridge, execution_result, view
+            reservation, package_start, bridge, execution_result, records, view
         )
     elif reservation.get("authority_mode") == "QUALIFICATION_ONLY":
         legacy_sink, successor_sink = claim_qualification_terminal_sinks(

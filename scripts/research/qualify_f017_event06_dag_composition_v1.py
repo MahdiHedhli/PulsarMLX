@@ -107,6 +107,10 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
             bridge, package_view,
             authorities["legacy_terminal"] | {"result": "ABORTED_NOT_COMPLETE"}, closure,
             authorities["successor_terminal_sink"])),
+        ("successor_terminal_legacy_sink_digest_splice", lambda: build_prompt_bound_package_terminal(
+            bridge, package_view,
+            authorities["legacy_terminal"] | {"terminal_sink_sha256": "f" * 64}, closure,
+            authorities["successor_terminal_sink"])),
         ("successor_terminal_legacy_sink", lambda: build_prompt_bound_package_terminal(
             bridge, package_view, authorities["legacy_terminal"], closure,
             authorities["legacy_terminal_sink"])),

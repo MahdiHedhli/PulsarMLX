@@ -922,6 +922,10 @@ def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge,
     if (terminal_sink.get("terminal_layer") == "LEGACY_V11_CLOSURE"
             and value["terminal_sink_sha256"] != terminal_sink.sha256):
         raise TypeError("bridge package terminal exact sink continuity")
+    if (terminal_sink.get("terminal_layer") == "PROMPT_BOUND_V12_CLOSURE"
+            and value["terminal_sink_sha256"]
+            != terminal_sink.get("legacy_terminal_sink_sha256")):
+        raise TypeError("bridge package terminal legacy sink continuity")
     for key in ("binding_chain_head_sha256","v11_closure_root_sha256","accounting_binding_sha256",
                 "package_attempt_reservation_sha256","terminal_claim_sha256","terminal_sink_sha256"):
         _sha(value[key], key)
