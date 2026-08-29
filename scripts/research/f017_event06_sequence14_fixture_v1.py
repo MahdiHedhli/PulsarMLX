@@ -332,6 +332,7 @@ def build_sequence14_qualification(
         "bundle": bundle,
         "prepared": prepared,
         "target": target,
+        "capability": capability,
         "transaction": transaction,
         "installed": installed,
         "gate": gate,

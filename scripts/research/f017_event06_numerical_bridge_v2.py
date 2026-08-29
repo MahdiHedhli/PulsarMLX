@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Prompt-bound V12 identity to unchanged V11 numerical authority bridge.
+"""Collapsed-prompt-bound V12 identity to unchanged V11 numerical bridge.
 
-This successor accepts only producer-created sealed Sequence 11 objects.  It
-does not project the nine-field event identity into the historical five-field
-mapping.  The historical bridge is retained as an immutable inner authority
-for unchanged V11 consumers, while this module carries the complete prompt
-binding through every downstream control-plane view.
+This successor accepts only the producer-created collapsed prompt identity.
+It never reconstructs the obsolete prompt-bound event-plan type.  The
+historical bridge remains an immutable inner authority for unchanged V11
+consumers, while collapsed preparation, GO, prompt, and installed digests are
+carried through every downstream control-plane view.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from f017_event06_identity_bridge_contract_v2 import (
     IDENTITY_INPUT_TYPES, PACKAGE_TERMINAL_FIELDS, PACKAGE_TERMINAL_SCHEMA,
     PACKAGE_TERMINAL_TYPES,
 )
-from f017_event06_production_installation_v3 import PromptBoundEventIdentityPlanV2
+from f017_event06_collapsed_live_installation_v2 import CollapsedLivePromptIdentityV2
 import f017_event06_numerical_bridge_v1 as legacy
 
 HEX40 = re.compile(r"[0-9a-f]{40}")
@@ -153,17 +153,21 @@ def _exact(value: object, fields: tuple[str, ...], types: dict[str, str], schema
 
 
 def produce_identity_bridge_input(
-    event_identity: PromptBoundEventIdentityPlanV2,
+    event_identity: CollapsedLivePromptIdentityV2,
     installed: ValidatedIdentityAuthority,
     execution: ValidatedExecutionPlan,
 ) -> PromptBoundIdentityBridgeInputV2:
     """Seal the sole allowed bridge input from exact producer-created objects."""
-    if type(event_identity) is not PromptBoundEventIdentityPlanV2:
-        raise TypeError("exact prompt-bound event identity required")
+    if type(event_identity) is not CollapsedLivePromptIdentityV2:
+        raise TypeError("exact collapsed prompt identity required")
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
         raise TypeError("exact installed V12 authority required")
     if type(execution) is not ValidatedExecutionPlan:
         raise TypeError("exact sealed execution plan required")
+    if event_identity.get("authority_mode") not in {
+        "QUALIFICATION_ONLY", "LIVE_CANONICAL"
+    }:
+        raise ValueError("collapsed identity authority mode")
     installed_value = installed.as_dict()
     checks = (
         (event_identity.get("authorization_id"), installed_value["authorization_id"], "authorization"),
@@ -187,6 +191,9 @@ def produce_identity_bridge_input(
         "primary_event_id": event_identity.get("primary_event_id"),
         "secondary_event_id": event_identity.get("secondary_event_id"),
         "execution_plan_sha256": event_identity.get("execution_plan_sha256"),
+        "preparation_sha256": event_identity.get("preparation_sha256"),
+        "collapsed_go_sha256": event_identity.get("collapsed_go_sha256"),
+        "authority_mode": event_identity.get("authority_mode"),
         "prompt_repository_commit": event_identity.get("prompt_repository_commit"),
         "prompt_repository_path": event_identity.get("prompt_repository_path"),
         "prompt_sha256": event_identity.get("prompt_sha256"),
@@ -273,6 +280,9 @@ def derive_bridge(
         "schema": BRIDGE_SCHEMA, "state": "VALIDATED_PROMPT_BOUND",
         "identity_bridge_input_sha256": bridge_input.sha256,
         "event_identity_plan_sha256": bridge_input.get("event_identity_plan_sha256"),
+        "preparation_sha256": bridge_input.get("preparation_sha256"),
+        "collapsed_go_sha256": bridge_input.get("collapsed_go_sha256"),
+        "authority_mode": bridge_input.get("authority_mode"),
         "authorization_id": bridge_input.get("authorization_id"),
         "package_attempt_id": bridge_input.get("package_attempt_id"),
         "primary_event_id": bridge_input.get("primary_event_id"),
@@ -288,6 +298,8 @@ def derive_bridge(
     _exact(value, BRIDGE_FIELDS, BRIDGE_TYPES, BRIDGE_SCHEMA, "successor bridge")
     if historical.get("event_identity_plan_sha256") != value["event_identity_plan_sha256"]:
         raise ValueError("historical numerical bridge identity digest")
+    if value["authority_mode"] != bridge_input.get("authority_mode"):
+        raise ValueError("collapsed identity authority-mode continuity")
     return ValidatedNumericalBridgeV2(_SEAL, value, historical)
 
 
@@ -310,6 +322,9 @@ def consumer_view(
         "bridge_sha256": bridge.sha256, "legacy_view_sha256": historical_view.sha256,
         "identity_bridge_input_sha256": bridge.get("identity_bridge_input_sha256"),
         "event_identity_plan_sha256": bridge.get("event_identity_plan_sha256"),
+        "preparation_sha256": bridge.get("preparation_sha256"),
+        "collapsed_go_sha256": bridge.get("collapsed_go_sha256"),
+        "authority_mode": bridge.get("authority_mode"),
         "authorization_id": bridge.get("authorization_id"),
         "package_attempt_id": bridge.get("package_attempt_id"),
         "consumer_event_id": consumer_event_id,
@@ -337,6 +352,9 @@ def build_accounting_closure(
         "schema": ACCOUNTING_SCHEMA, "bridge_sha256": bridge.sha256,
         "legacy_accounting_binding_sha256": legacy_sha,
         "event_identity_plan_sha256": bridge.get("event_identity_plan_sha256"),
+        "preparation_sha256": bridge.get("preparation_sha256"),
+        "collapsed_go_sha256": bridge.get("collapsed_go_sha256"),
+        "authority_mode": bridge.get("authority_mode"),
         "prompt_repository_commit": bridge.get("prompt_repository_commit"),
         "prompt_repository_path": bridge.get("prompt_repository_path"),
         "prompt_sha256": bridge.get("prompt_sha256"),
@@ -371,6 +389,9 @@ def build_package_terminal(
         "legacy_package_terminal_sha256": hashlib.sha256(canonical_bytes(legacy_package_terminal)).hexdigest(),
         "accounting_closure_sha256": accounting_closure_sha256,
         "event_identity_plan_sha256": bridge.get("event_identity_plan_sha256"),
+        "preparation_sha256": bridge.get("preparation_sha256"),
+        "collapsed_go_sha256": bridge.get("collapsed_go_sha256"),
+        "authority_mode": bridge.get("authority_mode"),
         "prompt_repository_commit": bridge.get("prompt_repository_commit"),
         "prompt_repository_path": bridge.get("prompt_repository_path"),
         "prompt_sha256": bridge.get("prompt_sha256"),

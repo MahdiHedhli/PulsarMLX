@@ -12,7 +12,7 @@ from f017_event06_numerical_bridge_v2 import (
     ValidatedNumericalBridgeV2, consumer_view, derive_bridge,
     produce_identity_bridge_input,
 )
-from f017_event06_production_installation_v3 import PromptBoundEventIdentityPlanV2
+from f017_event06_collapsed_live_installation_v2 import CollapsedLivePromptIdentityV2
 import f017_event06_numerical_bridge_v1 as legacy
 import f017_corrected_oracle_primary_wrapper_v12_bridge_v2 as primary_adapter
 import f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 as secondary_adapter
@@ -20,10 +20,13 @@ import f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 as secondary_adapte
 
 def test_exact_sealed_input_and_digest_continuity():
     bridge, bridge_input, event_identity, installed, _leases, _report, identity, plan = runtime_fixture_values()
-    assert type(event_identity) is PromptBoundEventIdentityPlanV2
+    assert type(event_identity) is CollapsedLivePromptIdentityV2
     assert type(bridge_input) is PromptBoundIdentityBridgeInputV2
     assert type(bridge) is ValidatedNumericalBridgeV2
     assert bridge_input.get("event_identity_plan_sha256") == event_identity.source_sha256
+    assert bridge_input.get("preparation_sha256") == event_identity.get("preparation_sha256")
+    assert bridge_input.get("collapsed_go_sha256") == event_identity.get("collapsed_go_sha256")
+    assert bridge_input.get("authority_mode") == event_identity.get("authority_mode")
     assert bridge.get("event_identity_plan_sha256") == event_identity.source_sha256
     assert bridge.legacy_bridge.get("event_identity_plan_sha256") == event_identity.source_sha256
     assert derive_bridge(bridge_input, installed, identity, plan).sha256 == bridge.sha256
@@ -38,7 +41,7 @@ def test_sealed_authorities_are_immutable(operation):
              "pickle": pickle.dumps}[operation](value)
 
 
-def test_mapping_and_historical_plan_are_rejected():
+def test_mapping_and_lookalike_identity_are_rejected():
     bridge, bridge_input, _event_identity, installed, _leases, _report, identity, plan = runtime_fixture_values()
     with pytest.raises(TypeError):
         derive_bridge(bridge_input.as_dict(), installed, identity, plan)

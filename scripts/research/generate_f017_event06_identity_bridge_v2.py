@@ -14,7 +14,7 @@ MODULE = ROOT / "scripts/research/f017_event06_identity_bridge_contract_v2.py"
 
 def _contract(requirements: dict[str, object]) -> dict[str, object]:
     return {
-        "schema": "pulsarmlx.f017.event06-v12-identity-to-numerical-bridge-contract/2.0.0",
+        "schema": "pulsarmlx.f017.event06-v12-identity-to-numerical-bridge-contract/2.1.0",
         "requirements": REQUIREMENTS.relative_to(ROOT).as_posix(),
         "generation": requirements["generation"],
         "numerical_authority": requirements["numerical_authority"],
@@ -62,7 +62,7 @@ def _module(contract: dict[str, object]) -> str:
         "ACCOUNTING_UNITS": tuple(contract["accounting_units"]),
         "FAILURE_OUTCOMES": tuple(contract["failure_outcomes"]),
     }
-    body = ["#!/usr/bin/env python3", '"""Generated Sequence 12 identity bridge contract. Do not edit."""', "from __future__ import annotations", ""]
+    body = ["#!/usr/bin/env python3", '"""Generated collapsed-identity bridge contract. Do not edit."""', "from __future__ import annotations", ""]
     body.extend(f"{name} = {value!r}" for name, value in rows.items())
     return "\n".join(body) + "\n"
 
