@@ -11,6 +11,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v2 import runtime_fixture_values
@@ -60,7 +61,7 @@ def _baseline_documents():
     primary_numerical = legacy.numerical_view(historical, "PRIMARY")
     primary_result = legacy.result_bundle_view(historical, "PRIMARY", "7" * 64)
     primary_bundle_binding, primary_bundle_sha = legacy.build_bundle_binding(
-        primary_numerical, primary_result, primary_bundle["index"]
+        primary_numerical, primary_result, primary_bundle["index"], "QUALIFICATION_ONLY"
     )
     primary_binding = legacy.primary_terminal_binding(
         primary_bundle, historical, primary_bundle_binding
@@ -69,7 +70,7 @@ def _baseline_documents():
     secondary_result = legacy.result_bundle_view(historical, "SECONDARY", "8" * 64)
     secondary_bundle = _synthetic_bundle("SECONDARY", historical)
     secondary_bundle_binding, _ = legacy.build_bundle_binding(
-        secondary_numerical, secondary_result, secondary_bundle["index"]
+        secondary_numerical, secondary_result, secondary_bundle["index"], "QUALIFICATION_ONLY"
     )
     comparison = legacy.comparison_view(historical, primary_bundle_binding, secondary_bundle_binding)
     comparison_summary = {
@@ -144,10 +145,15 @@ def _baseline_documents():
     accounting, accounting_sha = build_accounting_closure(
         bridge, views["ACCOUNTING"], legacy_accounting
     )
-    legacy_terminal = legacy.build_package_terminal(package_terminal)
-    terminal, _ = build_package_terminal(
-        bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting
-    )
+    with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-v2-") as directory:
+        root = Path(directory)
+        legacy_terminal, _ = legacy.build_package_terminal(
+            package_terminal, historical, root / "legacy-terminal.json"
+        )
+        terminal, _ = build_package_terminal(
+            bridge, views["PACKAGE_TERMINAL"], legacy_terminal, accounting,
+            root / "prompt-bound-terminal.json",
+        )
     documents = {
         "identity_input": bridge_input.as_dict(), "numerical_bridge": bridge.as_dict(),
         "accounting_closure": accounting.as_dict(), "package_terminal": terminal,

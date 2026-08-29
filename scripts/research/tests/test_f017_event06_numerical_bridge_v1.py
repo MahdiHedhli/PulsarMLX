@@ -26,7 +26,8 @@ from f017_event06_numerical_bridge_v1 import (
 )
 from execute_f017_corrected_oracle_event_v12_bridge import (
     PRODUCTION_CALL_PATH, ValidatedBridgeExecutionResult, ValidatedDurableStart,
-    close_bridge_package, validate_no_access_call_path, validate_transition_order,
+    bank_package_start, close_bridge_package, validate_no_access_call_path,
+    validate_transition_order,
 )
 from qualify_f017_event06_bridge_call_path_v2 import _release_report, qualify_call_path
 
@@ -120,7 +121,7 @@ def test_plan_field_mutations_fail_closed():
     assert rejected >= 75
 
 
-def test_views_close_exact_consumer_authority():
+def test_views_close_exact_consumer_authority(tmp_path):
     bridge, *_ = fixture_values()
     primary = numerical_view(bridge, "PRIMARY")
     primary_result = result_bundle_view(bridge, "PRIMARY", "a" * 64)
@@ -156,8 +157,13 @@ def test_views_close_exact_consumer_authority():
     closure = _closure_fixture()
     closure_binding = bind_v11_closure(bridge, closure, accounting_binding)
     terminal_view = package_terminal_view(bridge, chain, closure_binding, accounting_binding)
-    terminal = build_package_terminal(terminal_view)
-    assert validate_package_terminal(terminal, bridge) == hashlib.sha256(canonical_bytes(terminal)).hexdigest()
+    terminal, terminal_sha = build_package_terminal(
+        terminal_view, bridge, tmp_path / "package-terminal.json"
+    )
+    assert terminal_sha == validate_package_terminal(terminal, bridge)
+    assert terminal_sha == hashlib.sha256(canonical_bytes(terminal)).hexdigest()
+    with pytest.raises(FileExistsError):
+        build_package_terminal(terminal_view, bridge, tmp_path / "package-terminal.json")
     for view in (primary, primary_result, secondary, secondary_result, compare, release, accounting, terminal_view):
         assert view.get("bridge_sha256") == bridge.sha256
     assert binding_doc.get("bridge_sha256") == bridge.sha256
@@ -175,6 +181,25 @@ def test_views_close_exact_consumer_authority():
         accounting_view(bridge, release_binding.as_dict())
     with pytest.raises(TypeError):
         package_terminal_view(bridge, chain, closure_binding, accounting_binding.as_dict())
+
+
+def test_bundle_binding_requires_exact_producer_kinds_and_authority_mode():
+    bridge, *_ = fixture_values()
+    numerical = numerical_view(bridge, "PRIMARY")
+    result = result_bundle_view(bridge, "PRIMARY", "a" * 64)
+    production = primary_bundle_fixture()["index"]
+    with pytest.raises(TypeError):
+        build_bundle_binding(result, result, production)
+    with pytest.raises(ValueError):
+        build_bundle_binding(numerical, result, production, "QUALIFICATION_ONLY")
+
+
+def test_durable_start_terminalization_is_one_shot(tmp_path):
+    _bridge, installed, *_ = fixture_values()
+    start = bank_package_start(installed, tmp_path / "package-start.json")
+    start.claim_terminalization()
+    with pytest.raises(RuntimeError):
+        start.claim_terminalization()
 
 
 def test_transition_chain_is_exact_and_mutation_closed():

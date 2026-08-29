@@ -25,7 +25,8 @@ def validate_identity_authority(authority: ValidatedIdentityAuthority, *, postur
 
 def execute_bridge_and_bank(numerical_view: ValidatedConsumerView,
                             result_view: ValidatedConsumerView,
-                            file_descriptors: list[int], directory: Path) -> dict:
+                            file_descriptors: list[int], directory: Path,
+                            authority_mode: str = "LIVE_CANONICAL") -> dict:
     """Run one unchanged V11 secondary core from a sealed V12 bridge view."""
     if (type(numerical_view) is not ValidatedConsumerView or numerical_view.get("role") != "SECONDARY"
             or type(result_view) is not ValidatedConsumerView or result_view.get("role") != "SECONDARY"):
@@ -40,7 +41,9 @@ def execute_bridge_and_bank(numerical_view: ValidatedConsumerView,
     bundle = execute_and_bank_v11(
         document, directory, store=store, use_mlx=False, **primary, **bundle_kwargs(result_view)
     )
-    binding, binding_sha = build_bundle_binding(numerical_view, result_view, bundle["index"])
+    binding, binding_sha = build_bundle_binding(
+        numerical_view, result_view, bundle["index"], authority_mode
+    )
     observed_sha = bank_exclusive(directory / "secondary-bridge-bundle-binding.json", binding.as_dict())
     if observed_sha != binding_sha:
         raise ValueError("secondary bridge bundle binding")

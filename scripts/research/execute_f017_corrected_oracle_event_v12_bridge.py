@@ -40,7 +40,7 @@ _START_SEAL = object()
 
 class ValidatedDurableStart:
     """Coordinator-created durable start bound to the installed authority."""
-    __slots__ = ("_value", "sha256")
+    __slots__ = ("_terminalization_claimed", "_value", "sha256")
 
     def __new__(cls, seal=None, value=None):
         if seal is not _START_SEAL:
@@ -50,6 +50,7 @@ class ValidatedDurableStart:
     def __init__(self, seal, value):
         object.__setattr__(self, "_value", MappingProxyType(dict(value)))
         object.__setattr__(self, "sha256", _sha(value))
+        object.__setattr__(self, "_terminalization_claimed", False)
 
     def __setattr__(self, name, value):
         del name, value
@@ -61,6 +62,12 @@ class ValidatedDurableStart:
 
     def get(self, key, default=None):
         return self._value.get(key, default)
+
+    def claim_terminalization(self) -> None:
+        """Consume the process-local half of the durable one-shot close gate."""
+        if self._terminalization_claimed:
+            raise RuntimeError("package terminalization already claimed")
+        object.__setattr__(self, "_terminalization_claimed", True)
 
 
 class ValidatedBridgeExecutionResult:
@@ -372,6 +379,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
     ):
         if start_value != bridge_value:
             raise ValueError(f"package start/bridge {name}")
+    package_start.claim_terminalization()
     _sha256 = lambda value: hashlib.sha256(canonical_bytes(value)).hexdigest()
     primary = execution_result["primary"]
     secondary = execution_result["secondary"]
@@ -394,10 +402,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         bridge, transition_chain, execution_result["v11_closure_binding"],
         execution_result["accounting_binding"]
     )
-    terminal = build_package_terminal(view)
-    terminal_sha = validate_package_terminal(terminal, bridge)
-    if bank_exclusive(terminal_path, terminal) != terminal_sha:
-        raise ValueError("bridge package terminal banking")
+    terminal, terminal_sha = build_package_terminal(view, bridge, terminal_path)
     return {"transition_records":records,
             "transition_chain":transition_chain,
             "chain_head_sha256":transition_chain.get("chain_head_sha256"),

@@ -140,39 +140,46 @@ class _Sealed:
 
 
 class ValidatedIdentityStage(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedNumericalBridge(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedConsumerView(_Sealed):
-    pass
+    __slots__ = ("_producer_kind",)
+
+    @property
+    def producer_kind(self) -> str:
+        try:
+            return self._producer_kind
+        except AttributeError as exc:
+            raise TypeError("consumer view lacks producer provenance") from exc
 
 
 class ValidatedBundleBinding(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedComparisonBinding(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedReleaseBinding(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedAccountingBinding(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedTransitionChain(_Sealed):
-    pass
+    __slots__ = ()
 
 
 class ValidatedV11ClosureBinding(_Sealed):
-    pass
+    __slots__ = ()
 
 
 def _sha(value, name):
@@ -421,7 +428,9 @@ def _validated_consumer_view_from_producer(role: str, value: object) -> Validate
                                  value["primary_receipt_sha256"], value["primary_manifest_sha256"])
     if "lease_owner" in value and (type(value["lease_owner"]) is not str or not value["lease_owner"]):
         raise ValueError("bridge view lease owner")
-    return ValidatedConsumerView(_SEAL, value)
+    view = ValidatedConsumerView(_SEAL, value)
+    object.__setattr__(view, "_producer_kind", role)
+    return view
 
 
 def _base_view(bridge: ValidatedNumericalBridge) -> dict:
@@ -490,7 +499,9 @@ def primary_terminal_binding(bundle: dict, bridge: ValidatedNumericalBridge,
     keys = {"schema","role","bridge_sha256","primary_terminal","primary_result_terminal_sha256","primary_receipt_sha256","primary_manifest_sha256","primary_bridge_bundle_binding_sha256"}
     if set(values) != keys:
         raise ValueError("primary terminal binding census")
-    return ValidatedConsumerView(_SEAL, values)
+    view = ValidatedConsumerView(_SEAL, values)
+    object.__setattr__(view, "_producer_kind", "PRIMARY_TERMINAL_BINDING")
+    return view
 
 
 def source_projection(view: ValidatedConsumerView) -> tuple[dict, list[dict]]:
@@ -689,7 +700,7 @@ def package_terminal_view(bridge: ValidatedNumericalBridge,
 
 
 def _validate_bundle_index(index: object, numerical: ValidatedConsumerView,
-                           bundle: ValidatedConsumerView) -> None:
+                           bundle: ValidatedConsumerView, authority_mode: str) -> None:
     if type(index) is not dict:
         raise ValueError("bundle index")
     production_keys = {
@@ -709,7 +720,7 @@ def _validate_bundle_index(index: object, numerical: ValidatedConsumerView,
         and bundle.get("role") == role
     )
     if index.get("schema") == "pulsarmlx.f017.corrected-oracle-result-bundle-index/11.0.0":
-        if (set(index) != production_keys or not common
+        if (authority_mode != "LIVE_CANONICAL" or set(index) != production_keys or not common
                 or index.get("authorization_id") != bundle.get("authorization_id")
                 or index.get("package_attempt_id") != bundle.get("package_attempt_id")
                 or index.get("consumer_event_id") != bundle.get("consumer_event_id")
@@ -723,7 +734,7 @@ def _validate_bundle_index(index: object, numerical: ValidatedConsumerView,
         for value in index["payload_sha256s"]:
             _sha(value, "bundle payload")
     elif index.get("schema") == "pulsarmlx.f017.event06-v12-qualification-bundle-index/1.0.0":
-        if (set(index) != qualification_keys or not common
+        if (authority_mode != "QUALIFICATION_ONLY" or set(index) != qualification_keys or not common
                 or index.get("bridge_sha256") != numerical.get("bridge_sha256")
                 or index.get("qualification_only") is not True):
             raise ValueError("qualification bundle index continuity")
@@ -734,14 +745,21 @@ def _validate_bundle_index(index: object, numerical: ValidatedConsumerView,
 
 
 def build_bundle_binding(numerical: ValidatedConsumerView, bundle: ValidatedConsumerView,
-                         bundle_index: dict) -> tuple[ValidatedBundleBinding, str]:
+                         bundle_index: dict, authority_mode: str = "LIVE_CANONICAL"
+                         ) -> tuple[ValidatedBundleBinding, str]:
     if type(numerical) is not ValidatedConsumerView or type(bundle) is not ValidatedConsumerView:
         raise TypeError("sealed bundle views required")
     if numerical.get("bridge_sha256") != bundle.get("bridge_sha256"):
         raise ValueError("bundle bridge mismatch")
     if numerical.get("role") != bundle.get("role"):
         raise ValueError("bundle role mismatch")
-    _validate_bundle_index(bundle_index, numerical, bundle)
+    role = numerical.get("role")
+    if (numerical.producer_kind != f"{role}_NUMERICAL_V11"
+            or bundle.producer_kind != "RESULT_BUNDLE_V11"):
+        raise TypeError("exact numerical and result-bundle producer views required")
+    if authority_mode not in {"LIVE_CANONICAL", "QUALIFICATION_ONLY"}:
+        raise ValueError("bundle authority mode")
+    _validate_bundle_index(bundle_index, numerical, bundle, authority_mode)
     value = {"schema":BUNDLE_BINDING_SCHEMA,"role":numerical.get("role"),
         "bridge_sha256":numerical.get("bridge_sha256"),"authorization_id":bundle.get("authorization_id"),
         "package_attempt_id":bundle.get("package_attempt_id"),"consumer_event_id":bundle.get("consumer_event_id"),
@@ -839,7 +857,7 @@ def bind_v11_closure(bridge: ValidatedNumericalBridge, closure: object,
     return ValidatedV11ClosureBinding(_SEAL, value)
 
 
-def build_package_terminal(view: ValidatedConsumerView) -> dict:
+def _package_terminal_document(view: ValidatedConsumerView) -> dict:
     if type(view) is not ValidatedConsumerView:
         raise TypeError("package terminal view")
     expected = VIEW_KEYS["PACKAGE_TERMINAL"]
@@ -847,6 +865,20 @@ def build_package_terminal(view: ValidatedConsumerView) -> dict:
     if set(value) != expected:
         raise ValueError("bridge package terminal census")
     return value | {"schema":PACKAGE_TERMINAL_SCHEMA,"result":"COMPLETE"}
+
+
+def build_package_terminal(view: ValidatedConsumerView, bridge: ValidatedNumericalBridge,
+                           terminal_path) -> tuple[dict, str]:
+    """Construct, validate, and exclusively bank the sole package terminal."""
+    from pathlib import Path
+    from f017_canonical_serialization_v10 import bank_exclusive
+    if not isinstance(terminal_path, Path):
+        raise TypeError("exact package terminal path required")
+    value = _package_terminal_document(view)
+    digest = validate_package_terminal(value, bridge)
+    if bank_exclusive(terminal_path, value) != digest:
+        raise ValueError("bridge package terminal banking")
+    return value, digest
 
 
 def validate_package_terminal(value: object, bridge: ValidatedNumericalBridge) -> str:

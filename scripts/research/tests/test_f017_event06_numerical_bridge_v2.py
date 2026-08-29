@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import pickle
 
 import pytest
@@ -16,6 +17,8 @@ from f017_event06_collapsed_live_installation_v2 import CollapsedLivePromptIdent
 import f017_event06_numerical_bridge_v1 as legacy
 import f017_corrected_oracle_primary_wrapper_v12_bridge_v2 as primary_adapter
 import f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 as secondary_adapter
+import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator
+from qualify_f017_event06_bridge_call_path_v2 import _bundle, _release_report, _summary
 
 
 def test_exact_sealed_input_and_digest_continuity():
@@ -59,6 +62,65 @@ def test_prompt_bound_consumer_view():
     assert view.get("prompt_sha256") == bridge.get("prompt_sha256")
     with pytest.raises(TypeError):
         consumer_view(bridge, "PRIMARY_NUMERICAL", historical.immutable_view())
+    secondary = legacy.numerical_view(bridge.legacy_bridge, "SECONDARY", primary_binding=_primary_binding(bridge))
+    with pytest.raises(ValueError):
+        consumer_view(bridge, "PRIMARY_NUMERICAL", secondary)
+
+
+def _primary_binding(bridge):
+    from f017_event06_dag_derived_control_path_v1 import _synthetic_bundle
+    bundle = _synthetic_bundle("PRIMARY", bridge.legacy_bridge)
+    numerical = legacy.numerical_view(bridge.legacy_bridge, "PRIMARY")
+    result = legacy.result_bundle_view(bridge.legacy_bridge, "PRIMARY", "1" * 64)
+    binding, _ = legacy.build_bundle_binding(
+        numerical, result, bundle["index"], "QUALIFICATION_ONLY"
+    )
+    return legacy.primary_terminal_binding(bundle, bridge.legacy_bridge, binding)
+
+
+def test_successor_bridge_rejects_checkpoint_set_substitution():
+    _bridge, bridge_input, _event_identity, installed, _leases, _report, identity, plan = runtime_fixture_values()
+    changed = identity.as_dict()
+    changed["checkpoint_set_sha256"] = "f" * 64
+    substituted = legacy.validate_identity_stage(changed)
+    with pytest.raises(ValueError, match="checkpoint set"):
+        derive_bridge(bridge_input, installed, substituted, plan)
+
+
+def test_successor_coordinator_binds_v11_closure_before_return():
+    source = inspect.getsource(coordinator.execute_consumers)
+    assert "legacy_bridge.bind_v11_closure" in source
+    assert '"v11_closure_binding": v11_closure_binding' in source
+
+
+def test_successor_execute_consumers_returns_exact_sealed_v11_closure(tmp_path):
+    bridge, _bridge_input, _event_identity, _installed, leases, *_ = runtime_fixture_values()
+
+    def stage(numerical, result, _fds, _directory):
+        role = "PRIMARY" if numerical.get("role") == "PRIMARY_NUMERICAL" else "SECONDARY"
+        bundle = _bundle(role, bridge.legacy_bridge.sha256)
+        binding, binding_sha = legacy.build_bundle_binding(
+            numerical.legacy_view, result.legacy_view, bundle["index"],
+            "QUALIFICATION_ONLY",
+        )
+        return bundle | {
+            "bridge_bundle_binding": binding,
+            "bridge_bundle_binding_sha256": binding_sha,
+        }
+
+    leases.release = lambda: _release_report(bridge.get("package_attempt_id"))
+    with (patch.object(coordinator, "execute_primary", stage),
+          patch.object(coordinator, "execute_secondary", stage),
+          patch.object(coordinator, "derive_summary", lambda *_args: _summary(bridge.legacy_bridge)),
+          patch.object(coordinator, "validate_summary", lambda *_args: {"result": "PASS"})):
+        result = coordinator.execute_consumers(
+            bridge, leases, tmp_path / "primary", tmp_path / "secondary",
+            tmp_path / "package",
+        )
+    binding = result["v11_closure_binding"]
+    assert type(binding) is legacy.ValidatedV11ClosureBinding
+    assert binding.get("bridge_sha256") == bridge.get("legacy_bridge_sha256")
+    assert binding.get("accounting_binding_sha256") == result["accounting_binding"].sha256
 
 
 def test_versioned_wrappers_receive_prompt_bound_views():
@@ -82,7 +144,7 @@ def test_versioned_wrappers_receive_prompt_bound_views():
         bridge.legacy_bridge, "PRIMARY", "1" * 64
     )
     bundle_binding, _ = legacy.build_bundle_binding(
-        historical_primary, historical_result, bundle["index"]
+        historical_primary, historical_result, bundle["index"], "QUALIFICATION_ONLY"
     )
     primary_binding = legacy.primary_terminal_binding(
         bundle, bridge.legacy_bridge, bundle_binding

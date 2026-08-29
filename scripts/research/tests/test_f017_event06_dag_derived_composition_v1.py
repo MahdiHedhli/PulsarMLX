@@ -40,6 +40,6 @@ def test_generated_per_edge_positive_and_negative_coverage():
     assert result["mutation_campaign"] == {
         "passed": 160, "total": 160, "unexpected_passes": 0
     }
-    assert result["real_binding_consumer_mutations"]["passed"] == 18
+    assert result["real_binding_consumer_mutations"]["passed"] == 22
     assert result["real_binding_consumer_mutations"]["unexpected_passes"] == 0
     assert result["full_call_path_dry_run_with_synthetic_authority"] == "PASS"

@@ -23,5 +23,6 @@ def execute_bridge_and_bank(
             or numerical.get("prompt_sha256") != result.get("prompt_sha256")):
         raise ValueError("primary prompt-bound consumer continuity")
     return _execute(
-        numerical.legacy_view, result.legacy_view, inherited_descriptors, output_directory
+        numerical.legacy_view, result.legacy_view, inherited_descriptors, output_directory,
+        numerical.get("authority_mode"),
     )

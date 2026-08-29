@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import hashlib
 import re
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 
-from f017_canonical_serialization_v10 import canonical_bytes
+from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 from f017_event06_identity_bridge_contract_v2 import (
@@ -231,6 +231,7 @@ def _derive_historical_bridge(
         (bridge_input.get("execution_plan_sha256"), execution.sha256, "execution plan"),
         (bridge_input.get("authorization_id"), identity.get("authorization_id"), "identity authorization"),
         (bridge_input.get("package_attempt_id"), identity.get("package_attempt_id"), "identity package"),
+        (installed_value["checkpoint_set_sha256"], identity.get("checkpoint_set_sha256"), "checkpoint set"),
     )
     for observed, expected, detail in equalities:
         if observed != expected:
@@ -321,13 +322,30 @@ def consumer_view(
 ) -> PromptBoundConsumerViewV2:
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(historical_view) is not legacy.ValidatedConsumerView:
         raise TypeError("exact sealed bridge and historical consumer view required")
+    expected_inner = {
+        "PRIMARY_NUMERICAL": ("PRIMARY_NUMERICAL_V11", "PRIMARY"),
+        "PRIMARY_RESULT": ("RESULT_BUNDLE_V11", "PRIMARY"),
+        "SECONDARY_NUMERICAL": ("SECONDARY_NUMERICAL_V11", "SECONDARY"),
+        "SECONDARY_RESULT": ("RESULT_BUNDLE_V11", "SECONDARY"),
+        "COMPARISON": ("COMPARISON_V11", None),
+        "RELEASE": ("RELEASE", None),
+        "ACCOUNTING": ("ACCOUNTING", None),
+        "PACKAGE_TERMINAL": ("PACKAGE_TERMINAL", None),
+    }
     if role not in CONSUMER_ROLES or historical_view.get("bridge_sha256") != bridge.get("legacy_bridge_sha256"):
         raise ValueError("consumer bridge continuity")
+    producer_kind, expected_role = expected_inner[role]
+    if historical_view.producer_kind != producer_kind:
+        raise ValueError("consumer inner producer-kind continuity")
+    if expected_role is not None and historical_view.get("role") != expected_role:
+        raise ValueError("consumer inner role continuity")
     consumer_event_id = (
         bridge.get("primary_event_id") if role.startswith("PRIMARY") else
         bridge.get("secondary_event_id") if role.startswith("SECONDARY") else
         bridge.get("package_attempt_id")
     )
+    if expected_role is not None and historical_view.get("consumer_event_id") != consumer_event_id:
+        raise ValueError("consumer inner event continuity")
     value = {
         "schema": CONSUMER_VIEW_SCHEMA, "role": role,
         "bridge_sha256": bridge.sha256, "legacy_view_sha256": historical_view.sha256,
@@ -389,6 +407,7 @@ def build_package_terminal(
     package_view: PromptBoundConsumerViewV2,
     legacy_package_terminal: dict[str, object],
     accounting_closure: ValidatedAccountingClosureV2,
+    terminal_path: Path,
 ) -> tuple[dict[str, object], str]:
     if type(bridge) is not ValidatedNumericalBridgeV2 or type(package_view) is not PromptBoundConsumerViewV2:
         raise TypeError("sealed package terminal authorities required")
@@ -423,4 +442,9 @@ def build_package_terminal(
         "package_attempt_id": bridge.get("package_attempt_id"), "result": "COMPLETE",
     }
     _exact(value, PACKAGE_TERMINAL_FIELDS, PACKAGE_TERMINAL_TYPES, PACKAGE_TERMINAL_SCHEMA, "package terminal")
-    return value, hashlib.sha256(canonical_bytes(value)).hexdigest()
+    digest = hashlib.sha256(canonical_bytes(value)).hexdigest()
+    if not isinstance(terminal_path, Path):
+        raise TypeError("exact successor terminal path required")
+    if bank_exclusive(terminal_path, value) != digest:
+        raise ValueError("successor package terminal banking")
+    return value, digest

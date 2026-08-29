@@ -77,7 +77,9 @@ def qualify_call_path() -> dict:
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("primary bridge authority")
         bundle = _bundle("PRIMARY", args[0].get("bridge_sha256"))
-        binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+        binding, binding_sha = build_bundle_binding(
+            args[0], args[1], bundle["index"], "QUALIFICATION_ONLY"
+        )
         return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
     def secondary(*args):
@@ -85,7 +87,9 @@ def qualify_call_path() -> dict:
         if args[0].get("bridge_sha256") != expected.sha256:
             raise ValueError("secondary bridge authority")
         bundle = _bundle("SECONDARY", args[0].get("bridge_sha256"))
-        binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+        binding, binding_sha = build_bundle_binding(
+            args[0], args[1], bundle["index"], "QUALIFICATION_ONLY"
+        )
         return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
 
     def compare(*_args):
@@ -124,10 +128,22 @@ def qualify_call_path() -> dict:
                 primary_directory=root / "primary", secondary_directory=root / "secondary",
                 package_directory=root / "package", terminal_path=root / "package-terminal.json",
             )
+            try:
+                coordinator.close_bridge_package(
+                    result["bridge"], result["package_start"], result["execution"],
+                    root / "replacement-package-terminal.json",
+                )
+            except RuntimeError as exc:
+                if "terminalization already claimed" not in str(exc):
+                    raise
+                duplicate_terminalization_rejected = True
+            else:
+                duplicate_terminalization_rejected = False
     if (result["result"] != "PASS" or result["bridge"].sha256 != expected.sha256
             or result["package"]["result"] != "PASS" or release_calls != 1
             or type(result["package_start"]) is not coordinator.ValidatedDurableStart
             or type(result["execution"]) is not coordinator.ValidatedBridgeExecutionResult
+            or not duplicate_terminalization_rejected
             or calls.count("PRIMARY_SINGLE_CALL") != 1 or calls.count("SECONDARY_SINGLE_CALL") != 1):
         raise ValueError("production coordinator instantiability")
 
@@ -174,12 +190,16 @@ def qualify_call_path() -> dict:
         def primary_stage(*args):
             if failed_stage == "PRIMARY": raise RuntimeError("modeled primary failure")
             bundle = _bundle("PRIMARY", args[0].get("bridge_sha256"))
-            binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+            binding, binding_sha = build_bundle_binding(
+                args[0], args[1], bundle["index"], "QUALIFICATION_ONLY"
+            )
             return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
         def secondary_stage(*args):
             if failed_stage == "SECONDARY": raise RuntimeError("modeled secondary failure")
             bundle = _bundle("SECONDARY", args[0].get("bridge_sha256"))
-            binding, binding_sha = build_bundle_binding(args[0], args[1], bundle["index"])
+            binding, binding_sha = build_bundle_binding(
+                args[0], args[1], bundle["index"], "QUALIFICATION_ONLY"
+            )
             return bundle | {"bridge_bundle_binding": binding, "bridge_bundle_binding_sha256": binding_sha}
         def comparison_stage(*_args):
             if failed_stage == "COMPARISON": raise RuntimeError("modeled comparison failure")
@@ -207,6 +227,7 @@ def qualify_call_path() -> dict:
         "primary_calls":1,"secondary_calls":1,"success_release_passes":release_calls,
         "sealed_durable_starts":3,"caller_supplied_start_digests":0,
         "sealed_execution_result":"PASS",
+        "duplicate_terminalization_rejected":duplicate_terminalization_rejected,
         "failure_release_paths":failure_release_paths,"comparison_release_accounting_chain":"PASS",
         "package_terminal":"PASS","original_checkpoint_root_resolved":False,
         "original_checkpoint_access":0,"numerical_operations":0,"live_state_created":False,

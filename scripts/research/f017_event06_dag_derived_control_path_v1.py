@@ -172,7 +172,8 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     _trace(trace, EDGE_IDS[22], primary_result_legacy)
     primary_bundle = _synthetic_bundle("PRIMARY", historical)
     primary_bundle_binding, primary_bundle_binding_sha = legacy.build_bundle_binding(
-        primary_numerical_legacy, primary_result_legacy, primary_bundle["index"]
+        primary_numerical_legacy, primary_result_legacy, primary_bundle["index"],
+        "QUALIFICATION_ONLY",
     )
     primary_terminal_binding = legacy.primary_terminal_binding(
         primary_bundle, historical, primary_bundle_binding
@@ -194,7 +195,8 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     _trace(trace, EDGE_IDS[26], secondary_result_legacy)
     secondary_bundle = _synthetic_bundle("SECONDARY", historical)
     secondary_bundle_binding, secondary_bundle_binding_sha = legacy.build_bundle_binding(
-        secondary_numerical_legacy, secondary_result_legacy, secondary_bundle["index"]
+        secondary_numerical_legacy, secondary_result_legacy, secondary_bundle["index"],
+        "QUALIFICATION_ONLY",
     )
 
     comparison_legacy = legacy.comparison_view(
@@ -291,16 +293,16 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     _trace(trace, EDGE_IDS[34], package_legacy_view)
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", package_legacy_view)
     _trace(trace, EDGE_IDS[35], package_view)
-    legacy_terminal = legacy.build_package_terminal(package_legacy_view)
-    legacy_terminal_sha = legacy.validate_package_terminal(
-        legacy_terminal, historical
+    legacy_terminal, legacy_terminal_sha = legacy.build_package_terminal(
+        package_legacy_view, historical, root / "legacy-package-terminal.json"
     )
     _trace(trace, EDGE_IDS[36], accounting_closure)
     _trace(trace, EDGE_IDS[37], primary_bundle_binding)
     _trace(trace, EDGE_IDS[38], transition_chain)
     _trace(trace, EDGE_IDS[39], v11_closure_binding)
     package_terminal, package_terminal_sha = build_prompt_bound_package_terminal(
-        bridge, package_view, legacy_terminal, accounting_closure
+        bridge, package_view, legacy_terminal, accounting_closure,
+        root / "prompt-bound-package-terminal.json",
     )
 
     counters = package["state"].snapshot()
@@ -351,6 +353,22 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
         "authority_mode": result["authority_mode"],
         "dag_edges_traversed": result["dag_edges_traversed"],
         "runtime_types": [item["runtime_type"] for item in trace],
+        "stable_preinstallation_edge_digests": [item["digest"] for item in trace[:7]],
+        "authority_invariant_bindings": {
+            "event_identity_plan_sha256": bridge.get("event_identity_plan_sha256"),
+            "preparation_sha256": bridge.get("preparation_sha256"),
+            "collapsed_go_sha256": bridge.get("collapsed_go_sha256"),
+            "prompt_sha256": bridge.get("prompt_sha256"),
+            "checkpoint_set_sha256": historical.get("checkpoint_set_sha256"),
+            "execution_plan_sha256": historical.get("execution_plan_sha256"),
+            "numerical_contract_sha256": historical.get("numerical_contract_sha256"),
+            "result_authority_sha256": historical.get("result_authority_sha256"),
+            "primary_bundle_role": primary_bundle_binding.get("role"),
+            "secondary_bundle_role": secondary_bundle_binding.get("role"),
+            "transition_phases": [record["phase"] for record in transitions],
+            "accounting_result": legacy_accounting_binding.get("result"),
+            "package_terminal_result": package_terminal["result"],
+        },
         "synthetic_accounting": result["synthetic_accounting"],
         "live_accounting": result["live_accounting"],
         "live_counters": result["live_counters"],
@@ -362,8 +380,15 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     if retain_authorities:
         result["_authorities"] = {
             "bridge": bridge,
+            "bridge_input": bridge_input,
+            "installed_authority": package["installed"].authority,
+            "identity_stage": identity_stage,
+            "execution_plan": package["plan"],
             "primary_numerical_view": primary_numerical_legacy,
             "primary_result_view": primary_result_legacy,
+            "primary_bundle_index": primary_bundle["index"],
+            "secondary_numerical_view": secondary_numerical_legacy,
+            "secondary_result_view": secondary_result_legacy,
             "primary_bundle_binding": primary_bundle_binding,
             "secondary_bundle_binding": secondary_bundle_binding,
             "comparison_binding": comparison_binding,

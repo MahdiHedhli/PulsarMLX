@@ -218,6 +218,13 @@ def execute_consumers(
         _sha(release_start), _sha(release_report), _sha(release_receipt),
         _sha(release_terminal), _sha(package_receipt),
     )
+    v11_closure_binding = legacy_bridge.bind_v11_closure(
+        historical, v11_closure, accounting_binding
+    )
+    _bank(
+        package_directory / "bridge-v11-closure-binding.json",
+        v11_closure_binding.as_dict(), v11_closure_binding.sha256,
+    )
     views = {
         "PRIMARY_NUMERICAL": primary_numerical, "PRIMARY_RESULT": primary_result,
         "SECONDARY_NUMERICAL": secondary_numerical, "SECONDARY_RESULT": secondary_result,
@@ -236,6 +243,7 @@ def execute_consumers(
         "release_binding": release_binding, "release_binding_sha256": release_binding_sha,
         "release_terminal": release_terminal, "accounting_binding": accounting_binding,
         "accounting_binding_sha256": accounting_binding_sha, "v11_closure": v11_closure,
+        "v11_closure_binding": v11_closure_binding,
         "v11_closure_sha256": _sha(v11_closure), "consumer_views": views, "result": "PASS",
     }
     return legacy_coordinator.ValidatedBridgeExecutionResult(
@@ -300,9 +308,9 @@ def execute_event06_bridge(
     package_view = consumer_view(bridge, "PACKAGE_TERMINAL", historical_package_view)
     views["PACKAGE_TERMINAL"] = package_view
     terminal, terminal_sha = build_package_terminal(
-        bridge, package_view, legacy_package["terminal"], accounting
+        bridge, package_view, legacy_package["terminal"], accounting,
+        package_directory / "prompt-bound-package-terminal.json",
     )
-    _bank(package_directory / "prompt-bound-package-terminal.json", terminal, terminal_sha)
     for role, view in views.items():
         value = view.as_dict()
         _bank(package_directory / f"prompt-bound-{role.lower().replace('_', '-')}-view.json", value, view.sha256)

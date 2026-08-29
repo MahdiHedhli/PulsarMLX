@@ -11,7 +11,11 @@ from pathlib import Path
 
 from f017_event06_dag_derived_control_path_v1 import EDGE_IDS, run_full_call_path
 import f017_event06_numerical_bridge_v1 as legacy
-from f017_event06_numerical_bridge_v2 import build_package_terminal as build_prompt_bound_package_terminal
+from f017_event06_numerical_bridge_v2 import (
+    build_package_terminal as build_prompt_bound_package_terminal,
+    consumer_view as build_prompt_bound_consumer_view,
+    derive_bridge as derive_prompt_bound_bridge,
+)
 from validate_f017_event06_authority_dag_v1 import (
     DAG, validate as validate_dag, validate_runtime_boundary,
 )
@@ -57,6 +61,10 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
     transition_chain = authorities["transition_chain"]
     v11_closure = authorities["v11_closure_binding"]
     package_view = authorities["package_view"]
+    terminal_root = Path(tempfile.mkdtemp(prefix="f017-seq17-terminal-mutations-"))
+    changed_identity = authorities["identity_stage"].as_dict()
+    changed_identity["checkpoint_set_sha256"] = "f" * 64
+    substituted_identity = legacy.validate_identity_stage(changed_identity)
     cases = (
         ("comparison_raw_documents", lambda: legacy.comparison_view(historical, primary.as_dict(), secondary.as_dict())),
         ("comparison_swapped_roles", lambda: legacy.comparison_view(historical, secondary, primary)),
@@ -77,15 +85,29 @@ def _binding_consumer_mutations(authorities: dict[str, object]) -> dict[str, obj
         ("bundle_unrelated_index", lambda: legacy.build_bundle_binding(
             authorities["primary_numerical_view"], authorities["primary_result_view"],
             {"schema": "totally.unrelated/0", "role": "PRIMARY", "result": "PASS"})),
+        ("bundle_result_view_in_numerical_slot", lambda: legacy.build_bundle_binding(
+            authorities["primary_result_view"], authorities["primary_result_view"],
+            authorities["primary_bundle_index"], "QUALIFICATION_ONLY")),
+        ("qualification_bundle_in_live_mode", lambda: legacy.build_bundle_binding(
+            authorities["primary_numerical_view"], authorities["primary_result_view"],
+            authorities["primary_bundle_index"], "LIVE_CANONICAL")),
+        ("successor_checkpoint_set_substitution", lambda: derive_prompt_bound_bridge(
+            authorities["bridge_input"], authorities["installed_authority"],
+            substituted_identity, authorities["execution_plan"])),
+        ("successor_outer_inner_role_splice", lambda: build_prompt_bound_consumer_view(
+            bridge, "PRIMARY_NUMERICAL", authorities["secondary_numerical_view"])),
         ("mutate_primary_bundle_items", lambda: setattr(primary, "_items", secondary._items)),
         ("mutate_primary_bundle_sha", lambda: setattr(primary, "sha256", secondary.sha256)),
         ("successor_terminal_raw_closure", lambda: build_prompt_bound_package_terminal(
-            bridge, package_view, authorities["legacy_terminal"], closure.as_dict())),
+            bridge, package_view, authorities["legacy_terminal"], closure.as_dict(),
+            terminal_root / "raw-closure.json")),
         ("successor_terminal_wrong_sealed_type", lambda: build_prompt_bound_package_terminal(
-            bridge, package_view, authorities["legacy_terminal"], accounting)),
+            bridge, package_view, authorities["legacy_terminal"], accounting,
+            terminal_root / "wrong-type.json")),
         ("successor_terminal_invalid_legacy_terminal", lambda: build_prompt_bound_package_terminal(
             bridge, package_view,
-            authorities["legacy_terminal"] | {"result": "ABORTED_NOT_COMPLETE"}, closure)),
+            authorities["legacy_terminal"] | {"result": "ABORTED_NOT_COMPLETE"}, closure,
+            terminal_root / "invalid-legacy.json")),
     )
     rejected = []
     unexpected = []
