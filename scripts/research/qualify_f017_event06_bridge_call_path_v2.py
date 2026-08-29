@@ -12,7 +12,6 @@ from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v1 import runtime_fixture_values
 from f017_event06_numerical_bridge_v1 import build_bundle_binding
 import execute_f017_corrected_oracle_event_v12_bridge as coordinator
-from f017_event06_package_attempt_registry_v2 import reserve_qualification_package_attempt
 
 
 def _sha(value: dict) -> str:
@@ -113,14 +112,7 @@ def qualify_call_path() -> dict:
 
     with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-callpath-") as temporary:
         root = Path(temporary)
-        qualification_start = lambda value: coordinator._bank_package_start(
-            value,
-            reserve_qualification_package_attempt(
-                value, root / "package-attempt-registry"
-            ),
-        )
         with (patch.object(coordinator, "validate_package_start", package_gate),
-              patch.object(coordinator, "bank_live_package_start", qualification_start),
               patch.object(coordinator, "run_identity_stage", identity_stage),
               patch.object(coordinator, "execute_primary", primary),
               patch.object(coordinator, "execute_secondary", secondary),
@@ -164,15 +156,8 @@ def qualify_call_path() -> dict:
     bridge_leases.release = bridge_failure_release
     with tempfile.TemporaryDirectory(prefix="f017-event06-bridge-derivation-failure-") as temporary:
         root = Path(temporary)
-        qualification_start = lambda value: coordinator._bank_package_start(
-            value,
-            reserve_qualification_package_attempt(
-                value, root / "package-attempt-registry"
-            ),
-        )
         with (patch.object(coordinator, "validate_package_start",
                            lambda *_args: {"installed_authority":bridge_installed,"result":"PASS"}),
-              patch.object(coordinator, "bank_live_package_start", qualification_start),
               patch.object(coordinator, "run_identity_stage", lambda *_args, **_kwargs: (bridge_leases, bridge_report)),
               patch.object(coordinator, "bank_exclusive", bank)):
             try:

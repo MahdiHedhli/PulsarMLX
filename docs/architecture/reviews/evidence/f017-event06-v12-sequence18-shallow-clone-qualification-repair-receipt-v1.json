@@ -1,0 +1,12 @@
+{
+  "event06_executed": false,
+  "frozen_authority_paths": 5,
+  "frozen_authority_sha_mismatches": 0,
+  "historical_master_ledger": 175,
+  "original_checkpoint_access": "NONE",
+  "qualification_full_checkout": "PASS",
+  "qualification_sandbox": "PASS",
+  "repair_class": "MAKE_FROZEN_AUTHORITY_CENSUS_INDEPENDENT_OF_UNAVAILABLE_SHALLOW_HISTORY_OBJECTS",
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-shallow-clone-qualification-repair-receipt/1.0.0"
+}

@@ -435,7 +435,12 @@ def execute_event06_bridge_qualification(candidate_path: Path, installed_path: P
     """Historical qualification harness; never a production storage authority."""
     gate = validate_package_start(candidate_path, installed_path, receipt_path)
     installed = gate["installed_authority"]
-    package_start = bank_live_package_start(installed)
+    package_start = _bank_package_start(
+        installed,
+        reserve_qualification_package_attempt(
+            installed, package_directory.parent / "package-attempt-registry"
+        ),
+    )
     leases, identity_report = run_identity_stage(
         installed, package_attempt_id=package_attempt_id, package_durable_start=True,
         evidence_directory=identity_evidence_directory,

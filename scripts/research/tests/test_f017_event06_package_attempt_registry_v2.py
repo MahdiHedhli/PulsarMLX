@@ -11,6 +11,7 @@ import pytest
 
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
+import execute_f017_corrected_oracle_event_v12_bridge as coordinator_v1
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator_v2
 from execute_f017_corrected_oracle_event_v12_bridge import (
     bank_live_package_start,
@@ -250,3 +251,13 @@ def test_source_derived_dag_covers_split_and_live_terminal_boundaries():
     assert result["live_terminal_boundaries_with_composition_tests"] == result[
         "live_terminal_boundaries_total"
     ]
+
+
+def test_qualification_coordinators_have_no_live_package_start_call():
+    for function in (
+        coordinator_v1.execute_event06_bridge_qualification,
+        coordinator_v2.execute_event06_bridge_qualification,
+    ):
+        source = inspect.getsource(function)
+        assert "bank_live_package_start(" not in source
+        assert "reserve_qualification_package_attempt(" in source

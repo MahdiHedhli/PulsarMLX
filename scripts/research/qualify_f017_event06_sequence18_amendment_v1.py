@@ -7,7 +7,6 @@ import hashlib
 import inspect
 import json
 import os
-import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -42,7 +41,18 @@ FROZEN = (
     "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-collapsed-go-path-v1.json",
     "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-authority-v12.json",
 )
-START_HEAD = "272292154c3c3229569793da86700cae027df1fd"
+FROZEN_SHA256 = {
+    "docs/architecture/reviews/evidence/f017-authority-freezing-policy-v1-exact-snapshot.md":
+        "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json":
+        "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json":
+        "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+    "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-collapsed-go-path-v1.json":
+        "c7ea10d9ab9c09ff1e6fa5d5c0b847ec0318cc1863f44b63c6d67bec00ba1778",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-authority-v12.json":
+        "12f6d717edbdea385974d870445754b7163ce76dfef3ee936a72586307da9050",
+}
 
 
 def _sha(value: object) -> str:
@@ -53,16 +63,14 @@ def _frozen_census() -> dict[str, object]:
     rows, drift = [], 0
     for path in FROZEN:
         current = (ROOT / path).read_bytes()
-        start = subprocess.run(
-            ["git", "show", f"{START_HEAD}:{path}"], cwd=ROOT,
-            check=True, stdout=subprocess.PIPE,
-        ).stdout
-        equal = start == current
+        start_sha256 = FROZEN_SHA256[path]
+        final_sha256 = hashlib.sha256(current).hexdigest()
+        equal = start_sha256 == final_sha256
         drift += not equal
         rows.append({
             "path": path,
-            "start_sha256": hashlib.sha256(start).hexdigest(),
-            "final_sha256": hashlib.sha256(current).hexdigest(),
+            "start_sha256": start_sha256,
+            "final_sha256": final_sha256,
             "equal": equal,
         })
     return {"rows": rows, "frozen_authority_drift": drift}
