@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-evidence-only-ci/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "run_id": 33267273222,
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/33267273222",
+  "head_sha": "638ebdc31d02dddbc34ca81eadeb07c283802c70",
+  "mode": "EVIDENCE_ONLY",
+  "classifier_job": {"job_id":99139457641,"conclusion":"success"},
+  "evidence_integrity_job": {"job_id":99139473701,"conclusion":"success"},
+  "aggregate_job": {"job_id":99139493771,"conclusion":"success"},
+  "native_jobs_launched": 0,
+  "native_jobs_skipped": [
+    {"job_id":99139474321,"name":"Apple MLX small-fixture validation"},
+    {"job_id":99139474465,"name":"Apple Silicon workspace baseline"}
+  ],
+  "result": "PASS"
+}
