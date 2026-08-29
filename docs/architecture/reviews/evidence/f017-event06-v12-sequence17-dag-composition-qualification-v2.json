@@ -1,0 +1,112 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-dag-composition-qualification/1.1.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "source_implementation_head": "77b5c0831f2ee199fc5c5b3f36190116bdc48466",
+  "source_implementation_tree": "d9dc86bc7c0d917cade6034aecc0c80e9803bbe0",
+  "prompt_commit": "be3f85b2f3aa1dc60ce93907e89de2573010fe93",
+  "prompt_sha256": "420ec84f2354ec45bc7d44c1bc7be31b4a4af828f48451fa4aeccb8cbc6756d7",
+  "dag": {
+    "edges_total": 37,
+    "edges_with_composition_tests": 37,
+    "signature_bound_edges": 37,
+    "uncovered_typed_boundaries": 0,
+    "source_typed_boundaries_absent_from_dag": 0,
+    "extraneous_test_edges_absent_from_dag": 0,
+    "unverified_consumer_type_boundaries": 0,
+    "disconnected_components": 0,
+    "unknown_public_symbols": 0
+  },
+  "full_call_path": {
+    "result": "PASS",
+    "repetitions_passed": 20,
+    "repetitions_total": 20,
+    "aggregate_sha256": "2707682e18e531da407fb309a6b9e3114579c664169879d73738a2cda734f23f"
+  },
+  "mutation_campaign": {
+    "passed": 1508,
+    "total": 1508,
+    "unexpected_passes": 0,
+    "dag_structural_edges": "148/148",
+    "real_downstream_binding_consumers": "12/12",
+    "identity_bridge": "742/742",
+    "numerical_bridge": "395/395",
+    "collapsed_installation": "211/211"
+  },
+  "no_access_campaign": {
+    "reconstructions": 20,
+    "mutations_passed": 326,
+    "mutations_total": 326,
+    "unexpected_passes": 0
+  },
+  "bridge_failure_campaign": {
+    "failure_classes": 38,
+    "substantive_cases": 395,
+    "unexpected_passes": 0
+  },
+  "applicable_f017_tests": {
+    "passed": 545,
+    "subtests_passed": 147
+  },
+  "focused_tests_passed": 15,
+  "generator_checks": "PASS",
+  "overnight_qualification": "PASS",
+  "frozen_authority_drift": 0,
+  "declared_transitions": {
+    "honored": 37,
+    "total": 37,
+    "undeclared": 0
+  },
+  "repair_loops": [
+    {
+      "loop": 1,
+      "finding": "CollapsedLivePromptIdentityV2 could not compose with the numerical bridge's obsolete PromptBoundEventIdentityPlanV2 requirement",
+      "repair": "accept the exact installed collapsed identity and preserve its digest through the bridge"
+    },
+    {
+      "loop": 2,
+      "finding": "initial authority-DAG labels produced a disconnected topology",
+      "repair": "derive connected public-symbol edges and enforce weak connectivity"
+    },
+    {
+      "loop": 3,
+      "finding": "fresh-process fixture bytes varied with durable filesystem identity",
+      "repair": "separate deterministic validator fixture coverage from the real durable-install full-path composition"
+    },
+    {
+      "loop": 4,
+      "finding": "downstream comparison, release, accounting, and terminal consumers accepted bare digests without sealed producer provenance",
+      "repair": "require exact sealed producer objects with role, package, event, bridge, and result continuity and invoke real consumers in the mutation campaign"
+    }
+  ],
+  "authorized_repair_loops": 10,
+  "repair_loops_consumed": 4,
+  "same_root_cause_repairs": "2/2",
+  "consecutive_no_progress_cycles": "0/2",
+  "reviewers_first_to_find_noncomposition": false,
+  "collapsed_identity_installed_digest_binding": "PASS",
+  "numerical_consumer_repair": "PASS",
+  "all_live_and_access_counters_zero": true,
+  "original_checkpoint_access": {
+    "root_resolved": false,
+    "shard_opens": 0,
+    "identity_hash_reads": 0,
+    "payload_reads": 0,
+    "mmaps_or_tensor_reads": 0
+  },
+  "new_human_go_documents": 0,
+  "live_event06_authorization_created": false,
+  "live_v12_installation_created": false,
+  "event_06_package_started": false,
+  "event_06_executed": false,
+  "event06_identities_instantiated_or_consumed": [0, 0],
+  "primary_real_oracle_event06_executions": 0,
+  "secondary_real_oracle_event06_executions": 0,
+  "numerical_operations": 0,
+  "full_model_inference": "NONE",
+  "authority_accounting": [0, 0, 0, 0],
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "historical_master_ledger": 175,
+  "sequence16_go_reused": false,
+  "superseded_sequence17_prompt_unexecuted": true,
+  "result": "PASS"
+}

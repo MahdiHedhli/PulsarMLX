@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-agy-cycle-01-normalized-result/1.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "ff0f1d6f04a469a10c7390459a917c4abb546845",
+  "reviewed_tree": "85b3eac7acd369c696a9ec4c9443c4cbf237c64a",
+  "full_native_run": 33259507825,
+  "dag_edges_reviewed": 36,
+  "tests_or_inspections": [
+    "re-ran the committed DAG validator",
+    "re-ran the committed DAG composition qualifier",
+    "inspected the exact committed repair and no-access evidence"
+  ],
+  "blocking_findings": 0,
+  "advisory_findings": 1,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT",
+  "result": "PASS",
+  "disposition": "SUPERSEDED_BY_OPUS_CYCLE_01_ACCOUNTING_BINDING_FINDING"
+}
