@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence21-claude-preinstall-receipt/1.0.0",
+  "starting_version": "2.1.235",
+  "binary_identity": "OFFICIAL_NATIVE_VERSION_STORE_ARM64_MACH_O",
+  "binary_sha256": "83b8f806f6f2eea316cfe246628e6c23374711d868f1fd0409db551b877b7748",
+  "installation_channel": "OFFICIAL_NATIVE",
+  "authenticated": true,
+  "auth_shape_digest": "feb01efae01fb3bb65283c6947b3a44c1cff12d70523beae6304ff852f79d3ac",
+  "sanitized_help_sha256": "71ad650f59e08ae40ede14c534db4f49d8590ee5a4f92f6da2882d3a5560fea6",
+  "restricted_capability": "ABSENT",
+  "code_signature_validation": "PASS",
+  "platform_assessment": "DEVELOPER_ID_CODE_VALID_STANDALONE_CLI",
+  "credentials_serialized": false,
+  "account_identifier_serialized": false,
+  "environment_serialized": false,
+  "hostname_or_username_serialized": false,
+  "local_path_serialized": false,
+  "result": "PASS"
+}
