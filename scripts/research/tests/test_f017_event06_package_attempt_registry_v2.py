@@ -11,6 +11,7 @@ import pytest
 
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
+import f017_event06_numerical_bridge_v1 as numerical_bridge
 import execute_f017_corrected_oracle_event_v12_bridge as coordinator_v1
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator_v2
 from execute_f017_corrected_oracle_event_v12_bridge import (
@@ -261,3 +262,31 @@ def test_qualification_coordinators_have_no_live_package_start_call():
         source = inspect.getsource(function)
         assert "bank_live_package_start(" not in source
         assert "reserve_qualification_package_attempt(" in source
+
+
+def test_terminal_view_rejects_same_package_from_different_authorization(tmp_path):
+    result = run_full_call_path(tmp_path / "composition", retain_authorities=True)
+    authorities = result["_authorities"]
+    filesystem = InMemorySafetyFilesystem()
+    with filesystem.installed():
+        reservation = registry.reserve_live_package_attempt(
+            authorities["installed_authority"]
+        )
+    bridge_value = authorities["historical_bridge"].as_dict()
+    bridge_value["authorization_id"] = "F017-CORRECTED-ORACLE-AUTHORIZATION-DIFFERENT"
+    forged_bridge = numerical_bridge.ValidatedNumericalBridge(
+        numerical_bridge._SEAL, bridge_value
+    )
+    forged_view = numerical_bridge._validated_consumer_view_from_producer(
+        "PACKAGE_TERMINAL",
+        {
+            "schema": numerical_bridge.VIEW_SCHEMA,
+            "bridge_sha256": forged_bridge.sha256,
+            "package_attempt_id": reservation.get("package_attempt_id"),
+            "binding_chain_head_sha256": "1" * 64,
+            "v11_closure_root_sha256": "2" * 64,
+            "accounting_binding_sha256": "3" * 64,
+        },
+    )
+    with pytest.raises(TypeError, match="exact package closure authorities required"):
+        registry._validate_view(reservation, forged_bridge, forged_view)

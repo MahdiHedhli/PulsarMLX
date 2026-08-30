@@ -297,6 +297,7 @@ def _validate_view(reservation: _Reservation, bridge, package_terminal_view) -> 
     if (type(bridge) is not ValidatedNumericalBridge
             or type(package_terminal_view) is not ValidatedConsumerView
             or package_terminal_view.producer_kind != "PACKAGE_TERMINAL"
+            or reservation.get("authorization_id") != bridge.get("authorization_id")
             or reservation.get("package_attempt_id") != bridge.get("package_attempt_id")
             or package_terminal_view.get("bridge_sha256") != bridge.sha256
             or package_terminal_view.get("package_attempt_id")

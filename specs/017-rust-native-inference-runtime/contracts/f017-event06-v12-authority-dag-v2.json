@@ -1100,7 +1100,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
@@ -1129,7 +1129,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_live_terminal",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "LIVE_TERMINAL_CLAIM"
     },
     {
@@ -1158,7 +1158,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
@@ -1187,7 +1187,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "bank_qualification_terminal",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_TERMINAL_CLAIM"
     },
     {
@@ -1216,7 +1216,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_live_terminal_sinks",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "LIVE_EXECUTION_AND_ACCOUNTING_CLOSURE"
     },
     {
@@ -1245,7 +1245,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
@@ -1274,7 +1274,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "claim_qualification_terminal_sinks",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_RESULT_CLOSURE"
     },
     {
@@ -1303,7 +1303,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_live_package_attempt",
       "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "INSTALLED_AUTHORITY"
     },
     {
@@ -1332,7 +1332,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     },
     {
@@ -1361,7 +1361,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     },
     {
@@ -1390,7 +1390,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     },
     {
@@ -1419,7 +1419,7 @@
       "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
       "producer_symbol": "reserve_qualification_package_attempt",
       "side_effect_class": "DISPOSABLE_SYNTHETIC_ONLY",
-      "source_blob_sha256": "ba0136ff228f2ede8a6fdc59b427c1a793374fc03643bff9d983a060e1aea932",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
       "source_node": "QUALIFICATION_INSTALLED_AUTHORITY"
     }
   ],
