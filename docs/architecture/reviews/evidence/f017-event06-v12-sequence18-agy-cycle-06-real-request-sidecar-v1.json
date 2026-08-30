@@ -1,0 +1,11 @@
+{
+  "canary_nonce": "f75813434c64d955bc995a4bbdd4dbb5d0ae0730a8b048203f3fa2102f8e4bbe",
+  "canary_response_sha256": "f85b75fa3f0f7f0f3759ad38c27629226bc1144e96eea0a38712a175f8cbe2bc",
+  "canary_terminal_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-canary-terminal-v1.json",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "payload_sha256": "1070d15835cc5f8ab1be08da1d728c5a742e00f93db16fa32a2d982f4f152d5c",
+  "real_nonce": "0fb42d1bcf416c1883d29eb8bf9df92e84b140cba9fe4300fd519a5cb3111798",
+  "request_kind": "REAL_CANDIDATE",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-request-sidecar/1.0.0"
+}
