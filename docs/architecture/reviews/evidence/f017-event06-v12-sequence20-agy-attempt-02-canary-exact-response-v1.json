@@ -1,0 +1,44 @@
+{
+  "advisory_findings": [],
+  "blocking_findings": [
+    {
+      "claim_id": "S19-C-ROOT-001",
+      "consequence": "REPEATED_CONSUMPTION",
+      "finding_id": "ROOT-LOCATION-FORGE",
+      "statement": "The application uses std::env::current_dir() as the repository root without provenance verification, allowing a caller to forge a contract file that selects an arbitrary state_root.",
+      "symbol_or_edge": "crates/f017-native/src/bin/bounded_p1.rs"
+    },
+    {
+      "claim_id": "S19-C-ONESHOT-001",
+      "consequence": "SECOND_ATTEMPT",
+      "finding_id": "SECOND-ATTEMPT-FORGE",
+      "statement": "Because the authority JSON and contract are unauthenticated, an attacker can specify a new state_root via a forged repo to bypass the exclusive claim and launch a second package attempt.",
+      "symbol_or_edge": "crates/f017-native/src/bin/bounded_p1.rs"
+    },
+    {
+      "claim_id": "S19-C-NOACCESS-001",
+      "consequence": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "SANDBOX-LSOF-RACE",
+      "statement": "The sandbox monitor relies on polling lsof with time.sleep(0.02), creating a race condition that fails to assure zero checkpoint access, as short-lived reads can easily evade detection.",
+      "symbol_or_edge": "scripts/research/run_f017_event06_sequence18_sandbox_v1.py"
+    },
+    {
+      "claim_id": "S19-C-FREEZE-001",
+      "consequence": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "PACKAGE-IDENTITY-FORK",
+      "statement": "The validate_package function does not enforce cryptographic hashes or immutable paths for the package tensors, permitting a caller-modified package JSON to fork the package identity.",
+      "symbol_or_edge": "crates/f017-native/src/bin/retained_qualification.rs"
+    }
+  ],
+  "completion_status": "COMPLETED",
+  "decline_reason": "",
+  "nonce_echo": "40a3237e1d3047878f1fb9cfdde2b09e837d1b49d03f6f9cf841cd36e561d463",
+  "payload_sha256_echo": "fa5fdc7b42721c13979f9d4b70b2c18b7f364f2511fc1c1f53438fd8b02360bf",
+  "requested_model_echo": "gemini-3.1-pro-high",
+  "reviewed_head": "7f38c1cfdc53e879da86b274a5b759241fc029e3",
+  "reviewed_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "summary": "The audit is complete. Multiple critical vulnerabilities were found, including caller-controlled registry locations via unauthenticated repository root spoofing, failure of the oneshot property via state root bypass, incomplete sandbox assurance due to lsof polling races, and package identity forking due to missing tensor hash verification.",
+  "terminal_marker": "END_F017_SEQUENCE20_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

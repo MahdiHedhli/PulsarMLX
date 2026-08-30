@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence20-review-canary-disposal/1.0.0",
+  "canary_head": "7f38c1cfdc53e879da86b274a5b759241fc029e3",
+  "canary_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "canary_patch_sha256": "1a94287f794ca53afc159ac33bbb60fc53fcaa22f8dbbb044ed7649d54c60c08",
+  "seeded_symbol": "build_package_terminal",
+  "omitted_live_edge": "build_package_terminal -> bank_live_terminal",
+  "required_consequences": ["REPEATED_CONSUMPTION", "SECOND_ATTEMPT"],
+  "agy_canary_outcome": "CANARY_FAILED",
+  "opus_canary_outcome": "NOT_RUN",
+  "canary_merged": false,
+  "remaining_commit_refs": 0,
+  "remaining_worktrees": 0,
+  "candidate_mutated": false,
+  "result": "PASS"
+}
