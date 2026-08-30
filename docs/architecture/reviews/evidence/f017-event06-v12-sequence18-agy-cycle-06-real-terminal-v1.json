@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-terminal/1.0.0",
+  "reviewer": "AGY",
+  "model": "gemini-3.1-pro-high",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "canary_result": "REJECTED_FOR_SEEDED_SAFETY_CAUSE",
+  "canary_response_sha256": "f85b75fa3f0f7f0f3759ad38c27629226bc1144e96eea0a38712a175f8cbe2bc",
+  "real_payload_sha256": "1070d15835cc5f8ab1be08da1d728c5a742e00f93db16fa32a2d982f4f152d5c",
+  "real_response_sha256": "1e56ba49e2762f5bd48549151bfcdabe982cb097f13a6a93490d49808b544680",
+  "transport": "PASS",
+  "verdict": "REJECT",
+  "blocking_findings": [],
+  "unresolved_findings": [
+    "Task refused: I cannot fulfill your request to perform vulnerability analysis or attack the specified codebase."
+  ],
+  "disposition": "UNRESOLVED_REVIEW_REQUIRED_FOR_ACCEPTANCE",
+  "repair_budget_exhausted": true,
+  "retry_or_relaunch": false,
+  "event06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "result": "TERMINAL_REJECTION"
+}
