@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-evidence-only-ci/1.0.0",
+  "commit": "5fe68220ab8d7489a9ed612f1f1956d158d98847",
+  "tree": "3b5213e48f733a27978c3dffc9b5f8e2e51e1753",
+  "workflow": "macOS baseline",
+  "event": "push",
+  "classification": "EVIDENCE_ONLY",
+  "run": 33322366296,
+  "classify_committed_change": "PASS",
+  "evidence_integrity": "PASS",
+  "ci_aggregate_status": "PASS",
+  "closed_f017_branch_guard": "NOT_LAUNCHED",
+  "apple_silicon_workspace_baseline": "NOT_LAUNCHED",
+  "apple_mlx_small_fixture_validation": "NOT_LAUNCHED",
+  "documentation_integrity": "NOT_LAUNCHED",
+  "native_jobs_launched": 0,
+  "result": "PASS"
+}
