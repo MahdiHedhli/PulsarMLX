@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-sequence18-terminal-adjudication/1.0.0",
+  "legacy_response_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-exact-response-v1.json",
+  "legacy_response_sha256": "1e56ba49e2762f5bd48549151bfcdabe982cb097f13a6a93490d49808b544680",
+  "legacy_terminal_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-terminal-v1.json",
+  "legacy_terminal_sha256": "57d136486ba6071971100ef4fa7c977889bcfeee6bd198ce1bf81a270139254d",
+  "sequence18_terminal_implementation_defect_demonstrated": false,
+  "sequence18_agy_cycle06_transport": "PASS",
+  "sequence18_agy_cycle06_canary": "PASS",
+  "sequence18_agy_cycle06_blocking_safety_findings": 0,
+  "sequence18_agy_cycle06_outcome_class": "REVIEWER_DECLINED",
+  "sole_unresolved_item_contains_candidate_security_claim_disposition": false,
+  "sequence18_technical_candidate": "BANKED_PINNED_QUALIFIED_PENDING_COMPLETED_REVIEW",
+  "sequence18_blocked_terminal_preserved": true,
+  "acceptance_inferred": false,
+  "event06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "result": "PASS"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-independent-review-terminal/1.0.0",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "agy_completion_status": "TRANSPORT_FAILED",
+  "agy_blocking_safety_findings": "NOT_COMPLETED",
+  "agy_declined": false,
+  "agy_attempts": 2,
+  "agy_canary_and_transport_integrity": "FAIL",
+  "opus_completion_status": "TRANSPORT_FAILED",
+  "opus_blocking_safety_findings": "NOT_COMPLETED",
+  "opus_declined": false,
+  "opus_attempts": 2,
+  "opus_canary_and_transport_integrity": "FAIL",
+  "real_candidate_audits_issued": 0,
+  "independent_review_result": "REVIEW_UNAVAILABLE",
+  "implementation_defect_demonstrated": false,
+  "contract_status": "PENDING_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "result": "REVIEW_UNAVAILABLE"
+}
