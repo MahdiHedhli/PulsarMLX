@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence23-terminal-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "starting_evidence_head": "f20cff7c0277974bcc5a36d098da9f20b59ce8ef",
+  "starting_evidence_tree": "baf6a070f01d593e6010f9600a4d7c5caaa822f4",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "full_native_run_reused": 33285890775,
+  "bindings": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-authority-guard-receipt-v1.json",
+      "sha256": "6bcea6ee80e291176d320534422004556fe18b628c2811bf553c68db380ad58b"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-banked-frontier-reverification-v1.json",
+      "sha256": "9ebb4c10c00b49b8267d6365897c6f31803a647902b618b8da1c194c2adb0439"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-grok-admission-failure-v1.json",
+      "sha256": "474828aa38a28c8ba974b59c42ba770874db3f693112a56654d05d2d6ffd3a6e"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-structural-loop-ledger-v1.json",
+      "sha256": "fd81642e0a87d96cdc64c461b9ea78946e816277c0d395847096612c60e72054"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-final-safety-census-v1.json",
+      "sha256": "07c7ad11dca8421373100c27b6d16eb79f460f2af412bba8cd6a4cb8e9951282"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence23-final-dual-review-hold-declaration-v1.json",
+      "sha256": "2370e869a50cc50460c5eb00e330ca031904790e927e66b7b2e355905ec36d84"
+    }
+  ],
+  "binding_count": 6,
+  "dual_review_result": "DUAL_REVIEW_HOLD",
+  "package_scoped_terminal_uniqueness_and_no_second_attempt": "PENDING_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}
