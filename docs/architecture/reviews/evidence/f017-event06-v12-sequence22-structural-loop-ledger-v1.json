@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-structural-loop-ledger/1.0.0",
+  "authorized_structural_loops": 10,
+  "consumed_structural_loops": 0,
+  "consumed_nonstructural_loops": 0,
+  "completed_review_cycles": 0,
+  "same_structural_root_failed_repairs": "0/3",
+  "material_implementation_loops": 0,
+  "completed_review_loops": 0,
+  "transport_failures_consume_loops": false,
+  "canary_failures_consume_loops": false,
+  "source_repairs_performed": 0,
+  "result": "PASS"
+}
