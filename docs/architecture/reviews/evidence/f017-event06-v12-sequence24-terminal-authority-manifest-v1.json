@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence24-terminal-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "starting_evidence_head": "7125b51827cedd3a225a3fb2d8a5a8c55aa60f21",
+  "starting_evidence_tree": "173128cb98ad018acbd28ee60df0b88bcc52a5c2",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "full_native_run_reused": 33285890775,
+  "bindings": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-authority-guard-receipt-v1.json",
+      "sha256": "041b7e5c6a996b126112cc3e0d9cf1ca9217e1f3301062aaff41d827494fb5ed"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-privacy-config-repair-receipt-v1.json",
+      "sha256": "002dbcd63652ae631294d883d6f974a6a43c93d1db863ece4e3a354a962f5cd4"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-privacy-posture-receipt-v1.json",
+      "sha256": "6e432d9062d383e9f9a2fa2e9f7d1685e01fbf6d887c1d5d91a31524cdbba894"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-banked-frontier-reverification-v1.json",
+      "sha256": "8fb6baf8767effe371fa8e6ecc626095380d40df3b4f2de8a3dfdbadf91c6178"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-private-home-admission-failure-v1.json",
+      "sha256": "565eb453ee6a8fdfa9f53cd116611c0ebde9629f6eb5c64dc9c8d7c204bebcff"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-structural-loop-ledger-v1.json",
+      "sha256": "34ef10625037048cc9bb823121e701e507c3ec5dac600f5c7da8bad2174e0354"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-final-safety-census-v1.json",
+      "sha256": "9a48fd86463c5016130cc80c0c7ea4646359240d528588f268c414e004e5315a"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence24-final-dual-review-hold-declaration-v1.json",
+      "sha256": "e24d7681811cacd24cf04a58a85c01cd746003452ab6a09e8b265f85611d0c7f"
+    }
+  ],
+  "binding_count": 8,
+  "privacy_posture": "RETENTION_DISABLED",
+  "grok_private_home_admission": "FAIL",
+  "dual_review_result": "DUAL_REVIEW_HOLD",
+  "package_scoped_terminal_uniqueness_and_no_second_attempt": "PENDING_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

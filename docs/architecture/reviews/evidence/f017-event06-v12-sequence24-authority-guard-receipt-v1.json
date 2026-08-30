@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence24-authority-guard-receipt/1.0.0",
+  "prompt_commit": "42c8615f8b7c0b407d421baba9882649e8243320",
+  "prompt_tree": "8303a69f77612c8faacaed370bc655db7f3599fe",
+  "prompt_sha256": "05911f05a56ba1c47d4a1e61c0ee12ebf90db2da2d5e47d0e91ed0a8ea1f05c2",
+  "prompt_and_basename_sidecar_guard": "PASS",
+  "prompt_control_ancestry_guard": "PASS",
+  "reviewer_successor_declaration_sha256": "0652dae93de6f069aca5ccb2a0a69b8e20e1ccfb135d94a6a69b6cc73cd4b16d",
+  "reviewer_successor_verdict": "F017_SEQUENCE24_GROK_PRIVATE_HOME_SUCCESSOR: DECLARED_PENDING_ADMISSION",
+  "freeze_transition_table_sha256": "459bdbabf4d4c3cdedea9d66472de5d251c270dbc2c69554fc8cb1a21f770f40",
+  "freeze_transition_mode": "PLANNER_DECLARED_NO_ACCESS_REVIEWER_SUCCESSOR",
+  "sequence23_response_sha256": "8431aea59d55bb73d1aee324ba58850f7b4dc8ac46590ecf3e44eac8a138c636",
+  "sequence23_terminal": "DUAL_REVIEW_HOLD",
+  "feature_sequences_mac_studio_macbook": [24, 28],
+  "shared_feature_state_sha256": "946d318dfcf321b4e45e45c0d63a5224f88f26ac7826d119d78dc1f552fb5ff1",
+  "sequence24_prior_outputs": 0,
+  "result": "PASS"
+}
