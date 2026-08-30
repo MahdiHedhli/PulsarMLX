@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence20-evidence-only-ci-failure/1.0.0",
+  "commit": "46109193af4728299c542affaf1bcc9370020cb3",
+  "workflow": "macOS baseline",
+  "run": 33312602412,
+  "classification": "EVIDENCE_ONLY",
+  "native_jobs_launched": 0,
+  "failure_stage": "EVIDENCE_INTEGRITY",
+  "failure_class": "EXTERNAL_PROMPT_ARTIFACT_MISCLASSIFIED_AS_SOURCE_REPOSITORY_BINDING",
+  "source_execution_bytes_changed": false,
+  "candidate_changed": false,
+  "review_replayed": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "result": "FAIL"
+}
