@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-final-no-go-authority-manifest/1.0.0",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "terminal_evidence_commit": "c7a725bf8e2cd5e38dd6d566066ab670c737a675",
+  "bindings": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-payload-v1.json",
+      "sha256": "1070d15835cc5f8ab1be08da1d728c5a742e00f93db16fa32a2d982f4f152d5c"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-exact-response-v1.json",
+      "sha256": "1e56ba49e2762f5bd48549151bfcdabe982cb097f13a6a93490d49808b544680"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-transport-ledger-v1.json",
+      "sha256": "7bc76eba06bc0e5ec40ae5d4a77842ef327661ea27855b2c3ff3e7618472cb97"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-agy-cycle-06-real-terminal-v1.json",
+      "sha256": "57d136486ba6071971100ef4fa7c977889bcfeee6bd198ce1bf81a270139254d"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-terminal-canary-disposal-v1.json",
+      "sha256": "fed1af2c70dbbca7739ee192f991c2efd53d43c39e63d9fa645e7178c435af7a"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-repair-loop-final-ledger-v1.json",
+      "sha256": "397467e86ccb959c75db22bdd2bf763d2bb23149be85b124171a9daab27f2bb0"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-final-no-go-declaration-v1.json",
+      "sha256": "35734e364052238013d7f0ab74dccc6540eeba352e736521899640bfac6843d0"
+    }
+  ],
+  "review_acceptance": "REJECTED_UNRESOLVED",
+  "full_native_run": 33283331421,
+  "full_native_result": "CANCELLED",
+  "event06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "historical_master_ledger": 175,
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "result": "BLOCKED"
+}
