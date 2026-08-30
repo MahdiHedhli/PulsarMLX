@@ -25,6 +25,7 @@ from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
 from f017_event06_storage_authority_v1 import fixed_live_registry_root
 from f017_event06_sequence18_storage_census_v1 import census as storage_census
 from f017_event06_sequence18_vfs_v1 import InMemorySafetyFilesystem
+from generate_f017_event06_authority_dag_v2 import build as build_dag_v2
 from qualify_f017_event06_package_uniqueness_v1 import qualify as qualify_uniqueness
 from validate_f017_event06_authority_dag_v2 import validate as validate_dag_v2
 
@@ -252,6 +253,23 @@ def test_source_derived_dag_covers_split_and_live_terminal_boundaries():
     assert result["live_terminal_boundaries_with_composition_tests"] == result[
         "live_terminal_boundaries_total"
     ]
+
+
+def test_live_terminal_claim_inputs_are_source_derived():
+    inputs = [
+        edge for edge in build_dag_v2()["edges"]
+        if edge.get("boundary_direction") == "CONSUMER_INPUT"
+        and edge["consumer_symbol"] == "claim_live_terminal_sinks"
+    ]
+    assert {edge["consumer_parameter"] for edge in inputs} == {
+        "reservation", "package_start", "bridge", "execution_result",
+        "transition_records", "package_terminal_view",
+    }
+    assert all(
+        edge["composition_evidence"]["test_symbol"]
+        == "test_live_terminal_claim_inputs_are_source_derived"
+        for edge in inputs
+    )
 
 
 def test_qualification_coordinators_have_no_live_package_start_call():

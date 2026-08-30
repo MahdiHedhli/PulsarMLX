@@ -1,0 +1,22 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-DAG-001",
+      "consequence_term": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "F017-SEQ18-DAG-OMISSION",
+      "seeded_symbol_or_edge": "claim_live_terminal_sinks",
+      "statement": "The claim_live_terminal_sinks live terminal boundary lacks required consumer DAG edges, omitting composition testing for its inputs and causing ambiguous accounting."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "6a0ec57f08c7d9f2cdfb2135a61e8a91692e6dae8a759fea8d5db6abc60c19ff",
+  "payload_sha256_echo": "83a83b4364bb247dd01ceb7054ce2e7fa2c8913778a7cb7fb54abe17e00ebd67",
+  "reviewed_head": "d71ab4fa9b6b15403f1d0d13185c08e476d07735",
+  "reviewed_tree": "ba58b18fc07ff41fd49e7580f9135148d982fee4",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "The safety-state review rejected the candidate due to missing DAG consumer edges for the claim_live_terminal_sinks live boundary, leaving its safety dependencies unverified by composition testing.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

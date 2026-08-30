@@ -52,6 +52,27 @@ DISCOVERY = {
     ),
 }
 
+LIVE_TERMINAL_CLAIM_INPUTS = (
+    ("reservation", "LIVE_PACKAGE_RESERVATION",
+     "scripts/research/f017_event06_package_attempt_registry_v2.py",
+     "reserve_live_package_attempt", "ValidatedLivePackageAttemptReservation"),
+    ("package_start", "LIVE_PACKAGE_START",
+     "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+     "bank_live_package_start", "ValidatedDurableStart"),
+    ("bridge", "LIVE_NUMERICAL_BRIDGE",
+     "scripts/research/f017_event06_numerical_bridge_v1.py",
+     "derive_bridge", "ValidatedNumericalBridge"),
+    ("execution_result", "LIVE_EXECUTION_AND_ACCOUNTING_CLOSURE",
+     "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+     "execute_event06_bridge", "ValidatedBridgeExecutionResult"),
+    ("transition_records", "LIVE_TRANSITION_CHAIN_RECORDS",
+     "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+     "_bank_bridge_transition_chain", "list[dict]"),
+    ("package_terminal_view", "LIVE_PACKAGE_TERMINAL_VIEW",
+     "scripts/research/f017_event06_numerical_bridge_v1.py",
+     "package_terminal_view", "ValidatedConsumerView"),
+)
+
 def _production_modules() -> tuple[str, ...]:
     """Discover every production module that invokes a split boundary."""
     result = []
@@ -132,6 +153,78 @@ def source_inventory() -> list[dict[str, object]]:
     return [unique[key] for key in sorted(unique)]
 
 
+def live_terminal_claim_input_inventory() -> list[dict[str, object]]:
+    """Derive every typed input consumed by the live terminal-claim boundary."""
+    registry_module = "scripts/research/f017_event06_package_attempt_registry_v2.py"
+    coordinator_module = "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py"
+    registry_tree = ast.parse((ROOT / registry_module).read_text(encoding="utf-8"))
+    claim = next(
+        node for node in registry_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name == "claim_live_terminal_sinks"
+    )
+    expected_parameters = tuple(row[0] for row in LIVE_TERMINAL_CLAIM_INPUTS)
+    observed_parameters = tuple(argument.arg for argument in claim.args.args)
+    if observed_parameters != expected_parameters:
+        raise ValueError("live terminal claim signature drift")
+
+    coordinator_tree = ast.parse((ROOT / coordinator_module).read_text(encoding="utf-8"))
+    close = next(
+        node for node in coordinator_tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name == "close_bridge_package"
+    )
+    calls = [
+        node for node in ast.walk(close)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "claim_live_terminal_sinks"
+    ]
+    if len(calls) != 1:
+        raise ValueError("live terminal claim call census")
+    expected_arguments = (
+        "reservation", "package_start", "bridge", "execution_result", "records", "view",
+    )
+    observed_arguments = tuple(
+        argument.id if isinstance(argument, ast.Name) else ""
+        for argument in calls[0].args
+    )
+    if observed_arguments != expected_arguments or calls[0].keywords:
+        raise ValueError("live terminal claim caller argument drift")
+
+    rows = []
+    for parameter, source_node, producer_module, producer_symbol, authority_type in (
+        LIVE_TERMINAL_CLAIM_INPUTS
+    ):
+        rows.append({
+            "source_node": source_node,
+            "producer_module": producer_module,
+            "producer_symbol": producer_symbol,
+            "output_type_or_schema": authority_type,
+            "destination_node": f"LIVE_TERMINAL_CLAIM_INPUT_{parameter.upper()}",
+            "consumer_module": registry_module,
+            "consumer_symbol": "claim_live_terminal_sinks",
+            "consumer_parameter": parameter,
+            "accepted_input_type_or_schema": authority_type,
+            "boundary_direction": "CONSUMER_INPUT",
+            "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+            "authority_mode": "LIVE_CANONICAL",
+            "lifecycle_phase": "TERMINAL",
+            "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+            "negative_mutation_family": [
+                "missing_typed_input_edge", "cross_authorization_substitution",
+                "cross_mode_substitution", "package_digest_substitution",
+            ],
+            "composition_evidence": {
+                "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+                "case_id": f"SEQ18-claim-live-terminal-input-{parameter}",
+                "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+                "test_symbol": "test_live_terminal_claim_inputs_are_source_derived",
+            },
+        })
+    return rows
+
+
 def build() -> dict[str, object]:
     base = []
     for row in BASE_ROWS:
@@ -160,7 +253,7 @@ def build() -> dict[str, object]:
                 "test_symbol": "qualify",
             },
         })
-    inventory = base + source_inventory()
+    inventory = base + live_terminal_claim_input_inventory() + source_inventory()
     lifecycle_order = {
         "reserve_live_package_attempt": 100,
         "reserve_qualification_package_attempt": 100,
@@ -172,8 +265,9 @@ def build() -> dict[str, object]:
     }
     for number, edge in enumerate(inventory, 1):
         edge["edge_id"] = f"F017-DAG2-{number:03d}"
-        edge["generated_lifecycle_order"] = lifecycle_order.get(
-            edge["producer_symbol"], number
+        edge["generated_lifecycle_order"] = (
+            850 if edge.get("boundary_direction") == "CONSUMER_INPUT"
+            else lifecycle_order.get(edge["producer_symbol"], number)
         )
         edge["source_blob_sha256"] = hashlib.sha256(
             (ROOT / edge["producer_module"]).read_bytes()

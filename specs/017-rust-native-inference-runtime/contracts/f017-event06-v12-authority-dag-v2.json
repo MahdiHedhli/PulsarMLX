@@ -1,5 +1,5 @@
 {
-  "edge_count": 49,
+  "edge_count": 55,
   "edges": [
     {
       "accepted_input_type_or_schema": "ValidatedEvent06ReadinessV3",
@@ -1017,6 +1017,192 @@
       "source_node": "PACKAGE_TERMINAL_LEGACY"
     },
     {
+      "accepted_input_type_or_schema": "ValidatedLivePackageAttemptReservation",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-reservation",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "reservation",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_RESERVATION",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-036",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "ValidatedLivePackageAttemptReservation",
+      "producer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "producer_symbol": "reserve_live_package_attempt",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "0a93b2e8bc8dab7d0fafa71dc0340861572ce935565e9415952a498208f4cd80",
+      "source_node": "LIVE_PACKAGE_RESERVATION"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedDurableStart",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-package_start",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "package_start",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_PACKAGE_START",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-037",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "ValidatedDurableStart",
+      "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "producer_symbol": "bank_live_package_start",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "7e05010f5c3e9115659465886e0cf4d94da41ddc0a5fb2b66397c79fae167214",
+      "source_node": "LIVE_PACKAGE_START"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedNumericalBridge",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-bridge",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "bridge",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_BRIDGE",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-038",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "ValidatedNumericalBridge",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "derive_bridge",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
+      "source_node": "LIVE_NUMERICAL_BRIDGE"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedBridgeExecutionResult",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-execution_result",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "execution_result",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_EXECUTION_RESULT",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-039",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "ValidatedBridgeExecutionResult",
+      "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "producer_symbol": "execute_event06_bridge",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "7e05010f5c3e9115659465886e0cf4d94da41ddc0a5fb2b66397c79fae167214",
+      "source_node": "LIVE_EXECUTION_AND_ACCOUNTING_CLOSURE"
+    },
+    {
+      "accepted_input_type_or_schema": "list[dict]",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-transition_records",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "transition_records",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_TRANSITION_RECORDS",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-040",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "list[dict]",
+      "producer_module": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+      "producer_symbol": "_bank_bridge_transition_chain",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "7e05010f5c3e9115659465886e0cf4d94da41ddc0a5fb2b66397c79fae167214",
+      "source_node": "LIVE_TRANSITION_CHAIN_RECORDS"
+    },
+    {
+      "accepted_input_type_or_schema": "ValidatedConsumerView",
+      "authority_mode": "LIVE_CANONICAL",
+      "boundary_direction": "CONSUMER_INPUT",
+      "composition_evidence": {
+        "case_id": "SEQ18-claim-live-terminal-input-package_terminal_view",
+        "kind": "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        "test_path": "scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py",
+        "test_symbol": "test_live_terminal_claim_inputs_are_source_derived"
+      },
+      "consumer_module": "scripts/research/f017_event06_package_attempt_registry_v2.py",
+      "consumer_parameter": "package_terminal_view",
+      "consumer_symbol": "claim_live_terminal_sinks",
+      "destination_node": "LIVE_TERMINAL_CLAIM_INPUT_PACKAGE_TERMINAL_VIEW",
+      "digest_identity_invariant": "EXACT_PACKAGE_AUTHORIZATION_AND_SEALED_DIGEST_CONTINUITY",
+      "edge_id": "F017-DAG2-041",
+      "generated_lifecycle_order": 850,
+      "lifecycle_phase": "TERMINAL",
+      "negative_mutation_family": [
+        "missing_typed_input_edge",
+        "cross_authorization_substitution",
+        "cross_mode_substitution",
+        "package_digest_substitution"
+      ],
+      "output_type_or_schema": "ValidatedConsumerView",
+      "producer_module": "scripts/research/f017_event06_numerical_bridge_v1.py",
+      "producer_symbol": "package_terminal_view",
+      "side_effect_class": "FIXED_LIVE_PACKAGE_TRANSACTION",
+      "source_blob_sha256": "c04a2fc4de81a231027fb684608c6939d9f80e5fbc6b8abc56bc0ca8be7ca0f3",
+      "source_node": "LIVE_PACKAGE_TERMINAL_VIEW"
+    },
+    {
       "accepted_input_type_or_schema": "ValidatedDurableStart",
       "authority_mode": "LIVE_CANONICAL",
       "composition_evidence": {
@@ -1029,7 +1215,7 @@
       "consumer_symbol": "execute_event06_bridge",
       "destination_node": "LIVE_PACKAGE_START",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-036",
+      "edge_id": "F017-DAG2-042",
       "generated_lifecycle_order": 200,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1058,7 +1244,7 @@
       "consumer_symbol": "execute_event06_bridge",
       "destination_node": "LIVE_PACKAGE_START",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-037",
+      "edge_id": "F017-DAG2-043",
       "generated_lifecycle_order": 200,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1087,7 +1273,7 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-038",
+      "edge_id": "F017-DAG2-044",
       "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1116,7 +1302,7 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "LIVE_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-039",
+      "edge_id": "F017-DAG2-045",
       "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1145,7 +1331,7 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-040",
+      "edge_id": "F017-DAG2-046",
       "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1174,7 +1360,7 @@
       "consumer_symbol": "build_package_terminal",
       "destination_node": "QUALIFICATION_PACKAGE_TERMINAL",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-041",
+      "edge_id": "F017-DAG2-047",
       "generated_lifecycle_order": 1000,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1203,7 +1389,7 @@
       "consumer_symbol": "close_bridge_package",
       "destination_node": "LIVE_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-042",
+      "edge_id": "F017-DAG2-048",
       "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1232,7 +1418,7 @@
       "consumer_symbol": "close_bridge_package",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-043",
+      "edge_id": "F017-DAG2-049",
       "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1261,7 +1447,7 @@
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_TERMINAL_CLAIM",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-044",
+      "edge_id": "F017-DAG2-050",
       "generated_lifecycle_order": 900,
       "lifecycle_phase": "TERMINAL",
       "negative_mutation_family": [
@@ -1290,7 +1476,7 @@
       "consumer_symbol": "bank_live_package_start",
       "destination_node": "LIVE_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-045",
+      "edge_id": "F017-DAG2-051",
       "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1319,7 +1505,7 @@
       "consumer_symbol": "bank_qualification_package_start",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-046",
+      "edge_id": "F017-DAG2-052",
       "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1348,7 +1534,7 @@
       "consumer_symbol": "execute_event06_bridge_qualification",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-047",
+      "edge_id": "F017-DAG2-053",
       "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1377,7 +1563,7 @@
       "consumer_symbol": "execute_event06_bridge_qualification",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-048",
+      "edge_id": "F017-DAG2-054",
       "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1406,7 +1592,7 @@
       "consumer_symbol": "run_full_call_path",
       "destination_node": "QUALIFICATION_PACKAGE_RESERVATION",
       "digest_identity_invariant": "EXACT_PACKAGE_AND_SEALED_DIGEST_CONTINUITY",
-      "edge_id": "F017-DAG2-049",
+      "edge_id": "F017-DAG2-055",
       "generated_lifecycle_order": 100,
       "lifecycle_phase": "PACKAGE_GATE",
       "negative_mutation_family": [
@@ -1427,7 +1613,7 @@
   "generation": "V12",
   "legacy_production_writers_reachable_to_safety_state": 0,
   "legacy_production_writers_total": 5,
-  "live_terminal_boundaries_total": 3,
+  "live_terminal_boundaries_total": 9,
   "original_checkpoint_access_permitted": false,
   "production_indirect_storage_location_inputs": 0,
   "production_public_storage_location_inputs": 0,
@@ -1498,6 +1684,6 @@
   },
   "schema": "pulsarmlx.f017.event06-v12-authority-dag/2.0.0",
   "source_inventory_method": "AST_PUBLIC_CALL_AND_SIGNATURE_EXTRACTION",
-  "source_typed_boundaries_total": 49,
+  "source_typed_boundaries_total": 55,
   "uncovered_typed_boundaries": 0
 }

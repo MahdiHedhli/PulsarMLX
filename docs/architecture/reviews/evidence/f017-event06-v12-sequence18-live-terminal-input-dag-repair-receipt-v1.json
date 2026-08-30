@@ -1,0 +1,12 @@
+{
+  "event06_executed": false,
+  "finding_id": "F017-SEQ18-DAG-OMISSION",
+  "historical_master_ledger": 175,
+  "live_terminal_claim_typed_inputs": 6,
+  "original_checkpoint_access": "NONE",
+  "repair_class": "LIVE_EDGE_OMISSION",
+  "repair_loop": 10,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-live-terminal-input-dag-repair-receipt/1.0.0",
+  "source_derivation": "EXACT_FUNCTION_SIGNATURE_AND_EXACT_CALL_ARGUMENT_LIST"
+}

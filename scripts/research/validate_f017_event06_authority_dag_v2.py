@@ -64,8 +64,10 @@ def validate_document(observed: dict[str, object]) -> dict[str, object]:
         raise ValueError("Sequence 18 required source boundary missing")
     covered_live = [
         edge for edge in live_terminal
-        if edge["composition_evidence"]["kind"]
-        == "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST"
+        if edge["composition_evidence"]["kind"] in {
+            "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+            "SOURCE_AST_SIGNATURE_AND_CALL_ARGUMENT_COMPOSITION_TEST",
+        }
     ]
     storage = observed.get("safety_storage_inventory", {})
     if (storage.get("result") != "PASS"

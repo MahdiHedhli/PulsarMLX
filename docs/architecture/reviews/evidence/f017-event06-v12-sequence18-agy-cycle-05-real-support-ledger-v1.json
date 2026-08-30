@@ -1,0 +1,19 @@
+{
+  "candidate_head": "d71ab4fa9b6b15403f1d0d13185c08e476d07735",
+  "candidate_tree": "ba58b18fc07ff41fd49e7580f9135148d982fee4",
+  "dispositions": [
+    {
+      "disposition": "ACCEPTED_AND_REPAIRED_BY_EXACT_SIGNATURE_AND_CALL_ARGUMENT_DERIVATION",
+      "finding_id": "F017-SEQ18-DAG-OMISSION",
+      "support": "The source-derived DAG now contains six distinct consumer-input edges for claim_live_terminal_sinks, mechanically bound to its exact public signature and the exact close_bridge_package call argument list."
+    }
+  ],
+  "event06_executed": false,
+  "finding_count": 1,
+  "historical_master_ledger": 175,
+  "original_checkpoint_access": "NONE",
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "repair_loop": 10,
+  "result": "REPAIR_REQUIRED_AND_APPLIED",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-support-ledger/1.0.0"
+}
