@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence41-checkpoint-census-repair-correction/1.0.0",
+  "recorded_at_utc": "2026-09-04T20:34:54Z",
+  "feature_id": "F017",
+  "sequence": 41,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "correction_class": "APPEND_ONLY_CROSS_REPOSITORY_DIGEST_TRANSCRIPTION_CORRECTION",
+  "original_evidence_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence41-checkpoint-census-repair-v1.json",
+  "original_evidence_sha256": "b6b5721d6ffd15afc2339e9029cff7b32be0bcd0226b8b78428b696b865c2aad",
+  "corrected_field": "predecessor_authority.sequence40_handoff_digest",
+  "incorrect_value": "4919fc9a19db9cc36aa7a698bd6554f1460909784cfe75c23540c66c2f763d0f",
+  "correct_value": "4919fc005a1c0446094513a7a2f8c0b58e59aed1cd953d77a345012e5b069e0f",
+  "cross_repository_authority": {
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "commit": "45ebeef316f4434462b3e9b78d076967aa02244e",
+    "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/040__F017__Mac-Studio-M1-Ultra__planner-handoff.json",
+    "digest": "4919fc005a1c0446094513a7a2f8c0b58e59aed1cd953d77a345012e5b069e0f"
+  },
+  "scope": {
+    "source_or_test_bytes_changed": false,
+    "qualification_result_changed": false,
+    "sequence41_result_changed": false,
+    "safety_census_changed": false,
+    "repair_loop_consumed": false,
+    "event_06_authority_or_package_state_created": false,
+    "original_checkpoint_access": 0,
+    "numerical_executions": 0,
+    "new_human_go_created_requested_or_reused": false,
+    "p1_attempt_2_authority_or_execution": "NONE"
+  },
+  "disposition": "THE_CORRECT VALUE IN THIS APPEND_ONLY ARTIFACT OVERRIDES ONLY THE NAMED TRANSCRIBED FIELD; ALL OTHER ORIGINAL EVIDENCE FIELDS REMAIN IN FORCE",
+  "result": "PASS"
+}
