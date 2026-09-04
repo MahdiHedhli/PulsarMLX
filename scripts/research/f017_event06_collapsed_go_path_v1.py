@@ -16,6 +16,8 @@ from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Final, Never, SupportsIndex
 
+__all__: tuple[str, ...] = ()
+
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
@@ -332,12 +334,17 @@ def begin_no_access_composition(
     )
 
 
-def begin_live_one_shot_composition() -> OneShotCompositionStateV1:
-    """Future-GO entrypoint; Sequence 13 never calls or creates this root."""
+def _qualification_begin_live_one_shot_composition() -> OneShotCompositionStateV1:
+    """Historical live-shape constructor retained for isolated qualification."""
 
     return OneShotCompositionStateV1(
         _STATE_SEAL, _LIVE_RESERVATION_ROOT, "LIVE_CANONICAL"
     )
+
+
+def begin_live_one_shot_composition() -> OneShotCompositionStateV1:
+    """Fail closed: the former live state root is superseded."""
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def validate_sanitized_human_decision(

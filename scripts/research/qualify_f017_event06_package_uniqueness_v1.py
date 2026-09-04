@@ -11,10 +11,10 @@ from pathlib import Path
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
 from f017_event06_package_attempt_registry_v2 import (
+    _qualification_load_live_package_attempt as load_historical_live_package_attempt,
+    _qualification_reserve_live_package_attempt as reserve_historical_live_package_attempt,
     claim_qualification_terminal_sinks,
-    load_live_package_attempt,
     load_qualification_package_attempt,
-    reserve_live_package_attempt,
     reserve_qualification_package_attempt,
 )
 from f017_event06_numerical_bridge_v1 import (
@@ -159,7 +159,7 @@ def _reserve_worker(root: str, queue, files, directories, operations, lock, inst
     filesystem = InMemorySafetyFilesystem(files, directories, operations, lock)
     try:
         with filesystem.installed():
-            reservation = reserve_live_package_attempt(installed)
+            reservation = reserve_historical_live_package_attempt(installed)
         queue.put(("WIN", {"reservation_sha256": reservation.sha256}))
     except FileExistsError as exc:
         queue.put(("LOSE", {"exception_type": type(exc).__name__}))
@@ -218,7 +218,7 @@ def qualify(contenders: int = 20) -> dict[str, object]:
         )
         filesystem = InMemorySafetyFilesystem(files, directories, operations, lock)
         with filesystem.installed():
-            reconstructed = load_live_package_attempt(production)
+            reconstructed = load_historical_live_package_attempt(production)
             reserve_qualification_package_attempt(fixture_values()[1], root)
         claim = _race(
             _claim_worker, root, contenders, files, directories, operations, lock
@@ -266,6 +266,9 @@ def qualify(contenders: int = 20) -> dict[str, object]:
         ),
         "loser_records": loser_records,
         "shared_graph_owned_interposition_backing_store": True,
+        "historical_live_shape_qualification_only": True,
+        "sequence39_public_live_registry_api_invoked": False,
+        "historical_dag_live_authority_eligible": False,
         "virtual_filesystem_census": filesystem_census,
         "reconstructed_reservation_sha256": reconstructed.sha256,
         "competing_terminal_outcomes_accepted": 0,

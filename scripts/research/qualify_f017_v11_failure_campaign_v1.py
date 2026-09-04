@@ -21,7 +21,9 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import require_primary_terminal
 from f017_result_bundle_authority_v11 import validate_bundle
-from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import (
+    _qualification_bank_output_bundle as bank_output_bundle,
+)
 from f017_result_envelope_v11 import (ResultEnvelopeError, bank_payload_bytes,
     payload_spec, validate_payload)
 from f017_v11_full_geometry_fixture import make_output

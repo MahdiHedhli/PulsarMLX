@@ -7,10 +7,19 @@ import tempfile
 from pathlib import Path
 from types import MappingProxyType
 
+# Sequence 39 supersedes this module's effectful live facade with the single
+# minimum-gate coordinator. Direct imports remain usable to reproduce
+# historical evidence, but only the no-access helper is exported.
+__all__ = ("execute_event06_bridge_qualification", "validate_no_access_call_path")
+
 from f017_binary_comparison_authority_v11 import derive_summary, validate_summary
 from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
-from f017_corrected_oracle_primary_wrapper_v12 import execute_bridge_and_bank as execute_primary
-from f017_corrected_oracle_secondary_wrapper_v12 import execute_bridge_and_bank as execute_secondary
+from f017_corrected_oracle_primary_wrapper_v12 import (
+    _qualification_execute_bridge_and_bank as execute_primary,
+)
+from f017_corrected_oracle_secondary_wrapper_v12 import (
+    _qualification_execute_bridge_and_bank as execute_secondary,
+)
 from f017_descriptor_lease_manager_v10 import LeaseSet
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
 from f017_event06_numerical_bridge_v1 import (
@@ -26,9 +35,9 @@ from f017_event06_collapsed_live_installation_v2 import CollapsedInstalledTriple
 from f017_event06_package_attempt_registry_v2 import (
     ValidatedLivePackageAttemptReservation,
     ValidatedQualificationPackageAttemptReservation,
+    _qualification_claim_live_terminal_sinks,
+    _qualification_reserve_live_package_attempt,
     claim_qualification_terminal_sinks,
-    claim_live_terminal_sinks,
-    reserve_live_package_attempt,
     reserve_qualification_package_attempt,
 )
 from f017_event06_storage_authority_v1 import package_storage_layout
@@ -203,7 +212,9 @@ def validate_transition_order(trace: object) -> dict:
 
 def validate_no_access_call_path() -> dict:
     """Run the canonical complete synthetic authority path without capabilities."""
-    from f017_event06_dag_derived_control_path_v1 import run_full_call_path
+    from f017_event06_dag_derived_control_path_v1 import (
+        _qualification_run_full_call_path as run_full_call_path,
+    )
     with tempfile.TemporaryDirectory(prefix="f017-event06-no-access-") as directory:
         full = run_full_call_path(Path(directory))
     counters = full["live_counters"]
@@ -250,11 +261,21 @@ def _bank_package_start(installed: ValidatedIdentityAuthority, reservation) -> V
     return start
 
 
+def _qualification_bank_live_package_start(
+    installed: ValidatedIdentityAuthority,
+) -> ValidatedDurableStart:
+    """Historical fixed-root start retained only for qualification evidence."""
+    return _bank_package_start(
+        installed, _qualification_reserve_live_package_attempt(installed)
+    )
+
+
 def bank_live_package_start(
     installed: ValidatedIdentityAuthority,
 ) -> ValidatedDurableStart:
-    """Production start: fixed registry root and no caller path capability."""
-    return _bank_package_start(installed, reserve_live_package_attempt(installed))
+    """Fail closed: Sequence 39 owns the sole production package-start path."""
+    del installed
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def bank_qualification_package_start(
@@ -272,7 +293,7 @@ def bank_qualification_package_start(
 
 def bank_package_start(*args, **kwargs):
     del args, kwargs
-    raise RuntimeError("superseded shared package-start API")
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def _bank_consumer_start(bridge: ValidatedNumericalBridge, role: str, path: Path, *,
@@ -461,13 +482,13 @@ def execute_event06_bridge_qualification(candidate_path: Path, installed_path: P
     result = _execute_consumers(
         bridge, leases, primary_directory, secondary_directory, package_directory,
     )
-    closure = close_bridge_package(bridge, package_start, result)
+    closure = _qualification_close_bridge_package(bridge, package_start, result)
     return {"bridge":bridge,"package_start":package_start,
             "identity_report":identity_report,"execution":result,
             "package":closure,"result":"PASS"}
 
 
-def execute_event06_bridge(
+def _qualification_execute_event06_bridge(
     installed: ValidatedIdentityAuthority,
     execution_plan: ValidatedExecutionPlan,
     event_identity_plan: dict,
@@ -483,7 +504,7 @@ def execute_event06_bridge(
     authority = installed.as_dict()
     if authority.get("authority_scope") != "PRODUCTION":
         raise ValueError("production Event 06 authority required")
-    package_start = bank_live_package_start(installed)
+    package_start = _qualification_bank_live_package_start(installed)
     layout = package_storage_layout(package_start.reservation.root)
     leases, identity_report = run_identity_stage(
         installed,
@@ -509,7 +530,7 @@ def execute_event06_bridge(
     result = _execute_consumers(
         bridge, leases, layout["primary"], layout["secondary"], layout["package"]
     )
-    closure = close_bridge_package(bridge, package_start, result)
+    closure = _qualification_close_bridge_package(bridge, package_start, result)
     return {
         "bridge": bridge,
         "package_start": package_start,
@@ -541,8 +562,11 @@ def _bank_bridge_transition_chain(directory: Path, bridge: ValidatedNumericalBri
     return records, chain
 
 
-def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: ValidatedDurableStart,
-                         execution_result: ValidatedBridgeExecutionResult) -> dict:
+def _qualification_close_bridge_package(
+    bridge: ValidatedNumericalBridge,
+    package_start: ValidatedDurableStart,
+    execution_result: ValidatedBridgeExecutionResult,
+) -> dict:
     """Derive terminal inputs from the validated execution result; accept no digest strings."""
     if (type(bridge) is not ValidatedNumericalBridge
             or type(package_start) is not ValidatedDurableStart
@@ -585,7 +609,7 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
         execution_result["accounting_binding"]
     )
     if type(reservation) is ValidatedLivePackageAttemptReservation:
-        legacy_sink, successor_sink = claim_live_terminal_sinks(
+        legacy_sink, successor_sink = _qualification_claim_live_terminal_sinks(
             reservation, package_start, bridge, execution_result, records, view
         )
     elif type(reservation) is ValidatedQualificationPackageAttemptReservation:
@@ -600,3 +624,23 @@ def close_bridge_package(bridge: ValidatedNumericalBridge, package_start: Valida
             "chain_head_sha256":transition_chain.get("chain_head_sha256"),
             "terminal":terminal,"terminal_sha256":terminal_sha,
             "successor_terminal_sink":successor_sink,"result":"PASS"}
+
+
+def execute_event06_bridge(
+    installed: ValidatedIdentityAuthority,
+    execution_plan: ValidatedExecutionPlan,
+    event_identity_plan: dict,
+) -> dict:
+    """Fail closed: the raw-identity-plan executor is permanently superseded."""
+    del installed, execution_plan, event_identity_plan
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+def close_bridge_package(
+    bridge: ValidatedNumericalBridge,
+    package_start: ValidatedDurableStart,
+    execution_result: ValidatedBridgeExecutionResult,
+) -> dict:
+    """Fail closed: only the minimum-gate coordinator may terminalize Event 06."""
+    del bridge, package_start, execution_result
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")

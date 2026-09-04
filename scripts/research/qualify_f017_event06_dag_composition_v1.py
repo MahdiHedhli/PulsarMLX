@@ -9,7 +9,10 @@ import pickle
 import tempfile
 from pathlib import Path
 
-from f017_event06_dag_derived_control_path_v1 import EDGE_IDS, run_full_call_path
+from f017_event06_dag_derived_control_path_v1 import (
+    EDGE_IDS,
+    _qualification_run_full_call_path as run_full_call_path,
+)
 import f017_event06_numerical_bridge_v1 as legacy
 from f017_event06_numerical_bridge_v2 import (
     build_package_terminal as build_prompt_bound_package_terminal,

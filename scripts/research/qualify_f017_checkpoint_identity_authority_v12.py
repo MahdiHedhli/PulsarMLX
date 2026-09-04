@@ -17,9 +17,12 @@ from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import validate_candidate_bytes
 from f017_checkpoint_identity_capability_v12 import validate_capability
 from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError, OUTCOMES, failure
-from f017_checkpoint_identity_producer_v12 import validate_banked_identity_evidence
+from f017_checkpoint_identity_producer_v12 import (
+    _qualification_produce as run_identity_stage,
+    validate_banked_identity_evidence,
+)
 from f017_corrected_oracle_authorization_v12 import build_identity_candidate
-from execute_f017_corrected_oracle_event_v12 import run_identity_stage, validate_package_start
+from execute_f017_corrected_oracle_event_v12 import validate_package_start
 from validate_f017_corrected_oracle_access_v12 import (
     bank_candidate, install_noncanonical_candidate, validate_candidate_triple,
     validate_installed_triple,
@@ -340,7 +343,8 @@ def _fresh_processes(candidate_path: Path, installed_path: Path, receipt_path: P
                       "c=validate_candidate_triple(Path(sys.argv[1]))['authority']; "
                       "validate_installed_triple(Path(sys.argv[2]),Path(sys.argv[3]),c)")
     identity_code = ("from pathlib import Path; import sys; "
-                     "from execute_f017_corrected_oracle_event_v12 import validate_package_start,run_identity_stage; "
+                     "from execute_f017_corrected_oracle_event_v12 import validate_package_start; "
+                     "from f017_checkpoint_identity_producer_v12 import _qualification_produce as run_identity_stage; "
                      "g=validate_package_start(Path(sys.argv[1]),Path(sys.argv[2]),Path(sys.argv[3])); "
                      "l,r=run_identity_stage(g['installed_authority'],package_attempt_id=sys.argv[4],"
                      "package_durable_start=True,evidence_directory=Path(sys.argv[5])); "

@@ -8,6 +8,10 @@ live sealer, capability producer, durable commit, or package boundary.
 
 from __future__ import annotations
 
+# Superseded live build surface. Types and functions remain addressable only
+# for historical qualification; no symbol here is current production authority.
+__all__: tuple[str, ...] = ()
+
 import copy
 import hashlib
 import pickle
@@ -912,7 +916,7 @@ class FutureGoCapabilityV3:
 _ISSUED_CAPABILITIES: dict[int, FutureGoCapabilityV3] = {}
 
 
-def produce_future_go_capability_v3(
+def _qualification_produce_future_go_capability_v3(
     prepared: PreparedProductionInstallationV3,
 ) -> FutureGoCapabilityV3:
     validate_prepared_production_installation_v3(prepared)
@@ -924,6 +928,14 @@ def produce_future_go_capability_v3(
     capability = FutureGoCapabilityV3(_CAPABILITY_SEAL, prepared)
     _ISSUED_CAPABILITIES[id(capability)] = capability
     return capability
+
+
+def produce_future_go_capability_v3(
+    prepared: PreparedProductionInstallationV3,
+) -> FutureGoCapabilityV3:
+    """Fail closed: the V3 live capability issuer is superseded."""
+    del prepared
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def validate_future_go_capability_v3(
@@ -944,7 +956,7 @@ def validate_future_go_capability_v3(
     return capability
 
 
-def commit_production_installation_v3(
+def _qualification_commit_production_installation_v3(
     prepared: PreparedProductionInstallationV3,
     capability: FutureGoCapabilityV3,
 ) -> DurableTransactionResult:
@@ -968,6 +980,15 @@ def commit_production_installation_v3(
         payloads,
         consumption_marker=f"consumed-{validated.nonce_sha256[:16]}",
     )
+
+
+def commit_production_installation_v3(
+    prepared: PreparedProductionInstallationV3,
+    capability: FutureGoCapabilityV3,
+) -> DurableTransactionResult:
+    """Fail closed: superseded V3 installation cannot mint live authority."""
+    del prepared, capability
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def assert_closed_security_surface(*values: object) -> None:

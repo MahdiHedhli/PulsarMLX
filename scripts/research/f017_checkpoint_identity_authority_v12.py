@@ -16,6 +16,9 @@ from f017_checkpoint_identity_lifecycle_v12 import failure
 ROOT = Path(__file__).resolve().parents[2]
 CANDIDATE_SCHEMA = "pulsarmlx.f017.corrected-oracle-checkpoint-identity-candidate-authority/12.1.0"
 INSTALLED_SCHEMA = "pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.1.0"
+MINIMUM_INSTALLED_SCHEMA = (
+    "pulsarmlx.f017.event06-minimum-checkpoint-identity-installed-authority/1.0.0"
+)
 HEX64 = re.compile(r"[0-9a-f]{64}")
 TYPED_ID = re.compile(r"[A-Z0-9](?:[A-Z0-9-]{0,190}[A-Z0-9])?")
 
@@ -43,6 +46,29 @@ SHA_KEYS = {key for key in CANDIDATE_KEYS | INSTALLED_EXTRA_KEYS if key.endswith
 COUNT_KEYS = {
     "expected_shard_count", "expected_identity_only_shard_count",
     "expected_graph_payload_shard_count", "expected_total_bytes", "attempts", "retries",
+}
+
+# Sequence 39's production path has one installed identity authority.  It
+# directly binds the only producer and validator that participate in the
+# identity stage; the historical candidate/role-alias/install-receipt ceremony
+# remains available only to historical qualification callers below.
+MINIMUM_INSTALLED_KEYS = {
+    "schema", "authority_scope", "operation_class", "generation",
+    "authorization_id", "package_attempt_id", "checkpoint_set_sha256",
+    "checkpoint_root", "checkpoint_identity_contract_path",
+    "checkpoint_identity_contract_sha256", "measured_producer_path",
+    "measured_producer_sha256", "measured_validator_path",
+    "measured_validator_sha256", "expected_shard_count",
+    "expected_identity_only_shard_count", "expected_graph_payload_shard_count",
+    "expected_total_bytes", "attempts", "retries", "resume",
+}
+MINIMUM_PATH_KEYS = {
+    "checkpoint_identity_contract_path", "measured_producer_path",
+    "measured_validator_path",
+}
+MINIMUM_SHA_KEYS = {
+    "checkpoint_set_sha256", "checkpoint_identity_contract_sha256",
+    "measured_producer_sha256", "measured_validator_sha256",
 }
 
 
@@ -163,12 +189,92 @@ def _validate(raw: bytes, *, installed: bool, expected: Mapping[str, object] | N
         raise failure(outcome, str(exc)) from exc
 
 
+def _validate_minimum_installed(
+    raw: bytes,
+    expected: Mapping[str, object] | None,
+) -> ValidatedIdentityAuthority:
+    """Validate the single installed authority used by the minimum-gate path.
+
+    This interface intentionally has no candidate posture, role-specific
+    validator aliases, identity-plan digest, or installation-receipt predicate.
+    Its canonical byte digest is the installed-authority identity consumed by
+    the package-start gate.
+    """
+    try:
+        value = parse_artifact_bytes(raw)
+        if type(value) is not dict or set(value) != MINIMUM_INSTALLED_KEYS:
+            raise ValueError("minimum installed authority key census")
+        if value["schema"] != MINIMUM_INSTALLED_SCHEMA:
+            raise ValueError("minimum installed authority schema")
+        if value["authority_scope"] not in {"SYNTHETIC", "PRODUCTION"}:
+            raise ValueError("authority scope")
+        expected_operation = (
+            "CHECKPOINT_IDENTITY_QUALIFICATION"
+            if value["authority_scope"] == "SYNTHETIC"
+            else "CORRECTED_FULL_CHECKPOINT_ORACLE"
+        )
+        if value["operation_class"] != expected_operation or value["generation"] != "V12":
+            raise ValueError("operation or generation")
+        for key in ("authorization_id", "package_attempt_id"):
+            if type(value[key]) is not str or TYPED_ID.fullmatch(value[key]) is None:
+                raise ValueError(f"typed identity: {key}")
+        if value["authorization_id"] == value["package_attempt_id"]:
+            raise ValueError("distinct typed identities")
+        for key in MINIMUM_SHA_KEYS:
+            if type(value[key]) is not str or HEX64.fullmatch(value[key]) is None:
+                raise ValueError(f"sha256 type: {key}")
+        for key in COUNT_KEYS:
+            if type(value[key]) is not int or value[key] < 0:
+                raise ValueError(f"nonnegative integer: {key}")
+        if value["attempts"] != 1 or value["retries"] != 0 or value["resume"] is not False:
+            raise ValueError("one-shot limits")
+        checkpoint_root = value["checkpoint_root"]
+        if type(checkpoint_root) is not str or not checkpoint_root.startswith("/") or "/../" in checkpoint_root:
+            raise ValueError("checkpoint root syntax")
+        for key in MINIMUM_PATH_KEYS:
+            path = _repo_path(value[key])
+            digest_key = key.removesuffix("_path") + "_sha256"
+            if _sha(path) != value[digest_key]:
+                if key == "measured_producer_path":
+                    raise failure("F017_V12_IDENTITY_PRODUCER_MEASUREMENT_DRIFT", key)
+                raise ValueError(f"repository binding: {key}")
+        if value["measured_producer_path"] == value["measured_validator_path"]:
+            raise ValueError("distinct producer and validator measurements")
+        contract = _contract(value)
+        if contract.get("authority_scope") != value["authority_scope"]:
+            raise ValueError("contract scope")
+        if expected is not None:
+            unknown = set(expected) - MINIMUM_INSTALLED_KEYS
+            if unknown:
+                raise ValueError("unknown expected binding")
+            for key, expected_value in expected.items():
+                if value.get(key) != expected_value:
+                    raise ValueError(f"expected binding: {key}")
+        return ValidatedIdentityAuthority(
+            tuple(sorted(value.items())), sha256_bytes(raw), "INSTALLED"
+        )
+    except Exception as exc:
+        if hasattr(exc, "outcome_id"):
+            raise
+        raise failure(
+            "F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH", str(exc)
+        ) from exc
+
+
 def validate_candidate_bytes(raw: bytes, expected: Mapping[str, object] | None = None) -> ValidatedIdentityAuthority:
     return _validate(raw, installed=False, expected=expected)
 
 
 def validate_installed_bytes(raw: bytes, expected: Mapping[str, object] | None = None) -> ValidatedIdentityAuthority:
     return _validate(raw, installed=True, expected=expected)
+
+
+def validate_minimum_installed_bytes(
+    raw: bytes,
+    expected: Mapping[str, object] | None = None,
+) -> ValidatedIdentityAuthority:
+    """Validate canonical Sequence 39 installed-authority bytes."""
+    return _validate_minimum_installed(raw, expected)
 
 
 def validate_candidate_path(path: Path, expected: Mapping[str, object] | None = None) -> ValidatedIdentityAuthority:
@@ -191,6 +297,24 @@ def validate_installed_path(path: Path, expected: Mapping[str, object] | None = 
     finally:
         os.close(descriptor)
     return validate_installed_bytes(raw, expected)
+
+
+def validate_minimum_installed_path(
+    path: Path,
+    expected: Mapping[str, object] | None = None,
+) -> ValidatedIdentityAuthority:
+    """Read and validate a canonical Sequence 39 installed authority."""
+    descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    try:
+        raw = os.read(descriptor, 262_145)
+        if os.read(descriptor, 1):
+            raise failure(
+                "F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH",
+                "authority bytes exceed bound",
+            )
+    finally:
+        os.close(descriptor)
+    return validate_minimum_installed_bytes(raw, expected)
 
 
 def installed_document(candidate: ValidatedIdentityAuthority, installation_receipt_sha256: str) -> dict:
@@ -218,4 +342,11 @@ def installed_expected(candidate: ValidatedIdentityAuthority) -> dict:
 def canonical_candidate(value: Mapping[str, object]) -> bytes:
     raw = canonical_bytes(dict(value))
     validate_candidate_bytes(raw)
+    return raw
+
+
+def canonical_minimum_installed(value: Mapping[str, object]) -> bytes:
+    """Return strict canonical bytes for the single installed authority."""
+    raw = canonical_bytes(dict(value))
+    validate_minimum_installed_bytes(raw)
     return raw

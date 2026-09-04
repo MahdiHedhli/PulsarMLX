@@ -11,11 +11,19 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+# Historical prompt-bound bridge: retained for deterministic qualification,
+# excluded from the current production export surface.
+__all__ = ("execute_event06_bridge_qualification",)
+
 from f017_binary_comparison_authority_v11 import derive_summary, validate_summary
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
-from f017_corrected_oracle_primary_wrapper_v12_bridge_v2 import execute_bridge_and_bank as execute_primary
-from f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 import execute_bridge_and_bank as execute_secondary
+from f017_corrected_oracle_primary_wrapper_v12_bridge_v2 import (
+    _qualification_execute_bridge_and_bank as execute_primary,
+)
+from f017_corrected_oracle_secondary_wrapper_v12_bridge_v2 import (
+    _qualification_execute_bridge_and_bank as execute_secondary,
+)
 from f017_descriptor_lease_manager_v10 import LeaseSet
 from f017_event06_execution_plan_v1 import ValidatedExecutionPlan
 from f017_event06_numerical_bridge_v2 import (
@@ -303,7 +311,7 @@ def execute_event06_bridge_qualification(
         bridge, views["ACCOUNTING"], execution["accounting_binding"]
     )
     _bank(package_directory / "prompt-bound-accounting-closure.json", accounting.as_dict(), accounting_sha)
-    legacy_package = legacy_coordinator.close_bridge_package(
+    legacy_package = legacy_coordinator._qualification_close_bridge_package(
         bridge.legacy_bridge, package_start, execution
     )
     historical_package_view = legacy_bridge.package_terminal_view(
@@ -328,7 +336,7 @@ def execute_event06_bridge_qualification(
     }
 
 
-def execute_event06_bridge(
+def _qualification_execute_event06_bridge(
     installed: ValidatedIdentityAuthority,
     execution_plan: ValidatedExecutionPlan,
     bridge_input: PromptBoundIdentityBridgeInputV2,
@@ -338,7 +346,7 @@ def execute_event06_bridge(
     authority = installed.as_dict()
     if authority.get("authority_scope") != "PRODUCTION":
         raise ValueError("production Event 06 authority required")
-    package_start = legacy_coordinator.bank_live_package_start(installed)
+    package_start = legacy_coordinator._qualification_bank_live_package_start(installed)
     layout = package_storage_layout(package_start.reservation.root)
     leases, identity_report = legacy_coordinator.run_identity_stage(
         installed,
@@ -373,7 +381,7 @@ def execute_event06_bridge(
         layout["package"] / "prompt-bound-accounting-closure.json",
         accounting.as_dict(), accounting_sha,
     )
-    legacy_package = legacy_coordinator.close_bridge_package(
+    legacy_package = legacy_coordinator._qualification_close_bridge_package(
         bridge.legacy_bridge, package_start, execution
     )
     historical_package_view = legacy_bridge.package_terminal_view(
@@ -399,3 +407,13 @@ def execute_event06_bridge(
         "accounting_closure": accounting, "accounting_closure_sha256": accounting_sha,
         "terminal": terminal, "terminal_sha256": terminal_sha, "result": "PASS",
     }
+
+
+def execute_event06_bridge(
+    installed: ValidatedIdentityAuthority,
+    execution_plan: ValidatedExecutionPlan,
+    bridge_input: PromptBoundIdentityBridgeInputV2,
+) -> dict[str, object]:
+    """Fail closed: the superseded prompt-bound executor cannot start Event 06."""
+    del installed, execution_plan, bridge_input
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")

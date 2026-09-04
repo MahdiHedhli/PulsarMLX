@@ -214,10 +214,10 @@ def _load_reservation(installed: ValidatedIdentityAuthority, mode: str,
     return reservation_type(_RESERVATION_SEALS[mode], value, root)
 
 
-def reserve_live_package_attempt(
+def _qualification_reserve_live_package_attempt(
     installed: ValidatedIdentityAuthority,
 ) -> ValidatedLivePackageAttemptReservation:
-    """Reserve production exactly once under the internal fixed live root."""
+    """Historical fixed-root reservation retained for qualification evidence."""
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
         raise TypeError("exact installed production authority required")
     if installed.as_dict().get("authority_scope") != "PRODUCTION":
@@ -228,7 +228,7 @@ def reserve_live_package_attempt(
     )
 
 
-def load_live_package_attempt(
+def _qualification_load_live_package_attempt(
     installed: ValidatedIdentityAuthority,
 ) -> ValidatedLivePackageAttemptReservation:
     if type(installed) is not ValidatedIdentityAuthority or installed.posture != "INSTALLED":
@@ -351,7 +351,7 @@ def _claim(reservation: _Reservation, package_start_sha256: str | None,
     return legacy, successor
 
 
-def claim_live_terminal_sinks(
+def _qualification_claim_live_terminal_sinks(
     reservation: ValidatedLivePackageAttemptReservation,
     package_start,
     bridge,
@@ -468,10 +468,54 @@ def _bank_terminal(sink: _TerminalSink, value: dict) -> str:
     return digest
 
 
-def bank_live_terminal(sink: ValidatedLivePackageTerminalSink, value: dict) -> str:
+def _qualification_bank_live_terminal(
+    sink: ValidatedLivePackageTerminalSink, value: dict
+) -> str:
     if type(sink) is not ValidatedLivePackageTerminalSink:
         raise TypeError("exact live package terminal sink required")
     return _bank_terminal(sink, value)
+
+
+def reserve_live_package_attempt(
+    installed: ValidatedIdentityAuthority,
+) -> ValidatedLivePackageAttemptReservation:
+    """Fail closed: Sequence 39 owns the sole production one-shot claim."""
+    del installed
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+def load_live_package_attempt(
+    installed: ValidatedIdentityAuthority,
+) -> ValidatedLivePackageAttemptReservation:
+    """Fail closed: historical live reservations are not production authority."""
+    del installed
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+def claim_live_terminal_sinks(
+    reservation: ValidatedLivePackageAttemptReservation,
+    package_start,
+    bridge,
+    execution_result,
+    transition_records: list[dict],
+    package_terminal_view: "ValidatedConsumerView",
+) -> tuple[ValidatedLivePackageTerminalSink, ValidatedLivePackageTerminalSink]:
+    """Fail closed: Sequence 39 has one package-scoped terminal writer."""
+    del (
+        reservation,
+        package_start,
+        bridge,
+        execution_result,
+        transition_records,
+        package_terminal_view,
+    )
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+def bank_live_terminal(sink: ValidatedLivePackageTerminalSink, value: dict) -> str:
+    """Fail closed: superseded terminal sinks cannot bank Event 06 state."""
+    del sink, value
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def bank_qualification_terminal(
@@ -483,16 +527,10 @@ def bank_qualification_terminal(
 
 
 __all__ = [
-    "ValidatedLivePackageAttemptReservation",
     "ValidatedQualificationPackageAttemptReservation",
-    "ValidatedLivePackageTerminalSink",
     "ValidatedQualificationPackageTerminalSink",
-    "bank_live_terminal",
     "bank_qualification_terminal",
-    "claim_live_terminal_sinks",
     "claim_qualification_terminal_sinks",
-    "load_live_package_attempt",
     "load_qualification_package_attempt",
-    "reserve_live_package_attempt",
     "reserve_qualification_package_attempt",
 ]

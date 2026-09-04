@@ -128,7 +128,7 @@ def qualify_call_path() -> dict:
                 package_directory=root / "package",
             )
             try:
-                coordinator.close_bridge_package(
+                coordinator._qualification_close_bridge_package(
                     result["bridge"], result["package_start"], result["execution"],
                 )
             except RuntimeError as exc:

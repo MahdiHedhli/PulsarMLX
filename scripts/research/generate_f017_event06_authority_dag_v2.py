@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Generate Sequence 18 DAG from predecessor closure plus actual split calls."""
+"""Expose the exact banked Sequence 18 DAG as historical qualification data.
+
+Sequence 39 supersedes every public live boundary represented by this DAG.  The
+document remains useful for replaying the accepted Sequence 18 qualification,
+but it must never be regenerated from the current source tree or promoted back
+to live authority.
+"""
 from __future__ import annotations
 
 import argparse
@@ -13,6 +19,9 @@ from f017_event06_sequence18_storage_census_v1 import census as storage_census
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
+HISTORICAL_DAG_COMMIT = "9bfe3c0af88d774df15d595389f7f2778cea7806"
+HISTORICAL_DAG_SHA256 = "02276152043fb31fd20b3556542e33edbd8bf386c117baa3e6b3b3105108136d"
+AUTHORITY_DISPOSITION = "HISTORICAL_QUALIFICATION_ONLY_NOT_LIVE_AUTHORITY"
 
 # The stable predecessor closure ends immediately before package reservation.
 BASE_ROWS = predecessor.ROWS[:35]
@@ -225,7 +234,7 @@ def live_terminal_claim_input_inventory() -> list[dict[str, object]]:
     return rows
 
 
-def build() -> dict[str, object]:
+def _build_from_current_sources() -> dict[str, object]:
     base = []
     for row in BASE_ROWS:
         source, producer, output_type, destination, consumer, phase = row
@@ -302,18 +311,32 @@ def build() -> dict[str, object]:
     }
 
 
+def build() -> dict[str, object]:
+    """Load the exact historical DAG; never synthesize new live authority."""
+    raw = OUTPUT.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != HISTORICAL_DAG_SHA256:
+        raise ValueError("historical Sequence 18 authority DAG drift")
+    value = json.loads(raw)
+    if (
+        type(value) is not dict
+        or value.get("schema")
+        != "pulsarmlx.f017.event06-v12-authority-dag/2.0.0"
+        or value.get("original_checkpoint_access_permitted") is not False
+    ):
+        raise ValueError("historical Sequence 18 authority DAG shape")
+    return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    raw = (json.dumps(build(), indent=2, sort_keys=True) + "\n").encode()
+    build()
     if args.check:
-        if not OUTPUT.exists() or OUTPUT.read_bytes() != raw:
-            raise SystemExit("generated Sequence 18 authority DAG is stale")
         return 0
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_bytes(raw)
-    return 0
+    raise SystemExit(
+        "Sequence 18 DAG is historical qualification-only; regeneration is disabled"
+    )
 
 
 if __name__ == "__main__":

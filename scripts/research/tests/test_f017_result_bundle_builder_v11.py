@@ -14,12 +14,15 @@ sys.path.insert(0, str(ROOT / "scripts/research"))
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import require_primary_terminal
-from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import (
+    _qualification_bank_output_bundle as bank_output_bundle,
+)
 from f017_result_bundle_builder_v11 import validate_numerical_output_summary
 from f017_result_envelope_v11 import ResultEnvelopeError, payload_spec
 import f017_corrected_oracle_primary_wrapper_v11 as primary_wrapper
 import f017_corrected_oracle_secondary_wrapper_v11 as secondary_wrapper
 import f017_corrected_oracle_secondary_numerics_v3 as secondary_core
+import f017_result_bundle_builder_v11 as bundle_builder
 from generate_f017_corrected_oracle_fixtures import fixture
 
 
@@ -48,6 +51,61 @@ def output(role: str) -> SimpleNamespace:
 
 
 class ResultBundleBuilderV11Tests(unittest.TestCase):
+    def test_superseded_effectful_public_roots_fail_before_any_effect(self) -> None:
+        digest = "1" * 64
+        with tempfile.TemporaryDirectory() as temporary:
+            output_root = Path(temporary) / "must-not-exist"
+            with patch.object(primary_wrapper.primary_core, "execute_outputs") as primary_execute:
+                with self.assertRaisesRegex(RuntimeError, "Sequence 39"):
+                    primary_wrapper.execute_and_bank(
+                        object(), object(), 9703, output_root,
+                        authorization_id="AUTH", package_attempt_id="PKG",
+                        consumer_event_id="PRIMARY",
+                        producer_measurement_sha256=digest,
+                        durable_start_sha256=digest,
+                        access_census_sha256=digest,
+                    )
+                primary_execute.assert_not_called()
+            with patch.object(secondary_wrapper.secondary_core, "execute_outputs") as secondary_execute:
+                with self.assertRaisesRegex(RuntimeError, "Sequence 39"):
+                    secondary_wrapper.execute_and_bank(
+                        {}, output_root, authorization_id="AUTH",
+                        package_attempt_id="PKG", consumer_event_id="SECONDARY",
+                        producer_measurement_sha256=digest,
+                        durable_start_sha256=digest,
+                        access_census_sha256=digest,
+                        primary_terminal={},
+                        primary_result_terminal_sha256=digest,
+                        primary_receipt_sha256=digest,
+                        primary_manifest_sha256=digest,
+                    )
+                secondary_execute.assert_not_called()
+            with patch.object(primary_wrapper, "validate_candidate_document") as primary_validate:
+                with self.assertRaisesRegex(RuntimeError, "Sequence 39"):
+                    primary_wrapper.execute_target_and_bank({}, [], [], output_root)
+                primary_validate.assert_not_called()
+            with patch.object(secondary_wrapper, "validate_candidate_document") as secondary_validate:
+                with self.assertRaisesRegex(RuntimeError, "Sequence 39"):
+                    secondary_wrapper.execute_target_and_bank(
+                        {}, [], [], output_root, primary_terminal={},
+                        primary_result_terminal_sha256=digest,
+                        primary_receipt_sha256=digest,
+                        primary_manifest_sha256=digest,
+                    )
+                secondary_validate.assert_not_called()
+            with self.assertRaisesRegex(RuntimeError, "Sequence 39"):
+                bundle_builder.bank_output_bundle(
+                    output("PRIMARY"), output_root, authorization_id="AUTH",
+                    package_attempt_id="PKG", consumer_event_id="PRIMARY",
+                    producer_measurement_sha256=digest,
+                    durable_start_sha256=digest,
+                    access_census_sha256=digest,
+                )
+            self.assertFalse(output_root.exists())
+        self.assertEqual(primary_wrapper.__all__, ("validate_candidate_document",))
+        self.assertEqual(secondary_wrapper.__all__, ("validate_candidate_document",))
+        self.assertEqual(bundle_builder.__all__, ("validate_numerical_output_summary",))
+
     def test_real_secondary_core_summary_couples_to_banking_semantics(self) -> None:
         numerical = secondary_core.execute_outputs(fixture(18101), use_mlx=False)
         result = validate_numerical_output_summary(numerical, "SECONDARY")
@@ -129,8 +187,8 @@ class ResultBundleBuilderV11Tests(unittest.TestCase):
     def test_primary_wrapper_calls_core_once(self) -> None:
         sentinel = object()
         with patch.object(primary_wrapper.primary_core, "execute_outputs", return_value=sentinel) as execute, \
-                patch.object(primary_wrapper, "bank_output_bundle", return_value={"result":"PASS"}) as bank:
-            result = primary_wrapper.execute_and_bank(object(), object(), 9703, Path("unused"),
+                patch.object(primary_wrapper, "_minimum_gate_bank_output_bundle", return_value={"result":"PASS"}) as bank:
+            result = primary_wrapper._qualification_execute_and_bank(object(), object(), 9703, Path("unused"),
                 authorization_id="AUTH", package_attempt_id="PKG", consumer_event_id="PRIMARY",
                 producer_measurement_sha256="1"*64, durable_start_sha256="2"*64,
                 access_census_sha256="3"*64)
@@ -142,7 +200,7 @@ class ResultBundleBuilderV11Tests(unittest.TestCase):
     def test_secondary_gate_precedes_core_execution(self) -> None:
         with patch.object(secondary_wrapper.secondary_core, "execute_outputs") as execute:
             with self.assertRaises(ResultEnvelopeError):
-                secondary_wrapper.execute_and_bank({}, Path("unused"), authorization_id="AUTH",
+                secondary_wrapper._qualification_execute_and_bank({}, Path("unused"), authorization_id="AUTH",
                     package_attempt_id="PKG", consumer_event_id="SECONDARY",
                     producer_measurement_sha256="1"*64, durable_start_sha256="2"*64,
                     access_census_sha256="3"*64, primary_terminal={},

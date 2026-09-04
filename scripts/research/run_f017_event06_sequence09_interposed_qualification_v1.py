@@ -142,8 +142,10 @@ def run() -> dict[str, object]:
 
     import f017_event06_production_installation_v2 as production
 
-    real_produce = production.produce_future_go_capability
-    real_production_commit = production.commit_production_installation_v2
+    real_produce = production._qualification_produce_future_go_capability
+    real_production_commit = (
+        production._qualification_commit_production_installation_v2
+    )
     real_commit = production._commit_bound_production_transaction
 
     def observed_produce(*args: object, **kwargs: object) -> object:
@@ -162,8 +164,8 @@ def run() -> dict[str, object]:
         census["id_consumption"] += consumed
         return result
 
-    production.produce_future_go_capability = observed_produce  # type: ignore[assignment]
-    production.commit_production_installation_v2 = observed_production_commit  # type: ignore[assignment]
+    production._qualification_produce_future_go_capability = observed_produce  # type: ignore[assignment]
+    production._qualification_commit_production_installation_v2 = observed_production_commit  # type: ignore[assignment]
     production._commit_bound_production_transaction = observed_commit
 
     import qualify_f017_event06_sequence09_no_access_v1 as qualification

@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import stat
 from pathlib import Path
+from typing import Never
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_descriptor_lease_manager_v10 import LeaseRecord, LeaseSet
@@ -127,7 +128,9 @@ def _trace(trace: list[dict[str, object]], edge_id: str, value: object) -> objec
     return value
 
 
-def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[str, object]:
+def _qualification_run_full_call_path(
+    root: Path, *, retain_authorities: bool = False
+) -> dict[str, object]:
     """Run one deterministic complete control path without irreversible work."""
     package = build_sequence14_qualification(
         root, now_unix_ns=4_000_000_000_000_000_000
@@ -448,4 +451,12 @@ def run_full_call_path(root: Path, *, retain_authorities: bool = False) -> dict[
     return result
 
 
-__all__ = ["EDGE_IDS", "run_full_call_path"]
+def run_full_call_path(
+    root: Path, *, retain_authorities: bool = False
+) -> dict[str, object]:
+    """Fail closed: the former qualification-only full composer is superseded."""
+    del root, retain_authorities
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+__all__ = ["EDGE_IDS"]

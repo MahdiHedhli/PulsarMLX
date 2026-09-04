@@ -12,11 +12,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 from execute_f017_corrected_oracle_event_v12_bridge import (
-    bank_live_package_start, close_bridge_package,
+    _qualification_bank_live_package_start as bank_live_package_start,
+    _qualification_close_bridge_package as close_bridge_package,
 )
 from f017_canonical_serialization_v10 import canonical_bytes
-from f017_event06_dag_derived_control_path_v1 import run_full_call_path
-from f017_event06_package_attempt_registry_v2 import bank_live_terminal
+from f017_event06_dag_derived_control_path_v1 import (
+    _qualification_run_full_call_path as run_full_call_path,
+)
+from f017_event06_package_attempt_registry_v2 import (
+    _qualification_bank_live_terminal as bank_live_terminal,
+)
 import f017_event06_package_attempt_registry_v1 as historical
 import f017_event06_package_attempt_registry_v2 as registry
 from f017_event06_sequence18_storage_census_v1 import census, validate_census_document
@@ -112,10 +117,16 @@ def qualify() -> dict[str, object]:
         filesystem = InMemorySafetyFilesystem()
         with filesystem.installed():
             package_start = bank_live_package_start(authorities["installed_authority"])
-            closure = close_bridge_package(
-                authorities["historical_bridge"], package_start,
-                authorities["execution_result"],
-            )
+            # Replay the historical live-shaped terminal composition only inside
+            # this synthetic VFS qualification.  Sequence 39's public writer
+            # remains a fail-closed tombstone before and after this scoped alias.
+            with patch.object(
+                registry, "bank_live_terminal", bank_live_terminal
+            ):
+                closure = close_bridge_package(
+                    authorities["historical_bridge"], package_start,
+                    authorities["execution_result"],
+                )
             legacy_terminal = closure["terminal"]
             successor_sink = closure["successor_terminal_sink"]
             successor_value = {
@@ -223,7 +234,7 @@ def qualify() -> dict[str, object]:
     ) * 4):
         killed(
             f"PUBLIC-STORAGE-{index:03d}",
-            lambda name=name: registry.reserve_live_package_attempt(
+            lambda name=name: registry._qualification_reserve_live_package_attempt(
                 authority, **{name: Path("/discarded")}
             ),
         )

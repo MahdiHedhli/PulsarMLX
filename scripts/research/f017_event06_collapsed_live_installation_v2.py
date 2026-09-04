@@ -8,6 +8,11 @@ called by Sequence 14.
 """
 from __future__ import annotations
 
+# Retained historical/qualification machinery. The minimum-gate coordinator
+# supersedes its fixed-root state factory and this module exports no alternate
+# production construction surface.
+__all__: tuple[str, ...] = ()
+
 import copy
 import hashlib
 import os
@@ -43,7 +48,7 @@ from f017_event06_collapsed_go_path_v1 import (
     CollapsedOneShotGoV1,
     OneShotCompositionStateV1,
     SanitizedHumanDecisionV1,
-    begin_live_one_shot_composition,
+    _qualification_begin_live_one_shot_composition,
     begin_no_access_composition,
     seal_collapsed_one_shot_go,
     validate_sanitized_human_decision,
@@ -368,12 +373,19 @@ def begin_qualification_live_installation(
     )
 
 
-def begin_live_collapsed_installation() -> CollapsedLiveIntegrationStateV2:
-    """Future human-GO entry point.  Sequence 14 must never invoke it."""
+def _qualification_begin_live_collapsed_installation() -> CollapsedLiveIntegrationStateV2:
+    """Historical live-shape constructor retained for isolated qualification."""
 
     return CollapsedLiveIntegrationStateV2(
-        _STATE_SEAL, begin_live_one_shot_composition(), "LIVE_CANONICAL"
+        _STATE_SEAL,
+        _qualification_begin_live_one_shot_composition(),
+        "LIVE_CANONICAL",
     )
+
+
+def begin_live_collapsed_installation() -> Never:
+    """Fail closed: the former live integration root is superseded."""
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 class _PromptControlRepositoryAuthority:
@@ -1431,7 +1443,7 @@ def commit_qualification_collapsed_installation(
     )
 
 
-def commit_collapsed_live_installation(
+def _qualification_commit_collapsed_live_installation(
     prepared: PreparedCollapsedInstallationV2,
     capability: CollapsedLiveInstallationCapabilityV2,
     *,
@@ -1453,6 +1465,17 @@ def commit_collapsed_live_installation(
         _payloads(prepared),
         consumption_marker=marker,
     )
+
+
+def commit_collapsed_live_installation(
+    prepared: PreparedCollapsedInstallationV2,
+    capability: CollapsedLiveInstallationCapabilityV2,
+    *,
+    state: CollapsedLiveIntegrationStateV2,
+) -> DurableTransactionResult:
+    """Fail closed: superseded V2 installation cannot mint live authority."""
+    del prepared, capability, state
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 class CollapsedInstalledTripleV2:

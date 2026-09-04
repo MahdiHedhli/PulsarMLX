@@ -16,6 +16,8 @@ import stat
 import struct
 from typing import Iterable, Iterator
 
+from f017_write_once_artifact_v1 import _set_user_immutable
+
 
 class ResultEnvelopeError(ValueError):
     """Stable fail-closed boundary for malformed result envelopes."""
@@ -220,7 +222,8 @@ def bank_payload(directory: Path, leaf: str, spec: PayloadSpec, values: Iterable
 
 
 def bank_payload_bytes(directory: Path, leaf: str, spec: PayloadSpec, payload: bytes,
-                       *, package_attempt_id: str, consumer_event_id: str) -> dict:
+                       *, package_attempt_id: str, consumer_event_id: str,
+                       _write_once: bool = False) -> dict:
     """Bank already-canonical immutable output bytes without numeric repacking.
 
     Successor numerical cores own conversion from their frozen arithmetic dtype
@@ -235,6 +238,8 @@ def bank_payload_bytes(directory: Path, leaf: str, spec: PayloadSpec, payload: b
         raise ResultEnvelopeError("payload package binding")
     if type(consumer_event_id) is not str or not consumer_event_id:
         raise ResultEnvelopeError("payload consumer binding")
+    if type(_write_once) is not bool:
+        raise ResultEnvelopeError("payload write-once policy")
     _validate_leaf(leaf)
     if len(payload) != spec.byte_count:
         raise ResultEnvelopeError("canonical payload byte geometry")
@@ -254,7 +259,8 @@ def bank_payload_bytes(directory: Path, leaf: str, spec: PayloadSpec, payload: b
     try:
         descriptor = os.open(
             leaf,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
+            (os.O_RDWR if _write_once else os.O_WRONLY)
+            | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
             0o600,
             dir_fd=directory_fd,
         )
@@ -263,12 +269,16 @@ def bank_payload_bytes(directory: Path, leaf: str, spec: PayloadSpec, payload: b
         before = os.fstat(descriptor)
         if not stat.S_ISREG(before.st_mode) or before.st_size != spec.byte_count:
             raise ResultEnvelopeError("payload write geometry")
-        os.close(descriptor)
-        descriptor = -1
-        os.fsync(directory_fd)
-        descriptor = os.open(
-            leaf, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd
-        )
+        if _write_once:
+            _set_user_immutable(descriptor, True)
+            os.lseek(descriptor, 0, os.SEEK_SET)
+        else:
+            os.close(descriptor)
+            descriptor = -1
+            os.fsync(directory_fd)
+            descriptor = os.open(
+                leaf, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=directory_fd
+            )
         after = os.fstat(descriptor)
         if (before.st_dev, before.st_ino, before.st_size) != (
                 after.st_dev, after.st_ino, after.st_size):

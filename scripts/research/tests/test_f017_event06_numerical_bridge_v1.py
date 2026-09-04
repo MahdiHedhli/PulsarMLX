@@ -31,8 +31,8 @@ from f017_event06_numerical_bridge_v1 import (
 )
 from execute_f017_corrected_oracle_event_v12_bridge import (
     PRODUCTION_CALL_PATH, ValidatedBridgeExecutionResult, ValidatedDurableStart,
-    bank_qualification_package_start, close_bridge_package, validate_no_access_call_path,
-    validate_transition_order,
+    bank_qualification_package_start, close_bridge_package, execute_event06_bridge,
+    validate_no_access_call_path, validate_transition_order,
 )
 from qualify_f017_event06_bridge_call_path_v2 import _release_report, qualify_call_path
 
@@ -99,7 +99,11 @@ def test_sealed_authority_objects_reject_construction_copy_and_pickle():
     with pytest.raises(TypeError): del bridge.sha256
     with pytest.raises(TypeError): ValidatedBridgeExecutionResult()
     with pytest.raises(TypeError): ValidatedDurableStart()
-    with pytest.raises(ValueError): close_bridge_package(bridge, {}, {})
+    tombstone = "^superseded by F017 Sequence 39 minimum-gate path$"
+    with pytest.raises(RuntimeError, match=tombstone):
+        close_bridge_package(bridge, {}, {})
+    with pytest.raises(RuntimeError, match=tombstone):
+        execute_event06_bridge(None, None, {})
 
 
 def test_bridge_field_mutations_fail_closed():

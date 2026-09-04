@@ -16,6 +16,8 @@ import time
 from pathlib import Path
 from typing import Final, Never, Self, SupportsIndex, cast
 
+__all__: tuple[str, ...] = ()
+
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
@@ -214,7 +216,7 @@ def _validate_future_go_value(
     return dict(value)
 
 
-def produce_future_go_capability(
+def _qualification_produce_future_go_capability(
     raw: bytes,
     *,
     prepared: PreparedProductionInstallation,
@@ -258,6 +260,17 @@ def produce_future_go_capability(
     capability = FutureGoCapabilityV2(_CAPABILITY_SEAL, value, raw)
     _ISSUED_CAPABILITIES[id(capability)] = capability
     return capability
+
+
+def produce_future_go_capability(
+    raw: bytes,
+    *,
+    prepared: PreparedProductionInstallation,
+    readiness: ValidatedEvent06ReadinessV3,
+) -> FutureGoCapabilityV2:
+    """Fail closed: the V2 live capability issuer is superseded."""
+    del raw, prepared, readiness
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def inspect_future_go_shape_without_issuing(raw: bytes) -> str:
@@ -322,7 +335,7 @@ def validate_future_go_capability(
     return capability
 
 
-def commit_production_installation_v2(
+def _qualification_commit_production_installation_v2(
     prepared: PreparedProductionInstallation,
     capability: object,
 ) -> DurableTransactionResult:
@@ -351,6 +364,15 @@ def commit_production_installation_v2(
         payloads,
         consumption_marker=marker,
     )
+
+
+def commit_production_installation_v2(
+    prepared: PreparedProductionInstallation,
+    capability: object,
+) -> DurableTransactionResult:
+    """Fail closed: the V2 production installation path is superseded."""
+    del prepared, capability
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
 
 
 def assert_capability_sealed(value: FutureGoCapabilityV2) -> None:

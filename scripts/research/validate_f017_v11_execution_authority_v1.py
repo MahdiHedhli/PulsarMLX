@@ -54,8 +54,8 @@ def main() -> int:
     if ("f017_corrected_oracle_primary_target_source_v11" not in primary_wrapper.read_text()
             or "f017_corrected_oracle_secondary_target_source_v11" not in secondary_wrapper.read_text()):
         raise ValueError("V11 target-source separation")
-    p_calls = _calls(primary_wrapper, "execute_and_bank")
-    s_calls = _calls(secondary_wrapper, "execute_and_bank")
+    p_calls = _calls(primary_wrapper, "_minimum_gate_execute_and_bank")
+    s_calls = _calls(secondary_wrapper, "_minimum_gate_execute_and_bank")
     if sum(_call_name(call) == "execute_outputs" for call in p_calls) != 1:
         raise ValueError("primary one-execution gate")
     if sum(_call_name(call) == "execute_outputs" for call in s_calls) != 1:
@@ -63,8 +63,21 @@ def main() -> int:
     s_gate = next(call.lineno for call in s_calls if _call_name(call) == "require_primary_terminal")
     s_execute = next(call.lineno for call in s_calls if _call_name(call) == "execute_outputs")
     if s_gate >= s_execute: raise ValueError("secondary gate order")
+    for path, function in (
+        (primary_wrapper, "execute_and_bank"),
+        (primary_wrapper, "execute_target_and_bank"),
+        (secondary_wrapper, "execute_and_bank"),
+        (secondary_wrapper, "execute_target_and_bank"),
+    ):
+        target = next(
+            node for node in ast.walk(ast.parse(path.read_text(), filename=str(path)))
+            if isinstance(node, ast.FunctionDef) and node.name == function
+        )
+        if not any(isinstance(node, ast.Raise) for node in target.body):
+            raise ValueError(f"superseded wrapper is not fail closed: {function}")
     builder = (RESEARCH / "f017_result_bundle_builder_v11.py").read_text()
-    if ("bank_payload_bytes" not in builder or "full_logits_payload" not in builder
+    if ("_minimum_gate_bank_output_bundle" not in builder
+            or "bank_payload_bytes" not in builder or "full_logits_payload" not in builder
             or "json.dumps" in builder or "canonical payload must be immutable bytes" not in
             (RESEARCH / "f017_result_envelope_v11.py").read_text()):
         raise ValueError("exact-byte result banking")

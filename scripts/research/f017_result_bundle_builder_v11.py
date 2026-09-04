@@ -25,6 +25,9 @@ from f017_result_envelope_v11 import (
     bank_payload_bytes,
     payload_spec,
 )
+from f017_write_once_artifact_v1 import _bank_exclusive_write_once
+
+__all__ = ("validate_numerical_output_summary",)
 
 
 def _sha(value: dict) -> str:
@@ -151,17 +154,27 @@ def _validate_summary_binding(output: object, summary: dict, role: str) -> None:
         raise ResultEnvelopeError("numerical output summary binding")
 
 
-def bank_output_bundle(output: object, directory: Path, *, authorization_id: str,
-                       package_attempt_id: str, consumer_event_id: str,
-                       producer_measurement_sha256: str,
-                       durable_start_sha256: str, access_census_sha256: str,
-                       numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256) -> dict:
+def _minimum_gate_bank_output_bundle(
+    output: object,
+    directory: Path,
+    *,
+    authorization_id: str,
+    package_attempt_id: str,
+    consumer_event_id: str,
+    producer_measurement_sha256: str,
+    durable_start_sha256: str,
+    access_census_sha256: str,
+    numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256,
+    _write_once: bool = False,
+) -> dict:
     """Create the complete causal bundle without rerunning or repacking a core."""
     role = _attribute(output, "role")
     if role not in {"PRIMARY", "SECONDARY"}:
         raise ResultEnvelopeError("numerical output role")
     if not isinstance(directory, Path):
         raise ResultEnvelopeError("bundle directory")
+    if type(_write_once) is not bool:
+        raise ResultEnvelopeError("bundle write-once policy")
     for name, value in (
         ("producer measurement", producer_measurement_sha256),
         ("durable start", durable_start_sha256),
@@ -177,30 +190,32 @@ def bank_output_bundle(output: object, directory: Path, *, authorization_id: str
         records.append(bank_payload_bytes(
             directory, f"{role_leaf}-{kind}.bin", payload_spec(role, kind), payloads[kind],
             package_attempt_id=package_attempt_id, consumer_event_id=consumer_event_id,
+            _write_once=_write_once,
         ))
+    bank_control = _bank_exclusive_write_once if _write_once else bank_exclusive
     manifest = build_manifest(role, package_attempt_id, consumer_event_id, records)
-    manifest_sha = bank_exclusive(directory / f"{role_leaf}-payload-manifest.json", manifest)
+    manifest_sha = bank_control(directory / f"{role_leaf}-payload-manifest.json", manifest)
     routing = build_routing_manifest(role, package_attempt_id, consumer_event_id,
                                      _routing_layers(output))
-    routing_sha = bank_exclusive(directory / f"{role_leaf}-routing-manifest.json", routing)
+    routing_sha = bank_control(directory / f"{role_leaf}-routing-manifest.json", routing)
     top32 = build_top32(directory, records[2])
     _validate_summary_binding(output, top32, role)
-    top32_sha = bank_exclusive(directory / f"{role_leaf}-top32-summary.json", top32)
+    top32_sha = bank_control(directory / f"{role_leaf}-top32-summary.json", top32)
     receipt = build_receipt(
         role, authorization_id, package_attempt_id, consumer_event_id,
         producer_measurement_sha256, numerical_contract_sha256,
         manifest_sha, top32_sha, routing_sha, durable_start_sha256,
         access_census_sha256,
     )
-    receipt_sha = bank_exclusive(directory / f"{role_leaf}-result-receipt.json", receipt)
+    receipt_sha = bank_control(directory / f"{role_leaf}-result-receipt.json", receipt)
     result_terminal = build_result_terminal(role, receipt_sha, manifest_sha)
-    result_terminal_sha = bank_exclusive(
+    result_terminal_sha = bank_control(
         directory / f"{role_leaf}-result-terminal.json", result_terminal
     )
     consumer_terminal = build_consumer_terminal(
         role, result_terminal_sha, receipt_sha, manifest_sha
     )
-    consumer_terminal_sha = bank_exclusive(
+    consumer_terminal_sha = bank_control(
         directory / f"{role_leaf}-consumer-terminal.json", consumer_terminal
     )
     artifacts = {
@@ -221,3 +236,35 @@ def bank_output_bundle(output: object, directory: Path, *, authorization_id: str
     if index["consumer_terminal_sha256"] != consumer_terminal_sha:
         raise ResultEnvelopeError("consumer terminal banking identity")
     return {"artifacts": artifacts, "index": index, "result": "PASS"}
+
+
+# Historical synthetic qualifications use the exact same implementation body,
+# but neither private name is part of the production export surface.
+_qualification_bank_output_bundle = _minimum_gate_bank_output_bundle
+
+
+def bank_output_bundle(
+    output: object,
+    directory: Path,
+    *,
+    authorization_id: str,
+    package_attempt_id: str,
+    consumer_event_id: str,
+    producer_measurement_sha256: str,
+    durable_start_sha256: str,
+    access_census_sha256: str,
+    numerical_contract_sha256: str = NUMERICAL_CONTRACT_V4_SHA256,
+) -> dict:
+    """Fail closed: bundle banking is internal to the Sequence 39 path."""
+    del (
+        output,
+        directory,
+        authorization_id,
+        package_attempt_id,
+        consumer_event_id,
+        producer_measurement_sha256,
+        durable_start_sha256,
+        access_census_sha256,
+        numerical_contract_sha256,
+    )
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")

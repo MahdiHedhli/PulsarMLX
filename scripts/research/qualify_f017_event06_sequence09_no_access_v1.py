@@ -39,9 +39,9 @@ from f017_event06_production_installation_v1 import (
 )
 from f017_event06_production_installation_v2 import (
     FutureGoCapabilityV2,
-    commit_production_installation_v2,
+    _qualification_commit_production_installation_v2 as commit_production_installation_v2,
+    _qualification_produce_future_go_capability as produce_future_go_capability,
     prepare_production_installation_v2,
-    produce_future_go_capability,
 )
 from f017_event06_readiness_authority_v2 import (
     Event06ReadinessError,

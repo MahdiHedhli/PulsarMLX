@@ -228,16 +228,46 @@ def _nodes() -> list[dict[str, object]]:
 def derive_requirements() -> dict[str, object]:
     nodes = _nodes()
     edges = [f"{source}->{node['node_id']}" for node in nodes for source in node["direct_predecessors"]]
+    # These are historical design bindings, not selectors for the current live
+    # surface.  Pin the accepted bytes instead of silently rebinding the old
+    # design when a Sequence 39 tombstone changes a former public module.
     historical = {
-        "live_go_contract_v3": "scripts/research/f017_event06_live_go_contract_v3.py",
-        "production_installation_v3": "scripts/research/f017_event06_production_installation_v3.py",
-        "durable_installation_transaction_v1": "scripts/research/f017_event06_durable_installation_transaction_v1.py",
-        "execution_plan_v1": "scripts/research/f017_event06_execution_plan_v1.py",
-        "checkpoint_identity_v12": "scripts/research/f017_checkpoint_identity_producer_v12.py",
-        "primary_numerical_v3": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
-        "secondary_numerical_v3": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
-        "result_authority_v11": "scripts/research/f017_result_bundle_authority_v11.py",
-        "comparison_authority_v11": "scripts/research/f017_binary_comparison_authority_v11.py",
+        "live_go_contract_v3": (
+            "scripts/research/f017_event06_live_go_contract_v3.py",
+            "df9777cd0e31adbcf4b0379a2cc3020988481d59bb8f24676ebed49e1e09aa87",
+        ),
+        "production_installation_v3": (
+            "scripts/research/f017_event06_production_installation_v3.py",
+            "ef2527b3b80a1e487bc145318f6ffaf8d830fa9d6492af68fc8a9b619d6494e9",
+        ),
+        "durable_installation_transaction_v1": (
+            "scripts/research/f017_event06_durable_installation_transaction_v1.py",
+            "ee8add19d81a1da5f15f98ac79836cf0228288f8eb6c087bcc61b768bb587c09",
+        ),
+        "execution_plan_v1": (
+            "scripts/research/f017_event06_execution_plan_v1.py",
+            "e6bc9020eb0262bca9ce9bc39b526337f1068da4e77edf854ebfbcf6cc1fd499",
+        ),
+        "checkpoint_identity_v12": (
+            "scripts/research/f017_checkpoint_identity_producer_v12.py",
+            "419a8f5395368b3a2066d2c3ef5b19d1f14ef2bf49cc4ca8a19e2031e7880dbe",
+        ),
+        "primary_numerical_v3": (
+            "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+            "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+        ),
+        "secondary_numerical_v3": (
+            "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
+            "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+        ),
+        "result_authority_v11": (
+            "scripts/research/f017_result_bundle_authority_v11.py",
+            "f1388876fa24d4f93d6cd0732c6648584177b353c2bd1f37f6a02d3b3e948a3a",
+        ),
+        "comparison_authority_v11": (
+            "scripts/research/f017_binary_comparison_authority_v11.py",
+            "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+        ),
     }
     superseded = (
         ("specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-requirements-v1.json", "1e7f3a1269127bf2c40cdd2eae69133f806dd094bc1fb777ad7beff4154aa5fd"),
@@ -257,8 +287,8 @@ def derive_requirements() -> dict[str, object]:
         "node_count": len(nodes),
         "edge_count": len(edges),
         "historical_public_interfaces": [
-            {"role": role, "path": path, "sha256": _sha(ROOT / path)}
-            for role, path in historical.items()
+            {"role": role, "path": path, "sha256": digest}
+            for role, (path, digest) in historical.items()
         ],
         "superseded_future_authority": [
             {"path": path, "sha256": digest, "historical_bytes_preserved": True, "future_selection_permitted": False}

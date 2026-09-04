@@ -17,7 +17,9 @@ from f017_binary_comparison_authority_v11 import derive_summary, validate_summar
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_result_artifacts_v11 import require_primary_terminal
 from f017_result_bundle_authority_v11 import compose_comparison_closure
-from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import (
+    _qualification_bank_output_bundle as bank_output_bundle,
+)
 from f017_result_bundle_builder_v11 import validate_numerical_output_summary
 from f017_v11_full_geometry_fixture import DISTRIBUTIONS, make_output
 import f017_corrected_oracle_primary_numerics_v3 as primary_core

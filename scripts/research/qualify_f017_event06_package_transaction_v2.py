@@ -15,7 +15,9 @@ from unittest.mock import patch
 
 from f017_canonical_serialization_v10 import canonical_bytes
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
-from f017_event06_dag_derived_control_path_v1 import run_full_call_path
+from f017_event06_dag_derived_control_path_v1 import (
+    _qualification_run_full_call_path as run_full_call_path,
+)
 from execute_f017_corrected_oracle_event_v12_bridge import _freeze, _thaw
 from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
 from f017_event06_storage_authority_v1 import fixed_live_registry_root
@@ -71,7 +73,7 @@ def qualify() -> dict[str, object]:
             or (_ for _ in ()).throw(RuntimeError("INTERPOSED_BEFORE_CREATE")),
         ):
             rejected(
-                lambda: registry.reserve_live_package_attempt(production),
+                lambda: registry._qualification_reserve_live_package_attempt(production),
                 (RuntimeError,),
             )
         if observed_roots != [fixed_live_registry_root()]:
@@ -82,12 +84,17 @@ def qualify() -> dict[str, object]:
             "provider", "resolver", "callback", "options",
         ):
             rejected(
-                lambda name=name: registry.reserve_live_package_attempt(
+                lambda name=name: registry._qualification_reserve_live_package_attempt(
                     production, **{name: root / name}
                 ),
                 (TypeError,),
             )
-        rejected(lambda: registry.reserve_live_package_attempt(qualification), (TypeError,))
+        rejected(
+            lambda: registry._qualification_reserve_live_package_attempt(
+                qualification
+            ),
+            (TypeError,),
+        )
         observations = []
         with patch.object(
             registry, "_prepare_qualification_registry",

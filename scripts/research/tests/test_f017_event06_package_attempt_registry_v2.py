@@ -15,12 +15,15 @@ import f017_event06_numerical_bridge_v1 as numerical_bridge
 import execute_f017_corrected_oracle_event_v12_bridge as coordinator_v1
 import execute_f017_corrected_oracle_event_v12_bridge_v2 as coordinator_v2
 from execute_f017_corrected_oracle_event_v12_bridge import (
+    _qualification_bank_live_package_start as qualification_bank_live_package_start,
     bank_live_package_start,
     bank_qualification_package_start,
     execute_event06_bridge,
 )
 from f017_event06_bridge_synthetic_fixture_v1 import fixture_values
-from f017_event06_dag_derived_control_path_v1 import run_full_call_path
+from f017_event06_dag_derived_control_path_v1 import (
+    _qualification_run_full_call_path as run_full_call_path,
+)
 from f017_event06_sequence14_fixture_v1 import build_sequence14_qualification
 from f017_event06_storage_authority_v1 import fixed_live_registry_root
 from f017_event06_sequence18_storage_census_v1 import census as storage_census
@@ -70,7 +73,9 @@ def test_cross_mode_authority_and_root_intersections_fail_before_observation(tmp
             )
     assert observed == 0
     with pytest.raises(TypeError):
-        registry.reserve_live_package_attempt(qualification)
+        registry._qualification_reserve_live_package_attempt(qualification)
+    with pytest.raises(RuntimeError, match="superseded by F017 Sequence 39"):
+        registry.reserve_live_package_attempt(production)
 
     synthetic = fixture_values()[1]
     for root in (
@@ -134,7 +139,7 @@ def test_production_fixed_root_is_internal_and_intercepted_before_creation(tmp_p
 
     with patch.object(registry, "_secure_directory", abort):
         with pytest.raises(RuntimeError, match="INTERPOSED_BEFORE_CREATE"):
-            registry.reserve_live_package_attempt(production)
+            registry._qualification_reserve_live_package_attempt(production)
     assert observed == [fixed_live_registry_root()]
 
 
@@ -156,7 +161,7 @@ def test_qualification_types_are_sealed_and_not_live_substitutes(tmp_path):
     with pytest.raises(TypeError):
         registry.ValidatedLivePackageAttemptReservation()
     with pytest.raises((TypeError, ValueError)):
-        bank_live_package_start(synthetic)
+        qualification_bank_live_package_start(synthetic)
 
 
 def test_reservation_restart_and_second_start_are_one_shot(tmp_path):
@@ -185,6 +190,21 @@ def test_legacy_shared_writers_are_tombstoned():
             call()
 
 
+def test_sequence39_superseded_live_registry_apis_remain_tombstoned():
+    for call in (
+        lambda: registry.reserve_live_package_attempt(None),
+        lambda: registry.load_live_package_attempt(None),
+        lambda: registry.claim_live_terminal_sinks(
+            None, None, None, None, [], None
+        ),
+        lambda: registry.bank_live_terminal(None, {}),
+        lambda: bank_live_package_start(None),
+        lambda: execute_event06_bridge(None, None, None),
+    ):
+        with pytest.raises(RuntimeError, match="superseded by F017 Sequence 39"):
+            call()
+
+
 def test_twenty_fresh_qualification_paths_are_deterministic_and_no_access(tmp_path):
     digests = set()
     for index in range(20):
@@ -207,7 +227,7 @@ def test_environment_and_cwd_cannot_select_production_registry(tmp_path, monkeyp
         lambda path: observed.append(path) or (_ for _ in ()).throw(RuntimeError("STOP")),
     ):
         with pytest.raises(RuntimeError, match="STOP"):
-            registry.reserve_live_package_attempt(production)
+            registry._qualification_reserve_live_package_attempt(production)
     assert observed == [fixed_live_registry_root()]
 
 
@@ -238,9 +258,9 @@ def test_live_package_key_and_start_are_exclusive_in_process_vfs(tmp_path):
     production, _qualification = _production_and_qualification(tmp_path)
     filesystem = InMemorySafetyFilesystem()
     with filesystem.installed():
-        start = bank_live_package_start(production)
+        start = qualification_bank_live_package_start(production)
         with pytest.raises(FileExistsError):
-            bank_live_package_start(production)
+            qualification_bank_live_package_start(production)
     assert start.get("authority_mode") == "LIVE_CANONICAL"
     assert filesystem.snapshot()["file_count"] == 2
 
@@ -287,7 +307,7 @@ def test_terminal_view_rejects_same_package_from_different_authorization(tmp_pat
     authorities = result["_authorities"]
     filesystem = InMemorySafetyFilesystem()
     with filesystem.installed():
-        reservation = registry.reserve_live_package_attempt(
+        reservation = registry._qualification_reserve_live_package_attempt(
             authorities["installed_authority"]
         )
     bridge_value = authorities["historical_bridge"].as_dict()

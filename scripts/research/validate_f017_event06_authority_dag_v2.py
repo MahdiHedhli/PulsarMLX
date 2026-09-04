@@ -1,20 +1,46 @@
 #!/usr/bin/env python3
-"""Bidirectional source/DAG validator for Sequence 18."""
+"""Validate the exact historical Sequence 18 qualification DAG snapshot."""
 from __future__ import annotations
 
 import ast
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 
-from generate_f017_event06_authority_dag_v2 import build
+from generate_f017_event06_authority_dag_v2 import (
+    AUTHORITY_DISPOSITION,
+    HISTORICAL_DAG_COMMIT,
+    HISTORICAL_DAG_SHA256,
+    build,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
 
 
-def _symbols(path: Path) -> set[str]:
-    tree = ast.parse(path.read_text(encoding="utf-8"))
+def _historical_bytes(relative_path: str) -> bytes:
+    """Read one exact repository blob from the DAG's historical commit."""
+    if (
+        type(relative_path) is not str
+        or relative_path.startswith("/")
+        or "\\" in relative_path
+        or any(part in {"", ".", ".."} for part in Path(relative_path).parts)
+    ):
+        raise ValueError("historical repository path")
+    completed = subprocess.run(
+        ["git", "show", f"{HISTORICAL_DAG_COMMIT}:{relative_path}"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+    )
+    if completed.returncode != 0 or completed.stderr:
+        raise ValueError(f"historical repository blob: {relative_path}")
+    return completed.stdout
+
+
+def _symbols(raw: bytes) -> set[str]:
+    tree = ast.parse(raw)
     return {
         node.name for node in ast.walk(tree)
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
@@ -32,19 +58,28 @@ def validate_document(observed: dict[str, object]) -> dict[str, object]:
     drift = []
     uncovered = []
     for edge in edges:
-        producer_path = ROOT / edge["producer_module"]
-        consumer_path = ROOT / edge["consumer_module"]
-        if edge["producer_symbol"] not in _symbols(producer_path):
+        source_blob_sha256 = edge.get("source_blob_sha256")
+        if (
+            type(source_blob_sha256) is not str
+            or len(source_blob_sha256) != 64
+            or any(character not in "0123456789abcdef" for character in source_blob_sha256)
+        ):
+            raise ValueError("historical Sequence 18 source binding")
+        producer_raw = _historical_bytes(str(edge["producer_module"]))
+        consumer_raw = _historical_bytes(str(edge["consumer_module"]))
+        if edge["producer_symbol"] not in _symbols(producer_raw):
             unknown.append((edge["producer_module"], edge["producer_symbol"]))
-        if edge["consumer_symbol"] not in _symbols(consumer_path):
+        if edge["consumer_symbol"] not in _symbols(consumer_raw):
             unknown.append((edge["consumer_module"], edge["consumer_symbol"]))
-        if hashlib.sha256(producer_path.read_bytes()).hexdigest() != edge["source_blob_sha256"]:
+        if hashlib.sha256(producer_raw).hexdigest() != source_blob_sha256:
             drift.append(edge["edge_id"])
         evidence = edge.get("composition_evidence", {})
-        test_path = ROOT / str(evidence.get("test_path", ""))
-        if (not test_path.is_file()
-                or evidence.get("test_symbol") not in _symbols(test_path)
-                or not evidence.get("case_id")):
+        test_path = str(evidence.get("test_path", ""))
+        if (
+            evidence.get("test_symbol")
+            not in _symbols(_historical_bytes(test_path))
+            or not evidence.get("case_id")
+        ):
             uncovered.append(edge["edge_id"])
     if len(ids) != len(set(ids)) or unknown or drift or uncovered:
         raise ValueError("Sequence 18 DAG identity, symbol, or composition validation")
@@ -77,6 +112,11 @@ def validate_document(observed: dict[str, object]) -> dict[str, object]:
         raise ValueError("Sequence 18 storage or legacy-writer DAG boundary")
     return {
         "schema": "pulsarmlx.f017.event06-v12-authority-dag-validation/2.1.0",
+        "authority_disposition": AUTHORITY_DISPOSITION,
+        "historical_source_commit": HISTORICAL_DAG_COMMIT,
+        "historical_dag_sha256": HISTORICAL_DAG_SHA256,
+        "current_live_authority_eligible": False,
+        "sequence39_public_tombstones_preserved": True,
         "source_typed_boundaries_total": len(edges),
         "dag_edges_total": len(edges),
         "dag_edges_with_composition_tests": len(edges) - len(uncovered),

@@ -8,7 +8,9 @@ import hashlib
 import f017_corrected_oracle_primary_numerics_v3 as primary_core
 from f017_corrected_oracle_primary_target_source_v11 import source_from_inherited_descriptors
 from f017_descriptor_lease_manager_v10 import validate_descriptors
-from f017_result_bundle_builder_v11 import bank_output_bundle
+from f017_result_bundle_builder_v11 import _minimum_gate_bank_output_bundle
+
+__all__ = ("validate_candidate_document",)
 
 ROOT = Path(__file__).resolve().parents[2]
 CORE_PATH = ROOT / "scripts/research/f017_corrected_oracle_primary_numerics_v3.py"
@@ -23,28 +25,48 @@ def validate_candidate_document(candidate: dict) -> dict:
             "checkpoint_opens":0,"checkpoint_reads":0,"state_created":False,"numerical_operations":0}
 
 
-def execute_and_bank(source, geometry, token: int, directory: Path, *, position: int = 0,
-                     authorization_id: str, package_attempt_id: str,
-                     consumer_event_id: str, producer_measurement_sha256: str,
-                     durable_start_sha256: str, access_census_sha256: str) -> dict:
+def _minimum_gate_execute_and_bank(
+    source,
+    geometry,
+    token: int,
+    directory: Path,
+    *,
+    position: int = 0,
+    authorization_id: str,
+    package_attempt_id: str,
+    consumer_event_id: str,
+    producer_measurement_sha256: str,
+    durable_start_sha256: str,
+    access_census_sha256: str,
+    _write_once: bool = False,
+) -> dict:
     outputs = primary_core.execute_outputs(source, geometry, token, position)
-    return bank_output_bundle(
+    return _minimum_gate_bank_output_bundle(
         outputs, directory, authorization_id=authorization_id,
         package_attempt_id=package_attempt_id, consumer_event_id=consumer_event_id,
         producer_measurement_sha256=producer_measurement_sha256,
         durable_start_sha256=durable_start_sha256,
         access_census_sha256=access_census_sha256,
+        _write_once=_write_once,
     )
 
 
-def execute_target_and_bank(candidate: dict, descriptors: list[dict], file_descriptors: list[int],
-                            directory: Path, **authority: str) -> dict:
+def _minimum_gate_execute_target_and_bank(
+    candidate: dict,
+    descriptors: list[dict],
+    file_descriptors: list[int],
+    directory: Path,
+    **authority: str,
+) -> dict:
     validate_candidate_document(candidate)
     validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
     source, geometry, token, position = source_from_inherited_descriptors(
         candidate, descriptors, file_descriptors
     )
-    bundle = execute_and_bank(source, geometry, token, directory, position=position, **authority)
+    bundle = _minimum_gate_execute_and_bank(
+        source, geometry, token, directory, position=position,
+        _write_once=True, **authority
+    )
     return {**bundle, "role":"PRIMARY",
             "layers_completed":bundle["artifacts"]["routing"]["layer_count"],
             "path_reopen_count":source.path_reopen_count,
@@ -52,3 +74,25 @@ def execute_target_and_bank(candidate: dict, descriptors: list[dict], file_descr
             "format_coverage":sorted(source.formats),
             "consumed_graph_shards":sorted(source.consumed),
             "tensor_read_operations":source.tensor_reads}
+
+
+_qualification_execute_and_bank = _minimum_gate_execute_and_bank
+_qualification_execute_target_and_bank = _minimum_gate_execute_target_and_bank
+
+
+def execute_and_bank(source, geometry, token: int, directory: Path, *, position: int = 0,
+                     authorization_id: str, package_attempt_id: str,
+                     consumer_event_id: str, producer_measurement_sha256: str,
+                     durable_start_sha256: str, access_census_sha256: str) -> dict:
+    """Fail closed before numerical execution or result banking."""
+    del (source, geometry, token, directory, position, authorization_id,
+         package_attempt_id, consumer_event_id, producer_measurement_sha256,
+         durable_start_sha256, access_census_sha256)
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")
+
+
+def execute_target_and_bank(candidate: dict, descriptors: list[dict], file_descriptors: list[int],
+                            directory: Path, **authority: str) -> dict:
+    """Fail closed before descriptor validation, source reads, or banking."""
+    del candidate, descriptors, file_descriptors, directory, authority
+    raise RuntimeError("superseded by F017 Sequence 39 minimum-gate path")

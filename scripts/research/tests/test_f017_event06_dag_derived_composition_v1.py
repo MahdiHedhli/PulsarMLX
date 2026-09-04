@@ -4,7 +4,10 @@ import tempfile
 from pathlib import Path
 import pytest
 
-from f017_event06_dag_derived_control_path_v1 import EDGE_IDS, run_full_call_path
+from f017_event06_dag_derived_control_path_v1 import (
+    EDGE_IDS,
+    _qualification_run_full_call_path as run_full_call_path,
+)
 from qualify_f017_event06_dag_composition_v1 import qualify
 from validate_f017_event06_authority_dag_v1 import validate
 

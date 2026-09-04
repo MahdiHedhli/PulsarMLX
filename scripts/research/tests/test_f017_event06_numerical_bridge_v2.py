@@ -133,7 +133,7 @@ def test_versioned_wrappers_receive_prompt_bound_views():
     )
     primary_calls = []
     with patch.object(primary_adapter, "_execute", lambda *args: primary_calls.append(args) or {"result": "PASS"}):
-        assert primary_adapter.execute_bridge_and_bank(primary_numerical, primary_result, [], None)["result"] == "PASS"
+        assert primary_adapter._qualification_execute_bridge_and_bank(primary_numerical, primary_result, [], None)["result"] == "PASS"
     assert len(primary_calls) == 1
     assert type(primary_calls[0][0]) is legacy.ValidatedConsumerView
 
@@ -158,7 +158,7 @@ def test_versioned_wrappers_receive_prompt_bound_views():
     )
     secondary_calls = []
     with patch.object(secondary_adapter, "_execute", lambda *args: secondary_calls.append(args) or {"result": "PASS"}):
-        assert secondary_adapter.execute_bridge_and_bank(secondary_numerical, secondary_result, [], None)["result"] == "PASS"
+        assert secondary_adapter._qualification_execute_bridge_and_bank(secondary_numerical, secondary_result, [], None)["result"] == "PASS"
     assert len(secondary_calls) == 1
     assert type(secondary_calls[0][0]) is legacy.ValidatedConsumerView
 

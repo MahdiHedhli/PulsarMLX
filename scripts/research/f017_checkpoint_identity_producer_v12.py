@@ -11,11 +11,16 @@ import tempfile
 from f017_accounting_root_continuity_v1 import open_directory_no_symlinks
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
 from f017_canonical_serialization_v10 import bank_exclusive, canonical_bytes
-from f017_checkpoint_identity_authority_v12 import ValidatedIdentityAuthority
+from f017_checkpoint_identity_authority_v12 import (
+    MINIMUM_INSTALLED_SCHEMA,
+    ValidatedIdentityAuthority,
+)
 from f017_checkpoint_identity_lifecycle_v12 import failure
 from f017_descriptor_lease_manager_v10 import LeaseRecord, LeaseSet, validate_descriptors
+from f017_write_once_artifact_v1 import _bank_exclusive_write_once
 
 ROOT = Path(__file__).resolve().parents[2]
+__all__ = ("validate_banked_identity_evidence",)
 
 
 def _sha(path: Path) -> str:
@@ -29,6 +34,13 @@ def _runtime_revalidate(authority: ValidatedIdentityAuthority, package_attempt_i
     if value["package_attempt_id"] != package_attempt_id:
         raise failure("F017_V12_IDENTITY_PACKAGE_ATTEMPT_MISMATCH", "package attempt identity")
     bindings = (
+        (
+            "checkpoint_identity_contract_path",
+            "checkpoint_identity_contract_sha256",
+        ),
+        ("measured_producer_path", "measured_producer_sha256"),
+        ("measured_validator_path", "measured_validator_sha256"),
+    ) if value["schema"] == MINIMUM_INSTALLED_SCHEMA else (
         ("checkpoint_identity_contract_path", "checkpoint_identity_contract_sha256"),
         ("producer_capability_path", "producer_capability_sha256"),
         ("measured_producer_path", "measured_producer_sha256"),
@@ -73,7 +85,11 @@ def _hash_descriptor(descriptor: int, expected_size: int, *, require_single_link
 
 
 def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthority,
-                            contract: dict, leases: LeaseSet, report: dict) -> dict:
+                            contract: dict, leases: LeaseSet, report: dict,
+                            *, _write_once: bool = False) -> dict:
+    if type(_write_once) is not bool:
+        raise TypeError("identity evidence write-once policy")
+    bank_control = _bank_exclusive_write_once if _write_once else bank_exclusive
     directory.mkdir(parents=True, exist_ok=False)
     access_journal = {
         "schema":"pulsarmlx.f017.checkpoint-identity-access-journal/12.0.0",
@@ -83,20 +99,20 @@ def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthori
                    for item, digest in zip(contract["shards"], report["ordered_shard_digests"], strict=True)],
         "checkpoint_shard_opens":6,"checkpoint_identity_hash_reads":6,"result":"PASS",
     }
-    journal_sha = bank_exclusive(directory / "access-journal.json", access_journal)
+    journal_sha = bank_control(directory / "access-journal.json", access_journal)
     receipts = {
         "schema":"pulsarmlx.f017.checkpoint-identity-shard-receipts/12.0.0",
         "package_attempt_id":authority.get("package_attempt_id"),
         "receipts":access_journal["entries"],"result":"PASS",
     }
-    receipts_sha = bank_exclusive(directory / "shard-receipts.json", receipts)
+    receipts_sha = bank_control(directory / "shard-receipts.json", receipts)
     lease_manifest = {
         "schema":"pulsarmlx.f017.checkpoint-identity-lease-manifest/12.0.0",
         "package_attempt_id":authority.get("package_attempt_id"),
         "identity_only_retained_count":0,"retained_lease_count":5,
         "descriptors":leases.descriptors,"result":"PASS",
     }
-    lease_sha = bank_exclusive(directory / "lease-manifest.json", lease_manifest)
+    lease_sha = bank_control(directory / "lease-manifest.json", lease_manifest)
     deterministic_core = {
         "authority_scope":authority.get("authority_scope"),
         "operation_class":authority.get("operation_class"),
@@ -106,7 +122,7 @@ def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthori
         "shard_sizes":[item["size_bytes"] for item in contract["shards"]],
         "identity_only_retained_count":0,"retained_lease_count":5,
     }
-    core_sha = bank_exclusive(directory / "identity-core.json", deterministic_core)
+    core_sha = bank_control(directory / "identity-core.json", deterministic_core)
     manifest = {
         "schema":"pulsarmlx.f017.checkpoint-identity-manifest/12.0.0",
         "authorization_id":authority.get("authorization_id"),
@@ -115,20 +131,20 @@ def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthori
         "lease_manifest_sha256":lease_sha,"deterministic_core_sha256":core_sha,
         "result":"PASS",
     }
-    manifest_sha = bank_exclusive(directory / "identity-manifest.json", manifest)
+    manifest_sha = bank_control(directory / "identity-manifest.json", manifest)
     receipt = {
         "schema":"pulsarmlx.f017.checkpoint-identity-receipt/12.0.0",
         "authorization_id":authority.get("authorization_id"),
         "package_attempt_id":authority.get("package_attempt_id"),
         "identity_manifest_sha256":manifest_sha,"result":"PASS",
     }
-    receipt_sha = bank_exclusive(directory / "identity-receipt.json", receipt)
+    receipt_sha = bank_control(directory / "identity-receipt.json", receipt)
     terminal = {
         "schema":"pulsarmlx.f017.checkpoint-identity-terminal/12.0.0",
         "package_attempt_id":authority.get("package_attempt_id"),
         "identity_receipt_sha256":receipt_sha,"state":"COMPLETE","result":"PASS",
     }
-    terminal_sha = bank_exclusive(directory / "identity-terminal.json", terminal)
+    terminal_sha = bank_control(directory / "identity-terminal.json", terminal)
     result = {"access_journal_sha256":journal_sha,"shard_receipts_sha256":receipts_sha,
             "lease_manifest_sha256":lease_sha,"deterministic_core_sha256":core_sha,
             "identity_manifest_sha256":manifest_sha,"identity_receipt_sha256":receipt_sha,
@@ -199,9 +215,9 @@ def validate_banked_identity_evidence(directory: Path, report: dict | None = Non
             "deterministic_core_sha256":core_sha}
 
 
-def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
-            package_durable_start: bool,
-            evidence_directory: Path | None = None) -> tuple[LeaseSet, dict]:
+def _minimum_gate_produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
+                          package_durable_start: bool,
+                          evidence_directory: Path | None = None) -> tuple[LeaseSet, dict]:
     if package_durable_start is not True:
         raise failure("F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT", "package durable start required")
     value, contract = _runtime_revalidate(authority, package_attempt_id)
@@ -267,7 +283,10 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
             "descriptor_identities": leases.descriptors, "path_reopen_count": 0,
         }
         if evidence_directory is not None:
-            report["evidence"] = _bank_identity_evidence(evidence_directory, authority, contract, leases, report)
+            report["evidence"] = _bank_identity_evidence(
+                evidence_directory, authority, contract, leases, report,
+                _write_once=value["schema"] == MINIMUM_INSTALLED_SCHEMA,
+            )
         return leases, report
     except Exception:
         for record in records:
@@ -278,3 +297,37 @@ def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
         raise
     finally:
         os.close(root_fd)
+
+
+def produce(authority: ValidatedIdentityAuthority, *, package_attempt_id: str,
+            package_durable_start: bool,
+            evidence_directory: Path | None = None) -> tuple[LeaseSet, dict]:
+    """Superseded public producer entrypoint; production uses the sealed path."""
+    del authority, package_attempt_id, package_durable_start, evidence_directory
+    raise RuntimeError(
+        "superseded by F017 Sequence 39 minimum-gate identity entrypoint"
+    )
+
+
+def _qualification_produce(
+    authority: ValidatedIdentityAuthority,
+    *,
+    package_attempt_id: str,
+    package_durable_start: bool,
+    evidence_directory: Path | None = None,
+) -> tuple[LeaseSet, dict]:
+    """Historical synthetic qualification adapter; never accepts production."""
+    if (
+        type(authority) is not ValidatedIdentityAuthority
+        or authority.get("authority_scope") != "SYNTHETIC"
+    ):
+        raise failure(
+            "F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT",
+            "qualification producer requires synthetic authority",
+        )
+    return _minimum_gate_produce(
+        authority,
+        package_attempt_id=package_attempt_id,
+        package_durable_start=package_durable_start,
+        evidence_directory=evidence_directory,
+    )

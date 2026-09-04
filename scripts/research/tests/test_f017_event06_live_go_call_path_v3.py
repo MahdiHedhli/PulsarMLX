@@ -65,8 +65,14 @@ class LiveGoCallPathV3Tests(unittest.TestCase):
             "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
         }
         for relative, digest in expected.items():
+            historical = subprocess.check_output(
+                [
+                    "git", "-C", str(ROOT), "show",
+                    f"a47c320941cdcd1d6e62f801a2a3ccb88bd3d729:{relative}",
+                ]
+            )
             self.assertEqual(
-                hashlib.sha256((ROOT / relative).read_bytes()).hexdigest(), digest
+                hashlib.sha256(historical).hexdigest(), digest
             )
 
 

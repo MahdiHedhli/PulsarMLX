@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import pickle
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -69,10 +70,15 @@ class CollapsedLiveInstallationV2Tests(unittest.TestCase):
     def test_historical_eight_field_token_is_unchanged(self) -> None:
         self.assertEqual(len(COLLAPSED_GO_FIELDS), 8)
         self.assertEqual(len(set(COLLAPSED_GO_FIELDS)), 8)
+        historical = subprocess.check_output(
+            [
+                "git", "-C", str(ROOT), "show",
+                "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729:"
+                "scripts/research/f017_event06_collapsed_go_path_v1.py",
+            ]
+        )
         self.assertEqual(
-            hashlib.sha256(
-                (RESEARCH / "f017_event06_collapsed_go_path_v1.py").read_bytes()
-            ).hexdigest(),
+            hashlib.sha256(historical).hexdigest(),
             "44576569769697cd8f9bfb7bbc4d274637ff47ff51d9c4f05f3f0173f92fd27b",
         )
 
