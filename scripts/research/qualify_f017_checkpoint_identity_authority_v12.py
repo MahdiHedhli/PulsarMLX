@@ -113,7 +113,7 @@ def _filesystem_faults(base: Path) -> tuple[int, int, dict[str, int]]:
     original_pread = os.pread
     cases = [
         ("missing_shard", "F017_V12_IDENTITY_SHARD_OPEN_FAILURE"),
-        ("extra_shard", "F017_V12_IDENTITY_SHARD_OPEN_FAILURE"),
+        ("shard_directory", "F017_V12_IDENTITY_DESCRIPTOR_CHANGED"),
         ("wrong_size", "F017_V12_IDENTITY_SHARD_SIZE_MISMATCH"),
         ("hash_mismatch", "F017_V12_IDENTITY_SHARD_HASH_MISMATCH"),
         ("shard_symlink", "F017_V12_IDENTITY_SHARD_OPEN_FAILURE"),
@@ -131,9 +131,11 @@ def _filesystem_faults(base: Path) -> tuple[int, int, dict[str, int]]:
         shard6 = root / "synthetic-v12-shard-6.bin"
         context = mock.patch("f017_checkpoint_identity_producer_v12.os.pread", wraps=original_pread)
         if category == "missing_shard":
+            missing_ordinal = index // len(cases) + 1
+            (root / f"synthetic-v12-shard-{missing_ordinal}.bin").unlink()
+        elif category == "shard_directory":
             shard6.unlink()
-        elif category == "extra_shard":
-            (root / "unexpected-shard.bin").write_bytes(b"x")
+            shard6.mkdir()
         elif category == "wrong_size":
             shard6.write_bytes(b"short")
         elif category == "hash_mismatch":

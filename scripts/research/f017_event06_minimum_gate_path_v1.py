@@ -22,6 +22,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 import time
 from types import MappingProxyType
 from typing import Callable, Final, Mapping, Never, TypeVar, cast
@@ -41,7 +42,10 @@ from f017_checkpoint_identity_authority_v12 import (
     validate_minimum_installed_bytes as _validate_installed_bytes,
 )
 from f017_checkpoint_identity_producer_v12 import (
+    _QUALIFICATION_ROOT_DESCRIPTOR_SEAL,
+    _bind_qualification_root_descriptor,
     _minimum_gate_produce as _run_identity_stage,
+    _reset_qualification_root_descriptor,
     validate_banked_identity_evidence as _validate_banked_identity_evidence,
 )
 from f017_corrected_oracle_primary_wrapper_v11 import (
@@ -51,7 +55,6 @@ from f017_corrected_oracle_secondary_wrapper_v11 import (
     _minimum_gate_execute_target_and_bank as _execute_secondary_target,
 )
 from f017_descriptor_lease_manager_v10 import (
-    LeaseRecord as _LeaseRecord,
     LeaseSet as _LeaseSet,
     validate_descriptors as _validate_descriptors,
 )
@@ -172,13 +175,7 @@ _SUCCESS_COMMON_ROOT_FILES: Final = frozenset({
     "secondary-start-receipt.json",
     "v11-result-closure.json",
 })
-_SUCCESS_SYNTHETIC_IDENTITY_FILES: Final = frozenset({
-    "identity-access-census.json",
-    "identity-read-receipts.json",
-    "identity-receipt.json",
-    "identity-terminal.json",
-})
-_SUCCESS_PRODUCTION_IDENTITY_FILES: Final = frozenset({
+_SUCCESS_PHYSICAL_IDENTITY_FILES: Final = frozenset({
     "access-journal.json",
     "identity-core.json",
     "identity-manifest.json",
@@ -187,6 +184,10 @@ _SUCCESS_PRODUCTION_IDENTITY_FILES: Final = frozenset({
     "lease-manifest.json",
     "shard-receipts.json",
 })
+_SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES: Final = (
+    "qualification-benign-extra-leaf.txt",
+)
+_EMPTY_SHA256: Final = hashlib.sha256(b"").hexdigest()
 _SUCCESS_ROLE_FILE_SUFFIXES: Final = frozenset({
     "consumer-terminal.json",
     "final_hidden.bin",
@@ -523,9 +524,20 @@ def _authority_profile(*, synthetic: bool) -> _AuthorityProfile:
     )
 
 
+def _canonical_absolute_path(path: Path) -> Path:
+    """Reject alternate POSIX anchors and every noncanonical path spelling."""
+    if not isinstance(path, Path) or not path.is_absolute() or path.anchor != os.sep:
+        raise ValueError("fixed canonical absolute path")
+    lexical = Path(os.path.normpath(str(path)))
+    if lexical != path or str(path).startswith("//"):
+        raise ValueError("fixed canonical absolute path")
+    return lexical
+
+
 def _open_directory_chain(path: Path, *, create: bool) -> int:
     """Open an absolute directory one component at a time without symlinks."""
-    if not path.is_absolute() or path == Path("/"):
+    path = _canonical_absolute_path(path)
+    if path == Path("/"):
         raise ValueError("fixed absolute directory chain")
     flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
     if hasattr(os, "O_CLOEXEC"):
@@ -748,7 +760,7 @@ class _StorageBinding:
         except BaseException:
             if not stop.package_started:
                 self._discard_prestart_terminal_reservation()
-            raise
+            raise execution_error
 
     def bank_failure(self, leaf: str, value: Mapping[str, object]) -> str:
         """Bank terminal failure evidence to the held post-start authority."""
@@ -1007,12 +1019,8 @@ class _StorageBinding:
             raise ValueError("package root is not immutable")
 
         root_files = set(_SUCCESS_COMMON_ROOT_FILES)
-        root_directories = {"primary", "secondary"}
-        if self.scope == "SYNTHETIC":
-            root_files.update(_SUCCESS_SYNTHETIC_IDENTITY_FILES)
-        elif self.scope == "PRODUCTION":
-            root_directories.add("identity")
-        else:
+        root_directories = {"primary", "secondary", "identity"}
+        if self.scope not in {"SYNTHETIC", "PRODUCTION"}:
             raise ValueError("package success inventory scope")
         expected_root = root_files | root_directories
         if set(os.listdir(self._package_fd)) != expected_root:
@@ -1077,26 +1085,25 @@ class _StorageBinding:
             finally:
                 os.close(directory_fd)
 
-        if self.scope == "PRODUCTION":
-            directory_fd = os.open(
-                "identity", directory_flags, dir_fd=self._package_fd
-            )
-            try:
-                observed = os.fstat(directory_fd)
-                if (
-                    not stat.S_ISDIR(observed.st_mode)
-                    or observed.st_uid != os.getuid()
-                    or not bool(observed.st_flags & stat.UF_IMMUTABLE)
-                ):
-                    raise ValueError("package identity directory identity")
-                if set(os.listdir(directory_fd)) != set(
-                    _SUCCESS_PRODUCTION_IDENTITY_FILES
-                ):
-                    raise ValueError("package identity directory entry census")
-                for leaf in sorted(_SUCCESS_PRODUCTION_IDENTITY_FILES):
-                    validate_file(directory_fd, leaf, terminal=False)
-            finally:
-                os.close(directory_fd)
+        directory_fd = os.open(
+            "identity", directory_flags, dir_fd=self._package_fd
+        )
+        try:
+            observed = os.fstat(directory_fd)
+            if (
+                not stat.S_ISDIR(observed.st_mode)
+                or observed.st_uid != os.getuid()
+                or not bool(observed.st_flags & stat.UF_IMMUTABLE)
+            ):
+                raise ValueError("package identity directory identity")
+            if set(os.listdir(directory_fd)) != set(
+                _SUCCESS_PHYSICAL_IDENTITY_FILES
+            ):
+                raise ValueError("package identity directory entry census")
+            for leaf in sorted(_SUCCESS_PHYSICAL_IDENTITY_FILES):
+                validate_file(directory_fd, leaf, terminal=False)
+        finally:
+            os.close(directory_fd)
 
     def _abort_success_commit(self, descriptor: int) -> None:
         """Restore the reserved terminal and namespace for failure banking."""
@@ -1671,26 +1678,18 @@ class _SyntheticStorageBinding(_StorageBinding):
 
     def __init__(self, seal: object, qualification_root: Path, package_key: str) -> None:
         del seal
-        resolved = qualification_root.resolve(strict=True)
-        live = _LIVE_PACKAGE_PARENT
-        if (
-            qualification_root.is_symlink()
-            or not resolved.is_dir()
-            or resolved == live
-            or resolved in live.parents
-            or live in resolved.parents
-        ):
-            raise ValueError("synthetic storage/live storage separation")
-        package = resolved / f"minimum-gate-{package_key}"
-        self._qualification_root = resolved
+        graph_root = _qualification_root(qualification_root)
+        package = graph_root / f"minimum-gate-{package_key}"
+        self._qualification_root = graph_root
         super().__init__(package, "SYNTHETIC")
 
     def prepare(self) -> None:
         if self.scope != "SYNTHETIC":
             raise TypeError("synthetic storage authority")
         super().prepare()
-        if not self.package_directory.resolve().is_relative_to(self._qualification_root):
+        if self.package_directory.parent != self._qualification_root:
             raise ValueError("synthetic storage escape")
+        self._verify_package_path_identity()
 
     def close(self) -> None:
         """Unseal graph-owned test leaves only after the public path returns."""
@@ -1770,6 +1769,66 @@ def _emergency_release_value(
     }
 
 
+def _raise_identity_handoff_failure(
+    storage: _StorageBinding,
+    leases: _LeaseSet,
+    cause: BaseException,
+) -> Never:
+    """Retire acquired leases and carry their exact census to terminalization."""
+    release_sha256: str | None = None
+    release_evidence_error: BaseException | None = None
+    release: Mapping[str, object] = {
+        "attempted_closures": 0,
+        "successful_closures": sum(
+            record.state == "CLOSED" for record in leases.records
+        ),
+        "duplicate_closures": 0,
+        "unknown_leases": sum(
+            record.state == "UNKNOWN" for record in leases.records
+        ),
+        "live_leases_after_release": sum(
+            record.state != "CLOSED" for record in leases.records
+        ),
+        "result": "NOT_ATTEMPTED",
+    }
+    if not leases.closed:
+        try:
+            release = leases.release()
+        except BaseException as release_error:
+            release_evidence_error = release_error
+            release = {
+                "attempted_closures": sum(
+                    record.close_attempt_count > 0 for record in leases.records
+                ),
+                "successful_closures": sum(
+                    record.state == "CLOSED" for record in leases.records
+                ),
+                "duplicate_closures": 0,
+                "unknown_leases": sum(
+                    record.state == "UNKNOWN" for record in leases.records
+                ),
+                "live_leases_after_release": sum(
+                    record.state != "CLOSED" for record in leases.records
+                ),
+                "result": "RELEASE_EXCEPTION",
+            }
+        try:
+            release_sha256 = storage.bank_failure(
+                "emergency-release-report.json",
+                _emergency_release_value("IDENTITY_TERMINAL", release),
+            )
+        except BaseException as bank_error:
+            if release_evidence_error is None:
+                release_evidence_error = bank_error
+            release_sha256 = None
+    raise _IdentityHandoffFailure(
+        release_sha256,
+        release,
+        cause,
+        release_evidence_error,
+    ) from cause
+
+
 class _ProductionCheckpointEffect:
     __slots__ = ("_qualification_interceptor",)
 
@@ -1812,65 +1871,27 @@ class _ProductionCheckpointEffect:
         except BaseException as exc:
             if leases is None:
                 raise
-            release_sha256: str | None = None
-            release_evidence_error: BaseException | None = None
-            release: Mapping[str, object] = {
-                "attempted_closures": 0,
-                "successful_closures": sum(
-                    record.state == "CLOSED" for record in leases.records
-                ),
-                "duplicate_closures": 0,
-                "unknown_leases": sum(
-                    record.state == "UNKNOWN" for record in leases.records
-                ),
-                "live_leases_after_release": sum(
-                    record.state != "CLOSED" for record in leases.records
-                ),
-                "result": "NOT_ATTEMPTED",
-            }
-            if not leases.closed:
-                try:
-                    release = leases.release()
-                except BaseException as release_error:
-                    release_evidence_error = release_error
-                    release = {
-                        "attempted_closures": sum(
-                            record.close_attempt_count > 0
-                            for record in leases.records
-                        ),
-                        "successful_closures": sum(
-                            record.state == "CLOSED" for record in leases.records
-                        ),
-                        "duplicate_closures": 0,
-                        "unknown_leases": sum(
-                            record.state == "UNKNOWN" for record in leases.records
-                        ),
-                        "live_leases_after_release": sum(
-                            record.state != "CLOSED" for record in leases.records
-                        ),
-                        "result": "RELEASE_EXCEPTION",
-                    }
-                try:
-                    release_sha256 = storage.bank_failure(
-                        "emergency-release-report.json",
-                        _emergency_release_value("IDENTITY_TERMINAL", release),
-                    )
-                except BaseException as bank_error:
-                    if release_evidence_error is None:
-                        release_evidence_error = bank_error
-                    release_sha256 = None
-            raise _IdentityHandoffFailure(
-                release_sha256,
-                release,
-                exc,
-                release_evidence_error,
-            ) from exc
+            _raise_identity_handoff_failure(storage, leases, exc)
+
+
+def _close_synthetic_checkpoint_root_descriptor(descriptor: int) -> None:
+    """One injectable close boundary for the qualification-owned root handle."""
+    os.close(descriptor)
 
 
 class _SyntheticCheckpointProvider:
     """The sole checkpoint seam; no production authority can reach it."""
 
-    __slots__ = ("_intercept", "preopen_intercepted")
+    __slots__ = (
+        "_intercept",
+        "_fixture_identity",
+        "_fixture_leaf_identities",
+        "preopen_intercepted",
+        "physical_identity_producer_calls",
+        "producer_checkpoint_binding_checks",
+        "producer_checkpoint_shard_opens",
+        "producer_checkpoint_identity_hash_reads",
+    )
 
     def __new__(cls, seal: object = None, *args: object, **kwargs: object):
         del args, kwargs
@@ -1881,130 +1902,221 @@ class _SyntheticCheckpointProvider:
     def __init__(self, seal: object, *, intercept: bool) -> None:
         del seal
         self._intercept = intercept
+        self._fixture_identity: tuple[int, int] | None = None
+        self._fixture_leaf_identities: tuple[tuple[str, int, int], ...] | None = None
         self.preopen_intercepted = False
+        self.physical_identity_producer_calls = 0
+        self.producer_checkpoint_binding_checks = 0
+        self.producer_checkpoint_shard_opens = 0
+        self.producer_checkpoint_identity_hash_reads = 0
+
+    def _bind_graph_owned_checkpoint_fixture(
+        self,
+        observed: os.stat_result,
+        leaf_identities: Mapping[str, tuple[int, int]],
+    ) -> None:
+        if (
+            self._fixture_identity is not None
+            or self._fixture_leaf_identities is not None
+            or not stat.S_ISDIR(observed.st_mode)
+            or observed.st_uid != os.getuid()
+            or type(leaf_identities) is not dict
+            or len(leaf_identities) not in {5, 6}
+            or any(
+                type(name) is not str
+                or type(identity) is not tuple
+                or len(identity) != 2
+                or any(type(item) is not int for item in identity)
+                for name, identity in leaf_identities.items()
+            )
+        ):
+            raise ValueError("graph-owned synthetic checkpoint fixture identity")
+        self._fixture_identity = (observed.st_dev, observed.st_ino)
+        self._fixture_leaf_identities = tuple(
+            sorted(
+                (name, identity[0], identity[1])
+                for name, identity in leaf_identities.items()
+            )
+        )
+
+    def _require_graph_owned_checkpoint_binding(
+        self,
+        authority: _ValidatedIdentityAuthority,
+        storage: _StorageBinding,
+    ) -> int:
+        """Open the exact graph-created checkpoint leaf without following it."""
+        root = Path(str(authority.get("checkpoint_root")))
+        try:
+            lexical = _canonical_absolute_path(root)
+            graph_root = _qualification_root(lexical.parent)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "graph-owned synthetic checkpoint root authority"
+            ) from exc
+        if (
+            graph_root != storage.package_directory.parent
+            or lexical == _LIVE_CHECKPOINT_ROOT
+            or lexical.is_relative_to(_LIVE_CHECKPOINT_ROOT)
+            or _LIVE_CHECKPOINT_ROOT.is_relative_to(lexical)
+            or lexical == _LIVE_PACKAGE_PARENT
+            or lexical.is_relative_to(_LIVE_PACKAGE_PARENT)
+            or _LIVE_PACKAGE_PARENT.is_relative_to(lexical)
+        ):
+            raise ValueError("graph-owned synthetic checkpoint root authority")
+        if self._fixture_identity is None:
+            raise ValueError("graph-owned synthetic checkpoint fixture identity")
+        parent_fd = _open_directory_chain(graph_root, create=False)
+        checkpoint_fd = -1
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        try:
+            checkpoint_fd = os.open(lexical.name, flags, dir_fd=parent_fd)
+            observed = os.fstat(checkpoint_fd)
+            if (
+                not stat.S_ISDIR(observed.st_mode)
+                or observed.st_uid != os.getuid()
+                or (observed.st_dev, observed.st_ino) != self._fixture_identity
+            ):
+                raise ValueError("graph-owned synthetic checkpoint fixture changed")
+        except BaseException:
+            if checkpoint_fd >= 0:
+                os.close(checkpoint_fd)
+                checkpoint_fd = -1
+            raise
+        finally:
+            try:
+                os.close(parent_fd)
+            except BaseException:
+                if checkpoint_fd >= 0:
+                    os.close(checkpoint_fd)
+                    checkpoint_fd = -1
+                raise
+        return checkpoint_fd
 
     def run(self, consumed_gate: object, authority: _ValidatedIdentityAuthority,
             storage: _StorageBinding) -> _IdentityOutcome:
         _require_consumed_gate(consumed_gate, authority)
         if authority.get("authority_scope") != "SYNTHETIC" or storage.scope != "SYNTHETIC":
             raise TypeError("synthetic checkpoint provider rejects production authority")
-        root = Path(str(authority.get("checkpoint_root")))
-        if not root.resolve(strict=True).is_relative_to(storage.package_directory.parent.resolve(strict=True)):
-            raise ValueError("synthetic checkpoint root authority")
         # This is the immediate call boundary for the unchanged physical
         # identity producer.  The interception case proves the exact input and
         # deliberately does not invoke _run_identity_stage.
         if self._intercept:
             raise AssertionError("interception must traverse production call boundary")
-        # The no-access case is bound only to the installed synthetic identity
-        # authority.  It never borrows production shard metadata or resolves
-        # the production root.
-        shards = [dict(item) for item in _authority_profile(synthetic=True).shards]
-        package = str(authority.get("package_attempt_id"))
-        descriptors = [
-            {
-                "device": 39,
-                "inode": 39_000 + ordinal,
-                "mode": stat.S_IFREG | 0o600,
-                "size": int(shards[ordinal - 1]["size_bytes"]),
-                "mtime_ns": ordinal,
-                "ctime_ns": ordinal,
-                "shard_ordinal": ordinal,
-                "role": "GRAPH_PAYLOAD",
-                "lease_id": f"LEASE-{package}-{ordinal}",
-            }
-            for ordinal in range(2, 7)
-        ]
-        leases = _LeaseSet(
-            [_LeaseRecord(item, 39_000 + int(item["shard_ordinal"])) for item in descriptors],
-            str(shards[0]["sha256"]),
-            [str(item["sha256"]) for item in shards[1:]],
+        # Fixture construction completed before package start.  This call
+        # traverses only the measured V12 producer and its ordinary seven-leaf
+        # evidence closure; no alternate public provider is introduced.
+        checkpoint_root_descriptor = self._require_graph_owned_checkpoint_binding(
+            authority, storage
         )
-        read_receipts = tuple(
-            {
-                "schema": "pulsarmlx.f017.event06-minimum-identity-read-receipt/1.0.0",
-                "ordinal": ordinal,
-                "role": str(item["role"]),
-                "byte_count": int(item["size_bytes"]),
-                "sha256": str(item["sha256"]),
-                "result": "PASS",
-            }
-            for ordinal, item in enumerate(shards, start=1)
-        )
-        read_receipt_document = {
-            "schema": "pulsarmlx.f017.event06-minimum-identity-read-receipts/1.0.0",
-            "package_attempt_id": package,
-            "receipts": list(read_receipts),
-            "result": "PASS",
-        }
-        read_receipt_sha = storage.bank(
-            "identity-read-receipts.json", read_receipt_document
-        )
-        access_document = {
-            "schema": "pulsarmlx.f017.event06-minimum-identity-access-census/1.0.0",
-            "package_attempt_id": package,
-            "checkpoint_root_resolutions": 0,
-            "physical_checkpoint_opens": 0,
-            "physical_checkpoint_reads": 0,
-            "physical_checkpoint_mmaps": 0,
-            "synthetic_receipt_count": 6,
-            "result": "PASS",
-        }
-        access_sha = storage.bank("identity-access-census.json", access_document)
-        identity_receipt = {
-            "schema": "pulsarmlx.f017.event06-minimum-identity-receipt/1.0.0",
-            "package_attempt_id": package,
-            "identity_read_receipts_sha256": read_receipt_sha,
-            "access_census_sha256": access_sha,
-            "retained_graph_leases": 5,
-            "result": "PASS",
-        }
-        identity_receipt_sha = storage.bank("identity-receipt.json", identity_receipt)
-        identity_terminal = {
-            "schema": "pulsarmlx.f017.event06-minimum-identity-terminal/1.0.0",
-            "package_attempt_id": package,
-            "identity_receipt_sha256": identity_receipt_sha,
-            "state": "COMPLETE",
-            "result": "PASS",
-        }
-        identity_terminal_sha = storage.bank("identity-terminal.json", identity_terminal)
-        evidence = {
-            "access_journal_sha256": access_sha,
-            "shard_receipts_sha256": read_receipt_sha,
-            "lease_manifest_sha256": _contract_sha256(descriptors),
-            "deterministic_core_sha256": _contract_sha256(
-                {"checkpoint_provider": "INTERPOSED", "physical_open": False}
-            ),
-            "identity_manifest_sha256": _contract_sha256(
-                {"package_attempt_id": package, "receipts": list(read_receipts)}
-            ),
-            "identity_receipt_sha256": identity_receipt_sha,
-            "identity_terminal_sha256": identity_terminal_sha,
-            "identity_terminal_state": "COMPLETE",
-        }
-        report = {
-            "result": "PASS",
-            "authority_scope": "SYNTHETIC",
-            "operation_class": "QUALIFICATION_IDENTITY_BOUNDARY_INTERPOSE",
-            "generation": "V12",
-            "ordered_shard_digests": [str(item["sha256"]) for item in shards],
-            "checkpoint_shard_opens": 6,
-            "checkpoint_identity_hash_reads": 6,
-            "retained_lease_count": 5,
-            "identity_only_retained_count": 0,
-            "descriptor_identities": descriptors,
-            "path_reopen_count": 0,
-            "evidence": evidence,
-        }
-        return _IdentityOutcome(
-            authority,
-            leases,
-            MappingProxyType(report),
-            read_receipts,
-            identity_receipt_sha,
-            identity_terminal_sha,
-            access_sha,
-        )
+        self.producer_checkpoint_binding_checks += 1
+        self.physical_identity_producer_calls += 1
+        try:
+            binding_token = _bind_qualification_root_descriptor(
+                _QUALIFICATION_ROOT_DESCRIPTOR_SEAL, checkpoint_root_descriptor
+            )
+        except BaseException:
+            try:
+                _close_synthetic_checkpoint_root_descriptor(
+                    checkpoint_root_descriptor
+                )
+            except OSError:
+                pass
+            raise
+
+        outcome: _IdentityOutcome | None = None
+        execution_error: BaseException | None = None
+        reset_error: BaseException | None = None
+        close_error: BaseException | None = None
+        try:
+            outcome = _ProductionCheckpointEffect().run(
+                consumed_gate, authority, storage
+            )
+        except BaseException as exc:
+            execution_error = exc
+        try:
+            _reset_qualification_root_descriptor(
+                _QUALIFICATION_ROOT_DESCRIPTOR_SEAL, binding_token
+            )
+        except BaseException as exc:
+            reset_error = exc
+        try:
+            _close_synthetic_checkpoint_root_descriptor(
+                checkpoint_root_descriptor
+            )
+        except BaseException as exc:
+            close_error = exc
+
+        if outcome is not None and (reset_error is not None or close_error is not None):
+            _raise_identity_handoff_failure(
+                storage,
+                outcome.leases,
+                reset_error if reset_error is not None else cast(BaseException, close_error),
+            )
+        if execution_error is not None:
+            exc = execution_error
+            try:
+                evidence = getattr(exc, "evidence", None)
+            except BaseException:
+                evidence = None
+            if isinstance(evidence, Mapping):
+                checkpoint_access = evidence.get("checkpoint_access")
+                if type(checkpoint_access) is int:
+                    self.producer_checkpoint_shard_opens += checkpoint_access
+            raise execution_error
+        if reset_error is not None:
+            raise reset_error
+        if close_error is not None:
+            raise close_error
+        if outcome is None:
+            raise AssertionError("physical identity producer returned no outcome")
+        try:
+            checkpoint_root_identity = outcome.report[
+                "checkpoint_root_descriptor_identity"
+            ]
+            shard_descriptor_identities = outcome.report[
+                "all_shard_descriptor_identities"
+            ]
+            shard_opens = outcome.report["checkpoint_shard_opens"]
+            identity_hash_reads = outcome.report["checkpoint_identity_hash_reads"]
+            if type(shard_opens) is not int or type(identity_hash_reads) is not int:
+                raise TypeError("physical identity producer access counters")
+            self.producer_checkpoint_shard_opens += shard_opens
+            self.producer_checkpoint_identity_hash_reads += identity_hash_reads
+            observed_shards = tuple(
+                sorted(
+                    (
+                        item["filename"],
+                        item["device"],
+                        item["inode"],
+                    )
+                    for item in shard_descriptor_identities
+                )
+            ) if type(shard_descriptor_identities) is list and all(
+                type(item) is dict
+                and set(item) == {"filename", "device", "inode"}
+                and type(item["filename"]) is str
+                and type(item["device"]) is int
+                and type(item["inode"]) is int
+                for item in shard_descriptor_identities
+            ) else ()
+            if (
+                type(checkpoint_root_identity) is not dict
+                or set(checkpoint_root_identity) != {"device", "inode"}
+                or type(checkpoint_root_identity["device"]) is not int
+                or type(checkpoint_root_identity["inode"]) is not int
+                or (
+                    checkpoint_root_identity["device"],
+                    checkpoint_root_identity["inode"],
+                )
+                != self._fixture_identity
+                or observed_shards != self._fixture_leaf_identities
+            ):
+                raise TypeError("physical identity producer provenance")
+        except BaseException as exc:
+            _raise_identity_handoff_failure(storage, outcome.leases, exc)
+        return outcome
 
     def intercept_physical_call(
         self,
@@ -2022,11 +2134,16 @@ class _SyntheticCheckpointProvider:
             or storage.scope != "SYNTHETIC"
         ):
             raise TypeError("exact synthetic pre-open interception authority")
-        root = Path(str(authority.get("checkpoint_root"))).resolve(strict=True)
-        if not root.is_relative_to(storage.package_directory.parent.resolve(strict=True)):
-            raise ValueError("pre-open fixture substitution")
-        self.preopen_intercepted = True
-        raise RuntimeError("PREOPEN_INTERCEPTED")
+        checkpoint_root_descriptor = self._require_graph_owned_checkpoint_binding(
+            authority, storage
+        )
+        try:
+            self.preopen_intercepted = True
+            raise RuntimeError("PREOPEN_INTERCEPTED")
+        finally:
+            _close_synthetic_checkpoint_root_descriptor(
+                checkpoint_root_descriptor
+            )
 
 
 class _ProductionNumericalEffect:
@@ -2191,11 +2308,18 @@ class _Runtime:
     numerical_effect: object
     integration_state: object
     fault_stage: str | None = None
+    synthetic_missing_required_ordinal: int | None = None
+    synthetic_checkpoint_leaf: str = "synthetic-checkpoint"
     observed_effects: dict[str, int] = field(default_factory=lambda: {
         "checkpoint_root_resolutions": 0,
         "checkpoint_opens": 0,
         "numerical_executions": 0,
         "synthetic_identities_instantiated": 0,
+        "synthetic_fixture_required_leaves": 0,
+        "synthetic_fixture_benign_extra_leaves": 0,
+        "synthetic_fixture_leaf_creation_opens": 0,
+        "synthetic_fixture_benign_extra_creation_opens": 0,
+        "synthetic_fixture_payload_bytes": 0,
     })
 
 
@@ -2217,6 +2341,18 @@ class _QualificationInvocation:
             or type(runtime.numerical_effect) is not _SyntheticNumericalProvider
             or type(self.now_unix_ns) is not int
             or self.now_unix_ns < 0
+            or (
+                runtime.synthetic_missing_required_ordinal is not None
+                and (
+                    type(runtime.synthetic_missing_required_ordinal) is not int
+                    or runtime.synthetic_missing_required_ordinal not in range(1, 7)
+                )
+            )
+            or type(runtime.synthetic_checkpoint_leaf) is not str
+            or not runtime.synthetic_checkpoint_leaf
+            or runtime.synthetic_checkpoint_leaf in {".", ".."}
+            or Path(runtime.synthetic_checkpoint_leaf).name
+            != runtime.synthetic_checkpoint_leaf
             or _HEX64.fullmatch(self.collapsed_go_sha256) is None
         ):
             raise TypeError("sealed synthetic qualification invocation")
@@ -2229,8 +2365,16 @@ class _QualificationInvocation:
             is not _SyntheticCheckpointProvider
         ):
             raise TypeError("qualification checkpoint seam")
-        package = runtime.storage.package_directory.resolve()
-        if package == _LIVE_PACKAGE_PARENT or package.is_relative_to(_LIVE_PACKAGE_PARENT):
+        package = runtime.storage.package_directory
+        if (
+            package.parent != _qualification_root(package.parent)
+            or package == _LIVE_PACKAGE_PARENT
+            or package.is_relative_to(_LIVE_PACKAGE_PARENT)
+            or _LIVE_PACKAGE_PARENT.is_relative_to(package)
+            or package == _LIVE_CHECKPOINT_ROOT
+            or package.is_relative_to(_LIVE_CHECKPOINT_ROOT)
+            or _LIVE_CHECKPOINT_ROOT.is_relative_to(package)
+        ):
             raise ValueError("qualification may not address live package storage")
 
 
@@ -2359,7 +2503,9 @@ def _production_runtime(package_claim_sha256: str, profile: _AuthorityProfile) -
 
 
 def _qualification_runtime(root: Path, package_claim_sha256: str, *, intercept: bool,
-                           fault_stage: str | None = None) -> _Runtime:
+                           fault_stage: str | None = None,
+                           missing_required_ordinal: int | None = None,
+                           checkpoint_leaf: str = "synthetic-checkpoint") -> _Runtime:
     integration = _MinimumOneShotState(_ONE_SHOT_STATE_SEAL, "SYNTHETIC")
     storage = _SyntheticStorageBinding(
         _SYNTHETIC_STORAGE_SEAL, root, package_claim_sha256
@@ -2379,6 +2525,8 @@ def _qualification_runtime(root: Path, package_claim_sha256: str, *, intercept: 
         _SyntheticNumericalProvider(_SYNTHETIC_NUMERICAL_SEAL),
         integration,
         fault_stage=fault_stage,
+        synthetic_missing_required_ordinal=missing_required_ordinal,
+        synthetic_checkpoint_leaf=checkpoint_leaf,
     )
 
 
@@ -2493,13 +2641,150 @@ def _identity_installed_document(
     }
 
 
-def _build_installed_authority(go: _ValidatedCollapsedGo, runtime: _Runtime) -> _ValidatedIdentityAuthority:
+def _materialize_graph_owned_checkpoint_fixture(
+    checkpoint_root: Path, runtime: _Runtime
+) -> None:
+    """Create the complete synthetic input fixture before package start."""
+    if runtime.scope != "SYNTHETIC" or runtime.profile.authority_scope != "SYNTHETIC":
+        raise TypeError("synthetic checkpoint fixture authority")
+    shards = [dict(item) for item in runtime.profile.shards]
+    if (
+        len(shards) != 6
+        or any(
+            type(item.get("ordinal")) is not int
+            or item["ordinal"] not in range(1, 7)
+            or type(item.get("filename")) is not str
+            or not str(item["filename"])
+            or str(item["filename"]) in {".", ".."}
+            or Path(str(item["filename"])).name != str(item["filename"])
+            or item.get("size_bytes") != 0
+            or item.get("sha256") != _EMPTY_SHA256
+            for item in shards
+        )
+    ):
+        raise ValueError("bounded empty synthetic checkpoint contract")
+    shards.sort(key=lambda item: int(item["ordinal"]))
+    if [item["ordinal"] for item in shards] != list(range(1, 7)):
+        raise ValueError("synthetic checkpoint ordinal authority")
+    required_names = tuple(str(item["filename"]) for item in shards)
+    if (
+        len(set(required_names)) != len(required_names)
+        or set(required_names) & set(_SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES)
+    ):
+        raise ValueError("synthetic checkpoint leaf authority")
+    missing = runtime.synthetic_missing_required_ordinal
+    if missing is not None and (type(missing) is not int or missing not in range(1, 7)):
+        raise TypeError("synthetic missing-required ordinal")
+
+    directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    create_flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+    if hasattr(os, "O_CLOEXEC"):
+        directory_flags |= os.O_CLOEXEC
+        create_flags |= os.O_CLOEXEC
+    parent_fd = _open_directory_chain(checkpoint_root.parent, create=False)
+    checkpoint_fd = -1
+    created_required = 0
+    created_extra = 0
+    created_required_identities: dict[str, tuple[int, int]] = {}
+    try:
+        os.mkdir(checkpoint_root.name, mode=0o700, dir_fd=parent_fd)
+        checkpoint_fd = os.open(
+            checkpoint_root.name, directory_flags, dir_fd=parent_fd
+        )
+        observed = os.fstat(checkpoint_fd)
+        if (
+            not stat.S_ISDIR(observed.st_mode)
+            or observed.st_uid != os.getuid()
+            or os.listdir(checkpoint_fd)
+        ):
+            raise ValueError("fresh graph-owned synthetic checkpoint root")
+        for shard in shards:
+            if shard["ordinal"] == missing:
+                continue
+            descriptor = os.open(
+                str(shard["filename"]),
+                create_flags,
+                0o600,
+                dir_fd=checkpoint_fd,
+            )
+            try:
+                created = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(created.st_mode)
+                    or created.st_nlink != 1
+                    or created.st_uid != os.getuid()
+                    or created.st_size != 0
+                ):
+                    raise ValueError("graph-owned synthetic checkpoint leaf")
+                created_required_identities[str(shard["filename"])] = (
+                    created.st_dev,
+                    created.st_ino,
+                )
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            created_required += 1
+        for leaf in _SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES:
+            descriptor = os.open(leaf, create_flags, 0o600, dir_fd=checkpoint_fd)
+            try:
+                created = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(created.st_mode)
+                    or created.st_nlink != 1
+                    or created.st_uid != os.getuid()
+                    or created.st_size != 0
+                ):
+                    raise ValueError("graph-owned benign extra leaf")
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            created_extra += 1
+        expected = {
+            str(item["filename"])
+            for item in shards
+            if item["ordinal"] != missing
+        } | set(_SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES)
+        if set(os.listdir(checkpoint_fd)) != expected:
+            raise ValueError("graph-owned synthetic checkpoint fixture census")
+        checkpoint_provider = runtime.checkpoint_effect
+        if type(checkpoint_provider) is _ProductionCheckpointEffect:
+            checkpoint_provider = checkpoint_provider._qualification_interceptor
+        if type(checkpoint_provider) is not _SyntheticCheckpointProvider:
+            raise TypeError("sealed synthetic checkpoint provider")
+        checkpoint_provider._bind_graph_owned_checkpoint_fixture(
+            observed, created_required_identities
+        )
+        os.fsync(checkpoint_fd)
+        os.fsync(parent_fd)
+    finally:
+        if checkpoint_fd >= 0:
+            os.close(checkpoint_fd)
+        os.close(parent_fd)
+
+    runtime.observed_effects["synthetic_fixture_required_leaves"] = created_required
+    runtime.observed_effects["synthetic_fixture_benign_extra_leaves"] = created_extra
+    runtime.observed_effects["synthetic_fixture_leaf_creation_opens"] = (
+        created_required + created_extra
+    )
+    runtime.observed_effects["synthetic_fixture_benign_extra_creation_opens"] = (
+        created_extra
+    )
+    runtime.observed_effects["synthetic_fixture_payload_bytes"] = sum(
+        int(item["size_bytes"])
+        for item in shards
+        if item["ordinal"] != missing
+    )
+
+
+def _build_installed_authority(
+    go: _ValidatedCollapsedGo, runtime: _Runtime
+) -> _ValidatedIdentityAuthority:
     checkpoint_root = (
-        runtime.storage.package_directory.parent / "synthetic-checkpoint"
+        runtime.storage.package_directory.parent / runtime.synthetic_checkpoint_leaf
         if runtime.scope == "SYNTHETIC" else _LIVE_CHECKPOINT_ROOT
     )
     if runtime.scope == "SYNTHETIC":
-        checkpoint_root.mkdir(exist_ok=True)
+        _materialize_graph_owned_checkpoint_fixture(checkpoint_root, runtime)
     installed_value = _identity_installed_document(go, runtime, checkpoint_root)
     installed_expected = dict(installed_value)
     installed_expected.pop("schema")
@@ -2660,68 +2945,21 @@ def _validate_identity_evidence_closure(
     evidence = identity.report.get("evidence")
     if type(evidence) is not dict:
         raise ValueError("identity evidence report")
-    if identity.authority.get("authority_scope") == "PRODUCTION":
-        result = storage.anchored_path_call(
-            "identity",
-            lambda directory: _validate_banked_identity_evidence(
-                directory, dict(identity.report)
-            ),
-        )
-        if (
-            result.get("result") != "PASS"
-            or result.get("leaf_count") != 7
-            or result.get("terminal_sha256")
-            != identity.identity_terminal_sha256
-            or result.get("deterministic_core_sha256")
-            != evidence.get("deterministic_core_sha256")
-        ):
-            raise ValueError("production identity evidence closure")
-        return dict(result)
-
-    names = {
-        "identity-read-receipts.json": "read_receipts",
-        "identity-access-census.json": "access",
-        "identity-receipt.json": "receipt",
-        "identity-terminal.json": "terminal",
-    }
-    documents: dict[str, dict[str, object]] = {}
-    digests: dict[str, str] = {}
-    for leaf, key in names.items():
-        raw = storage.read(leaf)
-        value = _parse_artifact_bytes(raw)
-        if type(value) is not dict or _canonical_bytes(value) != raw:
-            raise ValueError("synthetic identity evidence document")
-        documents[key] = value
-        digests[key] = _sha(raw)
-    package = identity.authority.get("package_attempt_id")
+    result = storage.anchored_path_call(
+        "identity",
+        lambda directory: _validate_banked_identity_evidence(
+            directory, dict(identity.report)
+        ),
+    )
     if (
-        documents["read_receipts"].get("package_attempt_id") != package
-        or documents["read_receipts"].get("receipts")
-        != list(identity.read_receipts)
-        or documents["access"].get("package_attempt_id") != package
-        or documents["access"].get("checkpoint_root_resolutions") != 0
-        or documents["access"].get("physical_checkpoint_opens") != 0
-        or documents["access"].get("physical_checkpoint_reads") != 0
-        or documents["access"].get("physical_checkpoint_mmaps") != 0
-        or documents["receipt"].get("identity_read_receipts_sha256")
-        != digests["read_receipts"]
-        or documents["receipt"].get("access_census_sha256")
-        != digests["access"]
-        or documents["terminal"].get("identity_receipt_sha256")
-        != digests["receipt"]
-        or documents["terminal"].get("state") != "COMPLETE"
-        or documents["terminal"].get("result") != "PASS"
-        or digests["receipt"] != identity.identity_receipt_sha256
-        or digests["terminal"] != identity.identity_terminal_sha256
-        or digests["access"] != identity.access_census_sha256
+        result.get("result") != "PASS"
+        or result.get("leaf_count") != 7
+        or result.get("terminal_sha256") != identity.identity_terminal_sha256
+        or result.get("deterministic_core_sha256")
+        != evidence.get("deterministic_core_sha256")
     ):
-        raise ValueError("synthetic identity evidence closure")
-    return {
-        "result": "PASS",
-        "leaf_count": 4,
-        "terminal_sha256": digests["terminal"],
-        "synthetic_identity_evidence_sha256": _contract_sha256(digests),
-    }
+        raise ValueError("physical identity evidence closure")
+    return dict(result)
 
 
 def _bridge_from_gate(gate: object, identity: _IdentityOutcome,
@@ -3079,14 +3317,7 @@ def _gate_m013_checkpoint_identity_stability(
     if (
         report.get("result") != "PASS"
         or report.get("authority_scope") != authority.get("authority_scope")
-        or (
-            report.get("operation_class") != authority.get("operation_class")
-            and not (
-                authority.get("authority_scope") == "SYNTHETIC"
-                and report.get("operation_class")
-                == "QUALIFICATION_IDENTITY_BOUNDARY_INTERPOSE"
-            )
-        )
+        or report.get("operation_class") != authority.get("operation_class")
         or report.get("generation") != "V12"
         or report.get("ordered_shard_digests")
         != [str(item["sha256"]) for item in profile.shards]
@@ -3656,10 +3887,7 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
         _gate_m004_stop_boundary(stop, "RELEASE_TERMINAL", runtime)
         release_start = _bank_stage_receipt(runtime.storage, "RELEASE", bridge.as_dict())
         stop.record("RELEASE_START", release_start)
-        close_function: Callable[[int, str], None] | None = None
-        if runtime.scope == "SYNTHETIC":
-            close_function = lambda _descriptor, _lease: None
-        release = identity.leases.release(close_function=close_function)
+        release = identity.leases.release()
         completed_release = release
         _gate_m017_release_before_package_terminal(release)
         release_report_sha = runtime.storage.bank("release-report.json", release)
@@ -3766,12 +3994,7 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
                 pass
         elif identity is not None and not identity.leases.closed:
             try:
-                close_function = None
-                if runtime.scope == "SYNTHETIC":
-                    close_function = lambda _descriptor, _lease: None
-                emergency_release = identity.leases.release(
-                    close_function=close_function
-                )
+                emergency_release = identity.leases.release()
                 emergency_release_outcome = emergency_release
                 emergency_release_sha = runtime.storage.bank_failure(
                     "emergency-release-report.json",
@@ -3899,6 +4122,53 @@ def _qualification_go(profile: _AuthorityProfile, human_seed: bytes,
     })
 
 
+def _graph_owned_qualification_seed(root: Path, label: str) -> bytes:
+    """Bank and read back one deterministic, graph-owned decision seed."""
+    root = _qualification_root(root)
+    if type(label) is not str or not label or len(label) > 128:
+        raise TypeError("bounded qualification decision label")
+    label_bytes = label.encode("utf-8")
+    raw = b"F017-SEQUENCE41-GRAPH-OWNED-DECISION\x00" + label_bytes
+    leaf = f".f017-sequence41-decision-{_sha(label_bytes)[:24]}.bin"
+    root_fd = _open_directory_chain(root, create=False)
+    descriptor = -1
+    flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+    if hasattr(os, "O_CLOEXEC"):
+        flags |= os.O_CLOEXEC
+    try:
+        descriptor = os.open(leaf, flags, 0o600, dir_fd=root_fd)
+        written = 0
+        while written < len(raw):
+            count = os.write(descriptor, raw[written:])
+            if count <= 0:
+                raise OSError("short qualification decision write")
+            written += count
+        os.fsync(descriptor)
+        observed = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(observed.st_mode)
+            or observed.st_uid != os.getuid()
+            or observed.st_nlink != 1
+            or observed.st_size != len(raw)
+        ):
+            raise ValueError("graph-owned qualification decision identity")
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        readback = bytearray()
+        while len(readback) < len(raw):
+            chunk = os.read(descriptor, len(raw) - len(readback))
+            if not chunk:
+                raise OSError("short qualification decision readback")
+            readback.extend(chunk)
+        if os.read(descriptor, 1) or bytes(readback) != raw:
+            raise ValueError("graph-owned qualification decision readback")
+        os.fsync(root_fd)
+        return bytes(readback)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        os.close(root_fd)
+
+
 def _qualification_collapsed_go_bytes() -> bytes:
     """Return a current, synthetic-only collapsed GO for private qualification."""
     return _qualification_go(
@@ -3909,14 +4179,43 @@ def _qualification_collapsed_go_bytes() -> bytes:
 
 
 def _qualification_root(value: Path) -> Path:
-    if not isinstance(value, Path) or not value.is_absolute():
+    if not isinstance(value, Path):
         raise TypeError("qualification root is graph-owned")
-    root = value.resolve(strict=True)
-    if value.is_symlink() or not root.is_dir():
-        raise ValueError("qualification root must be a real directory")
-    if root == _LIVE_PACKAGE_PARENT or root.is_relative_to(_LIVE_PACKAGE_PARENT):
-        raise ValueError("qualification root cannot be live package storage")
-    return root
+    try:
+        lexical = _canonical_absolute_path(value)
+        temporary_parent = _canonical_absolute_path(
+            Path(os.path.realpath(tempfile.gettempdir()))
+        )
+    except ValueError as exc:
+        raise ValueError("qualification root is noncanonical") from exc
+    if (
+        lexical == temporary_parent
+        or not lexical.is_relative_to(temporary_parent)
+        or lexical == _LIVE_PACKAGE_PARENT
+        or lexical.is_relative_to(_LIVE_PACKAGE_PARENT)
+        or _LIVE_PACKAGE_PARENT.is_relative_to(lexical)
+        or lexical == _LIVE_CHECKPOINT_ROOT
+        or lexical.is_relative_to(_LIVE_CHECKPOINT_ROOT)
+        or _LIVE_CHECKPOINT_ROOT.is_relative_to(lexical)
+    ):
+        raise ValueError("qualification root cannot overlap a live root")
+    descriptor = -1
+    try:
+        descriptor = _open_directory_chain(lexical, create=False)
+        observed = os.fstat(descriptor)
+        physical = Path(os.path.realpath(lexical))
+        if (
+            physical != lexical
+            or not stat.S_ISDIR(observed.st_mode)
+            or observed.st_uid != os.getuid()
+        ):
+            raise ValueError("qualification root must be a real directory")
+    except (OSError, ValueError) as exc:
+        raise ValueError("qualification root must be a nonsymlink directory") from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    return lexical
 
 
 def _invoke_public_qualification(
@@ -3945,9 +4244,10 @@ def _run_preopen_intercept(root: Path) -> dict[str, object]:
     qualification_root = _qualification_root(root)
     now = time.time_ns()
     profile = _authority_profile(synthetic=True)
-    collapsed_go = _qualification_go(
-        profile, b"F017-S39-PREOPEN", now_unix_ns=now
+    human_seed = _graph_owned_qualification_seed(
+        qualification_root, "PREOPEN"
     )
+    collapsed_go = _qualification_go(profile, human_seed, now_unix_ns=now)
     runtime = _qualification_runtime(
         qualification_root,
         str(_validate_go_bytes(collapsed_go, profile, now_unix_ns=now).get(
@@ -3983,10 +4283,13 @@ def _run_preopen_intercept(root: Path) -> dict[str, object]:
     return {
         "result": "PASS",
         "preopen_interception": "PASS",
-        "physical_call_boundary": "f017_checkpoint_identity_producer_v12.produce",
+        "physical_call_boundary": (
+            "f017_checkpoint_identity_producer_v12._minimum_gate_produce"
+        ),
         "package_started": True,
         "terminal_failure_banked": True,
         "failure_accounting_banked": True,
+        "synthetic_human_decision_sha256": _sha(human_seed),
         "original_checkpoint_root_resolutions": 0,
         "original_checkpoint_opens": 0,
         "original_checkpoint_reads": 0,
@@ -4033,7 +4336,7 @@ def _run_no_access_qualification(
     case_root.mkdir(exist_ok=False)
     now = time.time_ns()
     profile = _authority_profile(synthetic=True)
-    seed = f"F017-S39-{case_name}".encode("ascii")
+    seed = _graph_owned_qualification_seed(case_root, case_name)
     collapsed_go = _qualification_go(profile, seed, now_unix_ns=now)
     runtime = _qualification_runtime(
         case_root,
@@ -4058,6 +4361,10 @@ def _run_no_access_qualification(
     if fail_stage is not None and not stopped:
         raise AssertionError("requested stage did not stop")
 
+    checkpoint_provider = runtime.checkpoint_effect
+    if type(checkpoint_provider) is not _SyntheticCheckpointProvider:
+        raise AssertionError("synthetic checkpoint provider accounting")
+
     terminal_path = runtime.storage.package_directory / "package-terminal.json"
     package_started = (runtime.storage.package_directory / "package-start.json").is_file()
     if fail_stage is not None:
@@ -4074,6 +4381,10 @@ def _run_no_access_qualification(
         "full_call_path_dry_run_with_synthetic_authority": "PASS",
         "public_entry_exercised": "execute_event06_minimum_gate_path",
         "preopen_interception": preopen["preopen_interception"],
+        "synthetic_human_decision_sha256s": [
+            preopen["synthetic_human_decision_sha256"],
+            _sha(seed),
+        ],
         "production_path_components_exercised": "17/17",
         "required_gates_enforced": "17/17",
         "extra_required_gates": 0,
@@ -4086,6 +4397,37 @@ def _run_no_access_qualification(
         "package_terminal_banked": terminal_path.is_file(),
         "original_checkpoint_root_resolutions": 0,
         "original_checkpoint_opens_hashes_payload_reads_mmaps": "0/0/0/0",
+        "physical_v12_identity_producer_calls": (
+            checkpoint_provider.physical_identity_producer_calls
+        ),
+        "synthetic_checkpoint_binding_checks": (
+            checkpoint_provider.producer_checkpoint_binding_checks
+        ),
+        "synthetic_checkpoint_shard_opens": (
+            checkpoint_provider.producer_checkpoint_shard_opens
+        ),
+        "synthetic_checkpoint_identity_hash_reads": (
+            checkpoint_provider.producer_checkpoint_identity_hash_reads
+        ),
+        "synthetic_checkpoint_payload_bytes_read": (
+            runtime.observed_effects["synthetic_fixture_payload_bytes"]
+        ),
+        "synthetic_checkpoint_mmaps": 0,
+        "graph_owned_synthetic_checkpoint_required_leaves": (
+            runtime.observed_effects["synthetic_fixture_required_leaves"]
+        ),
+        "graph_owned_synthetic_checkpoint_benign_extra_leaves": (
+            runtime.observed_effects["synthetic_fixture_benign_extra_leaves"]
+        ),
+        "graph_owned_fixture_leaf_creation_opens": runtime.observed_effects[
+            "synthetic_fixture_leaf_creation_opens"
+        ],
+        "graph_owned_fixture_benign_extra_creation_opens": (
+            runtime.observed_effects[
+                "synthetic_fixture_benign_extra_creation_opens"
+            ]
+        ),
+        "identity_producer_extra_leaf_open_follow_stat_hash": "0/0/0/0",
         "primary_secondary_real_executions": "0/0",
         "full_model_inference": "NONE",
         "real_registry_ledger_or_terminal_writes": 0,

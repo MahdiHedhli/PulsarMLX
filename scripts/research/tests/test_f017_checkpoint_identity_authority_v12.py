@@ -153,6 +153,9 @@ def test_overnight_qualification_census() -> None:
     assert result["install_boundary_substitutions_rejected"] == 20
     assert result["live_drift_faults_realized"] == 2
     assert result["filesystem_faults_realized"] >= 50
+    assert result["filesystem_fault_categories"]["missing_shard"] == 6
+    assert result["filesystem_fault_categories"]["shard_directory"] == 6
+    assert "extra_shard" not in result["filesystem_fault_categories"]
     assert result["evidence_and_close_faults_realized"] >= 17
     assert result["scope_separation"]["result"] == "PASS"
     assert result["unexpected_passes"] == 0

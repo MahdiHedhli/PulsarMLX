@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import stat
 import tempfile
+from contextvars import ContextVar, Token
 
 from f017_accounting_root_continuity_v1 import open_directory_no_symlinks
 from f017_bounded_artifact_decode_v1 import parse_artifact_bytes
@@ -21,6 +22,29 @@ from f017_write_once_artifact_v1 import _bank_exclusive_write_once
 
 ROOT = Path(__file__).resolve().parents[2]
 __all__ = ("validate_banked_identity_evidence",)
+
+_QUALIFICATION_ROOT_DESCRIPTOR: ContextVar[int | None] = ContextVar(
+    "f017_sequence41_qualification_checkpoint_root_descriptor", default=None
+)
+_QUALIFICATION_ROOT_DESCRIPTOR_SEAL = object()
+
+
+def _bind_qualification_root_descriptor(seal: object, descriptor: int) -> Token:
+    """Carry one sealed graph-owned root descriptor into the private producer."""
+    if seal is not _QUALIFICATION_ROOT_DESCRIPTOR_SEAL or type(descriptor) is not int:
+        raise TypeError("sealed qualification checkpoint root descriptor")
+    observed = os.fstat(descriptor)
+    if not stat.S_ISDIR(observed.st_mode) or observed.st_uid != os.getuid():
+        raise ValueError("qualification checkpoint root descriptor identity")
+    if _QUALIFICATION_ROOT_DESCRIPTOR.get() is not None:
+        raise RuntimeError("qualification checkpoint root descriptor already bound")
+    return _QUALIFICATION_ROOT_DESCRIPTOR.set(descriptor)
+
+
+def _reset_qualification_root_descriptor(seal: object, token: Token) -> None:
+    if seal is not _QUALIFICATION_ROOT_DESCRIPTOR_SEAL or type(token) is not Token:
+        raise TypeError("sealed qualification checkpoint root descriptor token")
+    _QUALIFICATION_ROOT_DESCRIPTOR.reset(token)
 
 
 def _sha(path: Path) -> str:
@@ -82,6 +106,69 @@ def _hash_descriptor(descriptor: int, expected_size: int, *, require_single_link
     if identity(before) != identity(after):
         raise failure("F017_V12_IDENTITY_DESCRIPTOR_CHANGED", "descriptor identity changed", checkpoint_access="OBSERVED_PREFIX")
     return digest.hexdigest(), after
+
+
+def _required_shard_names(contract: dict) -> tuple[str, ...]:
+    """Derive the exact ordered shard-name authority from one selected contract."""
+    shards = contract.get("shards")
+    if type(shards) is not list or len(shards) != 6:
+        raise failure(
+            "F017_V12_IDENTITY_CONTRACT_DRIFT",
+            "required shard name census",
+        )
+    if [item.get("ordinal") if type(item) is dict else None for item in shards] != list(
+        range(1, 7)
+    ):
+        raise failure(
+            "F017_V12_IDENTITY_CONTRACT_DRIFT",
+            "required shard order",
+        )
+    names: list[str] = []
+    for shard in shards:
+        name = shard.get("filename") if type(shard) is dict else None
+        if (
+            type(name) is not str
+            or not name
+            or name in {".", ".."}
+            or os.path.basename(name) != name
+        ):
+            raise failure(
+                "F017_V12_IDENTITY_CONTRACT_DRIFT",
+                "unsafe required shard basename",
+            )
+        names.append(name)
+    if len(set(names)) != len(names):
+        raise failure(
+            "F017_V12_IDENTITY_CONTRACT_DRIFT",
+            "duplicate required shard basename",
+        )
+    return tuple(names)
+
+
+def _require_checkpoint_root_membership(
+    root_fd: int, required_names: tuple[str, ...]
+) -> None:
+    """Require every exact contract name while ignoring unrelated root leaves."""
+    try:
+        observed_names = os.listdir(root_fd)
+    except OSError as exc:
+        raise failure(
+            "F017_V12_IDENTITY_SHARD_OPEN_FAILURE",
+            "checkpoint root leaf census",
+            checkpoint_access=0,
+        ) from exc
+    missing = set(required_names).difference(observed_names)
+    if missing:
+        present_required = len(required_names) - len(missing)
+        raise failure(
+            "F017_V12_IDENTITY_SHARD_OPEN_FAILURE",
+            (
+                "checkpoint root leaf census: "
+                f"required={len(required_names)} "
+                f"present={present_required} missing={len(missing)}"
+            ),
+            checkpoint_access=0,
+        )
 
 
 def _bank_identity_evidence(directory: Path, authority: ValidatedIdentityAuthority,
@@ -222,30 +309,53 @@ def _minimum_gate_produce(authority: ValidatedIdentityAuthority, *, package_atte
         raise failure("F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT", "package durable start required")
     value, contract = _runtime_revalidate(authority, package_attempt_id)
     root = Path(value["checkpoint_root"])
-    try:
-        resolved = root.resolve(strict=True)
-        temporary = Path(tempfile.gettempdir()).resolve(strict=True)
-    except OSError as exc:
-        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root", checkpoint_access=0) from exc
     synthetic = value["authority_scope"] == "SYNTHETIC"
-    if root.is_symlink() or (synthetic and not resolved.is_relative_to(temporary)) or (not synthetic and resolved.is_relative_to(temporary)):
-        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root scope", checkpoint_access=0)
-    try:
-        root_fd, opened = open_directory_no_symlinks(resolved)
-    except Exception as exc:
-        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root open", checkpoint_access=0) from exc
-    if opened != resolved:
-        os.close(root_fd)
-        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root identity", checkpoint_access=0)
-    expected_leaves = {item["filename"] for item in contract["shards"]}
-    if set(os.listdir(root_fd)) != expected_leaves:
-        os.close(root_fd)
-        raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root leaf census", checkpoint_access=0)
+    bound_root_descriptor = _QUALIFICATION_ROOT_DESCRIPTOR.get()
+    if bound_root_descriptor is not None:
+        if not synthetic:
+            raise failure(
+                "F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT",
+                "qualification root descriptor on production authority",
+                checkpoint_access=0,
+            )
+        try:
+            held = os.fstat(bound_root_descriptor)
+            if (
+                not stat.S_ISDIR(held.st_mode)
+                or held.st_uid != os.getuid()
+            ):
+                raise OSError("qualification checkpoint root descriptor identity")
+            root_fd = os.dup(bound_root_descriptor)
+        except (OSError, TypeError, ValueError) as exc:
+            raise failure(
+                "F017_V12_IDENTITY_SHARD_OPEN_FAILURE",
+                "qualification checkpoint root descriptor",
+                checkpoint_access=0,
+            ) from exc
+    else:
+        try:
+            resolved = root.resolve(strict=True)
+            temporary = Path(tempfile.gettempdir()).resolve(strict=True)
+        except OSError as exc:
+            raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root", checkpoint_access=0) from exc
+        if root.is_symlink() or (synthetic and not resolved.is_relative_to(temporary)) or (not synthetic and resolved.is_relative_to(temporary)):
+            raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root scope", checkpoint_access=0)
+        try:
+            root_fd, opened = open_directory_no_symlinks(resolved)
+        except Exception as exc:
+            raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root open", checkpoint_access=0) from exc
+        if opened != resolved:
+            os.close(root_fd)
+            raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", "checkpoint root identity", checkpoint_access=0)
     records: list[LeaseRecord] = []
     digests: list[str] = []
+    all_shard_descriptor_identities: list[dict[str, object]] = []
     identity_only_digest = ""
     opens = 0
     try:
+        root_identity = os.fstat(root_fd)
+        required_names = _required_shard_names(contract)
+        _require_checkpoint_root_membership(root_fd, required_names)
         for shard in contract["shards"]:
             ordinal = shard["ordinal"]
             try:
@@ -255,6 +365,11 @@ def _minimum_gate_produce(authority: ValidatedIdentityAuthority, *, package_atte
                 raise failure("F017_V12_IDENTITY_SHARD_OPEN_FAILURE", f"shard {ordinal}", checkpoint_access=opens) from exc
             try:
                 digest, metadata = _hash_descriptor(descriptor, shard["size_bytes"], require_single_link=synthetic)
+                all_shard_descriptor_identities.append({
+                    "filename": shard["filename"],
+                    "device": metadata.st_dev,
+                    "inode": metadata.st_ino,
+                })
                 if digest != shard["sha256"]:
                     raise failure("F017_V12_IDENTITY_SHARD_HASH_MISMATCH", f"shard {ordinal}", checkpoint_access=opens)
                 if shard["role"] == "IDENTITY_ONLY":
@@ -281,6 +396,11 @@ def _minimum_gate_produce(authority: ValidatedIdentityAuthority, *, package_atte
             "checkpoint_shard_opens": opens, "checkpoint_identity_hash_reads": 6,
             "retained_lease_count": len(records), "identity_only_retained_count": 0,
             "descriptor_identities": leases.descriptors, "path_reopen_count": 0,
+            "checkpoint_root_descriptor_identity": {
+                "device": root_identity.st_dev,
+                "inode": root_identity.st_ino,
+            },
+            "all_shard_descriptor_identities": all_shard_descriptor_identities,
         }
         if evidence_directory is not None:
             report["evidence"] = _bank_identity_evidence(

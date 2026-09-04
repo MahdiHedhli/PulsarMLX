@@ -32,6 +32,9 @@ import f017_event06_minimum_gate_path_v1 as path
 _ROOT = Path(__file__).resolve().parents[2]
 _RESEARCH_ROOT = _ROOT / "scripts/research"
 _PATH_SOURCE = _ROOT / "scripts/research/f017_event06_minimum_gate_path_v1.py"
+_SEQUENCE40_CONSUMED_DECISION_SHA256 = (
+    "25b1312d26a436e103f26f1645f2d83e3147cbabc6522c91e5fa92d89ee73bdd"
+)
 _SUPERSEDED_SURFACE_SOURCES = (
     "scripts/research/f017_checkpoint_identity_producer_v12.py",
     "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
@@ -551,6 +554,7 @@ def _package_start_consumed_gate_relation(tree: ast.Module) -> dict[str, object]
         raise AssertionError("package-start source functions")
 
     consumed_assignment_lines: list[int] = []
+    fixture_build_lines: list[int] = []
     checkpoint_call_lines: list[int] = []
     for node in ast.walk(executor):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
@@ -570,7 +574,15 @@ def _package_start_consumed_gate_relation(tree: ast.Module) -> dict[str, object]
             if not node.args or ast.unparse(node.args[0]) != "consumed_gate":
                 raise AssertionError("checkpoint effect does not consume gate")
             checkpoint_call_lines.append(node.lineno)
-    if len(consumed_assignment_lines) != 1 or len(checkpoint_call_lines) != 1:
+        if isinstance(node, ast.Call) and ast.unparse(node.func) == (
+            "_build_installed_authority"
+        ):
+            fixture_build_lines.append(node.lineno)
+    if (
+        len(fixture_build_lines) != 1
+        or len(consumed_assignment_lines) != 1
+        or len(checkpoint_call_lines) != 1
+    ):
         raise AssertionError("package-start/identity call census")
 
     calls_in_gate = [
@@ -591,7 +603,9 @@ def _package_start_consumed_gate_relation(tree: ast.Module) -> dict[str, object]
     if not (
         len(consume_lines) == len(bank_lines) == len(state_lines) == 1
         and consume_lines[0] < bank_lines[0] < state_lines[0]
-        and consumed_assignment_lines[0] < checkpoint_call_lines[0]
+        and fixture_build_lines[0]
+        < consumed_assignment_lines[0]
+        < checkpoint_call_lines[0]
     ):
         raise AssertionError(
             "durable start must select the winner before process state and identity"
@@ -623,6 +637,7 @@ def _package_start_consumed_gate_relation(tree: ast.Module) -> dict[str, object]
             if name
             in {
                 "_run_identity_stage",
+                "_ProductionCheckpointEffect().run",
                 "self._qualification_interceptor.intercept_physical_call",
                 "storage.bank",
                 "_bind_identity_stage",
@@ -643,8 +658,10 @@ def _package_start_consumed_gate_relation(tree: ast.Module) -> dict[str, object]
         "consume_line": consume_lines[0],
         "durable_start_bank_line": bank_lines[0],
         "one_shot_state_consume_line": state_lines[0],
+        "synthetic_fixture_build_line": fixture_build_lines[0],
         "executor_consumed_assignment_line": consumed_assignment_lines[0],
         "executor_first_identity_effect_line": checkpoint_call_lines[0],
+        "synthetic_fixture_precedes_package_start": True,
         "effect_guards": effect_guards,
         "package_start_without_consumed_gate": 0,
         "result": "PASS",
@@ -1414,9 +1431,11 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
     The denominator deliberately covers the public/coordinator roots, every
     retained gate reached from that root, and repository-local producer or
     consumer functions imported directly by the reachable composition.  The
-    three effect seams remain outside this production-component denominator;
-    the real result-bundle producer used behind the numerical seam is included
-    because it is itself a production authority, not a fixture implementation.
+    three effect seams remain outside this production-component denominator.
+    The real V12 identity producer and evidence validator reached behind the
+    checkpoint seam, and the real result-bundle producer reached behind the
+    numerical seam, are included because they are production authorities rather
+    than fixture implementations.
     """
     source_raw = _PATH_SOURCE.read_bytes()
     source = source_raw.decode("utf-8")
@@ -1500,13 +1519,15 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
     # producer/consumer boundary set.  This is an AST reachability result, not
     # a copy of the dynamic trace.
     boundary_nodes: list[ast.AST] = [functions[name] for name in sorted(reached)]
+    boundary_nodes.append(checkpoint_run)
     for class_name, class_node in sorted(class_nodes.items()):
         if class_name.startswith(("_Qualification", "_Synthetic")):
             continue
         if class_name in {"_ProductionCheckpointEffect", "_ProductionNumericalEffect"}:
-            # These are the three interposed effect boundaries.  The exact
-            # checkpoint pre-open method is represented above; their physical
-            # callees must not execute in a no-access qualification.
+            # These are interposed effect boundaries.  The checkpoint run method
+            # is represented explicitly above because its physical identity
+            # producer now executes on graph-owned synthetic files; the real
+            # numerical targets remain interposed.
             continue
         boundary_nodes.extend(
             node
@@ -1527,7 +1548,7 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
         )
 
     production_only_aliases: set[str] = set()
-    for class_name in ("_ProductionCheckpointEffect", "_ProductionNumericalEffect"):
+    for class_name in ("_ProductionNumericalEffect",):
         class_node = class_nodes.get(class_name)
         if not isinstance(class_node, ast.ClassDef):
             continue
@@ -1536,11 +1557,6 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
         ):
             if isinstance(call.func, ast.Name) and call.func.id in imports:
                 production_only_aliases.add(call.func.id)
-    # Production identity evidence uses a physical producer-owned seven-leaf
-    # layout.  Its validator is intentionally not called by the synthetic
-    # four-leaf evidence branch.
-    production_only_aliases.add("_validate_banked_identity_evidence")
-
     expected_external: set[str] = set()
     tracked_external_universe: set[str] = set()
     external_metadata: dict[str, dict[str, object]] = {}
@@ -1618,16 +1634,23 @@ def _profiled_public_path(
     expectation = _source_derived_public_path_expectation()
     previous = sys.getprofile()
     called: dict[tuple[str, str, int], dict[str, object]] = {}
+    source_cache: dict[str, Path | None] = {}
+    qualification_source = Path(__file__).resolve(strict=True)
 
     def profiler(frame: object, event: str, _argument: object) -> None:
         if event != "call":
             return
         code = frame.f_code
-        try:
-            source_path = Path(code.co_filename).resolve(strict=True)
-        except (FileNotFoundError, OSError):
+        filename = str(code.co_filename)
+        if filename not in source_cache:
+            try:
+                source_cache[filename] = Path(filename).resolve(strict=True)
+            except (FileNotFoundError, OSError):
+                source_cache[filename] = None
+        source_path = source_cache[filename]
+        if source_path is None:
             return
-        if source_path.parent != _RESEARCH_ROOT or source_path == Path(__file__).resolve():
+        if source_path.parent != _RESEARCH_ROOT or source_path == qualification_source:
             return
         qualname = str(getattr(code, "co_qualname", code.co_name))
         if "<" in qualname:
@@ -1654,6 +1677,10 @@ def _profiled_public_path(
         "f017_event06_minimum_gate_path_v1._run_no_access_qualification",
         "f017_event06_minimum_gate_path_v1._run_preopen_intercept",
     )
+    qualification_carrier_components = {
+        "f017_checkpoint_identity_producer_v12._bind_qualification_root_descriptor",
+        "f017_checkpoint_identity_producer_v12._reset_qualification_root_descriptor",
+    }
     seam_qualnames = {
         "_SyntheticStorageBinding",
         "_SyntheticCheckpointProvider",
@@ -1674,6 +1701,7 @@ def _profiled_public_path(
             qualification_support.append(item)
         elif (
             owner in seam_qualnames
+            or component in qualification_carrier_components
             or "fixture" in module.lower()
             or module.startswith("qualify_")
         ):
@@ -2110,7 +2138,7 @@ def _expect_rejection(
     raise AssertionError(f"{mechanism_id} mutation unexpectedly passed")
 
 
-def retained_gate_mutations() -> dict[str, object]:
+def retained_gate_mutations(root: Path) -> dict[str, object]:
     """Reject one stable, effect-free negative mutation for every retained gate."""
 
     class _Gettable:
@@ -2124,10 +2152,11 @@ def retained_gate_mutations() -> dict[str, object]:
 
     mutation_profile = path._authority_profile(synthetic=True)
     mutation_now = 39_000_000_000
+    mutation_seed = path._graph_owned_qualification_seed(
+        root, "RETAINED-GATE-MUTATION"
+    )
     mutation_raw = path._qualification_go(
-        mutation_profile,
-        b"F017-S39-RETAINED-GATE-MUTATION",
-        now_unix_ns=mutation_now,
+        mutation_profile, mutation_seed, now_unix_ns=mutation_now
     )
     mutation_go = path._gate_m003_fail_closed_preflight(
         mutation_raw, mutation_profile, now_unix_ns=mutation_now
@@ -2272,6 +2301,7 @@ def retained_gate_mutations() -> dict[str, object]:
         "total": len(expected),
         "unexpected_passes": len(expected) - len(passed_ids),
         "cases": results,
+        "synthetic_human_decision_sha256s": [path._sha(mutation_seed)],
         "result": "PASS",
     }
 
@@ -2301,6 +2331,9 @@ def _optional_omission_campaign(root: Path) -> dict[str, object]:
                 "synthetic_identities_consumed": result[
                     "synthetic_identities_consumed"
                 ],
+                "synthetic_human_decision_sha256s": result[
+                    "synthetic_human_decision_sha256s"
+                ],
                 "result": "PASS",
             }
         )
@@ -2314,6 +2347,11 @@ def _optional_omission_campaign(root: Path) -> dict[str, object]:
         "synthetic_identities_consumed": sum(
             int(item["synthetic_identities_consumed"]) for item in cases
         ),
+        "synthetic_human_decision_sha256s": [
+            digest
+            for item in cases
+            for digest in item["synthetic_human_decision_sha256s"]
+        ],
         "result": "PASS",
     }
 
@@ -2321,7 +2359,7 @@ def _optional_omission_campaign(root: Path) -> dict[str, object]:
 def _one_shot_campaign(root: Path) -> dict[str, object]:
     now = 4_000_000_000_000_000_000
     profile = path._authority_profile(synthetic=True)
-    human_seed = b"F017-S39-CONTENTION"
+    human_seed = path._graph_owned_qualification_seed(root, "CONTENTION")
     human_decision_sha256 = path._sha(human_seed)
     raw = path._qualification_go(profile, human_seed, now_unix_ns=now)
     # Each contender has a fresh integration object, producer set, and storage
@@ -2329,8 +2367,13 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
     # selected by the durable O_EXCL package-start write, never by shared
     # process-local state.
     runtimes = [
-        path._qualification_runtime(root, human_decision_sha256, intercept=False)
-        for _index in range(2)
+        path._qualification_runtime(
+            root,
+            human_decision_sha256,
+            intercept=False,
+            checkpoint_leaf=f"synthetic-checkpoint-contender-{index}",
+        )
+        for index in range(2)
     ]
     if (
         runtimes[0] is runtimes[1]
@@ -2373,11 +2416,18 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
     loser_runtime, loser_error = losers[0]
     if type(loser_error) is not FileExistsError:
         raise AssertionError("contention loser must fail at O_EXCL package start")
+    loser_provider = loser_runtime.checkpoint_effect
     if (
-        dict(loser_runtime.integration_state.snapshot()) != {"package_starts": 0}
+        type(loser_provider) is not path._SyntheticCheckpointProvider
+        or dict(loser_runtime.integration_state.snapshot())
+        != {"package_starts": 0}
         or loser_runtime.observed_effects["checkpoint_root_resolutions"] != 0
         or loser_runtime.observed_effects["checkpoint_opens"] != 0
         or loser_runtime.observed_effects["numerical_executions"] != 0
+        or loser_provider.physical_identity_producer_calls != 0
+        or loser_provider.producer_checkpoint_binding_checks != 0
+        or loser_provider.producer_checkpoint_shard_opens != 0
+        or loser_provider.producer_checkpoint_identity_hash_reads != 0
     ):
         raise AssertionError("contention loser crossed package-start boundary")
 
@@ -2396,7 +2446,10 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
     if replay_raw == raw or path._sha(replay_raw) == path._sha(raw):
         raise AssertionError("replay proof requires different canonical GO bytes")
     third_runtime = path._qualification_runtime(
-        root, human_decision_sha256, intercept=False
+        root,
+        human_decision_sha256,
+        intercept=False,
+        checkpoint_leaf="synthetic-checkpoint-replay",
     )
     if (
         third_runtime.integration_state is winner_runtime.integration_state
@@ -2417,11 +2470,18 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
         raise AssertionError("second package attempt unexpectedly passed")
     if type(second_exception) is not FileExistsError:
         raise AssertionError("second attempt must fail at durable O_EXCL start")
+    replay_provider = third_runtime.checkpoint_effect
     if (
-        dict(third_runtime.integration_state.snapshot()) != {"package_starts": 0}
+        type(replay_provider) is not path._SyntheticCheckpointProvider
+        or dict(third_runtime.integration_state.snapshot())
+        != {"package_starts": 0}
         or third_runtime.observed_effects["checkpoint_root_resolutions"] != 0
         or third_runtime.observed_effects["checkpoint_opens"] != 0
         or third_runtime.observed_effects["numerical_executions"] != 0
+        or replay_provider.physical_identity_producer_calls != 0
+        or replay_provider.producer_checkpoint_binding_checks != 0
+        or replay_provider.producer_checkpoint_shard_opens != 0
+        or replay_provider.producer_checkpoint_identity_hash_reads != 0
     ):
         raise AssertionError("second attempt crossed package-start boundary")
     after = (start_path.read_bytes(), terminal_path.read_bytes())
@@ -2456,6 +2516,12 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
         "loser_error_type": type(loser_error).__name__,
         "loser_checkpoint_root_resolutions": 0,
         "loser_checkpoint_opens": 0,
+        "loser_physical_identity_producer_calls": (
+            loser_provider.physical_identity_producer_calls
+        ),
+        "replay_physical_identity_producer_calls": (
+            replay_provider.physical_identity_producer_calls
+        ),
         "loser_numerical_operations": 0,
         "terminal_winners_per_package": 1,
         "second_attempt_rejected": second_rejected,
@@ -2465,6 +2531,7 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
         "first_go_sha256": path._sha(raw),
         "replay_go_sha256": path._sha(replay_raw),
         "package_claim_sha256": human_decision_sha256,
+        "synthetic_human_decision_sha256s": [human_decision_sha256],
         "second_attempt_error_type": second_error_type,
         "second_attempts_reaching_package_start": 0,
         "competing_terminal_rejected": competing_terminal_rejected,
@@ -2572,6 +2639,9 @@ def _stage_failure_campaign(root: Path) -> dict[str, object]:
                 "synthetic_identities_consumed": result[
                     "synthetic_identities_consumed"
                 ],
+                "synthetic_human_decision_sha256s": result[
+                    "synthetic_human_decision_sha256s"
+                ],
                 "result": "PASS",
             }
         )
@@ -2585,27 +2655,199 @@ def _stage_failure_campaign(root: Path) -> dict[str, object]:
         "synthetic_identities_consumed": sum(
             int(item["synthetic_identities_consumed"]) for item in cases
         ),
+        "synthetic_human_decision_sha256s": [
+            digest
+            for item in cases
+            for digest in item["synthetic_human_decision_sha256s"]
+        ],
         "result": "PASS",
     }
 
 
-def qualify(qualification_root: Path | None = None) -> dict[str, object]:
-    """Run the complete deterministic Sequence 39 no-access campaign."""
-    temporary: tempfile.TemporaryDirectory[str] | None = None
-    if qualification_root is None:
-        temporary = tempfile.TemporaryDirectory(prefix="f017-sequence39-")
-        root = Path(temporary.name)
+def _missing_required_public_path_rehearsals(root: Path) -> dict[str, object]:
+    """Omit each required synthetic leaf and prove a terminal pre-open stop."""
+    profile = path._authority_profile(synthetic=True)
+    forbidden_successors = {
+        "primary",
+        "secondary",
+        "primary-start-receipt.json",
+        "secondary-start-receipt.json",
+        "comparison-summary.json",
+        "comparison-receipt.json",
+        "comparison-terminal.json",
+        "release-start-receipt.json",
+        "release-report.json",
+        "release-receipt.json",
+        "release-terminal.json",
+        "receipt-derived-accounting.json",
+        "package-receipt.json",
+        "v11-result-closure.json",
+    }
+    cases: list[dict[str, object]] = []
+    for ordinal in range(1, 7):
+        case_root = root / f"missing-required-{ordinal}"
+        case_root.mkdir()
+        now = 39_387_000_000 + ordinal
+        seed = path._graph_owned_qualification_seed(
+            case_root, f"MISSING-REQUIRED-{ordinal}"
+        )
+        raw = path._qualification_go(profile, seed, now_unix_ns=now)
+        validated = path._validate_go_bytes(raw, profile, now_unix_ns=now)
+        runtime = path._qualification_runtime(
+            case_root,
+            str(validated.get("human_decision_sha256")),
+            intercept=False,
+            missing_required_ordinal=ordinal,
+        )
+        failure: BaseException | None = None
+        try:
+            path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+        except BaseException as exc:
+            failure = exc
+        if failure is None:
+            raise AssertionError("missing required shard unexpectedly passed")
+
+        provider = runtime.checkpoint_effect
+        if type(provider) is not path._SyntheticCheckpointProvider:
+            raise AssertionError("missing-required checkpoint provider")
+        evidence = getattr(failure, "evidence", None)
+        detail = getattr(failure, "detail", None)
+        package = runtime.storage.package_directory
+        terminal = json.loads(
+            (package / "package-terminal.json").read_text(encoding="utf-8")
+        )
+        accounting = json.loads(
+            (package / "failure-accounting.json").read_text(encoding="utf-8")
+        )
+        observed_package = set(item.name for item in package.iterdir())
+        extra_name = path._SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES[0]
+        if (
+            type(evidence) is not dict
+            or evidence.get("checkpoint_access") != 0
+            or type(detail) is not str
+            or detail
+            != "checkpoint root leaf census: required=6 present=5 missing=1"
+            or extra_name in detail
+            or observed_package & forbidden_successors
+            or terminal.get("state") != "TERMINAL_FAILURE"
+            or terminal.get("failed_stage") != "IDENTITY_TERMINAL"
+            or accounting.get("package_delta") != 1
+            or accounting.get("primary_delta") != 0
+            or accounting.get("secondary_delta") != 0
+            or accounting.get("original_checkpoint_root_resolutions") != 0
+            or accounting.get("original_checkpoint_opens") != 0
+            or accounting.get("real_numerical_executions") != 0
+            or provider.physical_identity_producer_calls != 1
+            or provider.producer_checkpoint_binding_checks != 1
+            or provider.producer_checkpoint_shard_opens != 0
+            or provider.producer_checkpoint_identity_hash_reads != 0
+            or runtime.observed_effects["synthetic_fixture_required_leaves"] != 5
+            or runtime.observed_effects["synthetic_fixture_benign_extra_leaves"]
+            != 1
+            or runtime.observed_effects["synthetic_fixture_leaf_creation_opens"]
+            != 6
+            or runtime.observed_effects["numerical_executions"] != 0
+        ):
+            raise AssertionError("missing-required public-path pre-open closure")
+        cases.append(
+            {
+                "missing_ordinal": ordinal,
+                "checkpoint_shard_opens": 0,
+                "checkpoint_identity_hash_reads": 0,
+                "primary_successor_effects": 0,
+                "secondary_successor_effects": 0,
+                "comparison_successor_effects": 0,
+                "release_successor_effects": 0,
+                "terminal_failure_banked": True,
+                "failure_accounting_banked": True,
+                "synthetic_identities_instantiated": runtime.observed_effects[
+                    "synthetic_identities_instantiated"
+                ],
+                "synthetic_identities_consumed": runtime.integration_state.snapshot().get(
+                    "package_starts"
+                ),
+                "synthetic_human_decision_sha256s": [path._sha(seed)],
+                "result": "PASS",
+            }
+        )
+    return {
+        "cases": cases,
+        "missing_required_shard_preopen_failures": f"{len(cases)}/6",
+        "checkpoint_shard_opens": 0,
+        "checkpoint_identity_hash_reads": 0,
+        "successor_effects": "0/0/0/0",
+        "terminal_failures_banked": len(cases),
+        "synthetic_identities_instantiated": sum(
+            int(item["synthetic_identities_instantiated"]) for item in cases
+        ),
+        "synthetic_identities_consumed": sum(
+            int(item["synthetic_identities_consumed"]) for item in cases
+        ),
+        "synthetic_human_decision_sha256s": [
+            digest
+            for item in cases
+            for digest in item["synthetic_human_decision_sha256s"]
+        ],
+        "result": "PASS",
+    }
+
+
+def _synthetic_scope_boundary(root: Path) -> dict[str, object]:
+    """Prove one graph-owned synthetic decision cannot enter production."""
+    now = 39_388_000_000
+    seed = path._graph_owned_qualification_seed(root, "SCOPE-BOUNDARY")
+    synthetic = path._authority_profile(synthetic=True)
+    production = path._authority_profile(synthetic=False)
+    synthetic_shards = tuple(
+        (item["size_bytes"], item["sha256"]) for item in synthetic.shards
+    )
+    production_shards = tuple(
+        (item["size_bytes"], item["sha256"]) for item in production.shards
+    )
+    if (
+        synthetic.checkpoint_set_sha256 == production.checkpoint_set_sha256
+        or len(synthetic_shards) != 6
+        or len(production_shards) != 6
+        or any(
+            synthetic_item == production_item
+            for synthetic_item, production_item in zip(
+                synthetic_shards, production_shards, strict=True
+            )
+        )
+    ):
+        raise AssertionError("synthetic/production checkpoint authority separation")
+    raw = path._qualification_go(synthetic, seed, now_unix_ns=now)
+    try:
+        path._gate_m003_fail_closed_preflight(raw, production, now_unix_ns=now)
+    except ValueError as exc:
+        if "collapsed GO release authority" not in str(exc):
+            raise
     else:
-        if not isinstance(qualification_root, Path) or not qualification_root.is_absolute():
-            raise TypeError("qualification root must be an absolute Path")
-        root = qualification_root.resolve(strict=True)
-        if qualification_root.is_symlink() or not root.is_dir():
-            raise ValueError("qualification root must be a real directory")
+        raise AssertionError("synthetic authority crossed production preflight")
+    return {
+        "synthetic_authority_production_consumable": False,
+        "checkpoint_set_sha256_unequal": True,
+        "all_shard_size_digest_pairs_unequal": True,
+        "synthetic_human_decision_sha256s": [path._sha(seed)],
+        "protected_production_effects": 0,
+        "result": "PASS",
+    }
+
+
+def qualify() -> dict[str, object]:
+    """Run the complete deterministic Sequence 39 no-access campaign."""
+    graph_temp_parent = Path(tempfile.gettempdir()).resolve(strict=True)
+    temporary = tempfile.TemporaryDirectory(
+        prefix="f017-sequence41-", dir=graph_temp_parent
+    )
+    root = path._qualification_root(Path(temporary.name))
     try:
         # First prove the static closure, then enrich it with the actual
         # producer/consumer component trace from the complete public dry run.
         source_derived_closure()
-        mutations = retained_gate_mutations()
+        mutation_root = root / "retained-gate-mutations"
+        mutation_root.mkdir()
+        mutations = retained_gate_mutations(mutation_root)
 
         full_root = root / "full-call-path"
         full_root.mkdir()
@@ -2617,7 +2859,38 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
         ]
         if not isinstance(active_components, list):
             raise AssertionError("production component trace")
+        physical_counters = {
+            "physical_v12_identity_producer_calls": 1,
+            "synthetic_checkpoint_binding_checks": 1,
+            "synthetic_checkpoint_shard_opens": 6,
+            "synthetic_checkpoint_identity_hash_reads": 6,
+            "synthetic_checkpoint_payload_bytes_read": 0,
+            "synthetic_checkpoint_mmaps": 0,
+            "graph_owned_synthetic_checkpoint_required_leaves": 6,
+            "graph_owned_synthetic_checkpoint_benign_extra_leaves": 1,
+            "graph_owned_fixture_leaf_creation_opens": 7,
+            "graph_owned_fixture_benign_extra_creation_opens": 1,
+            "identity_producer_extra_leaf_open_follow_stat_hash": "0/0/0/0",
+        }
+        if any(full_path.get(key) != value for key, value in physical_counters.items()):
+            raise AssertionError("physical synthetic checkpoint counters")
+        physical_components = {
+            "f017_checkpoint_identity_producer_v12._minimum_gate_produce",
+            "f017_checkpoint_identity_producer_v12.validate_banked_identity_evidence",
+        }
+        if not physical_components.issubset(
+            set(component_trace["source_derived_exercised_components"])
+        ):
+            raise AssertionError("physical V12 identity component trace")
         closure = source_derived_closure(active_components)
+
+        missing_root = root / "missing-required-public-path"
+        missing_root.mkdir()
+        missing_required = _missing_required_public_path_rehearsals(missing_root)
+
+        scope_root = root / "synthetic-scope-boundary"
+        scope_root.mkdir()
+        scope_boundary = _synthetic_scope_boundary(scope_root)
 
         optional_root = root / "optional-omissions"
         optional_root.mkdir()
@@ -2630,6 +2903,26 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
         failures_root = root / "retained-stage-failures"
         failures_root.mkdir()
         stage_failures = _stage_failure_campaign(failures_root)
+
+        decision_sha256s = [
+            digest
+            for source in (
+                mutations,
+                full_path,
+                missing_required,
+                scope_boundary,
+                optional,
+                one_shot,
+                stage_failures,
+            )
+            for digest in source["synthetic_human_decision_sha256s"]
+        ]
+        if (
+            not decision_sha256s
+            or any(re.fullmatch(r"[0-9a-f]{64}", digest) is None for digest in decision_sha256s)
+            or _SEQUENCE40_CONSUMED_DECISION_SHA256 in decision_sha256s
+        ):
+            raise AssertionError("synthetic decision authority separation")
 
         synthetic_identity_sources = {
             "full_call_path": {
@@ -2649,6 +2942,12 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
                     "synthetic_identities_instantiated"
                 ],
                 "consumed": stage_failures["synthetic_identities_consumed"],
+            },
+            "missing_required_public_path_rehearsals": {
+                "instantiated": missing_required[
+                    "synthetic_identities_instantiated"
+                ],
+                "consumed": missing_required["synthetic_identities_consumed"],
             },
         }
         synthetic_instantiated = sum(
@@ -2706,11 +3005,53 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
             ],
             "full_call_path": full_path,
             "production_component_trace": component_trace,
+            "root_census_policy": "REQUIRED_SUBSET_EXTRAS_IGNORED",
+            "required_shard_names": 6,
+            "required_shards_present_with_extra_leaves": "PASS",
+            "exact_required_shard_open_names": "6/6",
             "retained_gate_mutations": mutations,
             "optional_diagnostic_omission": optional,
             "one_shot_contention": one_shot,
             "retained_stage_failures": stage_failures,
+            "missing_required_public_path_rehearsals": missing_required,
+            "synthetic_scope_boundary": scope_boundary,
+            "missing_required_shard_preopen_failures": missing_required[
+                "missing_required_shard_preopen_failures"
+            ],
             "full_call_path_dry_run_with_synthetic_authority": "PASS",
+            "physical_v12_identity_producer_on_graph_owned_synthetic_checkpoint": (
+                "PASS"
+            ),
+            "physical_v12_identity_producer_calls": full_path[
+                "physical_v12_identity_producer_calls"
+            ],
+            "synthetic_checkpoint_binding_checks": full_path[
+                "synthetic_checkpoint_binding_checks"
+            ],
+            "synthetic_checkpoint_opens_identity_hash_reads_payload_bytes_mmaps": (
+                f"{full_path['synthetic_checkpoint_shard_opens']}/"
+                f"{full_path['synthetic_checkpoint_identity_hash_reads']}/"
+                f"{full_path['synthetic_checkpoint_payload_bytes_read']}/"
+                f"{full_path['synthetic_checkpoint_mmaps']}"
+            ),
+            "graph_owned_synthetic_checkpoint_required_leaves": full_path[
+                "graph_owned_synthetic_checkpoint_required_leaves"
+            ],
+            "graph_owned_synthetic_checkpoint_benign_extra_leaves": full_path[
+                "graph_owned_synthetic_checkpoint_benign_extra_leaves"
+            ],
+            "graph_owned_fixture_leaf_creation_opens": full_path[
+                "graph_owned_fixture_leaf_creation_opens"
+            ],
+            "graph_owned_fixture_benign_extra_creation_opens": full_path[
+                "graph_owned_fixture_benign_extra_creation_opens"
+            ],
+            "identity_producer_extra_leaf_open_follow_stat_hash": full_path[
+                "identity_producer_extra_leaf_open_follow_stat_hash"
+            ],
+            "identity_producer_extra_leaf_interaction_proof": (
+                "SOURCE_DERIVED_AND_FOCUSED_RUNTIME_INSTRUMENTED"
+            ),
             "production_path_components_exercised": component_trace[
                 "production_components_exercised_ratio"
             ],
@@ -2730,6 +3071,10 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
             "synthetic_identities_instantiated_or_consumed": (
                 f"{synthetic_instantiated}/{synthetic_consumed}"
             ),
+            "synthetic_decision_authority_source": "GRAPH_OWNED_TEMPORARY_BYTES",
+            "synthetic_decision_count": len(decision_sha256s),
+            "synthetic_decision_digest_equals_consumed_go": False,
+            "synthetic_authority_production_consumable": False,
             "historical_master_ledger": 175,
             "event06_executed": False,
             "new_human_go_created_requested_or_reused": False,
@@ -2737,8 +3082,7 @@ def qualify(qualification_root: Path | None = None) -> dict[str, object]:
         }
         return result
     finally:
-        if temporary is not None:
-            temporary.cleanup()
+        temporary.cleanup()
 
 
 if __name__ == "__main__":

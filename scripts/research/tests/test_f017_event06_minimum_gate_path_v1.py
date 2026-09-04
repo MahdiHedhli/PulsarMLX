@@ -25,9 +25,8 @@ def _unseal_graph_owned_test_leaf(target: Path) -> None:
 
 
 @pytest.fixture(scope="module")
-def qualification(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    root = tmp_path_factory.mktemp("f017-sequence39-minimum-gate")
-    return qualify(Path(root))
+def qualification() -> dict[str, object]:
+    return qualify()
 
 
 def test_minimum_path_has_one_closed_public_input() -> None:
@@ -41,6 +40,183 @@ def test_minimum_path_has_one_closed_public_input() -> None:
         not in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD}
         for item in signature.parameters.values()
     )
+
+
+def test_qualification_root_rejects_live_overlap_and_intermediate_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    live_package = tmp_path / "live-package"
+    live_checkpoint = tmp_path / "live-checkpoint"
+    live_package.mkdir()
+    live_checkpoint.mkdir()
+    (live_package / "child").mkdir()
+    (live_checkpoint / "child").mkdir()
+    monkeypatch.setattr(path, "_LIVE_PACKAGE_PARENT", live_package)
+    monkeypatch.setattr(path, "_LIVE_CHECKPOINT_ROOT", live_checkpoint)
+
+    opened: list[object] = []
+    real_open = os.open
+
+    def tracked_open(target, flags, mode=0o777, *, dir_fd=None):
+        opened.append(target)
+        return real_open(target, flags, mode, dir_fd=dir_fd)
+
+    monkeypatch.setattr(path.os, "open", tracked_open)
+    for live in (live_package, live_checkpoint):
+        for candidate in (live, live / "child", live.parent):
+            opened.clear()
+            with pytest.raises(ValueError, match="overlap a live root"):
+                path._qualification_root(candidate)
+            assert opened == []
+
+    safe = tmp_path / "safe"
+    safe.mkdir()
+    for index, live in enumerate((live_package, live_checkpoint), start=1):
+        alias = safe / f"alias-{index}"
+        alias.symlink_to(live, target_is_directory=True)
+        opened.clear()
+        with pytest.raises(ValueError, match="nonsymlink directory"):
+            path._qualification_root(alias / "child")
+        assert live not in opened
+        assert str(live) not in opened
+        assert live.name not in opened
+
+    opened.clear()
+    double_anchor = Path("//" + str(tmp_path).lstrip("/"))
+    with pytest.raises(ValueError, match="noncanonical"):
+        path._qualification_root(double_anchor)
+    assert opened == []
+
+    opened.clear()
+    with pytest.raises(ValueError, match="overlap a live root"):
+        path._qualification_root(Path("/Applications"))
+    assert opened == []
+
+    opened.clear()
+    with pytest.raises(ValueError, match="fixed canonical absolute path"):
+        path._open_directory_chain(double_anchor, create=False)
+    assert opened == []
+
+
+@pytest.mark.parametrize("replacement_kind", ["directory", "symlink"])
+def test_synthetic_checkpoint_provider_rejects_fixture_leaf_replacement(
+    tmp_path: Path,
+    replacement_kind: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_950_000
+    seed = b"F017-S41-CHECKPOINT-FIXTURE-IDENTITY"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    validated = path._validate_go_bytes(raw, profile, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    installed = path._build_installed_authority(validated, runtime)
+    provider = runtime.checkpoint_effect
+    assert type(provider) is path._SyntheticCheckpointProvider
+
+    checkpoint_root = tmp_path / runtime.synthetic_checkpoint_leaf
+    original = tmp_path / f"original-{replacement_kind}"
+    checkpoint_root.rename(original)
+    if replacement_kind == "directory":
+        checkpoint_root.mkdir(mode=0o700)
+    else:
+        checkpoint_root.symlink_to(original, target_is_directory=True)
+
+    opened_parents: list[int] = []
+    original_open_chain = path._open_directory_chain
+
+    def track_parent(candidate: Path, *, create: bool) -> int:
+        descriptor = original_open_chain(candidate, create=create)
+        opened_parents.append(descriptor)
+        return descriptor
+
+    monkeypatch.setattr(path, "_open_directory_chain", track_parent)
+    with pytest.raises((OSError, ValueError)):
+        provider._require_graph_owned_checkpoint_binding(installed, runtime.storage)
+    assert len(opened_parents) == 2
+    for descriptor in opened_parents:
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
+    assert provider.physical_identity_producer_calls == 0
+    assert provider.producer_checkpoint_shard_opens == 0
+    assert provider.producer_checkpoint_identity_hash_reads == 0
+
+
+def test_synthetic_checkpoint_provider_rejects_leaf_replacement_after_binding(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_975_000
+    seed = b"F017-S41-CHECKPOINT-LEAF-IDENTITY"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    provider = runtime.checkpoint_effect
+    assert type(provider) is path._SyntheticCheckpointProvider
+    original = path._SyntheticCheckpointProvider._require_graph_owned_checkpoint_binding
+    replaced_name = str(profile.shards[0]["filename"])
+
+    def replace_after_binding(
+        current: object,
+        authority: object,
+        storage: object,
+    ) -> int:
+        checkpoint_fd = original(current, authority, storage)
+        os.unlink(replaced_name, dir_fd=checkpoint_fd)
+        replacement = os.open(
+            replaced_name,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+            0o600,
+            dir_fd=checkpoint_fd,
+        )
+        os.close(replacement)
+        return checkpoint_fd
+
+    monkeypatch.setattr(
+        path._SyntheticCheckpointProvider,
+        "_require_graph_owned_checkpoint_binding",
+        replace_after_binding,
+    )
+    with pytest.raises(path._IdentityHandoffFailure) as captured:
+        path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+    assert captured.value.release_outcome["attempted_closures"] == 5
+    assert captured.value.release_outcome["successful_closures"] == 5
+    assert captured.value.release_outcome["live_leases_after_release"] == 0
+    assert provider.physical_identity_producer_calls == 1
+    assert provider.producer_checkpoint_shard_opens == 6
+    assert provider.producer_checkpoint_identity_hash_reads == 6
+
+
+def test_synthetic_checkpoint_root_close_failure_releases_producer_leases(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_990_000
+    seed = b"F017-S41-CHECKPOINT-ROOT-CLOSE-FAILURE"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    original_close = path._close_synthetic_checkpoint_root_descriptor
+
+    def close_then_raise(descriptor: int) -> None:
+        original_close(descriptor)
+        raise OSError("injected checkpoint root close completion error")
+
+    monkeypatch.setattr(
+        path, "_close_synthetic_checkpoint_root_descriptor", close_then_raise
+    )
+    with pytest.raises(path._IdentityHandoffFailure) as captured:
+        path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+    assert captured.value.cause_type == "OSError"
+    assert captured.value.release_outcome["attempted_closures"] == 5
+    assert captured.value.release_outcome["successful_closures"] == 5
+    assert captured.value.release_outcome["live_leases_after_release"] == 0
 
 
 def test_source_derived_gate_and_bypass_closure(
@@ -183,8 +359,21 @@ def test_package_start_consumed_gate_and_identity_key_censuses_are_derived(
     assert relation["executor_consumed_assignment_line"] < relation[
         "executor_first_identity_effect_line"
     ]
+    assert relation["synthetic_fixture_build_line"] < relation[
+        "executor_consumed_assignment_line"
+    ]
+    assert relation["synthetic_fixture_precedes_package_start"] is True
     assert relation["package_start_without_consumed_gate"] == 0
-    assert len(relation["effect_guards"]) == 2
+    effect_guards = {
+        item["consumer"]: item for item in relation["effect_guards"]
+    }
+    assert set(effect_guards) == {
+        "_ProductionCheckpointEffect.run",
+        "_SyntheticCheckpointProvider.run",
+    }
+    for item in effect_guards.values():
+        assert item["guard_line"] < item["first_effect_line"]
+        assert item["consumed_gate_is_first_argument"] is True
 
     identities = closure["package_identity_key_census"]
     assert identities["result"] == "PASS"
@@ -461,7 +650,7 @@ def test_m008_rejects_oracle_disagreement_even_with_valid_thresholds() -> None:
     ("mutation", "expected_error"),
     (
         ("primary-logits", "payload SHA mismatch"),
-        ("identity-evidence", "synthetic identity evidence closure"),
+        ("identity-evidence", "identity journal or receipt census"),
     ),
 )
 def test_m016_revalidates_banked_bytes_after_comparison(
@@ -513,12 +702,12 @@ def test_m016_revalidates_banked_bytes_after_comparison(
             logits_path.write_bytes(mutated)
         else:
             evidence_path = (
-                runtime.storage.package_directory / "identity-access-census.json"
+                runtime.storage.package_directory / "identity" / "access-journal.json"
             )
             _unseal_graph_owned_test_leaf(evidence_path)
             evidence = path._parse_artifact_bytes(evidence_path.read_bytes())
             assert isinstance(evidence, dict)
-            evidence["physical_checkpoint_reads"] = 1
+            evidence["checkpoint_shard_opens"] = 5
             evidence_path.write_bytes(path._canonical_bytes(evidence))
         return original(
             primary,
@@ -604,12 +793,16 @@ def test_package_terminal_revalidates_every_raw_closure_leaf(
             "receipt-derived-accounting": "receipt-derived-accounting.json",
             "package-receipt": "package-receipt.json",
             "v11-result-closure": "v11-result-closure.json",
-        }.get(mutation, "identity-access-census.json")
-        target = package / leaf
+        }.get(mutation)
+        target = (
+            package / "identity" / "access-journal.json"
+            if mutation == "identity-evidence"
+            else package / str(leaf)
+        )
         _unseal_graph_owned_test_leaf(target)
         if mutation == "identity-evidence":
             evidence = path._parse_artifact_bytes(target.read_bytes())
-            evidence["physical_checkpoint_reads"] = 1
+            evidence["checkpoint_shard_opens"] = 5
             target.write_bytes(path._canonical_bytes(evidence))
         else:
             target.write_bytes(target.read_bytes() + b" ")
@@ -1590,6 +1783,199 @@ def test_post_release_failure_accounts_for_actual_completed_release(
     assert terminal["emergency_release_disposition"] == "ALREADY_RELEASED"
 
 
+def test_synthetic_public_path_uses_physical_v12_checkpoint_and_closes_real_fds(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_875_000
+    seed = b"F017-S41-PHYSICAL-SYNTHETIC-IDENTITY"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    original = path._run_identity_stage
+    observed: dict[str, object] = {"calls": 0}
+
+    def observe_physical_identity(
+        authority: object,
+        *,
+        package_attempt_id: str,
+        package_durable_start: bool,
+        evidence_directory: Path | None = None,
+    ) -> tuple[object, dict[str, object]]:
+        observed["calls"] = int(observed["calls"]) + 1
+        checkpoint_root = Path(str(authority.get("checkpoint_root")))
+        observed["checkpoint_root"] = checkpoint_root
+        leases, report = original(
+            authority,
+            package_attempt_id=package_attempt_id,
+            package_durable_start=package_durable_start,
+            evidence_directory=evidence_directory,
+        )
+        observed["leases"] = leases
+        observed["descriptors"] = tuple(leases.inherited_fds())
+        observed["report"] = dict(report)
+        assert evidence_directory is not None
+        observed["evidence_leaves"] = set(os.listdir(evidence_directory))
+        return leases, report
+
+    monkeypatch.setattr(path, "_run_identity_stage", observe_physical_identity)
+    result = path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+
+    assert result["result"] == "PASS"
+    assert observed["calls"] == 1
+    checkpoint_root = observed["checkpoint_root"]
+    assert isinstance(checkpoint_root, Path)
+    assert checkpoint_root.resolve(strict=True).is_relative_to(tmp_path.resolve(strict=True))
+    assert checkpoint_root != path._LIVE_CHECKPOINT_ROOT
+    expected_checkpoint_leaves = {
+        *(str(item["filename"]) for item in profile.shards),
+        *path._SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES,
+    }
+    assert set(os.listdir(checkpoint_root)) == expected_checkpoint_leaves
+    assert observed["evidence_leaves"] == set(path._SUCCESS_PHYSICAL_IDENTITY_FILES)
+    report = observed["report"]
+    assert isinstance(report, dict)
+    assert report["operation_class"] == "CHECKPOINT_IDENTITY_QUALIFICATION"
+    assert report["checkpoint_shard_opens"] == 6
+    assert report["checkpoint_identity_hash_reads"] == 6
+    leases = observed["leases"]
+    assert leases.closed is True
+    for descriptor in observed["descriptors"]:
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
+
+
+def test_malformed_post_producer_counter_releases_physical_leases(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_900_000
+    seed = b"F017-S41-MALFORMED-PRODUCER-COUNTER"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    original = path._ProductionCheckpointEffect.run
+    observed: dict[str, object] = {}
+
+    def corrupt_counter(
+        effect: object,
+        consumed_gate: object,
+        authority: object,
+        storage: object,
+    ) -> object:
+        outcome = original(effect, consumed_gate, authority, storage)
+        observed["leases"] = outcome.leases
+        observed["descriptors"] = tuple(outcome.leases.inherited_fds())
+        malformed = dict(outcome.report)
+        malformed["checkpoint_shard_opens"] = "6"
+        return path._IdentityOutcome(
+            outcome.authority,
+            outcome.leases,
+            malformed,
+            outcome.read_receipts,
+            outcome.identity_receipt_sha256,
+            outcome.identity_terminal_sha256,
+            outcome.access_census_sha256,
+        )
+
+    monkeypatch.setattr(path._ProductionCheckpointEffect, "run", corrupt_counter)
+    with pytest.raises(
+        path._IdentityHandoffFailure,
+        match="checkpoint identity evidence handoff failed",
+    ) as captured:
+        path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+
+    leases = observed["leases"]
+    assert leases.closed is True
+    for descriptor in observed["descriptors"]:
+        with pytest.raises(OSError):
+            os.fstat(descriptor)
+    assert captured.value.cause_type == "TypeError"
+    assert captured.value.release_outcome["attempted_closures"] == 5
+    assert captured.value.release_outcome["successful_closures"] == 5
+    assert captured.value.release_outcome["live_leases_after_release"] == 0
+    package = runtime.storage.package_directory
+    release = path._parse_artifact_bytes(
+        (package / "emergency-release-report.json").read_bytes()
+    )
+    accounting = path._parse_artifact_bytes(
+        (package / "failure-accounting.json").read_bytes()
+    )
+    terminal = path._parse_artifact_bytes(
+        (package / "package-terminal.json").read_bytes()
+    )
+    assert release["attempted_closures"] == 5
+    assert release["successful_closures"] == 5
+    assert release["live_leases"] == 0
+    assert release["result"] == "PASS"
+    assert accounting["emergency_release_outcome"]["result"] == "PASS"
+    assert terminal["failure_wrapper_type"] == "_IdentityHandoffFailure"
+    assert terminal["emergency_release_result"] == "PASS"
+
+
+def test_malformed_counter_release_exception_is_not_hidden(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_925_000
+    seed = b"F017-S41-MALFORMED-COUNTER-RELEASE-EXCEPTION"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, path._sha(seed), intercept=False
+    )
+    original_run = path._ProductionCheckpointEffect.run
+    original_release = path._LeaseSet.release
+
+    def corrupt_counter(
+        effect: object,
+        consumed_gate: object,
+        authority: object,
+        storage: object,
+    ) -> object:
+        outcome = original_run(effect, consumed_gate, authority, storage)
+        malformed = dict(outcome.report)
+        malformed["checkpoint_identity_hash_reads"] = "6"
+        return path._IdentityOutcome(
+            outcome.authority,
+            outcome.leases,
+            malformed,
+            outcome.read_receipts,
+            outcome.identity_receipt_sha256,
+            outcome.identity_terminal_sha256,
+            outcome.access_census_sha256,
+        )
+
+    def release_then_raise(leases: object) -> object:
+        original_release(leases)
+        raise OSError("injected release completion exception")
+
+    monkeypatch.setattr(path._ProductionCheckpointEffect, "run", corrupt_counter)
+    monkeypatch.setattr(path._LeaseSet, "release", release_then_raise)
+    with pytest.raises(path._IdentityHandoffFailure) as captured:
+        path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
+
+    assert captured.value.cause_type == "TypeError"
+    assert captured.value.release_evidence_error_type == "OSError"
+    assert captured.value.release_outcome["result"] == "RELEASE_EXCEPTION"
+    assert captured.value.release_outcome["successful_closures"] == 5
+    assert captured.value.release_outcome["live_leases_after_release"] == 0
+    package = runtime.storage.package_directory
+    terminal = path._parse_artifact_bytes(
+        (package / "package-terminal.json").read_bytes()
+    )
+    accounting = path._parse_artifact_bytes(
+        (package / "failure-accounting.json").read_bytes()
+    )
+    assert terminal["emergency_release_result"] == "RELEASE_EXCEPTION"
+    assert accounting["emergency_release_outcome"]["successful_closures"] == 5
+    assert accounting["emergency_release_outcome"]["live_leases_after_release"] == 0
+
+
 def test_release_authority_is_production_complete_and_scope_separated() -> None:
     synthetic = path._authority_profile(synthetic=True)
     production = path._authority_profile(synthetic=False)
@@ -1755,6 +2141,8 @@ def test_one_shot_contention_and_terminal_have_one_winner(
     assert one_shot["loser_error_type"] == "FileExistsError"
     assert one_shot["loser_checkpoint_root_resolutions"] == 0
     assert one_shot["loser_checkpoint_opens"] == 0
+    assert one_shot["loser_physical_identity_producer_calls"] == 0
+    assert one_shot["replay_physical_identity_producer_calls"] == 0
     assert one_shot["loser_numerical_operations"] == 0
     assert one_shot["terminal_winners_per_package"] == 1
     assert one_shot["second_attempt_rejected"] is True
@@ -1776,9 +2164,29 @@ def test_every_retained_stage_stops_with_truthful_prefix(
     assert all(item["fabricated_successor_receipts"] == 0 for item in failures["cases"])
 
 
-def test_full_public_path_is_synthetic_and_has_zero_real_effects(
+def test_missing_required_public_paths_fail_before_shard_or_successor_effects(
     qualification: dict[str, object],
 ) -> None:
+    rehearsals = qualification["missing_required_public_path_rehearsals"]
+    assert rehearsals["result"] == "PASS"
+    assert rehearsals["missing_required_shard_preopen_failures"] == "6/6"
+    assert rehearsals["checkpoint_shard_opens"] == 0
+    assert rehearsals["checkpoint_identity_hash_reads"] == 0
+    assert rehearsals["successor_effects"] == "0/0/0/0"
+    assert rehearsals["terminal_failures_banked"] == 6
+    assert [item["missing_ordinal"] for item in rehearsals["cases"]] == list(
+        range(1, 7)
+    )
+    assert all(item["result"] == "PASS" for item in rehearsals["cases"])
+
+
+def test_full_public_path_uses_bounded_physical_synthetic_identity(
+    qualification: dict[str, object],
+) -> None:
+    assert qualification["root_census_policy"] == "REQUIRED_SUBSET_EXTRAS_IGNORED"
+    assert qualification["required_shard_names"] == 6
+    assert qualification["required_shards_present_with_extra_leaves"] == "PASS"
+    assert qualification["exact_required_shard_open_names"] == "6/6"
     assert qualification["full_call_path_dry_run_with_synthetic_authority"] == "PASS"
     trace = qualification["production_component_trace"]
     component_count = trace["production_component_count"]
@@ -1799,6 +2207,15 @@ def test_full_public_path_is_synthetic_and_has_zero_real_effects(
         f"{exercised_count}/{expected_count}"
     )
     assert trace["actual_call_trace_not_handwritten_census"] is True
+    exercised_components = set(trace["source_derived_exercised_components"])
+    assert (
+        "f017_checkpoint_identity_producer_v12._minimum_gate_produce"
+        in exercised_components
+    )
+    assert (
+        "f017_checkpoint_identity_producer_v12.validate_banked_identity_evidence"
+        in exercised_components
+    )
     assert trace["active_imported_producer_consumer_module_count"] == len(
         trace["active_imported_producer_consumer_modules"]
     )
@@ -1810,8 +2227,72 @@ def test_full_public_path_is_synthetic_and_has_zero_real_effects(
     assert qualification["primary_secondary_real_executions"] == "0/0"
     assert qualification["full_model_inference"] == "NONE"
     assert qualification["real_registry_ledger_or_terminal_writes"] == 0
+    assert (
+        qualification[
+            "physical_v12_identity_producer_on_graph_owned_synthetic_checkpoint"
+        ]
+        == "PASS"
+    )
+    assert qualification["physical_v12_identity_producer_calls"] == 1
+    assert qualification["synthetic_checkpoint_binding_checks"] == 1
+    assert (
+        qualification[
+            "synthetic_checkpoint_opens_identity_hash_reads_payload_bytes_mmaps"
+        ]
+        == "6/6/0/0"
+    )
+    assert qualification["graph_owned_synthetic_checkpoint_required_leaves"] == 6
+    assert (
+        qualification["graph_owned_synthetic_checkpoint_benign_extra_leaves"]
+        == 1
+    )
+    assert qualification["graph_owned_fixture_leaf_creation_opens"] == 7
+    assert qualification["graph_owned_fixture_benign_extra_creation_opens"] == 1
+    assert (
+        qualification["identity_producer_extra_leaf_open_follow_stat_hash"]
+        == "0/0/0/0"
+    )
+    full_path = qualification["full_call_path"]
+    assert full_path["physical_v12_identity_producer_calls"] == 1
+    assert full_path["synthetic_checkpoint_binding_checks"] == 1
+    assert full_path["synthetic_checkpoint_shard_opens"] == 6
+    assert full_path["synthetic_checkpoint_identity_hash_reads"] == 6
+    assert full_path["synthetic_checkpoint_payload_bytes_read"] == 0
+    assert full_path["synthetic_checkpoint_mmaps"] == 0
+    assert full_path["graph_owned_fixture_leaf_creation_opens"] == 7
+    assert full_path["graph_owned_fixture_benign_extra_creation_opens"] == 1
+    assert (
+        full_path["identity_producer_extra_leaf_open_follow_stat_hash"]
+        == "0/0/0/0"
+    )
     assert qualification["historical_master_ledger"] == 175
     assert qualification["event06_executed"] is False
+    assert (
+        qualification["synthetic_decision_authority_source"]
+        == "GRAPH_OWNED_TEMPORARY_BYTES"
+    )
+    assert qualification["synthetic_decision_count"] > 0
+    assert qualification["synthetic_decision_digest_equals_consumed_go"] is False
+    assert qualification["synthetic_authority_production_consumable"] is False
+    assert qualification["synthetic_scope_boundary"]["result"] == "PASS"
+    assert (
+        qualification["synthetic_scope_boundary"][
+            "checkpoint_set_sha256_unequal"
+        ]
+        is True
+    )
+    assert (
+        qualification["synthetic_scope_boundary"][
+            "all_shard_size_digest_pairs_unequal"
+        ]
+        is True
+    )
+    assert (
+        qualification["synthetic_scope_boundary"][
+            "protected_production_effects"
+        ]
+        == 0
+    )
     assert qualification["result"] == "PASS"
 
     synthetic = qualification["synthetic_identity_accounting"]
