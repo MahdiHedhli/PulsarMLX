@@ -1,0 +1,71 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence39-implementation-measurement/1.0.0",
+  "recorded_at_utc": "2026-09-04T02:53:26Z",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "5b39a21aa8369ea2e53ea8e406002cc74250cec3",
+  "implementation_tree": "f6960677878233a7e7fba0f3f0f3470a92e9ec00",
+  "changed_path_count": 45,
+  "key_paths": {
+    "minimum_gate_contract": {
+      "path": "scripts/research/f017_event06_minimum_gate_contract_v1.py",
+      "sha256": "cdd59f753f11f642801e4488b15d216dfd06ae9b98ef274a8fb314f1fabe562e"
+    },
+    "minimum_gate_path": {
+      "path": "scripts/research/f017_event06_minimum_gate_path_v1.py",
+      "sha256": "49b980ca3290d35d96de50179f02a705b9dc8a6f436f4ee3e7ecba76db103b94"
+    },
+    "write_once_helper": {
+      "path": "scripts/research/f017_write_once_artifact_v1.py",
+      "sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768"
+    },
+    "qualification": {
+      "path": "scripts/research/qualify_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "9f1ebd0874273c3fb79f5d91d33ef433fb06e95c5e4dcdcf41499ad3e8023543"
+    },
+    "minimum_gate_tests": {
+      "path": "scripts/research/tests/test_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "20b9dabb2ca915a758c336fb5c31efefe82db061f63d98b77560450c6ae8c893"
+    }
+  },
+  "focused_tests": {
+    "minimum_gate_module": "55 passed",
+    "changed_surfaces": "89 passed, 3 subtests passed",
+    "result": "PASS"
+  },
+  "applicable_f017_tests": {
+    "tests": 646,
+    "subtests": 147,
+    "failures": 0,
+    "result": "PASS"
+  },
+  "formatting_lint_type": {
+    "python_compileall": "PASS",
+    "git_diff_check": "PASS",
+    "generator_checks": "PASS",
+    "v11_execution_authority_validation": "PASS"
+  },
+  "supporting_qualifications": {
+    "checkpoint_identity_cases": 393,
+    "v11_failure_cases": 360,
+    "full_geometry_primary_secondary_comparison": "30/30/30",
+    "unexpected_passes": 0,
+    "original_checkpoint_access": 0,
+    "result": "PASS"
+  },
+  "frozen_authority": {
+    "numerical_contract_v4_sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "primary_numerical_core_v3_sha256": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "secondary_numerical_core_v3_sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+    "result_authority_v11_sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+    "binary_result_envelope_v11_sha256": "9f2812c70d248d15e0f39e14dc047d815c5c9c0a19257bd122fa64ade078ea67",
+    "historical_canonical_v10_sha256": "7faa1d292c61257024e8aa1e4b337f395cea4c3e4e2dafa476661aeb9dc3872d",
+    "drift_count": 0
+  },
+  "full_native_ci": "OPTIONAL_NOT_RUN",
+  "external_reviewers": "NOT_RUN_NON_GATING",
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "real_numerical_executions": 0,
+  "result": "PASS"
+}

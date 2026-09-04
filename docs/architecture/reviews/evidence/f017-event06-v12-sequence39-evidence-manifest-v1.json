@@ -1,0 +1,106 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence39-evidence-manifest/1.0.0",
+  "recorded_at_utc": "2026-09-04T02:53:26Z",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "source_start": {
+    "head": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729",
+    "tree": "e03faf44b27f1753f070a1b54bc33f73277c6bbf"
+  },
+  "technical_implementation": {
+    "head": "5b39a21aa8369ea2e53ea8e406002cc74250cec3",
+    "tree": "f6960677878233a7e7fba0f3f0f3470a92e9ec00"
+  },
+  "implementation_bindings": [
+    {
+      "path": "scripts/research/f017_event06_minimum_gate_contract_v1.py",
+      "sha256": "cdd59f753f11f642801e4488b15d216dfd06ae9b98ef274a8fb314f1fabe562e",
+      "role": "MINIMUM_GATE_CONTRACT"
+    },
+    {
+      "path": "scripts/research/f017_event06_minimum_gate_path_v1.py",
+      "sha256": "49b980ca3290d35d96de50179f02a705b9dc8a6f436f4ee3e7ecba76db103b94",
+      "role": "SOLE_PUBLIC_PRODUCTION_PATH"
+    },
+    {
+      "path": "scripts/research/f017_write_once_artifact_v1.py",
+      "sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768",
+      "role": "PRIVATE_WRITE_ONCE_HELPER"
+    },
+    {
+      "path": "scripts/research/qualify_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "9f1ebd0874273c3fb79f5d91d33ef433fb06e95c5e4dcdcf41499ad3e8023543",
+      "role": "SOURCE_DERIVED_QUALIFIER"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "20b9dabb2ca915a758c336fb5c31efefe82db061f63d98b77560450c6ae8c893",
+      "role": "MINIMUM_GATE_TESTS"
+    }
+  ],
+  "evidence_bindings": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-baseline-v1.json",
+      "sha256": "df3e1e1796ab3d6cebf14db10374b67d794ff547f15631ea12ad1af72cde2ee1",
+      "role": "BASELINE"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-source-derived-minimum-gate-inventory-v1.json",
+      "sha256": "0eea72d35b25d27196edd6d1763369802afef933ed42bf2081938e683b52c543",
+      "role": "SOURCE_DERIVED_GATE_INVENTORY"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-production-shaped-no-access-dry-run-v1.json",
+      "sha256": "2ec84af9160d78c639e2cf95c3efa3e629e2e736c0c9bdf2f5a594630fb63551",
+      "role": "PRODUCTION_SHAPED_NO_ACCESS_DRY_RUN"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-retained-gate-mutation-evidence-v1.json",
+      "sha256": "f66b7386ac2bf848dc537c36aa04b1bf791e7597edf59098613176594a5e9bb3",
+      "role": "RETAINED_GATE_AND_FAILURE_MUTATIONS"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-repair-loop-ledger-v1.json",
+      "sha256": "bf59876f783adeb7c4d6e7746118cc67bd2962ded47d9b24e84f69625cbc5fec",
+      "role": "STRUCTURAL_REPAIR_LOOP_LEDGER"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence39-implementation-measurement-v1.json",
+      "sha256": "57b23b85c176b8552b15e363825fe1ddbfb623c30be157a25f456868ecd33c26",
+      "role": "IMPLEMENTATION_MEASUREMENT"
+    }
+  ],
+  "qualification": {
+    "required_gates_enforced": "17/17",
+    "removed_mechanisms_still_gating": 0,
+    "implementation_dependencies_resolved": "16/16",
+    "callable_legacy_or_superseded_bypasses": 0,
+    "production_path_components_exercised": "168/168",
+    "retained_gate_mutations_rejected": "17/17",
+    "applicable_f017_tests": 646,
+    "applicable_f017_subtests": 147,
+    "unexpected_passes": 0,
+    "full_native_ci": "OPTIONAL_NOT_RUN",
+    "external_reviewers": "NOT_RUN_NON_GATING"
+  },
+  "safety": {
+    "event_04_retry": false,
+    "event_05_retry_or_resume": false,
+    "prior_event_06_retry_or_resume": false,
+    "new_human_go_created_requested_or_reused": false,
+    "live_event_06_authorization_created": false,
+    "event_06_package_started": false,
+    "event_06_executed": false,
+    "real_event06_identities_instantiated": 0,
+    "real_event06_identities_consumed": 0,
+    "original_checkpoint_root_resolutions": 0,
+    "original_checkpoint_opens_hashes_payload_reads_mmaps": "0/0/0/0",
+    "primary_secondary_real_executions": "0/0",
+    "real_registry_ledger_or_terminal_writes": 0,
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "historical_master_ledger": 175
+  },
+  "sequence39_result": "PASS_PENDING_PLANNER_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "result": "PASS"
+}
