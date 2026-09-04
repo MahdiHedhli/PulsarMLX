@@ -1,0 +1,351 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence41-checkpoint-census-repair/1.0.0",
+  "recorded_at_utc": "2026-09-04T20:24:50Z",
+  "feature_id": "F017",
+  "sequence": 41,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt_authority": {
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "commit": "d85ad9e59030fa9d66392c551e55eddbe8b3ed52",
+    "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/041__F017__Mac-Studio-M1-Ultra__checkpoint-root-leaf-census-repair-and-no-access-requalification__prompt.md",
+    "digest": "1abdc8b83338a7bc869c76bf17197c331bc5dc2b3af1f53a62bf058fb841828c",
+    "basename_sidecar": "PASS",
+    "support_commit": "c1f3401742a11d512c3fd983291862bd382378a0",
+    "planner_declaration": {
+      "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/041__F017__Mac-Studio-M1-Ultra__checkpoint-root-leaf-census-repair__planner-declaration.md",
+      "digest": "bcacdb134197bc1b2d93e58bc71e7e46d63dde2f9f7d4415cd7a097950f9f1c3"
+    },
+    "freeze_transition_table": {
+      "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/041__F017__Mac-Studio-M1-Ultra__checkpoint-root-leaf-census-repair__freeze-transition-table.json",
+      "digest": "a4331ddb5700051c2d2144e9ee6d72286bb5755f1a99195bd65597cd7603cdb5"
+    }
+  },
+  "predecessor_authority": {
+    "source_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+    "source_tree": "dbf833977373aaffc67250e0e1893d8b9ee56af4",
+    "sequence40_terminal_response_digest": "3db22e414b4c1ca96680c29b57a10f0eaf699682ca303215c4e7ece65590d282",
+    "sequence40_handoff_digest": "4919fc9a19db9cc36aa7a698bd6554f1460909784cfe75c23540c66c2f763d0f",
+    "sequence40_go_decision_digest": "25b1312d26a436e103f26f1645f2d83e3147cbabc6522c91e5fa92d89ee73bdd",
+    "sequence40_go_consumed": true,
+    "sequence40_go_reusable": false,
+    "sequence40_terminal_evidence": {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence40-terminal-failure-evidence-v1.json",
+      "sha256": "ddaca36a24dd4b5cde4fee8dfb3913093d7d128c880b9e249403f692a58b0339"
+    },
+    "sequence40_package_terminal_digest": "8bdccdb12922ec0154c48b9db969b1b8ff08ebc6ab5764cbabd0615598a13889",
+    "sequence40_accounting_delta": "0/1/0/0"
+  },
+  "source_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "start_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+    "start_tree": "dbf833977373aaffc67250e0e1893d8b9ee56af4",
+    "start_parity_classification": "EXACT",
+    "implementation_head": "f3647206b1be434538dad8a44dc7ac950bc93558",
+    "implementation_tree": "3197b3940ee64e7c16a9ec091f2077e57b4aace3",
+    "implementation_remote_parity": "PASS",
+    "implementation_worktree_clean": true,
+    "changed_path_count": 7,
+    "insertions": 2133,
+    "deletions": 388
+  },
+  "implementation_bindings": [
+    {
+      "path": "scripts/research/f017_checkpoint_identity_producer_v12.py",
+      "sha256": "7fb87265bcb649bf9fe080caa61723fdaf35225022212f7300898d52850724ba",
+      "predecessor_sha256": "a964dac920555f7d124dd982d4475d78cfaa135c134c4984cfc5689898356c05",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/f017_event06_minimum_gate_path_v1.py",
+      "sha256": "2e7e2cb526fd5bfa81da951c2a583b4f891e2dcc71d4c900575ea40a9706e5ff",
+      "predecessor_sha256": "49b980ca3290d35d96de50179f02a705b9dc8a6f436f4ee3e7ecba76db103b94",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/qualify_f017_checkpoint_identity_authority_v12.py",
+      "sha256": "9a7a38fb0a4c99e9807d0e9275a361016e729cf9bc8ac49fe89e155629db2522",
+      "predecessor_sha256": "58da02963b728beb1e9dc42c57f49dca5edcbbb07ec584f013358d16f4710711",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/qualify_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "7a117f9de62045a00cf1ae9d0eb83f0d9bb42ab7dc8e6fe189bcd7a29fcaf426",
+      "predecessor_sha256": "9f1ebd0874273c3fb79f5d91d33ef433fb06e95c5e4dcdcf41499ad3e8023543",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_checkpoint_identity_authority_v12.py",
+      "sha256": "d00d751e6e51d6a80634e3ebe5b708bf08a93c956651e9bd05dbe9e56399e5e4",
+      "predecessor_sha256": "11fa058dca34f2341acc986f27482e4911afc144536b8fcc0ea334610c9a6751",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_checkpoint_identity_minimum_authority_v1.py",
+      "sha256": "4e476bfd55744bb61c92d8facb3bced48700b694bdf387f835469d4ed292a60c",
+      "predecessor_sha256": "b54723c11b74bf63fb5022792b43b113186439791b349b030528acd6fafeff18",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "38d06f2e3c3f47ff5cfcbb0655972224230401b03b6ad8709267d34485daa776",
+      "predecessor_sha256": "20b9dabb2ca915a758c336fb5c31efefe82db061f63d98b77560450c6ae8c893",
+      "commit": "f3647206b1be434538dad8a44dc7ac950bc93558"
+    }
+  ],
+  "authority_drift": {
+    "production_release_authority_sha256_before": "4a55183f0bddfbdc0381a8e9447f9293b6e53bb3c04857083b27326e8b7c9e19",
+    "production_release_authority_sha256_after": "b925011eeb6ed393dd173945fe5007e5b13501d410c32ef296dad78705939335",
+    "runtime_closure_sha256_after": "a495009e2831e31a64f594f9a912473ba8f378678f89e4243217f4ef56784f98",
+    "loaded_bindings_sha256_after": "793c076dde6c3877493bb707dc86364cb491986842db5c471f4d89721b7b332f",
+    "frozen_digest_drift_count": 0,
+    "frozen_bindings": [
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v12.json",
+        "sha256": "fee13b771363cd29123c3e945c856560e11ca9752a0501139dd518c8aafb20f2"
+      },
+      {
+        "path": "scripts/research/f017_event06_minimum_gate_contract_v1.py",
+        "sha256": "cdd59f753f11f642801e4488b15d216dfd06ae9b98ef274a8fb314f1fabe562e"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v12.json",
+        "sha256": "cad79cd9a87897347d096ad698e7dc2da3f0fe18b13aa124ef559dc9691a450d"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json",
+        "sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json",
+        "sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json",
+        "sha256": "17732cd5d98c434bdeea4ee66701e80aaf7713db772b20b537f21e5bbfa4ee23"
+      }
+    ]
+  },
+  "qualification": {
+    "qualification_result_sha256": "ae025b7c12ff602c8d41c46bad51e2d1248ee3a41ce98861ba38aa6cadb7dc64",
+    "root_census_policy": "REQUIRED_SUBSET_EXTRAS_IGNORED",
+    "required_shard_names": 6,
+    "required_shards_present_with_extra_leaves": "PASS",
+    "missing_required_shard_preopen_failures": "6/6",
+    "exact_required_shard_open_names": "6/6",
+    "expected_name_symlink_rejected": "PASS",
+    "size_hash_type_descriptor_stability_guards": "PASS",
+    "identity_producer_extra_leaf_open_follow_stat_hash": "0/0/0/0",
+    "extra_leaves_in_authority_or_evidence": 0,
+    "full_call_path_dry_run_with_synthetic_authority_and_extra_leaf": "PASS",
+    "physical_v12_identity_producer_calls": 1,
+    "synthetic_checkpoint_opens_identity_hash_reads_payload_bytes_mmaps": "6/6/0/0",
+    "synthetic_decision_count": 45,
+    "synthetic_decision_digest_equals_consumed_go": false,
+    "synthetic_authority_production_consumable": false,
+    "synthetic_checkpoint_set_sha256_unequal": true,
+    "all_synthetic_shard_size_digest_pairs_unequal": true,
+    "retained_gate_mutations": "17/17",
+    "retained_gate_mutation_unexpected_passes": 0,
+    "production_component_trace": "183/183",
+    "source_derived_closure": "PASS",
+    "one_shot_contention": {
+      "contenders": 2,
+      "winners": 1,
+      "loser_physical_identity_producer_calls": 0,
+      "replay_physical_identity_producer_calls": 0,
+      "second_attempts_reaching_package_start": 0,
+      "terminal_winners_per_package": 1,
+      "result": "PASS"
+    },
+    "result": "PASS"
+  },
+  "repair_loops": {
+    "authorized_structural": 10,
+    "consumed_structural": 10,
+    "consumed_nonstructural": 0,
+    "same_structural_root_failed_repairs": "2/3",
+    "development_head_during_uncommitted_loops": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+    "implementation_commit_containing_all_dispositions": "f3647206b1be434538dad8a44dc7ac950bc93558",
+    "intermediate_worktree_digest_disposition": "NOT_RETROSPECTIVELY_RECONSTRUCTED; EACH LOOP REMAINED ON THE EXACT PREDECESSOR HEAD UNTIL THE SINGLE CUMULATIVE IMPLEMENTATION COMMIT",
+    "entries": [
+      {
+        "loop": 1,
+        "trigger": "AF_UNIX pathname exceeded the platform bound in a graph-owned fixture",
+        "root_cause_class": "SYNTHETIC_FIXTURE_STORAGE_PATH",
+        "changed_claim": "FULL_CALL_PATH_DRY_RUN_WITH_SYNTHETIC_AUTHORITY_AND_EXTRA_LEAF",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIR_ADVANCED_BUT_ROOT_NOT_YET_CLOSED"
+      },
+      {
+        "loop": 2,
+        "trigger": "Moving the synthetic socket to a global temporary directory violated graph-owned scope",
+        "root_cause_class": "SYNTHETIC_FIXTURE_STORAGE_PATH",
+        "changed_claim": "FULL_CALL_PATH_DRY_RUN_WITH_SYNTHETIC_AUTHORITY_AND_EXTRA_LEAF",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED_WITH_GRAPH_OWNED_RELATIVE_BIND"
+      },
+      {
+        "loop": 3,
+        "trigger": "Source-derived guard qualification became stale after physical producer delegation",
+        "root_cause_class": "SOURCE_DERIVED_GUARD_CLOSURE",
+        "changed_claim": "SOURCE_DERIVED_CLOSURE",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 4,
+        "trigger": "Fixture creation opens were conflated with identity-producer access accounting",
+        "root_cause_class": "SYNTHETIC_ACCESS_ACCOUNTING",
+        "changed_claim": "TRUTHFUL_SYNTHETIC_OPEN_AND_HASH_CENSUS",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 5,
+        "trigger": "Required-name derivation coverage omitted the production checkpoint contract",
+        "root_cause_class": "REQUIRED_SET_DERIVATION",
+        "changed_claim": "REQUIRED_SHARD_NAMES",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 6,
+        "trigger": "Intermediate-symlink and root-descriptor continuity were not fully demonstrated",
+        "root_cause_class": "DESCRIPTOR_ROOT_CONTINUITY",
+        "changed_claim": "SIZE_HASH_TYPE_DESCRIPTOR_STABILITY_GUARDS",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 7,
+        "trigger": "The public production path lacked all six missing-required-leaf rehearsals",
+        "root_cause_class": "PREOPEN_MISSING_LEAF_COVERAGE",
+        "changed_claim": "MISSING_REQUIRED_SHARD_PREOPEN_FAILURES",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 8,
+        "trigger": "Descriptor listing and second-root-resolution assertions were too weak",
+        "root_cause_class": "NO_ACCESS_MEASUREMENT",
+        "changed_claim": "ORIGINAL_CHECKPOINT_ROOT_RESOLUTIONS_OR_ENUMERATIONS",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 9,
+        "trigger": "Pre-package synthetic fixture naming collided during contention rehearsal",
+        "root_cause_class": "ONE_SHOT_CONTENTION_FIXTURE",
+        "changed_claim": "ONE_SHOT_CONTENTION",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 10,
+        "trigger": "Final adversarial audit required a sealed synthetic scope and truthful error handoff",
+        "root_cause_class": "SYNTHETIC_QUALIFICATION_TRUST_BOUNDARY_AND_TRUTHFUL_HANDOFF",
+        "changed_claim": "SYNTHETIC_AUTHORITY_PRODUCTION_CONSUMABLE",
+        "before_head": "8676586662495f84471f4aa6b26d3801a1a19f8e",
+        "after_head": "f3647206b1be434538dad8a44dc7ac950bc93558",
+        "disposition": "REPAIRED_AND_COMMITTED"
+      }
+    ]
+  },
+  "tests": {
+    "focused": "132 passed in 117.70s",
+    "applicable_f017": "678 passed, 147 subtests passed in 219.48s",
+    "checkpoint_identity_qualification": {
+      "mutations_rejected": 250,
+      "total_failure_executions": 393,
+      "filesystem_failure_executions": 54,
+      "missing_required_shard_cases": 6,
+      "shard_directory_cases": 6,
+      "complete_terminals": 90,
+      "result": "PASS"
+    },
+    "generator_checks": "PASS",
+    "v11_execution_authority_validation": "PASS",
+    "ast_parse_files": "7/7",
+    "diff_check": "PASS",
+    "no_access_barrier": {
+      "sha256": "f7248d01306eb4dcbaca2ef326c4a22b28061bd9e51f91100a22c64a63c8cb34",
+      "guarded_process_activations": 510,
+      "blocked_access_events": 0
+    }
+  },
+  "preexisting_unrelated_failures": {
+    "count": 2,
+    "disposition": "DISCLOSED_OPEN_OUT_OF_SEQUENCE41_SCOPE",
+    "items": [
+      {
+        "id": "FROZEN_PACKAGE_START_TORN_COMMIT_WINDOW",
+        "introduced_by_sequence41": false,
+        "sequence41_scope": "OUT_OF_SCOPE",
+        "status": "OPEN",
+        "statement": "Failure after exclusive package-start creation and before in-memory package-start state transition can orphan a package start without terminal closure."
+      },
+      {
+        "id": "POST_OPEN_FAILURE_ACCESS_ACCOUNTING_GAPS",
+        "introduced_by_sequence41": false,
+        "sequence41_scope": "OUT_OF_SCOPE",
+        "status": "OPEN",
+        "statement": "Some production post-open or revalidation failure paths retain stale access accounting."
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "id": "LIVE_ROOT_CAUSE_NOT_OBSERVED",
+      "classification": "NONBLOCKING_SEQUENCE41_SCOPE_LIMITATION",
+      "basis": "LIVE_ROOT_DISCOVERY_PROHIBITED",
+      "statement": "Sequence 41 cannot determine whether Sequence 40 observed an extra leaf or a missing required leaf.",
+      "claims_not_made": [
+        "SEQUENCE40_FAILURE_WAS_CAUSED_BY_AN_EXTRA_LEAF",
+        "SEQUENCE40_FAILURE_WAS_CAUSED_BY_A_MISSING_REQUIRED_LEAF"
+      ],
+      "planner_disposition": "SEPARATE_AUTHORITY_REQUIRED_BEFORE_ANY_NEW_GO"
+    },
+    {
+      "id": "ENTRY_STATE_SNAPSHOT_SCOPE",
+      "classification": "NONBLOCKING_SEQUENCE41_SCOPE_LIMITATION",
+      "statement": "The six-of-six pre-open proof covers preexisting missing leaves in isolated nonconcurrent graph-owned fixtures; it does not claim an atomic snapshot against hostile concurrent deletion after directory enumeration."
+    }
+  ],
+  "safety": {
+    "prompt_declaration_table_and_sidecar_guards": "PASS",
+    "sequence40_terminal_response_handoff_and_evidence_guard": "PASS",
+    "sequence40_go_consumed_and_nonreusable": "PASS",
+    "static_exact_set_failure_reproduced": "PASS",
+    "original_checkpoint_root_resolutions_or_enumerations": "0/0",
+    "original_checkpoint_opens_hashes_payload_reads_mmaps": "0/0/0/0",
+    "primary_secondary_real_executions": "0/0",
+    "full_model_inference": "NONE",
+    "live_event_06_authority_or_package_state": "NONE",
+    "sequence40_retry_resume_continuation_or_replay": "NONE",
+    "new_human_go_created_requested_or_reused": false,
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "historical_master_ledger": 175,
+    "macbook_lane_mutation": "NONE",
+    "synthetic_scope_only": true,
+    "synthetic_authority_production_consumable": false,
+    "synthetic_decision_digest_equals_consumed_go": false
+  },
+  "source_repository_state": {
+    "source_remote_parity_after_technical_push": "PASS",
+    "source_worktree_clean_at_implementation_head": true,
+    "evidence_commit_disposition": "THIS_ADDED_ONLY_ARTIFACT_DOES_NOT_SELF_BIND; FINAL_EVIDENCE_HEAD_AND_TREE_ARE_BOUND_BY_PROMPT_CONTROL_HANDOFF",
+    "evidence_only_validation": "PENDING_EVIDENCE_COMMIT"
+  },
+  "sequence41_result": "PASS_PENDING_PLANNER_REVIEW",
+  "ready_to_request_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "result": "PASS"
+}
