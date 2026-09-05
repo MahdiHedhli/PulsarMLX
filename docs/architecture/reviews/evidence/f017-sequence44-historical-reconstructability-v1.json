@@ -1,0 +1,163 @@
+{
+  "bindings": {
+    "043__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-one-shot-execution__response.md": {
+      "commit": "47f80e862bb9e9ec3739e0b840f79b7f86290a53",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-one-shot-execution__response.md",
+      "sha256": "abc2fb833445734ad287359b95323f9f40d71aae9083c931dd67d6928d322ebc"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-handoff.json": {
+      "commit": "aeb14cf72f067cf461f289394b758695bdf26a94",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-handoff.json",
+      "sha256": "7b4541777d8bdba376490e3c7f1b764a134b1306c8c116d25c91942175bfa28b"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-acceptance.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-acceptance.json",
+      "sha256": "ca963328dee51a527caeb4bac667819c693005030915918de27ecedfcfc1b601"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-verification.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-verification.json",
+      "sha256": "1e0a4ccc7fe753a3aee8efeca1d2cb7dfd0fc79cf1f671ef85dc0e7e44f81ac0"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-verifier.py": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-verifier.py",
+      "sha256": "1aa544c6158966c3595b61c00d082a0e3ffca29b0c5c234eba363a542f9ac8d0"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__freeze-transition-table.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__freeze-transition-table.json",
+      "sha256": "ab2fba9875997a8b358d292505e82c72f725d8594ef0cb83b34d02c6516b35de"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__prompt.md": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__prompt.md",
+      "sha256": "2c7a002367726dcd5ff8ff78fd165cf2b8d9024601810cf7603c6787336624c1"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__read-event-vocabulary.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__read-event-vocabulary.json",
+      "sha256": "9974e6531377b16398fc65d433e923789c757b21c3223d2454bd83bf0297ff43"
+    }
+  },
+  "elapsed_display": "3h56m05s",
+  "evidence_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence43-terminal-success-evidence-v1.json",
+  "evidence_sha256": "88cedac341b0cc353d9307820aa61eaf6cc5443396477e3feb7da16d06750498",
+  "explicit_unknown_fields": [
+    "/access/numerical_mmap_or_tensor_read_count",
+    "/access/numerical_payload_reads",
+    "/access/numerical_payload_read_count_basis",
+    "/reporting_limitations/1"
+  ],
+  "facts": {
+    "authorization_delta": {
+      "committed_evidence_pointer": "/accounting/authorization_delta",
+      "value": 0
+    },
+    "elapsed_seconds": {
+      "committed_evidence_pointer": "/invocation/elapsed_seconds",
+      "value": 14165.037923
+    },
+    "historical_ledger_after": {
+      "committed_evidence_pointer": "/accounting/historical_master_ledger_after",
+      "value": 175
+    },
+    "historical_ledger_before": {
+      "committed_evidence_pointer": "/accounting/historical_master_ledger_before",
+      "value": 175
+    },
+    "identity_hash_bytes": {
+      "committed_evidence_pointer": "/access/identity_census/identity_hash_bytes_lower_bound",
+      "value": 238458632928
+    },
+    "leases_created": {
+      "additional_pointer": "/access/graph_descriptor_ordinals",
+      "basis_caveat": "Creation corroborated by /access/graph_descriptor_ordinals [2,3,4,5,6]; attempts alone are not creation proof.",
+      "committed_evidence_pointer": "/accounting/attempted_closures",
+      "value": 5
+    },
+    "leases_live": {
+      "committed_evidence_pointer": "/accounting/live_leases",
+      "value": 0
+    },
+    "leases_released": {
+      "committed_evidence_pointer": "/accounting/successful_closures",
+      "value": 5
+    },
+    "package_delta": {
+      "committed_evidence_pointer": "/accounting/package_delta",
+      "value": 1
+    },
+    "primary_delta": {
+      "committed_evidence_pointer": "/accounting/primary_delta",
+      "value": 1
+    },
+    "primary_layers": {
+      "committed_evidence_pointer": "/numerical_results/roles/primary/layers_completed",
+      "value": 79
+    },
+    "secondary_delta": {
+      "committed_evidence_pointer": "/accounting/secondary_delta",
+      "value": 1
+    },
+    "secondary_layers": {
+      "committed_evidence_pointer": "/numerical_results/roles/secondary/layers_completed",
+      "value": 79
+    },
+    "shard_open_completions": {
+      "committed_evidence_pointer": "/access/shard_open_completions",
+      "value": 6
+    },
+    "shard_opens_unconfirmed": {
+      "committed_evidence_pointer": "/access/identity_census/checkpoint_shard_opens_unconfirmed",
+      "value": 0
+    }
+  },
+  "historical_estimates_or_backfills": 0,
+  "limitations": [
+    "Package/payload readback, flags and numerical results remain worker-measured digest-bound observations; this graph checked only committed bytes.",
+    "Six whole identity hashes are not six low-level read calls. Five descriptor releases are not five unmaps."
+  ],
+  "result": "COMMITTED_EVIDENCE_RECONCILED",
+  "retained_package_or_checkpoint_access": "NONE",
+  "schema": "pulsarmlx.f017.sequence44.historical-reconstructability/1.0.0",
+  "source_commit": "29c55d314a72747b44bd2c1ce93c71ba6ac157b6",
+  "unrecoverable": {
+    "attributable_fault_residency_events": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "mapped_payload_view_counts_and_spans": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "mapping_attempts_success_failures_extents": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "numerical_positional_calls": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "numerical_requested_bytes_by_role_and_shard": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "numerical_returned_bytes_by_role_and_shard": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    },
+    "unmap_attempts_success_failures_extents": {
+      "availability": "NOT_SEPARATELY_BANKED",
+      "reason": "Not separately retained in committed Sequence43 evidence; no reconstruction or retained-package reopening.",
+      "value": null
+    }
+  }
+}

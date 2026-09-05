@@ -1,0 +1,160 @@
+{
+  "authority_checks": "PASS",
+  "ci": "NOT_REQUESTED; eventual evidence-only publication is non-gating",
+  "declared_transitions_honored_after_publication": 3,
+  "failed_node": "N0_CHEAP_PREREQUISITE_NATIVE_FIXTURE_COMPILE",
+  "fixture_executions": 0,
+  "frozen_runtime_semantic_changes": 0,
+  "harness_attempts": [
+    {
+      "change": "Initial installed Rust compilation under fixture-only default-deny sandbox.",
+      "correction": 0,
+      "exit_code": 134,
+      "id": "SMOKE-0",
+      "observation": "Aborted without diagnostic output; no fixture executable ran."
+    },
+    {
+      "change": "Permit platform operations while retaining explicit filesystem read/write allowlists and network denial.",
+      "correction": 1,
+      "exit_code": 1,
+      "id": "SMOKE-1",
+      "observation": "xcrun/xcode-select developer-directory discovery denied; Rust compile reached link but could not select SDK/linker. Diagnostic requested developer-tools installation; no installation command was issued."
+    },
+    {
+      "change": "Set graph-process SDKROOT/DEVELOPER_DIR to installed CommandLineTools SDK and exact clang linker.",
+      "correction": 2,
+      "exit_code": 1,
+      "id": "SMOKE-2",
+      "observation": "Apple ld attempted xcrun_db and ld-support cache access under ambient per-user temporary directory; sandbox denied it and linker aborted. No ambient-cache allowance was granted."
+    },
+    {
+      "change": "Select installed classic linker using -fuse-ld=classic.",
+      "correction": 3,
+      "exit_code": 1,
+      "id": "SMOKE-3",
+      "observation": "Installed clang rejected the linker-selection spelling: invalid linker name in argument -fuse-ld=classic. Stopped at third consecutive unsuccessful correction."
+    }
+  ],
+  "harness_correction_events": 3,
+  "instrumentation_implementation": "NOT_STARTED",
+  "machine": {
+    "architecture": "arm64",
+    "build": "25A354",
+    "chip": "Apple M1 Ultra",
+    "os": "macOS 26.0"
+  },
+  "mutation_campaign": "NOT_RUN",
+  "next_safe_action": "Planner-directed tooling continuation: qualify an installed linker invocation whose required temporary writes remain in graph-owned scratch, or explicitly authorize a narrow alternative harness. Do not retry under the exhausted tooling-correction allowance; do not request Event06/P1 GO.",
+  "nonstructural_repair_loops_consumed": 0,
+  "out_of_fixture_sentinel_denial": "NOT_RUN_COMPILATION_PREREQUISITE_FAILED",
+  "producer_receipt_terminal_qualification": "NOT_RUN",
+  "prompt_bindings": {
+    "043__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-one-shot-execution__response.md": {
+      "commit": "47f80e862bb9e9ec3739e0b840f79b7f86290a53",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-one-shot-execution__response.md",
+      "sha256": "abc2fb833445734ad287359b95323f9f40d71aae9083c931dd67d6928d322ebc"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-handoff.json": {
+      "commit": "aeb14cf72f067cf461f289394b758695bdf26a94",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-handoff.json",
+      "sha256": "7b4541777d8bdba376490e3c7f1b764a134b1306c8c116d25c91942175bfa28b"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-acceptance.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-acceptance.json",
+      "sha256": "ca963328dee51a527caeb4bac667819c693005030915918de27ecedfcfc1b601"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-verification.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-verification.json",
+      "sha256": "1e0a4ccc7fe753a3aee8efeca1d2cb7dfd0fc79cf1f671ef85dc0e7e44f81ac0"
+    },
+    "043__F017__Mac-Studio-M1-Ultra__planner-result-verifier.py": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/043__F017__Mac-Studio-M1-Ultra__planner-result-verifier.py",
+      "sha256": "1aa544c6158966c3595b61c00d082a0e3ffca29b0c5c234eba363a542f9ac8d0"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__freeze-transition-table.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__freeze-transition-table.json",
+      "sha256": "ab2fba9875997a8b358d292505e82c72f725d8594ef0cb83b34d02c6516b35de"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__prompt.md": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__prompt.md",
+      "sha256": "2c7a002367726dcd5ff8ff78fd165cf2b8d9024601810cf7603c6787336624c1"
+    },
+    "044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__read-event-vocabulary.json": {
+      "commit": "55f5cc886a124159223961a1927716ea8aa11069",
+      "path": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__read-event-vocabulary.json",
+      "sha256": "9974e6531377b16398fc65d433e923789c757b21c3223d2454bd83bf0297ff43"
+    }
+  },
+  "ready_to_request_p1_or_event06_go": "NOT_AUTHORIZED_BY_THIS_GRAPH",
+  "result": "HUMAN_REQUIRED_TOOLING",
+  "root_cause_class": "GRAPH_OWNED_NATIVE_BUILD_SANDBOX_SDK_LINKER_COMPATIBILITY",
+  "safety": {
+    "ambient_tool_upgrade_commands": 0,
+    "credential_or_privacy_configuration_access": "NONE",
+    "event06_reexecution_go_reuse_or_new_go": "NONE",
+    "historical_master_ledger": 175,
+    "live_registry_or_ledger_writes": 0,
+    "macbook_lane_mutation": "NONE",
+    "observer_restart": false,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_root_resolutions": 0,
+    "original_checkpoint_shard_opens": 0,
+    "real_execution_or_p1_authority": "NONE",
+    "retained_event06_package_or_payload_access": "NONE"
+  },
+  "schema": "pulsarmlx.f017.sequence44.instrumentation-tooling-outcome/1.0.0",
+  "scope_classification": "Qualification harness/tooling, not a numerical or executor defect.",
+  "smallest_causal_error": "Final correction used an unsupported clang linker-selection spelling after earlier linker cache writes were refused outside admitted scratch roots.",
+  "source_start_head": "29c55d314a72747b44bd2c1ce93c71ba6ac157b6",
+  "source_start_tree": "124ded98467910a3f0c3acda1db169bf86eb9f9b",
+  "structural_repair_loops_authorized": 10,
+  "structural_repair_loops_consumed": 0,
+  "successful_tiny_fixture_compilations": 0,
+  "synthetic_receipt_write_readbacks": 0,
+  "test_harness_artifacts": {
+    "out-of-fixture-sentinel.txt": "79fba8fd58c81a595ebcb72f53199b10936eff1a9e8fe6cc75e03f33a7368a48",
+    "tooling/fixture-only.sb": "a3fbe33e157294ae688e90de06812fffa54e5eb2dfe39b1321ec2c60862dc3bf",
+    "tooling/smoke.rs": "2306d890e94be3593fdc2ec956cf5fad780658ea0d7164fdb1ecab4c7e852861"
+  },
+  "tool_identities": {
+    "cargo": {
+      "observed_version": "cargo 1.97.1 (c980f4866 2026-06-30) (Homebrew)",
+      "path": "/opt/homebrew/Cellar/rust/1.97.1/bin/cargo",
+      "sha256": "b7a341737d8777ef0e21a71f0af90723ccf692914255110c12bbcfed79d75a53"
+    },
+    "clang": {
+      "path": "/Library/Developer/CommandLineTools/usr/bin/clang",
+      "sha256": "be5518e9c6736cda8dfc3486ce11e8112a2e08045084260691cf41f57a653f59"
+    },
+    "ld_classic": {
+      "path": "/Library/Developer/CommandLineTools/usr/bin/ld-classic",
+      "sha256": "76e14451cc95c19caee443f21a242cf3d925bb3f7a9b2b8e8761833f55ff5575"
+    },
+    "python": {
+      "path": "/opt/homebrew/Cellar/python@3.14/3.14.7/bin/python3",
+      "sha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634"
+    },
+    "rustc": {
+      "observed_version": "rustc 1.97.1 (8bab26f4f 2026-07-14) (Homebrew)",
+      "path": "/opt/homebrew/Cellar/rust/1.97.1/bin/rustc",
+      "sha256": "d69d40bfd2e11825feb3538512b6ffcd63de91c35ec36bb876849f0f9f8fe6bd"
+    }
+  },
+  "toolchain_downloads_or_rustup_probes": 0,
+  "transition_disposition": {
+    "F44-01": "VERIFIED_PLANNER_ACCEPTANCE",
+    "F44-02": "VERIFIED_PREDECLARED_VOCABULARY",
+    "F44-03": "NOT_CROSSED_N0_FAILED_PRELIMINARY_STATIC_FINDINGS_ONLY",
+    "F44-04": "NOT_CROSSED_NO_QUALIFICATION",
+    "F44-05": "SCOPED_TOOLING_OUTCOME_PUBLICATION"
+  },
+  "undeclared_transitions": 0,
+  "worker_reviewers_invoked": 0
+}
