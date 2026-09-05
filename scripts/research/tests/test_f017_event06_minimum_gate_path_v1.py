@@ -29,17 +29,65 @@ def qualification() -> dict[str, object]:
     return qualify()
 
 
-def test_minimum_path_has_one_closed_public_input() -> None:
-    assert path.__all__ == ("execute_event06_minimum_gate_path",)
-    signature = inspect.signature(path.execute_event06_minimum_gate_path)
-    assert tuple(signature.parameters) == ("collapsed_go_bytes",)
-    parameter = signature.parameters["collapsed_go_bytes"]
-    assert parameter.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
-    assert all(
-        item.kind
-        not in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD}
-        for item in signature.parameters.values()
+def test_minimum_path_has_one_execution_entry_and_one_nonexecuting_closeout() -> None:
+    assert path.__all__ == (
+        "execute_event06_minimum_gate_path",
+        "closeout_interrupted_event06_minimum_gate_path",
     )
+    for public in (
+        path.execute_event06_minimum_gate_path,
+        path.closeout_interrupted_event06_minimum_gate_path,
+    ):
+        signature = inspect.signature(public)
+        assert tuple(signature.parameters) == ("collapsed_go_bytes",)
+        parameter = signature.parameters["collapsed_go_bytes"]
+        assert parameter.kind is inspect.Parameter.POSITIONAL_OR_KEYWORD
+        assert all(
+            item.kind
+            not in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD}
+            for item in signature.parameters.values()
+        )
+
+
+def test_closeout_without_durable_start_has_zero_execution_effects(
+    tmp_path: Path,
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_925_000
+    seed = b"F017-S42-NONEXECUTING-CLOSEOUT"
+    raw = path._qualification_go(profile, seed, now_unix_ns=now)
+    validated = path._validate_go_bytes(raw, profile, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path,
+        str(validated.get("human_decision_sha256")),
+        intercept=False,
+    )
+
+    result = path._invoke_public_closeout_qualification(
+        raw, runtime, now_unix_ns=now
+    )
+
+    assert result == {
+        "result": "NO_DURABLE_PACKAGE_START",
+        "terminal_written": False,
+        "checkpoint_effects": 0,
+        "numerical_effects": 0,
+    }
+    assert not runtime.storage.package_directory.exists()
+    assert runtime.storage._package_fd is None
+    assert runtime.integration_state.snapshot() == {"package_starts": 0}
+    provider = runtime.checkpoint_effect
+    assert type(provider) is path._SyntheticCheckpointProvider
+    assert provider.physical_identity_producer_calls == 0
+    assert provider.producer_checkpoint_binding_checks == 0
+    assert provider.producer_checkpoint_shard_opens == 0
+    assert provider.producer_checkpoint_identity_hash_reads == 0
+    numerical = runtime.numerical_effect
+    assert type(numerical) is path._SyntheticNumericalProvider
+    assert numerical.executions == {"PRIMARY": 0, "SECONDARY": 0}
+    assert runtime.observed_effects["checkpoint_root_resolutions"] == 0
+    assert runtime.observed_effects["checkpoint_opens"] == 0
+    assert runtime.observed_effects["numerical_executions"] == 0
 
 
 def test_qualification_root_rejects_live_overlap_and_intermediate_symlinks(
@@ -230,6 +278,25 @@ def test_source_derived_gate_and_bypass_closure(
     assert closure["removed_mechanisms_still_gating"] == 0
     assert closure["implementation_dependencies_remaining"] == 0
     assert closure["optional_diagnostics_mandatory"] == 0
+    assert closure["public_production_exports"] == [
+        "execute_event06_minimum_gate_path",
+        "closeout_interrupted_event06_minimum_gate_path",
+    ]
+    assert closure["public_execution_exports"] == [
+        "execute_event06_minimum_gate_path"
+    ]
+    assert closure["public_nonexecuting_closeout_exports"] == [
+        "closeout_interrupted_event06_minimum_gate_path"
+    ]
+    assert closure["public_signature_parameters"] == ["collapsed_go_bytes"]
+    assert closure["public_closeout_signature_parameters"] == [
+        "collapsed_go_bytes"
+    ]
+    assert closure["prohibited_public_closeout_parameters"] == []
+    assert closure["closeout_execution_entry_reachable"] is False
+    assert closure["closeout_gate_symbols"] == []
+    assert closure["closeout_effectful_execution_calls"] == []
+    assert closure["closeout_is_nonexecuting"] is True
     assert closure["public_raw_identity_inputs"] == 0
     assert closure["public_storage_location_inputs"] == 0
     surface = closure["superseded_surface"]
@@ -388,6 +455,38 @@ def test_package_start_consumed_gate_and_identity_key_censuses_are_derived(
     assert "event_identity_plan_sha256" in identities[
         "removed_identity_ceremony_fields"
     ]
+
+    evidence = closure["identity_success_leaf_census"]
+    expected_evidence_leaves = {
+        "access-journal.json",
+        "identity-core.json",
+        "identity-manifest.json",
+        "identity-receipt.json",
+        "identity-terminal.json",
+        "lease-manifest.json",
+        "shard-receipts.json",
+        *(f"access-prefix-{sequence:02d}.json" for sequence in range(1, 25)),
+    }
+    assert evidence["derivation"] == "AST_PRODUCER_EXPORT_AND_LITERAL_RANGE"
+    assert evidence["producer_export"] == "identity_success_evidence_leaves"
+    assert evidence["composer_uses_producer_export"] is True
+    assert evidence["base_leaf_count"] == 7
+    assert evidence["access_prefix_leaf_count"] == 24
+    assert evidence["leaf_count"] == 31
+    assert evidence["leaves"] == sorted(expected_evidence_leaves)
+    assert set(path._SUCCESS_PHYSICAL_IDENTITY_FILES) == expected_evidence_leaves
+
+    stage_receipt = closure["stage_receipt_binding_census"]
+    assert stage_receipt["authority_keys"] == [
+        "stage",
+        "authorization_id",
+        "package_attempt_id",
+        "stage_event_id",
+        "package_start_sha256",
+    ]
+    assert stage_receipt["digest_field"] == "stage_authority_sha256"
+    assert stage_receipt["digest_rederived_on_read"] is True
+    assert stage_receipt["unvalidated_subject_sha256_present"] is False
 
     ownership = closure["predicate_ownership"]
     assert ownership["accepted_retained_owner_mechanisms"] == [
@@ -650,7 +749,7 @@ def test_m008_rejects_oracle_disagreement_even_with_valid_thresholds() -> None:
     ("mutation", "expected_error"),
     (
         ("primary-logits", "payload SHA mismatch"),
-        ("identity-evidence", "identity journal or receipt census"),
+        ("identity-evidence", "identity evidence leaf immutability"),
     ),
 )
 def test_m016_revalidates_banked_bytes_after_comparison(
@@ -817,10 +916,10 @@ def test_package_terminal_revalidates_every_raw_closure_leaf(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
 
 
-def test_success_terminal_has_no_fallible_post_commit_identity_check(
+def test_success_terminal_post_commit_identity_revalidation_preserves_success(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -863,12 +962,18 @@ def test_success_terminal_has_no_fallible_post_commit_identity_check(
 
     assert result["result"] == "PASS"
     # The terminal is reserved at package start, so ordinary descriptor-bound
-    # banking performs many canonical checks while it is still empty.  Once
-    # terminal bytes exist, neither the production commit nor graph-owned
-    # synthetic cleanup performs a fallible canonical-path re-resolution.
+    # banking performs many canonical checks while it is still empty.  Atomic
+    # publication deliberately performs a final package-path revalidation
+    # after the complete terminal inode is renamed into place.  That check is
+    # inside the commit recovery boundary and therefore cannot reclassify the
+    # already proven terminal.
     assert post_terminal_checks.count("PRECOMMIT_RESERVATION") > 1
     assert cleanup_started is True
-    assert all(item == "PRECOMMIT_RESERVATION" for item in post_terminal_checks)
+    assert runtime.storage.scope in post_terminal_checks
+    assert set(post_terminal_checks) == {
+        "PRECOMMIT_RESERVATION",
+        runtime.storage.scope,
+    }
     terminal = path._parse_artifact_bytes(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
@@ -1135,7 +1240,7 @@ def test_preexisting_unbound_entry_forces_package_terminal_failure(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["result"] == "FAIL"
 
 
@@ -1188,7 +1293,7 @@ def test_deep_hostile_unbound_directory_cannot_suppress_failure_terminal(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["result"] == "FAIL"
 
     # CPython's recursive temporary-directory cleanup cannot itself traverse
@@ -1256,7 +1361,7 @@ def test_nested_unbound_entry_is_sealed_then_rejected_by_exact_inventory(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["result"] == "FAIL"
 
 
@@ -1330,7 +1435,7 @@ def test_unbound_fifo_fails_closed_without_blocking_terminalization(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["result"] == "FAIL"
 
 
@@ -1476,7 +1581,7 @@ def test_failure_terminal_closes_held_writer_before_return(
     assert terminal["state"] == "TERMINAL_FAILURE"
 
 
-def test_success_downgrade_then_diagnostic_error_preserves_committed_success(
+def test_success_atomic_publish_then_diagnostic_error_preserves_committed_success(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1489,22 +1594,25 @@ def test_success_downgrade_then_diagnostic_error_preserves_committed_success(
         path._sha(seed),
         intercept=False,
     )
-    original = path._StorageBinding._downgrade_terminal_to_read_only
+    original = path._StorageBinding._publish_reserved_terminal_atomically
     observed = False
 
-    def downgrade_then_raise(
-        storage: object, writer_descriptor: int, expected_size: int
+    def publish_then_raise(
+        storage: object,
+        descriptor: int,
+        raw_terminal: bytes,
+        stop: object,
     ) -> None:
         nonlocal observed
-        original(storage, writer_descriptor, expected_size)
+        original(storage, descriptor, raw_terminal, stop)
         assert storage._terminal_writer_retired is True
         observed = True
-        raise OSError("post-downgrade success diagnostic")
+        raise OSError("post-publication success diagnostic")
 
     monkeypatch.setattr(
         path._StorageBinding,
-        "_downgrade_terminal_to_read_only",
-        downgrade_then_raise,
+        "_publish_reserved_terminal_atomically",
+        publish_then_raise,
     )
     result = path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
 
@@ -1518,7 +1626,7 @@ def test_success_downgrade_then_diagnostic_error_preserves_committed_success(
     assert path._sha(terminal_raw) == result["package_terminal_sha256"]
 
 
-def test_failure_downgrade_then_diagnostic_error_preserves_original_failure(
+def test_failure_atomic_publish_then_diagnostic_error_preserves_original_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1532,22 +1640,25 @@ def test_failure_downgrade_then_diagnostic_error_preserves_original_failure(
         intercept=False,
         fault_stage="PRIMARY_RESULT_TERMINAL",
     )
-    original = path._StorageBinding._downgrade_terminal_to_read_only
+    original = path._StorageBinding._publish_reserved_terminal_atomically
     observed = False
 
-    def downgrade_then_raise(
-        storage: object, writer_descriptor: int, expected_size: int
+    def publish_then_raise(
+        storage: object,
+        descriptor: int,
+        raw_terminal: bytes,
+        stop: object,
     ) -> None:
         nonlocal observed
-        original(storage, writer_descriptor, expected_size)
+        original(storage, descriptor, raw_terminal, stop)
         assert storage._terminal_writer_retired is True
         observed = True
-        raise OSError("post-downgrade failure diagnostic")
+        raise OSError("post-publication failure diagnostic")
 
     monkeypatch.setattr(
         path._StorageBinding,
-        "_downgrade_terminal_to_read_only",
-        downgrade_then_raise,
+        "_publish_reserved_terminal_atomically",
+        publish_then_raise,
     )
     with pytest.raises(RuntimeError, match="INJECTED_STOP"):
         path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
@@ -1557,7 +1668,7 @@ def test_failure_downgrade_then_diagnostic_error_preserves_original_failure(
         (runtime.storage.package_directory / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PRIMARY_RESULT_TERMINAL"
+    assert terminal["failed_stage"] == "IDENTITY_TERMINAL"
     assert terminal["failure_type"] == "RuntimeError"
 
 
@@ -1568,7 +1679,7 @@ def test_failure_downgrade_then_diagnostic_error_preserves_original_failure(
         ("PRIMARY_RESULT_TERMINAL", "TERMINAL_FAILURE"),
     ),
 )
-def test_terminal_writer_close_after_kernel_success_is_not_reclassified(
+def test_terminal_reservation_close_after_kernel_success_is_not_reclassified(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     fault_stage: str | None,
@@ -1592,7 +1703,6 @@ def test_terminal_writer_close_after_kernel_success_is_not_reclassified(
         if (
             not injected
             and descriptor == runtime.storage._terminal_fd
-            and os.fstat(descriptor).st_size > 0
         ):
             injected = True
             original_close(descriptor)
@@ -1684,17 +1794,34 @@ def test_partial_success_terminal_write_rolls_back_to_truthful_failure(
         path._sha(seed),
         intercept=False,
     )
+    original_open = path.os.open
     original_write = path.os.write
     injected = False
+    staged_terminal_descriptor: int | None = None
+
+    def capture_staged_terminal(
+        target: object, flags: int, *args: object, **kwargs: object
+    ) -> int:
+        nonlocal staged_terminal_descriptor
+        descriptor = original_open(target, flags, *args, **kwargs)
+        if (
+            isinstance(target, str)
+            and target.startswith(
+                f".{runtime.storage.package_directory.name}.terminal-stage-"
+            )
+        ):
+            staged_terminal_descriptor = descriptor
+        return descriptor
 
     def partial_then_fail(descriptor: int, value: object) -> int:
         nonlocal injected
-        if descriptor == runtime.storage._terminal_fd and not injected:
+        if descriptor == staged_terminal_descriptor and not injected:
             injected = True
             original_write(descriptor, bytes(value)[:7])
             raise OSError("injected partial success terminal write")
         return original_write(descriptor, value)
 
+    monkeypatch.setattr(path.os, "open", capture_staged_terminal)
     monkeypatch.setattr(path.os, "write", partial_then_fail)
     with pytest.raises(OSError, match="injected partial"):
         path._invoke_public_qualification(raw, runtime, now_unix_ns=now)
@@ -1706,7 +1833,7 @@ def test_partial_success_terminal_write_rolls_back_to_truthful_failure(
     assert not terminal_raw.startswith(b"\x00")
     terminal = path._parse_artifact_bytes(terminal_raw)
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["result"] == "FAIL"
 
 
@@ -1745,7 +1872,7 @@ def test_package_path_retarget_preserves_original_failure_and_terminalizes(
         (displaced / "package-terminal.json").read_bytes()
     )
     assert terminal["state"] == "TERMINAL_FAILURE"
-    assert terminal["failed_stage"] == "PACKAGE_TERMINAL"
+    assert terminal["failed_stage"] == "RELEASE_TERMINAL"
     assert terminal["failure_type"] == "RuntimeError"
     assert terminal["result"] == "FAIL"
 
@@ -2162,6 +2289,22 @@ def test_every_retained_stage_stops_with_truthful_prefix(
     assert isinstance(failures, dict)
     assert failures["passed"] == failures["total"] == 11
     assert all(item["fabricated_successor_receipts"] == 0 for item in failures["cases"])
+    assert {
+        item["stage"]: item["furthest_durable_stage"]
+        for item in failures["cases"]
+    } == {
+        "PREPARED": None,
+        "INSTALLED": None,
+        "PACKAGE_START_ELIGIBLE_DRY_STOP": None,
+        "PACKAGE_START": None,
+        "IDENTITY_TERMINAL": "PACKAGE_START",
+        "PRIMARY_RESULT_TERMINAL": "IDENTITY_TERMINAL",
+        "SECONDARY_RESULT_TERMINAL": "PRIMARY_RESULT_TERMINAL",
+        "COMPARISON_TERMINAL": "SECONDARY_RESULT_TERMINAL",
+        "RELEASE_TERMINAL": "COMPARISON_TERMINAL",
+        "ACCOUNTING_CLOSURE": "RELEASE_TERMINAL",
+        "PACKAGE_TERMINAL": "RELEASE_TERMINAL",
+    }
 
 
 def test_missing_required_public_paths_fail_before_shard_or_successor_effects(
@@ -2202,6 +2345,132 @@ def test_full_public_path_uses_bounded_physical_synthetic_identity(
     assert trace["source_derived_missing_components"] == []
     assert trace["source_derived_unexpected_component_count"] == 0
     assert trace["source_derived_unexpected_components"] == []
+    expectation = trace["source_derived_expectation"]
+    assert expectation["composition_derivation"] == (
+        "DIRECT_IMPORT_CALLS_PLUS_IMPORTED_FUNCTION_LOCAL_CALL_GRAPH"
+    )
+    transitive_boundaries = {
+        "f017_event06_minimum_gate_contract_v1._validate_accounting_document",
+        "f017_event06_minimum_gate_contract_v1._validate_identity_read_receipts",
+        "f017_event06_minimum_gate_contract_v1._validate_package_terminal_document",
+    }
+    assert set(expectation["transitive_external_boundary_names"]) == (
+        transitive_boundaries
+    )
+    assert expectation["transitive_external_boundary_count"] == len(
+        transitive_boundaries
+    )
+    direct_boundaries = set(expectation["direct_external_boundary_names"])
+    assert direct_boundaries.isdisjoint(transitive_boundaries)
+    composition_edges = {
+        (item["caller"], item["callee"])
+        for item in expectation["source_derived_composition_edges"]
+    }
+    assert {
+        (
+            "f017_event06_minimum_gate_contract_v1._validate_accounting_closure",
+            "f017_event06_minimum_gate_contract_v1._validate_accounting_document",
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1._validate_accounting_document",
+            "f017_event06_minimum_gate_contract_v1._validate_identity_read_receipts",
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1._validate_package_terminal",
+            "f017_event06_minimum_gate_contract_v1._validate_package_terminal_document",
+        ),
+    }.issubset(composition_edges)
+    assert trace["source_derived_transitive_boundary_count"] == len(
+        transitive_boundaries
+    )
+    assert set(trace["source_derived_transitive_boundaries_exercised"]) == (
+        transitive_boundaries
+    )
+    assert trace["source_derived_transitive_boundaries_uncovered"] == []
+    assert trace["source_derived_transitive_boundary_composition"] == "3/3"
+    changed = qualification["source_derived_closure"][
+        "changed_typed_boundary_census"
+    ]
+    expected_callables = {
+        "f017_checkpoint_identity_lifecycle_v12.IdentityAccessCensus",
+        "f017_checkpoint_identity_lifecycle_v12.IdentityAuthorityError",
+        "f017_checkpoint_identity_lifecycle_v12.IdentityDescriptorDisposition",
+        "f017_checkpoint_identity_lifecycle_v12.IdentityOperationObservation",
+        "f017_checkpoint_identity_lifecycle_v12.failure",
+        "f017_checkpoint_identity_lifecycle_v12.with_failure_context",
+        (
+            "f017_checkpoint_identity_producer_v12."
+            "IdentityAccessPrefixValidationError"
+        ),
+        "f017_checkpoint_identity_producer_v12.identity_success_evidence_leaves",
+        (
+            "f017_checkpoint_identity_producer_v12."
+            "missing_identity_access_prefix_census"
+        ),
+        (
+            "f017_checkpoint_identity_producer_v12."
+            "validate_banked_identity_access_prefix"
+        ),
+        (
+            "f017_checkpoint_identity_producer_v12."
+            "validate_banked_identity_evidence"
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1."
+            "_validate_accounting_closure"
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1."
+            "_validate_accounting_document"
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1."
+            "_validate_package_terminal"
+        ),
+        (
+            "f017_event06_minimum_gate_contract_v1."
+            "_validate_package_terminal_document"
+        ),
+        "f017_event06_minimum_gate_path_v1.execute_event06_minimum_gate_path",
+        (
+            "f017_event06_minimum_gate_path_v1."
+            "closeout_interrupted_event06_minimum_gate_path"
+        ),
+    }
+    expected_schemas = {
+        "pulsarmlx.f017.checkpoint-identity-access-census/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-access-journal/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-access-prefix-genesis/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-access-prefix-receipt/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-core/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-lease-manifest/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-manifest/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-receipt/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-shard-receipts/12.1.0",
+        "pulsarmlx.f017.checkpoint-identity-terminal/12.1.0",
+        "pulsarmlx.f017.event06-minimum-gate-failure-accounting/1.1.0",
+        "pulsarmlx.f017.event06-minimum-gate-package-terminal/1.1.0",
+        "pulsarmlx.f017.event06-minimum-gate-stage-receipt/1.1.0",
+    }
+    callable_rows = changed["changed_callable_or_carrier_boundaries"]
+    schema_rows = changed["version_forward_schema_boundaries"]
+    assert {row["boundary"] for row in callable_rows} == expected_callables
+    assert {row["boundary"] for row in schema_rows} == expected_schemas
+    assert changed["changed_callable_or_carrier_boundary_count"] == 17
+    assert changed["version_forward_schema_boundary_count"] == 13
+    assert changed["changed_typed_boundaries_total"] == 30
+    assert changed["changed_typed_boundaries_with_composition_tests"] == 30
+    assert all(row["composition_tested"] is True for row in callable_rows)
+    assert all(row["composition_tested"] is True for row in schema_rows)
+    assert changed["uncovered_changed_boundary_count"] == 0
+    assert changed["uncovered_changed_boundaries"] == []
+    assert changed["extraneous_changed_boundary_count"] == 0
+    assert changed["extraneous_changed_boundaries"] == []
+    assert qualification["changed_typed_boundaries_total"] == 30
+    assert qualification[
+        "changed_typed_boundaries_with_composition_tests"
+    ] == 30
+    assert qualification["uncovered_or_extraneous_changed_boundaries"] == "0/0"
     assert trace["expected_denominator_independent_of_observed_profile"] is True
     assert qualification["production_path_components_exercised"] == (
         f"{exercised_count}/{expected_count}"
@@ -2309,3 +2578,99 @@ def test_full_public_path_uses_bounded_physical_synthetic_identity(
     assert qualification["synthetic_identities_instantiated_or_consumed"] == (
         f"{expected_instantiated}/{expected_consumed}"
     )
+
+
+def test_exact_foreign_start_race_is_never_adopted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_999_100
+    raw = path._qualification_go(
+        profile, b"F017-S42-FOREIGN-START-RACE", now_unix_ns=now
+    )
+    go = path._validate_go_bytes(raw, profile, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, str(go.get("human_decision_sha256")), intercept=False
+    )
+    runtime.storage.prepare()
+    expected = path._derive_expected_package_start_receipt(go, runtime)
+    expected_raw = path._canonical_bytes(expected)
+    stop = path._StopBoundary(runtime.storage)
+    original = path._StorageBinding._bank_leaf
+    inserted = False
+
+    def insert_foreign_exact_start(storage, leaf, value, **kwargs):
+        nonlocal inserted
+        if leaf == "package-start.json" and not inserted:
+            inserted = True
+            descriptor = os.open(
+                leaf,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                0o600,
+                dir_fd=storage._package_fd,
+            )
+            try:
+                assert os.write(descriptor, expected_raw) == len(expected_raw)
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            os.fsync(storage._package_fd)
+        return original(storage, leaf, value, **kwargs)
+
+    monkeypatch.setattr(path._StorageBinding, "_bank_leaf", insert_foreign_exact_start)
+    with pytest.raises(FileExistsError):
+        runtime.storage.bank_package_start(expected, stop)
+    assert inserted is True
+    assert stop.package_started is False
+    assert all(kind != "PACKAGE_START" for kind, _digest in stop.receipts)
+    assert stop.expected_package_start_raw is None
+    assert runtime.storage._owned_package_start_identity is None
+    # The foreign exact start is not adopted into the in-memory stop boundary,
+    # but its appearance after reservation makes reservation deletion unsafe.
+    # Retain the exact empty immutable terminal so a fresh observer sees a
+    # terminal-bearing durable prefix instead of a stranded start marker.
+    terminal_path = runtime.storage.package_directory / "package-terminal.json"
+    assert terminal_path.is_file()
+    terminal_descriptor = os.open(terminal_path, os.O_RDONLY | os.O_NOFOLLOW)
+    try:
+        terminal_stat = os.fstat(terminal_descriptor)
+        assert terminal_stat.st_size == 0
+        assert terminal_stat.st_nlink == 1
+        assert terminal_stat.st_uid == os.getuid()
+        assert terminal_stat.st_flags & path.stat.UF_IMMUTABLE
+    finally:
+        os.close(terminal_descriptor)
+    assert runtime.storage._terminal_claim_held is True
+    assert (
+        runtime.storage.package_directory / "package-start.json"
+    ).read_bytes() == expected_raw
+    assert runtime.observed_effects["checkpoint_opens"] == 0
+    assert runtime.observed_effects["numerical_executions"] == 0
+    runtime.storage.close()
+
+
+def test_restart_start_derivation_uses_only_the_frozen_profile(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    profile = path._authority_profile(synthetic=True)
+    now = 39_386_999_200
+    raw = path._qualification_go(
+        profile, b"F017-S42-PURE-RESTART-DERIVATION", now_unix_ns=now
+    )
+    go = path._validate_go_bytes(raw, profile, now_unix_ns=now)
+    runtime = path._qualification_runtime(
+        tmp_path, str(go.get("human_decision_sha256")), intercept=False
+    )
+
+    def unexpected_source_read(_relative: str) -> str:
+        raise AssertionError("restart derivation reread mutable source")
+
+    monkeypatch.setattr(path, "_file_sha", unexpected_source_read)
+    expected = path._derive_expected_package_start_receipt(go, runtime)
+    assert expected["package_attempt_id"] == path._identities(go)[
+        "package_attempt_id"
+    ]
+    assert expected["result"] == "PASS"
+    assert not runtime.storage.package_directory.exists()
+    assert runtime.observed_effects["checkpoint_opens"] == 0
+    assert runtime.observed_effects["numerical_executions"] == 0

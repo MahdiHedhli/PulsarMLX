@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Source-derived, no-access qualification for the Event 06 minimum path.
 
-The qualification invokes the sole public production entry under the sealed,
-context-local seams owned by ``f017_event06_minimum_gate_path_v1``.  It never
-selects a live root, resolves an original checkpoint root, or supplies an
-authority/effect dependency through the public API.
+The qualification invokes the sole public execution entry under the sealed,
+context-local seams owned by ``f017_event06_minimum_gate_path_v1`` and censuses
+the separate non-executing closeout entry.  It never selects a live root,
+resolves an original checkpoint root, or supplies an authority/effect
+dependency through the public API.
 """
 from __future__ import annotations
 
@@ -32,6 +33,18 @@ import f017_event06_minimum_gate_path_v1 as path
 _ROOT = Path(__file__).resolve().parents[2]
 _RESEARCH_ROOT = _ROOT / "scripts/research"
 _PATH_SOURCE = _ROOT / "scripts/research/f017_event06_minimum_gate_path_v1.py"
+_PUBLIC_EXECUTION_ENTRY = "execute_event06_minimum_gate_path"
+_PUBLIC_CLOSEOUT_ENTRY = "closeout_interrupted_event06_minimum_gate_path"
+_PUBLIC_EXPORTS = (_PUBLIC_EXECUTION_ENTRY, _PUBLIC_CLOSEOUT_ENTRY)
+_SEQUENCE42_CHANGED_BOUNDARY_SOURCES = (
+    "scripts/research/f017_checkpoint_identity_lifecycle_v12.py",
+    "scripts/research/f017_checkpoint_identity_producer_v12.py",
+    "scripts/research/f017_event06_minimum_gate_contract_v1.py",
+    "scripts/research/f017_event06_minimum_gate_path_v1.py",
+)
+_SEQUENCE42_SCHEMA_VERSION = re.compile(
+    r"pulsarmlx\.f017\..+/(?:12\.1\.0|1\.1\.0)"
+)
 _SEQUENCE40_CONSUMED_DECISION_SHA256 = (
     "25b1312d26a436e103f26f1645f2d83e3147cbabc6522c91e5fa92d89ee73bdd"
 )
@@ -420,6 +433,140 @@ def _local_imports(tree: ast.Module) -> dict[str, dict[str, str]]:
     return result
 
 
+def _module_assignment(tree: ast.Module, name: str) -> ast.expr:
+    """Return one exact module-level assignment expression."""
+    values: list[ast.expr] = []
+    for node in tree.body:
+        target: ast.expr | None = None
+        value: ast.expr | None = None
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target, value = node.targets[0], node.value
+        elif isinstance(node, ast.AnnAssign):
+            target, value = node.target, node.value
+        if (
+            isinstance(target, ast.Name)
+            and target.id == name
+            and value is not None
+        ):
+            values.append(value)
+    if len(values) != 1:
+        raise AssertionError(f"one module assignment required: {name}")
+    return values[0]
+
+
+def _identity_success_leaf_census(tree: ast.Module) -> dict[str, object]:
+    """Derive the exact identity success inventory from producer source only."""
+    imports = _local_imports(tree)
+    binding = imports.get("_identity_success_evidence_leaves")
+    if binding != {
+        "module": "f017_checkpoint_identity_producer_v12",
+        "symbol": "identity_success_evidence_leaves",
+        "path": "scripts/research/f017_checkpoint_identity_producer_v12.py",
+    }:
+        raise AssertionError("identity success-leaf source binding")
+
+    composer_value = _module_assignment(
+        tree, "_SUCCESS_PHYSICAL_IDENTITY_FILES"
+    )
+    if not (
+        isinstance(composer_value, ast.Call)
+        and isinstance(composer_value.func, ast.Name)
+        and composer_value.func.id == "frozenset"
+        and len(composer_value.args) == 1
+        and not composer_value.keywords
+        and isinstance(composer_value.args[0], ast.Call)
+        and isinstance(composer_value.args[0].func, ast.Name)
+        and composer_value.args[0].func.id == "_identity_success_evidence_leaves"
+        and not composer_value.args[0].args
+        and not composer_value.args[0].keywords
+    ):
+        raise AssertionError("composer identity inventory must use producer export")
+
+    producer_path = _ROOT / str(binding["path"])
+    producer_raw = producer_path.read_bytes()
+    producer_tree = ast.parse(producer_raw, filename=str(producer_path))
+    if "identity_success_evidence_leaves" not in _literal_all(producer_tree):
+        raise AssertionError("identity success-leaf producer export")
+
+    base_expression = _module_assignment(producer_tree, "_IDENTITY_BASE_LEAVES")
+    if not (
+        isinstance(base_expression, ast.Call)
+        and isinstance(base_expression.func, ast.Name)
+        and base_expression.func.id == "frozenset"
+        and len(base_expression.args) == 1
+        and not base_expression.keywords
+    ):
+        raise AssertionError("identity base-leaf source expression")
+    base_value = ast.literal_eval(base_expression.args[0])
+    if type(base_value) is not set or any(
+        type(item) is not str for item in base_value
+    ):
+        raise AssertionError("identity base-leaf literal census")
+
+    function = _named_node(producer_tree, "identity_success_evidence_leaves")
+    if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        raise AssertionError("identity success-leaf function source")
+    prefix_values = [
+        node.value
+        for node in function.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id == "prefix"
+    ]
+    if len(prefix_values) != 1 or not isinstance(prefix_values[0], ast.SetComp):
+        raise AssertionError("identity access-prefix source comprehension")
+    comprehension = prefix_values[0]
+    if (
+        len(comprehension.generators) != 1
+        or comprehension.generators[0].ifs
+        or comprehension.generators[0].is_async
+        or not isinstance(comprehension.generators[0].target, ast.Name)
+        or comprehension.generators[0].target.id != "sequence"
+        or not isinstance(comprehension.generators[0].iter, ast.Call)
+        or not isinstance(comprehension.generators[0].iter.func, ast.Name)
+        or comprehension.generators[0].iter.func.id != "range"
+        or [
+            item.value
+            for item in comprehension.generators[0].iter.args
+            if isinstance(item, ast.Constant) and type(item.value) is int
+        ]
+        != [1, 25]
+        or comprehension.generators[0].iter.keywords
+        or ast.unparse(comprehension.elt)
+        not in {
+            "f'access-prefix-{sequence:02d}.json'",
+            'f"access-prefix-{sequence:02d}.json"',
+        }
+    ):
+        raise AssertionError("identity access-prefix exact source range")
+
+    returns = [node for node in function.body if isinstance(node, ast.Return)]
+    if len(returns) != 1 or returns[0].value is None:
+        raise AssertionError("identity success-leaf return source")
+    return_source = ast.unparse(returns[0].value)
+    if return_source != "tuple(sorted(set(_IDENTITY_BASE_LEAVES) | prefix))":
+        raise AssertionError("identity success-leaf union source")
+
+    prefix = {f"access-prefix-{sequence:02d}.json" for sequence in range(1, 25)}
+    leaves = tuple(sorted(set(base_value) | prefix))
+    if len(base_value) != 7 or len(prefix) != 24 or len(leaves) != 31:
+        raise AssertionError("exact 31-leaf identity success inventory")
+    return {
+        "derivation": "AST_PRODUCER_EXPORT_AND_LITERAL_RANGE",
+        "producer_module": str(binding["module"]),
+        "producer_path": str(binding["path"]),
+        "producer_source_sha256": _sha256(producer_raw),
+        "producer_export": str(binding["symbol"]),
+        "composer_uses_producer_export": True,
+        "base_leaf_count": len(base_value),
+        "access_prefix_leaf_count": len(prefix),
+        "leaf_count": len(leaves),
+        "leaves": list(leaves),
+        "result": "PASS",
+    }
+
+
 def _recursive_local_import_inventory() -> dict[str, object]:
     """Recursively inventory local modules imported by the production module.
 
@@ -466,6 +613,391 @@ def _recursive_local_import_inventory() -> dict[str, object]:
             for consumer, producer, symbol in sorted(edges)
         ],
         "source_only": True,
+    }
+
+
+def _qualified_function_nodes(
+    tree: ast.Module,
+) -> dict[str, ast.FunctionDef | ast.AsyncFunctionDef]:
+    """Return module functions and one-level class methods by qualified name."""
+    result: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            result[node.name] = node
+        elif isinstance(node, ast.ClassDef):
+            for member in node.body:
+                if isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    result[f"{node.name}.{member.name}"] = member
+    return result
+
+
+def _alias_reference_sites(tree: ast.Module, alias: str) -> list[str]:
+    """Source-derive every executable or module binding that uses an import."""
+    sites = {
+        name
+        for name, node in _qualified_function_nodes(tree).items()
+        if any(
+            isinstance(item, ast.Name) and item.id == alias
+            for item in ast.walk(node)
+        )
+    }
+    module_statements = [
+        node
+        for node in tree.body
+        if not isinstance(
+            node,
+            (
+                ast.Import,
+                ast.ImportFrom,
+                ast.FunctionDef,
+                ast.AsyncFunctionDef,
+                ast.ClassDef,
+            ),
+        )
+    ]
+    if any(
+        isinstance(item, ast.Name) and item.id == alias
+        for statement in module_statements
+        for item in ast.walk(statement)
+    ):
+        sites.add("<module>")
+    return sorted(sites)
+
+
+def _schema_assignment_values(tree: ast.Module) -> dict[str, str]:
+    """Resolve exact module constants holding Sequence 42 schema versions."""
+    result: dict[str, str] = {}
+    for node in tree.body:
+        targets: list[ast.expr] = []
+        value: ast.expr | None = None
+        if isinstance(node, ast.Assign):
+            targets = list(node.targets)
+            value = node.value
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+            value = node.value
+        if not (
+            isinstance(value, ast.Constant)
+            and type(value.value) is str
+            and _SEQUENCE42_SCHEMA_VERSION.fullmatch(value.value) is not None
+        ):
+            continue
+        for target in targets:
+            if isinstance(target, ast.Name):
+                result[target.id] = value.value
+    return result
+
+
+def _schema_references(
+    node: ast.AST, assignments: dict[str, str]
+) -> set[str]:
+    result: set[str] = set()
+    for item in ast.walk(node):
+        if (
+            isinstance(item, ast.Constant)
+            and type(item.value) is str
+            and _SEQUENCE42_SCHEMA_VERSION.fullmatch(item.value) is not None
+        ):
+            result.add(item.value)
+        elif isinstance(item, ast.Name) and item.id in assignments:
+            result.add(assignments[item.id])
+    return result
+
+
+def _schema_writer_references(
+    node: ast.AST, assignments: dict[str, str]
+) -> set[str]:
+    result: set[str] = set()
+    for item in (candidate for candidate in ast.walk(node) if isinstance(candidate, ast.Dict)):
+        for key, value in zip(item.keys, item.values, strict=True):
+            if not (
+                isinstance(key, ast.Constant)
+                and key.value == "schema"
+            ):
+                continue
+            if (
+                isinstance(value, ast.Constant)
+                and type(value.value) is str
+                and _SEQUENCE42_SCHEMA_VERSION.fullmatch(value.value) is not None
+            ):
+                result.add(value.value)
+            elif isinstance(value, ast.Name) and value.id in assignments:
+                result.add(assignments[value.id])
+    return result
+
+
+def _changed_typed_boundary_census() -> dict[str, object]:
+    """Derive and compose every Sequence 42 public or evidence boundary.
+
+    The expected set comes from four independent final-source properties:
+    cross-module lifecycle type imports, producer ``__all__``, minimum-path
+    ``__all__``, and version-forward evidence schema literals.  The two raw
+    document validators and their sealed callers are discovered from the
+    minimum path's imports plus the contract's local call graph.  Coverage is
+    then derived separately from source reference sites and schema
+    writer-to-validator composition; no observed runtime trace supplies the
+    denominator.
+    """
+    sources: dict[str, dict[str, object]] = {}
+    for relative in _SEQUENCE42_CHANGED_BOUNDARY_SOURCES:
+        source_path = _ROOT / relative
+        raw = source_path.read_bytes()
+        tree = ast.parse(raw, filename=str(source_path))
+        sources[source_path.stem] = {
+            "path": relative,
+            "sha256": _sha256(raw),
+            "tree": tree,
+            "imports": _local_imports(tree),
+        }
+
+    lifecycle_module = "f017_checkpoint_identity_lifecycle_v12"
+    producer_module = "f017_checkpoint_identity_producer_v12"
+    contract_module = "f017_event06_minimum_gate_contract_v1"
+    path_module = "f017_event06_minimum_gate_path_v1"
+
+    lifecycle_symbols = sorted({
+        str(binding["symbol"])
+        for consumer in (producer_module, path_module)
+        for binding in sources[consumer]["imports"].values()
+        if binding["module"] == lifecycle_module
+        and not str(binding["symbol"]).startswith("_")
+    })
+    producer_tree = sources[producer_module]["tree"]
+    path_tree = sources[path_module]["tree"]
+    contract_tree = sources[contract_module]["tree"]
+    if not isinstance(producer_tree, ast.Module) or not isinstance(
+        path_tree, ast.Module
+    ) or not isinstance(contract_tree, ast.Module):
+        raise AssertionError("changed boundary source trees")
+    producer_symbols = sorted(_literal_all(producer_tree))
+    path_symbols = sorted(_literal_all(path_tree))
+
+    path_contract_imports = {
+        str(binding["symbol"])
+        for binding in sources[path_module]["imports"].values()
+        if binding["module"] == contract_module
+    }
+    raw_document_validators = {
+        symbol
+        for symbol in path_contract_imports
+        if symbol.startswith("_validate_") and symbol.endswith("_document")
+    }
+    contract_functions, contract_graph = _local_call_graph(contract_tree)
+    sealed_validator_callers = {
+        caller
+        for caller, callees in contract_graph.items()
+        if caller in path_contract_imports
+        and caller.startswith("_validate_")
+        and callees & raw_document_validators
+    }
+    contract_symbols = sorted(
+        raw_document_validators | sealed_validator_callers
+    )
+
+    callable_groups = (
+        (
+            lifecycle_module,
+            lifecycle_symbols,
+            "CROSS_MODULE_TYPED_CARRIER_OR_FACTORY",
+        ),
+        (
+            producer_module,
+            producer_symbols,
+            "EXPORTED_IDENTITY_PRODUCER_CONSUMER_INTERFACE",
+        ),
+        (
+            contract_module,
+            contract_symbols,
+            "RAW_AND_SEALED_DOCUMENT_VALIDATOR_INTERFACE",
+        ),
+        (
+            path_module,
+            path_symbols,
+            "PUBLIC_MINIMUM_PATH_INTERFACE",
+        ),
+    )
+    callable_rows: list[dict[str, object]] = []
+    callable_coverage: set[str] = set()
+    for module, symbols, kind in callable_groups:
+        producer = sources[module]
+        producer_tree = producer["tree"]
+        if not isinstance(producer_tree, ast.Module):
+            raise AssertionError("changed callable producer tree")
+        producer_nodes = {
+            node.name: node
+            for node in producer_tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+        }
+        for symbol in symbols:
+            if symbol not in producer_nodes:
+                raise AssertionError(f"changed callable source symbol: {module}.{symbol}")
+            consumer_sites: set[str] = set()
+            for consumer_module, consumer in sources.items():
+                imports = consumer["imports"]
+                consumer_tree = consumer["tree"]
+                if not isinstance(consumer_tree, ast.Module):
+                    raise AssertionError("changed callable consumer tree")
+                for alias, binding in imports.items():
+                    if (
+                        binding["module"] == module
+                        and binding["symbol"] == symbol
+                    ):
+                        consumer_sites.update(
+                            f"{consumer_module}.{site}"
+                            for site in _alias_reference_sites(
+                                consumer_tree, alias
+                            )
+                        )
+            if module == path_module:
+                _, path_graph = _local_call_graph(producer_tree)
+                consumer_sites.update(
+                    f"{path_module}.{caller}"
+                    for caller, callees in path_graph.items()
+                    if symbol in callees
+                )
+            component = f"{module}.{symbol}"
+            covered = bool(consumer_sites)
+            if covered:
+                callable_coverage.add(component)
+            callable_rows.append(
+                {
+                    "boundary": component,
+                    "boundary_kind": kind,
+                    "producer_path": producer["path"],
+                    "producer_source_sha256": producer["sha256"],
+                    "consumer_reference_sites": sorted(consumer_sites),
+                    "composition_tested": covered,
+                }
+            )
+
+    schema_values: set[str] = set()
+    schema_direct_references: dict[str, set[str]] = {}
+    schema_writers: dict[str, set[str]] = {}
+    schema_validators: dict[str, set[str]] = {}
+    for module, source in sources.items():
+        tree = source["tree"]
+        if not isinstance(tree, ast.Module):
+            raise AssertionError("changed schema source tree")
+        assignments = _schema_assignment_values(tree)
+        schema_values.update(assignments.values())
+        schema_values.update(
+            item.value
+            for item in ast.walk(tree)
+            if isinstance(item, ast.Constant)
+            and type(item.value) is str
+            and _SEQUENCE42_SCHEMA_VERSION.fullmatch(item.value) is not None
+        )
+        qualified_nodes = _qualified_function_nodes(tree)
+        function_nodes = {
+            name: node
+            for name, node in qualified_nodes.items()
+            if "." not in name
+        }
+        local_graph = {
+            name: {
+                call.func.id
+                for call in ast.walk(node)
+                if isinstance(call, ast.Call)
+                and isinstance(call.func, ast.Name)
+                and call.func.id in function_nodes
+            }
+            for name, node in function_nodes.items()
+        }
+        direct_by_function: dict[str, set[str]] = {}
+        for name, node in qualified_nodes.items():
+            referenced = _schema_references(node, assignments)
+            direct_by_function[name] = referenced
+            for schema in referenced:
+                schema_direct_references.setdefault(schema, set()).add(
+                    f"{module}.{name}"
+                )
+            for schema in _schema_writer_references(node, assignments):
+                schema_writers.setdefault(schema, set()).add(f"{module}.{name}")
+        for name in function_nodes:
+            if "validate" not in name:
+                continue
+            reached = _reachable(local_graph, name)
+            for schema in set().union(
+                *(direct_by_function[callee] for callee in reached)
+            ):
+                schema_validators.setdefault(schema, set()).add(
+                    f"{module}.{name}"
+                )
+        for name, referenced in direct_by_function.items():
+            if "." in name and "validate" in name:
+                for schema in referenced:
+                    schema_validators.setdefault(schema, set()).add(
+                        f"{module}.{name}"
+                    )
+
+    schema_rows: list[dict[str, object]] = []
+    schema_coverage: set[str] = set()
+    for schema in sorted(schema_values):
+        writers = sorted(schema_writers.get(schema, ()))
+        validators = sorted(schema_validators.get(schema, ()))
+        covered = bool(writers and validators)
+        if covered:
+            schema_coverage.add(schema)
+        schema_rows.append(
+            {
+                "boundary": schema,
+                "boundary_kind": (
+                    "VERSION_FORWARD_PERSISTED_OR_TRANSITIVELY_BOUND_SCHEMA"
+                ),
+                "direct_source_references": sorted(
+                    schema_direct_references.get(schema, ())
+                ),
+                "writer_sites": writers,
+                "validator_sites": validators,
+                "composition_tested": covered,
+            }
+        )
+
+    callable_expected = {
+        str(row["boundary"]) for row in callable_rows
+    }
+    schema_expected = {str(row["boundary"]) for row in schema_rows}
+    expected = callable_expected | schema_expected
+    covered = callable_coverage | schema_coverage
+    uncovered = sorted(expected - covered)
+    extraneous = sorted(covered - expected)
+    if (
+        len(callable_rows) != 17
+        or len(schema_rows) != 13
+        or len(expected) != 30
+        or uncovered
+        or extraneous
+    ):
+        raise AssertionError(
+            "changed typed boundary composition: "
+            f"callable={len(callable_rows)}, schema={len(schema_rows)}, "
+            f"uncovered={uncovered!r}, extraneous={extraneous!r}"
+        )
+    return {
+        "derivation": (
+            "FINAL_SOURCE_EXPORTS_CROSS_MODULE_TYPES_DOCUMENT_VALIDATORS_"
+            "AND_VERSION_FORWARD_SCHEMAS"
+        ),
+        "denominator_independent_of_runtime_trace": True,
+        "source_paths": [
+            {
+                "module": module,
+                "path": source["path"],
+                "sha256": source["sha256"],
+            }
+            for module, source in sorted(sources.items())
+        ],
+        "changed_callable_or_carrier_boundaries": callable_rows,
+        "changed_callable_or_carrier_boundary_count": len(callable_rows),
+        "version_forward_schema_boundaries": schema_rows,
+        "version_forward_schema_boundary_count": len(schema_rows),
+        "changed_typed_boundaries_total": len(expected),
+        "changed_typed_boundaries_with_composition_tests": len(covered),
+        "uncovered_changed_boundary_count": len(uncovered),
+        "uncovered_changed_boundaries": uncovered,
+        "extraneous_changed_boundary_count": len(extraneous),
+        "extraneous_changed_boundaries": extraneous,
+        "result": "PASS",
     }
 
 
@@ -742,6 +1274,75 @@ def _identity_key_census(tree: ast.Module) -> dict[str, object]:
         "identity_plan_is_separately_supplied": False,
         "identity_plan_is_separately_validated": False,
         "removed_identity_ceremony_fields": sorted(removed_aliases),
+        "result": "PASS",
+    }
+
+
+def _stage_receipt_binding_census(tree: ast.Module) -> dict[str, object]:
+    """Prove stage progress is bound to rederived authority, not a subject SHA."""
+    writer = _named_node(tree, "_bank_stage_receipt")
+    reader = _named_node(tree, "_derive_durable_stage_progress")
+    if not isinstance(writer, (ast.FunctionDef, ast.AsyncFunctionDef)) or not isinstance(
+        reader, (ast.FunctionDef, ast.AsyncFunctionDef)
+    ):
+        raise AssertionError("stage receipt writer/reader source")
+
+    def assigned_value(function: ast.AST, name: str) -> ast.expr:
+        values = [
+            node.value
+            for node in ast.walk(function)
+            if isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == name
+        ]
+        if len(values) != 1:
+            raise AssertionError(f"one stage receipt assignment: {name}")
+        return values[0]
+
+    authority_value = assigned_value(writer, "stage_authority")
+    expected_value = assigned_value(reader, "expected_keys")
+    if not isinstance(authority_value, ast.Dict):
+        raise AssertionError("stage authority source document")
+    authority_keys = [
+        str(key.value)
+        for key in authority_value.keys
+        if isinstance(key, ast.Constant) and type(key.value) is str
+    ]
+    expected_keys = ast.literal_eval(expected_value)
+    receipt_keys = {
+        "schema",
+        *authority_keys,
+        "stage_authority_sha256",
+        "result",
+    }
+    if authority_keys != [
+        "stage",
+        "authorization_id",
+        "package_attempt_id",
+        "stage_event_id",
+        "package_start_sha256",
+    ] or expected_keys != receipt_keys:
+        raise AssertionError("stage authority exact key census")
+
+    writer_source = ast.unparse(writer)
+    reader_source = ast.unparse(reader)
+    if (
+        "_contract_sha256(stage_authority)" not in writer_source
+        or "value.get('stage_authority_sha256')" not in reader_source
+        or "_contract_sha256({" not in reader_source
+        or "subject_sha256" in writer_source
+        or "subject_sha256" in reader_source
+    ):
+        raise AssertionError("stage authority digest rederivation")
+    return {
+        "writer": "_bank_stage_receipt",
+        "reader": "_derive_durable_stage_progress",
+        "authority_keys": authority_keys,
+        "receipt_keys": sorted(receipt_keys),
+        "digest_field": "stage_authority_sha256",
+        "digest_rederived_on_read": True,
+        "unvalidated_subject_sha256_present": False,
         "result": "PASS",
     }
 
@@ -1442,9 +2043,9 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
     tree = ast.parse(source, filename=str(_PATH_SOURCE))
     functions, graph = _local_call_graph(tree)
     exports = _literal_all(tree)
-    if exports != ("execute_event06_minimum_gate_path",):
-        raise AssertionError("one profiled public production entry")
-    entry = exports[0]
+    if exports != _PUBLIC_EXPORTS:
+        raise AssertionError("exact execution and closeout public exports")
+    entry = _PUBLIC_EXECUTION_ENTRY
     reached = _reachable(graph, entry)
     executors = sorted(
         target
@@ -1547,6 +2148,27 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
             and node.name == "_bank"
         )
 
+    profiled_direct_aliases = {
+        call.func.id
+        for node in boundary_nodes
+        for call in ast.walk(node)
+        if isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id in imports
+    }
+    closeout_reached = _reachable(graph, _PUBLIC_CLOSEOUT_ENTRY)
+    closeout_direct_aliases = {
+        call.func.id
+        for name in closeout_reached
+        for call in ast.walk(functions[name])
+        if isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id in imports
+    }
+    nonprofiled_closeout_aliases = (
+        closeout_direct_aliases - profiled_direct_aliases
+    )
+
     production_only_aliases: set[str] = set()
     for class_name in ("_ProductionNumericalEffect",):
         class_node = class_nodes.get(class_name)
@@ -1560,13 +2182,19 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
     expected_external: set[str] = set()
     tracked_external_universe: set[str] = set()
     external_metadata: dict[str, dict[str, object]] = {}
+    external_metadata_by_component: dict[str, dict[str, object]] = {}
+    external_graphs: dict[str, dict[str, set[str]]] = {}
     for alias, binding in sorted(imports.items()):
+        if alias in nonprofiled_closeout_aliases:
+            continue
         symbol = str(binding["symbol"])
         if symbol == "*":
             continue
         target_path = _ROOT / str(binding["path"])
         target_raw = target_path.read_bytes()
         target_tree = ast.parse(target_raw, filename=str(target_path))
+        _, target_graph = _local_call_graph(target_tree)
+        external_graphs[str(binding["module"])] = target_graph
         target_node = next(
             (
                 node
@@ -1582,14 +2210,17 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
             continue
         component = f"{binding['module']}.{symbol}"
         tracked_external_universe.add(component)
-        external_metadata[alias] = {
+        metadata = {
             "component": component,
             "kind": "IMPORTED_PRODUCER_CONSUMER_BOUNDARY",
             "module": str(binding["module"]),
+            "source_symbol": symbol,
             "path": str(binding["path"]),
             "first_line": target_node.lineno,
             "source_sha256": _sha256(target_raw),
         }
+        external_metadata[alias] = metadata
+        external_metadata_by_component[component] = metadata
 
     for node in boundary_nodes:
         for call in (item for item in ast.walk(node) if isinstance(item, ast.Call)):
@@ -1602,6 +2233,42 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
             component = str(metadata["component"])
             expected_external.add(component)
             expected[component] = dict(metadata)
+
+    # Imported producer/consumer functions are typed composition boundaries,
+    # not isolated trace labels.  Derive the closure between those boundaries
+    # from each imported module's own call graph.  This catches a validator
+    # delegating to another imported validator without copying the observed
+    # runtime trace into a handwritten expected census.  Restricting the walk
+    # to functions explicitly imported by the production composer keeps
+    # implementation-private helpers outside this boundary denominator.
+    direct_external = set(expected_external)
+    composition_edges: set[tuple[str, str]] = set()
+    pending_external = sorted(direct_external, reverse=True)
+    while pending_external:
+        caller_component = pending_external.pop()
+        caller_metadata = external_metadata_by_component.get(caller_component)
+        if caller_metadata is None:
+            raise AssertionError("imported boundary source metadata")
+        module = str(caller_metadata["module"])
+        symbol = str(caller_metadata["source_symbol"])
+        graph_for_module = external_graphs.get(module)
+        if graph_for_module is None or symbol not in graph_for_module:
+            raise AssertionError("imported boundary source graph")
+        for callee_symbol in sorted(graph_for_module[symbol]):
+            callee_component = f"{module}.{callee_symbol}"
+            if callee_component not in tracked_external_universe:
+                continue
+            composition_edges.add((caller_component, callee_component))
+            if callee_component in expected_external:
+                continue
+            callee_metadata = external_metadata_by_component.get(callee_component)
+            if callee_metadata is None:
+                raise AssertionError("composed boundary source metadata")
+            expected_external.add(callee_component)
+            expected[callee_component] = dict(callee_metadata)
+            pending_external.append(callee_component)
+
+    transitive_external = expected_external - direct_external
 
     tracked_local_universe = {
         f"{_PATH_SOURCE.stem}.{name}"
@@ -1620,10 +2287,23 @@ def _source_derived_public_path_expectation() -> dict[str, object]:
         "expected_components": expectation_rows,
         "expected_component_names": sorted(expected),
         "expected_external_boundary_names": sorted(expected_external),
+        "direct_external_boundary_names": sorted(direct_external),
+        "transitive_external_boundary_names": sorted(transitive_external),
+        "transitive_external_boundary_count": len(transitive_external),
+        "source_derived_composition_edges": [
+            {"caller": caller, "callee": callee}
+            for caller, callee in sorted(composition_edges)
+        ],
+        "composition_derivation": (
+            "DIRECT_IMPORT_CALLS_PLUS_IMPORTED_FUNCTION_LOCAL_CALL_GRAPH"
+        ),
         "tracked_component_universe": sorted(
             tracked_local_universe | tracked_external_universe
         ),
         "interposed_physical_boundary_aliases": sorted(production_only_aliases),
+        "excluded_nonprofiled_closeout_aliases": sorted(
+            nonprofiled_closeout_aliases
+        ),
     }
 
 
@@ -1714,6 +2394,15 @@ def _profiled_public_path(
     exercised_names = sorted(expected_names & observed_names)
     missing_names = sorted(expected_names - observed_names)
     unexpected_names = sorted((observed_names & tracked_universe) - expected_names)
+    transitive_boundary_names = set(
+        expectation["transitive_external_boundary_names"]
+    )
+    transitive_boundary_exercised = sorted(
+        transitive_boundary_names & observed_names
+    )
+    transitive_boundary_uncovered = sorted(
+        transitive_boundary_names - observed_names
+    )
     active_modules: dict[str, list[str]] = {}
     for item in production:
         active_modules.setdefault(str(item["module"]), []).append(
@@ -1730,6 +2419,19 @@ def _profiled_public_path(
         "source_derived_missing_components": missing_names,
         "source_derived_unexpected_component_count": len(unexpected_names),
         "source_derived_unexpected_components": unexpected_names,
+        "source_derived_transitive_boundary_count": len(
+            transitive_boundary_names
+        ),
+        "source_derived_transitive_boundaries_exercised": (
+            transitive_boundary_exercised
+        ),
+        "source_derived_transitive_boundaries_uncovered": (
+            transitive_boundary_uncovered
+        ),
+        "source_derived_transitive_boundary_composition": (
+            f"{len(transitive_boundary_exercised)}/"
+            f"{len(transitive_boundary_names)}"
+        ),
         "production_components_exercised_ratio": (
             f"{len(exercised_names)}/{len(expected_names)}"
         ),
@@ -1742,9 +2444,15 @@ def _profiled_public_path(
         "synthetic_seam_calls": synthetic_seam_calls,
         "actual_call_trace_not_handwritten_census": True,
         "expected_denominator_independent_of_observed_profile": True,
-        "result": "PASS" if not missing_names and not unexpected_names else "FAIL",
+        "result": (
+            "PASS"
+            if not missing_names
+            and not unexpected_names
+            and not transitive_boundary_uncovered
+            else "FAIL"
+        ),
     }
-    if missing_names or unexpected_names:
+    if missing_names or unexpected_names or transitive_boundary_uncovered:
         raise AssertionError(
             "source-derived public path mismatch: "
             f"missing={missing_names!r}, unexpected={unexpected_names!r}"
@@ -1995,9 +2703,9 @@ def source_derived_closure(
     tree = ast.parse(source)
     functions, graph = _local_call_graph(tree)
     public_exports = _literal_all(tree)
-    if public_exports != ("execute_event06_minimum_gate_path",):
-        raise AssertionError("minimum path must have one public production entry")
-    public = public_exports[0]
+    if public_exports != _PUBLIC_EXPORTS:
+        raise AssertionError("minimum path must expose execution and closeout")
+    public = _PUBLIC_EXECUTION_ENTRY
     reached = _reachable(graph, public)
     gate_symbols = sorted(
         symbol
@@ -2032,6 +2740,10 @@ def source_derived_closure(
 
     signature = inspect.signature(path.execute_event06_minimum_gate_path)
     parameters = tuple(signature.parameters.values())
+    closeout_signature = inspect.signature(
+        path.closeout_interrupted_event06_minimum_gate_path
+    )
+    closeout_parameters = tuple(closeout_signature.parameters.values())
     prohibited_parameters = [
         parameter.name
         for parameter in parameters
@@ -2042,23 +2754,92 @@ def source_derived_closure(
             for token in _FORBIDDEN_PUBLIC_PARAMETER_TOKENS
         )
     ]
+    prohibited_closeout_parameters = [
+        parameter.name
+        for parameter in closeout_parameters
+        if parameter.kind
+        in {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD}
+        or any(
+            token in parameter.name.lower()
+            for token in _FORBIDDEN_PUBLIC_PARAMETER_TOKENS
+        )
+    ]
     if tuple(parameter.name for parameter in parameters) != ("collapsed_go_bytes",):
         raise AssertionError("public production signature")
+    if tuple(parameter.name for parameter in closeout_parameters) != (
+        "collapsed_go_bytes",
+    ):
+        raise AssertionError("public nonexecuting closeout signature")
+
+    closeout_reached = _reachable(graph, _PUBLIC_CLOSEOUT_ENTRY)
+    closeout_calls = sorted({
+        ast.unparse(call.func)
+        for symbol in closeout_reached
+        for call in ast.walk(functions[symbol])
+        if isinstance(call, ast.Call)
+    })
+    forbidden_closeout_calls = sorted({
+        call
+        for call in closeout_calls
+        if call
+        in {
+            "_execute_minimum_gate_path",
+            "_run_identity_stage",
+            "_execute_primary_target",
+            "_execute_secondary_target",
+            "_bank_output_bundle",
+        }
+        or call.endswith(
+            (
+                ".checkpoint_effect.run",
+                ".numerical_effect.primary",
+                ".numerical_effect.secondary",
+            )
+        )
+    })
+    closeout_gate_symbols = sorted(
+        symbol
+        for symbol in closeout_reached
+        if re.fullmatch(r"_gate_m\d{3}_.+", symbol) is not None
+    )
+    identity_success_leaves = _identity_success_leaf_census(tree)
 
     superseded = _superseded_surface_census()
     import_inventory = _recursive_local_import_inventory()
     package_start_relation = _package_start_consumed_gate_relation(tree)
     identity_keys = _identity_key_census(tree)
+    stage_receipt_binding = _stage_receipt_binding_census(tree)
+    changed_typed_boundaries = _changed_typed_boundary_census()
     predicate_ownership = _predicate_ownership_census(tree)
     seams = _synthetic_seam_census(tree, public_exports)
     gate_schema_types = _retained_gate_schema_type_mapping(tree, functions)
     report = {
         "source_path": _PATH_SOURCE.relative_to(_ROOT).as_posix(),
         "public_production_exports": list(public_exports),
+        "public_execution_exports": [_PUBLIC_EXECUTION_ENTRY],
+        "public_nonexecuting_closeout_exports": [_PUBLIC_CLOSEOUT_ENTRY],
         "public_signature_parameters": [parameter.name for parameter in parameters],
+        "public_closeout_signature_parameters": [
+            parameter.name for parameter in closeout_parameters
+        ],
         "public_raw_identity_inputs": 0,
         "public_storage_location_inputs": 0,
         "prohibited_public_parameters": prohibited_parameters,
+        "prohibited_public_closeout_parameters": (
+            prohibited_closeout_parameters
+        ),
+        "closeout_reachable_symbol_count": len(closeout_reached),
+        "closeout_reachable_symbols": sorted(closeout_reached),
+        "closeout_execution_entry_reachable": (
+            _PUBLIC_EXECUTION_ENTRY in closeout_reached
+        ),
+        "closeout_gate_symbols": closeout_gate_symbols,
+        "closeout_effectful_execution_calls": forbidden_closeout_calls,
+        "closeout_is_nonexecuting": (
+            _PUBLIC_EXECUTION_ENTRY not in closeout_reached
+            and not closeout_gate_symbols
+            and not forbidden_closeout_calls
+        ),
         "reachable_symbol_count": len(reached),
         "reachable_symbols": sorted(reached),
         "local_call_edges": [
@@ -2094,6 +2875,9 @@ def source_derived_closure(
         "package_identity_keys_per_identity": identity_keys[
             "package_identity_keys_per_identity"
         ],
+        "identity_success_leaf_census": identity_success_leaves,
+        "stage_receipt_binding_census": stage_receipt_binding,
+        "changed_typed_boundary_census": changed_typed_boundaries,
         "predicate_ownership": predicate_ownership,
         "result": "PASS",
     }
@@ -2105,6 +2889,15 @@ def source_derived_closure(
         or dependency_mapping["remaining"]
         or optional_mandatory
         or prohibited_parameters
+        or prohibited_closeout_parameters
+        or _PUBLIC_EXECUTION_ENTRY in closeout_reached
+        or closeout_gate_symbols
+        or forbidden_closeout_calls
+        or identity_success_leaves["leaf_count"] != 31
+        or stage_receipt_binding["result"] != "PASS"
+        or changed_typed_boundaries["result"] != "PASS"
+        or changed_typed_boundaries["uncovered_changed_boundary_count"] != 0
+        or changed_typed_boundaries["extraneous_changed_boundary_count"] != 0
         or superseded["callable_legacy_or_superseded_bypasses"] != 0
         or predicate_ownership["unowned_predicate_count"] != 0
         or predicate_ownership["new_independently_enforceable_mechanisms"] != 0
@@ -2549,6 +3342,15 @@ def _one_shot_campaign(root: Path) -> dict[str, object]:
 
 def _stage_failure_campaign(root: Path) -> dict[str, object]:
     cases: list[dict[str, object]] = []
+    durable_failed_stage = {
+        "IDENTITY_TERMINAL": "PACKAGE_START",
+        "PRIMARY_RESULT_TERMINAL": "IDENTITY_TERMINAL",
+        "SECONDARY_RESULT_TERMINAL": "PRIMARY_RESULT_TERMINAL",
+        "COMPARISON_TERMINAL": "SECONDARY_RESULT_TERMINAL",
+        "RELEASE_TERMINAL": "COMPARISON_TERMINAL",
+        "ACCOUNTING_CLOSURE": "RELEASE_TERMINAL",
+        "PACKAGE_TERMINAL": "RELEASE_TERMINAL",
+    }
     started_stages = {
         "IDENTITY_TERMINAL",
         "PRIMARY_RESULT_TERMINAL",
@@ -2581,13 +3383,14 @@ def _stage_failure_campaign(root: Path) -> dict[str, object]:
             terminal_path = package / "package-terminal.json"
             accounting = json.loads(accounting_path.read_text(encoding="utf-8"))
             terminal = json.loads(terminal_path.read_text(encoding="utf-8"))
+            expected_failed_stage = durable_failed_stage[stage]
             if (
-                accounting["failed_stage"] != stage
+                accounting["failed_stage"] != expected_failed_stage
                 or accounting["fabricated_successor_receipts"] != 0
                 or accounting["historical_master_ledger_before"] != 175
                 or accounting["historical_master_ledger_after"] != 175
                 or terminal["state"] != "TERMINAL_FAILURE"
-                or terminal["failed_stage"] != stage
+                or terminal["failed_stage"] != expected_failed_stage
                 or terminal["fabricated_successor_receipts"] != 0
             ):
                 raise AssertionError("truthful failure accounting")
@@ -2630,6 +3433,9 @@ def _stage_failure_campaign(root: Path) -> dict[str, object]:
         cases.append(
             {
                 "stage": stage,
+                "furthest_durable_stage": (
+                    durable_failed_stage.get(stage) if should_start else None
+                ),
                 "package_started": should_start,
                 "durable_receipts": durable_receipts,
                 "fabricated_successor_receipts": 0,
@@ -2711,6 +3517,9 @@ def _missing_required_public_path_rehearsals(root: Path) -> dict[str, object]:
         if type(provider) is not path._SyntheticCheckpointProvider:
             raise AssertionError("missing-required checkpoint provider")
         evidence = getattr(failure, "evidence", None)
+        access_census = (
+            evidence.get("access_census") if type(evidence) is dict else None
+        )
         detail = getattr(failure, "detail", None)
         package = runtime.storage.package_directory
         terminal = json.loads(
@@ -2723,20 +3532,44 @@ def _missing_required_public_path_rehearsals(root: Path) -> dict[str, object]:
         extra_name = path._SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES[0]
         if (
             type(evidence) is not dict
-            or evidence.get("checkpoint_access") != 0
+            or evidence.get("checkpoint_access") != "RECEIPT_DERIVED"
+            or type(access_census) is not dict
+            or access_census.get("receipt_count") != 0
+            or access_census.get("checkpoint_shard_opens_lower_bound") != 0
+            or access_census.get("checkpoint_shard_opens_upper_bound") != 0
+            or access_census.get(
+                "checkpoint_identity_hash_reads_lower_bound"
+            )
+            != 0
+            or access_census.get(
+                "checkpoint_identity_hash_reads_upper_bound"
+            )
+            != 0
+            or access_census.get("exact") is not True
             or type(detail) is not str
             or detail
             != "checkpoint root leaf census: required=6 present=5 missing=1"
             or extra_name in detail
             or observed_package & forbidden_successors
             or terminal.get("state") != "TERMINAL_FAILURE"
-            or terminal.get("failed_stage") != "IDENTITY_TERMINAL"
+            or terminal.get("failed_stage") != "PACKAGE_START"
             or accounting.get("package_delta") != 1
             or accounting.get("primary_delta") != 0
             or accounting.get("secondary_delta") != 0
-            or accounting.get("original_checkpoint_root_resolutions") != 0
-            or accounting.get("original_checkpoint_opens") != 0
-            or accounting.get("real_numerical_executions") != 0
+            or accounting.get("original_checkpoint_opens_lower_bound") != 0
+            or accounting.get("original_checkpoint_opens_upper_bound") != 0
+            or accounting.get(
+                "original_checkpoint_identity_hash_reads_lower_bound"
+            )
+            != 0
+            or accounting.get(
+                "original_checkpoint_identity_hash_reads_upper_bound"
+            )
+            != 0
+            or accounting.get(
+                "real_numerical_executions_observed_in_process"
+            )
+            != 0
             or provider.physical_identity_producer_calls != 1
             or provider.producer_checkpoint_binding_checks != 1
             or provider.producer_checkpoint_shard_opens != 0
@@ -2964,6 +3797,13 @@ def qualify() -> dict[str, object]:
                 "pulsarmlx.f017.event06-v12-minimum-gate-path-qualification/1.0.0"
             ),
             "source_derived_closure": closure,
+            "changed_typed_boundaries_total": closure[
+                "changed_typed_boundary_census"
+            ]["changed_typed_boundaries_total"],
+            "changed_typed_boundaries_with_composition_tests": closure[
+                "changed_typed_boundary_census"
+            ]["changed_typed_boundaries_with_composition_tests"],
+            "uncovered_or_extraneous_changed_boundaries": "0/0",
             "current_required_gate_count_reproduced": 35,
             "minimum_gate_set_accepted": 17,
             "required_gates_enforced": closure["required_gates_enforced"],

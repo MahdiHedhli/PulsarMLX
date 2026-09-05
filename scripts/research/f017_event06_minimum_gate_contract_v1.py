@@ -650,10 +650,9 @@ def _build_accounting_closure(
     return _validate_accounting_closure(closure)
 
 
-def _validate_accounting_closure(value: object) -> object:
-    if type(value) is not _AccountingClosure:
-        raise TypeError("exact sealed accounting closure required")
-    data = _require_exact_keys(value.as_dict(), _ACCOUNTING_KEYS, "accounting closure")
+def _validate_accounting_document(value: object) -> dict[str, object]:
+    """Validate the complete raw accounting document without minting authority."""
+    data = _require_exact_keys(value, _ACCOUNTING_KEYS, "accounting closure")
     reads_value = data["identity_read_receipts"]
     if type(reads_value) is not list:
         raise ValueError("identity read receipt array")
@@ -688,7 +687,6 @@ def _validate_accounting_closure(value: object) -> object:
         or data["live_leases"] != 0
         or data["stage"] != "ACCOUNTING_CLOSURE"
         or data["result"] != "PASS"
-        or canonical_sha256(data) != value.sha256
     ):
         raise ValueError("receipt-derived accounting semantics")
     _require_sha256(
@@ -696,6 +694,15 @@ def _validate_accounting_closure(value: object) -> object:
     )
     for key in ("authorization_id", "package_attempt_id", "primary_event_id", "secondary_event_id"):
         _require_typed_id(data[key], key)
+    return data
+
+
+def _validate_accounting_closure(value: object) -> object:
+    if type(value) is not _AccountingClosure:
+        raise TypeError("exact sealed accounting closure required")
+    data = _validate_accounting_document(value.as_dict())
+    if canonical_sha256(data) != value.sha256:
+        raise ValueError("receipt-derived accounting digest")
     return value
 
 
@@ -770,13 +777,12 @@ def _build_package_terminal(
     return _validate_package_terminal(terminal, closure)
 
 
-def _validate_package_terminal(value: object, accounting: object) -> object:
-    if type(value) is not _PackageTerminal:
-        raise TypeError("exact sealed package terminal required")
-    closure = _validate_accounting_closure(accounting)
-    if type(closure) is not _AccountingClosure:
-        raise TypeError("exact accounting closure")
-    data = _require_exact_keys(value.as_dict(), _TERMINAL_KEYS, "package terminal")
+def _validate_package_terminal_document(
+    value: object, accounting: object
+) -> dict[str, object]:
+    """Validate complete raw terminal/accounting bytes without sealing them."""
+    data = _require_exact_keys(value, _TERMINAL_KEYS, "package terminal")
+    closure = _validate_accounting_document(accounting)
     bindings = closure.get("receipt_bindings")
     if type(bindings) is not dict:
         raise TypeError("receipt bindings")
@@ -790,7 +796,7 @@ def _validate_package_terminal(value: object, accounting: object) -> object:
         "package_attempt_id": closure.get("package_attempt_id"),
         "primary_event_id": closure.get("primary_event_id"),
         "secondary_event_id": closure.get("secondary_event_id"),
-        "accounting_closure_sha256": closure.sha256,
+        "accounting_closure_sha256": canonical_sha256(closure),
         "receipt_root_sha256": closure.get("receipt_root_sha256"),
         "package_start_receipt_sha256": bindings["package_start_receipt_sha256"],
         "primary_consumer_terminal_sha256": bindings[
@@ -821,9 +827,22 @@ def _validate_package_terminal(value: object, accounting: object) -> object:
         or data["stage"] != "PACKAGE_TERMINAL"
         or data["outcome"] != "COMPLETE_SUCCESS"
         or data["result"] != "PASS"
-        or canonical_sha256(data) != value.sha256
     ):
         raise ValueError("single-winner package terminal semantics")
+    return data
+
+
+def _validate_package_terminal(value: object, accounting: object) -> object:
+    if type(value) is not _PackageTerminal:
+        raise TypeError("exact sealed package terminal required")
+    closure = _validate_accounting_closure(accounting)
+    if type(closure) is not _AccountingClosure:
+        raise TypeError("exact accounting closure")
+    data = _validate_package_terminal_document(
+        value.as_dict(), closure.as_dict()
+    )
+    if canonical_sha256(data) != value.sha256:
+        raise ValueError("single-winner package terminal digest")
     return value
 
 

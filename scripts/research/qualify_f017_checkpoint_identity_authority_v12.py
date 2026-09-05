@@ -162,7 +162,12 @@ def _filesystem_faults(base: Path) -> tuple[int, int, dict[str, int]]:
             context = mock.patch("f017_checkpoint_identity_producer_v12.os.pread", side_effect=mutating_pread)
         try:
             with context:
-                run_identity_stage(gate["installed_authority"], package_attempt_id=candidate["package_attempt_id"], package_durable_start=True)
+                run_identity_stage(
+                    gate["installed_authority"],
+                    package_attempt_id=candidate["package_attempt_id"],
+                    package_durable_start=True,
+                    evidence_directory=base / f"filesystem-evidence-{index:03d}",
+                )
         except IdentityAuthorityError as exc:
             if exc.outcome_id == expected and exc.evidence["generic_fallback"] is False:
                 realized += 1

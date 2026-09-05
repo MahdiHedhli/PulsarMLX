@@ -3,10 +3,12 @@ from __future__ import annotations
 import ast
 import errno
 import hashlib
+from itertools import count
 import json
 import os
 from pathlib import Path
 import socket
+import stat
 from unittest import mock
 
 import pytest
@@ -21,10 +23,15 @@ from f017_checkpoint_identity_authority_v12 import (
 )
 from f017_checkpoint_identity_lifecycle_v12 import IdentityAuthorityError
 from f017_checkpoint_identity_producer_v12 import (
+    IdentityAccessPrefixValidationError,
     _minimum_gate_produce,
     _qualification_produce,
     _runtime_revalidate,
+    identity_success_evidence_leaves,
+    missing_identity_access_prefix_census,
     produce,
+    validate_banked_identity_access_prefix,
+    validate_banked_identity_evidence,
 )
 
 
@@ -43,6 +50,7 @@ PRODUCTION_CONTRACT = (
 PRODUCER = "scripts/research/f017_checkpoint_identity_producer_v12.py"
 VALIDATOR = "scripts/research/f017_checkpoint_identity_authority_v12.py"
 ROOT = Path(__file__).resolve().parents[3]
+_EVIDENCE_SEQUENCE = count(1)
 
 
 def _sha(relative: str) -> str:
@@ -105,6 +113,11 @@ def run_minimum_identity_stage(
     *,
     evidence_directory: Path | None = None,
 ):
+    if evidence_directory is None:
+        checkpoint_root = Path(str(value["checkpoint_root"]))
+        evidence_directory = checkpoint_root.parent / (
+            f"identity-evidence-{next(_EVIDENCE_SEQUENCE):04d}"
+        )
     return _minimum_gate_produce(
         authority,
         package_attempt_id=str(value["package_attempt_id"]),
@@ -349,6 +362,503 @@ def test_root_census_accepts_unrelated_leaf_without_opening_it(
     assert release["live_leases_after_release"] == 0
 
 
+def test_success_banks_and_validates_exact_receipt_derived_access_prefix(
+    tmp_path: Path,
+) -> None:
+    authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    leases, report = run_minimum_identity_stage(
+        authority, value, evidence_directory=evidence
+    )
+    try:
+        census = validate_banked_identity_access_prefix(
+            evidence, value, contract, require_complete=True
+        )
+        closure = validate_banked_identity_evidence(
+            evidence, report, authority=authority, contract=contract
+        )
+        assert census["receipt_count"] == 24
+        assert census["checkpoint_shard_opens_lower_bound"] == 6
+        assert census["checkpoint_shard_opens_upper_bound"] == 6
+        assert census["checkpoint_identity_hash_reads_lower_bound"] == 6
+        assert census["checkpoint_identity_hash_reads_upper_bound"] == 6
+        assert census["identity_hash_bytes_lower_bound"] == (
+            contract["derived_census"]["expected_total_bytes"]
+        )
+        assert census["identity_hash_bytes_upper_bound"] == (
+            contract["derived_census"]["expected_total_bytes"]
+        )
+        assert census["exact"] is True
+        assert census["prefix_complete"] is True
+        assert closure["leaf_count"] == 31
+        assert set(identity_success_evidence_leaves()) == {
+            item.name for item in evidence.iterdir()
+        }
+
+        predecessor = census["genesis_sha256"]
+        for sequence in range(1, 25):
+            raw = (evidence / f"access-prefix-{sequence:02d}.json").read_bytes()
+            receipt = json.loads(raw)
+            assert receipt["predecessor_sha256"] == predecessor
+            predecessor = hashlib.sha256(raw).hexdigest()
+        assert predecessor == census["head_sha256"]
+    finally:
+        assert leases.release()["result"] == "PASS"
+
+
+@pytest.mark.parametrize("leaf", sorted(identity_producer._IDENTITY_BASE_LEAVES))
+def test_complete_identity_base_leaf_hardlink_is_rejected(
+    tmp_path: Path,
+    leaf: str,
+) -> None:
+    authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    leases, report = run_minimum_identity_stage(
+        authority, value, evidence_directory=evidence
+    )
+    try:
+        outside = tmp_path / f"outside-{leaf}"
+        if hasattr(os, "chflags"):
+            observed_flags = os.stat(evidence / leaf).st_flags
+            os.chflags(evidence / leaf, observed_flags & ~stat.UF_IMMUTABLE)
+        os.link(evidence / leaf, outside)
+        with pytest.raises(ValueError, match="identity evidence leaf"):
+            validate_banked_identity_evidence(
+                evidence, report, authority=authority, contract=contract
+            )
+    finally:
+        assert leases.release()["result"] == "PASS"
+
+
+def test_hash_mismatch_failure_carries_exact_receipt_derived_census(
+    tmp_path: Path,
+) -> None:
+    authority, value, root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    target = root / "synthetic-v12-shard-6.bin"
+    target.write_bytes(b"\t" * 6)
+    evidence = tmp_path / "identity-evidence"
+
+    with pytest.raises(IdentityAuthorityError) as raised:
+        run_minimum_identity_stage(
+            authority, value, evidence_directory=evidence
+        )
+
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_SHARD_HASH_MISMATCH"
+    failure_evidence = raised.value.evidence
+    assert failure_evidence["checkpoint_access"] == "RECEIPT_DERIVED"
+    census = failure_evidence["access_census"]
+    assert census["receipt_count"] == 24
+    assert census["checkpoint_shard_opens_lower_bound"] == 6
+    assert census["checkpoint_shard_opens_upper_bound"] == 6
+    assert census["checkpoint_identity_hash_reads_lower_bound"] == 6
+    assert census["checkpoint_identity_hash_reads_upper_bound"] == 6
+    assert census["identity_hash_bytes_lower_bound"] == (
+        contract["derived_census"]["expected_total_bytes"]
+    )
+    assert census["exact"] is True
+    assert failure_evidence["descriptor_disposition"] == {
+        "opened": 6,
+        "closed": 6,
+        "close_failures": 0,
+        "retained_leases": 0,
+    }
+    assert validate_banked_identity_access_prefix(evidence, value, contract) == census
+
+
+def test_shard_descriptor_close_failure_is_modeled_and_does_not_leak(
+    tmp_path: Path,
+) -> None:
+    authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    expected_names = {item["filename"] for item in contract["shards"]}
+    real_open = os.open
+    real_retire = identity_producer._retire_descriptor
+    checkpoint_descriptors: list[int] = []
+    injected = False
+
+    def tracked_open(path, flags, mode=0o777, *, dir_fd=None):
+        descriptor = real_open(path, flags, mode, dir_fd=dir_fd)
+        if path in expected_names:
+            checkpoint_descriptors.append(descriptor)
+        return descriptor
+
+    def injected_retire(descriptor: int):
+        nonlocal injected
+        if checkpoint_descriptors and descriptor == checkpoint_descriptors[0] and not injected:
+            injected = True
+            retired, _error = real_retire(descriptor)
+            assert retired is True
+            return True, OSError(errno.EIO, "injected shard close failure")
+        return real_retire(descriptor)
+
+    with (
+        mock.patch.object(identity_producer.os, "open", side_effect=tracked_open),
+        mock.patch.object(
+            identity_producer, "_retire_descriptor", side_effect=injected_retire
+        ),
+    ):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            run_minimum_identity_stage(authority, value)
+
+    assert injected is True
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_DESCRIPTOR_CHANGED"
+    assert "SHARD_DESCRIPTOR_CLOSE" in str(
+        raised.value.evidence["evidence_failure_type"]
+    )
+    assert raised.value.evidence["access_census"]["receipt_count"] == 4
+    assert raised.value.evidence["descriptor_disposition"] == {
+        "opened": 1,
+        "closed": 0,
+        "close_failures": 1,
+        "retained_leases": 0,
+    }
+    for descriptor in checkpoint_descriptors:
+        with pytest.raises(OSError) as closed:
+            os.fstat(descriptor)
+        assert closed.value.errno == errno.EBADF
+
+
+def test_root_descriptor_close_failure_releases_all_graph_descriptors(
+    tmp_path: Path,
+) -> None:
+    authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    expected_names = {item["filename"] for item in contract["shards"]}
+    real_open = os.open
+    real_open_root = identity_producer.open_directory_no_symlinks
+    real_retire = identity_producer._retire_descriptor
+    checkpoint_descriptors: list[int] = []
+    root_descriptor: int | None = None
+    injected = False
+
+    def tracked_open(path, flags, mode=0o777, *, dir_fd=None):
+        descriptor = real_open(path, flags, mode, dir_fd=dir_fd)
+        if path in expected_names:
+            checkpoint_descriptors.append(descriptor)
+        return descriptor
+
+    def tracked_root(path: Path) -> tuple[int, Path]:
+        nonlocal root_descriptor
+        root_descriptor, opened = real_open_root(path)
+        return root_descriptor, opened
+
+    def injected_retire(descriptor: int):
+        nonlocal injected
+        if root_descriptor is not None and descriptor == root_descriptor and not injected:
+            injected = True
+            retired, _error = real_retire(descriptor)
+            assert retired is True
+            return True, OSError(errno.EIO, "injected root close failure")
+        return real_retire(descriptor)
+
+    with (
+        mock.patch.object(identity_producer.os, "open", side_effect=tracked_open),
+        mock.patch.object(
+            identity_producer,
+            "open_directory_no_symlinks",
+            side_effect=tracked_root,
+        ),
+        mock.patch.object(
+            identity_producer, "_retire_descriptor", side_effect=injected_retire
+        ),
+    ):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            run_minimum_identity_stage(authority, value)
+
+    assert injected is True
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_DESCRIPTOR_CHANGED"
+    assert "ROOT_DESCRIPTOR_CLOSE" in str(
+        raised.value.evidence["evidence_failure_type"]
+    )
+    assert raised.value.evidence["access_census"]["receipt_count"] == 24
+    assert raised.value.evidence["descriptor_disposition"] == {
+        "opened": 6,
+        "closed": 6,
+        "close_failures": 0,
+        "retained_leases": 0,
+    }
+    assert root_descriptor is not None
+    for descriptor in [root_descriptor, *checkpoint_descriptors]:
+        with pytest.raises(OSError) as closed:
+            os.fstat(descriptor)
+        assert closed.value.errno == errno.EBADF
+
+
+def test_close_failure_does_not_override_hash_mismatch_cause(
+    tmp_path: Path,
+) -> None:
+    authority, value, root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    (root / "synthetic-v12-shard-6.bin").write_bytes(b"\t" * 6)
+    expected_names = {item["filename"] for item in contract["shards"]}
+    real_open = os.open
+    real_retire = identity_producer._retire_descriptor
+    checkpoint_descriptors: list[int] = []
+    injected = False
+
+    def tracked_open(path, flags, mode=0o777, *, dir_fd=None):
+        descriptor = real_open(path, flags, mode, dir_fd=dir_fd)
+        if path in expected_names:
+            checkpoint_descriptors.append(descriptor)
+        return descriptor
+
+    def injected_retire(descriptor: int):
+        nonlocal injected
+        if len(checkpoint_descriptors) == 6 and descriptor == checkpoint_descriptors[-1] and not injected:
+            injected = True
+            retired, _error = real_retire(descriptor)
+            assert retired is True
+            return True, OSError(errno.EIO, "injected shard close failure")
+        return real_retire(descriptor)
+
+    with (
+        mock.patch.object(identity_producer.os, "open", side_effect=tracked_open),
+        mock.patch.object(
+            identity_producer, "_retire_descriptor", side_effect=injected_retire
+        ),
+    ):
+        with pytest.raises(IdentityAuthorityError) as raised:
+            run_minimum_identity_stage(authority, value)
+
+    assert injected is True
+    assert raised.value.outcome_id == "F017_V12_IDENTITY_SHARD_HASH_MISMATCH"
+    assert "SHARD_DESCRIPTOR_CLOSE" in str(
+        raised.value.evidence["evidence_failure_type"]
+    )
+    assert raised.value.evidence["descriptor_disposition"] == {
+        "opened": 6,
+        "closed": 5,
+        "close_failures": 1,
+        "retained_leases": 0,
+    }
+    for descriptor in checkpoint_descriptors:
+        with pytest.raises(OSError) as closed:
+            os.fstat(descriptor)
+        assert closed.value.errno == errno.EBADF
+
+
+def test_unresolved_intent_derives_tight_lower_and_upper_bounds(
+    tmp_path: Path,
+) -> None:
+    _authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    writer = identity_producer._AccessPrefixWriter(
+        evidence,
+        value,
+        contract,
+        write_once=True,
+    )
+    writer.bank(
+        operation="SHARD_OPEN",
+        phase="INTENT",
+        effect_count=0,
+        observed_bytes=0,
+        descriptor_identity_sha256=None,
+        observed_sha256=None,
+        disposition="SHARD_OPEN_INTENT",
+        result="PENDING",
+    )
+
+    census = validate_banked_identity_access_prefix(evidence, value, contract)
+    assert census["receipt_count"] == 1
+    assert census["checkpoint_shard_opens_lower_bound"] == 0
+    assert census["checkpoint_shard_opens_upper_bound"] == 1
+    assert census["checkpoint_shard_opens_unconfirmed"] == 1
+    assert census["checkpoint_identity_hash_reads_lower_bound"] == 0
+    assert census["checkpoint_identity_hash_reads_upper_bound"] == 0
+    assert census["exact"] is False
+    assert census["unresolved_operation"] == "SHARD_OPEN"
+    assert census["unresolved_ordinal"] == 1
+    with pytest.raises(ValueError, match="complete identity access prefix"):
+        validate_banked_identity_access_prefix(
+            evidence, value, contract, require_complete=True
+        )
+
+
+def test_missing_prefix_is_conservatively_bounded_but_empty_created_prefix_is_exact(
+    tmp_path: Path,
+) -> None:
+    _authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    missing = tmp_path / "missing-identity-evidence"
+    expected = missing_identity_access_prefix_census(value, contract)
+    assert expected["receipt_count"] == 0
+    assert expected["checkpoint_shard_opens_lower_bound"] == 0
+    assert expected["checkpoint_shard_opens_upper_bound"] == 6
+    assert expected["checkpoint_identity_hash_reads_lower_bound"] == 0
+    assert expected["checkpoint_identity_hash_reads_upper_bound"] == 6
+    assert expected["exact"] is False
+    with pytest.raises(IdentityAccessPrefixValidationError) as raised:
+        validate_banked_identity_access_prefix(missing, value, contract)
+    assert raised.value.access_census == expected
+
+    empty = tmp_path / "created-empty-identity-evidence"
+    identity_producer._AccessPrefixWriter(
+        empty, value, contract, write_once=True
+    )
+    observed = validate_banked_identity_access_prefix(empty, value, contract)
+    assert observed["receipt_count"] == 0
+    assert observed["checkpoint_shard_opens_lower_bound"] == 0
+    assert observed["checkpoint_shard_opens_upper_bound"] == 0
+    assert observed["checkpoint_identity_hash_reads_lower_bound"] == 0
+    assert observed["checkpoint_identity_hash_reads_upper_bound"] == 0
+    assert observed["exact"] is True
+
+
+@pytest.mark.parametrize("identity_attack", ["hardlink", "symlink"])
+def test_receipt_identity_attack_retains_conservative_validated_prefix(
+    tmp_path: Path,
+    identity_attack: str,
+) -> None:
+    _authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    writer = identity_producer._AccessPrefixWriter(
+        evidence, value, contract, write_once=False
+    )
+    writer.bank(
+        operation="SHARD_OPEN",
+        phase="INTENT",
+        effect_count=0,
+        observed_bytes=0,
+        descriptor_identity_sha256=None,
+        observed_sha256=None,
+        disposition="SHARD_OPEN_INTENT",
+        result="PENDING",
+    )
+    receipt = evidence / "access-prefix-01.json"
+    outside = tmp_path / "outside-receipt"
+    if identity_attack == "hardlink":
+        os.link(receipt, outside)
+    else:
+        receipt.replace(outside)
+        receipt.symlink_to(outside)
+
+    with pytest.raises(IdentityAccessPrefixValidationError) as raised:
+        validate_banked_identity_access_prefix(evidence, value, contract)
+    census = raised.value.access_census
+    assert census["receipt_count"] == 0
+    assert census["checkpoint_shard_opens_lower_bound"] == 0
+    assert census["checkpoint_shard_opens_upper_bound"] == 6
+    assert census["checkpoint_identity_hash_reads_lower_bound"] == 0
+    assert census["checkpoint_identity_hash_reads_upper_bound"] == 6
+    assert census["exact"] is False
+
+
+def test_receipt_path_substitution_during_read_fails_closed(
+    tmp_path: Path,
+) -> None:
+    _authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    writer = identity_producer._AccessPrefixWriter(
+        evidence, value, contract, write_once=True
+    )
+    writer.bank(
+        operation="SHARD_OPEN",
+        phase="INTENT",
+        effect_count=0,
+        observed_bytes=0,
+        descriptor_identity_sha256=None,
+        observed_sha256=None,
+        disposition="SHARD_OPEN_INTENT",
+        result="PENDING",
+    )
+    substitute = tmp_path / "substitute"
+    substitute.write_bytes(b"substitute")
+    real_stat = os.stat
+    receipt_stats = 0
+
+    def substituted_stat(path, *args, **kwargs):
+        nonlocal receipt_stats
+        if path == "access-prefix-01.json":
+            receipt_stats += 1
+            if receipt_stats == 2:
+                return real_stat(substitute)
+        return real_stat(path, *args, **kwargs)
+
+    with mock.patch.object(
+        identity_producer.os, "stat", side_effect=substituted_stat
+    ):
+        with pytest.raises(IdentityAccessPrefixValidationError) as raised:
+            validate_banked_identity_access_prefix(evidence, value, contract)
+    assert receipt_stats == 2
+    assert raised.value.access_census["receipt_count"] == 0
+    assert raised.value.access_census["checkpoint_shard_opens_upper_bound"] == 6
+
+
+def test_access_prefix_directory_substitution_during_read_fails_closed(
+    tmp_path: Path,
+) -> None:
+    _authority, value, _root, contract = runnable_minimum_installed(
+        tmp_path, mixed=True
+    )
+    evidence = tmp_path / "identity-evidence"
+    writer = identity_producer._AccessPrefixWriter(
+        evidence, value, contract, write_once=True
+    )
+    writer.bank(
+        operation="SHARD_OPEN",
+        phase="INTENT",
+        effect_count=0,
+        observed_bytes=0,
+        descriptor_identity_sha256=None,
+        observed_sha256=None,
+        disposition="SHARD_OPEN_INTENT",
+        result="PENDING",
+    )
+    displaced = tmp_path / "displaced-identity-evidence"
+    replacement = tmp_path / "replacement-identity-evidence"
+    replacement.mkdir()
+    real_read = identity_producer._read_evidence_leaf_from_directory_descriptor
+    substituted = False
+
+    def substitute_directory(
+        directory_descriptor,
+        leaf,
+        *,
+        maximum_bytes=65_536,
+        require_immutable=False,
+    ):
+        nonlocal substituted
+        if not substituted:
+            evidence.rename(displaced)
+            replacement.rename(evidence)
+            substituted = True
+        return real_read(
+            directory_descriptor,
+            leaf,
+            maximum_bytes=maximum_bytes,
+            require_immutable=require_immutable,
+        )
+
+    with mock.patch.object(
+        identity_producer,
+        "_read_evidence_leaf_from_directory_descriptor",
+        side_effect=substitute_directory,
+    ):
+        with pytest.raises(IdentityAccessPrefixValidationError) as raised:
+            validate_banked_identity_access_prefix(evidence, value, contract)
+    assert substituted is True
+    assert raised.value.access_census["receipt_count"] == 1
+    assert raised.value.access_census["checkpoint_shard_opens_lower_bound"] == 0
+    assert raised.value.access_census["checkpoint_shard_opens_upper_bound"] == 1
+
+
 @pytest.mark.parametrize("missing_ordinal", range(1, 7))
 def test_each_missing_required_shard_fails_before_any_shard_open(
     tmp_path: Path, missing_ordinal: int
@@ -369,7 +879,13 @@ def test_each_missing_required_shard_fails_before_any_shard_open(
     ]
     assert shard_open_attempts == []
     assert raised.value.outcome_id == "F017_V12_IDENTITY_SHARD_OPEN_FAILURE"
-    assert raised.value.evidence["checkpoint_access"] == 0
+    assert raised.value.evidence["checkpoint_access"] == "RECEIPT_DERIVED"
+    census = raised.value.evidence["access_census"]
+    assert census["checkpoint_shard_opens_lower_bound"] == 0
+    assert census["checkpoint_shard_opens_upper_bound"] == 0
+    assert census["checkpoint_identity_hash_reads_lower_bound"] == 0
+    assert census["checkpoint_identity_hash_reads_upper_bound"] == 0
+    assert census["exact"] is True
     assert raised.value.detail.startswith("checkpoint root leaf census")
 
 
@@ -408,12 +924,21 @@ def test_expected_shard_name_still_enforces_descriptor_identity(
 def test_root_census_listdir_failure_closes_root_descriptor(tmp_path: Path) -> None:
     authority, value, _root, _contract = runnable_minimum_installed(tmp_path)
     real_open_root = identity_producer.open_directory_no_symlinks
+    real_listdir = os.listdir
     captured_root_fd: int | None = None
+    census_failure_injected = False
 
     def capture_root_descriptor(path: Path) -> tuple[int, Path]:
         nonlocal captured_root_fd
         captured_root_fd, opened = real_open_root(path)
         return captured_root_fd, opened
+
+    def fail_root_census_only(target):
+        nonlocal census_failure_injected
+        if target == captured_root_fd and not census_failure_injected:
+            census_failure_injected = True
+            raise OSError(errno.EIO, "injected root census failure")
+        return real_listdir(target)
 
     with mock.patch.object(
         identity_producer,
@@ -422,13 +947,20 @@ def test_root_census_listdir_failure_closes_root_descriptor(tmp_path: Path) -> N
     ), mock.patch.object(
         identity_producer.os,
         "listdir",
-        side_effect=OSError(errno.EIO, "injected root census failure"),
+        side_effect=fail_root_census_only,
     ):
         with pytest.raises(IdentityAuthorityError) as raised:
             run_minimum_identity_stage(authority, value)
 
     assert raised.value.outcome_id == "F017_V12_IDENTITY_SHARD_OPEN_FAILURE"
-    assert raised.value.evidence["checkpoint_access"] == 0
+    assert census_failure_injected is True
+    assert raised.value.evidence["checkpoint_access"] == "RECEIPT_DERIVED"
+    assert raised.value.evidence["access_census"][
+        "checkpoint_shard_opens_lower_bound"
+    ] == 0
+    assert raised.value.evidence["access_census"][
+        "checkpoint_shard_opens_upper_bound"
+    ] == 0
     assert captured_root_fd is not None
     with pytest.raises(OSError) as closed:
         os.fstat(captured_root_fd)
@@ -503,8 +1035,8 @@ def test_checkpoint_census_uses_one_descriptor_relative_listing(
     ):
         leases, _report = run_minimum_identity_stage(authority, value)
     assert captured_root_fd is not None
-    assert listdir_targets == [captured_root_fd]
-    assert type(listdir_targets[0]) is int
+    checkpoint_listings = [target for target in listdir_targets if target == captured_root_fd]
+    assert checkpoint_listings == [captured_root_fd]
     assert resolves_after_root_open == []
     assert leases.release()["result"] == "PASS"
 

@@ -14,6 +14,7 @@ from contextvars import ContextVar
 import ctypes
 from dataclasses import dataclass, field
 import errno
+import fcntl
 import hashlib
 import importlib.util
 import os
@@ -27,6 +28,7 @@ import time
 from types import MappingProxyType
 from typing import Callable, Final, Mapping, Never, TypeVar, cast
 
+import f017_checkpoint_identity_producer_v12 as _identity_producer_module
 from f017_binary_comparison_authority_v11 import (
     MAX_ABS_LIMIT as _MAX_ABS_LIMIT,
     RMSE_LIMIT as _RMSE_LIMIT,
@@ -41,11 +43,18 @@ from f017_checkpoint_identity_authority_v12 import (
     ValidatedIdentityAuthority as _ValidatedIdentityAuthority,
     validate_minimum_installed_bytes as _validate_installed_bytes,
 )
+from f017_checkpoint_identity_lifecycle_v12 import (
+    IdentityAuthorityError as _IdentityAuthorityError,
+)
 from f017_checkpoint_identity_producer_v12 import (
+    IdentityAccessPrefixValidationError as _IdentityAccessPrefixValidationError,
     _QUALIFICATION_ROOT_DESCRIPTOR_SEAL,
     _bind_qualification_root_descriptor,
+    identity_success_evidence_leaves as _identity_success_evidence_leaves,
+    missing_identity_access_prefix_census as _missing_identity_access_prefix_census,
     _minimum_gate_produce as _run_identity_stage,
     _reset_qualification_root_descriptor,
+    validate_banked_identity_access_prefix as _validate_banked_identity_access_prefix,
     validate_banked_identity_evidence as _validate_banked_identity_evidence,
 )
 from f017_corrected_oracle_primary_wrapper_v11 import (
@@ -59,20 +68,30 @@ from f017_descriptor_lease_manager_v10 import (
     validate_descriptors as _validate_descriptors,
 )
 from f017_event06_minimum_gate_contract_v1 import (
+    ACCOUNTING_CLOSURE_SCHEMA as _SUCCESS_ACCOUNTING_SCHEMA,
     HISTORICAL_MASTER_LEDGER as _HISTORICAL_MASTER_LEDGER,
+    PACKAGE_TERMINAL_SCHEMA as _SUCCESS_PACKAGE_TERMINAL_SCHEMA,
     REQUIRED_MECHANISM_IDS as _REQUIRED_MECHANISM_IDS,
     STAGE_VOCABULARY as _STAGE_VOCABULARY,
     _build_accounting_closure,
     _build_package_start_gate,
     _build_package_terminal,
     canonical_sha256 as _contract_sha256,
+    _ACCOUNTING_KEYS as _SUCCESS_ACCOUNTING_KEYS,
+    _IDENTITY_READ_KEYS as _SUCCESS_IDENTITY_READ_KEYS,
+    _RECEIPT_BINDING_KEYS as _SUCCESS_RECEIPT_BINDING_KEYS,
+    _TERMINAL_KEYS as _SUCCESS_PACKAGE_TERMINAL_KEYS,
     _consume_package_start_gate,
+    _package_start_receipt,
     minimum_gate_contract as _minimum_gate_contract,
     _validate_accounting_closure,
+    _validate_accounting_document as _validate_success_accounting_document,
+    _validate_identity_read_receipts as _validate_success_identity_read_receipts,
     validate_minimum_gate_contract as _validate_minimum_gate_contract,
     _validate_package_start_gate,
     _validate_consumed_package_start_gate,
     _validate_package_terminal,
+    _validate_package_terminal_document as _validate_success_package_terminal_document,
 )
 from f017_result_bundle_builder_v11 import (
     _minimum_gate_bank_output_bundle as _bank_output_bundle,
@@ -80,7 +99,10 @@ from f017_result_bundle_builder_v11 import (
 from f017_result_bundle_authority_v11 import validate_bundle as _validate_bundle
 from f017_write_once_artifact_v1 import _set_user_immutable
 
-__all__ = ("execute_event06_minimum_gate_path",)
+__all__ = (
+    "execute_event06_minimum_gate_path",
+    "closeout_interrupted_event06_minimum_gate_path",
+)
 
 
 _ROOT: Final = Path(__file__).resolve().parents[2]
@@ -175,19 +197,85 @@ _SUCCESS_COMMON_ROOT_FILES: Final = frozenset({
     "secondary-start-receipt.json",
     "v11-result-closure.json",
 })
-_SUCCESS_PHYSICAL_IDENTITY_FILES: Final = frozenset({
-    "access-journal.json",
-    "identity-core.json",
-    "identity-manifest.json",
-    "identity-receipt.json",
-    "identity-terminal.json",
-    "lease-manifest.json",
-    "shard-receipts.json",
-})
+_SUCCESS_PHYSICAL_IDENTITY_FILES: Final = frozenset(
+    _identity_success_evidence_leaves()
+)
 _SYNTHETIC_CHECKPOINT_BENIGN_EXTRA_LEAVES: Final = (
     "qualification-benign-extra-leaf.txt",
 )
 _EMPTY_SHA256: Final = hashlib.sha256(b"").hexdigest()
+_STAGE_RECEIPT_SCHEMA: Final = (
+    "pulsarmlx.f017.event06-minimum-gate-stage-receipt/1.1.0"
+)
+_FAILURE_ACCOUNTING_SCHEMA: Final = (
+    "pulsarmlx.f017.event06-minimum-gate-failure-accounting/1.1.0"
+)
+_FAILURE_TERMINAL_SCHEMA: Final = (
+    "pulsarmlx.f017.event06-minimum-gate-package-terminal/1.1.0"
+)
+_FAILURE_ACCOUNTING_FIELDS: Final = frozenset({
+    "schema",
+    "terminal_origin",
+    "failed_stage",
+    "authorization_delta",
+    "package_delta",
+    "primary_delta",
+    "secondary_delta",
+    "historical_master_ledger_before",
+    "historical_master_ledger_after",
+    "durable_receipts",
+    "invalid_durable_receipts",
+    "emergency_release_report_sha256",
+    "emergency_release_outcome",
+    "checkpoint_access_census",
+    "original_checkpoint_opens_lower_bound",
+    "original_checkpoint_opens_upper_bound",
+    "original_checkpoint_identity_hash_reads_lower_bound",
+    "original_checkpoint_identity_hash_reads_upper_bound",
+    "real_numerical_executions_observed_in_process",
+    "fabricated_successor_receipts",
+    "result",
+})
+_FAILURE_TERMINAL_FIELDS: Final = frozenset({
+    "schema",
+    "state",
+    "terminal_origin",
+    "failed_stage",
+    "failure_type",
+    "failure_wrapper_type",
+    "package_attempt_id",
+    "failure_accounting",
+    "failure_accounting_sha256",
+    "failure_accounting_leaf_sha256",
+    "emergency_release_report_sha256",
+    "emergency_release_result",
+    "emergency_release_disposition",
+    "fabricated_successor_receipts",
+    "result",
+})
+_ACCESS_CENSUS_FIELDS: Final = frozenset({
+    "schema",
+    "genesis_sha256",
+    "head_sha256",
+    "receipt_count",
+    "checkpoint_shard_opens_lower_bound",
+    "checkpoint_shard_opens_upper_bound",
+    "checkpoint_shard_opens_unconfirmed",
+    "checkpoint_identity_hash_reads_lower_bound",
+    "checkpoint_identity_hash_reads_upper_bound",
+    "checkpoint_identity_hash_reads_unconfirmed",
+    "identity_hash_bytes_lower_bound",
+    "identity_hash_bytes_upper_bound",
+    "identity_hash_bytes_unconfirmed",
+    "exact",
+    "unresolved_operation",
+    "unresolved_ordinal",
+    "prefix_complete",
+    "result",
+    "receipt_validation",
+})
+_RESTART_CLOSEOUT_ORIGIN: Final = "RESTART_CLOSEOUT"
+_IN_PROCESS_TERMINAL_ORIGIN: Final = "IN_PROCESS_STOP_BOUNDARY"
 _SUCCESS_ROLE_FILE_SUFFIXES: Final = frozenset({
     "consumer-terminal.json",
     "final_hidden.bin",
@@ -573,7 +661,10 @@ class _StorageBinding:
         "_package_identity",
         "_terminal_fd",
         "_terminal_identity",
+        "_terminal_claim_fd",
+        "_terminal_claim_held",
         "_terminal_writer_retired",
+        "_owned_package_start_identity",
     )
 
     def __init__(self, package_directory: Path, scope: str) -> None:
@@ -585,7 +676,10 @@ class _StorageBinding:
         self._package_identity: tuple[int, int] | None = None
         self._terminal_fd: int | None = None
         self._terminal_identity: tuple[int, int] | None = None
+        self._terminal_claim_fd: int | None = None
+        self._terminal_claim_held = False
         self._terminal_writer_retired = False
+        self._owned_package_start_identity: tuple[int, int] | None = None
 
     def prepare(self) -> None:
         if self._package_fd is not None:
@@ -621,13 +715,47 @@ class _StorageBinding:
         finally:
             os.close(parent_fd)
 
+    def prepare_existing(self) -> None:
+        """Bind an already-created package without creating any filesystem state."""
+        if self._package_fd is not None:
+            raise RuntimeError("package storage is already prepared")
+        parent_fd = _open_directory_chain(
+            self.package_directory.parent, create=False
+        )
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        package_fd = -1
+        try:
+            package_fd = os.open(
+                self.package_directory.name, flags, dir_fd=parent_fd
+            )
+            observed = os.fstat(package_fd)
+            if (
+                not stat.S_ISDIR(observed.st_mode)
+                or observed.st_uid != os.getuid()
+            ):
+                raise ValueError("existing package directory authority")
+            self._package_fd = package_fd
+            self._package_identity = (observed.st_dev, observed.st_ino)
+            package_fd = -1
+        finally:
+            if package_fd >= 0:
+                os.close(package_fd)
+            os.close(parent_fd)
+        self._verify_package_path_identity()
+
     def close(self) -> None:
         """Release the package-directory descriptor exactly once."""
         terminal_descriptor = self._terminal_fd
+        terminal_claim_descriptor = self._terminal_claim_fd
         descriptor = self._package_fd
         self._terminal_fd = None
         self._terminal_identity = None
+        self._terminal_claim_fd = None
+        self._terminal_claim_held = False
         self._terminal_writer_retired = False
+        self._owned_package_start_identity = None
         self._package_fd = None
         self._package_identity = None
         terminal_error: BaseException | None = None
@@ -636,6 +764,15 @@ class _StorageBinding:
                 os.close(terminal_descriptor)
             except BaseException as exc:
                 terminal_error = exc
+        if (
+            terminal_claim_descriptor is not None
+            and terminal_claim_descriptor != terminal_descriptor
+        ):
+            try:
+                os.close(terminal_claim_descriptor)
+            except BaseException as exc:
+                if terminal_error is None:
+                    terminal_error = exc
         if descriptor is not None:
             try:
                 os.close(descriptor)
@@ -673,6 +810,499 @@ class _StorageBinding:
                 os.close(resolved_fd)
             os.close(parent_fd)
 
+    def _verify_held_package_parent_identity(self, parent_fd: int) -> None:
+        """Bind a held package to its original parent without trusting its leaf.
+
+        Failure terminalization must remain possible after a canonical package
+        leaf is retargeted: the held package descriptor is still the durable
+        package authority.  The private staging inode lives in the original
+        parent, so prove that parent through ``..`` from the held package rather
+        than reopening the now-hostile canonical package leaf.
+        """
+        if (
+            self._package_fd is None
+            or self._package_identity is None
+            or type(parent_fd) is not int
+        ):
+            raise RuntimeError("package storage is not prepared")
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        rebound_parent = os.open("..", flags, dir_fd=self._package_fd)
+        try:
+            held = os.fstat(self._package_fd)
+            expected_parent = os.fstat(parent_fd)
+            observed_parent = os.fstat(rebound_parent)
+            if (
+                not stat.S_ISDIR(held.st_mode)
+                or held.st_uid != os.getuid()
+                or (held.st_dev, held.st_ino) != self._package_identity
+                or not stat.S_ISDIR(expected_parent.st_mode)
+                or expected_parent.st_uid != os.getuid()
+                or (expected_parent.st_dev, expected_parent.st_ino)
+                != (observed_parent.st_dev, observed_parent.st_ino)
+            ):
+                raise RuntimeError("held package parent identity changed")
+        finally:
+            os.close(rebound_parent)
+
+    def _open_held_package_parent(self) -> int:
+        """Open the package's current parent through the held package inode."""
+        if self._package_fd is None or self._package_identity is None:
+            raise RuntimeError("package storage is not prepared")
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        parent_fd = os.open("..", flags, dir_fd=self._package_fd)
+        try:
+            self._verify_held_package_parent_identity(parent_fd)
+        except BaseException:
+            os.close(parent_fd)
+            raise
+        return parent_fd
+
+    def _require_absent_leaf(self, leaf: str) -> None:
+        """Require descriptor-relative no-follow absence of one exact leaf."""
+        if self._package_fd is None:
+            raise RuntimeError("package storage is not prepared")
+        try:
+            os.stat(leaf, dir_fd=self._package_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        raise FileExistsError(f"package leaf already exists: {leaf}")
+
+    def _read_held_leaf(
+        self,
+        leaf: str,
+        *,
+        maximum_bytes: int,
+        required_mode: int | None = None,
+        require_immutable: bool = False,
+    ) -> bytes:
+        """Read one exact leaf from the held package, without a path reopen."""
+        if (
+            self._package_fd is None
+            or type(maximum_bytes) is not int
+            or maximum_bytes < 0
+            or (
+                required_mode is not None
+                and (type(required_mode) is not int or required_mode < 0)
+            )
+            or type(require_immutable) is not bool
+        ):
+            raise RuntimeError("package storage is not prepared")
+        flags = os.O_RDONLY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        descriptor = os.open(leaf, flags, dir_fd=self._package_fd)
+        try:
+            before = os.fstat(descriptor)
+            if (
+                not stat.S_ISREG(before.st_mode)
+                or before.st_nlink != 1
+                or before.st_uid != os.getuid()
+                or before.st_size > maximum_bytes
+                or (
+                    required_mode is not None
+                    and stat.S_IMODE(before.st_mode) != required_mode
+                )
+                or (
+                    require_immutable
+                    and not bool(before.st_flags & stat.UF_IMMUTABLE)
+                )
+            ):
+                raise ValueError("held package leaf identity")
+            chunks: list[bytes] = []
+            remaining = before.st_size
+            while remaining:
+                chunk = os.read(descriptor, min(65_536, remaining))
+                if not chunk:
+                    raise OSError("short held package leaf read")
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            if os.read(descriptor, 1):
+                raise ValueError("held package leaf excess bytes")
+            after = os.fstat(descriptor)
+            canonical = os.stat(
+                leaf, dir_fd=self._package_fd, follow_symlinks=False
+            )
+            stable_fields = (
+                "st_dev", "st_ino", "st_mode", "st_uid", "st_nlink",
+                "st_size", "st_mtime_ns", "st_ctime_ns", "st_flags",
+            )
+            if (
+                any(
+                    getattr(before, field, 0) != getattr(after, field, 0)
+                    for field in stable_fields
+                )
+                or (canonical.st_dev, canonical.st_ino)
+                != (after.st_dev, after.st_ino)
+            ):
+                raise RuntimeError("held package leaf identity changed")
+            return b"".join(chunks)
+        finally:
+            os.close(descriptor)
+
+    def _classify_package_start(self, expected_raw: bytes) -> str:
+        """Classify durable start truth solely from a fresh descriptor reopen."""
+        try:
+            raw = self._read_held_leaf("package-start.json", maximum_bytes=65_536)
+        except FileNotFoundError:
+            return "ABSENT"
+        except BaseException:
+            return "INVALID_START_WITH_RESERVATION"
+        try:
+            value = _parse_artifact_bytes(raw)
+        except BaseException:
+            return "INVALID_START_WITH_RESERVATION"
+        try:
+            marker = os.stat(
+                "package-start.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+        except OSError:
+            return "INVALID_START_WITH_RESERVATION"
+        if (
+            raw == expected_raw
+            and type(value) is dict
+            and _canonical_bytes(value) == raw
+            and stat.S_ISREG(marker.st_mode)
+            and marker.st_uid == os.getuid()
+            and marker.st_nlink == 1
+            and stat.S_IMODE(marker.st_mode) == 0o600
+        ):
+            return "VALID_DURABLE_START"
+        return "INVALID_START_WITH_RESERVATION"
+
+    def _remove_owned_invalid_package_start(self) -> bool:
+        """Durably remove only this reservation owner's invalid start leaf."""
+        owned_identity = self._owned_package_start_identity
+        if (
+            self._package_fd is None
+            or not self._terminal_claim_held
+            or owned_identity is None
+        ):
+            return False
+        flags = os.O_RDWR | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        try:
+            descriptor = os.open(
+                "package-start.json", flags, dir_fd=self._package_fd
+            )
+        except OSError:
+            return False
+        removed = False
+        try:
+            observed = os.fstat(descriptor)
+            canonical = os.stat(
+                "package-start.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+            if (
+                not stat.S_ISREG(observed.st_mode)
+                or observed.st_uid != os.getuid()
+                or observed.st_nlink != 1
+                or (observed.st_dev, observed.st_ino) != owned_identity
+                or (observed.st_dev, observed.st_ino)
+                != (canonical.st_dev, canonical.st_ino)
+            ):
+                return False
+            if bool(observed.st_flags & stat.UF_IMMUTABLE):
+                _set_user_immutable(descriptor, False)
+            os.unlink("package-start.json", dir_fd=self._package_fd)
+            os.fsync(self._package_fd)
+            self._require_absent_leaf("package-start.json")
+            self._owned_package_start_identity = None
+            removed = True
+        finally:
+            os.close(descriptor)
+        return removed
+
+    def observe_package_start(self, expected_raw: bytes) -> str:
+        """Classify one durable start marker from exact held-package bytes."""
+        if type(expected_raw) is not bytes or not expected_raw:
+            raise TypeError("expected package-start bytes")
+        return self._classify_package_start(expected_raw)
+
+    def _owns_valid_package_start(self, expected_raw: bytes) -> bool:
+        """Return true only for the exact start inode created by this instance."""
+        owned = self._owned_package_start_identity
+        if owned is None or self._package_fd is None:
+            return False
+        if self._classify_package_start(expected_raw) != "VALID_DURABLE_START":
+            return False
+        try:
+            observed = os.stat(
+                "package-start.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+        except OSError:
+            return False
+        return (
+            stat.S_ISREG(observed.st_mode)
+            and observed.st_uid == os.getuid()
+            and observed.st_nlink == 1
+            and (observed.st_dev, observed.st_ino) == owned
+        )
+
+    def acquire_interrupted_terminal(
+        self,
+        expected_start_raw: bytes,
+        *,
+        runtime: _Runtime | None = None,
+    ) -> str:
+        """Acquire only an existing empty reservation after its owner exited.
+
+        This method never creates, replaces, truncates, or cleans up a package
+        artifact.  The returned state is derived while holding the package
+        descriptor and, for the winner, a nonblocking kernel claim on the
+        already-existing terminal inode.
+        """
+        if self._package_fd is None or self._package_identity is None:
+            raise RuntimeError("package storage is not prepared")
+        start_state = self.observe_package_start(expected_start_raw)
+        expected_start = _parse_artifact_bytes(expected_start_raw)
+        if type(expected_start) is not dict:
+            raise ValueError("expected package-start document")
+        expected_package_id = expected_start.get("package_attempt_id")
+        flags = os.O_RDWR | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        opened_read_only = False
+        try:
+            descriptor = os.open(
+                "package-terminal.json", flags, dir_fd=self._package_fd
+            )
+        except PermissionError:
+            readonly_flags = os.O_RDONLY | os.O_NOFOLLOW
+            if hasattr(os, "O_CLOEXEC"):
+                readonly_flags |= os.O_CLOEXEC
+            descriptor = os.open(
+                "package-terminal.json", readonly_flags, dir_fd=self._package_fd
+            )
+            opened_read_only = True
+        except FileNotFoundError:
+            return (
+                "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                if start_state == "VALID_DURABLE_START"
+                else start_state
+            )
+        except OSError:
+            return (
+                "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                if start_state == "VALID_DURABLE_START"
+                else "INVALID_START_WITH_RESERVATION"
+            )
+        retain = False
+        writer_descriptor: int | None = None
+        try:
+            observed = os.fstat(descriptor)
+            canonical = os.stat(
+                "package-terminal.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+            terminal_identity = (observed.st_dev, observed.st_ino)
+            valid_identity = (
+                stat.S_ISREG(observed.st_mode)
+                and observed.st_uid == os.getuid()
+                and observed.st_nlink == 1
+                and terminal_identity == (canonical.st_dev, canonical.st_ino)
+                and stat.S_IMODE(observed.st_mode) in {0o400, 0o600}
+            )
+            if not valid_identity:
+                return (
+                    "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                    if start_state == "VALID_DURABLE_START"
+                    else "INVALID_START_WITH_RESERVATION"
+                )
+            if observed.st_size:
+                if start_state != "VALID_DURABLE_START":
+                    return "INVALID_START_WITH_RESERVATION"
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except (BlockingIOError, OSError) as exc:
+                    if isinstance(exc, BlockingIOError) or getattr(
+                        exc, "errno", None
+                    ) in {errno.EACCES, errno.EAGAIN}:
+                        return "EXECUTING_OWNER_ACTIVE"
+                    raise
+                try:
+                    os.lseek(descriptor, 0, os.SEEK_SET)
+                    raw = os.read(descriptor, min(observed.st_size + 1, 1_048_577))
+                    value = _parse_artifact_bytes(raw)
+                except BaseException:
+                    return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                common_invalid = (
+                    len(raw) != observed.st_size
+                    or observed.st_size > 1_048_576
+                    or type(value) is not dict
+                    or _canonical_bytes(value) != raw
+                    or value.get("package_attempt_id") != expected_package_id
+                    or stat.S_IMODE(observed.st_mode) != 0o400
+                )
+                if common_invalid:
+                    return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                try:
+                    _validate_existing_package_terminal(
+                        self,
+                        value,
+                        raw,
+                        expected_start_raw,
+                        runtime=runtime,
+                    )
+                except BaseException:
+                    return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                # A process can exit at any instruction after the atomic
+                # rename, including after sealing the terminal but before
+                # sealing or syncing its package directory.  Hold the exact
+                # published inode while revalidating the bytes and completing
+                # every missing durability step.  This path is used even when
+                # the terminal is already immutable so a terminal-sealed /
+                # package-unsealed crash cannot be accepted as complete.
+                current = os.fstat(descriptor)
+                rebound = os.stat(
+                    "package-terminal.json",
+                    dir_fd=self._package_fd,
+                    follow_symlinks=False,
+                )
+                os.lseek(descriptor, 0, os.SEEK_SET)
+                repeated = os.read(descriptor, len(raw) + 1)
+                if (
+                    (current.st_dev, current.st_ino) != terminal_identity
+                    or (rebound.st_dev, rebound.st_ino) != terminal_identity
+                    or current.st_uid != os.getuid()
+                    or current.st_nlink != 1
+                    or current.st_size != len(raw)
+                    or stat.S_IMODE(current.st_mode) != 0o400
+                    or repeated != raw
+                ):
+                    return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+                _set_user_immutable(descriptor, True)
+                _set_user_immutable(self._package_fd, True)
+                os.fsync(descriptor)
+                os.fsync(self._package_fd)
+                parent_fd = _open_directory_chain(
+                    self.package_directory.parent, create=False
+                )
+                try:
+                    os.fsync(parent_fd)
+                finally:
+                    self._close_descriptor_confirmed(parent_fd)
+                sealed = os.fstat(descriptor)
+                sealed_package = os.fstat(self._package_fd)
+                rebound = os.stat(
+                    "package-terminal.json",
+                    dir_fd=self._package_fd,
+                    follow_symlinks=False,
+                )
+                self._verify_package_path_identity()
+                if (
+                    (sealed.st_dev, sealed.st_ino) != terminal_identity
+                    or (rebound.st_dev, rebound.st_ino) != terminal_identity
+                    or stat.S_IMODE(sealed.st_mode) != 0o400
+                    or not bool(sealed.st_flags & stat.UF_IMMUTABLE)
+                    or not bool(sealed_package.st_flags & stat.UF_IMMUTABLE)
+                ):
+                    raise RuntimeError("recovered package terminal seal")
+                return "ALREADY_TERMINAL"
+            if start_state == "ABSENT":
+                return "EMPTY_RESERVATION_WITHOUT_START"
+            if start_state != "VALID_DURABLE_START":
+                return "INVALID_START_WITH_RESERVATION"
+            if stat.S_IMODE(observed.st_mode) != 0o600:
+                return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return "EXECUTING_OWNER_ACTIVE"
+            except OSError as exc:
+                if exc.errno in {errno.EACCES, errno.EAGAIN}:
+                    return "EXECUTING_OWNER_ACTIVE"
+                raise
+            # Revalidate both leaves after winning.  The lock applies to this
+            # exact existing terminal inode, not a pathname or package claim.
+            if self.observe_package_start(expected_start_raw) != "VALID_DURABLE_START":
+                return "INVALID_START_WITH_RESERVATION"
+            current = os.fstat(descriptor)
+            rebound = os.stat(
+                "package-terminal.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+            if (
+                (current.st_dev, current.st_ino) != terminal_identity
+                or (rebound.st_dev, rebound.st_ino) != terminal_identity
+                or current.st_size != 0
+                or current.st_uid != os.getuid()
+                or current.st_nlink != 1
+                or stat.S_IMODE(current.st_mode) != 0o600
+            ):
+                return "VALID_START_WITHOUT_VALID_RESERVED_TERMINAL"
+            if not bool(current.st_flags & stat.UF_IMMUTABLE):
+                _set_user_immutable(descriptor, True)
+                os.fsync(descriptor)
+                os.fsync(self._package_fd)
+            if opened_read_only:
+                # The read-only descriptor holds the uninterrupted kernel
+                # claim.  Temporarily clear the immutable flag through that
+                # exact inode, open a distinct writer while the claim remains
+                # held, revalidate identity, and reseal before exposing the
+                # writer to the terminal routine.
+                _set_user_immutable(descriptor, False)
+                writer_descriptor = os.open(
+                    "package-terminal.json",
+                    flags,
+                    dir_fd=self._package_fd,
+                )
+                writer = os.fstat(writer_descriptor)
+                rebound = os.stat(
+                    "package-terminal.json",
+                    dir_fd=self._package_fd,
+                    follow_symlinks=False,
+                )
+                if (
+                    (writer.st_dev, writer.st_ino) != terminal_identity
+                    or (rebound.st_dev, rebound.st_ino) != terminal_identity
+                    or writer.st_size != 0
+                    or writer.st_uid != os.getuid()
+                    or writer.st_nlink != 1
+                    or stat.S_IMODE(writer.st_mode) != 0o600
+                ):
+                    raise ValueError("restart terminal writer identity")
+                _set_user_immutable(writer_descriptor, True)
+                os.fsync(writer_descriptor)
+                os.fsync(self._package_fd)
+                self._terminal_fd = writer_descriptor
+                self._terminal_claim_fd = descriptor
+                writer_descriptor = None
+            else:
+                self._terminal_fd = descriptor
+                self._terminal_claim_fd = None
+            self._terminal_identity = terminal_identity
+            self._terminal_claim_held = True
+            self._terminal_writer_retired = False
+            retain = True
+            return "ACQUIRED_FOR_RESTART_CLOSEOUT"
+        finally:
+            if writer_descriptor is not None:
+                try:
+                    _set_user_immutable(writer_descriptor, True)
+                except BaseException:
+                    pass
+                os.close(writer_descriptor)
+            if not retain:
+                if opened_read_only:
+                    try:
+                        _set_user_immutable(descriptor, True)
+                    except BaseException:
+                        pass
+                os.close(descriptor)
+
     def _bank_leaf(
         self,
         leaf: str,
@@ -695,6 +1325,9 @@ class _StorageBinding:
         if hasattr(os, "O_CLOEXEC"):
             flags |= os.O_CLOEXEC
         descriptor = os.open(leaf, flags, 0o600, dir_fd=self._package_fd)
+        if leaf == "package-start.json" and durable_start is not None:
+            created = os.fstat(descriptor)
+            self._owned_package_start_identity = (created.st_dev, created.st_ino)
         try:
             view = memoryview(raw)
             written = 0
@@ -734,8 +1367,7 @@ class _StorageBinding:
             # Both file contents and the containing directory entry are now
             # durable.  Mark the package before any subsequent pathname check
             # can fail so every post-durability outcome terminalizes.
-            durable_start.package_started = True
-            durable_start.record("PACKAGE_START", digest)
+            durable_start.mark_package_started(digest, expected_raw=raw)
         if require_canonical_path:
             self._verify_package_path_identity()
         return digest
@@ -749,6 +1381,8 @@ class _StorageBinding:
         self, value: Mapping[str, object], stop: _StopBoundary
     ) -> str:
         """Select one terminal owner, then durably mark the package winner."""
+        expected_raw = _canonical_bytes(dict(value))
+        expected_digest = _sha(expected_raw)
         self._reserve_package_terminal(stop)
         try:
             return self._bank_leaf(
@@ -758,9 +1392,23 @@ class _StorageBinding:
                 durable_start=stop,
             )
         except BaseException:
-            if not stop.package_started:
-                self._discard_prestart_terminal_reservation()
-            raise execution_error
+            classification = self._classify_package_start(expected_raw)
+            if (
+                classification == "VALID_DURABLE_START"
+                and self._owns_valid_package_start(expected_raw)
+            ):
+                stop.mark_package_started(expected_digest, expected_raw=expected_raw)
+            elif classification in {"ABSENT", "VALID_DURABLE_START"}:
+                try:
+                    self._discard_prestart_terminal_reservation()
+                except BaseException:
+                    pass
+            elif self._remove_owned_invalid_package_start():
+                try:
+                    self._discard_prestart_terminal_reservation()
+                except BaseException:
+                    pass
+            raise
 
     def bank_failure(self, leaf: str, value: Mapping[str, object]) -> str:
         """Bank terminal failure evidence to the held post-start authority."""
@@ -933,19 +1581,31 @@ class _StorageBinding:
             or stop.terminal_banked
             or self._terminal_fd is not None
             or self._terminal_identity is not None
+            or self._terminal_claim_fd is not None
+            or self._terminal_claim_held
             or self._terminal_writer_retired
         ):
             raise TypeError("uncommitted package stop boundary required")
         self._verify_package_path_identity()
+        # The terminal claim is never introduced into a package that already
+        # has a start marker.  Any later EEXIST is therefore an owner race,
+        # not adoption of foreign or historical package state.
+        self._require_absent_leaf("package-terminal.json")
+        # This is deliberately the last namespace observation before O_EXCL:
+        # an already-started package never acquires a new terminal reservation.
+        self._require_absent_leaf("package-start.json")
         flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
         if hasattr(os, "O_CLOEXEC"):
             flags |= os.O_CLOEXEC
         descriptor = os.open(
-            "package-terminal.json", flags, 0o400, dir_fd=self._package_fd
+            "package-terminal.json", flags, 0o600, dir_fd=self._package_fd
         )
+        created_identity: tuple[int, int] | None = None
         terminal_immutable = False
         try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
             observed = os.fstat(descriptor)
+            created_identity = (observed.st_dev, observed.st_ino)
             if (
                 not stat.S_ISREG(observed.st_mode)
                 or observed.st_nlink != 1
@@ -960,32 +1620,71 @@ class _StorageBinding:
             self._verify_package_path_identity()
             self._terminal_fd = descriptor
             self._terminal_identity = (observed.st_dev, observed.st_ino)
+            self._terminal_claim_fd = None
+            self._terminal_claim_held = True
             self._terminal_writer_retired = False
             return None
         except BaseException:
-            if terminal_immutable:
+            removable = False
+            try:
+                # If a start appeared after the pre-open check, the reservation
+                # is now part of a potentially durable package prefix.  Retain
+                # it; cleanup must never strand that start without a terminal.
+                self._require_absent_leaf("package-start.json")
+                removable = True
+            except BaseException:
+                try:
+                    if not terminal_immutable:
+                        _set_user_immutable(descriptor, True)
+                        os.fsync(descriptor)
+                        os.fsync(self._package_fd)
+                except BaseException:
+                    pass
+            if removable and terminal_immutable:
                 try:
                     _set_user_immutable(descriptor, False)
                 except BaseException:
-                    pass
+                    removable = False
             try:
-                os.close(descriptor)
-            finally:
-                try:
-                    os.unlink("package-terminal.json", dir_fd=self._package_fd)
-                except BaseException:
-                    pass
+                if removable:
+                    canonical = os.stat(
+                        "package-terminal.json",
+                        dir_fd=self._package_fd,
+                        follow_symlinks=False,
+                    )
+                    if (
+                        stat.S_ISREG(canonical.st_mode)
+                        and canonical.st_uid == os.getuid()
+                        and canonical.st_nlink == 1
+                        and created_identity is not None
+                        and (canonical.st_dev, canonical.st_ino)
+                        == created_identity
+                        and canonical.st_size == 0
+                    ):
+                        # No path operation is performed between this final
+                        # nofollow start-absence proof and the owned unlink.
+                        self._require_absent_leaf("package-start.json")
+                        os.unlink(
+                            "package-terminal.json", dir_fd=self._package_fd
+                        )
+                        os.fsync(self._package_fd)
+            except BaseException:
+                pass
+            try:
+                self._close_descriptor_confirmed(descriptor)
+            except BaseException:
+                # Reservation cleanup is best effort and must never replace
+                # the original pre-start exception.
+                pass
             raise
 
     def _discard_prestart_terminal_reservation(self) -> None:
         """Remove only this instance's empty terminal before durable start."""
         descriptor = self._terminal_fd
         identity = self._terminal_identity
-        self._terminal_fd = None
-        self._terminal_identity = None
-        self._terminal_writer_retired = False
         if descriptor is None or identity is None:
             return
+        removed = False
         try:
             observed = os.fstat(descriptor)
             canonical = os.stat(
@@ -999,11 +1698,29 @@ class _StorageBinding:
                 or observed.st_size != 0
             ):
                 raise ValueError("prestart terminal reservation identity")
+            self._require_absent_leaf("package-start.json")
             _set_user_immutable(descriptor, False)
+            # Recheck immediately before the only namespace mutation.  A
+            # concurrent start retains the reservation and forces fail-closed.
+            self._require_absent_leaf("package-start.json")
             os.unlink("package-terminal.json", dir_fd=self._package_fd)
             os.fsync(self._package_fd)
+            removed = True
+        except BaseException:
+            try:
+                _set_user_immutable(descriptor, True)
+                os.fsync(descriptor)
+            except BaseException:
+                pass
+            raise
         finally:
-            os.close(descriptor)
+            if removed:
+                os.close(descriptor)
+                self._terminal_fd = None
+                self._terminal_identity = None
+                self._terminal_claim_fd = None
+                self._terminal_claim_held = False
+                self._terminal_writer_retired = False
 
     def _verify_exact_success_inventory(
         self, reserved_terminal_descriptor: int
@@ -1124,6 +1841,7 @@ class _StorageBinding:
                 current is None
                 or identity is None
                 or current != descriptor
+                or not self._terminal_claim_held
                 or self._terminal_writer_retired
             ):
                 raise RuntimeError("held package terminal required")
@@ -1144,7 +1862,7 @@ class _StorageBinding:
                 os.fsync(current)
             if os.lseek(current, 0, os.SEEK_SET) != 0:
                 raise OSError("package terminal rollback offset")
-            os.fchmod(current, 0o400)
+            os.fchmod(current, 0o600)
             _set_user_immutable(current, True)
             os.fsync(current)
         except BaseException as exc:
@@ -1221,6 +1939,322 @@ class _StorageBinding:
                 os.close(child_fd)
         os.fsync(self._package_fd)
 
+    @staticmethod
+    def _close_descriptor_confirmed(descriptor: int) -> None:
+        """Retire one descriptor even when a wrapper reports ambiguous close."""
+        try:
+            os.close(descriptor)
+            return
+        except BaseException as close_error:
+            try:
+                os.fstat(descriptor)
+            except OSError as state_error:
+                if state_error.errno == errno.EBADF:
+                    return
+                raise close_error
+            libc = ctypes.CDLL(None, use_errno=True)
+            kernel_close = libc.close
+            kernel_close.argtypes = [ctypes.c_int]
+            kernel_close.restype = ctypes.c_int
+            if kernel_close(descriptor) == 0:
+                return
+            kernel_error = ctypes.get_errno()
+            try:
+                os.fstat(descriptor)
+            except OSError as state_error:
+                if state_error.errno == errno.EBADF:
+                    return
+            raise OSError(kernel_error, os.strerror(kernel_error)) from close_error
+
+    def _publish_reserved_terminal_atomically(
+        self,
+        descriptor: int,
+        raw: bytes,
+        stop: _StopBoundary | None,
+    ) -> None:
+        """Publish complete terminal bytes by one same-filesystem rename.
+
+        The continuously locked empty terminal remains the sole namespace
+        reservation while a private sibling inode is written, read back,
+        fsynced, mode-restricted, and sealed.  A crash before the rename leaves
+        the empty reservation recoverable; a crash after it exposes only the
+        complete immutable terminal.
+        """
+        if (
+            self._package_fd is None
+            or self._package_identity is None
+            or descriptor != self._terminal_fd
+            or self._terminal_identity is None
+            or not self._terminal_claim_held
+            or self._terminal_writer_retired
+            or type(raw) is not bytes
+            or not raw
+            or (stop is not None and type(stop) is not _StopBoundary)
+        ):
+            raise ValueError("reserved atomic terminal authority")
+        reserved_identity = self._terminal_identity
+        observed = os.fstat(descriptor)
+        canonical = os.stat(
+            "package-terminal.json",
+            dir_fd=self._package_fd,
+            follow_symlinks=False,
+        )
+        if (
+            (observed.st_dev, observed.st_ino) != reserved_identity
+            or (canonical.st_dev, canonical.st_ino) != reserved_identity
+            or not stat.S_ISREG(observed.st_mode)
+            or observed.st_uid != os.getuid()
+            or observed.st_nlink != 1
+            or observed.st_size != 0
+            or not bool(observed.st_flags & stat.UF_IMMUTABLE)
+        ):
+            raise ValueError("reserved atomic terminal identity")
+
+        # Derive the staging parent from the held package inode.  A canonical
+        # path-recheck failure may mean the original package leaf was renamed;
+        # failure closure must not follow the replacement pathname.
+        parent_fd = self._open_held_package_parent()
+        stage_leaf = (
+            f".{self.package_directory.name}.terminal-stage-"
+            f"{_sha(raw)[:16]}-{os.getpid()}-{time.monotonic_ns()}"
+        )
+        stage_fd = -1
+        stage_identity: tuple[int, int] | None = None
+        renamed = False
+        final_reader = -1
+        try:
+            self._verify_held_package_parent_identity(parent_fd)
+            if stop is not None:
+                # Success may only publish into the still-canonical package.
+                # Failure publication deliberately remains bound to the held
+                # package so a path-recheck failure can itself terminalize.
+                self._verify_package_path_identity()
+            flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+            if hasattr(os, "O_CLOEXEC"):
+                flags |= os.O_CLOEXEC
+            stage_fd = os.open(stage_leaf, flags, 0o600, dir_fd=parent_fd)
+            # The staging inode becomes the published terminal inode at the
+            # rename.  Claim it before the first write and retain that claim
+            # through publication and writer retirement; the old reservation
+            # remains independently claimed until the rename has completed.
+            fcntl.flock(stage_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            created = os.fstat(stage_fd)
+            stage_identity = (created.st_dev, created.st_ino)
+            if (
+                not stat.S_ISREG(created.st_mode)
+                or created.st_uid != os.getuid()
+                or created.st_nlink != 1
+                or created.st_size != 0
+            ):
+                raise ValueError("atomic terminal staging identity")
+            view = memoryview(raw)
+            written = 0
+            while written < len(view):
+                count = os.write(stage_fd, view[written:])
+                if count <= 0:
+                    raise OSError("short staged terminal write")
+                written += count
+            os.fsync(stage_fd)
+            staged = os.fstat(stage_fd)
+            if staged.st_size != len(raw):
+                raise ValueError("staged terminal byte count")
+            os.lseek(stage_fd, 0, os.SEEK_SET)
+            chunks: list[bytes] = []
+            remaining = len(raw)
+            while remaining:
+                chunk = os.read(stage_fd, min(65_536, remaining))
+                if not chunk:
+                    raise OSError("short staged terminal readback")
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            if os.read(stage_fd, 1) or b"".join(chunks) != raw:
+                raise ValueError("staged terminal readback")
+            os.fchmod(stage_fd, 0o400)
+            _set_user_immutable(stage_fd, True)
+            os.fsync(stage_fd)
+            staged = os.fstat(stage_fd)
+            rebound_stage = os.stat(
+                stage_leaf, dir_fd=parent_fd, follow_symlinks=False
+            )
+            if (
+                (staged.st_dev, staged.st_ino) != stage_identity
+                or (rebound_stage.st_dev, rebound_stage.st_ino) != stage_identity
+                or staged.st_size != len(raw)
+                or stat.S_IMODE(staged.st_mode) != 0o400
+                or not bool(staged.st_flags & stat.UF_IMMUTABLE)
+            ):
+                raise ValueError("sealed staged terminal identity")
+
+            # The old locked inode remains the exact target until the single
+            # atomic replacement.  Darwin forbids renaming either an immutable
+            # source or over an immutable target, so clear exactly those two
+            # leaf flags and the parent flag immediately around rename.
+            self._verify_held_package_parent_identity(parent_fd)
+            if stop is not None:
+                self._verify_package_path_identity()
+            _set_user_immutable(stage_fd, False)
+            _set_user_immutable(descriptor, False)
+            _set_user_immutable(self._package_fd, False)
+            current = os.fstat(descriptor)
+            rebound = os.stat(
+                "package-terminal.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+            if (
+                (current.st_dev, current.st_ino) != reserved_identity
+                or (rebound.st_dev, rebound.st_ino) != reserved_identity
+                or current.st_size != 0
+            ):
+                raise ValueError("atomic terminal reservation changed")
+            os.rename(
+                stage_leaf,
+                "package-terminal.json",
+                src_dir_fd=parent_fd,
+                dst_dir_fd=self._package_fd,
+            )
+            renamed = True
+            _set_user_immutable(stage_fd, True)
+            _set_user_immutable(self._package_fd, True)
+            os.fsync(stage_fd)
+            os.fsync(self._package_fd)
+            os.fsync(parent_fd)
+            self._verify_held_package_parent_identity(parent_fd)
+            if stop is not None:
+                self._verify_package_path_identity()
+
+            read_flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW
+            if hasattr(os, "O_CLOEXEC"):
+                read_flags |= os.O_CLOEXEC
+            final_reader = os.open(
+                "package-terminal.json", read_flags, dir_fd=self._package_fd
+            )
+            final = os.fstat(final_reader)
+            rebound = os.stat(
+                "package-terminal.json",
+                dir_fd=self._package_fd,
+                follow_symlinks=False,
+            )
+            if (
+                (final.st_dev, final.st_ino) != stage_identity
+                or (rebound.st_dev, rebound.st_ino) != stage_identity
+                or final.st_size != len(raw)
+                or final.st_uid != os.getuid()
+                or final.st_nlink != 1
+                or stat.S_IMODE(final.st_mode) != 0o400
+                or not bool(final.st_flags & stat.UF_IMMUTABLE)
+                or not bool(os.fstat(self._package_fd).st_flags & stat.UF_IMMUTABLE)
+            ):
+                raise ValueError("published terminal identity")
+            readback = os.read(final_reader, len(raw) + 1)
+            if readback != raw:
+                raise ValueError("published terminal bytes")
+            self._close_descriptor_confirmed(descriptor)
+            claim_descriptor = self._terminal_claim_fd
+            if claim_descriptor is not None and claim_descriptor != descriptor:
+                self._close_descriptor_confirmed(claim_descriptor)
+            self._terminal_fd = final_reader
+            final_reader = -1
+            self._terminal_identity = stage_identity
+            # The staging descriptor still owns an exclusive flock on the
+            # inode that became the canonical terminal.  Retain it until
+            # storage retirement instead of introducing a post-publication
+            # lock gap between closing the writer and recording retirement.
+            self._terminal_claim_fd = stage_fd
+            stage_fd = -1
+            self._terminal_claim_held = True
+            self._terminal_writer_retired = True
+            if stop is not None:
+                stop.terminal_banked = True
+        except BaseException:
+            if renamed and stage_identity is not None:
+                # A post-rename fault can only expose the already complete
+                # staged inode.  Reopen and prove it before declaring the
+                # writer retired; never roll a complete terminal backward.
+                try:
+                    if stage_fd >= 0:
+                        _set_user_immutable(stage_fd, True)
+                    _set_user_immutable(self._package_fd, True)
+                    if stage_fd >= 0:
+                        os.fsync(stage_fd)
+                    os.fsync(self._package_fd)
+                    os.fsync(parent_fd)
+                    self._verify_held_package_parent_identity(parent_fd)
+                    if stop is not None:
+                        self._verify_package_path_identity()
+                    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW
+                    if hasattr(os, "O_CLOEXEC"):
+                        flags |= os.O_CLOEXEC
+                    proven = os.open(
+                        "package-terminal.json", flags, dir_fd=self._package_fd
+                    )
+                    final = os.fstat(proven)
+                    if (
+                        (final.st_dev, final.st_ino) == stage_identity
+                        and final.st_size == len(raw)
+                        and stat.S_IMODE(final.st_mode) == 0o400
+                        and bool(final.st_flags & stat.UF_IMMUTABLE)
+                        and bool(
+                            os.fstat(self._package_fd).st_flags
+                            & stat.UF_IMMUTABLE
+                        )
+                        and os.read(proven, len(raw) + 1) == raw
+                    ):
+                        self._close_descriptor_confirmed(descriptor)
+                        claim_descriptor = self._terminal_claim_fd
+                        if claim_descriptor is not None and claim_descriptor != descriptor:
+                            self._close_descriptor_confirmed(claim_descriptor)
+                        self._terminal_fd = proven
+                        self._terminal_identity = stage_identity
+                        # Keep the published inode's staging flock through
+                        # recovery retirement for the same continuous-claim
+                        # guarantee as the non-faulting publication path.
+                        self._terminal_claim_fd = stage_fd
+                        stage_fd = -1
+                        self._terminal_claim_held = True
+                        self._terminal_writer_retired = True
+                        if stop is not None:
+                            stop.terminal_banked = True
+                        proven = -1
+                    if proven >= 0:
+                        os.close(proven)
+                except BaseException:
+                    pass
+            else:
+                try:
+                    _set_user_immutable(descriptor, True)
+                    _set_user_immutable(self._package_fd, True)
+                    os.fsync(descriptor)
+                    os.fsync(self._package_fd)
+                except BaseException:
+                    pass
+            raise
+        finally:
+            if final_reader >= 0:
+                self._close_descriptor_confirmed(final_reader)
+            if stage_fd >= 0:
+                self._close_descriptor_confirmed(stage_fd)
+            if not renamed and stage_identity is not None:
+                try:
+                    candidate = os.stat(
+                        stage_leaf, dir_fd=parent_fd, follow_symlinks=False
+                    )
+                    if (candidate.st_dev, candidate.st_ino) == stage_identity:
+                        cleanup = os.open(
+                            stage_leaf,
+                            os.O_RDONLY | os.O_NOFOLLOW,
+                            dir_fd=parent_fd,
+                        )
+                        try:
+                            _set_user_immutable(cleanup, False)
+                        finally:
+                            os.close(cleanup)
+                        os.unlink(stage_leaf, dir_fd=parent_fd)
+                        os.fsync(parent_fd)
+                except BaseException:
+                    pass
+            self._close_descriptor_confirmed(parent_fd)
+
     def _commit_reserved_success_terminal(
         self,
         descriptor: int,
@@ -1238,6 +2272,7 @@ class _StorageBinding:
         if (
             descriptor != self._terminal_fd
             or self._terminal_identity is None
+            or not self._terminal_claim_held
         ):
             raise ValueError("held package terminal authority")
         raw = _canonical_bytes(dict(value))
@@ -1260,45 +2295,7 @@ class _StorageBinding:
             or not bool(observed.st_flags & stat.UF_IMMUTABLE)
         ):
             raise ValueError("reserved package terminal identity")
-        _set_user_immutable(descriptor, False)
-        if os.lseek(descriptor, 0, os.SEEK_SET) != 0:
-            raise OSError("package success terminal offset")
-        view = memoryview(raw)
-        written = 0
-        while written < len(view):
-            count = os.write(descriptor, view[written:])
-            if count <= 0:
-                raise OSError("short package terminal write")
-            written += count
-        observed = os.fstat(descriptor)
-        if (
-            not stat.S_ISREG(observed.st_mode)
-            or observed.st_nlink != 1
-            or observed.st_size != len(raw)
-        ):
-            raise ValueError("package terminal identity")
-        # Seal before the authoritative readback.  Even a mutation racing the
-        # seal transition is therefore rejected or detected by the exact
-        # size/content check.
-        _set_user_immutable(descriptor, True)
-        sealed = os.fstat(descriptor)
-        if sealed.st_size != len(raw):
-            raise ValueError("package terminal sealed identity")
-        os.lseek(descriptor, 0, os.SEEK_SET)
-        chunks: list[bytes] = []
-        remaining = len(raw)
-        while remaining:
-            chunk = os.read(descriptor, min(65_536, remaining))
-            if not chunk:
-                raise OSError("short package terminal readback")
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        if os.read(descriptor, 1) or b"".join(chunks) != raw:
-            raise ValueError("package terminal readback")
-        os.fsync(descriptor)
-        os.fsync(self._package_fd)
-        self._downgrade_terminal_to_read_only(descriptor, len(raw))
-        stop.terminal_banked = True
+        self._publish_reserved_terminal_atomically(descriptor, raw, stop)
 
     def _downgrade_terminal_to_read_only(
         self, writer_descriptor: int, expected_size: int
@@ -1364,7 +2361,29 @@ class _StorageBinding:
         except BaseException:
             os.close(reader)
             raise
+        claim_descriptor = self._terminal_claim_fd
+        if (
+            claim_descriptor is not None
+            and claim_descriptor != writer_descriptor
+        ):
+            try:
+                os.close(claim_descriptor)
+            except BaseException as close_error:
+                try:
+                    os.fstat(claim_descriptor)
+                except OSError as state_error:
+                    if state_error.errno != errno.EBADF:
+                        raise close_error
+                else:
+                    libc = ctypes.CDLL(None, use_errno=True)
+                    kernel_close = libc.close
+                    kernel_close.argtypes = [ctypes.c_int]
+                    kernel_close.restype = ctypes.c_int
+                    if kernel_close(claim_descriptor) != 0:
+                        raise close_error
         self._terminal_fd = reader
+        self._terminal_claim_fd = None
+        self._terminal_claim_held = False
         # This assignment is the in-memory commit discriminator.  Every
         # fallible identity, content, immutability, and durability check has
         # already passed, and no writable terminal descriptor remains.
@@ -1378,6 +2397,7 @@ class _StorageBinding:
             self._package_fd is None
             or descriptor is None
             or identity is None
+            or not self._terminal_claim_held
         ):
             raise RuntimeError("reserved package terminal required")
         raw = _canonical_bytes(dict(value))
@@ -1396,31 +2416,7 @@ class _StorageBinding:
             raise ValueError("reserved package terminal identity")
         _set_user_immutable(self._package_fd, True)
         self._seal_failure_durable_prefix(descriptor)
-        _set_user_immutable(descriptor, False)
-        if os.lseek(descriptor, 0, os.SEEK_SET) != 0:
-            raise OSError("package failure terminal offset")
-        view = memoryview(raw)
-        written = 0
-        while written < len(view):
-            count = os.write(descriptor, view[written:])
-            if count <= 0:
-                raise OSError("short package failure terminal write")
-            written += count
-        _set_user_immutable(descriptor, True)
-        os.lseek(descriptor, 0, os.SEEK_SET)
-        chunks: list[bytes] = []
-        remaining = len(raw)
-        while remaining:
-            chunk = os.read(descriptor, min(65_536, remaining))
-            if not chunk:
-                raise OSError("short package failure terminal readback")
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        if os.read(descriptor, 1) or b"".join(chunks) != raw:
-            raise ValueError("package failure terminal readback")
-        os.fsync(descriptor)
-        os.fsync(self._package_fd)
-        self._downgrade_terminal_to_read_only(descriptor, len(raw))
+        self._publish_reserved_terminal_atomically(descriptor, raw, None)
 
     def read(self, leaf: str, *, maximum_bytes: int = 1_048_576) -> bytes:
         """Read one package-root leaf through the held package descriptor."""
@@ -1537,6 +2533,57 @@ class _StorageBinding:
                 raise RuntimeError("anchored child directory identity changed")
             self._seal_held_directory_tree(target_fd)
             self._verify_package_path_identity()
+            return result
+        finally:
+            if anchored and pthread_fchdir(-1) != 0:
+                error = ctypes.get_errno()
+                os.close(target_fd)
+                raise OSError(error, os.strerror(error))
+            os.close(target_fd)
+
+    def anchored_existing_path_call(
+        self, child: str, operation: Callable[[Path], _AnchoredResult]
+    ) -> _AnchoredResult:
+        """Run a read-only path API below an existing held child directory."""
+        if (
+            type(child) is not str
+            or child in {"", ".", ".."}
+            or "/" in child
+            or "\\" in child
+        ):
+            raise ValueError("canonical anchored child")
+        if self._package_fd is None:
+            raise RuntimeError("package storage is not prepared")
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+        if hasattr(os, "O_CLOEXEC"):
+            flags |= os.O_CLOEXEC
+        target_fd = os.open(child, flags, dir_fd=self._package_fd)
+        pthread_fchdir = _pthread_fchdir_callable()
+        anchored = False
+        try:
+            self._verify_package_path_identity()
+            target_identity = os.fstat(target_fd)
+            if (
+                not stat.S_ISDIR(target_identity.st_mode)
+                or target_identity.st_uid != os.getuid()
+            ):
+                raise ValueError("anchored existing child directory identity")
+            if pthread_fchdir(self._package_fd) != 0:
+                error = ctypes.get_errno()
+                raise OSError(error, os.strerror(error))
+            anchored = True
+            result = operation(Path(child))
+            after = os.fstat(target_fd)
+            canonical_target = os.stat(
+                child, dir_fd=self._package_fd, follow_symlinks=False
+            )
+            if (
+                (after.st_dev, after.st_ino)
+                != (target_identity.st_dev, target_identity.st_ino)
+                or (canonical_target.st_dev, canonical_target.st_ino)
+                != (after.st_dev, after.st_ino)
+            ):
+                raise RuntimeError("anchored existing child identity changed")
             return result
         finally:
             if anchored and pthread_fchdir(-1) != 0:
@@ -1668,7 +2715,7 @@ class _StorageBinding:
 class _SyntheticStorageBinding(_StorageBinding):
     """The sole storage seam; it is sealed and qualification-only."""
 
-    __slots__ = ("_qualification_root",)
+    __slots__ = ("_qualification_root", "_preserve_terminal_on_close")
 
     def __new__(cls, seal: object = None, *args: object):
         del args
@@ -1681,7 +2728,14 @@ class _SyntheticStorageBinding(_StorageBinding):
         graph_root = _qualification_root(qualification_root)
         package = graph_root / f"minimum-gate-{package_key}"
         self._qualification_root = graph_root
+        self._preserve_terminal_on_close = False
         super().__init__(package, "SYNTHETIC")
+
+    def preserve_terminal_for_closeout(self, seal: object) -> None:
+        """Keep closeout bytes sealed until the test harness explicitly cleans up."""
+        if seal is not _SYNTHETIC_STORAGE_SEAL:
+            raise TypeError("synthetic closeout preservation seal")
+        self._preserve_terminal_on_close = True
 
     def prepare(self) -> None:
         if self.scope != "SYNTHETIC":
@@ -1694,7 +2748,11 @@ class _SyntheticStorageBinding(_StorageBinding):
     def close(self) -> None:
         """Unseal graph-owned test leaves only after the public path returns."""
         try:
-            if self._package_fd is not None and self._terminal_fd is not None:
+            if (
+                not self._preserve_terminal_on_close
+                and self._package_fd is not None
+                and self._terminal_fd is not None
+            ):
                 _set_user_immutable(self._package_fd, False)
                 self._set_existing_leaf_immutability(
                     False, verify_canonical_path=False
@@ -1755,7 +2813,16 @@ def _emergency_release_value(
         and release.get("unknown_leases") == 0
         and release.get("live_leases_after_release") == 0
     )
-    return {
+    producer_failure = (
+        release.get("release_disposition")
+        == "IDENTITY_PRODUCER_FAILURE_DESCRIPTOR_DISPOSITION"
+        and type(release.get("identity_failure")) is dict
+        and release.get("result") == "PASS"
+        and release.get("attempted_closures")
+        == release.get("successful_closures")
+        and release.get("live_leases_after_release") == 0
+    )
+    value = {
         "schema": "pulsarmlx.f017.event06-minimum-gate-emergency-release/1.0.0",
         "failed_stage": failed_stage,
         "attempted_closures": release.get("attempted_closures"),
@@ -1765,7 +2832,53 @@ def _emergency_release_value(
         "live_leases": release.get("live_leases_after_release"),
         "release_result": release.get("result"),
         "release_disposition": release.get("release_disposition"),
-        "result": "PASS" if no_leases or complete_release else "FAIL",
+        "result": (
+            "PASS"
+            if no_leases or complete_release or producer_failure
+            else "FAIL"
+        ),
+    }
+    if type(release.get("identity_failure")) is dict:
+        value["identity_failure"] = dict(release["identity_failure"])
+    return value
+
+
+def _identity_failure_release_outcome(
+    exc: _IdentityAuthorityError,
+) -> dict[str, object] | None:
+    """Project producer-retired descriptor truth into outer release evidence."""
+    disposition = exc.descriptor_disposition
+    if disposition is None:
+        return None
+    descriptor = disposition.evidence
+    opened = int(descriptor["opened"])
+    retained = int(descriptor["retained_leases"])
+    return {
+        "attempted_closures": opened,
+        "successful_closures": opened - retained,
+        "duplicate_closures": 0,
+        "unknown_leases": 0,
+        "live_leases_after_release": retained,
+        "release_disposition": (
+            "IDENTITY_PRODUCER_FAILURE_DESCRIPTOR_DISPOSITION"
+        ),
+        "identity_failure": {
+            "outcome_id": exc.outcome_id,
+            "detail": exc.detail,
+            "evidence_failure_type": exc.evidence_failure_type,
+            "operation_observation": (
+                exc.operation_observation.evidence
+                if exc.operation_observation is not None
+                else None
+            ),
+            "access_census": (
+                exc.access_census.evidence
+                if exc.access_census is not None
+                else None
+            ),
+            "descriptor_disposition": descriptor,
+        },
+        "result": "PASS" if retained == 0 else "FAIL",
     }
 
 
@@ -1890,6 +3003,7 @@ class _SyntheticCheckpointProvider:
         "physical_identity_producer_calls",
         "producer_checkpoint_binding_checks",
         "producer_checkpoint_shard_opens",
+        "producer_checkpoint_hash_attempts",
         "producer_checkpoint_identity_hash_reads",
     )
 
@@ -1908,6 +3022,7 @@ class _SyntheticCheckpointProvider:
         self.physical_identity_producer_calls = 0
         self.producer_checkpoint_binding_checks = 0
         self.producer_checkpoint_shard_opens = 0
+        self.producer_checkpoint_hash_attempts = 0
         self.producer_checkpoint_identity_hash_reads = 0
 
     def _bind_graph_owned_checkpoint_fixture(
@@ -2029,12 +3144,67 @@ class _SyntheticCheckpointProvider:
         execution_error: BaseException | None = None
         reset_error: BaseException | None = None
         close_error: BaseException | None = None
-        try:
-            outcome = _ProductionCheckpointEffect().run(
-                consumed_gate, authority, storage
+        expected_shards = {
+            name: (device, inode)
+            for name, device, inode in cast(
+                tuple[tuple[str, int, int], ...], self._fixture_leaf_identities
             )
-        except BaseException as exc:
-            execution_error = exc
+        }
+        observed_shard_descriptors: set[int] = set()
+        original_open = _identity_producer_module.os.open
+        original_hash_descriptor = _identity_producer_module._hash_descriptor
+
+        def observed_open(
+            candidate: object,
+            flags: int,
+            mode: int = 0o777,
+            *,
+            dir_fd: int | None = None,
+        ) -> int:
+            descriptor = original_open(
+                candidate, flags, mode, dir_fd=dir_fd
+            )
+            if type(candidate) is str and candidate in expected_shards:
+                self.producer_checkpoint_shard_opens += 1
+                observed_shard_descriptors.add(descriptor)
+            return descriptor
+
+        def observed_hash_descriptor(
+            descriptor: int,
+            expected_size: int,
+            *,
+            require_single_link: bool,
+        ) -> tuple[str, os.stat_result]:
+            tracked = descriptor in observed_shard_descriptors
+            if tracked:
+                self.producer_checkpoint_hash_attempts += 1
+            try:
+                result = original_hash_descriptor(
+                    descriptor,
+                    expected_size,
+                    require_single_link=require_single_link,
+                )
+            except BaseException as hash_error:
+                observation = getattr(hash_error, "operation_observation", None)
+                if tracked and getattr(observation, "effect_count", None) == 1:
+                    self.producer_checkpoint_identity_hash_reads += 1
+                raise
+            if tracked:
+                self.producer_checkpoint_identity_hash_reads += 1
+            return result
+
+        _identity_producer_module.os.open = observed_open
+        _identity_producer_module._hash_descriptor = observed_hash_descriptor
+        try:
+            try:
+                outcome = _ProductionCheckpointEffect().run(
+                    consumed_gate, authority, storage
+                )
+            except BaseException as exc:
+                execution_error = exc
+        finally:
+            _identity_producer_module._hash_descriptor = original_hash_descriptor
+            _identity_producer_module.os.open = original_open
         try:
             _reset_qualification_root_descriptor(
                 _QUALIFICATION_ROOT_DESCRIPTOR_SEAL, binding_token
@@ -2055,15 +3225,6 @@ class _SyntheticCheckpointProvider:
                 reset_error if reset_error is not None else cast(BaseException, close_error),
             )
         if execution_error is not None:
-            exc = execution_error
-            try:
-                evidence = getattr(exc, "evidence", None)
-            except BaseException:
-                evidence = None
-            if isinstance(evidence, Mapping):
-                checkpoint_access = evidence.get("checkpoint_access")
-                if type(checkpoint_access) is int:
-                    self.producer_checkpoint_shard_opens += checkpoint_access
             raise execution_error
         if reset_error is not None:
             raise reset_error
@@ -2082,8 +3243,13 @@ class _SyntheticCheckpointProvider:
             identity_hash_reads = outcome.report["checkpoint_identity_hash_reads"]
             if type(shard_opens) is not int or type(identity_hash_reads) is not int:
                 raise TypeError("physical identity producer access counters")
-            self.producer_checkpoint_shard_opens += shard_opens
-            self.producer_checkpoint_identity_hash_reads += identity_hash_reads
+            if (
+                shard_opens != self.producer_checkpoint_shard_opens
+                or identity_hash_reads
+                != self.producer_checkpoint_identity_hash_reads
+                or self.producer_checkpoint_hash_attempts != 6
+            ):
+                raise TypeError("physical identity producer counter divergence")
             observed_shards = tuple(
                 sorted(
                     (
@@ -2390,6 +3556,7 @@ class _StopBoundary:
     terminal_banked: bool = False
     current_stage: str = "PREFLIGHT"
     receipts: list[tuple[str, str]] = field(default_factory=list)
+    expected_package_start_raw: bytes | None = None
 
     def enter(self, stage: str, runtime: _Runtime) -> None:
         if self.terminal_banked:
@@ -2405,82 +3572,58 @@ class _StopBoundary:
             raise ValueError("receipt digest")
         self.receipts.append((kind, digest))
 
+    def mark_package_started(
+        self, digest: str, *, expected_raw: bytes | None = None
+    ) -> None:
+        """Project the durable marker into memory without making it authority."""
+        if _HEX64.fullmatch(digest) is None:
+            raise ValueError("package-start digest")
+        existing = [value for kind, value in self.receipts if kind == "PACKAGE_START"]
+        if existing and existing != [digest]:
+            raise ValueError("package-start receipt conflict")
+        if not existing:
+            self.record("PACKAGE_START", digest)
+        if expected_raw is not None:
+            if type(expected_raw) is not bytes or _sha(expected_raw) != digest:
+                raise ValueError("package-start bytes")
+            if (
+                self.expected_package_start_raw is not None
+                and self.expected_package_start_raw != expected_raw
+            ):
+                raise ValueError("package-start bytes conflict")
+            self.expected_package_start_raw = expected_raw
+        self.package_started = True
+
     def fail(
         self,
         exc: BaseException,
         runtime: _Runtime,
         emergency_release_sha256: str | None,
         emergency_release_outcome: Mapping[str, object] | None = None,
+        access_progress: Mapping[str, object] | None = None,
     ) -> None:
         if not self.package_started or self.terminal_banked:
             return
         if emergency_release_sha256 is not None:
             self.record("EMERGENCY_RELEASE_REPORT", emergency_release_sha256)
-        receipt_kinds = {kind for kind, _digest in self.receipts}
-        accounting = {
-            "schema": (
-                "pulsarmlx.f017.event06-minimum-gate-failure-accounting/1.0.0"
-            ),
-            "failed_stage": self.current_stage,
-            "authorization_delta": 0,
-            "package_delta": 1,
-            "primary_delta": int("PRIMARY_START" in receipt_kinds),
-            "secondary_delta": int("SECONDARY_START" in receipt_kinds),
-            "historical_master_ledger_before": _HISTORICAL_MASTER_LEDGER,
-            "historical_master_ledger_after": _HISTORICAL_MASTER_LEDGER,
-            "durable_receipts": [
-                {"kind": kind, "sha256": digest} for kind, digest in self.receipts
-            ],
-            "emergency_release_report_sha256": emergency_release_sha256,
-            "emergency_release_outcome": (
-                dict(emergency_release_outcome)
-                if emergency_release_outcome is not None
-                else None
-            ),
-            "original_checkpoint_root_resolutions": (
-                runtime.observed_effects["checkpoint_root_resolutions"]
-            ),
-            "original_checkpoint_opens": runtime.observed_effects["checkpoint_opens"],
-            "real_numerical_executions": runtime.observed_effects[
-                "numerical_executions"
-            ],
-            "fabricated_successor_receipts": 0,
-            "result": "FAIL",
-        }
-        accounting_sha = self.storage.bank_failure(
-            "failure-accounting.json", accounting
-        )
-        value = {
-            "schema": "pulsarmlx.f017.event06-minimum-gate-package-terminal/1.0.0",
-            "state": "TERMINAL_FAILURE",
-            "failed_stage": self.current_stage,
-            "failure_type": (
-                exc.cause_type
-                if isinstance(exc, _IdentityHandoffFailure)
-                else type(exc).__name__
-            ),
-            "failure_wrapper_type": (
-                type(exc).__name__
-                if isinstance(exc, _IdentityHandoffFailure)
-                else None
-            ),
-            "failure_accounting_sha256": accounting_sha,
-            "emergency_release_report_sha256": emergency_release_sha256,
-            "emergency_release_result": (
-                emergency_release_outcome.get("result")
-                if emergency_release_outcome is not None
-                else None
-            ),
-            "emergency_release_disposition": (
-                emergency_release_outcome.get("release_disposition")
-                if emergency_release_outcome is not None
-                else None
-            ),
-            "fabricated_successor_receipts": 0,
-            "result": "FAIL",
-        }
+        expected_raw = self.expected_package_start_raw
+        if expected_raw is None:
+            raise RuntimeError("durable package-start bytes unavailable")
+        if access_progress is None:
+            access_progress = _derive_access_progress_for_failure(
+                self.storage, runtime, exc
+            )
         try:
-            self.storage._bank_failure_terminal(value)
+            _bank_failure_terminal_from_durable_progress(
+                storage=self.storage,
+                expected_package_start_raw=expected_raw,
+                exc=exc,
+                access_progress=access_progress,
+                terminal_origin=_IN_PROCESS_TERMINAL_ORIGIN,
+                emergency_release_sha256=emergency_release_sha256,
+                emergency_release_outcome=emergency_release_outcome,
+                runtime=runtime,
+            )
         except BaseException:
             if not self.storage._terminal_writer_retired:
                 raise
@@ -2530,8 +3673,10 @@ def _qualification_runtime(root: Path, package_claim_sha256: str, *, intercept: 
     )
 
 
-def _validate_go_bytes(raw: bytes, profile: _AuthorityProfile,
-                       *, now_unix_ns: int | None = None) -> _ValidatedCollapsedGo:
+def _validate_go_non_temporal(
+    raw: bytes, profile: _AuthorityProfile
+) -> _ValidatedCollapsedGo:
+    """Validate every collapsed-GO binding except its wall-clock window."""
     if type(raw) is not bytes:
         raise TypeError("exact collapsed GO bytes required")
     value = _parse_artifact_bytes(raw)
@@ -2563,10 +3708,20 @@ def _validate_go_bytes(raw: bytes, profile: _AuthorityProfile,
     )
     if value["one_shot_nonce_sha256"] != expected_nonce:
         raise ValueError("collapsed GO one-shot nonce")
-    now = time.time_ns() if now_unix_ns is None else now_unix_ns
-    if type(now) is not int or now < value["issued_at_unix_ns"] or now >= value["expires_at_unix_ns"]:
-        raise ValueError("collapsed GO validity")
     return _ValidatedCollapsedGo(_GO_SEAL, value)
+
+
+def _validate_go_bytes(raw: bytes, profile: _AuthorityProfile,
+                       *, now_unix_ns: int | None = None) -> _ValidatedCollapsedGo:
+    validated = _validate_go_non_temporal(raw, profile)
+    now = time.time_ns() if now_unix_ns is None else now_unix_ns
+    if (
+        type(now) is not int
+        or now < validated.get("issued_at_unix_ns")
+        or now >= validated.get("expires_at_unix_ns")
+    ):
+        raise ValueError("collapsed GO validity")
+    return validated
 
 
 def _validate_fresh_integration_state(state: object, scope: str) -> None:
@@ -2597,7 +3752,7 @@ def _identity_installed_document(
     runtime: _Runtime,
     checkpoint_root: Path,
 ) -> dict[str, object]:
-    """Build the retained checkpoint-identity authority without readiness ceremony."""
+    """Build retained identity authority only from the already-pinned profile."""
     selected_root = runtime.profile.release_authority.get(
         "selected_checkpoint_root"
     )
@@ -2610,6 +3765,27 @@ def _identity_installed_document(
     shards = runtime.profile.shards
     identity_only = sum(item.get("role") == "IDENTITY_ONLY" for item in shards)
     graph_payload = sum(item.get("role") == "GRAPH_PAYLOAD" for item in shards)
+    producer_path = runtime.profile.release_authority.get(
+        "checkpoint_identity_producer_path"
+    )
+    producer_sha256 = runtime.profile.release_authority.get(
+        "checkpoint_identity_producer_sha256"
+    )
+    validator_path = runtime.profile.release_authority.get(
+        "checkpoint_identity_validator_path"
+    )
+    validator_sha256 = runtime.profile.release_authority.get(
+        "checkpoint_identity_validator_sha256"
+    )
+    if (
+        producer_path != _IDENTITY_PRODUCER
+        or validator_path != _IDENTITY_VALIDATOR
+        or type(producer_sha256) is not str
+        or _HEX64.fullmatch(producer_sha256) is None
+        or type(validator_sha256) is not str
+        or _HEX64.fullmatch(validator_sha256) is None
+    ):
+        raise ValueError("pinned checkpoint implementation authority")
     return {
         "schema": _IDENTITY_INSTALLED_SCHEMA,
         "authority_scope": runtime.scope,
@@ -2627,10 +3803,10 @@ def _identity_installed_document(
         "checkpoint_identity_contract_sha256": (
             runtime.profile.checkpoint_authority_sha256
         ),
-        "measured_producer_path": _IDENTITY_PRODUCER,
-        "measured_producer_sha256": _file_sha(_IDENTITY_PRODUCER),
-        "measured_validator_path": _IDENTITY_VALIDATOR,
-        "measured_validator_sha256": _file_sha(_IDENTITY_VALIDATOR),
+        "measured_producer_path": producer_path,
+        "measured_producer_sha256": producer_sha256,
+        "measured_validator_path": validator_path,
+        "measured_validator_sha256": validator_sha256,
         "expected_shard_count": len(shards),
         "expected_identity_only_shard_count": identity_only,
         "expected_graph_payload_shard_count": graph_payload,
@@ -2817,6 +3993,40 @@ def _package_gate(go: _ValidatedCollapsedGo, installed: _ValidatedIdentityAuthor
     return _validate_package_start_gate(gate)
 
 
+def _derive_expected_package_start_receipt(
+    go: _ValidatedCollapsedGo, runtime: _Runtime
+) -> dict[str, object]:
+    """Purely rederive the write-once start marker for restart closeout."""
+    checkpoint_root = (
+        runtime.storage.package_directory.parent / runtime.synthetic_checkpoint_leaf
+        if runtime.scope == "SYNTHETIC"
+        else _LIVE_CHECKPOINT_ROOT
+    )
+    installed_value = _identity_installed_document(go, runtime, checkpoint_root)
+    installed_sha256 = _sha(_canonical_bytes(installed_value))
+    ids = _identities(go)
+    gate = _build_package_start_gate(
+        authorization_id=ids["authorization_id"],
+        package_attempt_id=ids["package_attempt_id"],
+        primary_event_id=ids["primary_event_id"],
+        secondary_event_id=ids["secondary_event_id"],
+        collapsed_go_sha256=go.sha256,
+        installed_authority_sha256=installed_sha256,
+        checkpoint_authority_sha256=runtime.profile.checkpoint_authority_sha256,
+        numerical_acceptance_contract_sha256=(
+            runtime.profile.numerical_acceptance_contract_sha256
+        ),
+        comparison_rules_sha256=runtime.profile.comparison_rules_sha256,
+        result_authority_sha256=runtime.profile.result_authority_sha256,
+        preflight_passed=True,
+    )
+    validated = _validate_package_start_gate(gate)
+    receipt = _package_start_receipt(validated)
+    if _contract_sha256(receipt) != _sha(_canonical_bytes(receipt)):
+        raise ValueError("pure package-start receipt derivation")
+    return receipt
+
+
 def _require_consumed_gate(
     gate: object, authority: _ValidatedIdentityAuthority
 ) -> object:
@@ -2844,12 +4054,15 @@ def _identity_outcome_from_report(authority: _ValidatedIdentityAuthority,
     validated_evidence = storage.anchored_path_call(
         "identity",
         lambda directory: _validate_banked_identity_evidence(
-            directory, dict(report)
+            directory,
+            dict(report),
+            authority=authority,
         ),
     )
     if (
         validated_evidence.get("result") != "PASS"
-        or validated_evidence.get("leaf_count") != 7
+        or validated_evidence.get("leaf_count")
+        != len(_SUCCESS_PHYSICAL_IDENTITY_FILES)
         or validated_evidence.get("terminal_sha256")
         != evidence.get("identity_terminal_sha256")
         or validated_evidence.get("deterministic_core_sha256")
@@ -2948,12 +4161,14 @@ def _validate_identity_evidence_closure(
     result = storage.anchored_path_call(
         "identity",
         lambda directory: _validate_banked_identity_evidence(
-            directory, dict(identity.report)
+            directory,
+            dict(identity.report),
+            authority=identity.authority,
         ),
     )
     if (
         result.get("result") != "PASS"
-        or result.get("leaf_count") != 7
+        or result.get("leaf_count") != len(_SUCCESS_PHYSICAL_IDENTITY_FILES)
         or result.get("terminal_sha256") != identity.identity_terminal_sha256
         or result.get("deterministic_core_sha256")
         != evidence.get("deterministic_core_sha256")
@@ -3011,15 +4226,774 @@ def _target_candidate(bridge: _ValidatedBridge) -> dict[str, object]:
     }
 
 
-def _bank_stage_receipt(storage: _StorageBinding, stage: str,
-                        subject: Mapping[str, object]) -> str:
-    value = {
-        "schema": "pulsarmlx.f017.event06-minimum-gate-stage-receipt/1.0.0",
+def _bank_stage_receipt(
+    storage: _StorageBinding,
+    stage: str,
+    subject: Mapping[str, object],
+    package_start_sha256: str,
+) -> str:
+    if stage not in {"PRIMARY", "SECONDARY", "RELEASE"}:
+        raise ValueError("durable stage receipt vocabulary")
+    if _HEX64.fullmatch(package_start_sha256) is None:
+        raise ValueError("durable package-start binding")
+    event_key = {
+        "PRIMARY": "primary_event_id",
+        "SECONDARY": "secondary_event_id",
+        "RELEASE": "package_attempt_id",
+    }[stage]
+    stage_authority = {
         "stage": stage,
-        "subject_sha256": _contract_sha256(dict(subject)),
+        "authorization_id": subject.get("authorization_id"),
+        "package_attempt_id": subject.get("package_attempt_id"),
+        "stage_event_id": subject.get(event_key),
+        "package_start_sha256": package_start_sha256,
+    }
+    value = {
+        "schema": _STAGE_RECEIPT_SCHEMA,
+        **stage_authority,
+        "stage_authority_sha256": _contract_sha256(stage_authority),
         "result": "PASS",
     }
     return storage.bank(f"{stage.lower()}-start-receipt.json", value)
+
+
+def _read_optional_canonical_leaf(
+    storage: _StorageBinding, leaf: str
+) -> tuple[dict[str, object], str] | None:
+    try:
+        raw = storage._read_held_leaf(
+            leaf,
+            maximum_bytes=1_048_576,
+            required_mode=0o600,
+            require_immutable=True,
+        )
+    except FileNotFoundError:
+        return None
+    value = _parse_artifact_bytes(raw)
+    if type(value) is not dict or _canonical_bytes(value) != raw:
+        raise ValueError(f"durable receipt canonical bytes: {leaf}")
+    return value, _sha(raw)
+
+
+def _derive_durable_stage_progress(
+    storage: _StorageBinding,
+    expected_package_start_raw: bytes,
+    *,
+    access_progress: Mapping[str, object] | None = None,
+) -> dict[str, object]:
+    """Derive consumer deltas and the furthest stage from durable receipts."""
+    if type(expected_package_start_raw) is not bytes:
+        raise TypeError("expected durable package-start bytes")
+    if storage.observe_package_start(expected_package_start_raw) != "VALID_DURABLE_START":
+        raise ValueError("durable package-start authority")
+    start_value = _parse_artifact_bytes(expected_package_start_raw)
+    if type(start_value) is not dict:
+        raise ValueError("durable package-start document")
+    start_sha256 = _sha(expected_package_start_raw)
+    durable: list[dict[str, str]] = [
+        {"kind": "PACKAGE_START", "sha256": start_sha256}
+    ]
+    invalid: list[str] = []
+    valid_stage: dict[str, str] = {}
+    expected_keys = {
+        "schema",
+        "stage",
+        "authorization_id",
+        "package_attempt_id",
+        "stage_event_id",
+        "package_start_sha256",
+        "stage_authority_sha256",
+        "result",
+    }
+    stage_event_keys = {
+        "PRIMARY": "primary_event_id",
+        "SECONDARY": "secondary_event_id",
+        "RELEASE": "package_attempt_id",
+    }
+    for stage in ("PRIMARY", "SECONDARY", "RELEASE"):
+        leaf = f"{stage.lower()}-start-receipt.json"
+        try:
+            observed = _read_optional_canonical_leaf(storage, leaf)
+        except BaseException:
+            invalid.append(leaf)
+            continue
+        if observed is None:
+            continue
+        value, digest = observed
+        event_key = stage_event_keys[stage]
+        if (
+            set(value) != expected_keys
+            or value.get("schema") != _STAGE_RECEIPT_SCHEMA
+            or value.get("stage") != stage
+            or value.get("authorization_id") != start_value.get("authorization_id")
+            or value.get("package_attempt_id") != start_value.get("package_attempt_id")
+            or value.get("stage_event_id") != start_value.get(event_key)
+            or value.get("package_start_sha256") != start_sha256
+            or value.get("stage_authority_sha256")
+            != _contract_sha256({
+                "stage": stage,
+                "authorization_id": start_value.get("authorization_id"),
+                "package_attempt_id": start_value.get("package_attempt_id"),
+                "stage_event_id": start_value.get(event_key),
+                "package_start_sha256": start_sha256,
+            })
+            or value.get("result") != "PASS"
+        ):
+            invalid.append(leaf)
+            continue
+        # Frozen causal order: later durable starts cannot confer authority
+        # when their required predecessor start is absent or invalid.
+        if stage == "SECONDARY" and "PRIMARY" not in valid_stage:
+            invalid.append(leaf)
+            continue
+        if stage == "RELEASE" and "SECONDARY" not in valid_stage:
+            invalid.append(leaf)
+            continue
+        valid_stage[stage] = digest
+        durable.append({"kind": f"{stage}_START", "sha256": digest})
+
+    failed_stage = "PACKAGE_START"
+    if access_progress is not None:
+        if type(access_progress) is not dict:
+            access_progress = dict(access_progress)
+        if access_progress.get("receipt_count", 0) or access_progress.get(
+            "checkpoint_shard_opens_lower_bound", 0
+        ):
+            failed_stage = "IDENTITY_TERMINAL"
+    else:
+        identity_receipt = None
+        try:
+            identity_receipt = storage.anchored_existing_path_call(
+                "identity",
+                lambda directory: _read_banked_document(
+                    directory, "identity-receipt.json"
+                ),
+            )
+        except BaseException:
+            pass
+        if identity_receipt is not None:
+            failed_stage = "IDENTITY_TERMINAL"
+    if "PRIMARY" in valid_stage:
+        failed_stage = "PRIMARY_RESULT_TERMINAL"
+    if "SECONDARY" in valid_stage:
+        failed_stage = "SECONDARY_RESULT_TERMINAL"
+    try:
+        comparison_receipt = _read_optional_canonical_leaf(
+            storage, "comparison-receipt.json"
+        )
+        comparison_terminal = _read_optional_canonical_leaf(
+            storage, "comparison-terminal.json"
+        )
+        if (
+            "SECONDARY" in valid_stage
+            and comparison_receipt is not None
+            and comparison_terminal is not None
+            and comparison_terminal[0].get("comparison_receipt_sha256")
+            == comparison_receipt[1]
+            and comparison_terminal[0].get("state") == "COMPLETE"
+        ):
+            failed_stage = "COMPARISON_TERMINAL"
+            durable.extend(
+                (
+                    {"kind": "COMPARISON_RECEIPT", "sha256": comparison_receipt[1]},
+                    {"kind": "COMPARISON_TERMINAL", "sha256": comparison_terminal[1]},
+                )
+            )
+    except BaseException:
+        invalid.append("comparison-receipt-or-terminal.json")
+    if "RELEASE" in valid_stage:
+        failed_stage = "RELEASE_TERMINAL"
+
+    return {
+        "package_attempt_id": start_value.get("package_attempt_id"),
+        "failed_stage": failed_stage,
+        "package_delta": 1,
+        "primary_delta": int("PRIMARY" in valid_stage),
+        "secondary_delta": int("SECONDARY" in valid_stage),
+        "durable_receipts": durable,
+        "invalid_durable_receipts": sorted(set(invalid)),
+        "access_progress": dict(access_progress) if access_progress is not None else None,
+    }
+
+
+def _empty_access_progress() -> dict[str, object]:
+    return {
+        "schema": "pulsarmlx.f017.checkpoint-identity-access-census/12.1.0",
+        "genesis_sha256": _EMPTY_SHA256,
+        "head_sha256": _EMPTY_SHA256,
+        "receipt_count": 0,
+        "checkpoint_shard_opens_lower_bound": 0,
+        "checkpoint_shard_opens_upper_bound": 0,
+        "checkpoint_shard_opens_unconfirmed": 0,
+        "checkpoint_identity_hash_reads_lower_bound": 0,
+        "checkpoint_identity_hash_reads_upper_bound": 0,
+        "checkpoint_identity_hash_reads_unconfirmed": 0,
+        "identity_hash_bytes_lower_bound": 0,
+        "identity_hash_bytes_upper_bound": 0,
+        "identity_hash_bytes_unconfirmed": 0,
+        "exact": True,
+        "unresolved_operation": None,
+        "unresolved_ordinal": 0,
+        "prefix_complete": False,
+        "receipt_validation": "PASS",
+        "result": "PASS",
+    }
+
+
+def _derive_access_progress_for_failure(
+    storage: _StorageBinding,
+    runtime: _Runtime | None,
+    exc: BaseException | None,
+) -> dict[str, object]:
+    """Read receipt-derived access truth; never fall back to mutable counters."""
+    if runtime is None:
+        raise TypeError("runtime authority required for access-prefix validation")
+    exception_census: dict[str, object] | None = None
+    if isinstance(exc, _IdentityAuthorityError) and exc.access_census is not None:
+        exception_census = dict(exc.access_census.evidence)
+    try:
+        start_raw = storage._read_held_leaf(
+            "package-start.json", maximum_bytes=65_536
+        )
+        start = _parse_artifact_bytes(start_raw)
+    except FileNotFoundError:
+        return _empty_access_progress()
+    if type(start) is not dict:
+        raise ValueError("package-start access binding")
+    contract = _parse_artifact_bytes(
+        (_ROOT / runtime.profile.checkpoint_contract_path).read_bytes()
+    )
+    if type(contract) is not dict:
+        raise ValueError("checkpoint access contract")
+    authority_binding = {
+        "authorization_id": start.get("authorization_id"),
+        "package_attempt_id": start.get("package_attempt_id"),
+        "checkpoint_identity_contract_sha256": (
+            runtime.profile.checkpoint_authority_sha256
+        ),
+        "checkpoint_set_sha256": runtime.profile.checkpoint_set_sha256,
+    }
+    try:
+        census = storage.anchored_existing_path_call(
+            "identity",
+            lambda directory: _validate_banked_identity_access_prefix(
+                directory,
+                authority_binding,
+                contract,
+                require_complete=False,
+            ),
+        )
+        evidence = dict(census)
+        evidence["receipt_validation"] = "PASS"
+        # The durable receipt prefix is authoritative.  An exception-carried
+        # census is accepted as corroboration only when it is exactly equal;
+        # it can never increase a durable lower or upper bound.
+        if exception_census is not None and exception_census != census:
+            exception_census = None
+        return evidence
+    except FileNotFoundError as validation_error:
+        # Missing durable receipts cannot be replaced by exception-carried
+        # process memory.  Preserve only the conservative receipt-authority
+        # bounds for an absent prefix.
+        evidence = _missing_identity_access_prefix_census(
+            authority_binding,
+            contract,
+        )
+        evidence["result"] = "FAIL"
+        evidence["receipt_validation"] = "FAIL"
+        evidence["validation_failure_type"] = type(validation_error).__name__
+        return evidence
+    except _IdentityAccessPrefixValidationError as validation_error:
+        evidence = dict(validation_error.access_census)
+        if exception_census is not None and exception_census != evidence:
+            exception_census = None
+        evidence["receipt_validation"] = "FAIL"
+        evidence["validation_failure_type"] = type(validation_error).__name__
+        return evidence
+    except BaseException as validation_error:
+        # An unreadable durable prefix likewise cannot confer authority on a
+        # mutable in-memory census, even if the producer attached one to the
+        # exception.  Report conservative receipt-derived bounds only.
+        evidence = _missing_identity_access_prefix_census(
+            authority_binding,
+            contract,
+        )
+        evidence["unresolved_operation"] = "RECEIPT_VALIDATION"
+        evidence["unresolved_ordinal"] = 0
+        evidence["result"] = "FAIL"
+        evidence["receipt_validation"] = "FAIL"
+        evidence["validation_failure_type"] = type(validation_error).__name__
+        return evidence
+
+
+def _failure_accounting_value(
+    *,
+    progress: Mapping[str, object],
+    access_progress: Mapping[str, object],
+    terminal_origin: str,
+    emergency_release_sha256: str | None,
+    emergency_release_outcome: Mapping[str, object] | None,
+    runtime: _Runtime | None,
+) -> dict[str, object]:
+    if terminal_origin not in {_IN_PROCESS_TERMINAL_ORIGIN, _RESTART_CLOSEOUT_ORIGIN}:
+        raise ValueError("failure terminal origin")
+    opens_lower = access_progress.get("checkpoint_shard_opens_lower_bound", 0)
+    opens_upper = access_progress.get("checkpoint_shard_opens_upper_bound", 0)
+    hashes_lower = access_progress.get(
+        "checkpoint_identity_hash_reads_lower_bound", 0
+    )
+    hashes_upper = access_progress.get(
+        "checkpoint_identity_hash_reads_upper_bound", 0
+    )
+    for item in (opens_lower, opens_upper, hashes_lower, hashes_upper):
+        if type(item) is not int or item < 0:
+            raise ValueError("receipt-derived checkpoint access bounds")
+    return {
+        "schema": _FAILURE_ACCOUNTING_SCHEMA,
+        "terminal_origin": terminal_origin,
+        "failed_stage": progress["failed_stage"],
+        "authorization_delta": 0,
+        "package_delta": 1,
+        "primary_delta": progress["primary_delta"],
+        "secondary_delta": progress["secondary_delta"],
+        "historical_master_ledger_before": _HISTORICAL_MASTER_LEDGER,
+        "historical_master_ledger_after": _HISTORICAL_MASTER_LEDGER,
+        "durable_receipts": list(progress["durable_receipts"]),
+        "invalid_durable_receipts": list(progress["invalid_durable_receipts"]),
+        "emergency_release_report_sha256": emergency_release_sha256,
+        "emergency_release_outcome": (
+            dict(emergency_release_outcome)
+            if emergency_release_outcome is not None
+            else None
+        ),
+        "checkpoint_access_census": dict(access_progress),
+        "original_checkpoint_opens_lower_bound": opens_lower,
+        "original_checkpoint_opens_upper_bound": opens_upper,
+        "original_checkpoint_identity_hash_reads_lower_bound": hashes_lower,
+        "original_checkpoint_identity_hash_reads_upper_bound": hashes_upper,
+        "real_numerical_executions_observed_in_process": (
+            runtime.observed_effects["numerical_executions"]
+            if runtime is not None and terminal_origin == _IN_PROCESS_TERMINAL_ORIGIN
+            else None
+        ),
+        "fabricated_successor_receipts": 0,
+        "result": "FAIL",
+    }
+
+
+def _validate_failure_access_census(value: object) -> dict[str, object]:
+    if type(value) is not dict:
+        raise TypeError("failure checkpoint access census")
+    fields = set(value)
+    allowed = {
+        _ACCESS_CENSUS_FIELDS,
+        _ACCESS_CENSUS_FIELDS | {"validation_failure_type"},
+    }
+    if fields not in allowed:
+        raise ValueError("failure checkpoint access census fields")
+    if (
+        value.get("schema")
+        != "pulsarmlx.f017.checkpoint-identity-access-census/12.1.0"
+        or value.get("result") not in {"PASS", "FAIL"}
+        or value.get("receipt_validation") not in {"PASS", "FAIL"}
+        or type(value.get("exact")) is not bool
+        or type(value.get("prefix_complete")) is not bool
+    ):
+        raise ValueError("failure checkpoint access census semantics")
+    for key in ("genesis_sha256", "head_sha256"):
+        digest = value.get(key)
+        if type(digest) is not str or _HEX64.fullmatch(digest) is None:
+            raise ValueError(f"failure checkpoint access census {key}")
+    integer_fields = (
+        "receipt_count",
+        "checkpoint_shard_opens_lower_bound",
+        "checkpoint_shard_opens_upper_bound",
+        "checkpoint_shard_opens_unconfirmed",
+        "checkpoint_identity_hash_reads_lower_bound",
+        "checkpoint_identity_hash_reads_upper_bound",
+        "checkpoint_identity_hash_reads_unconfirmed",
+        "identity_hash_bytes_lower_bound",
+        "identity_hash_bytes_upper_bound",
+        "identity_hash_bytes_unconfirmed",
+        "unresolved_ordinal",
+    )
+    if any(
+        type(value.get(key)) is not int or int(value[key]) < 0
+        for key in integer_fields
+    ):
+        raise ValueError("failure checkpoint access census integers")
+    opens_lower = int(value["checkpoint_shard_opens_lower_bound"])
+    opens_upper = int(value["checkpoint_shard_opens_upper_bound"])
+    hashes_lower = int(value["checkpoint_identity_hash_reads_lower_bound"])
+    hashes_upper = int(value["checkpoint_identity_hash_reads_upper_bound"])
+    bytes_lower = int(value["identity_hash_bytes_lower_bound"])
+    bytes_upper = int(value["identity_hash_bytes_upper_bound"])
+    if (
+        opens_upper != opens_lower + value["checkpoint_shard_opens_unconfirmed"]
+        or hashes_upper
+        != hashes_lower + value["checkpoint_identity_hash_reads_unconfirmed"]
+        or bytes_upper != bytes_lower + value["identity_hash_bytes_unconfirmed"]
+        or opens_upper > 6
+        or hashes_upper > 6
+        or value["receipt_count"] > 24
+        or value["exact"]
+        is not (
+            value["checkpoint_shard_opens_unconfirmed"] == 0
+            and value["checkpoint_identity_hash_reads_unconfirmed"] == 0
+            and value["identity_hash_bytes_unconfirmed"] == 0
+        )
+    ):
+        raise ValueError("failure checkpoint access census bounds")
+    unresolved = value.get("unresolved_operation")
+    unresolved_ordinal = value["unresolved_ordinal"]
+    if unresolved is None:
+        if unresolved_ordinal != 0:
+            raise ValueError("failure checkpoint access unresolved ordinal")
+    elif (
+        unresolved not in {"SHARD_OPEN", "IDENTITY_HASH_READ", "RECEIPT_VALIDATION"}
+        or unresolved_ordinal not in range(0, 7)
+        or value["exact"] is not False
+    ):
+        raise ValueError("failure checkpoint access unresolved operation")
+    return dict(value)
+
+
+def _validate_existing_failure_terminal(
+    storage: _StorageBinding,
+    terminal: dict[str, object],
+    expected_start_raw: bytes,
+    *,
+    runtime: _Runtime | None,
+) -> None:
+    if set(terminal) != _FAILURE_TERMINAL_FIELDS:
+        raise ValueError("failure terminal field census")
+    accounting = terminal.get("failure_accounting")
+    if type(accounting) is not dict or set(accounting) != _FAILURE_ACCOUNTING_FIELDS:
+        raise ValueError("failure accounting field census")
+    origin = terminal.get("terminal_origin")
+    failed_stage = terminal.get("failed_stage")
+    if (
+        terminal.get("schema") != _FAILURE_TERMINAL_SCHEMA
+        or terminal.get("state") != "TERMINAL_FAILURE"
+        or origin not in {_IN_PROCESS_TERMINAL_ORIGIN, _RESTART_CLOSEOUT_ORIGIN}
+        or failed_stage not in _STAGES
+        or terminal.get("result") != "FAIL"
+        or terminal.get("fabricated_successor_receipts") != 0
+        or type(terminal.get("fabricated_successor_receipts")) is not int
+        or accounting.get("schema") != _FAILURE_ACCOUNTING_SCHEMA
+        or accounting.get("terminal_origin") != origin
+        or accounting.get("failed_stage") != failed_stage
+        or accounting.get("authorization_delta") != 0
+        or type(accounting.get("authorization_delta")) is not int
+        or accounting.get("package_delta") != 1
+        or type(accounting.get("package_delta")) is not int
+        or accounting.get("historical_master_ledger_before")
+        != _HISTORICAL_MASTER_LEDGER
+        or type(accounting.get("historical_master_ledger_before")) is not int
+        or accounting.get("historical_master_ledger_after")
+        != _HISTORICAL_MASTER_LEDGER
+        or type(accounting.get("historical_master_ledger_after")) is not int
+        or accounting.get("fabricated_successor_receipts") != 0
+        or type(accounting.get("fabricated_successor_receipts")) is not int
+        or accounting.get("result") != "FAIL"
+    ):
+        raise ValueError("failure terminal semantics")
+    for key in ("primary_delta", "secondary_delta"):
+        if type(accounting.get(key)) is not int or accounting[key] not in {0, 1}:
+            raise ValueError("failure accounting consumer delta")
+    if accounting["secondary_delta"] > accounting["primary_delta"]:
+        raise ValueError("failure accounting causal delta")
+    access = _validate_failure_access_census(accounting.get("checkpoint_access_census"))
+    if runtime is None:
+        raise TypeError("failure terminal runtime authority")
+    derived_access = _validate_failure_access_census(
+        _derive_access_progress_for_failure(storage, runtime, None)
+    )
+    if access != derived_access:
+        raise ValueError("failure checkpoint access durable-prefix projection")
+    for lower_key, upper_key, accounting_lower, accounting_upper in (
+        (
+            "checkpoint_shard_opens_lower_bound",
+            "checkpoint_shard_opens_upper_bound",
+            "original_checkpoint_opens_lower_bound",
+            "original_checkpoint_opens_upper_bound",
+        ),
+        (
+            "checkpoint_identity_hash_reads_lower_bound",
+            "checkpoint_identity_hash_reads_upper_bound",
+            "original_checkpoint_identity_hash_reads_lower_bound",
+            "original_checkpoint_identity_hash_reads_upper_bound",
+        ),
+    ):
+        if (
+            accounting.get(accounting_lower) != access[lower_key]
+            or type(accounting.get(accounting_lower)) is not int
+            or accounting.get(accounting_upper) != access[upper_key]
+            or type(accounting.get(accounting_upper)) is not int
+        ):
+            raise ValueError("failure accounting access projection")
+    progress = _derive_durable_stage_progress(
+        storage, expected_start_raw, access_progress=access
+    )
+    for key in (
+        "failed_stage",
+        "primary_delta",
+        "secondary_delta",
+        "durable_receipts",
+        "invalid_durable_receipts",
+    ):
+        if accounting.get(key) != progress[key]:
+            raise ValueError("failure accounting durable-stage projection")
+    start = _parse_artifact_bytes(expected_start_raw)
+    if (
+        type(start) is not dict
+        or terminal.get("package_attempt_id") != start.get("package_attempt_id")
+        or type(terminal.get("failure_type")) is not str
+        or not terminal["failure_type"]
+        or (
+            terminal.get("failure_wrapper_type") is not None
+            and (
+                type(terminal.get("failure_wrapper_type")) is not str
+                or not terminal["failure_wrapper_type"]
+            )
+        )
+    ):
+        raise ValueError("failure terminal start binding")
+    if origin == _RESTART_CLOSEOUT_ORIGIN:
+        if (
+            terminal.get("failure_type")
+            != "PROCESS_INTERRUPTION_AFTER_PACKAGE_START"
+            or terminal.get("failure_wrapper_type") is not None
+            or accounting.get("real_numerical_executions_observed_in_process")
+            is not None
+        ):
+            raise ValueError("restart failure terminal semantics")
+    elif (
+        type(accounting.get("real_numerical_executions_observed_in_process"))
+        is not int
+        or accounting["real_numerical_executions_observed_in_process"] < 0
+    ):
+        raise ValueError("in-process failure execution census")
+    accounting_raw = _canonical_bytes(accounting)
+    if terminal.get("failure_accounting_sha256") != _sha(accounting_raw):
+        raise ValueError("failure terminal accounting digest")
+    accounting_leaf_sha = terminal.get("failure_accounting_leaf_sha256")
+    if accounting_leaf_sha is not None:
+        observed = _read_optional_canonical_leaf(storage, "failure-accounting.json")
+        if observed is None or observed[1] != accounting_leaf_sha or observed[0] != accounting:
+            raise ValueError("failure accounting leaf binding")
+    emergency_sha = terminal.get("emergency_release_report_sha256")
+    if accounting.get("emergency_release_report_sha256") != emergency_sha:
+        raise ValueError("failure emergency-release digest continuity")
+    emergency = accounting.get("emergency_release_outcome")
+    if emergency is not None and type(emergency) is not dict:
+        raise TypeError("failure emergency-release outcome")
+    if terminal.get("emergency_release_result") != (
+        emergency.get("result") if type(emergency) is dict else None
+    ) or terminal.get("emergency_release_disposition") != (
+        emergency.get("release_disposition") if type(emergency) is dict else None
+    ):
+        raise ValueError("failure emergency-release terminal projection")
+    if emergency_sha is not None:
+        if type(emergency_sha) is not str or _HEX64.fullmatch(emergency_sha) is None:
+            raise ValueError("failure emergency-release SHA-256")
+        observed = _read_optional_canonical_leaf(storage, "emergency-release-report.json")
+        expected_emergency = (
+            _emergency_release_value(
+                str(observed[0].get("failed_stage")),
+                emergency,
+            )
+            if observed is not None
+            and observed[0].get("failed_stage") in _STAGES
+            and type(emergency) is dict
+            else None
+        )
+        if (
+            observed is None
+            or observed[1] != emergency_sha
+            or observed[0] != expected_emergency
+        ):
+            raise ValueError("failure emergency-release leaf binding")
+
+
+def _validate_existing_success_terminal(
+    storage: _StorageBinding,
+    terminal: dict[str, object],
+    expected_start_raw: bytes,
+) -> None:
+    accounting_observed = _read_optional_canonical_leaf(
+        storage, "receipt-derived-accounting.json"
+    )
+    if accounting_observed is None:
+        raise ValueError("success accounting leaf")
+    accounting, accounting_sha = accounting_observed
+    _validate_success_accounting_document(accounting)
+    _validate_success_package_terminal_document(terminal, accounting)
+    if terminal.get("accounting_closure_sha256") != accounting_sha:
+        raise ValueError("success terminal accounting leaf digest")
+    start = _parse_artifact_bytes(expected_start_raw)
+    if type(start) is not dict:
+        raise ValueError("success terminal start document")
+    for key in (
+        "authorization_id",
+        "package_attempt_id",
+        "primary_event_id",
+        "secondary_event_id",
+    ):
+        if terminal.get(key) != start.get(key):
+            raise ValueError("success terminal start continuity")
+    bindings = accounting.get("receipt_bindings")
+    if type(bindings) is not dict:
+        raise TypeError("success terminal receipt bindings")
+
+    def root_digest(leaf: str) -> str:
+        observed = _read_optional_canonical_leaf(storage, leaf)
+        if observed is None:
+            raise ValueError(f"success terminal missing leaf: {leaf}")
+        return observed[1]
+
+    def child_digest(child: str, leaf: str) -> str:
+        return storage.anchored_existing_path_call(
+            child, lambda directory: _read_banked_document(directory, leaf)[1]
+        )
+
+    observed_bindings = {
+        "package_start_receipt_sha256": _sha(expected_start_raw),
+        "identity_receipt_sha256": child_digest("identity", "identity-receipt.json"),
+        "identity_terminal_sha256": child_digest("identity", "identity-terminal.json"),
+        "primary_start_receipt_sha256": root_digest("primary-start-receipt.json"),
+        "primary_result_receipt_sha256": child_digest("primary", "primary-result-receipt.json"),
+        "primary_result_terminal_sha256": child_digest("primary", "primary-result-terminal.json"),
+        "primary_consumer_terminal_sha256": child_digest("primary", "primary-consumer-terminal.json"),
+        "secondary_start_receipt_sha256": root_digest("secondary-start-receipt.json"),
+        "secondary_result_receipt_sha256": child_digest("secondary", "secondary-result-receipt.json"),
+        "secondary_result_terminal_sha256": child_digest("secondary", "secondary-result-terminal.json"),
+        "secondary_consumer_terminal_sha256": child_digest("secondary", "secondary-consumer-terminal.json"),
+        "comparison_receipt_sha256": root_digest("comparison-receipt.json"),
+        "comparison_terminal_sha256": root_digest("comparison-terminal.json"),
+        "release_start_receipt_sha256": root_digest("release-start-receipt.json"),
+        "release_report_sha256": root_digest("release-report.json"),
+        "release_receipt_sha256": root_digest("release-receipt.json"),
+        "release_terminal_sha256": root_digest("release-terminal.json"),
+    }
+    if bindings != observed_bindings:
+        raise ValueError("success terminal transitive receipt closure")
+    if terminal.get("package_receipt_sha256") != root_digest("package-receipt.json"):
+        raise ValueError("success package receipt closure")
+    if terminal.get("v11_closure_root_sha256") != root_digest("v11-result-closure.json"):
+        raise ValueError("success V11 closure")
+
+
+def _validate_existing_package_terminal(
+    storage: _StorageBinding,
+    value: object,
+    raw: bytes,
+    expected_start_raw: bytes,
+    *,
+    runtime: _Runtime | None,
+) -> None:
+    if type(value) is not dict or _canonical_bytes(value) != raw:
+        raise ValueError("existing package terminal bytes")
+    if value.get("schema") == _FAILURE_TERMINAL_SCHEMA:
+        _validate_existing_failure_terminal(
+            storage,
+            value,
+            expected_start_raw,
+            runtime=runtime,
+        )
+    elif value.get("schema") == _SUCCESS_PACKAGE_TERMINAL_SCHEMA:
+        _validate_existing_success_terminal(storage, value, expected_start_raw)
+    else:
+        raise ValueError("existing package terminal schema")
+
+
+def _bank_failure_terminal_from_durable_progress(
+    *,
+    storage: _StorageBinding,
+    expected_package_start_raw: bytes,
+    exc: BaseException,
+    access_progress: Mapping[str, object],
+    terminal_origin: str,
+    emergency_release_sha256: str | None,
+    emergency_release_outcome: Mapping[str, object] | None,
+    runtime: _Runtime | None,
+) -> tuple[dict[str, object], str]:
+    progress = _derive_durable_stage_progress(
+        storage,
+        expected_package_start_raw,
+        access_progress=access_progress,
+    )
+    accounting = _failure_accounting_value(
+        progress=progress,
+        access_progress=access_progress,
+        terminal_origin=terminal_origin,
+        emergency_release_sha256=emergency_release_sha256,
+        emergency_release_outcome=emergency_release_outcome,
+        runtime=runtime,
+    )
+    accounting_raw = _canonical_bytes(accounting)
+    accounting_sha256 = _sha(accounting_raw)
+    accounting_leaf_sha256: str | None = None
+    try:
+        accounting_leaf_sha256 = storage.bank_failure(
+            "failure-accounting.json", accounting
+        )
+    except FileExistsError:
+        try:
+            existing = storage._read_held_leaf(
+                "failure-accounting.json", maximum_bytes=1_048_576
+            )
+        except BaseException:
+            existing = b""
+        if existing == accounting_raw:
+            accounting_leaf_sha256 = accounting_sha256
+    except BaseException:
+        # The terminal embeds the complete accounting value and digest, so a
+        # failure to create this convenience leaf cannot strand a started
+        # package without its sole authoritative terminal.
+        accounting_leaf_sha256 = None
+    if terminal_origin == _RESTART_CLOSEOUT_ORIGIN:
+        failure_type = "PROCESS_INTERRUPTION_AFTER_PACKAGE_START"
+        failure_wrapper_type = None
+    elif isinstance(exc, _IdentityAuthorityError):
+        failure_type = exc.outcome_id
+        failure_wrapper_type = type(exc).__name__
+    else:
+        failure_type = (
+            exc.cause_type
+            if isinstance(exc, _IdentityHandoffFailure)
+            else type(exc).__name__
+        )
+        failure_wrapper_type = (
+            type(exc).__name__ if isinstance(exc, _IdentityHandoffFailure) else None
+        )
+    terminal = {
+        "schema": _FAILURE_TERMINAL_SCHEMA,
+        "state": "TERMINAL_FAILURE",
+        "terminal_origin": terminal_origin,
+        "failed_stage": progress["failed_stage"],
+        "failure_type": failure_type,
+        "failure_wrapper_type": failure_wrapper_type,
+        "package_attempt_id": progress["package_attempt_id"],
+        "failure_accounting": accounting,
+        "failure_accounting_sha256": accounting_sha256,
+        "failure_accounting_leaf_sha256": accounting_leaf_sha256,
+        "emergency_release_report_sha256": emergency_release_sha256,
+        "emergency_release_result": (
+            emergency_release_outcome.get("result")
+            if emergency_release_outcome is not None
+            else None
+        ),
+        "emergency_release_disposition": (
+            emergency_release_outcome.get("release_disposition")
+            if emergency_release_outcome is not None
+            else None
+        ),
+        "fabricated_successor_receipts": 0,
+        "result": "FAIL",
+    }
+    storage._bank_failure_terminal(terminal)
+    return terminal, _sha(_canonical_bytes(terminal))
 
 
 def _comparison(primary: Mapping[str, object], secondary: Mapping[str, object],
@@ -3595,10 +5569,22 @@ def _validate_package_control_closure(
         ("SECONDARY", secondary_start_sha256),
         ("RELEASE", release_start_sha256),
     ):
-        value = {
-            "schema": "pulsarmlx.f017.event06-minimum-gate-stage-receipt/1.0.0",
+        event_key = {
+            "PRIMARY": "primary_event_id",
+            "SECONDARY": "secondary_event_id",
+            "RELEASE": "package_attempt_id",
+        }[stage]
+        stage_authority = {
             "stage": stage,
-            "subject_sha256": _contract_sha256(bridge.as_dict()),
+            "authorization_id": bridge.get("authorization_id"),
+            "package_attempt_id": bridge.get("package_attempt_id"),
+            "stage_event_id": bridge.get(event_key),
+            "package_start_sha256": package_start_sha256,
+        }
+        value = {
+            "schema": _STAGE_RECEIPT_SCHEMA,
+            **stage_authority,
+            "stage_authority_sha256": _contract_sha256(stage_authority),
             "result": "PASS",
         }
         _require_exact_banked_document(
@@ -3841,7 +5827,9 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
         bridge = _bridge_from_gate(consumed_gate, identity, runtime)
 
         _gate_m004_stop_boundary(stop, "PRIMARY_RESULT_TERMINAL", runtime)
-        primary_start = _bank_stage_receipt(runtime.storage, "PRIMARY", bridge.as_dict())
+        primary_start = _bank_stage_receipt(
+            runtime.storage, "PRIMARY", bridge.as_dict(), package_start_sha
+        )
         stop.record("PRIMARY_START", primary_start)
         if runtime.scope == "PRODUCTION":
             runtime.observed_effects["numerical_executions"] += 1
@@ -3853,7 +5841,9 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
 
         _gate_m014_causal_prerequisite_order(primary)
         _gate_m004_stop_boundary(stop, "SECONDARY_RESULT_TERMINAL", runtime)
-        secondary_start = _bank_stage_receipt(runtime.storage, "SECONDARY", bridge.as_dict())
+        secondary_start = _bank_stage_receipt(
+            runtime.storage, "SECONDARY", bridge.as_dict(), package_start_sha
+        )
         stop.record("SECONDARY_START", secondary_start)
         if runtime.scope == "PRODUCTION":
             runtime.observed_effects["numerical_executions"] += 1
@@ -3885,7 +5875,9 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
         stop.record("COMPARISON_RECEIPT", comparison_receipt)
 
         _gate_m004_stop_boundary(stop, "RELEASE_TERMINAL", runtime)
-        release_start = _bank_stage_receipt(runtime.storage, "RELEASE", bridge.as_dict())
+        release_start = _bank_stage_receipt(
+            runtime.storage, "RELEASE", bridge.as_dict(), package_start_sha
+        )
         stop.record("RELEASE_START", release_start)
         release = identity.leases.release()
         completed_release = release
@@ -3961,6 +5953,21 @@ def _execute_minimum_gate_path(raw: bytes, runtime: _Runtime,
         if isinstance(exc, _IdentityHandoffFailure):
             emergency_release_sha = exc.release_sha256
             emergency_release_outcome = exc.release_outcome
+        elif (
+            isinstance(exc, _IdentityAuthorityError)
+            and exc.descriptor_disposition is not None
+        ):
+            source = _identity_failure_release_outcome(exc)
+            if source is None:
+                raise RuntimeError("identity descriptor disposition projection")
+            emergency_release_outcome = source
+            try:
+                emergency_release_sha = runtime.storage.bank_failure(
+                    "emergency-release-report.json",
+                    _emergency_release_value(stop.current_stage, source),
+                )
+            except BaseException:
+                pass
         elif identity is not None and identity.leases.closed:
             source = (
                 dict(completed_release)
@@ -4102,6 +6109,124 @@ def execute_event06_minimum_gate_path(collapsed_go_bytes: bytes) -> Mapping[str,
         _close_storage_after_outcome(runtime.storage)
 
 
+def closeout_interrupted_event06_minimum_gate_path(
+    collapsed_go_bytes: bytes,
+) -> Mapping[str, object]:
+    """Close an already-started package without reaching an execution stage."""
+    if type(collapsed_go_bytes) is not bytes:
+        raise TypeError("exact collapsed GO bytes required")
+    go_sha256 = _sha(collapsed_go_bytes)
+    qualification = _QUALIFICATION_INVOCATION.get()
+    if qualification is None:
+        profile = _authority_profile(synthetic=False)
+        try:
+            go = _validate_go_non_temporal(collapsed_go_bytes, profile)
+        except ValueError as exc:
+            if str(exc) == "collapsed GO release authority":
+                return MappingProxyType({
+                    "result": "SOURCE_RELEASE_AUTHORITY_MISMATCH_CLOSEOUT",
+                    "terminal_written": False,
+                    "checkpoint_effects": 0,
+                    "numerical_effects": 0,
+                })
+            raise
+        runtime = _production_runtime(
+            str(go.get("human_decision_sha256")), profile
+        )
+    else:
+        if (
+            type(qualification) is not _QualificationInvocation
+            or qualification.seal is not _QUALIFICATION_INVOCATION_SEAL
+            or qualification.collapsed_go_sha256 != go_sha256
+            or qualification.runtime.scope != "SYNTHETIC"
+        ):
+            raise TypeError("invalid qualification invocation")
+        runtime = qualification.runtime
+        try:
+            go = _validate_go_non_temporal(collapsed_go_bytes, runtime.profile)
+        except ValueError as exc:
+            if str(exc) == "collapsed GO release authority":
+                return MappingProxyType({
+                    "result": "SOURCE_RELEASE_AUTHORITY_MISMATCH_CLOSEOUT",
+                    "terminal_written": False,
+                    "checkpoint_effects": 0,
+                    "numerical_effects": 0,
+                })
+            raise
+    if runtime.package_claim_sha256 != go.get("human_decision_sha256"):
+        raise ValueError("one-shot package claim/human decision binding")
+    expected_start = _derive_expected_package_start_receipt(go, runtime)
+    expected_start_raw = _canonical_bytes(expected_start)
+    try:
+        try:
+            runtime.storage.prepare_existing()
+        except FileNotFoundError:
+            return MappingProxyType({
+                "result": "NO_DURABLE_PACKAGE_START",
+                "terminal_written": False,
+                "checkpoint_effects": 0,
+                "numerical_effects": 0,
+            })
+        state = runtime.storage.acquire_interrupted_terminal(
+            expected_start_raw,
+            runtime=runtime,
+        )
+        if state != "ACQUIRED_FOR_RESTART_CLOSEOUT":
+            terminal_sha256: str | None = None
+            if state == "ALREADY_TERMINAL":
+                terminal_sha256 = _sha(
+                    runtime.storage._read_held_leaf(
+                        "package-terminal.json", maximum_bytes=1_048_576
+                    )
+                )
+            return MappingProxyType({
+                "result": state,
+                "terminal_written": False,
+                "package_terminal_sha256": terminal_sha256,
+                "checkpoint_effects": 0,
+                "numerical_effects": 0,
+            })
+        access_progress = _derive_access_progress_for_failure(
+            runtime.storage, runtime, None
+        )
+        terminal, terminal_sha256 = _bank_failure_terminal_from_durable_progress(
+            storage=runtime.storage,
+            expected_package_start_raw=expected_start_raw,
+            exc=RuntimeError("PROCESS_INTERRUPTION_AFTER_PACKAGE_START"),
+            access_progress=access_progress,
+            terminal_origin=_RESTART_CLOSEOUT_ORIGIN,
+            emergency_release_sha256=None,
+            emergency_release_outcome={
+                "attempted_closures": 0,
+                "successful_closures": 0,
+                "duplicate_closures": 0,
+                "unknown_leases": 0,
+                "live_leases_after_release": 0,
+                "release_disposition": "KERNEL_RELEASED_PROCESS_DESCRIPTORS",
+                "result": "PASS",
+            },
+            runtime=None,
+        )
+        if (
+            terminal.get("terminal_origin") != _RESTART_CLOSEOUT_ORIGIN
+            or terminal.get("failure_type")
+            != "PROCESS_INTERRUPTION_AFTER_PACKAGE_START"
+        ):
+            raise RuntimeError("restart closeout terminal authority")
+        return MappingProxyType({
+            "result": "TERMINAL_FAILURE_BANKED",
+            "terminal_written": True,
+            "package_terminal_sha256": terminal_sha256,
+            "failed_stage": terminal["failed_stage"],
+            "primary_delta": terminal["failure_accounting"]["primary_delta"],
+            "secondary_delta": terminal["failure_accounting"]["secondary_delta"],
+            "checkpoint_effects": 0,
+            "numerical_effects": 0,
+        })
+    finally:
+        _close_storage_after_outcome(runtime.storage)
+
+
 def _qualification_go(profile: _AuthorityProfile, human_seed: bytes,
                       *, now_unix_ns: int) -> bytes:
     human = _sha(human_seed)
@@ -4235,6 +6360,27 @@ def _invoke_public_qualification(
     try:
         result = execute_event06_minimum_gate_path(collapsed_go_bytes)
         return dict(result)
+    finally:
+        _QUALIFICATION_INVOCATION.reset(token)
+
+
+def _invoke_public_closeout_qualification(
+    collapsed_go_bytes: bytes,
+    runtime: _Runtime,
+    *,
+    now_unix_ns: int,
+) -> dict[str, object]:
+    """Reach the non-executing public closeout through the sealed test seam."""
+    invocation = _QualificationInvocation(
+        _QUALIFICATION_INVOCATION_SEAL,
+        runtime,
+        now_unix_ns,
+        _sha(collapsed_go_bytes),
+    )
+    token = _QUALIFICATION_INVOCATION.set(invocation)
+    try:
+        runtime.storage.preserve_terminal_for_closeout(_SYNTHETIC_STORAGE_SEAL)
+        return dict(closeout_interrupted_event06_minimum_gate_path(collapsed_go_bytes))
     finally:
         _QUALIFICATION_INVOCATION.reset(token)
 
