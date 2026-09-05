@@ -1,0 +1,261 @@
+{
+  "authority": {
+    "freeze_transition_table_sha256": "fb877b741a21a4b95b72f9b012c951daa2445c9bb13119c5be3fde79a9290186",
+    "inherited_vocabulary_artifact": "Prompts/F017/Mac-Studio-M1-Ultra/044__F017__Mac-Studio-M1-Ultra__checkpoint-read-operation-instrumentation__read-event-vocabulary.json",
+    "inherited_vocabulary_commit": "55f5cc886a124159223961a1927716ea8aa11069",
+    "inherited_vocabulary_sha256": "9974e6531377b16398fc65d433e923789c757b21c3223d2454bd83bf0297ff43",
+    "parent_verification_sha256": "679673917a1078de66b6a34aa4c94bf55c2fd12a85fb8fcbd4f5578e8c96b1ff",
+    "planner_declaration_sha256": "6dd242c4e6f6b69691223ab8aab536b726149ad1c3c7f129602687f8133e691d",
+    "prompt_artifact": "Prompts/F017/Mac-Studio-M1-Ultra/045__F017__Mac-Studio-M1-Ultra__Python-read-operation-instrumentation__prompt.md",
+    "prompt_git_commit": "b2e46f50f02db59ca7873d93a73f914ec0f8b58e",
+    "prompt_repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "prompt_sha256": "7d26a7cb41fa4e45edf8947a420f676345155f2ae65d50a00505e7627e5d9235",
+    "source_head": "906cd913b04ac1649fbc0210e93f30731046502c",
+    "source_tree": "77a76c7ab891f87e75fc58dac3e5b4623dfd3192",
+    "state_binding_commit": "6a513aa82aacf9119cb64c3fb2ac4087137da976",
+    "verification": "Exact Git objects, basename-bearing sidecars, named Studio45 PROMPT_AVAILABLE binding and control ancestry passed before work. External Git identities are explicitly repository-scoped, not source-repository path bindings."
+  },
+  "budget": {
+    "fourth_correction_attempted": false,
+    "harness_correction_events": 3,
+    "initial_setup_counted_as_correction": false,
+    "nonstructural_repair_loops_consumed": 3,
+    "same_tooling_issue_consecutive_unsuccessful_corrections": 3,
+    "structural_repair_loops_authorized": 10,
+    "structural_repair_loops_consumed": 0,
+    "tooling_cap": 3
+  },
+  "declared_transitions_honored_after_publication": 2,
+  "diagnosis": "All four exact sandboxed Python smoke invocations returned shell exit134 without diagnostic output. The underlying abort cause was not established. No smoke fixture was created; no executor module or test was invoked. The three-correction cap requires parking before implementation.",
+  "failed_node": "N0_PYTHON_ONLY_FIXTURE_HARNESS",
+  "feature_id": "F017",
+  "harness_events": {
+    "corrections": [
+      {
+        "issue": "PYTHON_RUNTIME_SANDBOX_STARTUP",
+        "number": 1,
+        "remedy": "Admit installed system-runtime/dyld read closure and both canonical Python launcher paths; retain fixture-only data descriptor fence, deny network and all ambient writes.",
+        "result": "FAILED_EXIT134_NO_DIAGNOSTIC_BEFORE_FIXTURE"
+      },
+      {
+        "issue": "PYTHON_RUNTIME_SANDBOX_STARTUP",
+        "number": 2,
+        "remedy": "Use the existing sandbox process allowance and admit the exact installed libcrypto dependency shown by Python hashlib linkage; retain fixture-only data fence and ambient-write/network denial.",
+        "result": "FAILED_EXIT134_NO_DIAGNOSTIC_BEFORE_FIXTURE"
+      },
+      {
+        "issue": "PYTHON_RUNTIME_SANDBOX_STARTUP",
+        "number": 3,
+        "remedy": "Admit the observed NumPy extension symlink target, OpenBLAS dependency and installed GCC runtime libraries, plus read-only Darwin runtime database/cache traversal; no ambient-cache writes or executor data scope expansion.",
+        "result": "FAILED_EXIT134_NO_DIAGNOSTIC_BEFORE_FIXTURE"
+      }
+    ],
+    "diagnosis": "The exact sandboxed installed Python smoke terminates by SIGABRT (shell exit134) before any smoke result. No diagnostic text was emitted; the underlying abort cause is not established. No fourth correction is authorized by this graph.",
+    "harness_correction_events": 3,
+    "nonstructural_correction_cycles": 3,
+    "qualification": "NOT_RUN",
+    "result": "HUMAN_REQUIRED_TOOLING",
+    "same_tooling_issue_consecutive_unsuccessful_corrections": 3,
+    "schema": "f017.sequence45.private-harness-events/1",
+    "setup": {
+      "native_invocations": 0,
+      "numpy": "installed2.4.5",
+      "python": "Homebrew Python3.14.7",
+      "result": "FAILED_EXIT134_NO_DIAGNOSTIC_BEFORE_FIXTURE",
+      "roots": "new graph-owned owner-only",
+      "test_runner": "stdlib unittest"
+    },
+    "structural_loops_consumed": 0
+  },
+  "harness_material": [
+    {
+      "bytes": 2233,
+      "role": "final_sandbox_profile",
+      "sha256": "4059a8017b6c16d7bbfa4c918786c56a0579a24f5ee9b4a7adbd8fe6c23cbee0",
+      "status": "UNQUALIFIED_GRAPH_OWNED_HARNESS_MATERIAL"
+    },
+    {
+      "bytes": 1278,
+      "role": "graph_only_data_descriptor_fence",
+      "sha256": "434c1f06a829149040cf7da533f41f6c2f82ea2e6191e8e9d8913b393ba6b63b",
+      "status": "UNQUALIFIED_GRAPH_OWNED_HARNESS_MATERIAL"
+    },
+    {
+      "bytes": 1754,
+      "role": "tiny_public_smoke_script",
+      "sha256": "693d781c41513d1a9438ee991e2733fb1e80f5a56269daba5e2d447537079de1",
+      "status": "UNQUALIFIED_GRAPH_OWNED_HARNESS_MATERIAL"
+    }
+  ],
+  "historical_disposition": {
+    "backfills": 0,
+    "method": "REUSE_EXACT_BANKED_SEQUENCE44_FINDINGS_NO_RECONSTRUCTION",
+    "numerical_read_map_fault_quantities": "NOT_SEPARATELY_BANKED",
+    "sequence43_go": "CONSUMED_PERMANENTLY_NONREUSABLE",
+    "sequence43_result": "EVENT06_SUCCESS_ACCEPTED",
+    "sequence44_native_corrections_reused": false,
+    "sequence44_result": "HUMAN_REQUIRED_TOOLING",
+    "unavailable_values": null
+  },
+  "historical_optional_ci": {
+    "diagnosis": "Cross-repository prompt binding unresolved in source-only validator",
+    "native_jobs_launched": 0,
+    "repair_authorized": false,
+    "result": "FAIL",
+    "run": 33983756986
+  },
+  "next_safe_action": "Planner-directed Python harness admission continuation, diagnosing the observed abort before any executor import. Preserve this exact failed harness evidence and preliminary Python findings. Do not retry the exhausted allowance, invoke native tools, request a GO or access checkpoint/package data.",
+  "not_claimed": [
+    "native linker/cache collision proven to cause this Python abort",
+    "NumPy dependency import smoke passed",
+    "fixture/sentinel denial passed",
+    "instrumentation implemented",
+    "numerical equivalence passed"
+  ],
+  "observed_harness_outcomes": {
+    "combined_diagnostic_bytes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "executor_imports": 0,
+    "exit_statuses": [
+      134,
+      134,
+      134,
+      134
+    ],
+    "fixture_leaf_count_after_stop": 0,
+    "fixture_test_executions": 0,
+    "sentinel_and_descriptor_denial_test": "NOT_RUN",
+    "smoke_invocations": 4,
+    "smoke_observation_file_created": false
+  },
+  "observed_machine": {
+    "architecture": "arm64",
+    "build": "25A354",
+    "chip": "Apple M1 Ultra",
+    "model": "Mac13,2",
+    "os": "macOS26.0"
+  },
+  "predeclared_setup": {
+    "HOME_or_CODEX_HOME_overwritten": false,
+    "ambient_cache_write_grants": 0,
+    "bytecode_note": "-B disables writes; -I ignores Python environment overrides. No bytecode or pip operation ran.",
+    "child_PIP_CACHE_DIR": "GRAPH_ROOT/packages",
+    "child_PYTHONPYCACHEPREFIX": "GRAPH_ROOT/bytecode",
+    "child_TMPDIR": "GRAPH_ROOT/fixtures",
+    "child_XDG_CACHE_HOME": "GRAPH_ROOT/cache",
+    "python_flags": [
+      "-I",
+      "-B"
+    ],
+    "roots": "fresh atomically created owner-only graph root with owner-only tooling/fixtures/reports/cache/tmp/bytecode/packages children",
+    "status": "APPLIED_BUT_SMOKE_FAILED"
+  },
+  "publication_ci_policy": {
+    "actual_automatic_ci_result": "Recorded separately in final planner handoff if observed.",
+    "allowed_mode": "EVIDENCE_ONLY",
+    "classification_source": {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": "scripts/ci/classify_ci_change.py",
+      "sha256": "7aa2b4effb42ffc7db5c88c9cfbe465296a73417fb92a3156c32831f7e05b325"
+    },
+    "native_conditions": "Only FULL_NATIVE or UNKNOWN_DEFAULT_FULL; planned append-only evidence-only paths cannot satisfy them.",
+    "requested_dispatch": "NONE",
+    "workflow_source": {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": ".github/workflows/macos.yml",
+      "sha256": "7222b49499754455ca1b6c9ee4671c1a5188fd66d761e5cda3b6f7f61f888dd5"
+    }
+  },
+  "qualification": {
+    "PY_IDENTITY_low_level": "OUTSIDE_PYTHON_NUMERICAL_SCOPE",
+    "counter_mutations": "NOT_RUN",
+    "instrumentation": "NOT_STARTED",
+    "native_gates_python_planner_review": false,
+    "native_instrumentation": "DEFERRED_NOT_QUALIFIED",
+    "native_required_before_p1_accounting_model": true,
+    "numerical_equivalence": "NOT_RUN",
+    "persistence_prefix_and_overflow_tests": "NOT_RUN",
+    "python_coverage": "NOT_QUALIFIED",
+    "python_required_boundary_sites_preliminary": 2,
+    "python_site_producers_qualified": 0,
+    "real_python_composition": "NOT_RUN",
+    "receipt_terminal_transport": "NOT_IMPLEMENTED",
+    "required_python_tests": "NOT_RUN"
+  },
+  "ready_to_request_p1_or_event06_go": "NOT_AUTHORIZED_BY_THIS_GRAPH",
+  "result": "HUMAN_REQUIRED_TOOLING",
+  "reused_historical_report": {
+    "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+    "path": "docs/architecture/reviews/evidence/f017-sequence44-historical-reconstructability-v1.json",
+    "sha256": "81747fba3f8df2826757798a1794ce678809d61287f0dff0e00192ade9fcdea9"
+  },
+  "reused_preliminary_inventory": {
+    "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+    "path": "docs/architecture/reviews/evidence/f017-sequence44-preliminary-read-site-inventory-v1.json",
+    "sha256": "caed3fe75988a44ce1f521e7bd6c11df76144fb9f14b4316d57ee0161f5d054b"
+  },
+  "root_cause_class": "ISOLATED_PYTHON_SMOKE_ABORT_WITHOUT_DIAGNOSTIC",
+  "safety": {
+    "ambient_cache_write_grants": 0,
+    "ambient_software_upgrade_commands": 0,
+    "credential_or_privacy_configuration_access": "NONE",
+    "event06_reexecution_go_reuse_or_new_go": "NONE",
+    "historical_counts_estimated_or_backfilled": 0,
+    "historical_master_ledger": 175,
+    "in_repository_native_f017_initialization": 0,
+    "live_registry_or_ledger_writes": 0,
+    "macbook_lane_mutation": "NONE",
+    "native_compiler_linker_toolchain_invocations": 0,
+    "observer_restart": false,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_root_resolutions": 0,
+    "original_checkpoint_shard_opens": 0,
+    "prior_trash_access": "NONE",
+    "real_execution_or_p1_authority": "NONE",
+    "retained_event06_package_provenance_payload_access": "NONE",
+    "worker_external_reviewer_invocations": 0
+  },
+  "schema": "pulsarmlx.f017.sequence45.python-instrumentation-tooling-outcome/1.0.0",
+  "scope_option": "B_PYTHON_DESCRIPTOR_PATH_ONLY",
+  "sequence": 45,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "tooling": {
+    "git": "2.50.1 Apple Git-155; successful required authenticated Git transport",
+    "native_linkage_inspection": "otool read-only dependency metadata, not compiler/linker execution",
+    "native_toolchain_invocations": 0,
+    "numpy": {
+      "import_capability": "NOT_PROVEN",
+      "origin": "installed distribution metadata",
+      "version": "2.4.5"
+    },
+    "pytest": "not installed in selected interpreter; not required for selected unittest plan",
+    "python": {
+      "executable_sha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+      "origin": "Homebrew installed python@3.14/3.14.7",
+      "version": "3.14.7"
+    },
+    "sandbox_mechanism": "existing macOS sandbox-exec, read/write allowlist, network denial; graph-only positional descriptor fence intended but smoke did not complete",
+    "unittest": "standard-library test runner selected; no test executed"
+  },
+  "transitions": {
+    "F45-01": "VERIFIED_AT_LAUNCH",
+    "F45-02": "NOT_CROSSED_N0_FAILED_PRELIMINARY_ONLY",
+    "F45-03": "NOT_CROSSED_NO_IMPLEMENTATION_OR_QUALIFICATION",
+    "F45-04": "SCOPED_TOOLING_OUTCOME_PUBLICATION"
+  },
+  "undeclared_transitions": 0,
+  "zero_drift": {
+    "inherited_vocabulary_meanings_changed": 0,
+    "native_crate_files_changed": 0,
+    "numerical_decoder_contract_comparator_files_changed": 0,
+    "runtime_source_files_changed": 0,
+    "scientific_accounting_stage_stop_meanings_changed": 0,
+    "sequence43_44_historical_artifacts_changed": 0
+  }
+}
