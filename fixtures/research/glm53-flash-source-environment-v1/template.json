@@ -1,0 +1,52 @@
+{
+  "base": {
+    "tools": [],
+    "add_generation_prompt": true
+  },
+  "text_messages": [
+    {
+      "role": "user",
+      "content": "Hello."
+    }
+  ],
+  "tool_shaped_messages": [
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning_content": "",
+      "tool_calls": [
+        {
+          "function": {
+            "name": "weather",
+            "arguments": {
+              "city": "Paris"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "tool_definitions": [
+    {
+      "function": {
+        "name": "weather",
+        "description": "Synthetic inert declaration",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "prospective": {
+    "text_exact": "[gMASK]<sop><|system|>Reasoning Effort: Max<|user|>Hello.<|assistant|><think>",
+    "tool_call_fragment": "<tool_call>weather<arg_key>city</arg_key><arg_value>Paris</arg_value></tool_call>",
+    "missing_messages_role_content": "StrictUndefined rejection",
+    "malformed_messages": "wrapper ValueError",
+    "tool_declaration_json_option": "standard tojson rejects ensure_ascii; NOT_QUALIFIED; no custom filter enabled"
+  }
+}
