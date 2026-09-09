@@ -40,9 +40,9 @@ def fault_case(area,label,view):
         elif label=='RECORD_SPLICE':source.records['v']=dict(source.records['v'])
         elif label=='PURPOSE_SPLICE':source.records['v']['purpose']='FORMAT_PROBE'
         elif label=='LOST_COMPLETION':
-            saved['return']=target.historical._read_return
+            saved['return']=target.observed._read_return
             def lose(*args):faults.append('RETURN_TRANSPORT_INTERRUPTED')
-            target.historical._read_return=lose
+            target.observed._read_return=lose
         elif label=='PENDING_BEFORE_CALL':
             record=source.records['v'];ident=source.handles[2][0]
             obs._read_intent(owner,source,record,ident,16)
@@ -132,7 +132,7 @@ def fault_case(area,label,view):
         raise
     finally:
         if 'bank' in saved:obs._bank_record=saved['bank'];obs._encode_record=saved['encode']
-        if 'return' in saved:target.historical._read_return=saved['return']
+        if 'return' in saved:target.observed._read_return=saved['return']
         if owner is not None and not owner.finished:obs._finish_primary_observation(owner,'RAISED','COMPLETE')
         if other_owner is not None and not other_owner.finished:obs._finish_primary_observation(other_owner,'RAISED','COMPLETE')
         c.close()

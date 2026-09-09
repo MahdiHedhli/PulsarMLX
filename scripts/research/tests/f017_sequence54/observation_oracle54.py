@@ -59,7 +59,7 @@ def require_incomplete(observation):
 
 BINDINGS=('role','package_attempt_id','consumer_event_id','producer_measurement_sha256',
           'vocabulary_sha256','measurement_implementation_sha256','descriptor_set_sha256')
-FILES=('f017_primary_read_observation_v1.py','f017_corrected_oracle_primary_target_source_v10.py',
+FILES=('f017_primary_read_observation_v1.py','f017_primary_observed_descriptor_source_v1.py',
        'f017_corrected_oracle_primary_target_source_v11.py','f017_corrected_oracle_primary_wrapper_v11.py')
 
 def canon(value):

@@ -47,7 +47,7 @@ def _sha(raw):
 def _implementation_sha():
     parent = Path(__file__).resolve().parent
     names = ("f017_primary_read_observation_v1.py",
-             "f017_corrected_oracle_primary_target_source_v10.py",
+             "f017_primary_observed_descriptor_source_v1.py",
              "f017_corrected_oracle_primary_target_source_v11.py",
              "f017_corrected_oracle_primary_wrapper_v11.py")
     return _sha(_canonical({name: _sha((parent / name).read_bytes()) for name in names}))
