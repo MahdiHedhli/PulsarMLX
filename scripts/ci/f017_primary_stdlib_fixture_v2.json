@@ -1,0 +1,211 @@
+{
+  "archive_input_status": "MISSING_STANDALONE_MANDATORY_CASE_BODIES",
+  "criteria": {
+    "capture_controls": [
+      "fixed byte roundtrip",
+      "ordinary exit134 with both streams",
+      "actual SIGABRT6",
+      "actual timeout and reaping",
+      "ENOENT spawn failure"
+    ],
+    "capture_record_policy": "Source-free description capture at most131072 bytes; per-phase records remain32768 bytes; complete initial image list retained once, later records bind its digest/count and exact equality. Bounds remain below task16MiB; no control-plane logits.",
+    "conditional_composition": {
+      "baseline_equivalence": "exact values/stops/full byte-request transcript order, no tolerance",
+      "basic_full_values": [
+        [
+          1.0,
+          2.0,
+          -3.0,
+          4.0
+        ],
+        [
+          1.0,
+          2.0,
+          3.0,
+          4.0
+        ],
+        [
+          5.0,
+          6.0,
+          7.0,
+          8.0
+        ],
+        [
+          13.0,
+          14.0,
+          15.0,
+          16.0
+        ]
+      ],
+      "basic_modes": [
+        "FULL",
+        "SHORT",
+        "ZERO",
+        "ERROR",
+        "IDENTITY",
+        "BOUNDS",
+        "DECODE"
+      ],
+      "gate": "Required prior-archive integration/wrapper bodies must be resolved; currently missing. No composition launch under a manufactured substitute.",
+      "groups": [
+        "BASIC_BASELINE",
+        "BASIC_SUCCESSOR",
+        "WRAPPER_BASELINE",
+        "WRAPPER_SUCCESSOR",
+        "FAULTS_SUCCESSOR",
+        "INTEGRATION"
+      ],
+      "mutations": "unchanged 21 persistence/owner faults,2 wrapper-owner controls,17 counter/durable mutations; missing suffix and overflow INCOMPLETE",
+      "numerical_seeds": [
+        18101,
+        18102
+      ],
+      "oracle": "unchanged observation_oracle54: actual byte/outcome transcript reduces expected counters; never authors producer receipts",
+      "successful_full_result": "PROHIBITED_CLAIM",
+      "tiny_wrapper_outcome": "ResultEnvelopeError: numerical output payload binding"
+    },
+    "existing_nonnumerical_ctypes_exception": {
+      "call": "ctypes.CDLL(None) inside _set_user_immutable; libc.fchflags, not BLAS; no top-level CDLL call",
+      "path": "scripts/research/f017_write_once_artifact_v1.py",
+      "policy": "Allow only exact existing path/body for this source-derived import check; other project ctypes imports refuse. Do not invoke this capability in doctor-only admission.",
+      "sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768"
+    },
+    "fences": [
+      "owned readable file denied",
+      "owned writable sibling denied",
+      "positive loopback echo then sealed connect denial",
+      "same interpreter positive exec then sealed exec denial"
+    ],
+    "generation_frozen_before_any_candidate_output": true,
+    "import_oracle": "Exact source-derived project closure and actual imported origins; no NumPy/secondary/project numerical-backend calls. Exactly two previously observed Apple startup image names may be classified as passive presence only under prospective authority; no new image after the admitted pre-project baseline. No BLAS-call-absence or signature claim.",
+    "limits": {
+      "capture_bytes": 16777216,
+      "cleanup_seconds": 30,
+      "direct_RSS_bytes": 1073741824,
+      "free_floor_bytes": 8589934592,
+      "scratch_bytes": 4294967296,
+      "target_seconds": 180
+    },
+    "negatives": [
+      "source-view appended newline without digest update rejected before project import",
+      "incidental import numpy blocked by exact import-origin guard without loading NumPy",
+      "invalid child entry refused"
+    ],
+    "passive_startup_image_policy": {
+      "admitted_identifiers": [
+        "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
+        "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparseBLAS.dylib"
+      ],
+      "baseline": "complete bounded ordered dyld image census observed before any project import; retained digest/count/full initial list",
+      "forbidden": "Every NumPy/OpenBLAS/other BLAS-named image outside the two exact identifiers, and every NumPy/secondary project import",
+      "matching": "exact complete path strings, both present in source-free startup baseline",
+      "not_authorized": "No image preload, dlopen of test numerical libraries, signature inspection, new native trace, framework scan, alternate runtime, or sandbox permission expansion",
+      "numerical_call_status": "No project backend call in reviewed fixed path; actual internal Apple BLAS routine activity NOT_MEASURED",
+      "post_project": "identical ordered image census to the same-child pre-project baseline; any addition/removal/change refuses",
+      "signature_status": "NOT_COLLECTED; exact names identify observations, not proof of code signing",
+      "startup_backend_presence": "Report PASSIVE_SYSTEM_STARTUP_IMAGES_PRESENT, never BLAS_IMAGES_ABSENT"
+    },
+    "policy_negative_execution": "One additional fixed policy-data-only child per root behind unchanged fences, before any dependent project import; no actual numerical/native image loads",
+    "prohibits": [
+      "checkpoint",
+      "retained Event06",
+      "GO",
+      "P1",
+      "registry",
+      "ledger",
+      "native build",
+      "secondary execution",
+      "NumPy preload",
+      "workflow changes"
+    ],
+    "prospective_policy_negatives": [
+      {
+        "expected": "REFUSE",
+        "id": "IMG_FOREIGN_BLAS",
+        "input": "append owned /fixture/libOpenBLAS.dylib identifier only; do not load it"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "IMG_SAME_BASENAME_WRONG_PATH",
+        "input": "replace one approved identifier by /fixture/libBLAS.dylib string"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "IMG_MISSING_EXPECTED_STARTUP",
+        "input": "remove one approved startup identifier from supplied census data"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "IMG_POST_BASELINE_ADDITION",
+        "input": "add /fixture/innocent.dylib string to post-import census"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "IMG_POST_BASELINE_REMOVAL",
+        "input": "remove one image from post-import census data"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "IMG_POST_BASELINE_REORDER",
+        "input": "reverse two distinct baseline identifiers in post census data"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "SOURCE_NEW_BACKEND_CAPABILITY",
+        "input": "owned new source-path string import ctypes; static parse only, not the exact existing write-once helper"
+      },
+      {
+        "expected": "REFUSE",
+        "id": "SOURCE_SECONDARY",
+        "input": "owned source string import f017_corrected_oracle_secondary_numerics_v3; static parse only"
+      }
+    ],
+    "roots": 2,
+    "scope": "PRIMARY_STDLIB_IMPORT_ADMISSION_ONLY; COMPOSITION_BLOCKED_BY_MISSING_ARCHIVE_CASE_BODIES",
+    "source_capability_check": "Conservative AST import check plus source review: reject NumPy/secondary/BLAS/cffi and new project ctypes/backend-dispatch additions. Existing exact hash-bound f017_write_once_artifact_v1.py imports ctypes for Darwin fchflags inside _set_user_immutable; preserve that nonnumerical code, which is not called by import-only admission. Do not confuse a ctypes import with BLAS execution. Trusted stdlib SPI bootstrap remains separate. No general untrusted-code purity proof is claimed.",
+    "target_reservation": {
+      "completed_or_active_before_g2_proposal": 15,
+      "composition_starts": 0,
+      "hard_limit": 160,
+      "remaining_doctor_corrections_reserved": 60,
+      "remaining_review_and_smokes_reserved": 10,
+      "total_conservative_maximum": 119,
+      "two_fresh_doctors_maximum": 34
+    }
+  },
+  "files": {
+    "scripts/ci/f017_primary_stdlib_cases_v1.py": "fe064120f45d77b8609029b5a1302278da5168cc69ca216f3a34052b70a6c467",
+    "scripts/research/f017_accounting_root_continuity_v1.py": "57d407d827c27a5228916805b437e8d2386cd596c271d3e941f64d9f512e9ab7",
+    "scripts/research/f017_binary_comparison_authority_v11.py": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+    "scripts/research/f017_bounded_artifact_decode_v1.py": "60ad48f765b0a9924fb534204b6d85eecc975d6624110ca4f9a5133136f931fa",
+    "scripts/research/f017_canonical_serialization_v10.py": "7faa1d292c61257024e8aa1e4b337f395cea4c3e4e2dafa476661aeb9dc3872d",
+    "scripts/research/f017_corrected_oracle_primary_numerics_v2.py": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+    "scripts/research/f017_corrected_oracle_primary_numerics_v3.py": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "scripts/research/f017_corrected_oracle_primary_target_source_v10.py": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+    "scripts/research/f017_corrected_oracle_primary_target_source_v11.py": "33e6473aff9ba468b0614d5f06261c8995bf4ac609f9b61e59c6238b9cd99f74",
+    "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py": "515b23b0ac4fd382b9f4a75d01b4bbabe079020e17834347d6c1cfa2d7529133",
+    "scripts/research/f017_descriptor_lease_manager_v10.py": "9cf85bc57548a9d2fd176cb3d02acf2bc88aba5c136a2c747ac386c535003ae2",
+    "scripts/research/f017_oracle_primary_decoders.py": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+    "scripts/research/f017_primary_observed_descriptor_source_v1.py": "752fd55ba1ad641e3ab26b545e983a6bf798032d75a916e83e6c8fc2f701d28b",
+    "scripts/research/f017_primary_read_observation_v1.py": "16165f7dfb1060d72d79545e9986d439229b80691f4cc34ccebf66661724d5ec",
+    "scripts/research/f017_result_artifacts_v11.py": "d82af8629c8ad989baa760c13cea94a7e42bd3628aa6a5e24a6795dc33fa4ae4",
+    "scripts/research/f017_result_bundle_authority_v11.py": "f1388876fa24d4f93d6cd0732c6648584177b353c2bd1f37f6a02d3b3e948a3a",
+    "scripts/research/f017_result_bundle_builder_v11.py": "8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b",
+    "scripts/research/f017_result_envelope_v11.py": "572f4f03e8e02a8f9b13ef007b06e0e727089878d1187d81a4d70afb4c3870bf",
+    "scripts/research/f017_write_once_artifact_v1.py": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768",
+    "scripts/research/generate_f017_corrected_oracle_fixtures.py": "c611e0b684b86ab6e8064b10fc9b5ef1aefa11af1dbc1006fe1163ce82107526",
+    "scripts/research/iq2_xxs_tables.py": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756",
+    "scripts/research/iq3_xxs_tables.py": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042",
+    "scripts/research/iq_extra_tables.py": "08c0f3cf2fa33d7a51109959d773f2ae21f282c166b848d154903ce51f38d83e",
+    "scripts/research/tests/f017_primary_integration_cases.py": "03ef0fcbe9a0687f1a9b5fd9407ab1ff5ef082e3128c5e3312488ecc7ff64711",
+    "scripts/research/tests/f017_sequence54/observation_oracle54.py": "f3190ada6ab51a735bf4d97c5a7a0a1feb75ccedfaa46c086ba473dafdcb40ba",
+    "scripts/research/tests/f017_sequence54/primary_faults54.py": "6d16ce257ae60a7b2207774ad7c10ebb4def74384b93da01bd8a885db326a72c",
+    "scripts/research/tests/f017_sequence54/primary_suite54.py": "cdadf472d197aff23d55e9cb678fff65180201e59ebd3476c72896344db967a3",
+    "scripts/research/validate_f017_v11_execution_authority_v1.py": "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102761872628c"
+  },
+  "generation": 2,
+  "schema": "pulsarmlx.primary-stdlib-fixture-generation/1",
+  "scope": "PRIMARY_STDLIB_ONLY",
+  "source_head": "d3bf02c2e6f3de9376d9d94866683d4e8b1ada9c",
+  "source_tree": "4f04255219bed97b78949efdee9e2f249845c5f4"
+}
