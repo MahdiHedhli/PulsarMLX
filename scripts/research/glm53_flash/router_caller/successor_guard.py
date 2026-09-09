@@ -25,6 +25,16 @@ CODE_FILES = tuple(PREFIX + n for n in (
     'scripts/research/glm53_flash/cache_lifecycle/provenance.json',
     'scripts/research/glm53_flash/cache_lifecycle/upstream-cache.txt',
     'fixtures/research/glm53-flash-cache-lifecycle-v1/fixtures.json')
+CODE_FILES += (
+    'scripts/research/glm53_flash/recurrent_ops/capsule.py',
+    'scripts/research/glm53_flash/recurrent_ops/source.py',
+    'scripts/research/glm53_flash/recurrent_ops/oracle.py',
+    'scripts/research/glm53_flash/recurrent_ops/controls.py',
+    'scripts/research/glm53_flash/recurrent_ops/provenance.json',
+    'scripts/research/glm53_flash/recurrent_ops/upstream-gated-delta.txt',
+    'scripts/research/glm53_flash/recurrent_ops/upstream-language.txt',
+    'fixtures/research/glm53-flash-recurrent-ops-v1/fixtures.json',
+)
 FIXTURE_FILES = ('cases.json', 'controls.json', 'successor-discrimination-v1/fixtures.json')
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',

@@ -1,0 +1,146 @@
+{
+  "schema": "flash-recurrent-exact-source-v1",
+  "origin": {
+    "repo": "Blaizzy/mlx-vlm",
+    "path": "mlx_vlm/models/gated_delta.py",
+    "commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90",
+    "bytes": 8597,
+    "sha256": "e15cd83bfc0bfff3de7a9563aa6978f7e39e0e248cc8a55ca9482f1ce18f54d8",
+    "git_blob_sha1": "a4410a22677dbaad2434632cfe381a55b43336da",
+    "interpretation": "DATA_ONLY_NO_MODULE_IMPORT"
+  },
+  "source_spans": [
+    {
+      "name": "compute_g",
+      "line_start": 8,
+      "line_end": 10,
+      "byte_start": 110,
+      "byte_end": 261,
+      "sha256": "2557432693f6ac3904a34a185766e986d5f5e5c45b336b718b379fe2a8f0a1c9"
+    },
+    {
+      "name": "compute_g_safe",
+      "line_start": 13,
+      "line_end": 17,
+      "byte_start": 263,
+      "byte_end": 460,
+      "sha256": "f864032e9bcc846c40bd4ead3e500bf1cbda8d3eae5f4a62e1bfda48383ddb32"
+    },
+    {
+      "name": "_gated_delta_step_ops",
+      "line_start": 133,
+      "line_end": 175,
+      "byte_start": 4100,
+      "byte_end": 5304,
+      "sha256": "707acbcb89926ce734cf01c0e1babf3ad898ea83fcaa489b7b48beeb97e5b810"
+    },
+    {
+      "name": "gated_delta_ops",
+      "line_start": 221,
+      "line_end": 266,
+      "byte_start": 6443,
+      "byte_end": 7655,
+      "sha256": "9751b1354ae88830f815b23c3a2ed4ec3a5154ccbbb2bbaa400f407efdd0540a"
+    },
+    {
+      "name": "gated_delta_update",
+      "line_start": 269,
+      "line_end": 300,
+      "byte_start": 7657,
+      "byte_end": 8597,
+      "sha256": "e285f254f709fd22a161d5a6fd379815a26369b289f62619b20721880b703e78"
+    }
+  ],
+  "capsule_sha256": "af7e4bc42302d5991d642320fe40d0d89c243c6d4a2a3ca7a38cc643914b5f87",
+  "caller": {
+    "repo": "PipeNetwork/glm53-flash-mlx",
+    "path": "glm53_flash_mlx/glm5_next/language.py",
+    "commit": "a61a7c7d2fbdf3d218a9909365a24bd794f3a247",
+    "bytes": 35184,
+    "sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
+    "git_blob_sha1": "3bd6a9b2a7014f1ceb052768768d42ce5cb46e29",
+    "interpretation": "DATA_ONLY_NO_MODULE_IMPORT",
+    "line_start": 289,
+    "line_end": 303,
+    "byte_start": 11296,
+    "byte_end": 11755,
+    "selected_sha256": "817093e2d7c4b9c19ad671842608abdbab6a4658cd655649c316460eeb513558",
+    "wrapper": "source_recurrent_step(self,fg,q,k,v,a,b_o,cache,S); original15 statements lines with common indentation removed; explicit return(out,state) added after exact body",
+    "mask": "NOT_PASSED_BY_CALLER"
+  },
+  "injected_globals": [
+    "mx=admitted mlx.core",
+    "nn=admitted mlx.nn (softplus)",
+    "partial=functools.partial",
+    "Optional,Tuple=typing",
+    "gated_delta_kernel=raising sentinel, no kernel module import"
+  ],
+  "selector_predicate": "not use_kernel or mx.default_device() != mx.gpu or (not mx.metal.is_available()) or (k.shape[-1] < 32) or (k.shape[-1] % 32 != 0)",
+  "selector_default_use_kernel": true,
+  "finite_Dk": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "custom_kernel_module_top_level": "NEVER_IMPORTED_OR_EXECUTED",
+  "decorators": "UNCHANGED mx.compile and partial(mx.compile,shapeless=True)",
+  "counts": "Python-level function entry calls and explicit evaluation barriers; compiled tracing/kernel/operator counts NOT_MEASURABLE",
+  "mutations": {
+    "missing_decay": {
+      "before": "state = state * decay",
+      "after": "state = state",
+      "sha256": "16397c59a9a3bffb0667108951f8379f6dc760622b69873133b5bb928e3bb817",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "double_decay": {
+      "before": "state = state * decay",
+      "after": "state = state * decay * decay",
+      "sha256": "f83228b4c6935534d355622bdb2f3855d00b2d9ff3200cf066503d749812c7a4",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "residual_undecayed": {
+      "before": "kv_mem = (state * k[..., None, :]).sum(axis=-1)",
+      "after": "kv_mem = (old_state * k[..., None, :]).sum(axis=-1)",
+      "sha256": "26a0650d06b2c84f741de6f0a8ce0f17e3ab3113f339d103a5e4151d6d987865",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "wrong_outer_product": {
+      "before": "state = state + k[..., None, :] * delta[..., None]",
+      "after": "state = state + q[..., None, :] * delta[..., None]",
+      "sha256": "c9d9df659a722f69ca19c283c04a319905d6db02d47cd45fb786b723cd1f84ca",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "wrong_head_expansion": {
+      "before": "q = mx.repeat(q, repeat_factor, -2)",
+      "after": "q = mx.tile(q, (1, 1, repeat_factor, 1))",
+      "sha256": "04c7f04c646b81e6666c7d69f51290e3fcb97e5a7b2f472c27f285afa4bf83f4",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "wrong_vector_broadcast": {
+      "before": "decay = g[..., None, :]",
+      "after": "decay = g[..., :1, None]",
+      "sha256": "181e3cf7d300370d3015a5326fd1a5c4ed71f300bb22d2f1d6f49a655d1e130d",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "wrong_mask_selection": {
+      "before": "state = mx.where(mask, state, old_state)",
+      "after": "state = mx.where(mask, old_state, state)",
+      "sha256": "60730c39a07a7b15073e50058d7ba50ec8fbf042f7f637cea80352a904c4d656",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "missing_advance": {
+      "before": "cache.advance(S)",
+      "after": "cache.advance(0)",
+      "sha256": "0cabd8bc8db4a9c6d3eb7ef0f93fa164dbc0f88f8983b5b8479b43ea7229e9f3",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    },
+    "wrong_advance": {
+      "before": "cache.advance(S)",
+      "after": "cache.advance(S + 1)",
+      "sha256": "11f3767dacbaf69de3919f65106e7dad340a630e3ff48c93d6579c92203f05a9",
+      "kind": "DECLARED_SOURCE_MUTANT_FRESH_FUNCTION_OBJECTS"
+    }
+  },
+  "source_dependencies": "existing accepted actual ArraysCache and source_make_cache; existing cache/convolution capsules remain unchanged"
+}

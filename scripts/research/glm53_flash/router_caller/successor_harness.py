@@ -42,6 +42,14 @@ def run(context, mode, backend):
     mx.set_memory_limit(512 * 1024**2)
     mx.set_cache_limit(16 * 1024**2)
     mx.set_default_device(mx.cpu if backend == 'cpu' else mx.gpu)
+    if mode == 'recurrent':
+        import mlx.nn as nn
+        independent = component(context, 'oracle', {}, folder='recurrent_ops')
+        recurrent_source = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_ops')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        controls = component(context, 'controls', {'mx': mx, 'oracle': independent,
+                             'source': recurrent_source, 'cache_source': actual_cache}, folder='recurrent_ops')
+        return controls.run(context, backend)
     if mode in ('convolution', 'cache'):
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='convolution_state')

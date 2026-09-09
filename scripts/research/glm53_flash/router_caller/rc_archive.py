@@ -213,7 +213,8 @@ def _verify_archive(root,expected_manifest=None):
         stop=strict_json(bodies['producer/stop.json']);request=strict_json(bodies['producer/request.json'])
         expected_layout={'discrimination':'successor-discrimination-layout-v1',
                          'convolution':'successor-convolution-state-layout-v1',
-                         'cache':'successor-cache-lifecycle-layout-v1'}.get(request['operation'])
+                         'cache':'successor-cache-lifecycle-layout-v1',
+                         'recurrent':'successor-recurrent-ops-layout-v1'}.get(request['operation'])
         if m.get('successor_layout')!=expected_layout:raise ArchiveError('ARCHIVE_SUCCESSOR_LAYOUT')
         if (any(type(stop[k]) is not bool for k in ('capture_complete','stop_confirmed','direct_child_reaped','process_group_absent'))
                 or type(stop['exit_code']) is not int
@@ -284,7 +285,8 @@ def pack_successor(context,producer,target,*,redaction_roots=()):
     m={'schema':'router-caller-portable-parts-v1','producer_run':receipt['run'],'generation':context.manifest['generation'],
        'successor_layout':{'discrimination':'successor-discrimination-layout-v1',
                            'convolution':'successor-convolution-state-layout-v1',
-                           'cache':'successor-cache-lifecycle-layout-v1'}.get(prefix['operation']),
+                           'cache':'successor-cache-lifecycle-layout-v1',
+                         'recurrent':'successor-recurrent-ops-layout-v1'}.get(prefix['operation']),
        'part_cap':PART_CAP,'files':files,'redaction_policy':{'schema':'router-prefix-path-redaction-v1',
        'artifact':'producer/prefix.json','permitted_fields':[list(p) for p in REDACTION_FIELDS],
        'roots':[{'original_root_sha256':sha(old.encode()),'role':role} for old,role in roots],
