@@ -78,7 +78,10 @@ def validate_setup_command(args,work):
 def data_git(git,args,work,env,label):
     """Fixed internal setup calls only; never the tested generator's children."""
     validate_setup_command(args,work)
-    result,out,err=cap.capture([git,'-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false','-c','credential.helper=',*args],work,'data-'+label,env,timeout=60,limit=12*1024**2)
+    # Only the already exact-validated owned source -> owned store clone may
+    # use file transport. No network protocol or check-child permission changes.
+    clone_policy=['-c','protocol.file.allow=always']if args[0]=='clone'else[]
+    result,out,err=cap.capture([git,'-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false','-c','credential.helper=',*clone_policy,*args],work,'data-'+label,env,timeout=60,limit=12*1024**2)
     need(result['capture_integrity']=='PASS' and result['returncode']==0,'SOURCE_DATA_PREPARATION_FAILED:'+label)
     return out
 def readonly(path,raw):
