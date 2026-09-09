@@ -47,6 +47,11 @@ def run(context, mode, backend):
     source = component(context, 'rc_source', {'guard': context}, ('import rc_guard as guard',))
     runtime = component(context, 'rc_runtime', {'guard': context, 'source': source, 'checks': checks},
                         ('import rc_guard as guard', 'import rc_source as source', 'import rc_checks as checks'))
+    if mode == 'discrimination':
+        independent = component(context, 'successor_discrimination_oracle', {})
+        controls = component(context, 'successor_discrimination',
+                             {'source': source, 'runtime': runtime, 'oracle': independent})
+        return controls.run(context, backend)
     path = context.roots['code'] / 'scripts/research/tests/test_glm53_flash_router_caller_numeric.py'
     tree = ast.parse(context.read_verified(path))
     classes = [n for n in tree.body if isinstance(n, ast.ClassDef)]

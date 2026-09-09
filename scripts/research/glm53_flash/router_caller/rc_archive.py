@@ -211,6 +211,8 @@ def _verify_archive(root,expected_manifest=None):
         if name!='producer/prefix.json' and (entry['sha256']!=entry['original_sha256'] or entry['bytes']!=entry['original_bytes'] or entry['transformations'] or entry['portable_role_substitution']):raise ArchiveError('ARCHIVE_UNAUTHORIZED_TRANSFORMATION')
     if receipt.get('schema')=='successor-producer-v1':
         stop=strict_json(bodies['producer/stop.json']);request=strict_json(bodies['producer/request.json'])
+        expected_layout='successor-discrimination-layout-v1' if request['operation']=='discrimination' else None
+        if m.get('successor_layout')!=expected_layout:raise ArchiveError('ARCHIVE_SUCCESSOR_LAYOUT')
         if (any(type(stop[k]) is not bool for k in ('capture_complete','stop_confirmed','direct_child_reaped','process_group_absent'))
                 or type(stop['exit_code']) is not int
                 or any(type(result[k]) is not int for k in ('skips','failures','errors','tests_run'))):raise ArchiveError('ARCHIVE_SUCCESSOR_FIELD_TYPE')
@@ -278,6 +280,7 @@ def pack_successor(context,producer,target,*,redaction_roots=()):
                       'bytes':len(body),'sha256':sha(body),'portable_role_substitution':body!=original,
                       'transformations':changes,'parts':parts})
     m={'schema':'router-caller-portable-parts-v1','producer_run':receipt['run'],'generation':context.manifest['generation'],
+       'successor_layout':'successor-discrimination-layout-v1' if prefix['operation']=='discrimination' else None,
        'part_cap':PART_CAP,'files':files,'redaction_policy':{'schema':'router-prefix-path-redaction-v1',
        'artifact':'producer/prefix.json','permitted_fields':[list(p) for p in REDACTION_FIELDS],
        'roots':[{'original_root_sha256':sha(old.encode()),'role':role} for old,role in roots],

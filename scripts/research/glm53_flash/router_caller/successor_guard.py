@@ -9,10 +9,11 @@ import sys
 PREFIX = 'scripts/research/glm53_flash/router_caller/'
 CODE_FILES = tuple(PREFIX + n for n in (
     'successor.py', 'successor_guard.py', 'successor_doctor.py',
-    'successor_supervisor.py', 'successor_harness.py', 'rc_archive.py',
+    'successor_supervisor.py', 'successor_harness.py', 'successor_discrimination.py',
+    'successor_discrimination_oracle.py', 'rc_archive.py',
     'rc_guard.py', 'runner.py', 'rc_source.py', 'rc_runtime.py', 'rc_oracle.py', 'rc_checks.py')) + (
     'scripts/research/tests/test_glm53_flash_router_caller_numeric.py',)
-FIXTURE_FILES = ('cases.json', 'controls.json')
+FIXTURE_FILES = ('cases.json', 'controls.json', 'successor-discrimination-v1/fixtures.json')
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',
                   'mlx-vlm/mlx_vlm/models/deepseek_v32/language.py', 'pipenetwork/LICENSE',
