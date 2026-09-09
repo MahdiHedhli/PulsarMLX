@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Fixed source-free supervisor for the admitted primary-prefix method.
 
-Only stdlib and Git data reads occur here. A separate owned child preloads
+Only the finite source-free controllers and exact hash-bound stdlib measurement
+generator execute before sealing. Model/runtime bodies remain data. A child preloads
 stdlib, self-confines, proves real denial fences, verifies readonly source
 hashes, then imports the fixed research cases. This is not a live executor.
 Artifacts are retained under one fresh temporary root, including on failure.
@@ -79,22 +80,16 @@ def git(*args):
     need(p.returncode==0,'GIT_DATA_UNAVAILABLE');need(len(p.stdout)<12*1024*1024,'GIT_DATA_BOUND');return p.stdout
 def quote(path):return json.dumps(str(path))
 def profile(area,root,prefix,git_binary=None,git_dir=None):
+    need(git_binary is None and git_dir is None,'NO_GIT_IN_NUMERICAL_FIXTURE_PROFILE')
     reads=['/System/Library','/usr/lib',str(Path(prefix)/'lib'),str(Path(prefix)/'bin'),str(area/'tooling'),str(area/'work'),str(area/'tmp'),str(area/'cache')]
     literals=['/dev/null','/dev/urandom','/dev/random',str(Path(prefix)/'Python')]
     metadata=set()
     for p in [area,root,Path(prefix)]:metadata.update(str(x) for x in [p,*p.parents])
-    if git_binary:
-        literals.append(str(git_binary));reads.append(str(git_dir));metadata.update(str(x) for x in [Path(git_dir),*Path(git_dir).parents,*Path(git_binary).parents])
-        # On cryptex-based macOS the shared-cache images backing the declared
-        # system dylibs live here, not at their logical /System/Library names.
-        cache=Path('/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld')
-        if cache.is_dir():reads.append(str(cache));metadata.update(str(x) for x in cache.parents)
     rows=['(version 1)','(allow default)','(deny network*)','(deny file-read*)','(deny file-write*)','(deny process-exec)']
     rows+=['(allow file-read* '+ ' '.join('(subpath '+quote(p)+')' for p in reads)+' '+ ' '.join('(literal '+quote(p)+')' for p in literals)+')']
     rows+=['(deny file-read* (subpath '+quote(Path(prefix)/'lib'/('python'+str(sys.version_info.major)+'.'+str(sys.version_info.minor))/'site-packages')+'))']
     rows+=['(allow file-read-metadata '+' '.join('(literal '+quote(p)+')' for p in sorted(metadata))+')']
     rows+=['(allow file-write* (literal "/dev/null") '+' '.join('(subpath '+quote(area/p)+')' for p in ['work','tmp','cache'])+')','(allow file-read-data file-test-existence file-write-data (subpath "/dev/fd"))']
-    if git_binary:rows.append('(allow process-exec (literal '+quote(git_binary)+') (literal "/usr/lib/dyld"))')
     return ('\n'.join(rows)+'\n').encode()
 
 def main():
@@ -105,6 +100,24 @@ def main():
     need(shutil.disk_usage(root).free>=8*1024**3,'STORAGE_HEADROOM')
     python=str(Path(sys.executable).resolve());env=dict(PATH='/usr/bin:/bin',LANG='C',LC_ALL='C',TMPDIR=str(root),XDG_CACHE_HOME=str(root/'cache'))
     (root/'cache').mkdir(mode=0o700)
+    current_commit=git('rev-parse','HEAD').decode().strip()
+    controller_paths=('scripts/ci/f017_measurement_preparation_v1.py','scripts/ci/f017_preparation_capture_v1.py','scripts/ci/f017_measurement_preparation_tests_v1.py','scripts/research/tests/f017_primary_confined_ci_v1.py')
+    controller_rows=[]
+    for path in controller_paths:
+        body=(SOURCE/path).read_bytes();need(git('show',current_commit+':'+path)==body,'CONTROLLER_NOT_COMMITTED:'+path)
+        controller_rows.append(dict(path=path,sha256=sha(body)))
+    write(root/'trusted-controller-closure.json',encode(dict(current_commit=current_commit,controllers=controller_rows,only_preseal_research_execution='EXACT_HASH_BOUND_ORIGINAL_SOURCE_MEASUREMENT_GENERATOR',numerical_modules_preseal=0)))
+    # Explicit source-only trust boundary. No numerical module is imported by
+    # these fixed controllers or by the exact stdlib-only original generator.
+    sys.path.insert(0,str(SOURCE/'scripts/ci'))
+    import f017_measurement_preparation_v1 as preparation
+    import f017_measurement_preparation_tests_v1 as preparation_tests
+    need(Path(preparation.__file__).resolve()==SOURCE/'scripts/ci/f017_measurement_preparation_v1.py','FIXED_PREPARATION_MODULE')
+    doctor_report=preparation.doctor(root)
+    preparation_report=preparation.prepare(root)
+    mutation_report=preparation_tests.run(root,preparation_report)
+    preparation_summary=dict(result=preparation_report['result'],current_head=preparation_report['current_head'],current_tree=preparation_report['current_tree'],generator_children=preparation_report['generator_children'],nested_git_children=preparation_report['nested_git_children'],roles=[dict(role=r['role'],result=r['result'],manifest_sha256=r['manifest_sha256'],trace_sha256=r['trace_sha256'])for r in preparation_report['roles']],report_sha256=sha((root/'source-preparation/result.json').read_bytes()),doctor_sha256=sha((root/'preparation-doctor/admission.json').read_bytes()),mutation_report=mutation_report)
+    write(root/'trusted-preparation-summary.json',encode(preparation_summary))
     bootstrap=(TESTS/'f017_primary_confined_bootstrap_v1.py').read_bytes();dispatch=(TESTS/'f017_primary_ci_dispatch_v1.py').read_bytes()
     write(root/'bootstrap.py',bootstrap)
     description=json.loads(capture(root,'source-free-prefix',[python,'-I','-S','-B',str(root/'bootstrap.py'),'--describe-source-free'],root,env))
@@ -122,19 +135,17 @@ def main():
     need(len(historical)==36,'HISTORICAL_36')
     for r in m['measured_paths']:need(sha(historical[r['path']])==r['sha256'],'HISTORICAL_OBJECT_SHA')
     generator=(SOURCE/GENERATOR).read_bytes();need(sha(generator)=='ead39c8a8e1f8be4e0dbcd42121beaf58470dbf7dbcb4d93bcc83ef0f8527ef0','GENERATOR_EXACT')
-    git_binary=Path(subprocess.check_output(['/usr/bin/xcrun','--find','git'],text=True).strip()).resolve()
-    git_dir=Path(git('rev-parse','--absolute-git-dir').decode().strip()).resolve()
     base_workflow=git('show',SOURCE_BASE+':.github/workflows/macos.yml')
-    # Preserve independently qualified current/data-only legs even if a later
-    # historical Git child cannot start under this runtime's confinement.
-    cases=('CI_SCOPE_TESTS','BASIC_SUCCESSOR','WRAPPER_SUCCESSOR','FAULTS_SUCCESSOR','INTEGRATION','HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL','INTEGRATION','CI_ORIGINAL_CURRENT','CI_ORIGINAL_HISTORICAL')
+    # Both original-generator claims completed above as trusted preparation.
+    # The remaining eight fixture groups never need or permit Git execution.
+    cases=('CI_SCOPE_TESTS','BASIC_SUCCESSOR','WRAPPER_SUCCESSOR','FAULTS_SUCCESSOR','INTEGRATION','HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL','INTEGRATION')
     reports=[]
     for number,case_id in enumerate(cases,1):
         area=root/('case-'+str(number));denied=root/('denied-'+str(number))
         for p in [area,denied,*[area/n for n in ('tooling','work','tmp','cache')]]:p.mkdir(mode=0o700)
         view=area/'tooling/codeviews/successor';bodies=dict(current)
         if case_id.startswith('CI_'):
-            bodies.update({p:(historical[p] if case_id=='CI_ORIGINAL_HISTORICAL' else (SOURCE/p).read_bytes()) for p in historical})
+            bodies.update({p:(SOURCE/p).read_bytes() for p in historical})
             bodies.update({GENERATOR:generator,RECORD:record})
             for p in ('scripts/ci/f017_measurement_scope_v1.py','scripts/ci/f017_measurement_scope_tests_v1.py'):bodies[p]=(SOURCE/p).read_bytes()
         if case_id=='CI_SCOPE_TESTS':
@@ -150,7 +161,7 @@ def main():
             if p.endswith('.py') and not p.startswith('historical-inputs/'):
                 name=Path(p).stem;need(name not in imports,'IMPORT_NAME_COLLISION');imports[name]=p
         write(area/'tooling/bootstrap54.py',bootstrap);write(area/'tooling/primary_cases54.py',dispatch,True)
-        original=case_id.startswith('CI_ORIGINAL_');sb=profile(area,root,description['python_framework'],git_binary if original else None,git_dir if original else None)
+        sb=profile(area,root,description['python_framework'])
         write(area/'tooling/baseline.sb',sb)
         public=b'S53_FIXED_PUBLIC_READ\n';write(denied/'public-read.txt',public);write(area/'work/public-read.txt',public)
         listener=socket.socket();listener.bind(('127.0.0.1',0));listener.listen(1);listener.settimeout(8);acks=[]
@@ -165,7 +176,6 @@ def main():
         st=area.stat();cat=dict(schema='f017.sequence54.catalogue/1',sequence=54,root=str(area),root_identity=dict(dev=str(st.st_dev),inode=str(st.st_ino)),python=python,python_framework=description['python_framework'],bootstrap_sha256=sha(bootstrap),profile_sha256=sha(sb),module_closure_sha256=sha(encode(modules)),api_provenance=description['api_provenance'],rows={'S54-B01-POSITIVE':positive,'S54-B01-SUCCESSOR':row},code_manifests={'successor':dict(files=files,modules=imports)},dispatch_sha256=sha(dispatch))
         raw=encode(cat);need(len(raw)<=LIMIT,'CATALOGUE_BOUND');write(area/'tooling/catalogue54-B01.json',raw)
         child_env={**env,'TMPDIR':str(area/'tmp'),'XDG_CACHE_HOME':str(area/'cache')}
-        if original:child_env.update(PATH=str(git_binary.parent)+':/usr/bin:/bin',GIT_DIR=str(git_dir),GIT_WORK_TREE=str(view),GIT_CONFIG_NOSYSTEM='1',GIT_CONFIG_GLOBAL='/dev/null',GIT_TERMINAL_PROMPT='0',GIT_NO_LAZY_FETCH='1')
         try:
             result=capture(root,str(number)+'-positive',[python,'-I','-S','-B',str(area/'tooling/bootstrap54.py'),'S54-B01-POSITIVE'],area/'work',child_env)
             need(json.loads(result)['phase']=='POSITIVE_COMPLETE','POSITIVE_CONTROL');thread.join(3);need(not thread.is_alive() and acks==[row['public_nonce'].encode().hex()],'POSITIVE_ACK')
@@ -175,6 +185,6 @@ def main():
             report=events[-1]['detail']['case_result'];need(report['result']=='PASS','FIXTURE_RESULT');reports.append(dict(case=case_id,report=report,source_census_sha256=sha(encode(files))))
             write(root/'progress'/(str(number)+'.json'),encode(dict(completed=reports[-1],remaining_cases=list(cases[number:]),scope='QUALIFIED_PREFIX_ONLY_UNTIL_FINAL_RESULT')))
         finally:listener.close();thread.join(9)
-    result=dict(result='PASS',scope='HISTORICAL_RECORD_AND_CURRENT_PRIMARY_PREFIX_ONLY',cases=reports,child_starts=1+2*len(cases),current_source_base=SOURCE_BASE,root=str(root),original_checkpoint_access=0,live_authority_created=False,full_result_success='NOT_QUALIFIED',retained_for_evidence=True)
+    result=dict(result='PASS',scope='TRUSTED_SOURCE_MEASUREMENT_AND_SEALED_CURRENT_PRIMARY_PREFIX_ONLY',trusted_preparation=preparation_summary,cases=reports,sealed_fixture_child_starts=1+2*len(cases),runtime_input_source_base=SOURCE_BASE,current_source_head=preparation_report['current_head'],current_source_tree=preparation_report['current_tree'],root=str(root),original_checkpoint_access=0,live_authority_created=False,full_result_success='NOT_QUALIFIED',retained_for_evidence=True)
     write(root/'result.json',encode(result));print(json.dumps(result,sort_keys=True))
 if __name__=='__main__':main()

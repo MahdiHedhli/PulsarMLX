@@ -123,8 +123,10 @@ def verify_workflow_inventory(original, current):
     replacement = ("\n          ").join(NEW_COMMANDS)
     require(current.decode() == before.replace(OLD_COMMAND, replacement), "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
     checks = re.findall(r"scripts/(?:research|ci)/[\w./-]+\.py", before)
-    return dict(result="PASS", original_script_references=len(checks), relocated_checks=1,
-                unchanged_other_f017_checks=96, historical_context="EXACT_F35D_OBJECTS",
+    f017_checks = [p for p in checks if 'f017' in PurePosixPath(p).name.lower()]
+    require(GENERATOR in f017_checks, "F017_ORIGINAL_CHECK_PRESENT")
+    return dict(result="PASS", original_script_references=len(checks), f017_script_references=len(f017_checks), relocated_checks=1,
+                unchanged_other_f017_checks=len(f017_checks)-1, historical_context="EXACT_F35D_OBJECTS",
                 current_context="CURRENT_CHECKOUT", both_legs_required=True)
 
 

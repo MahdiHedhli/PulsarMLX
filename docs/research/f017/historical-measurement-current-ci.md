@@ -1,12 +1,17 @@
 # Historical measurement and current CI
 
-**Work in progress; not CI-complete.** Local qualification passed the original
+**Scoped tooling integration; outcomes are bound by external exact-head receipts.**
+The closed predecessor's local qualification passed the original
 51 primary-prefix cases, separation/fresh-root controls, and 13 data-only scope
 mutations. The unchanged historical generator's Git child terminated with SIGABRT
 before its comparison in three bounded attempts. The current-context original
 failure reproduction and historical-context original-generator PASS therefore
-remain **NOT_QUALIFIED**. That tooling limit stops further same-issue execution;
-it does not make either leg optional. The mandatory runner returns failure.
+remained **NOT_QUALIFIED** there. Its cause and inner executing Git image remain
+unknown. Those three confined attempts are closed and are not retried here.
+The new path explicitly treats only the exact stdlib-only source measurement
+generator as trusted preparation outside the numerical sandbox. This is not
+confinement qualification or a diagnosis of the earlier abort. Neither original
+check becomes optional; any preparation failure stops the aggregate.
 
 Measurement-v8 remains an immutable record of source head
 `f35d341110c67377200ad353ab56a3cf38615a73`, tree
@@ -40,7 +45,7 @@ The V6 worktree remains the workflow's already explicit historical context.
 | Claim | Mandatory location |
 |---|---|
 | Original measurement record, exact generator identity, all 36 historical Git objects | scripts/ci/f017_measurement_scope_v1.py --check |
-| Original generator itself: current-context refusal and historical-context PASS | Fixed confined CI_ORIGINAL_CURRENT and CI_ORIGINAL_HISTORICAL cases |
+| Original generator itself: exact current-wrapper ValueError and historical PASS | Fixed CURRENT_ORIGINAL_CHECK and HISTORICAL_ORIGINAL_CHECK trusted preparation roles before numerical sealing |
 | Current wrappers, numerical pins, historical V10 pins, one-execution and terminal gates | Unchanged validate_f017_v11_execution_authority_v1.py invocation |
 | Current result authority and bundle behavior | Existing result validators, tests, full-geometry and failure qualifiers, unchanged |
 | Current primary source bindings, original prefix matrix and separation controls | scripts/research/tests/f017_primary_confined_ci_v1.py |
@@ -48,9 +53,9 @@ The V6 worktree remains the workflow's already explicit historical context.
 
 The adapter validates the exact generator's closed output-expression grammar as
 data, using actual historical Git blobs and the exact later record commit. The
-confined historical control is designed to execute that unchanged generator against
+trusted historical control executes that unchanged generator against
 a newly materialized historical source view plus its explicitly later record;
-this execution remains unqualified as described above.
+the outcome must be reported separately from the data-only adapter.
 It does not execute a historical numerical oracle. It does not overlay the
 active checkout or create an authority document.
 
@@ -58,10 +63,22 @@ The current runner reuses fixed synthetic primary cases. Its source-free prefix
 is admitted separately, then each owned process seals and proves read, write and
 network denial against independent positive controls before importing research
 code. Optimization must be disabled. Source views are readonly and hash-checked.
-Git execution is permitted only in the two fixed original-generator controls;
-other case children cannot execute a process. Artifacts remain in fresh temporary
+Git is never permitted in sealed fixture children. Both original controls are
+relocated one-to-one to trusted preparation, with a source-free doctor, exact
+closed input/command contracts, fresh independent Git stores, literal `--check`,
+readonly current/historical views, and separately retained actual capture/trace
+evidence. Historical source cannot satisfy active runtime input gates; current
+source cannot masquerade as the historical record. The four named preparation
+controllers import no numerical modules. Git Trace2 is self-reported descendant
+evidence, not independent OS executing-image attestation. Artifacts remain in fresh temporary
 roots on success or failure. This is scoped fixture confinement, not production
 confinement or a universal tooling qualification.
+
+The input policy retains protected runtime/fixture content pins from `6f59d9db`.
+Controller identity instead binds the actual enclosing committed head and exact
+bodies through an external qualification receipt; no self-containing future
+commit/hash is embedded in policy. Workflow census totals derive from the frozen
+invocation inventory, and all unrelated invocations/order remain unchanged.
 
 ## Limits and finish line
 

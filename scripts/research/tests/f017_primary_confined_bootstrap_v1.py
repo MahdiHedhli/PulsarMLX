@@ -25,7 +25,7 @@ del _source_free_parser
 LIMIT = 32768
 ROW_PATTERN = re.compile(r'S54-(B(?:0[1-9]|[1-9][0-9]))-(POSITIVE|BASELINE|SUCCESSOR|POSITIVE-FRESH|FRESH)\Z')
 MODE_MAP = {'POSITIVE':'positive','BASELINE':'baseline','SUCCESSOR':'successor','POSITIVE-FRESH':'positive','FRESH':'fresh'}
-CASE_IDS = frozenset(('CI_ORIGINAL_CURRENT','CI_ORIGINAL_HISTORICAL','CI_SCOPE_TESTS','INTEGRATION','HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL','BASELINE_SMOKE','BASIC_BASELINE','WRAPPER_BASELINE','BASIC_SUCCESSOR','WRAPPER_SUCCESSOR','FAULTS_SUCCESSOR'))
+CASE_IDS = frozenset(('CI_SCOPE_TESTS','INTEGRATION','HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL','BASELINE_SMOKE','BASIC_BASELINE','WRAPPER_BASELINE','BASIC_SUCCESSOR','WRAPPER_SUCCESSOR','FAULTS_SUCCESSOR'))
 VIEW_IDS = frozenset(('baseline','successor','baseline-b02','baseline-b03','successor-b04','successor-b05','successor-b06','successor-b07','successor-b08','successor-b09'))
 CAT_KEYS = frozenset(('schema','sequence','root','root_identity','python',
     'python_framework','bootstrap_sha256','profile_sha256','module_closure_sha256',

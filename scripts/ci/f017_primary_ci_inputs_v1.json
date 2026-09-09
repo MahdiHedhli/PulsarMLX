@@ -1,4 +1,7 @@
 {
+  "input_role": "PROTECTED_RUNTIME_AND_ORIGINAL_FIXTURE_CONTENT_PINS_CARRIED_FORWARD_UNCHANGED",
+  "controller_identity": "ACTUAL_COMMITTED_HEAD_AND_CONTENTS_BOUND_IN_EXTERNAL_QUALIFICATION_RECEIPT",
+  "historical_identity": "MEASUREMENT_V8_REMAINS_BOUND_TO_F35D_NOT_CURRENT_CONTROLLERS",
   "inputs": [
     {
       "repository_path": "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json",
