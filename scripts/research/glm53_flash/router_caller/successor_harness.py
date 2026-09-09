@@ -42,6 +42,19 @@ def run(context, mode, backend):
     mx.set_memory_limit(512 * 1024**2)
     mx.set_cache_limit(16 * 1024**2)
     mx.set_default_device(mx.cpu if backend == 'cpu' else mx.gpu)
+    if mode == 'linear':
+        import mlx.nn as nn
+        accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
+        recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
+        independent = component(context, 'oracle', {}, folder='linear_attention')
+        module_source = component(context, 'source', {'mx': mx, 'nn': nn,
+                                  'recurrent_verifier': recurrent_verifier}, folder='linear_attention')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        archive = component(context, 'rc_archive', {})
+        controls = component(context, 'controls', {'mx': mx, 'nn': nn, 'oracle': independent,
+                             'accepted_recurrence': accepted_recurrence, 'source': module_source,
+                             'cache_source': actual_cache, 'archive': archive}, folder='linear_attention')
+        return controls.run(context, backend)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')

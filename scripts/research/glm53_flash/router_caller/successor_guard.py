@@ -46,6 +46,15 @@ CODE_FILES += (
     'fixtures/research/glm53-flash-recurrent-dispatch-v1/fixtures.json',
 )
 FIXTURE_FILES = ('cases.json', 'controls.json', 'successor-discrimination-v1/fixtures.json')
+CODE_FILES += (
+    'scripts/research/glm53_flash/linear_attention/capsule.py',
+    'scripts/research/glm53_flash/linear_attention/source.py',
+    'scripts/research/glm53_flash/linear_attention/oracle.py',
+    'scripts/research/glm53_flash/linear_attention/controls.py',
+    'scripts/research/glm53_flash/linear_attention/provenance.json',
+    'scripts/research/glm53_flash/linear_attention/edges.json',
+    'fixtures/research/glm53-flash-linear-attention-v1/fixtures.json',
+)
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',
                   'mlx-vlm/mlx_vlm/models/deepseek_v32/language.py', 'pipenetwork/LICENSE',

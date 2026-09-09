@@ -28,7 +28,9 @@ selects the custom kernel for Dk32/64. The bridge selects ops on both. Actual
 entry wrappers and submitted API calls identify the selected path. Factory
 creation alone is not kernel execution. Original grid `(32,Dv,B*Hv)` and
 threadgroup `(32,4,1)` are checked against bound source ASTs. Metadata guards
-prove input/output sizes, head mapping bounds, lane coverage and launch tiling.
+check input/output sizes and head mapping bounds; lane coverage and launch
+tiling bounds are conditional on the declared32-lane SIMD/x-major packing
+assumption. These checks do not prove the device's physical lane packing.
 Scientific input values are validated before tensor construction; lazy source
 gate/beta values are not host-read inside the recurrence.
 

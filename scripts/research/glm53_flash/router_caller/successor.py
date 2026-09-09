@@ -56,10 +56,15 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
+        if operation == 'linear' and result.get('test_ids') != [
+                'test_frozen_reference_and_anchor', 'test_interleaved_actual_caches',
+                'test_preentry_identity_and_archive_refusals', 'test_semantic_controls',
+                'test_whole_and_partitions']:
+            return False
         if operation == 'convolution' and result.get('test_ids') != [
                 'test_classifier_wrong_type_and_message', 'test_interleaved_and_new_cache',
                 'test_k1_source_diagnostic', 'test_mutants_normal_mutant_restored',
@@ -324,7 +329,7 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == '--child':
         return child(Path(sys.argv[2]))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'dispatch', 'archive-verify'))
+    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'dispatch', 'linear', 'archive-verify'))
     for name in ('source', 'environment', 'fixtures', 'upstream', 'environment-identity', 'output'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--manifest')
