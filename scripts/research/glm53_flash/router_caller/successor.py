@@ -56,10 +56,15 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
+        if operation == 'convolution' and result.get('test_ids') != [
+                'test_classifier_wrong_type_and_message', 'test_interleaved_and_new_cache',
+                'test_k1_source_diagnostic', 'test_mutants_normal_mutant_restored',
+                'test_partition_composition', 'test_research_refusals_and_failure_order']:
+            return False
         return (stop['exit_code'] == 0 and stop['stop_confirmed'] and stop['capture_complete']
                 and stop['direct_child_reaped'] and stop['process_group_absent'] and stop['reason'] is None
                 and result['status'] == 'PASS' and type(result['tests_run']) is int and result['tests_run'] == expected_tests
@@ -304,7 +309,7 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == '--child':
         return child(Path(sys.argv[2]))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'archive-verify'))
+    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'archive-verify'))
     for name in ('source', 'environment', 'fixtures', 'upstream', 'environment-identity', 'output'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--manifest')

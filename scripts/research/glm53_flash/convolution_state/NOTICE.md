@@ -1,0 +1,1 @@
+Exact selected statements from PipeNetwork/glm53-flash-mlx at a61a7c7d2fbdf3d218a9909365a24bd794f3a247, glm53_flash_mlx/glm5_next/language.py. Apache-2.0; see LICENSE-PipeNetwork.txt. Research function seams, instrumentation and tests are additions; no upstream endorsement. MLX operators are supplied by the separately admitted MIT-licensed runtime.

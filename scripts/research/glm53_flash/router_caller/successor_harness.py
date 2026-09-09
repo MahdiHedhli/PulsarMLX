@@ -14,8 +14,8 @@ import types
 import unittest
 
 
-def component(context, name, dependencies, omitted=()):
-    path = context.roots['code'] / 'scripts/research/glm53_flash/router_caller' / (name + '.py')
+def component(context, name, dependencies, omitted=(), folder='router_caller'):
+    path = context.roots['code'] / 'scripts/research/glm53_flash' / folder / (name + '.py')
     raw = context.read_verified(path)
     tree = ast.parse(raw)
     seen = []
@@ -42,6 +42,13 @@ def run(context, mode, backend):
     mx.set_memory_limit(512 * 1024**2)
     mx.set_cache_limit(16 * 1024**2)
     mx.set_default_device(mx.cpu if backend == 'cpu' else mx.gpu)
+    if mode == 'convolution':
+        import mlx.nn as nn
+        independent = component(context, 'oracle', {}, folder='convolution_state')
+        source_slice = component(context, 'source', {'mx': mx, 'nn': nn}, folder='convolution_state')
+        controls = component(context, 'controls', {'mx': mx, 'nn': nn, 'oracle': independent,
+                                                 'source': source_slice}, folder='convolution_state')
+        return controls.run(context, backend)
     checks = component(context, 'rc_checks', {})
     oracle = component(context, 'rc_oracle', {})
     source = component(context, 'rc_source', {'guard': context}, ('import rc_guard as guard',))

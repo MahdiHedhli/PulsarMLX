@@ -30,3 +30,9 @@ The finish line is runnable **tiny integration** with exact same-device CPU/Meta
 Limits remain: BF16 operands widen to FP32; this is not native BF16 model parity. E288 selection remains bias-dominated. The two individual-cast omission controls remain nondiscriminating. Negative grouped-mask coverage and cold driver-cache qualification remain open. No full-model, quantized, cross-hardware, F017, main-merge or shared-method acceptance follows. This doctor can be nominated for later shared-method review; this change does not ratify a global skill.
 
 The new [finite router discrimination operation](router-discrimination.md) adds prospectively declared controls and an explicitly tagged 36-file archive layout. Its finite-domain results do not retroactively change the scope of the earlier router matrix or its historical limitations.
+# Convolution state component
+
+The `convolution` operation adds source-bound causal convolution and saved-state
+composition through an explicit research cache adapter. See
+[its finite contract and limits](convolution-state.md) for the extracted source
+boundary, K1 diagnostic, mutation controls and distinct archive layout.

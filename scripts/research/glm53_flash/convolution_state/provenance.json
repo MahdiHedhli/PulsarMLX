@@ -1,0 +1,240 @@
+{
+  "K1_source_limit": "The exact -(K-1) slice is -0 for K1 and retains all conv_input. This diagnostic is predeclared, not repaired or counted as conceptual empty-state composition.",
+  "audit": "LOCAL_SOURCE_AS_DATA_AST_GLOBAL_CALLEE_AUDIT; no external pre-execution review claimed",
+  "cache_source_read_only": "make_cache uses ArraysCache(size=2); no retained ArraysCache definition exists in the prior admitted artifact index. Slot0 is updated before convolution; slot1 and advance occur after KDA. Fresh-cache replacement is a research ownership operation.",
+  "capsule_sha256": "d5f882470e79ba19155786ee4665edf6c9ddeee899fc7e7a44c9cc770d68d791",
+  "configured_width": {
+    "config_sha256": "3ed164a8f60c96dc81d5742b952b7823335fa7656fe0bbcf69c7ea05a4179d1d",
+    "limit": "Tiny K4 geometry reflects retained metadata; TextConfig property translation is SOURCE_READ_ONLY, not executed.",
+    "metadata_path": "text_config.linear_attn_config.short_conv_kernel_size",
+    "value": 4
+  },
+  "excluded": [
+    "Full upstream module import/model construction",
+    "Projection/fused inputs, boolean masking",
+    "KDA/attention/gated_delta_update, cache[1] update and cache.advance",
+    "TextConfig translation and full q/k/v weight sanitation/checkpoint correspondence"
+  ],
+  "external_globals": [
+    "mx",
+    "nn"
+  ],
+  "function_inputs": [
+    "self with bounded scalar dimensions and real MLX Conv1d",
+    "inputs NLC array supplies B/S/dtype",
+    "mixed NLC projected/masked input supplied directly",
+    "cache inert indexed adapter or None"
+  ],
+  "license": {
+    "SPDX": "Apache-2.0",
+    "disposition": "Redistribution under retained Apache2 terms with license, origin and modification notice. Original selected statements have no additional copyright or NOTICE text; no unretained NOTICE claim.",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "mutations": {
+    "cross_stream_alias": {
+      "kind": "declared research wiring/weight mutation; original source capsule unchanged"
+    },
+    "reset_omission": {
+      "kind": "declared research wiring/weight mutation; original source capsule unchanged"
+    },
+    "reverse_taps": {
+      "kind": "declared research wiring/weight mutation; original source capsule unchanged"
+    },
+    "stale_prefill_state": {
+      "kind": "declared research wiring/weight mutation; original source capsule unchanged"
+    },
+    "wrong_channel_axis": {
+      "kind": "declared research wiring/weight mutation; original source capsule unchanged"
+    },
+    "wrong_padding": {
+      "after": "padding=1,",
+      "before": "padding=0,",
+      "capsule_sha256": "34aed7c92b2e4910ab4128bc5a729aab0f6b00d6bb492fb38546da9f9d64e26e",
+      "matches": 1
+    },
+    "wrong_suffix": {
+      "after": "conv_input[:, :self.conv_kernel_size - 1, :]",
+      "before": "conv_input[:, -(self.conv_kernel_size - 1) :, :]",
+      "capsule_sha256": "841ab6f3f10ffa1ac8e3eac1d4a5ee313675facea27fe9fb4c7539dc5e168bc2",
+      "matches": 1
+    },
+    "wrong_suffix_length": {
+      "after": "conv_input[:, -self.conv_kernel_size :, :]",
+      "before": "conv_input[:, -(self.conv_kernel_size - 1) :, :]",
+      "capsule_sha256": "e8837ab5a7e6299ec2505a198bc027309b90ca85133baa2bbff958a58e294cea",
+      "matches": 1
+    }
+  },
+  "origin": {
+    "commit": "a61a7c7d2fbdf3d218a9909365a24bd794f3a247",
+    "path": "glm53_flash_mlx/glm5_next/language.py",
+    "repository": "PipeNetwork/glm53-flash-mlx",
+    "sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196"
+  },
+  "schema": "flash-convolution-source-slices-v1",
+  "seams": [
+    "Function headers/returns are research seams, not original method definitions.",
+    "Only whitespace dedent/reindent changes selected statements; ASTs equal.",
+    "self scalar dimensions supplied by tiny fixture; source constructor executes only conv_dim and Conv1d assignments.",
+    "Projected and optional masked mixed input is supplied directly; projections, mask and full constructor excluded.",
+    "A transparent Conv1d observer delegates to the constructed real layer and records raw arrays without changing arithmetic.",
+    "Inert adapter implements slots0/1 get/set directly, with no real ArraysCache or advance/reset API claim.",
+    "Source q/k/v split and reshape statements execute; full sanitation and predecessor DSV32 sanitize do not."
+  ],
+  "statements": [
+    {
+      "AST_equal": true,
+      "executed_statement": "    self.conv_dim = self.qkv_dim * 3\n",
+      "executed_statement_sha256": "93e0ad4550a4a085d458054d6f1d523b988a229525dd741072767dc9662b5798",
+      "function": "source_construct",
+      "node": "Assign",
+      "original_sha256": "0de7937ab282f22f0dfc3021b0ad785ae0ed161c42b48e399ecc9833db206597",
+      "source_byte_end_exclusive": 7370,
+      "source_byte_start": 7329,
+      "source_line_end": 190,
+      "source_line_start": 190,
+      "source_text": "        self.conv_dim = self.qkv_dim * 3\n",
+      "target": "self.conv_dim"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    self.conv1d = nn.Conv1d(\n        in_channels=self.conv_dim,\n        out_channels=self.conv_dim,\n        bias=False,\n        kernel_size=self.conv_kernel_size,\n        groups=self.conv_dim,\n        padding=0,\n    )\n",
+      "executed_statement_sha256": "ff01ce353e7d7db1b998fdeda6b77b8c9e687de3ddcd799e77b880abea5ea204",
+      "function": "source_construct",
+      "node": "Assign",
+      "original_sha256": "3bfb17af63c8d194dc8cae20be85f87b614b4c1d2b514b0f3b84f30d50e95688",
+      "source_byte_end_exclusive": 7620,
+      "source_byte_start": 7370,
+      "source_line_end": 198,
+      "source_line_start": 191,
+      "source_text": "        self.conv1d = nn.Conv1d(\n            in_channels=self.conv_dim,\n            out_channels=self.conv_dim,\n            bias=False,\n            kernel_size=self.conv_kernel_size,\n            groups=self.conv_dim,\n            padding=0,\n        )\n",
+      "target": "self.conv1d"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    B, S, _ = inputs.shape\n",
+      "executed_statement_sha256": "1d4ff77bdcc7a5f3f6dbc3adcd37b325ec68db822c1829f02326e33263589971",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "e02074034e8faac504291b25a8881afc87342093051f6d9cb7c07189f5b9a610",
+      "source_byte_end_exclusive": 9735,
+      "source_byte_start": 9704,
+      "source_line_end": 253,
+      "source_line_start": 253,
+      "source_text": "        B, S, _ = inputs.shape\n",
+      "target": "(B, S, _)"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    if cache is not None and cache[0] is not None:\n        conv_state = cache[0]\n    else:\n        conv_state = mx.zeros(\n            (B, self.conv_kernel_size - 1, self.conv_dim), dtype=inputs.dtype\n        )\n",
+      "executed_statement_sha256": "e1045d0759e678d4ee66d4a1eeac58f255e62f6de311d9b570ac884000e562ff",
+      "function": "source_step",
+      "node": "If",
+      "original_sha256": "2cafe03deacfaa10a91560d5ca4c0fb531720fb334e454ddc0a3f436f91d7b99",
+      "source_byte_end_exclusive": 10526,
+      "source_byte_start": 10292,
+      "source_line_end": 272,
+      "source_line_start": 267,
+      "source_text": "        if cache is not None and cache[0] is not None:\n            conv_state = cache[0]\n        else:\n            conv_state = mx.zeros(\n                (B, self.conv_kernel_size - 1, self.conv_dim), dtype=inputs.dtype\n            )\n",
+      "target": null
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    conv_input = mx.concatenate([conv_state, mixed], axis=1)\n",
+      "executed_statement_sha256": "491def3adf7c8de1723aeae3ab4b04db8e594eab31bbf53b01ca62370385db54",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "237c8fad6cf38c4ffde8e8dcbd483d7887dff352c4cffde5b2722967979c49e9",
+      "source_byte_end_exclusive": 10591,
+      "source_byte_start": 10526,
+      "source_line_end": 273,
+      "source_line_start": 273,
+      "source_text": "        conv_input = mx.concatenate([conv_state, mixed], axis=1)\n",
+      "target": "conv_input"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    if cache is not None:\n        cache[0] = mx.contiguous(conv_input[:, -(self.conv_kernel_size - 1) :, :])\n",
+      "executed_statement_sha256": "565de401d55e92263565f173a1c08b36280e6f07021f50c0a4906b4d2bcb5501",
+      "function": "source_step",
+      "node": "If",
+      "original_sha256": "1b7d263ea9d8328d4f6d0a721557e4ee1da6a21c995040d71c887fd4ed35cdaa",
+      "source_byte_end_exclusive": 10708,
+      "source_byte_start": 10591,
+      "source_line_end": 275,
+      "source_line_start": 274,
+      "source_text": "        if cache is not None:\n            cache[0] = mx.contiguous(conv_input[:, -(self.conv_kernel_size - 1) :, :])\n",
+      "target": null
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    conv_out = nn.silu(self.conv1d(conv_input))\n",
+      "executed_statement_sha256": "e9cd37787e90ee0fa4953df20d0277269532140ed7c587e6e30c1a864313313c",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "580f81db22ad63fc75fe5d82c4afd8604dcd4b99fbf8381a7683adc86ae6b054",
+      "source_byte_end_exclusive": 10760,
+      "source_byte_start": 10708,
+      "source_line_end": 276,
+      "source_line_start": 276,
+      "source_text": "        conv_out = nn.silu(self.conv1d(conv_input))\n",
+      "target": "conv_out"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    q, k, v = mx.split(conv_out, [self.qkv_dim, 2 * self.qkv_dim], axis=-1)\n",
+      "executed_statement_sha256": "d6797f3750c0bbf9db972522fa18d1c7c11dc564c9271a66aefdc24bd0274341",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "7d52d52333b14743762e46160118681145f2463a9d1e1f81dba1cf4cec0a069b",
+      "source_byte_end_exclusive": 10841,
+      "source_byte_start": 10761,
+      "source_line_end": 278,
+      "source_line_start": 278,
+      "source_text": "        q, k, v = mx.split(conv_out, [self.qkv_dim, 2 * self.qkv_dim], axis=-1)\n",
+      "target": "(q, k, v)"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    q = q.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "executed_statement_sha256": "a160ce06c0b4937b5ad34049276c64b24cac067cfd238679d1b59d33a67d028a",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "de32ddbe0d5eb16976c40eec8bd28ded3c4f7625e60a7de6ba8a3d6fc9ff6af3",
+      "source_byte_end_exclusive": 10900,
+      "source_byte_start": 10841,
+      "source_line_end": 279,
+      "source_line_start": 279,
+      "source_text": "        q = q.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "target": "q"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    k = k.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "executed_statement_sha256": "6a1a7aeb0a274e3816e1c7f28f6003fb5790adfeab1a1e16a7ca4a9b81c08026",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "ab3626779cb60acea802d8446e1c229ba42971bf1f09f46d2d27b52b582b52ac",
+      "source_byte_end_exclusive": 10959,
+      "source_byte_start": 10900,
+      "source_line_end": 280,
+      "source_line_start": 280,
+      "source_text": "        k = k.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "target": "k"
+    },
+    {
+      "AST_equal": true,
+      "executed_statement": "    v = v.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "executed_statement_sha256": "f371431f1157c0d1c02457fe3a4756089ea23d71f5b77347d03cf5c3354872e2",
+      "function": "source_step",
+      "node": "Assign",
+      "original_sha256": "96bb114312f6119186ec7aeeaf674ed69299ceca63b734a2fca4e74b49630172",
+      "source_byte_end_exclusive": 11018,
+      "source_byte_start": 10959,
+      "source_line_end": 281,
+      "source_line_start": 281,
+      "source_text": "        v = v.reshape(B, S, self.num_heads, self.head_dim)\n",
+      "target": "v"
+    }
+  ]
+}
