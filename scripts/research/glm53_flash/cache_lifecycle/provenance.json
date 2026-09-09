@@ -1,0 +1,137 @@
+{
+  "capsule_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1",
+  "class_spans": [
+    {
+      "AST_equal": true,
+      "byte_end": 5228,
+      "byte_start": 2775,
+      "end_line": 161,
+      "methods": [
+        "state",
+        "state",
+        "meta_state",
+        "meta_state",
+        "is_trimmable",
+        "size",
+        "nbytes",
+        "empty",
+        "from_state",
+        "prefix_cache_snapshot",
+        "prefix_cache_restore",
+        "prefix_cache_reserve",
+        "prefix_cache_merge"
+      ],
+      "name": "_BaseCache",
+      "sha256": "aaf8aa1acf621490ba54f36fbc2586a64c7060b1a0e11dba82cc0871c56ec645",
+      "start_line": 86
+    },
+    {
+      "AST_equal": true,
+      "byte_end": 29294,
+      "byte_start": 24467,
+      "end_line": 894,
+      "methods": [
+        "__new__",
+        "__init__",
+        "left_padding",
+        "left_padding",
+        "lengths",
+        "lengths",
+        "batch_size",
+        "__setitem__",
+        "__getitem__",
+        "state",
+        "state",
+        "filter",
+        "extend",
+        "extract",
+        "prepare",
+        "finalize",
+        "advance",
+        "make_mask",
+        "merge",
+        "empty",
+        "nbytes"
+      ],
+      "name": "ArraysCache",
+      "sha256": "0bde0f7a0a5cfc7493682e83d395cdbb9122ddda35d6e61d6d64fd6672fbccaf",
+      "start_line": 732
+    }
+  ],
+  "closure": "Two complete original classes retain all definitions and side effects. Only reported methods execute. Source module imports and unrelated definitions never execute.",
+  "convolution_capsule_sha256": "d5f882470e79ba19155786ee4665edf6c9ddeee899fc7e7a44c9cc770d68d791",
+  "correspondence": "Exact previously selected dependency revision, not an installed mlx-vlm distribution or proof of historical checkpoint producer. New source DATA only; MLX0.32.2 admitted wheel unchanged.",
+  "factory": {
+    "commit": "a61a7c7d2fbdf3d218a9909365a24bd794f3a247",
+    "end_line": 849,
+    "expression": "ArraysCache(size=2)",
+    "path": "glm53_flash_mlx/glm5_next/language.py",
+    "repository": "PipeNetwork/glm53-flash-mlx",
+    "seam": "Exact caller expression wrapped in a no-argument return function; full make_cache/model/layer iteration excluded.",
+    "sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
+    "start_line": 849
+  },
+  "globals": [
+    "mx",
+    "Optional",
+    "List",
+    "_BaseCache",
+    "ArraysCache",
+    "ordinary Python builtins"
+  ],
+  "licenses": {
+    "cache": {
+      "SPDX": "MIT",
+      "sha256": "f74c448746be3376e27dee43e2be9ec9d55f4820cd7466c603a6c7d1fd2d25b8"
+    },
+    "caller_expression": {
+      "SPDX": "Apache-2.0",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  },
+  "mutations": {
+    "wrong_advance": {
+      "after": "self._lengths_advance += N + 1",
+      "before": "self._lengths_advance += N",
+      "matches": 1,
+      "sha256": "8baedf840a6b9c0b2efae1438af9674c0c9e9d31cf7a818d3dfe422b5b2bbc91",
+      "target": "cache"
+    },
+    "wrong_slot": {
+      "after": "self.cache[1 - idx] = value",
+      "before": "self.cache[idx] = value",
+      "matches": 1,
+      "sha256": "a52a09e39dba53a98db818859a8b5c3caecf713544f35f52d7a6a06fcf40374d",
+      "target": "cache"
+    },
+    "wrong_suffix": {
+      "after": "conv_input[:, :self.conv_kernel_size - 1, :]",
+      "before": "conv_input[:, -(self.conv_kernel_size - 1) :, :]",
+      "matches": 1,
+      "sha256": "841ab6f3f10ffa1ac8e3eac1d4a5ee313675facea27fe9fb4c7539dc5e168bc2",
+      "target": "convolution"
+    },
+    "wrong_update_order": {
+      "after": "    conv_out = nn.silu(self.conv1d(conv_input))\n    if cache is not None:\n        cache[0] = mx.contiguous(conv_input[:, -(self.conv_kernel_size - 1) :, :])\n",
+      "before": "    if cache is not None:\n        cache[0] = mx.contiguous(conv_input[:, -(self.conv_kernel_size - 1) :, :])\n    conv_out = nn.silu(self.conv1d(conv_input))\n",
+      "matches": 1,
+      "sha256": "5c422138e280fb901ce755da4ecf69a48f168e6949a65b9c786c17f93824fbbc",
+      "target": "convolution"
+    }
+  },
+  "origin": {
+    "commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90",
+    "path": "mlx_vlm/models/cache.py",
+    "repository": "Blaizzy/mlx-vlm",
+    "sha256": "fde16e0558f8135fa88ae72484cdddc6adfd0c201a18be60bd041cb2d4f602d7",
+    "version": "0.7.0"
+  },
+  "schema": "flash-cache-lifecycle-source-v1",
+  "unexecuted": [
+    "Full model module/construction",
+    "KDA numerical/cache[1] update caller",
+    "Tokenizer/weights/checkpoint",
+    "Full masking/projection/sanitizer",
+    "Batched production scheduler and end-to-end model ownership"
+  ]
+}

@@ -18,7 +18,13 @@ CODE_FILES = tuple(PREFIX + n for n in (
     'scripts/research/glm53_flash/convolution_state/oracle.py',
     'scripts/research/glm53_flash/convolution_state/controls.py',
     'scripts/research/glm53_flash/convolution_state/provenance.json',
-    'fixtures/research/glm53-flash-convolution-state-v1/fixtures.json')
+    'fixtures/research/glm53-flash-convolution-state-v1/fixtures.json',
+    'scripts/research/glm53_flash/cache_lifecycle/capsule.py',
+    'scripts/research/glm53_flash/cache_lifecycle/source.py',
+    'scripts/research/glm53_flash/cache_lifecycle/controls.py',
+    'scripts/research/glm53_flash/cache_lifecycle/provenance.json',
+    'scripts/research/glm53_flash/cache_lifecycle/upstream-cache.txt',
+    'fixtures/research/glm53-flash-cache-lifecycle-v1/fixtures.json')
 FIXTURE_FILES = ('cases.json', 'controls.json', 'successor-discrimination-v1/fixtures.json')
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',

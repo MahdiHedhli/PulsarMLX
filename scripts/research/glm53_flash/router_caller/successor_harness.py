@@ -42,12 +42,18 @@ def run(context, mode, backend):
     mx.set_memory_limit(512 * 1024**2)
     mx.set_cache_limit(16 * 1024**2)
     mx.set_default_device(mx.cpu if backend == 'cpu' else mx.gpu)
-    if mode == 'convolution':
+    if mode in ('convolution', 'cache'):
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='convolution_state')
         source_slice = component(context, 'source', {'mx': mx, 'nn': nn}, folder='convolution_state')
         controls = component(context, 'controls', {'mx': mx, 'nn': nn, 'oracle': independent,
                                                  'source': source_slice}, folder='convolution_state')
+        if mode == 'cache':
+            actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+            cache_controls = component(context, 'controls',
+                                       {'mx': mx, 'nn': nn, 'cc': controls, 'oracle': independent,
+                                        'cache_source': actual_cache}, folder='cache_lifecycle')
+            return cache_controls.run(context, backend)
         return controls.run(context, backend)
     checks = component(context, 'rc_checks', {})
     oracle = component(context, 'rc_oracle', {})
