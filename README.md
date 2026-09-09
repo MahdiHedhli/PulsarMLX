@@ -4,7 +4,9 @@
 
 **Giant MoE inference on Apple Silicon.**
 
-PulsarMLX is an experimental inference runtime for oversized Mixture-of-Experts models on Apple Silicon. It uses MLX for GPU execution, treats unified memory and fast internal NVMe as first-class resources, and validates results against an independent architecture-level CPU oracle with an evidence-first research workflow.
+PulsarMLX is building an Apple Silicon runtime for Mixture-of-Experts models that do not fit in RAM. Its current targets are **GLM-5.3 and GLM-5.3 Flash**, with Flash leading the work toward practical local use. The selected [PipeNetwork mixed-precision Flash checkpoint](https://huggingface.co/pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit) is reported at **181.9 GB**, larger than either the 128 GB Mac Studio or 64 GB MacBook Pro. The design keeps attention state and frequently used experts in unified memory while streaming other expert weights from SSD as routing requires them. Useful quality at usable speed remains the goal, not a claimed result.
+
+Correctness comes before performance claims. The GLM-5.2 IQ2_XXS reference completed all **79 layers in two independent oracles**: both selected token **154820**, with identical ordered top-32 IDs and route structure, and maximum absolute error **2.45e-6** within the frozen numerical contract. This is [bounded reference evidence](https://github.com/MahdiHedhli/PulsarMLX/blob/c23e58ec87c7e73a23cf37ac64aa4dee6c45896f/docs/architecture/reviews/evidence/f017-event06-v12-sequence43-terminal-success-evidence-v1.json), not bit-identical floating-point output, a throughput benchmark, or validation of GLM-5.3 or Flash. See [model targets and evidence boundaries](docs/roadmap/MODEL_TARGETS.md).
 
 The current research/reference execution path uses Python, NumPy, and MLX. The
 planned shipping runtime is Rust-native with no required Python process; direct
@@ -124,7 +126,12 @@ Therefore:
 
 llama.cpp is not “wrong”; it implements a different quant contract. Feature 006 llama bit-parity remains a **preserved rejection**.
 
-## How it works
+## Runtime design
+
+The diagram describes the GGUF research path and intended residency architecture.
+Optimized caching, prefetch, direct quantized Metal execution and serving are not
+universally shipped capabilities. Flash additionally needs a model-specific
+MLX/Safetensors adapter; the existing GGUF path is not a drop-in implementation.
 
 ```text
                  ┌───────────────────────┐
@@ -231,14 +238,15 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | Evidence / claims / reviewer indexes | ✅ Verified |
 | Optimized MLX-only generation | 🚧 |
 | KV-cached decode | 🚧 |
-| GLM-5.2 full stack | 🚧 Active bring-up (see below) |
+| GLM-5.2 full stack | ✅ Bounded 79-layer two-oracle reference; product/performance qualification pending |
+| GLM-5.3 and GLM-5.3 Flash | 🚧 Model-specific bring-up; full-model qualification not claimed |
 | OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
 
-## The next giant: GLM-5.2
+## Large-model correctness reference: GLM-5.2
 
-Feature **016** (`016-glm52-full-execution`) targets **Unsloth GLM-5.2 UD-IQ2_XXS** multi-shard GGUF on **M1 Ultra internal SSD only**, under a frozen protocol.
+Feature **016** (`016-glm52-full-execution`) established the historical **Unsloth GLM-5.2 UD-IQ2_XXS** multi-shard GGUF research ladder on **M1 Ultra internal SSD only**, under its frozen protocol. That storage restriction belongs to this reference track, not the independent Flash bring-up on external NVMe.
 
 **From frozen contract + checkpoint identity** ([`docs/architecture/GLM52_CONTRACT.md`](docs/architecture/GLM52_CONTRACT.md), [`docs/validation/glm52-checkpoint.json`](docs/validation/glm52-checkpoint.json)):
 
@@ -254,7 +262,7 @@ Feature **016** (`016-glm52-full-execution`) targets **Unsloth GLM-5.2 UD-IQ2_XX
 
 GLM is the model that **forces** SSD-backed expert residency rather than “fit the whole quant in RAM.”
 
-### Deepest **committed** GLM boundary
+### Historical Feature 016 committed boundaries
 
 | Boundary | Committed status |
 | --- | --- |
@@ -275,6 +283,13 @@ GLM is the model that **forces** SSD-backed expert residency rather than “fit 
 Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
 
 **Not claimed:** GLM product support, generation quality, tok/s, M2 Max, external RAID, or CUDA bit-parity.
+
+The later [F017 Sequence 43 reference](docs/roadmap/MODEL_TARGETS.md#glm-52-reference-evidence)
+completed the corrected two-oracle comparison. Its six-shard identity census
+recorded **238,458,632,928 bytes** (about **238.5 GB / 222.1 GiB**).
+Exact numerical payload-read, mapping and fault counts were not separately
+banked and remain unknown. [Prospective read-observation instrumentation](docs/research/f017/read-observation-publication-status.md)
+does not backfill those historical counts.
 
 ## Performance: not the point yet
 
@@ -394,14 +409,20 @@ Those are **historical/inherited Pulsar results**, not PulsarMLX Apple benchmark
 The single high-level source of truth is
 **[docs/roadmap/PULSARMLX_STRATEGY.md](docs/roadmap/PULSARMLX_STRATEGY.md)**.
 
-1. Finish Feature 016's measured mixed-quant, P1, and P2 optimization gates.
-2. Begin the proposed Rust-native runtime only from that committed baseline.
-3. Qualify direct quantized Metal work in measured format order.
-4. Add the product CLI and serving surface only after the local runtime is stable.
+1. Map each target's numerical semantics and qualify synthetic composition.
+2. Earn independent model-specific numerical evidence at the appropriate real boundary.
+3. Measure memory pressure, storage traffic, cache behavior and decoding performance.
+4. Integrate a usable CLI/serving surface and evaluate task-level quality.
+
+These are roadmap stages, not execution authorization. Studio F017 reference and
+instrumentation work and MacBook Flash bring-up are independent tracks; neither
+implies a distributed inference system. See [model targets](docs/roadmap/MODEL_TARGETS.md).
 
 ## License & attribution
 
-MIT licensed. See [LICENSE](LICENSE).
+Repository source is MIT licensed. See [LICENSE](LICENSE). Model weights and
+external runtime components retain their own license terms; this repository's
+license does not relicense them.
 
 PulsarMLX is derived from **Pulsar** by **Giannis Anni and contributors** and preserves applicable upstream notices and history.
 

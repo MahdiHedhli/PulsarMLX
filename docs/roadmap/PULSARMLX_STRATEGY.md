@@ -6,6 +6,11 @@ Run oversized sparse models correctly and usefully on Apple Silicon through
 quantization, SSD-backed model storage, unified-memory residency, MLX, and
 direct Metal acceleration.
 
+Current targets are **GLM-5.3 and GLM-5.3 Flash**, with Flash leading practical
+local-usability work. GLM-5.2 remains the established large-model correctness
+reference. The [model-target register](MODEL_TARGETS.md) separates their evidence,
+formats and hardware roles; none inherits qualification solely from a family name.
+
 ## Current verified boundary
 
 This section names only committed evidence. The Qwen research baseline is
@@ -17,7 +22,16 @@ bound by [`glm52-checkpoint.json`](../validation/glm52-checkpoint.json) and
 238,458,632,928 bytes, immutable repository revision
 `abc55e72527792c6e77069c99b4cb7de16fa9f23`, and set SHA-256
 `d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee`.
-The C01–C11 research ladder is complete and frozen at
+F017's later [Sequence 43 evidence](https://github.com/MahdiHedhli/PulsarMLX/blob/c23e58ec87c7e73a23cf37ac64aa4dee6c45896f/docs/architecture/reviews/evidence/f017-event06-v12-sequence43-terminal-success-evidence-v1.json)
+records 79 layers in each independent oracle, matching token 154820, identical
+ordered top-32 IDs and route structure, and maximum absolute error
+`2.4495741151042694e-06` within the frozen contract. This is a bounded reference
+correctness result, not a throughput or product-readiness claim. Exact numerical
+read/mapping/fault counts remain unknown; current instrumentation cannot backfill
+them. See the [publication scope](../research/f017/read-observation-publication-status.md).
+
+The following Feature 016 records are historical authorities, not new expected-token
+predicates or active-run instructions. The C01–C11 research ladder is complete and frozen at
 [`v0.3.0-glm52-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.3.0-glm52-e2e-research), including the golden generated sequence
 `[21615, 220, 16, 13, 16, 16, 15, 15]`.
 
@@ -56,7 +70,7 @@ independently understandable.
 
 ## Runtime architecture
 
-The shipping control and data plane is Rust. It owns checkpoint identity, the
+The planned shipping control and data plane is Rust. It is intended to own checkpoint identity, the
 GGUF catalog and multi-shard tensor store, positional reads, memory admission,
 compressed expert residency, cache and prefetch policy, routing, MLA/DSA state,
 tokenization, generation, telemetry, cancellation, recovery, CLI, and serving.
@@ -92,6 +106,12 @@ MLX path remains the correctness reference, transitional accelerator, fallback
 for unsupported formats, and shortest route to faster full-model experiments.
 
 ## Migration plan
+
+The practical progression is model-specific semantic mapping and synthetic
+composition; independent numerical qualification; measured memory, storage,
+cache and decoding behavior; then usable CLI/serving and task-level quality.
+The stages below describe implementation direction, not universally shipped
+capabilities or permission to run new experiments.
 
 ### Stage A: accelerated research path
 
@@ -154,18 +174,22 @@ never described as bit exact.
 
 ### M1 Ultra Mac Studio
 
-Owns the full GLM checkpoint, full-stack truth runs, P1/P2/golden generation,
-memory admission, end-to-end performance, and final integration.
+The 128 GB Studio owns the F017 GLM-5.2 reference and prospective instrumentation
+track. Later GLM-5.3/Flash evaluation, memory admission and end-to-end integration
+require their own qualified boundaries.
 
 ### M2 Max MacBook Pro
 
-Owns extracted public-safe or local fixtures, quant decoder and Metal kernel
-development, slab allocator and command-buffer experiments, memory-pressure
-tests, unit/CI work, smaller Qwen regressions, CLI, and packaging.
+The 64 GB MacBook leads the independent GLM-5.3 Flash bring-up, using its
+authorized external NVMe storage/workspace. This includes model-specific source
+mapping and bounded synthetic component work; full-model correctness, sustained
+decoding and dogfood are not claimed. Shared work can include verified fixtures,
+decoder/Metal experiments, smaller Qwen regressions, CLI and packaging.
 
-Network-distributed inference between the Macs is outside the current roadmap.
-External RAID testing follows a stable optimized M1 Ultra internal-SSD
-baseline.
+The tracks share verified components and lessons without blocking each other's
+day-to-day progress. Network-distributed inference is outside the roadmap.
+F017 internal-SSD/RAID sequencing restrictions do not prohibit Flash's separate
+external-NVMe track. This documents the arrangement, not new drive-access authority.
 
 ## Product milestone definitions
 
@@ -206,6 +230,10 @@ Architecture-specific plugins own the tensor map, router, expert activation,
 residual graph, attention, KV/latent state, tokenizer/chat template, and output
 head.
 
+The existing GGUF research paths do not supply Flash's MLX/Safetensors adapter.
+Its hybrid architecture and mixed-precision artifact need explicit tensor/source
+mapping and independent numerical qualification, not a renamed GLM-5.2 plugin.
+
 ## Explicit non-goals and stop-doing list
 
 - No wholesale rewrite from scratch.
@@ -214,7 +242,7 @@ head.
 - No custom Metal before a measured format priority exists.
 - No unqualified donor dependency.
 - No distributed two-Mac inference now.
-- No RAID benchmarking before the internal-SSD baseline.
+- No F017 RAID benchmarking before that track's internal-SSD baseline; Flash's separate external-NVMe workspace is not covered by this restriction.
 - No performance claims from microbenchmarks alone.
 - No weakening the golden correctness contract merely for speed.
 
@@ -248,10 +276,10 @@ head.
 dependencies or performance evidence. Any adaptation requires an explicit
 license review, independently written tests, attribution, and measured benefit.
 
-## Proposed next feature
+## Active research and intended native boundary
 
-`017-rust-native-inference-runtime` is proposed after Feature 016 closes its
-golden-eight optimization baseline. Likely scope: a Rust checkpoint/catalog
+`017-rust-native-inference-runtime` includes ongoing numerical-reference and
+instrumentation work. Its intended native scope remains a Rust checkpoint/catalog
 and whole-slab read boundary; exact f32 decode interface; low-copy MLX bridge;
 model lifecycle, routing, MLA/DSA state, layer loop, logits, tokenizer,
 generation, telemetry, cancellation, and recovery. No Spec Kit artifacts or
