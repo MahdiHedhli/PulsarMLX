@@ -35,6 +35,16 @@ CODE_FILES += (
     'scripts/research/glm53_flash/recurrent_ops/upstream-language.txt',
     'fixtures/research/glm53-flash-recurrent-ops-v1/fixtures.json',
 )
+CODE_FILES += (
+    'scripts/research/glm53_flash/recurrent_dispatch/capsule.py',
+    'scripts/research/glm53_flash/recurrent_dispatch/source.py',
+    'scripts/research/glm53_flash/recurrent_dispatch/oracle.py',
+    'scripts/research/glm53_flash/recurrent_dispatch/controls.py',
+    'scripts/research/glm53_flash/recurrent_dispatch/provenance.json',
+    'scripts/research/glm53_flash/recurrent_dispatch/upstream-gated-delta.txt',
+    'scripts/research/glm53_flash/recurrent_dispatch/upstream-language.txt',
+    'fixtures/research/glm53-flash-recurrent-dispatch-v1/fixtures.json',
+)
 FIXTURE_FILES = ('cases.json', 'controls.json', 'successor-discrimination-v1/fixtures.json')
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',

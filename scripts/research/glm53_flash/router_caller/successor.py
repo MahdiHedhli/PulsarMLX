@@ -56,7 +56,7 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
@@ -70,6 +70,10 @@ def producer_pass(stdout, stderr, stop, operation):
                 'test_cache_construction_alias_and_errors', 'test_classifier',
                 'test_interleaved_new_cache', 'test_mutations', 'test_partitions',
                 'test_research_refusal_and_callee_failure']:
+            return False
+        if operation == 'dispatch' and result.get('test_ids') != [
+                'test_bridge_outer_only', 'test_cache_composition', 'test_default_dispatch_and_masks',
+                'test_frozen_binary64_and_rational_anchors', 'test_mutations', 'test_preentry_refusals']:
             return False
         if operation == 'recurrent' and result.get('test_ids') != [
                 'test_cache_partitions_and_streams', 'test_exception_order',
@@ -320,7 +324,7 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == '--child':
         return child(Path(sys.argv[2]))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'archive-verify'))
+    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'dispatch', 'archive-verify'))
     for name in ('source', 'environment', 'fixtures', 'upstream', 'environment-identity', 'output'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--manifest')

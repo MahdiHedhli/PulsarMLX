@@ -42,6 +42,14 @@ def run(context, mode, backend):
     mx.set_memory_limit(512 * 1024**2)
     mx.set_cache_limit(16 * 1024**2)
     mx.set_default_device(mx.cpu if backend == 'cpu' else mx.gpu)
+    if mode == 'dispatch':
+        import mlx.nn as nn
+        independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
+        dispatch_source = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        controls = component(context, 'controls', {'mx': mx, 'oracle': independent,
+                             'source': dispatch_source, 'cache_source': actual_cache}, folder='recurrent_dispatch')
+        return controls.run(context, backend)
     if mode == 'recurrent':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_ops')

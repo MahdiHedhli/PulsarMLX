@@ -1,0 +1,233 @@
+{
+  "schema": "flash-default-dispatch-exact-source-v1",
+  "origin": {
+    "repo": "Blaizzy/mlx-vlm",
+    "path": "mlx_vlm/models/gated_delta.py",
+    "commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90",
+    "bytes": 8597,
+    "sha256": "e15cd83bfc0bfff3de7a9563aa6978f7e39e0e248cc8a55ca9482f1ce18f54d8",
+    "git_blob_sha1": "a4410a22677dbaad2434632cfe381a55b43336da",
+    "interpretation": "DATA_ONLY_NO_MODULE_IMPORT"
+  },
+  "source_spans": [
+    {
+      "name": "compute_g",
+      "node_type": "FunctionDef",
+      "line_start": 8,
+      "line_end": 10,
+      "byte_start": 110,
+      "byte_end": 261,
+      "sha256": "2557432693f6ac3904a34a185766e986d5f5e5c45b336b718b379fe2a8f0a1c9"
+    },
+    {
+      "name": "compute_g_safe",
+      "node_type": "FunctionDef",
+      "line_start": 13,
+      "line_end": 17,
+      "byte_start": 263,
+      "byte_end": 460,
+      "sha256": "f864032e9bcc846c40bd4ead3e500bf1cbda8d3eae5f4a62e1bfda48383ddb32"
+    },
+    {
+      "name": "_make_gated_delta_kernel",
+      "node_type": "FunctionDef",
+      "line_start": 20,
+      "line_end": 122,
+      "byte_start": 462,
+      "byte_end": 3748,
+      "sha256": "cf05fe954c60c7a4e40912584a19f993ce6bac5cda630890faded93660930e04"
+    },
+    {
+      "name": "_gated_delta_kernel",
+      "node_type": "Assign",
+      "line_start": 125,
+      "line_end": 125,
+      "byte_start": 3750,
+      "byte_end": 3831,
+      "sha256": "1f6d2b80b394879c37535f6112fd6efdd8de477e68e682c03218a09cb0fd37c5"
+    },
+    {
+      "name": "_gated_delta_kernel_masked",
+      "node_type": "Assign",
+      "line_start": 126,
+      "line_end": 126,
+      "byte_start": 3831,
+      "byte_end": 3918,
+      "sha256": "42175f256ce25b0845f1c94a5f782f928249acaba94cbf890c124066c6555b60"
+    },
+    {
+      "name": "_gated_delta_kernel_vec",
+      "node_type": "Assign",
+      "line_start": 127,
+      "line_end": 127,
+      "byte_start": 3918,
+      "byte_end": 4002,
+      "sha256": "f0af12247bf296c522d27a4bc7467deaf56894c209e2ba2ab846ffc34a962ebc"
+    },
+    {
+      "name": "_gated_delta_kernel_vec_masked",
+      "node_type": "Assign",
+      "line_start": 128,
+      "line_end": 130,
+      "byte_start": 4002,
+      "byte_end": 4098,
+      "sha256": "e1a907d648c43a770dae49a279c3b0435173bdcaa46bb8b6f93f65c6af2ac8e9"
+    },
+    {
+      "name": "_gated_delta_step_ops",
+      "node_type": "FunctionDef",
+      "line_start": 133,
+      "line_end": 175,
+      "byte_start": 4100,
+      "byte_end": 5304,
+      "sha256": "707acbcb89926ce734cf01c0e1babf3ad898ea83fcaa489b7b48beeb97e5b810"
+    },
+    {
+      "name": "gated_delta_kernel",
+      "node_type": "FunctionDef",
+      "line_start": 178,
+      "line_end": 218,
+      "byte_start": 5306,
+      "byte_end": 6441,
+      "sha256": "87dd535eba98a52b22f44ca642f8e8fbbf496446790a8a790ee626fef74a9483"
+    },
+    {
+      "name": "gated_delta_ops",
+      "node_type": "FunctionDef",
+      "line_start": 221,
+      "line_end": 266,
+      "byte_start": 6443,
+      "byte_end": 7655,
+      "sha256": "9751b1354ae88830f815b23c3a2ed4ec3a5154ccbbb2bbaa400f407efdd0540a"
+    },
+    {
+      "name": "gated_delta_update",
+      "node_type": "FunctionDef",
+      "line_start": 269,
+      "line_end": 300,
+      "byte_start": 7657,
+      "byte_end": 8597,
+      "sha256": "e285f254f709fd22a161d5a6fd379815a26369b289f62619b20721880b703e78"
+    }
+  ],
+  "capsule_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872",
+  "caller": {
+    "repo": "PipeNetwork/glm53-flash-mlx",
+    "path": "glm53_flash_mlx/glm5_next/language.py",
+    "commit": "a61a7c7d2fbdf3d218a9909365a24bd794f3a247",
+    "bytes": 35184,
+    "sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
+    "git_blob_sha1": "3bd6a9b2a7014f1ceb052768768d42ce5cb46e29",
+    "interpretation": "DATA_ONLY_NO_MODULE_IMPORT",
+    "line_start": 289,
+    "line_end": 303,
+    "byte_start": 11296,
+    "byte_end": 11755,
+    "selected_sha256": "817093e2d7c4b9c19ad671842608abdbab6a4658cd655649c316460eeb513558",
+    "wrapper": "Exact caller statements with dedented wrapper signature and added return(out,state). Mask is not passed."
+  },
+  "selector_predicate": "not use_kernel or mx.default_device() != mx.gpu or (not mx.metal.is_available()) or (k.shape[-1] < 32) or (k.shape[-1] % 32 != 0)",
+  "geometry_expressions": {
+    "grid": "(32, Dv, B * Hv)",
+    "threadgroup": "(32, 4, 1)",
+    "output_shapes": "[(B, T, Hv, Dv), state.shape]",
+    "output_dtypes": "[input_type, state_type]"
+  },
+  "kernel_index_expression": "constexpr int n_per_t = Dk / 32;",
+  "injected_globals": [
+    "mx facade forwarding admitted mlx.core; only factory API counting is wrapped",
+    "nn=admitted mlx.nn",
+    "partial=functools.partial",
+    "Optional,Tuple=typing"
+  ],
+  "execution": "All selected nodes execute in original order in a fresh namespace; function wrappers count entries without inner evaluation. Original complete ASTs/decorators/initializers are preserved.",
+  "mask_semantics": "Source custom kernel false mask preserves state and writes zero output; original ops computes output then retains old state. Independent path-specific expectations, no masked output parity claim.",
+  "mutations": {
+    "missing_decay": {
+      "replacements": [
+        {
+          "before": "state = state * decay",
+          "after": "state = state"
+        },
+        {
+          "before": "state[i] = state[i] * {g_access};",
+          "after": "state[i] = state[i];"
+        }
+      ],
+      "sha256": "681f1c7c48cb34d8761804ac818e1bcaa26b284d63b25e26c4b92fa73be8da25",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    },
+    "residual_undecayed": {
+      "replacements": [
+        {
+          "before": "kv_mem = (state * k[..., None, :]).sum(axis=-1)",
+          "after": "kv_mem = (old_state * k[..., None, :]).sum(axis=-1)"
+        },
+        {
+          "before": "kv_mem += state[i] * k_[s_idx];",
+          "after": "kv_mem += (state[i] / {g_access}) * k_[s_idx];"
+        }
+      ],
+      "sha256": "03ace16893b6cc803db8e321708aa56c38c834bdb3b4827e085cf44360449551",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    },
+    "wrong_head_mapping": {
+      "replacements": [
+        {
+          "before": "q = mx.repeat(q, repeat_factor, -2)",
+          "after": "q = mx.tile(q, (1, 1, repeat_factor, 1))"
+        },
+        {
+          "before": "k = mx.repeat(k, repeat_factor, -2)",
+          "after": "k = mx.tile(k, (1, 1, repeat_factor, 1))"
+        },
+        {
+          "before": "auto hk_idx = hv_idx / (Hv / Hk);",
+          "after": "auto hk_idx = hv_idx % Hk;"
+        }
+      ],
+      "sha256": "3b21737606011e7dc89cf01570880b56871df31c71bf7e25ae0e4f07dda7ca5a",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    },
+    "dropped_cache1": {
+      "replacements": [
+        {
+          "before": "cache[1] = state",
+          "after": "cache[1] = cache[1]"
+        }
+      ],
+      "sha256": "7fa6515a086ab9b411ae372abfef67fb4b1ae41b061efa4b8bb1e58b3b510c80",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    },
+    "wrong_advance": {
+      "replacements": [
+        {
+          "before": "cache.advance(S)",
+          "after": "cache.advance(S + 1)"
+        }
+      ],
+      "sha256": "1e5cc270802f374a469d366256600c9f1cd9b0b4a5036f2fb73e93fca8d1898f",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    },
+    "forced_fallback": {
+      "replacements": [
+        {
+          "before": "not use_kernel\n",
+          "after": "True or not use_kernel\n"
+        }
+      ],
+      "sha256": "1db3cce264cc7af8207e364401d503483b9620d08557a99d10897267e0f2485f",
+      "safety": "Semantic-only graph-owned mutation; all dimensions, addresses, allocation sizes and launch geometry preserved."
+    }
+  },
+  "wrapper_controls": [
+    "wrong_mask_output_expectation",
+    "illicit_inner_barrier"
+  ],
+  "excluded": [
+    "whole upstream module import",
+    "unrelated kernel factory",
+    "unsafe GPU mutation",
+    "full KDA/model/weights/performance"
+  ]
+}
