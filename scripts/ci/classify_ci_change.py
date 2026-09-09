@@ -2,9 +2,12 @@
 """Fail-closed CI routing from an exact Git diff.
 
 The classifier has no network or third-party Python dependencies.  Unknown,
-mixed, executable, contract, fixture, build, and workflow changes always route
-to FULL_NATIVE.  The closed historical F017 branch refuses automatic source
+executable documentation, contract, fixture, build, and workflow changes route
+to native CI. Evidence mixed with docs stays on the strict integrity path.
+The closed historical F017 branch refuses automatic source
 qualification and requires an explicit manual full dispatch.
+Documentation, evidence and their mixture remain cheap integrity surfaces there.
+Noncanonical/control-character/backslash paths fail closed, not NO_CHANGES.
 """
 
 from __future__ import annotations
@@ -69,7 +72,9 @@ class ClassificationError(RuntimeError):
 
 def _safe_path(raw: str) -> str:
     path = PurePosixPath(raw)
-    if path.is_absolute() or ".." in path.parts or not path.parts:
+    if (path.is_absolute() or not raw or path.as_posix() != raw
+            or ".." in path.parts or "\\" in raw
+            or any(ord(c) < 32 or ord(c) == 127 for c in raw)):
         raise ClassificationError(f"unsafe changed path: {raw!r}")
     return path.as_posix()
 
@@ -116,12 +121,11 @@ def classify_paths(
         automatic = FULL_NATIVE
     elif UNKNOWN_DEFAULT_FULL in classes:
         automatic = UNKNOWN_DEFAULT_FULL
-    elif classes == {EVIDENCE_ONLY}:
+    elif EVIDENCE_ONLY in classes and classes <= {EVIDENCE_ONLY, DOCS_ONLY}:
         automatic = EVIDENCE_ONLY
     elif classes == {DOCS_ONLY}:
         automatic = DOCS_ONLY
     else:
-        # Evidence mixed with docs is not an approved evidence-only surface.
         automatic = FULL_NATIVE
 
     if requested_mode == "evidence":
@@ -148,21 +152,54 @@ def _git(*args: str, cwd: Path) -> str:
     return completed.stdout
 
 
-def changed_paths(repository: Path, base: str, head: str) -> list[str]:
-    """Resolve exact changed paths, including both sides of a rename."""
+def changed_entries(repository: Path, base: str, head: str) -> list[dict]:
+    """Read the complete committed diff with NUL paths and both file modes."""
+    for ref in (base, head):
+        if not ref or ref.startswith("-") or set(ref) == {"0"}:
+            raise ClassificationError("missing or zero diff authority")
+        _git("cat-file", "-e", f"{ref}^{{commit}}", cwd=repository)
+    output = _git("diff", "--raw", "-z", "--no-abbrev", "--find-renames",
+                  base, head, "--", cwd=repository)
+    fields = output.split("\0")
+    if fields.pop() != "":
+        raise ClassificationError("unterminated Git diff")
+    rows = []
+    while fields:
+        header = fields.pop(0).split()
+        if len(header) != 5 or not header[0].startswith(":"):
+            raise ClassificationError("malformed raw Git diff")
+        old_mode, new_mode, _, _, status = header
+        count = 2 if status.startswith(("R", "C")) else 1
+        if len(fields) < count:
+            raise ClassificationError("missing Git diff path")
+        paths = [_safe_path(fields.pop(0)) for _ in range(count)]
+        rows.append({"status": status, "old_mode": old_mode[1:],
+                     "new_mode": new_mode, "paths": paths})
+    return rows
 
-    output = _git("diff", "--name-status", "--find-renames", base, head, cwd=repository)
-    paths: list[str] = []
-    for line in output.splitlines():
-        fields = line.split("\t")
-        if len(fields) < 2:
-            raise ClassificationError(f"malformed git diff row: {line!r}")
-        status = fields[0]
-        candidates = fields[1:]
-        if status.startswith(("R", "C")) and len(candidates) != 2:
-            raise ClassificationError(f"malformed rename/copy row: {line!r}")
-        paths.extend(candidates)
-    return sorted(set(paths))
+
+def changed_paths(repository: Path, base: str, head: str) -> list[str]:
+    """Resolve both sides of every rename without Git path quoting ambiguity."""
+    return sorted({p for row in changed_entries(repository, base, head) for p in row["paths"]})
+
+
+def classify_change(repository: Path, base: str, head: str, *, branch: str,
+                    requested_mode: str = "auto") -> tuple[str, list[dict[str, str]]]:
+    entries = changed_entries(repository, base, head)
+    paths = sorted({p for row in entries for p in row["paths"]})
+    mode, rows = classify_paths(paths, branch=branch, requested_mode=requested_mode)
+    unsafe_docs = any(
+        any(path_class(p) == DOCS_ONLY for p in entry["paths"])
+        and any(m not in {"000000", "100644"} for m in (entry["old_mode"], entry["new_mode"]))
+        for entry in entries
+    )
+    if unsafe_docs:
+        if requested_mode == "evidence":
+            raise ClassificationError("manual evidence mode cannot override unsafe document modes")
+        mode = (CLOSED_BRANCH_GUARD if branch == CLOSED_BRANCH and requested_mode != "full"
+                else FULL_NATIVE)
+    # Invalid evidence modes still reach inexpensive integrity rejection.
+    return mode, rows
 
 
 def _write_github_output(path: Path, values: dict[str, str]) -> None:
@@ -183,9 +220,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     arguments = parser.parse_args(list(argv) if argv is not None else None)
 
     repository = arguments.repository.resolve(strict=True)
-    paths = changed_paths(repository, arguments.base, arguments.head)
-    mode, rows = classify_paths(
-        paths,
+    mode, rows = classify_change(
+        repository, arguments.base, arguments.head,
         branch=arguments.branch,
         requested_mode=arguments.requested_mode,
     )
