@@ -9,6 +9,10 @@ import f017_corrected_oracle_primary_numerics_v3 as primary_core
 from f017_corrected_oracle_primary_target_source_v11 import source_from_inherited_descriptors
 from f017_descriptor_lease_manager_v10 import validate_descriptors
 from f017_result_bundle_builder_v11 import _minimum_gate_bank_output_bundle
+from f017_primary_read_observation_v1 import (
+    _start_primary_observation, _finish_primary_observation, _phase_primary_observation,
+    _primary_observation_stage,
+)
 
 __all__ = ("validate_candidate_document",)
 
@@ -40,7 +44,10 @@ def _minimum_gate_execute_and_bank(
     access_census_sha256: str,
     _write_once: bool = False,
 ) -> dict:
+    _phase_primary_observation(source, "CORE")
     outputs = primary_core.execute_outputs(source, geometry, token, position)
+    _phase_primary_observation(source, "CORE_COMPLETE")
+    _phase_primary_observation(source, "BANK")
     return _minimum_gate_bank_output_bundle(
         outputs, directory, authorization_id=authorization_id,
         package_attempt_id=package_attempt_id, consumer_event_id=consumer_event_id,
@@ -58,22 +65,34 @@ def _minimum_gate_execute_target_and_bank(
     directory: Path,
     **authority: str,
 ) -> dict:
-    validate_candidate_document(candidate)
-    validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
-    source, geometry, token, position = source_from_inherited_descriptors(
-        candidate, descriptors, file_descriptors
-    )
-    bundle = _minimum_gate_execute_and_bank(
-        source, geometry, token, directory, position=position,
-        _write_once=True, **authority
-    )
+    owner = None
+    try:
+        validate_candidate_document(candidate)
+        validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
+        owner = _start_primary_observation(candidate, descriptors, directory, authority)
+        source, geometry, token, position = source_from_inherited_descriptors(
+            candidate, descriptors, file_descriptors, _observation_owner=owner
+        )
+        bundle = _minimum_gate_execute_and_bank(
+            source, geometry, token, directory, position=position,
+            _write_once=True, **authority
+        )
+    except BaseException as exc:
+        observation = _finish_primary_observation(owner, "RAISED", _primary_observation_stage(owner))
+        try:
+            exc.primary_read_observation = observation
+        except Exception:
+            pass
+        raise
+    observation = _finish_primary_observation(owner, "RETURNED", "COMPLETE")
     return {**bundle, "role":"PRIMARY",
             "layers_completed":bundle["artifacts"]["routing"]["layer_count"],
             "path_reopen_count":source.path_reopen_count,
             "descriptor_count":len(descriptors),
             "format_coverage":sorted(source.formats),
             "consumed_graph_shards":sorted(source.consumed),
-            "tensor_read_operations":source.tensor_reads}
+            "tensor_read_operations":source.tensor_reads,
+            "primary_read_observation":observation}
 
 
 _qualification_execute_and_bank = _minimum_gate_execute_and_bank

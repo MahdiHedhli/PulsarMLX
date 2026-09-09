@@ -16,6 +16,10 @@ import f017_corrected_oracle_primary_numerics_v2 as numerical
 from f017_bounded_artifact_decode_v1 import NONCANONICAL_LIMITS, parse_artifact_bytes, read_artifact
 from f017_descriptor_lease_manager_v10 import validate_descriptors
 from f017_oracle_primary_decoders import LAYOUT, decode
+from f017_primary_read_observation_v1 import (
+    _bind_primary_observation, _read_intent, _read_enter, _read_return, _read_error,
+    _primary_observation_attachment,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 GEOMETRY = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json"
@@ -52,7 +56,7 @@ def _normalized(record: dict) -> dict:
 
 
 class PrimaryDescriptorSourceV10:
-    def __init__(self, candidate: dict, identities: list[dict], descriptors: list[int]):
+    def __init__(self, candidate: dict, identities: list[dict], descriptors: list[int], *, _observation_owner=None):
         validate_descriptors(identities, [item["size_bytes"] for item in candidate["shards"][1:]])
         if type(descriptors) is not list or len(descriptors) != 5 or any(type(fd) is not int or fd < 0 for fd in descriptors):
             raise ValueError("primary inherited descriptor census")
@@ -68,6 +72,11 @@ class PrimaryDescriptorSourceV10:
                 self.records[record["name"]] = record
         self.handles = {identity["shard_ordinal"]: (identity, fd) for identity, fd in zip(identities, descriptors, strict=True)}
         self.consumed: set[int] = set(); self.formats: set[str] = set(); self.tensor_reads = 0
+        self._observation_owner = _bind_primary_observation(_observation_owner, self, candidate, identities)
+
+    @property
+    def primary_read_observation(self):
+        return _primary_observation_attachment(getattr(self, "_observation_owner", None))
 
     def _raw(self, record: dict, expert: int | None, rows: int, columns: int, row_start: int = 0) -> bytes:
         block_values, block_bytes = LAYOUT[record["format"]]
@@ -83,7 +92,15 @@ class PrimaryDescriptorSourceV10:
             raise ValueError("primary inherited descriptor identity")
         if offset + size > identity["size"] or offset + size > record["byte_offset"] + record["byte_length"]:
             raise ValueError("primary tensor bounds")
-        raw = os.pread(descriptor, size, offset)
+        owner = getattr(self, "_observation_owner", None)
+        ticket = _read_intent(owner, self, record, identity, size)
+        _read_enter(owner, ticket)
+        try:
+            raw = os.pread(descriptor, size, offset)
+        except BaseException:
+            _read_error(owner, ticket)
+            raise
+        _read_return(owner, ticket, len(raw))
         if len(raw) != size:
             raise ValueError("primary descriptor short read")
         self.consumed.add(record["shard_ordinal"]); self.formats.add(record["format"]); self.tensor_reads += 1
@@ -136,7 +153,7 @@ class PrimaryRowMatrixV10:
         return self.row(item.start // self.columns)
 
 
-def source_from_inherited_descriptors(candidate: dict, descriptors: list[dict], file_descriptors: list[int]):
-    source = PrimaryDescriptorSourceV10(candidate, descriptors, file_descriptors); source.exercise_format_probes()
+def source_from_inherited_descriptors(candidate: dict, descriptors: list[dict], file_descriptors: list[int], *, _observation_owner=None):
+    source = PrimaryDescriptorSourceV10(candidate, descriptors, file_descriptors, _observation_owner=_observation_owner); source.exercise_format_probes()
     geometry = numerical.Geometry.from_json(source.document["geometry"])
     return source, geometry, source.document["token"], source.document["position"]
