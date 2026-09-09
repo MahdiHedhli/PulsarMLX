@@ -1,0 +1,196 @@
+{
+  "inputs": [
+    {
+      "repository_path": "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json",
+      "sha256": "860493afff3069a6e837aed45a70f363cc0a85c1ae1da5fe6b1df127f6aaf696",
+      "view_path": "docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json"
+    },
+    {
+      "repository_path": "scripts/research/tests/f017_sequence54/observation_oracle54.py",
+      "sha256": "f3190ada6ab51a735bf4d97c5a7a0a1feb75ccedfaa46c086ba473dafdcb40ba",
+      "view_path": "qualification/observation_oracle54.py"
+    },
+    {
+      "repository_path": "scripts/research/tests/f017_sequence54/primary_faults54.py",
+      "sha256": "6d16ce257ae60a7b2207774ad7c10ebb4def74384b93da01bd8a885db326a72c",
+      "view_path": "qualification/primary_faults54.py"
+    },
+    {
+      "repository_path": "scripts/research/tests/f017_sequence54/primary_suite54.py",
+      "sha256": "cdadf472d197aff23d55e9cb678fff65180201e59ebd3476c72896344db967a3",
+      "view_path": "qualification/primary_suite54.py"
+    },
+    {
+      "repository_path": "scripts/research/execute_f017_corrected_oracle_event_v11.py",
+      "sha256": "967c1d5566e9faae801d1641c9839497d9ecc79aae28b34f1d6dba6679aba1fe",
+      "view_path": "scripts/research/execute_f017_corrected_oracle_event_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_accounting_root_continuity_v1.py",
+      "sha256": "57d407d827c27a5228916805b437e8d2386cd596c271d3e941f64d9f512e9ab7",
+      "view_path": "scripts/research/f017_accounting_root_continuity_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_binary_comparison_authority_v11.py",
+      "sha256": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+      "view_path": "scripts/research/f017_binary_comparison_authority_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_bounded_artifact_decode_v1.py",
+      "sha256": "60ad48f765b0a9924fb534204b6d85eecc975d6624110ca4f9a5133136f931fa",
+      "view_path": "scripts/research/f017_bounded_artifact_decode_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_canonical_serialization_v10.py",
+      "sha256": "7faa1d292c61257024e8aa1e4b337f395cea4c3e4e2dafa476661aeb9dc3872d",
+      "view_path": "scripts/research/f017_canonical_serialization_v10.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+      "view_path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+      "sha256": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+      "view_path": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
+      "sha256": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+      "view_path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+      "sha256": "33e6473aff9ba468b0614d5f06261c8995bf4ac609f9b61e59c6238b9cd99f74",
+      "view_path": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+      "sha256": "515b23b0ac4fd382b9f4a75d01b4bbabe079020e17834347d6c1cfa2d7529133",
+      "view_path": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+      "view_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
+      "sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+      "view_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+      "sha256": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8",
+      "view_path": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+      "sha256": "97e640e1e0fa4da36e7aed407c612ea991681422316f527a585e7c70eb6c8c55",
+      "view_path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_descriptor_lease_manager_v10.py",
+      "sha256": "9cf85bc57548a9d2fd176cb3d02acf2bc88aba5c136a2c747ac386c535003ae2",
+      "view_path": "scripts/research/f017_descriptor_lease_manager_v10.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_oracle_primary_decoders.py",
+      "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+      "view_path": "scripts/research/f017_oracle_primary_decoders.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_primary_observed_descriptor_source_v1.py",
+      "sha256": "752fd55ba1ad641e3ab26b545e983a6bf798032d75a916e83e6c8fc2f701d28b",
+      "view_path": "scripts/research/f017_primary_observed_descriptor_source_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_primary_read_observation_v1.py",
+      "sha256": "16165f7dfb1060d72d79545e9986d439229b80691f4cc34ccebf66661724d5ec",
+      "view_path": "scripts/research/f017_primary_read_observation_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_result_artifacts_v11.py",
+      "sha256": "d82af8629c8ad989baa760c13cea94a7e42bd3628aa6a5e24a6795dc33fa4ae4",
+      "view_path": "scripts/research/f017_result_artifacts_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_result_bundle_authority_v11.py",
+      "sha256": "f1388876fa24d4f93d6cd0732c6648584177b353c2bd1f37f6a02d3b3e948a3a",
+      "view_path": "scripts/research/f017_result_bundle_authority_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_result_bundle_builder_v11.py",
+      "sha256": "8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b",
+      "view_path": "scripts/research/f017_result_bundle_builder_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_result_envelope_v11.py",
+      "sha256": "572f4f03e8e02a8f9b13ef007b06e0e727089878d1187d81a4d70afb4c3870bf",
+      "view_path": "scripts/research/f017_result_envelope_v11.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_write_once_artifact_v1.py",
+      "sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768",
+      "view_path": "scripts/research/f017_write_once_artifact_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/generate_f017_corrected_oracle_fixtures.py",
+      "sha256": "c611e0b684b86ab6e8064b10fc9b5ef1aefa11af1dbc1006fe1163ce82107526",
+      "view_path": "scripts/research/generate_f017_corrected_oracle_fixtures.py"
+    },
+    {
+      "repository_path": "scripts/research/iq2_xxs_tables.py",
+      "sha256": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756",
+      "view_path": "scripts/research/iq2_xxs_tables.py"
+    },
+    {
+      "repository_path": "scripts/research/iq3_xxs_tables.py",
+      "sha256": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042",
+      "view_path": "scripts/research/iq3_xxs_tables.py"
+    },
+    {
+      "repository_path": "scripts/research/iq_extra_tables.py",
+      "sha256": "08c0f3cf2fa33d7a51109959d773f2ae21f282c166b848d154903ce51f38d83e",
+      "view_path": "scripts/research/iq_extra_tables.py"
+    },
+    {
+      "repository_path": "scripts/research/tests/f017_primary_integration_cases.py",
+      "sha256": "03ef0fcbe9a0687f1a9b5fd9407ab1ff5ef082e3128c5e3312488ecc7ff64711",
+      "view_path": "scripts/research/tests/f017_primary_integration_cases.py"
+    },
+    {
+      "repository_path": "scripts/research/validate_f017_v11_execution_authority_v1.py",
+      "sha256": "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102761872628c",
+      "view_path": "scripts/research/validate_f017_v11_execution_authority_v1.py"
+    },
+    {
+      "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json",
+      "sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a",
+      "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json"
+    },
+    {
+      "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json",
+      "sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+      "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json"
+    },
+    {
+      "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json",
+      "sha256": "755912461bd9818cfacb98bc03f325f7fbcea3cd034efc4951b5fdde40434447",
+      "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v11.json"
+    },
+    {
+      "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11-v2.json",
+      "sha256": "9f2812c70d248d15e0f39e14dc047d815c5c9c0a19257bd122fa64ade078ea67",
+      "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-binary-result-envelope-v11-v2.json"
+    },
+    {
+      "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json",
+      "sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+      "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json"
+    }
+  ],
+  "schema": "f017.current-primary-ci-inputs/1",
+  "source_base": "6f59d9db93e92afed142b543a0e2fc19e0362bb4"
+}
