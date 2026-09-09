@@ -1,5 +1,7 @@
 # GLM-5.3-Flash source frontier
 
+The current explicit-root command and its bounded qualification finish line are documented in [Current tiny successor entry](successor-entry.md). The sections and correspondence table below retain their historical checkpoint meanings. In particular, the earlier private admission adapter is not the current public entrypoint; the new successor preserves the historical guard/runner and reuses the unchanged mathematics through an explicit context boundary. Current review, source and hosted CI identities are recorded separately.
+
 ## Integration successor, 2026-09-09
 
 This successor adds the bounded router-caller source and repairs positive test-fixture allocation. The test helper resolves its existing temporary parent before allocation and checks the resulting ancestors. Production `store.py` and its negative symlink, escape, and replaced-root checks remain unchanged. The earlier hosted run [34305893705](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/34305893705) recorded ten ancestor-guard errors; the concrete offending ancestor was not logged.
