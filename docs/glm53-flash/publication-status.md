@@ -1,5 +1,19 @@
 # GLM-5.3-Flash source frontier
 
+## Integration successor, 2026-09-09
+
+This successor adds the bounded router-caller source and repairs positive test-fixture allocation. The test helper resolves its existing temporary parent before allocation and checks the resulting ancestors. Production `store.py` and its negative symlink, escape, and replaced-root checks remain unchanged. The earlier hosted run [34305893705](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/34305893705) recorded ten ancestor-guard errors; the concrete offending ancestor was not logged.
+
+The archive helper now uses explicit caller-supplied roots and changes only the three path operands in `producer/prefix.json`. Other source, numerical observations, claims, counters and receipt bindings remain unchanged; unhandled private locators are refused. Original and derivative identities stay distinct. Fabricated-marker tests cover nested data, already sanitized strings, case variants, JSON escapes, protected-field refusals and archive-part tampering. This is a scoped locator policy, not a universal secret detector.
+
+Local qualification includes 45 Flash tests with six explicit historical-runner skips, plus four current tiny router matrices: CPU and Metal, each repeated in a fresh process and root. The common numerical source and frozen fixtures are unchanged. The new matrices reproduce the banked same-device observations except ephemeral object identities. The historical guard and runner still bind their original phase and are retained unchanged; current qualification uses a separately recorded graph admission adapter, not a claim that the old supervisor accepts this modified tree. Ordinary hosted CI does not execute that private adapter or the gated router matrices.
+
+Limits remain: selected source definitions and tiny synthetic inputs only; BF16 operand widening into FP32, E288 bias-dominated selection, and nondiscriminating individual-cast controls. Whole-model, quantized, native BF16, negative grouped-mask and cold driver-cache qualification are not established. CI for the exact published commit is reported separately; local qualification is not a claim of green integrated CI or readiness to merge main. Shared-method acceptance remains with the coordinating planner.
+
+The historical correspondence below remains an immutable reference to the earlier checkpoint. Its store-test row records the old measured digest; this successor deliberately changes only that predecessor test body. The other 47 measured predecessor bodies remain exact. Router additions and their archive successor have a separate private per-path digest map.
+
+## Earlier published checkpoint
+
 This branch publishes the completed `boundary-completion-v1` research checkpoint. The selected candidate is `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit`; no model weights or real inference are included.
 
 The measured source commit is `1741f5143a095feb7b73ec8154b77a5d80660c84`, tree `65e660629edc8bbdfc7ee852b7469f0f38dd2d58`, based on public `a948b68d9868a34b0cc9b00aacaa4ad2330b0f55`. Its three original implementation commits and all 48 measured file bodies are preserved. A fresh isolated reconstruction matched that exact tree before this separate documentation commit. The local qualification was bound to this measured commit and a finite private source manifest; publication does not retroactively make it an execution against a public checkout.

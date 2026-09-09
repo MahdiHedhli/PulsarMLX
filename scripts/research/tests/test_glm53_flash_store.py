@@ -7,10 +7,12 @@ import math
 import os
 from pathlib import Path
 import random
+import stat
 import struct
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -166,9 +168,62 @@ def heldout_inputs():
     }
 
 
+def temporary_fixture_directory(*, prefix, parent=None):
+    """Allocate a test-owned root after canonicalizing its existing parent."""
+    parent = Path(tempfile.gettempdir() if parent is None else parent).resolve(strict=True)
+    if not parent.is_dir():
+        raise ValueError("test temporary parent must be a directory")
+    temporary = tempfile.TemporaryDirectory(prefix=prefix, dir=parent)
+    try:
+        root = Path(temporary.name)
+        chain = (root, *root.parents)
+        if root.parent != parent or not root.is_dir() or any(
+            stat.S_ISLNK(candidate.lstat().st_mode) for candidate in chain
+        ):
+            raise ValueError("test fixture must have canonical directory ancestors")
+    except BaseException:
+        temporary.cleanup()
+        raise
+    return temporary
+
+
+class TemporaryDirectoryRegressionTests(unittest.TestCase):
+    def test_canonical_and_alias_parents_reach_positive_store(self):
+        with temporary_fixture_directory(prefix="glm53-parent-") as directory:
+            canonical = Path(directory)
+            alias = canonical / "parent-alias"
+            alias.symlink_to(canonical, target_is_directory=True)
+            for parent in (canonical, alias):
+                with self.subTest(alias=parent == alias):
+                    with temporary_fixture_directory(prefix="child-", parent=parent) as child:
+                        root = Path(child)
+                        self.assertEqual(root.parent, canonical)
+                        self.assertFalse(any(p.is_symlink() for p in (root, *root.parents)))
+                        self.assertEqual(store._admit_root(root), root)
+                        (root / "sample.bin").write_bytes(b"synthetic-positive")
+                        reader = store.FixtureReader(root)
+                        self.assertEqual(reader.read("sample.bin", 0, 18), b"synthetic-positive")
+            with mock.patch.object(tempfile, "gettempdir", return_value=str(alias)):
+                with temporary_fixture_directory(prefix="default-parent-") as child:
+                    self.assertEqual(Path(child).parent, canonical)
+                    self.assertEqual(store._admit_root(child), Path(child))
+
+    def test_missing_and_nondirectory_parents_refused_before_allocation(self):
+        with temporary_fixture_directory(prefix="glm53-parent-") as directory:
+            root = Path(directory)
+            file = root / "file"
+            file.write_text("synthetic")
+            with mock.patch.object(tempfile, "TemporaryDirectory") as allocate:
+                with self.assertRaises(FileNotFoundError):
+                    temporary_fixture_directory(prefix="bad-", parent=root / "missing")
+                with self.assertRaisesRegex(ValueError, "must be a directory"):
+                    temporary_fixture_directory(prefix="bad-", parent=file)
+                allocate.assert_not_called()
+
+
 class TemporaryFixture(unittest.TestCase):
     def setUp(self):
-        self._temp = tempfile.TemporaryDirectory(prefix="glm53-store-")
+        self._temp = temporary_fixture_directory(prefix="glm53-store-")
         self.root = Path(self._temp.name)
 
     def tearDown(self):
@@ -281,7 +336,7 @@ class BitLayoutTests(TemporaryFixture):
 
     def test_heldout_changed_layout_and_semantic_relayout(self):
         first = self.write_base()
-        with tempfile.TemporaryDirectory(prefix="glm53-heldout-") as directory:
+        with temporary_fixture_directory(prefix="glm53-heldout-") as directory:
             other = Path(directory)
             changed = store.write_synthetic_bundle(
                 other,
@@ -303,7 +358,7 @@ class BitLayoutTests(TemporaryFixture):
                 )
             observe("heldout", changed, heldout_store.telemetry())
 
-        with tempfile.TemporaryDirectory(prefix="glm53-relayout-") as directory:
+        with temporary_fixture_directory(prefix="glm53-relayout-") as directory:
             relayout_root = Path(directory)
             relayout = store.write_synthetic_bundle(
                 relayout_root,
@@ -408,7 +463,7 @@ class RejectionTests(TemporaryFixture):
         with self.assertRaisesRegex(store.ManifestError, "nonfinite"):
             store.DemandStore(self.root, [manifest]).acquire((2, 3))
 
-        with tempfile.TemporaryDirectory(prefix="glm53-nonfinite-producer-") as directory:
+        with temporary_fixture_directory(prefix="glm53-nonfinite-producer-") as directory:
             inputs = base_inputs()
             inputs["gate"] = store.ProjectionInput(
                 (1, 32), 8, 32, (255,) * 32, (1e308,), (0.0,)
@@ -423,7 +478,7 @@ class RejectionTests(TemporaryFixture):
                     shard_for_role={role: f"{role}.bin" for role in ROLES},
                 )
 
-        with tempfile.TemporaryDirectory(prefix="glm53-padding-") as directory:
+        with temporary_fixture_directory(prefix="glm53-padding-") as directory:
             pad_root = Path(directory)
             padded = store.write_synthetic_bundle(
                 pad_root,
@@ -442,7 +497,7 @@ class RejectionTests(TemporaryFixture):
             with self.assertRaisesRegex(store.ManifestError, "padding"):
                 store.DemandStore(pad_root, [padded]).acquire((2, 3))
 
-        with tempfile.TemporaryDirectory(prefix="glm53-size-") as directory:
+        with temporary_fixture_directory(prefix="glm53-size-") as directory:
             size_root = Path(directory)
             sized = store.write_synthetic_bundle(
                 size_root,
@@ -630,7 +685,7 @@ class StoreBehaviorTests(TemporaryFixture):
         with self.assertRaises(store.StateError):
             post_init.acquire((2, 3))
 
-        with tempfile.TemporaryDirectory(prefix="glm53-reader-root-") as other:
+        with temporary_fixture_directory(prefix="glm53-reader-root-") as other:
             with self.assertRaises(store.PathSafetyError):
                 store.DemandStore(
                     self.root,
