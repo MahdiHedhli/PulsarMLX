@@ -1,0 +1,80 @@
+name: Serving synthetic qualification
+
+# Qualifies crates/serve-synthetic, which declares its own `[workspace]` and is
+# therefore NOT built by `cargo check --workspace` / `cargo test --workspace` in
+# the macOS baseline workflow. Before this job existed no CI job compiled or
+# tested the crate at all, so a green run on the repository said nothing about
+# it (F4).
+#
+# No path filter, matching the existing workflows. A path-filtered job reports
+# success when skipped, which would make this a weaker gate than the baseline it
+# sits beside.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # This job is synthetic-only: no checkpoints, weights or tokenizer assets, and
+  # no dependency on the F017 native qualification path.
+  PULSARMLX_MODEL_GGUF: ""
+  CARGO_TERM_COLOR: always
+
+jobs:
+  serve-synthetic:
+    name: serve-synthetic tests, clippy and SDK smoke
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Confirm synthetic boundary
+        run: |
+          uname -m
+          rustc -Vv
+          cargo -V
+          test -z "$PULSARMLX_MODEL_GGUF"
+          # The crate must stay outside the root workspace; if it is ever added
+          # there, this job's reason to exist changes and should be revisited.
+          ! cargo metadata --format-version 1 --no-deps --quiet \
+            | grep -q '"name":"pulsar-serve-synthetic"'
+
+      - name: Formatting
+        run: cargo fmt --manifest-path crates/serve-synthetic/Cargo.toml --check
+
+      - name: Clippy
+        run: |
+          cargo clippy --locked \
+            --manifest-path crates/serve-synthetic/Cargo.toml \
+            --all-targets -- -D warnings
+
+      - name: Tests
+        run: |
+          cargo test --locked \
+            --manifest-path crates/serve-synthetic/Cargo.toml \
+            --no-fail-fast
+
+      - name: Install pinned SDK environment
+        run: |
+          python3 -m venv "$RUNNER_TEMP/sdkvenv"
+          "$RUNNER_TEMP/sdkvenv/bin/pip" install --quiet --disable-pip-version-check \
+            -r crates/serve-synthetic/tests/sdk-requirements.txt
+
+      - name: OpenAI SDK loopback smoke
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHON="$RUNNER_TEMP/sdkvenv/bin/python" \
+            crates/serve-synthetic/tests/sdk_smoke.sh
+
+      - name: Mutation guards
+        run: |
+          "$RUNNER_TEMP/sdkvenv/bin/python" \
+            crates/serve-synthetic/tests/mutation_guards.py \
+            --scratch "$RUNNER_TEMP/mutants" \
+            --target "$RUNNER_TEMP/mutant-target"
+
+      - name: Confirm no model assets were introduced
+        run: test -z "$PULSARMLX_MODEL_GGUF"

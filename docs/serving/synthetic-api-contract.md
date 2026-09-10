@@ -45,8 +45,25 @@ authoritative usage must omit usage.
 
 SSE chunks retain one completion ID, model ID, and creation time, split content
 on UTF-8 character boundaries, emit an explicit finish reason, and emit
-`data: [DONE]` only after successful completion. Failure after streaming starts
-uses a safe `event: error` payload and closes without a success terminal.
+`data: [DONE]` only after successful completion. Content is cut immediately
+before and after each multibyte character, so every multibyte character is
+delivered as its own delta and a consumer concatenating deltas meets real
+boundaries.
+
+Failure after streaming starts closes without a success terminal and, where the
+stream can still accept bytes, carries a safe `event: error` payload. The cases
+that emit one are:
+
+| After-headers failure | `error.code` |
+| --- | --- |
+| Synthetic backend failure (`__synthetic_fail_after__`) | `backend_failure` |
+| Generation deadline expiry | `generation_timeout` |
+| Shutdown during an active stream | `server_shutdown` |
+
+Emission is best effort and bounded by the stream channel send deadline. A
+stream that ended because the consumer stalled or disconnected receives no
+error event, because delivery is no longer possible. No unsuccessful stream
+emits `data: [DONE]` or a `stop` finish reason.
 
 ## Resource and time limits
 
@@ -61,7 +78,7 @@ uses a safe `event: error` payload and closes without a success terminal.
 | Generations | 1 | Immediate structured `429 server_busy`; no generation queue. |
 | Header read | 5 seconds | Hyper HTTP/1 parser deadline. |
 | Whole connection | 15 seconds | Bounds request read and response service lifetime. |
-| Generation | 2 seconds | Cancels work and omits success terminal on expiry. |
+| Generation | 2 seconds | Cancels work, omits the success terminal, and emits a bounded `generation_timeout` error event on expiry. |
 | Stream channel send | 500 milliseconds | Cancels a producer stalled by downstream backpressure. |
 
 Shutdown stops accepting connections, signals active stream producers, aborts
@@ -71,12 +88,34 @@ keep-alive disabled.
 
 ## Errors and destination boundary
 
-Errors are JSON objects with a stable machine-readable `error.code` and a safe
-message. Authentication, host/origin checks, malformed JSON/body/framing,
-oversized inputs, unsupported parameters, unknown model/route/method, busy
-capacity, generation timeout, and backend failure are distinguishable. Hyper
-performs HTTP/1 framing validation, including rejection of conflicting content
-lengths.
+Errors are JSON objects with a stable machine-readable `error.code`, a safe
+message, and an `error.type` classified from the status so OpenAI-style clients
+can branch on it:
+
+| Status | `error.type` |
+| --- | --- |
+| 401 | `authentication_error` |
+| 429 | `rate_limit_error` |
+| 5xx | `server_error` |
+| everything else | `invalid_request_error` |
+
+Authentication, host/origin checks, malformed JSON/body/framing, oversized
+inputs, unsupported parameters, unknown model/route/method, busy capacity,
+generation timeout, and backend failure are distinguishable. Exactly one `Host`
+header value is required; a request carrying two is rejected as `invalid_host`
+rather than resolved in the peer's favour.
+
+Hyper performs HTTP/1 framing validation, including rejection of conflicting
+content lengths. It also rejects a malformed `Content-Length` during header
+parsing, answering with a bare 400 that carries no JSON body; the crate's own
+`invalid_content_length` branch is therefore unreachable in the current
+dependency pinning and is retained only as defence in depth.
+
+A transient `accept` failure does not terminate the listener. The accept loop
+backs off and continues, giving up only after 64 consecutive failures so a
+genuinely broken listener is still reported. The recovery path is bounded by a
+unit-tested policy function; forcing a real descriptor exhaustion in a test is
+not portable, so that path is not exercised end to end.
 
 The official SDK test supplies an explicit literal-loopback base URL through a
 transport that rejects every non-loopback destination before transmission. It
