@@ -920,3 +920,172 @@ async fn token_limits_outside_supported_range_are_rejected() {
     assert_eq!(server.state.metrics().backend_started, 1);
     server.stop().await;
 }
+
+/// F8: the removed dead expression in `validate` was the only thing referring
+/// to `Message::role`. The field still constrains the request at
+/// deserialization time, so assert that directly rather than relying on a
+/// no-op expression to imply it.
+#[tokio::test]
+async fn unknown_message_roles_are_rejected() {
+    let server = TestServer::start().await;
+    for role in ["tool", "function", "developer", "USER", ""] {
+        let body = format!(
+            "{{\"model\":\"pulsarmlx-synthetic-v1\",\"messages\":[{{\"role\":\"{role}\",\"content\":\"hello\"}}]}}"
+        );
+        let response = server
+            .request("POST", "/v1/chat/completions", Some(&body), true)
+            .await;
+        assert_eq!(response.status, 400, "role={role}");
+        assert_eq!(
+            response.json()["error"]["code"],
+            "invalid_json",
+            "role={role}"
+        );
+    }
+    for role in ["system", "user", "assistant"] {
+        let body = format!(
+            "{{\"model\":\"pulsarmlx-synthetic-v1\",\"messages\":[{{\"role\":\"{role}\",\"content\":\"hello\"}}]}}"
+        );
+        let response = server
+            .request("POST", "/v1/chat/completions", Some(&body), true)
+            .await;
+        assert_eq!(response.status, 200, "role={role}");
+    }
+    assert_eq!(server.state.metrics().backend_started, 3);
+    server.stop().await;
+}
+
+/// F5: OpenAI-style clients branch on `error.type`, so authentication, rate
+/// limiting and server failures must not all report `invalid_request_error`.
+#[tokio::test]
+async fn error_types_are_classified_by_status() {
+    let server = TestServer::start().await;
+
+    // 401 -> authentication_error
+    let unauthorized = server.request("GET", "/v1/models", None, false).await;
+    assert_eq!(unauthorized.status, 401);
+    assert_eq!(unauthorized.json()["error"]["type"], "authentication_error");
+    assert_eq!(unauthorized.json()["error"]["code"], "invalid_api_key");
+
+    // 500 -> server_error
+    let failed = server
+        .request(
+            "POST",
+            "/v1/chat/completions",
+            Some(&chat_body("__synthetic_fail_before__", false)),
+            true,
+        )
+        .await;
+    assert_eq!(failed.status, 500);
+    assert_eq!(failed.json()["error"]["type"], "server_error");
+
+    // 504 -> server_error
+    let timed_out = server
+        .request(
+            "POST",
+            "/v1/chat/completions",
+            Some(&chat_body("__synthetic_slow__", false)),
+            true,
+        )
+        .await;
+    assert_eq!(timed_out.status, 504);
+    assert_eq!(timed_out.json()["error"]["type"], "server_error");
+    assert_eq!(timed_out.json()["error"]["code"], "generation_timeout");
+
+    // 4xx caller mistakes stay invalid_request_error.
+    let bad_request = server
+        .request("POST", "/v1/chat/completions", Some("{"), true)
+        .await;
+    assert_eq!(bad_request.status, 400);
+    assert_eq!(bad_request.json()["error"]["type"], "invalid_request_error");
+
+    let not_found = server.request("GET", "/v1/unknown", None, true).await;
+    assert_eq!(not_found.json()["error"]["type"], "invalid_request_error");
+    server.stop().await;
+}
+
+/// F6: streamed deltas must place multibyte characters on real chunk
+/// boundaries, and the reassembled content must be byte-identical.
+#[tokio::test]
+async fn streamed_deltas_split_on_multibyte_boundaries() {
+    let server = TestServer::start().await;
+    let stream = server
+        .request(
+            "POST",
+            "/v1/chat/completions",
+            Some(&chat_body("hello", true)),
+            true,
+        )
+        .await;
+    assert_eq!(stream.status, 200);
+    let text = stream.text();
+
+    let deltas: Vec<String> = text
+        .lines()
+        .filter_map(|line| line.strip_prefix("data: "))
+        .filter(|line| *line != "[DONE]")
+        .filter_map(|line| {
+            let chunk: Value = serde_json::from_str(line).expect("chunk JSON");
+            chunk["choices"][0]["delta"]["content"]
+                .as_str()
+                .map(str::to_owned)
+        })
+        .collect();
+
+    assert_eq!(deltas.concat(), "SYNTHETIC_OK: café 🚀");
+
+    // Each multibyte character must be delivered as its own delta, so a
+    // consumer concatenating deltas meets a real boundary on both sides.
+    for character in ['é', '🚀'] {
+        assert!(
+            deltas.iter().any(|d| d == &character.to_string()),
+            "expected {character:?} on its own chunk boundary, got {deltas:?}"
+        );
+    }
+    // No delta may split a character: every delta is valid UTF-8 by typing,
+    // and reassembly is exact, so assert the boundary count is real.
+    assert!(
+        deltas.len() >= 4,
+        "expected boundaries around both multibyte characters, got {deltas:?}"
+    );
+    server.stop().await;
+}
+
+/// F8: a second Host header was ignored because `get` returns only the first
+/// value, so a peer could present one Host to an intermediary and another to
+/// this server. Exactly one Host value is now required.
+#[tokio::test]
+async fn duplicate_host_headers_are_rejected() {
+    let server = TestServer::start().await;
+    let port = server.address.port();
+
+    // Both values individually valid: only the duplication is wrong.
+    let duplicated = custom_request(
+        &server,
+        format!(
+            "GET /health HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nHost: localhost:{port}\r\nConnection: close\r\n\r\n"
+        ),
+    )
+    .await;
+    assert_eq!(duplicated.status, 403, "body: {:?}", duplicated.text());
+    assert_eq!(duplicated.json()["error"]["code"], "invalid_host");
+
+    // Identical repeated values are equally ambiguous.
+    let repeated = custom_request(
+        &server,
+        format!(
+            "GET /health HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n"
+        ),
+    )
+    .await;
+    assert_eq!(repeated.status, 403);
+
+    // A single Host still works.
+    let single = custom_request(
+        &server,
+        format!("GET /health HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nConnection: close\r\n\r\n"),
+    )
+    .await;
+    assert_eq!(single.status, 200);
+    server.stop().await;
+}

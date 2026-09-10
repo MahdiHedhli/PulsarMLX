@@ -202,6 +202,30 @@ def main() -> None:
         "let _ = send_event(&sender, \"error\", &error).await;",
         "stream_failure_has_no_success_terminal",
     )
+    # F8: first-Host-wins must not survive.
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "first-host-wins",
+        "    let mut values = headers.get_all(HOST).iter();\n"
+        "    let (Some(host), None) = (values.next(), values.next()) else {\n"
+        "        return false;\n"
+        "    };\n",
+        "    let Some(host) = headers.get(HOST) else {\n        return false;\n    };\n",
+        "duplicate_host_headers_are_rejected",
+    )
+    # F5: collapsing every error type back to invalid_request_error must not
+    # survive.
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "flat-error-type",
+        'StatusCode::UNAUTHORIZED => "authentication_error",',
+        'StatusCode::UNAUTHORIZED => "invalid_request_error",',
+        "error_types_are_classified_by_status",
+    )
     python_mutation(
         pristine,
         args.scratch,
@@ -218,7 +242,7 @@ def main() -> None:
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=False,\n",
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=True,\n",
     )
-    print("MUTATION_GUARDS_OK count=9")
+    print("MUTATION_GUARDS_OK count=11")
 
 
 if __name__ == "__main__":

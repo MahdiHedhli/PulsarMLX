@@ -29,6 +29,13 @@ pub const MAX_MESSAGE_BYTES: usize = 2 * 1024;
 pub const MAX_OUTPUT_TOKENS: u16 = 16;
 pub const MAX_CONNECTIONS: usize = 32;
 pub const MAX_GENERATIONS: usize = 1;
+/// Consecutive `accept` failures tolerated before the listener is treated as
+/// broken. Bounded so a permanently unusable listener still terminates rather
+/// than spinning forever.
+pub const MAX_CONSECUTIVE_ACCEPT_ERRORS: usize = 64;
+/// Pause after a failed `accept`, so descriptor exhaustion backs off instead of
+/// busy-looping while connections drain.
+pub const ACCEPT_ERROR_BACKOFF: Duration = Duration::from_millis(10);
 pub const HEADER_DEADLINE: Duration = Duration::from_secs(5);
 pub const CONNECTION_DEADLINE: Duration = Duration::from_secs(15);
 pub const GENERATION_DEADLINE: Duration = Duration::from_secs(2);
@@ -139,6 +146,7 @@ where
     let expected_port = listener.local_addr()?.port();
     let connection_slots = Arc::new(Semaphore::new(MAX_CONNECTIONS));
     let mut tasks = JoinSet::new();
+    let mut consecutive_accept_errors = 0usize;
     tokio::pin!(shutdown);
 
     loop {
@@ -152,7 +160,26 @@ where
                 state.metrics.connections_reaped.fetch_add(1, Ordering::SeqCst);
             }
             accepted = listener.accept() => {
-                let (stream, peer) = accepted?;
+                // F8: a transient per-connection failure - a peer that vanished
+                // between the SYN and the accept, or descriptor exhaustion under
+                // load - previously propagated and terminated the whole
+                // listener. Back off and continue instead, but give up once the
+                // failures stop looking transient so a genuinely broken listener
+                // is still reported.
+                let (stream, peer) = match accepted {
+                    Ok(accepted) => {
+                        consecutive_accept_errors = 0;
+                        accepted
+                    }
+                    Err(error) => {
+                        consecutive_accept_errors += 1;
+                        if !accept_error_is_recoverable(consecutive_accept_errors) {
+                            return Err(error);
+                        }
+                        tokio::time::sleep(ACCEPT_ERROR_BACKOFF).await;
+                        continue;
+                    }
+                };
                 if !peer.ip().is_loopback() { continue; }
                 let Ok(connection_permit) = connection_slots.clone().try_acquire_owned() else {
                     continue;
@@ -206,7 +233,7 @@ async fn handle_inner(
             "request headers exceed the limit",
         );
     }
-    if !valid_host(request.headers().get(HOST), expected_port) {
+    if !valid_host(request.headers(), expected_port) {
         return api_error(StatusCode::FORBIDDEN, "invalid_host", "Host is not allowed");
     }
     if !valid_origin(request.headers().get(ORIGIN), request.headers().get(HOST)) {
@@ -424,6 +451,11 @@ struct ChatRequest {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Message {
+    /// Constrains the accepted roles at deserialization time: an unknown role
+    /// makes the whole request fail to parse. The value is never read
+    /// afterwards, which is what the removed `let _ = ...any(matches!(...))`
+    /// expression in `validate` was concealing (F8).
+    #[allow(dead_code)]
     role: Role,
     content: String,
 }
@@ -468,10 +500,6 @@ impl ChatRequest {
         if self.temperature.unwrap_or(1.0) != 1.0 || self.top_p.unwrap_or(1.0) != 1.0 {
             return Err(("unsupported_parameter", "sampling controls are unsupported"));
         }
-        let _ = self
-            .messages
-            .iter()
-            .any(|m| matches!(m.role, Role::System | Role::User | Role::Assistant));
         Ok(())
     }
 }
@@ -681,18 +709,33 @@ fn render_output(mode: BackendMode, max_tokens: u16) -> (String, &'static str, u
     (tokens[..take].concat(), finish, take)
 }
 
+/// Split streamed content so that every multibyte character sits exactly on a
+/// chunk boundary.
+///
+/// F6: the previous implementation cut after the first and second characters
+/// only, so for "SYNTHETIC_OK: café 🚀" it produced "S", "Y" and the whole
+/// remainder - the multibyte characters never landed on a boundary and the
+/// UTF-8-safe delta claim was only weakly exercised. Placing a cut immediately
+/// before and after each multibyte character means a consumer that concatenates
+/// deltas must handle real boundaries.
 fn utf8_chunks(content: &str) -> Vec<&str> {
     if content.is_empty() {
         return Vec::new();
     }
-    let mut cuts = vec![0];
-    for (index, _) in content.char_indices().skip(1) {
-        if cuts.len() < 3 {
+    let mut cuts = vec![0usize];
+    for (index, character) in content.char_indices() {
+        let width = character.len_utf8();
+        if width > 1 {
             cuts.push(index);
+            cuts.push(index + width);
         }
     }
     cuts.push(content.len());
-    cuts.windows(2).map(|w| &content[w[0]..w[1]]).collect()
+    cuts.dedup();
+    cuts.windows(2)
+        .filter(|window| window[0] < window[1])
+        .map(|window| &content[window[0]..window[1]])
+        .collect()
 }
 
 async fn send_sse(sender: &mpsc::Sender<Result<Frame<Bytes>, Infallible>>, value: &Value) -> bool {
@@ -717,6 +760,13 @@ async fn send_raw(sender: &mpsc::Sender<Result<Frame<Bytes>, Infallible>>, bytes
         .is_ok_and(|r| r.is_ok())
 }
 
+/// Whether the accept loop should keep going after `consecutive` consecutive
+/// failures. Kept separate from the loop so the give-up boundary is directly
+/// testable; forcing a real `EMFILE` in a test is not portable.
+fn accept_error_is_recoverable(consecutive: usize) -> bool {
+    consecutive <= MAX_CONSECUTIVE_ACCEPT_ERRORS
+}
+
 fn header_bytes(headers: &hyper::HeaderMap) -> usize {
     headers.iter().fold(0usize, |total, (name, value)| {
         total
@@ -725,8 +775,15 @@ fn header_bytes(headers: &hyper::HeaderMap) -> usize {
     })
 }
 
-fn valid_host(value: Option<&hyper::header::HeaderValue>, expected_port: u16) -> bool {
-    let Some(host) = value.and_then(|v| v.to_str().ok()) else {
+/// F8: a second Host header was previously ignored because `get` returns only
+/// the first value. Requiring exactly one value rejects the ambiguity instead
+/// of choosing an interpretation for the peer.
+fn valid_host(headers: &hyper::HeaderMap, expected_port: u16) -> bool {
+    let mut values = headers.get_all(HOST).iter();
+    let (Some(host), None) = (values.next(), values.next()) else {
+        return false;
+    };
+    let Ok(host) = host.to_str() else {
         return false;
     };
     host == format!("127.0.0.1:{expected_port}") || host == format!("localhost:{expected_port}")
@@ -778,10 +835,22 @@ fn json_response(status: StatusCode, value: Value) -> Response<BoxBody> {
         .expect("valid response")
 }
 
+/// F5: OpenAI-style clients branch on `error.type`. Reporting every failure as
+/// `invalid_request_error` told an SDK that a 401, a 429 and a 500 were all
+/// caller mistakes, so retry and re-authentication logic could not work.
+fn error_type(status: StatusCode) -> &'static str {
+    match status {
+        StatusCode::UNAUTHORIZED => "authentication_error",
+        StatusCode::TOO_MANY_REQUESTS => "rate_limit_error",
+        status if status.is_server_error() => "server_error",
+        _ => "invalid_request_error",
+    }
+}
+
 fn api_error(status: StatusCode, code: &'static str, message: &'static str) -> Response<BoxBody> {
     json_response(
         status,
-        json!({"error":{"code":code,"message":message,"type":"invalid_request_error"}}),
+        json!({"error":{"code":code,"message":message,"type":error_type(status)}}),
     )
 }
 
@@ -811,6 +880,49 @@ pub fn limits() -> Limits {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn accept_errors_are_tolerated_then_surrendered() {
+        assert!(accept_error_is_recoverable(1));
+        assert!(accept_error_is_recoverable(MAX_CONSECUTIVE_ACCEPT_ERRORS));
+        assert!(!accept_error_is_recoverable(
+            MAX_CONSECUTIVE_ACCEPT_ERRORS + 1
+        ));
+    }
+
+    #[test]
+    fn error_types_map_from_status() {
+        assert_eq!(error_type(StatusCode::UNAUTHORIZED), "authentication_error");
+        assert_eq!(
+            error_type(StatusCode::TOO_MANY_REQUESTS),
+            "rate_limit_error"
+        );
+        assert_eq!(
+            error_type(StatusCode::INTERNAL_SERVER_ERROR),
+            "server_error"
+        );
+        assert_eq!(error_type(StatusCode::GATEWAY_TIMEOUT), "server_error");
+        assert_eq!(error_type(StatusCode::BAD_REQUEST), "invalid_request_error");
+        assert_eq!(error_type(StatusCode::NOT_FOUND), "invalid_request_error");
+        assert_eq!(
+            error_type(StatusCode::PAYLOAD_TOO_LARGE),
+            "invalid_request_error"
+        );
+    }
+
+    #[test]
+    fn utf8_chunks_isolate_multibyte_characters() {
+        assert!(utf8_chunks("").is_empty());
+        assert_eq!(utf8_chunks("abc"), vec!["abc"]);
+        assert_eq!(utf8_chunks("café"), vec!["caf", "é"]);
+        assert_eq!(utf8_chunks("éé"), vec!["é", "é"]);
+        assert_eq!(utf8_chunks("🚀a"), vec!["🚀", "a"]);
+        let content = "SYNTHETIC_OK: café 🚀";
+        let chunks = utf8_chunks(content);
+        assert_eq!(chunks.concat(), content);
+        assert!(chunks.contains(&"é"));
+        assert!(chunks.contains(&"🚀"));
+    }
 
     #[tokio::test]
     async fn stream_send_times_out_when_consumer_stalls() {
