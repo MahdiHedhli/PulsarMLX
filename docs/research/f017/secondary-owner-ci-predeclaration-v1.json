@@ -14,6 +14,11 @@
     "stale_or_absent_secondary_producer": "REJECT",
     "fake_expected_spelling_in_comment": "REJECT",
     "missing_candidate_validation": "REJECT",
+    "import_alias_definition_plain_import_and_dynamic_import_rebinding": "REJECT",
+    "primary_source_rebinding_or_secondary_import": "REJECT",
+    "unobserved_store_substitution": "REJECT",
+    "missing_prefix_owner_forwarding": "REJECT",
+    "dead_branch_or_attribute_candidate_validation": "REJECT",
     "wrong_package_or_event_bridge_key": "REJECT"
   },
   "identity_rule": "WRAPPER_AUTHORITY_VALUES_ARE_AUTHORITATIVE; OPTIONAL_CANDIDATE_COPIES_MAY_ONLY_EQUAL",
