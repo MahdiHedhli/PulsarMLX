@@ -326,7 +326,7 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     }
     let body = match read_body(request.into_body()).await {
         Ok(body) => body,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
     let value: Value = match serde_json::from_slice(&body) {
         Ok(value) => value,
@@ -411,23 +411,27 @@ fn has_unsupported_fields(value: &Value) -> bool {
         })
 }
 
-async fn read_body(mut body: Incoming) -> Result<Vec<u8>, Response<BoxBody>> {
+/// The error variant is boxed so the common `Ok` path does not carry a whole
+/// `Response`. Clippy's `result_large_err` reports the unboxed form on
+/// toolchains from 1.98 onwards; it was invisible while no CI job ran Clippy
+/// against this crate.
+async fn read_body(mut body: Incoming) -> Result<Vec<u8>, Box<Response<BoxBody>>> {
     let mut bytes = Vec::new();
     while let Some(frame) = body.frame().await {
         let frame = frame.map_err(|_| {
-            api_error(
+            Box::new(api_error(
                 StatusCode::BAD_REQUEST,
                 "invalid_body",
                 "request body could not be read",
-            )
+            ))
         })?;
         if let Some(data) = frame.data_ref() {
             if bytes.len().saturating_add(data.len()) > MAX_BODY_BYTES {
-                return Err(api_error(
+                return Err(Box::new(api_error(
                     StatusCode::PAYLOAD_TOO_LARGE,
                     "body_too_large",
                     "request body exceeds the limit",
-                ));
+                )));
             }
             bytes.extend_from_slice(data);
         }
