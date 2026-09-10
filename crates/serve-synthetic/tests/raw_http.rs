@@ -592,3 +592,111 @@ async fn shutdown_cancels_active_stream_and_releases_ownership() {
     );
     drop(stream);
 }
+
+/// F1: completed connection tasks must be reaped while the accept loop is
+/// still running. Before the fix `connections_reaped` stayed at zero until
+/// shutdown, so every accepted connection retained a JoinHandle for the whole
+/// process lifetime.
+#[tokio::test]
+async fn repeated_connections_are_reaped_during_normal_operation() {
+    let server = TestServer::start().await;
+    const ROUNDS: usize = 40;
+    for _ in 0..ROUNDS {
+        assert_eq!(
+            server.request("GET", "/health", None, false).await.status,
+            200
+        );
+    }
+    // Reaping is observed by the accept loop, so allow it to run without
+    // requiring a fixed scheduling order.
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while server.state.metrics().connections_reaped < ROUNDS {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("connection tasks reaped before shutdown");
+
+    let live = server.state.metrics();
+    assert_eq!(live.connections_spawned, ROUNDS);
+    assert_eq!(live.connections_reaped, ROUNDS);
+
+    // Reaping must not break shutdown or leave the accounting inconsistent.
+    server.stop().await;
+}
+
+/// F1: shutdown still drains connections that are in flight when it fires, and
+/// the spawned/reaped accounting balances afterwards.
+#[tokio::test]
+async fn shutdown_still_drains_in_flight_connections() {
+    let server = TestServer::start().await;
+    let state = server.state.clone();
+    let body = chat_body("__synthetic_disconnect__", true);
+    let mut stream = TcpStream::connect(server.address).await.expect("connect");
+    let request = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        server.address.port(),
+        server.token,
+        body.len(),
+        body
+    );
+    stream.write_all(request.as_bytes()).await.expect("write");
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while state.metrics().backend_active == 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("backend active");
+
+    server.stop().await;
+
+    let after = state.metrics();
+    assert_eq!(after.connections_spawned, after.connections_reaped);
+    assert!(after.connections_spawned >= 1);
+    drop(stream);
+}
+
+/// F2: a generation that exceeds its deadline after headers are sent must be
+/// reported, not silently truncated. Before the fix the body simply ended with
+/// no terminal event at all.
+#[tokio::test]
+async fn stream_generation_timeout_emits_bounded_error_event() {
+    let server = TestServer::start().await;
+    let body = chat_body("__synthetic_slow__", true);
+    let response = server
+        .request("POST", "/v1/chat/completions", Some(&body), true)
+        .await;
+    assert_eq!(response.status, 200);
+    let text = response.text();
+
+    assert!(
+        text.contains("event: error"),
+        "timeout must carry an error event, got: {text:?}"
+    );
+    assert!(
+        text.contains("generation_timeout"),
+        "error event must name the timeout, got: {text:?}"
+    );
+    // An unsuccessful stream must never look successful.
+    assert!(!text.contains("data: [DONE]"), "got: {text:?}");
+    assert!(!text.contains("finish_reason\":\"stop"), "got: {text:?}");
+
+    // Cancellation released the generation permit and the accounting balances.
+    let metrics = server.state.metrics();
+    assert_eq!(metrics.backend_active, 0);
+    assert_eq!(metrics.backend_started, metrics.backend_finished);
+
+    // The single generation slot is genuinely reusable afterwards.
+    let follow_up = server
+        .request(
+            "POST",
+            "/v1/chat/completions",
+            Some(&chat_body("hello", false)),
+            true,
+        )
+        .await;
+    assert_eq!(follow_up.status, 200);
+    assert_eq!(follow_up.json()["choices"][0]["finish_reason"], "stop");
+    server.stop().await;
+}

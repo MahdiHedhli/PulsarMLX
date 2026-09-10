@@ -50,6 +50,8 @@ pub struct Metrics {
     backend_started: AtomicUsize,
     backend_active: AtomicUsize,
     backend_finished: AtomicUsize,
+    connections_spawned: AtomicUsize,
+    connections_reaped: AtomicUsize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -57,6 +59,12 @@ pub struct MetricsSnapshot {
     pub backend_started: usize,
     pub backend_active: usize,
     pub backend_finished: usize,
+    /// Connection tasks handed to the accept loop's `JoinSet`.
+    pub connections_spawned: usize,
+    /// Connection tasks joined and removed from that set. F1 requires this to
+    /// track `connections_spawned` during normal operation, not only at
+    /// shutdown.
+    pub connections_reaped: usize,
 }
 
 impl AppState {
@@ -80,6 +88,8 @@ impl AppState {
             backend_started: self.metrics.backend_started.load(Ordering::SeqCst),
             backend_active: self.metrics.backend_active.load(Ordering::SeqCst),
             backend_finished: self.metrics.backend_finished.load(Ordering::SeqCst),
+            connections_spawned: self.metrics.connections_spawned.load(Ordering::SeqCst),
+            connections_reaped: self.metrics.connections_reaped.load(Ordering::SeqCst),
         }
     }
 }
@@ -134,6 +144,13 @@ where
     loop {
         tokio::select! {
             _ = &mut shutdown => break,
+            // F1: reap finished connection tasks during normal operation so
+            // completed JoinHandles do not accumulate for the process lifetime.
+            // The `!tasks.is_empty()` guard disables the branch when the set is
+            // empty, which would otherwise return `None` immediately and spin.
+            Some(_) = tasks.join_next(), if !tasks.is_empty() => {
+                state.metrics.connections_reaped.fetch_add(1, Ordering::SeqCst);
+            }
             accepted = listener.accept() => {
                 let (stream, peer) = accepted?;
                 if !peer.ip().is_loopback() { continue; }
@@ -141,6 +158,7 @@ where
                     continue;
                 };
                 let app = state.clone();
+                state.metrics.connections_spawned.fetch_add(1, Ordering::SeqCst);
                 tasks.spawn(async move {
                     let service = service_fn(move |request| handle(request, app.clone(), expected_port));
                     let mut builder = http1::Builder::new();
@@ -158,7 +176,12 @@ where
     }
     state.shutdown.send_replace(true);
     tasks.abort_all();
-    while tasks.join_next().await.is_some() {}
+    while tasks.join_next().await.is_some() {
+        state
+            .metrics
+            .connections_reaped
+            .fetch_add(1, Ordering::SeqCst);
+    }
     Ok(())
 }
 
@@ -476,6 +499,29 @@ impl BackendMode {
     }
 }
 
+/// How a streaming generation finished. `Completed` covers every path the
+/// generation body already terminated itself, including its own `event: error`
+/// and the abort taken when the consumer stopped reading.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum StreamOutcome {
+    Completed,
+    GenerationTimeout,
+    ServerShutdown,
+}
+
+impl StreamOutcome {
+    fn error_terminal(self) -> Option<(&'static str, &'static str)> {
+        match self {
+            Self::Completed => None,
+            Self::GenerationTimeout => Some((
+                "generation_timeout",
+                "synthetic generation exceeded its deadline",
+            )),
+            Self::ServerShutdown => Some(("server_shutdown", "server is shutting down")),
+        }
+    }
+}
+
 struct GenerationGuard {
     state: AppState,
     _permit: OwnedSemaphorePermit,
@@ -594,9 +640,21 @@ fn stream_chat(
             }
             let _ = send_raw(&sender, Bytes::from_static(b"data: [DONE]\n\n")).await;
         };
-        tokio::select! {
-            _ = tokio::time::timeout(GENERATION_DEADLINE, generation) => {}
-            _ = shutdown.changed() => {}
+        // F2: an SSE body that has already sent headers must never be closed
+        // silently. Classify how the generation ended and, when the stream can
+        // still accept bytes, emit a bounded `event: error` terminal. A stream
+        // that ended because the consumer stalled or vanished is left alone:
+        // delivery is no longer possible there.
+        let outcome = tokio::select! {
+            result = tokio::time::timeout(GENERATION_DEADLINE, generation) => match result {
+                Ok(()) => StreamOutcome::Completed,
+                Err(_) => StreamOutcome::GenerationTimeout,
+            },
+            _ = shutdown.changed() => StreamOutcome::ServerShutdown,
+        };
+        if let Some((code, message)) = outcome.error_terminal() {
+            let error = json!({"error":{"code":code,"message":message,"type":"server_error"}});
+            let _ = send_event(&sender, "error", &error).await;
         }
     });
     let stream = ReceiverStream::new(receiver);
