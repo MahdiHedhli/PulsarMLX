@@ -10,13 +10,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::convert::Infallible;
 use std::future::Future;
+use std::io::Read;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tokio::sync::{mpsc, OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{mpsc, watch, OwnedSemaphorePermit, Semaphore};
 use tokio::task::JoinSet;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -41,6 +42,7 @@ pub struct AppState {
     generation_slots: Arc<Semaphore>,
     next_id: Arc<AtomicU64>,
     metrics: Arc<Metrics>,
+    shutdown: watch::Sender<bool>,
 }
 
 #[derive(Default)]
@@ -63,11 +65,13 @@ impl AppState {
         if token.len() < 16 || token.len() > 256 || token.iter().any(u8::is_ascii_whitespace) {
             return Err("synthetic token must be 16..=256 non-whitespace bytes");
         }
+        let (shutdown, _) = watch::channel(false);
         Ok(Self {
             token: token.into(),
             generation_slots: Arc::new(Semaphore::new(MAX_GENERATIONS)),
             next_id: Arc::new(AtomicU64::new(1)),
             metrics: Arc::new(Metrics::default()),
+            shutdown,
         })
     }
 
@@ -81,14 +85,24 @@ impl AppState {
 }
 
 pub fn read_token_file(path: &Path) -> Result<String, String> {
-    let metadata =
+    let path_metadata =
         std::fs::symlink_metadata(path).map_err(|_| "cannot read token file metadata")?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
+    if path_metadata.file_type().is_symlink() || !path_metadata.is_file() {
+        return Err("token file must be a regular non-symlink file".into());
+    }
+    let mut file = std::fs::File::open(path).map_err(|_| "cannot open token file")?;
+    let metadata = file
+        .metadata()
+        .map_err(|_| "cannot read opened token file metadata")?;
+    if !metadata.is_file() {
         return Err("token file must be a regular non-symlink file".into());
     }
     #[cfg(unix)]
     {
-        use std::os::unix::fs::PermissionsExt;
+        use std::os::unix::fs::{MetadataExt, PermissionsExt};
+        if path_metadata.dev() != metadata.dev() || path_metadata.ino() != metadata.ino() {
+            return Err("token file changed while opening".into());
+        }
         if metadata.permissions().mode() & 0o777 != 0o600 {
             return Err("token file permissions must be 0600".into());
         }
@@ -96,7 +110,9 @@ pub fn read_token_file(path: &Path) -> Result<String, String> {
     if metadata.len() > 257 {
         return Err("token file is too large".into());
     }
-    let token = std::fs::read_to_string(path).map_err(|_| "cannot read token file")?;
+    let mut token = String::new();
+    file.read_to_string(&mut token)
+        .map_err(|_| "cannot read token file")?;
     let token = token.strip_suffix('\n').unwrap_or(&token);
     AppState::new(token.to_owned()).map_err(str::to_owned)?;
     Ok(token.to_owned())
@@ -140,6 +156,7 @@ where
             }
         }
     }
+    state.shutdown.send_replace(true);
     tasks.abort_all();
     while tasks.join_next().await.is_some() {}
     Ok(())
@@ -207,7 +224,7 @@ async fn handle_inner(
             StatusCode::OK,
             json!({
                 "object":"list",
-                "data":[{"id":MODEL_ID,"object":"model","created":1789000000_u64,"owned_by":"pulsarmlx-synthetic"}]
+                "data":[{"id":MODEL_ID,"object":"model","created":1789000000_u64,"owned_by":"pulsarmlx-synthetic","capabilities":["chat.completions","streaming","synthetic-only"]}]
             }),
         ),
         (Method::POST, "/v1/chat/completions") => chat(request, state).await,
@@ -261,7 +278,24 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
         Ok(body) => body,
         Err(response) => return response,
     };
-    let parsed: ChatRequest = match serde_json::from_slice(&body) {
+    let value: Value = match serde_json::from_slice(&body) {
+        Ok(value) => value,
+        Err(_) => {
+            return api_error(
+                StatusCode::BAD_REQUEST,
+                "invalid_json",
+                "request body is not valid supported JSON",
+            )
+        }
+    };
+    if has_unsupported_fields(&value) {
+        return api_error(
+            StatusCode::BAD_REQUEST,
+            "unsupported_parameter",
+            "request contains an unsupported field",
+        );
+    }
+    let parsed: ChatRequest = match serde_json::from_value(value) {
         Ok(value) => value,
         Err(_) => {
             return api_error(
@@ -292,6 +326,39 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     } else {
         nonstream_chat(state, permit, parsed, completion_id, mode).await
     }
+}
+
+fn has_unsupported_fields(value: &Value) -> bool {
+    const REQUEST_FIELDS: &[&str] = &[
+        "model",
+        "messages",
+        "stream",
+        "max_tokens",
+        "n",
+        "temperature",
+        "top_p",
+    ];
+    const MESSAGE_FIELDS: &[&str] = &["role", "content"];
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+    if object
+        .keys()
+        .any(|key| !REQUEST_FIELDS.contains(&key.as_str()))
+    {
+        return true;
+    }
+    object
+        .get("messages")
+        .and_then(Value::as_array)
+        .is_some_and(|messages| {
+            messages.iter().any(|message| {
+                message.as_object().is_some_and(|item| {
+                    item.keys()
+                        .any(|key| !MESSAGE_FIELDS.contains(&key.as_str()))
+                })
+            })
+        })
 }
 
 async fn read_body(mut body: Incoming) -> Result<Vec<u8>, Response<BoxBody>> {
@@ -390,6 +457,7 @@ impl ChatRequest {
 enum BackendMode {
     Success,
     Empty,
+    DisconnectProbe,
     FailBefore,
     FailAfter,
     Slow,
@@ -399,6 +467,7 @@ impl BackendMode {
     fn from_request(request: &ChatRequest) -> Self {
         match request.messages.last().map(|m| m.content.as_str()) {
             Some("__synthetic_empty__") => Self::Empty,
+            Some("__synthetic_disconnect__") => Self::DisconnectProbe,
             Some("__synthetic_fail_before__") => Self::FailBefore,
             Some("__synthetic_fail_after__") => Self::FailAfter,
             Some("__synthetic_slow__") => Self::Slow,
@@ -492,6 +561,7 @@ fn stream_chat(
         );
     }
     let (sender, receiver) = mpsc::channel::<Result<Frame<Bytes>, Infallible>>(1);
+    let mut shutdown = state.shutdown.subscribe();
     tokio::spawn(async move {
         let _guard = GenerationGuard::new(state, permit);
         let generation = async {
@@ -501,6 +571,9 @@ fn stream_chat(
             let role = json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":MODEL_ID,"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]});
             if !send_sse(&sender, &role).await {
                 return;
+            }
+            if mode == BackendMode::DisconnectProbe {
+                tokio::time::sleep(Duration::from_millis(250)).await;
             }
             if mode == BackendMode::FailAfter {
                 let error = json!({"error":{"code":"backend_failure","message":"synthetic backend failed","type":"server_error"}});
@@ -521,7 +594,10 @@ fn stream_chat(
             }
             let _ = send_raw(&sender, Bytes::from_static(b"data: [DONE]\n\n")).await;
         };
-        let _ = tokio::time::timeout(GENERATION_DEADLINE, generation).await;
+        tokio::select! {
+            _ = tokio::time::timeout(GENERATION_DEADLINE, generation) => {}
+            _ = shutdown.changed() => {}
+        }
     });
     let stream = ReceiverStream::new(receiver);
     let body = StreamBody::new(stream).boxed();
@@ -671,5 +747,23 @@ pub fn limits() -> Limits {
         max_output_tokens: MAX_OUTPUT_TOKENS,
         max_connections: MAX_CONNECTIONS,
         max_generations: MAX_GENERATIONS,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn stream_send_times_out_when_consumer_stalls() {
+        let (sender, _receiver) = mpsc::channel(1);
+        sender
+            .send(Ok(Frame::data(Bytes::from_static(b"first"))))
+            .await
+            .expect("prefill channel");
+        let started = tokio::time::Instant::now();
+        assert!(!send_raw(&sender, Bytes::from_static(b"blocked")).await);
+        assert!(started.elapsed() >= STREAM_SEND_DEADLINE);
+        assert!(started.elapsed() < STREAM_SEND_DEADLINE + Duration::from_secs(1));
     }
 }

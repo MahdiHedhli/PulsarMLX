@@ -99,6 +99,18 @@ async fn raw_exchange(address: std::net::SocketAddr, request: &[u8]) -> RawRespo
     parse_response(&raw)
 }
 
+async fn raw_exchange_with_eof(address: std::net::SocketAddr, request: &[u8]) -> RawResponse {
+    let mut stream = TcpStream::connect(address).await.expect("connect");
+    stream.write_all(request).await.expect("write request");
+    stream.shutdown().await.expect("half close request");
+    let mut raw = Vec::new();
+    tokio::time::timeout(Duration::from_secs(5), stream.read_to_end(&mut raw))
+        .await
+        .expect("read deadline")
+        .expect("read response");
+    parse_response(&raw)
+}
+
 async fn custom_request(server: &TestServer, headers_and_body: String) -> RawResponse {
     raw_exchange(server.address, headers_and_body.as_bytes()).await
 }
@@ -173,6 +185,10 @@ async fn health_and_models_enforce_the_boundary() {
     let models = server.request("GET", "/v1/models", None, true).await;
     assert_eq!(models.status, 200);
     assert_eq!(models.json()["data"][0]["id"], "pulsarmlx-synthetic-v1");
+    assert_eq!(
+        models.json()["data"][0]["capabilities"],
+        serde_json::json!(["chat.completions", "streaming", "synthetic-only"])
+    );
     assert!(models
         .headers
         .to_ascii_lowercase()
@@ -249,7 +265,7 @@ async fn invalid_and_oversized_requests_never_start_backend() {
             .request("POST", "/v1/chat/completions", Some(&unsupported), true)
             .await
             .json()["error"]["code"],
-        "invalid_json"
+        "unsupported_parameter"
     );
     let too_large = "x".repeat(MAX_BODY_BYTES + 1);
     assert_eq!(
@@ -258,6 +274,36 @@ async fn invalid_and_oversized_requests_never_start_backend() {
             .await
             .status,
         413
+    );
+    let too_many_messages = serde_json::json!({
+        "model":"pulsarmlx-synthetic-v1",
+        "messages":(0..17).map(|_| serde_json::json!({"role":"user","content":"x"})).collect::<Vec<_>>()
+    })
+    .to_string();
+    assert_eq!(
+        server
+            .request(
+                "POST",
+                "/v1/chat/completions",
+                Some(&too_many_messages),
+                true
+            )
+            .await
+            .json()["error"]["code"],
+        "invalid_messages"
+    );
+    let oversized_message = chat_body(&"x".repeat(2 * 1024 + 1), false);
+    assert_eq!(
+        server
+            .request(
+                "POST",
+                "/v1/chat/completions",
+                Some(&oversized_message),
+                true
+            )
+            .await
+            .json()["error"]["code"],
+        "message_too_large"
     );
     assert_eq!(server.state.metrics().backend_started, 0);
     server.stop().await;
@@ -328,6 +374,23 @@ async fn stream_failure_has_no_success_terminal() {
     assert!(!text.contains("data: [DONE]"));
     assert!(!text.contains("finish_reason\":\"stop"));
     assert_eq!(server.state.metrics().backend_active, 0);
+
+    let before = chat_body("__synthetic_fail_before__", true);
+    let response = server
+        .request("POST", "/v1/chat/completions", Some(&before), true)
+        .await;
+    assert_eq!(response.status, 500);
+    assert_eq!(response.json()["error"]["code"], "backend_failure");
+
+    let slow = chat_body("__synthetic_slow__", true);
+    let response = server
+        .request("POST", "/v1/chat/completions", Some(&slow), true)
+        .await;
+    assert_eq!(response.status, 200);
+    let text = response.text();
+    assert!(!text.contains("data: [DONE]"));
+    assert!(!text.contains("finish_reason\":\"stop"));
+    assert_eq!(server.state.metrics().backend_active, 0);
     server.stop().await;
 }
 
@@ -379,6 +442,39 @@ async fn host_origin_auth_and_header_limits_are_enforced() {
 }
 
 #[tokio::test]
+async fn parser_rejects_conflicting_framing_and_routes_are_explicit() {
+    let server = TestServer::start().await;
+    let conflicting = custom_request(
+        &server,
+        format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: 1\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{{}}",
+            server.address.port(),
+            server.token
+        ),
+    )
+    .await;
+    assert_eq!(conflicting.status, 400);
+
+    let truncated = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: 20\r\nConnection: close\r\n\r\n{{}}",
+        server.address.port(),
+        server.token
+    );
+    let truncated = raw_exchange_with_eof(server.address, truncated.as_bytes()).await;
+    assert_eq!(truncated.status, 400);
+    assert_eq!(truncated.json()["error"]["code"], "invalid_body");
+
+    let unknown = server.request("GET", "/v1/unknown", None, true).await;
+    assert_eq!(unknown.status, 404);
+    assert_eq!(unknown.json()["error"]["code"], "not_found");
+    let wrong_method = server.request("POST", "/v1/models", None, true).await;
+    assert_eq!(wrong_method.status, 405);
+    assert_eq!(wrong_method.json()["error"]["code"], "method_not_allowed");
+    assert_eq!(server.state.metrics().backend_started, 0);
+    server.stop().await;
+}
+
+#[tokio::test]
 async fn output_limit_and_unsupported_sampling_are_explicit() {
     let server = TestServer::start().await;
     let limited = serde_json::json!({
@@ -416,7 +512,7 @@ async fn output_limit_and_unsupported_sampling_are_explicit() {
 #[tokio::test]
 async fn disconnect_releases_stream_ownership() {
     let server = TestServer::start().await;
-    let body = chat_body("__synthetic_slow__", true);
+    let body = chat_body("__synthetic_disconnect__", true);
     let mut stream = TcpStream::connect(server.address).await.expect("connect");
     let request = format!(
         "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
@@ -439,8 +535,15 @@ async fn disconnect_releases_stream_ownership() {
     })
     .await
     .expect("response headers");
+    let mut first_body = [0_u8; 128];
+    let body_bytes = tokio::time::timeout(Duration::from_secs(1), stream.read(&mut first_body))
+        .await
+        .expect("first stream chunk deadline")
+        .expect("first stream chunk");
+    assert!(body_bytes > 0);
+    assert_eq!(server.state.metrics().backend_active, 1);
     drop(stream);
-    tokio::time::timeout(Duration::from_secs(4), async {
+    tokio::time::timeout(Duration::from_secs(1), async {
         while server.state.metrics().backend_active != 0 {
             tokio::task::yield_now().await;
         }
@@ -452,4 +555,40 @@ async fn disconnect_releases_stream_ownership() {
         server.state.metrics().backend_finished
     );
     server.stop().await;
+}
+
+#[tokio::test]
+async fn shutdown_cancels_active_stream_and_releases_ownership() {
+    let server = TestServer::start().await;
+    let state = server.state.clone();
+    let body = chat_body("__synthetic_disconnect__", true);
+    let mut stream = TcpStream::connect(server.address).await.expect("connect");
+    let request = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        server.address.port(),
+        server.token,
+        body.len(),
+        body
+    );
+    stream.write_all(request.as_bytes()).await.expect("write");
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while state.metrics().backend_active == 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("backend active");
+    server.stop().await;
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while state.metrics().backend_active != 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("shutdown released ownership");
+    assert_eq!(
+        state.metrics().backend_started,
+        state.metrics().backend_finished
+    );
+    drop(stream);
 }
