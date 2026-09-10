@@ -210,9 +210,15 @@ def run(case_id, work, view):
                 if raw.hex() != f.transcript[-1]["returned_hex"]:
                     raise AssertionError("MUTANT_CHANGED_BYTE_OUTCOME")
                 attachment = f.finish()
-                record(name, f, attachment, "COMPLETE" if control else "INCOMPLETE")
-                if not control and not f.prefix.owner.failure:
-                    raise AssertionError("MUTANT_NOT_DETECTED_AT_OWNER_EDGE")
+                intended = {"drop-return": "OBSERVATION_PENDING_CALL_OR_RETURN_UNKNOWN",
+                    "double-return": "OBSERVATION_RETURN_FAILED:ValueError",
+                    "wrong-shard": "OBSERVATION_ATTRIBUTION_FAILED:ValueError",
+                    "owner-detach": "OBSERVATION_FACTORY_OWNER_LOST_OR_REPLACED",
+                    "unknown-owner": "OBSERVATION_FACTORY_OWNER_LOST_OR_REPLACED"}[mode]
+                if not control and f.prefix.owner.failure != intended:
+                    raise AssertionError("MUTANT_NOT_DETECTED_AT_INTENDED_OWNER_EDGE")
+                record(name, f, attachment, "COMPLETE" if control else "INCOMPLETE",
+                       {"owner_failure": f.prefix.owner.failure, "intended_failure": None if control else intended})
             finally:
                 source_module._read_return = old_return
                 source_module._read_intent = old_intent
@@ -281,10 +287,23 @@ def run(case_id, work, view):
                     changed_path.unlink()
                 else:
                     document = json.loads(original)
-                    document["counters"][1]["attempts"] += 1
+                    # Keep the wrong row internally consistent, so the causal
+                    # transition checker (not a malformed-row check) rejects it.
+                    for key, delta in (("attempts", 1), ("successful_returns", 1),
+                                       ("requested_bytes", 16), ("returned_bytes", 16)):
+                        document["counters"][1][key] += delta
+                    previous = json.loads((changed_path.parent / "record-00000003.json").read_bytes())
+                    try:
+                        observation._transition(previous, document)
+                        raise AssertionError("CAUSAL_COUNTER_TRANSITION_NOT_REJECTED")
+                    except ValueError as error:
+                        if str(error) != "OBSERVATION_COUNTER_TRANSITION":
+                            raise AssertionError("COUNTER_MUTANT_REJECTED_AT_WRONG_EDGE") from error
                     changed_path.write_bytes(canonical(document))
                 bad = f.back()
-            record(mode + "-mutant", f, bad, "INCOMPLETE")
+            record(mode + "-mutant", f, bad, "INCOMPLETE",
+                   {"reader_failure": bad["measurement_failure"],
+                    "direct_transition_failure": "OBSERVATION_COUNTER_TRANSITION" if mode == "counter-transition" else None})
             if changed_path is not None:
                 changed_path.write_bytes(original)
             restored = f.back()
@@ -328,8 +347,12 @@ def run(case_id, work, view):
             if not control:
                 f.prefix.store.records["graph2"]["name"] = "graph3"
             f.read()
+            attachment = f.finish()
+            if not control and f.prefix.owner.failure != "OBSERVATION_ATTRIBUTION_FAILED:ValueError":
+                raise AssertionError("RECORD_MUTANT_REJECTED_AT_WRONG_EDGE")
             record("record-substitution" + ("-restored" if control else "-mutant"),
-                   f, f.finish(), "COMPLETE" if control else "INCOMPLETE")
+                   f, attachment, "COMPLETE" if control else "INCOMPLETE",
+                   {"owner_failure": f.prefix.owner.failure})
         finally:
             f.cleanup()
 
