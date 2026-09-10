@@ -291,7 +291,7 @@ def run(case_id, work, view):
                     # transition checker (not a malformed-row check) rejects it.
                     for key, delta in (("attempts", 1), ("successful_returns", 1),
                                        ("requested_bytes", 16), ("returned_bytes", 16)):
-                        document["counters"][1][key] += delta
+                        document["counters"][0][key] += delta
                     previous = json.loads((changed_path.parent / "record-00000003.json").read_bytes())
                     try:
                         observation._transition(previous, document)
