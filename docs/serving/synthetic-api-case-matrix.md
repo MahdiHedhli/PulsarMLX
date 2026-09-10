@@ -4,8 +4,11 @@ Status: implemented and measured on macOS for the standalone synthetic crate,
 and qualified in CI by the `Serving synthetic qualification` workflow.
 
 Independent review status: the source at commit `54e07b60` received an
-independent ACCEPT with zero blocking findings. The changes recorded here were
-made after that review and have **not** been independently reviewed.
+independent ACCEPT with zero blocking findings. The changes made after that
+review were put through a further independent model review, which found that
+the shutdown path closed an active stream before its terminal event could be
+written; that is fixed and covered by SAPI-13. A model review is not human
+acceptance, and these changes have **not** had an independent human review.
 
 | ID | Case | Result | Evidence |
 | --- | --- | --- | --- |
@@ -20,7 +23,8 @@ made after that review and have **not** been independently reviewed.
 | SAPI-09 | Privacy boundaries | PASS | Fresh-process capture finds no fixture token, input, output, or model ID in stdout/stderr; source has no HTTP client or cloud fallback. |
 | SAPI-10 | Fresh process | PASS | A newly spawned binary passes health, model listing, non-stream completion, SIGINT shutdown, and child reaping. |
 | SAPI-11 | Error classification | PASS | `error.type` is asserted to follow the status: `authentication_error` for 401, `server_error` for 500 and 504, `invalid_request_error` for other 4xx. |
-| SAPI-12 | Connection lifecycle | PASS | Completed connection tasks are asserted to be reaped while the accept loop is still running, and shutdown is asserted to drain in-flight connections with spawned and reaped counts balancing. |
+| SAPI-12 | Connection lifecycle | PASS | Completed connection tasks are asserted to be reaped while the accept loop is still running. Shutdown *aborts* rather than drains in-flight connections, with spawned and reaped counts balancing. |
+| SAPI-13 | Shutdown stream terminal | PASS | A client streaming when the server shuts down is asserted to receive a `server_shutdown` error event on the wire, with no `[DONE]` and no `stop` finish reason. Shutdown waits a bounded grace window while a generation is active so the terminal is deliverable; a mutant removing that window is rejected. |
 
 Rust validation is `cargo test` and `cargo clippy --all-targets -- -D warnings`
 from `crates/serve-synthetic`. The pinned Python environment is listed in
@@ -28,11 +32,12 @@ from `crates/serve-synthetic`. The pinned Python environment is listed in
 the SDK checks and `tests/sdk_smoke.sh` runs it against a freshly started
 loopback server.
 
-`mutation_guards.py` creates isolated copies and proves eleven negative
+`mutation_guards.py` creates isolated copies and proves twelve negative
 variants are rejected: missing authentication; an accepted oversized declared
 length; an accepted oversized accumulated body; missing ownership release;
 fabricated success after stream failure; unreaped connection tasks; a silently
-closed stream after a generation timeout; first-`Host`-wins; a flattened
+closed stream after a generation timeout; a shutdown that aborts an active
+stream before its terminal reaches the wire; first-`Host`-wins; a flattened
 `error.type`; an unguarded cloud destination; and redirect following.
 
 The declared-length and accumulated-frame caps are mutated separately. A single
@@ -54,7 +59,7 @@ SDK packages were absent, so the process exited non-zero on
 | --- | --- | --- |
 | `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test` for the crate | yes | yes, `Serving synthetic qualification` |
 | `sdk_smoke.sh` (pinned `openai==3.11.0` against a loopback server) | yes | yes, same workflow |
-| `mutation_guards.py` (11 mutants) | yes | yes, same workflow |
+| `mutation_guards.py` (12 mutants) | yes | yes, same workflow |
 | `cargo check/test --workspace` in `macOS baseline` | n/a | does **not** cover this crate |
 
 `crates/serve-synthetic` declares its own `[workspace]`, so it is not a member
