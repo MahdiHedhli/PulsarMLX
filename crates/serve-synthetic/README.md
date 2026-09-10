@@ -49,6 +49,11 @@ qualifies it explicitly on `macos-15`: formatting, Clippy with `-D warnings`,
 `PULSARMLX_MODEL_GGUF` is empty and is independent of model assets and of the
 F017 native qualification path.
 
+Client setup and the qualified client behaviours are documented in
+[`../../docs/serving/client-integration.md`](../../docs/serving/client-integration.md).
+An opt-in LM Studio adapter is planned but not implemented; see
+[`../../docs/serving/lm-studio-integration-plan.md`](../../docs/serving/lm-studio-integration-plan.md).
+
 ## Security notes
 
 - The server binds IPv4 loopback only and additionally checks the peer address.
