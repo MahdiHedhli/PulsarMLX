@@ -625,10 +625,16 @@ async fn repeated_connections_are_reaped_during_normal_operation() {
     server.stop().await;
 }
 
-/// F1: shutdown still drains connections that are in flight when it fires, and
-/// the spawned/reaped accounting balances afterwards.
+/// Shutdown *aborts* in-flight connections rather than draining them, and the
+/// spawned/reaped accounting balances afterwards.
+///
+/// This asserts accounting only. It deliberately does not claim to guard the
+/// F1 in-loop reaping: the post-loop `abort_all` + drain predates this change,
+/// so this assertion would hold with the in-loop branch reverted.
+/// `repeated_connections_are_reaped_during_normal_operation` is the test that
+/// actually guards F1, and it fails when that branch is removed.
 #[tokio::test]
-async fn shutdown_still_drains_in_flight_connections() {
+async fn shutdown_aborts_in_flight_connections_and_balances_accounting() {
     let server = TestServer::start().await;
     let state = server.state.clone();
     let body = chat_body("__synthetic_disconnect__", true);
@@ -1088,4 +1094,59 @@ async fn duplicate_host_headers_are_rejected() {
     .await;
     assert_eq!(single.status, 200);
     server.stop().await;
+}
+
+/// A client streaming when the server shuts down must be told, not just cut
+/// off. This is only deliverable because `serve` waits out a bounded
+/// SHUTDOWN_GRACE before aborting connection tasks; without it `abort_all`
+/// drops the response body first and the event can never reach the wire.
+#[tokio::test]
+async fn shutdown_delivers_a_server_shutdown_event_to_an_active_stream() {
+    let server = TestServer::start().await;
+    let state = server.state.clone();
+    let body = chat_body("__synthetic_disconnect__", true);
+    let request = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        server.address.port(),
+        server.token,
+        body.len(),
+        body
+    );
+    let mut stream = TcpStream::connect(server.address).await.expect("connect");
+    stream.write_all(request.as_bytes()).await.expect("write");
+
+    tokio::time::timeout(Duration::from_secs(2), async {
+        while state.metrics().backend_active == 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("backend active");
+
+    let reader = tokio::spawn(async move {
+        let mut raw = Vec::new();
+        let _ = tokio::time::timeout(Duration::from_secs(5), stream.read_to_end(&mut raw)).await;
+        raw
+    });
+
+    server.stop().await;
+    let raw = reader.await.expect("reader task");
+    let text = String::from_utf8_lossy(&raw).into_owned();
+
+    assert!(
+        text.contains("event: error"),
+        "shutdown closed the stream with no terminal: {text:?}"
+    );
+    assert!(
+        text.contains("server_shutdown"),
+        "shutdown terminal did not name the cause: {text:?}"
+    );
+    // An interrupted stream must never look successful.
+    assert!(!text.contains("data: [DONE]"), "{text:?}");
+    assert!(!text.contains("finish_reason\":\"stop"), "{text:?}");
+    assert_eq!(state.metrics().backend_active, 0);
+    assert_eq!(
+        state.metrics().backend_started,
+        state.metrics().backend_finished
+    );
 }

@@ -60,10 +60,22 @@ that emit one are:
 | Generation deadline expiry | `generation_timeout` |
 | Shutdown during an active stream | `server_shutdown` |
 
-Emission is best effort and bounded by the stream channel send deadline. A
-stream that ended because the consumer stalled or disconnected receives no
-error event, because delivery is no longer possible. No unsuccessful stream
-emits `data: [DONE]` or a `stop` finish reason.
+Emission is bounded by the stream channel send deadline. A stream that ended
+because the consumer stalled or disconnected receives no error event, because
+delivery is no longer possible. No unsuccessful stream emits `data: [DONE]` or
+a `stop` finish reason.
+
+Shutdown waits out a bounded grace window (`SHUTDOWN_GRACE`, 250 ms) while any
+generation is still active before aborting connection tasks, so the
+`server_shutdown` terminal can actually reach the wire. Without that window the
+abort drops the response body first and the event is never deliverable; a
+regression test asserts a streaming client receives `server_shutdown`, and a
+mutant that removes the window is rejected. A server with no active generation
+shuts down without waiting.
+
+The generation branch of the stream's outcome select is polled first
+(`biased`), so a generation that has already emitted its own terminal cannot
+have a second, contradictory terminal appended by a concurrent shutdown.
 
 ## Resource and time limits
 
@@ -81,9 +93,11 @@ emits `data: [DONE]` or a `stop` finish reason.
 | Generation | 2 seconds | Cancels work, omits the success terminal, and emits a bounded `generation_timeout` error event on expiry. |
 | Stream channel send | 500 milliseconds | Cancels a producer stalled by downstream backpressure. |
 
-Shutdown stops accepting connections, signals active stream producers, aborts
-owned connection tasks, waits for those tasks to be reaped, and releases all
-generation permits through owned guards. Each connection is HTTP/1.1 with
+Shutdown stops accepting connections, signals active stream producers, waits a
+bounded grace window for them to flush a terminal event, then aborts owned
+connection tasks, waits for those tasks to be reaped, and releases all
+generation permits through owned guards. In-flight connections are aborted, not
+drained. Each connection is HTTP/1.1 with
 keep-alive disabled.
 
 ## Errors and destination boundary

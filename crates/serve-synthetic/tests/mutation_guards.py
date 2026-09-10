@@ -202,6 +202,22 @@ def main() -> None:
         "let _ = send_event(&sender, \"error\", &error).await;",
         "stream_failure_has_no_success_terminal",
     )
+    # Shutdown must not cut an active stream off before its terminal reaches
+    # the wire; removing the grace window must not survive.
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "no-shutdown-grace",
+        "    let deadline = tokio::time::Instant::now() + SHUTDOWN_GRACE;\n"
+        "    while state.metrics.backend_active.load(Ordering::SeqCst) > 0\n"
+        "        && tokio::time::Instant::now() < deadline\n"
+        "    {\n"
+        "        tokio::time::sleep(SHUTDOWN_POLL).await;\n"
+        "    }\n",
+        "",
+        "shutdown_delivers_a_server_shutdown_event_to_an_active_stream",
+    )
     # F8: first-Host-wins must not survive.
     rust_mutation(
         pristine,
@@ -242,7 +258,7 @@ def main() -> None:
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=False,\n",
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=True,\n",
     )
-    print("MUTATION_GUARDS_OK count=11")
+    print("MUTATION_GUARDS_OK count=12")
 
 
 if __name__ == "__main__":

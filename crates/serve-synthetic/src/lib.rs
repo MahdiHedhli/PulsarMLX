@@ -36,6 +36,13 @@ pub const MAX_CONSECUTIVE_ACCEPT_ERRORS: usize = 64;
 /// Pause after a failed `accept`, so descriptor exhaustion backs off instead of
 /// busy-looping while connections drain.
 pub const ACCEPT_ERROR_BACKOFF: Duration = Duration::from_millis(10);
+/// Bounded window after the shutdown signal in which active stream producers
+/// may still flush their terminal `server_shutdown` event. Without it,
+/// `abort_all` drops the response bodies first and the event is never
+/// deliverable, which would make the documented shutdown contract false.
+pub const SHUTDOWN_GRACE: Duration = Duration::from_millis(250);
+/// Poll interval while waiting out `SHUTDOWN_GRACE`.
+const SHUTDOWN_POLL: Duration = Duration::from_millis(2);
 pub const HEADER_DEADLINE: Duration = Duration::from_secs(5);
 pub const CONNECTION_DEADLINE: Duration = Duration::from_secs(15);
 pub const GENERATION_DEADLINE: Duration = Duration::from_secs(2);
@@ -176,7 +183,15 @@ where
                         if !accept_error_is_recoverable(consecutive_accept_errors) {
                             return Err(error);
                         }
-                        tokio::time::sleep(ACCEPT_ERROR_BACKOFF).await;
+                        // Stay responsive to shutdown while backing off.
+                        let mut shutting_down = false;
+                        tokio::select! {
+                            _ = tokio::time::sleep(ACCEPT_ERROR_BACKOFF) => {}
+                            _ = &mut shutdown => shutting_down = true,
+                        }
+                        if shutting_down {
+                            break;
+                        }
                         continue;
                     }
                 };
@@ -202,6 +217,14 @@ where
         }
     }
     state.shutdown.send_replace(true);
+    // Wait only while generations are actually in flight, and never longer than
+    // SHUTDOWN_GRACE, so a quiet server still shuts down immediately.
+    let deadline = tokio::time::Instant::now() + SHUTDOWN_GRACE;
+    while state.metrics.backend_active.load(Ordering::SeqCst) > 0
+        && tokio::time::Instant::now() < deadline
+    {
+        tokio::time::sleep(SHUTDOWN_POLL).await;
+    }
     tasks.abort_all();
     while tasks.join_next().await.is_some() {
         state
@@ -678,6 +701,13 @@ fn stream_chat(
         // that ended because the consumer stalled or vanished is left alone:
         // delivery is no longer possible there.
         let outcome = tokio::select! {
+            // `biased` matters for correctness, not fairness: when the
+            // generation has just finished (already sending `data: [DONE]`, or
+            // its own FailAfter error) and shutdown fires in the same poll,
+            // random branch order could pick shutdown and append a second,
+            // contradictory terminal after the success terminal. Polling the
+            // generation first makes a completed generation always win.
+            biased;
             result = tokio::time::timeout(GENERATION_DEADLINE, generation) => match result {
                 Ok(()) => StreamOutcome::Completed,
                 Err(_) => StreamOutcome::GenerationTimeout,
