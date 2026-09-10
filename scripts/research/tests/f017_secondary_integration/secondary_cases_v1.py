@@ -74,7 +74,8 @@ class Fixture:
             event.update(outcome="ERROR", error_type="OSError", error_message="SECONDARY_BYTE_BACKEND_ERROR")
             self.transcript.append(event)
             raise OSError("SECONDARY_BYTE_BACKEND_ERROR")
-        payload = self.payloads[fd][offset:offset + size]
+        payload = (self.original_pread(fd, size, offset) if self.mode == "real-pread"
+                   else self.payloads[fd][offset:offset + size])
         if self.mode == "short":
             payload = payload[:max(0, len(payload) - 1)]
         if self.mode == "zero":
@@ -331,6 +332,30 @@ def run(case_id, work, view):
                    f, f.finish(), "COMPLETE" if control else "INCOMPLETE")
         finally:
             f.cleanup()
+
+    f = Fixture(work, "real-synthetic-pread-vs-direct-baseline")
+    try:
+        f.open()
+        baseline = []
+        for ordinal in (2, 3, 4, 5, 6):
+            descriptor = f.descriptors[ordinal - 2]
+            for purpose, offset in (("NUMERICAL_PAYLOAD", 0), ("FORMAT_PROBE", 128)):
+                raw = f.original_pread(descriptor, 16, offset)
+                baseline.append({"shard_ordinal": ordinal, "requested_bytes": 16,
+                    "offset": offset, "purpose": purpose, "outcome": "RETURN", "returned_hex": raw.hex()})
+        f.mode = "real-pread"
+        returned = []
+        for ordinal in (2, 3, 4, 5, 6):
+            returned.append(f.read("graph" + str(ordinal)).hex())
+            returned.append(f.read("probe" + str(ordinal)).hex())
+        if baseline != f.transcript or returned != [item["returned_hex"] for item in baseline]:
+            raise AssertionError("REAL_PREAD_BASELINE_BYTES_ORDER_OR_REQUEST_MISMATCH")
+        record("real-synthetic-pread-vs-direct-baseline", f, f.finish(), "COMPLETE",
+               {"direct_baseline_transcript": baseline, "actual_pread_calls": len(baseline) + len(f.transcript),
+                "storage_faults_or_physical_bytes": "NOT_MEASURABLE",
+                "baseline_scope": "DIRECT_POSITIONAL_READ_ONLY_NOT_NUMPY_OR_NUMERICAL_GRAPH"})
+    finally:
+        f.cleanup()
 
     report = {"schema": "pulsarmlx.secondary-descriptor-cases/1", "result": "PASS", "cases": results,
         "scope": "STDLIB_SECONDARY_DESCRIPTOR_TO_PREFIX_ONLY", "numerical_decode": "NOT_RUN_NOT_QUALIFIED",
