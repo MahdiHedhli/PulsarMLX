@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.secondary-owner-ci-predeclaration/1",
+  "scope": "SECONDARY_AUTHORITY_TO_OBSERVATION_OWNER_AND_ACTIVE_SOURCE_SEPARATION_ONLY",
+  "expected_cases": {
+    "production_candidate_without_identity_copies": "COMPLETE_AFTER_ACTUAL_READ_AND_DURABLE_CLOSURE",
+    "equal_optional_candidate_copies": "COMPLETE",
+    "conflicting_or_malformed_optional_copies": "INCOMPLETE_BEFORE_PAYLOAD_PREAD",
+    "missing_or_malformed_authoritative_ids": "INCOMPLETE_BEFORE_PAYLOAD_PREAD",
+    "wrong_optional_role": "INCOMPLETE_BEFORE_PAYLOAD_PREAD",
+    "partial_read_and_post_read_error": "TRUTHFUL_DURABLE_PREFIX",
+    "durable_closure_failure": "INCOMPLETE",
+    "missing_or_replaced_owner": "INCOMPLETE",
+    "primary_source_substitution": "REJECT",
+    "stale_or_absent_secondary_producer": "REJECT",
+    "fake_expected_spelling_in_comment": "REJECT",
+    "missing_candidate_validation": "REJECT",
+    "wrong_package_or_event_bridge_key": "REJECT"
+  },
+  "identity_rule": "WRAPPER_AUTHORITY_VALUES_ARE_AUTHORITATIVE; OPTIONAL_CANDIDATE_COPIES_MAY_ONLY_EQUAL",
+  "historical_guards": "PRESERVE",
+  "predecessor_qualification": "REUSED_NOT_RERUN:38_CASES_PER_ROOT;76_ROWS;12_MUTATION_FAMILIES",
+  "numerical_equivalence": {
+    "returned_descriptor_bytes_and_request_order": "EXERCISED_SYNTHETIC_DIMENSION",
+    "numpy_numerical_core": "NOT_RUN",
+    "native": "NOT_RUN",
+    "full_model": "NOT_RUN"
+  },
+  "open_findings": ["F017-SEC-02", "F017-SEC-03", "F017-SEC-04", "F017-SEC-05", "PRIMARY_OWNER_COMPLETENESS", "NATIVE_FULL_FORWARD"],
+  "checkpoint_access": 0,
+  "event06_retry_or_go": false,
+  "p1_authority": false,
+  "historical_master_ledger": 175
+}

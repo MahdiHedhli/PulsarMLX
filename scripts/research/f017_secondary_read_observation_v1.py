@@ -40,6 +40,28 @@ BINDINGS = ("role", "package_attempt_id", "consumer_event_id",
             "measurement_implementation_sha256", "descriptor_set_sha256")
 
 
+def _validate_executor_context(candidate, package_attempt_id, consumer_event_id):
+    """Bind optional candidate copies to the wrapper's authoritative values.
+
+    The production candidate intentionally does not carry execution identities.
+    The secondary wrapper already receives them from the validated bridge.  A
+    candidate copy is therefore optional and can only confirm, never supply or
+    override, the authoritative wrapper arguments.
+    """
+    if type(candidate) is not dict:
+        raise ValueError("OBSERVATION_EXECUTOR_CANDIDATE")
+    for value in (package_attempt_id, consumer_event_id):
+        if type(value) is not str or re.fullmatch(r"[A-Z0-9][A-Z0-9-]{0,127}", value) is None:
+            raise ValueError("OBSERVATION_ATTEMPT_IDENTITY")
+    for key, expected in (("package_attempt_id", package_attempt_id),
+                          ("secondary_event_id", consumer_event_id)):
+        if key in candidate and (type(candidate[key]) is not str or candidate[key] != expected):
+            raise ValueError("OBSERVATION_EXECUTOR_CONTEXT_MISMATCH")
+    for key in ("role", "consumer_role"):
+        if key in candidate and (type(candidate[key]) is not str or candidate[key] != "SECONDARY"):
+            raise ValueError("OBSERVATION_EXECUTOR_ROLE_MISMATCH")
+
+
 def _encode_record(value):
     raw = _canonical(value)
     if len(raw) > LIMIT:
@@ -99,13 +121,9 @@ class _SecondaryObservation:
         try:
             self.counters = _rows()
             validate_descriptors(identities)
-            for key in ("package_attempt_id", "consumer_event_id"):
-                value = authority[key]
-                if type(value) is not str or re.fullmatch(r"[A-Z0-9][A-Z0-9-]{0,127}", value) is None:
-                    raise ValueError("OBSERVATION_ATTEMPT_IDENTITY")
-            if (candidate.get("package_attempt_id") != authority["package_attempt_id"]
-                    or candidate.get("secondary_event_id") != authority["consumer_event_id"]):
-                raise ValueError("OBSERVATION_EXECUTOR_CONTEXT_MISMATCH")
+            package_attempt_id = authority["package_attempt_id"]
+            consumer_event_id = authority["consumer_event_id"]
+            _validate_executor_context(candidate, package_attempt_id, consumer_event_id)
             measured = authority["producer_measurement_sha256"]
             if type(measured) is not str or re.fullmatch(r"[0-9a-f]{64}", measured) is None:
                 raise ValueError("OBSERVATION_MEASUREMENT_IDENTITY")
@@ -116,8 +134,8 @@ class _SecondaryObservation:
                 raise ValueError("OBSERVATION_CATALOG_IDENTITY")
             self.catalog_identity = (catalog_path, catalog_sha)
             self.identities = [dict(item) for item in identities]
-            self.binding = {"role": "SECONDARY", "package_attempt_id": authority["package_attempt_id"],
-                "consumer_event_id": authority["consumer_event_id"],
+            self.binding = {"role": "SECONDARY", "package_attempt_id": package_attempt_id,
+                "consumer_event_id": consumer_event_id,
                 "producer_measurement_sha256": measured, "vocabulary_sha256": VOCABULARY_SHA256,
                 "measurement_implementation_sha256": _implementation_sha(),
                 "descriptor_set_sha256": _sha(_canonical(self.identities))}
@@ -167,9 +185,9 @@ class _SecondaryObservation:
             from f017_secondary_descriptor_source_v1 import SecondaryDescriptorStore
             if type(source) is not SecondaryDescriptorStore:
                 raise ValueError("OBSERVATION_FIXED_SECONDARY_SOURCE")
-            if (candidate.get("package_attempt_id") != self.binding["package_attempt_id"]
-                    or candidate.get("secondary_event_id") != self.binding["consumer_event_id"]
-                    or identities != self.identities or self.source is not None
+            _validate_executor_context(candidate, self.binding["package_attempt_id"],
+                                       self.binding["consumer_event_id"])
+            if (identities != self.identities or self.source is not None
                     or (candidate.get("tensor_catalog_path"), candidate.get("tensor_catalog_sha256")) != self.catalog_identity):
                 raise ValueError("OBSERVATION_SOURCE_CONTEXT")
             self.source = source

@@ -29,6 +29,119 @@ def _call_name(call: ast.Call) -> str:
     return ""
 
 
+def _imports(path: Path) -> set[tuple[str, str, str]]:
+    result = set()
+    for node in ast.parse(path.read_text(), filename=str(path)).body:
+        if isinstance(node, ast.ImportFrom) and node.module is not None:
+            result.update((node.module, item.name, item.asname or item.name) for item in node.names)
+    return result
+
+
+def _one_function(path: Path, name: str) -> ast.FunctionDef:
+    values = [node for node in ast.walk(ast.parse(path.read_text(), filename=str(path)))
+              if isinstance(node, ast.FunctionDef) and node.name == name]
+    if len(values) != 1:
+        raise ValueError("exact active function: " + name)
+    return values[0]
+
+
+def _one_method(path: Path, class_name: str, method_name: str) -> ast.FunctionDef:
+    tree = ast.parse(path.read_text(), filename=str(path))
+    classes = [node for node in tree.body
+               if isinstance(node, ast.ClassDef) and node.name == class_name]
+    if len(classes) != 1:
+        raise ValueError("exact active class: " + class_name)
+    values = [node for node in classes[0].body
+              if isinstance(node, ast.FunctionDef) and node.name == method_name]
+    if len(values) != 1:
+        raise ValueError("exact active method: " + class_name + "." + method_name)
+    return values[0]
+
+
+def _reject_rebinding(path: Path, names: set[str]) -> None:
+    tree = ast.parse(path.read_text(), filename=str(path))
+    rebound = {node.id for node in ast.walk(tree)
+               if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del))
+               and node.id in names}
+    if rebound:
+        raise ValueError("active source symbol rebound: " + ",".join(sorted(rebound)))
+
+
+def _bridge_get(value: ast.AST, key: str) -> bool:
+    return (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+            and value.func.id == "str" and len(value.args) == 1
+            and isinstance(value.args[0], ast.Call)
+            and isinstance(value.args[0].func, ast.Attribute)
+            and isinstance(value.args[0].func.value, ast.Name)
+            and value.args[0].func.value.id == "bridge" and value.args[0].func.attr == "get"
+            and len(value.args[0].args) == 1 and isinstance(value.args[0].args[0], ast.Constant)
+            and value.args[0].args[0].value == key)
+
+
+def _validate_active_target_source_separation(primary_wrapper: Path, secondary_wrapper: Path,
+                                              prefix: Path, factory: Path,
+                                              production: Path) -> None:
+    primary_imports = _imports(primary_wrapper)
+    secondary_imports = _imports(secondary_wrapper)
+    prefix_imports = _imports(prefix)
+    factory_imports = _imports(factory)
+    if ("f017_corrected_oracle_primary_target_source_v11", "source_from_inherited_descriptors",
+            "source_from_inherited_descriptors") not in primary_imports:
+        raise ValueError("V11 primary target-source separation")
+    if ("f017_secondary_read_observation_prefix_v1", "open_secondary_descriptor_prefix",
+            "open_secondary_descriptor_prefix") not in secondary_imports:
+        raise ValueError("V11 secondary observation source")
+    if any(module in {"f017_corrected_oracle_primary_target_source_v11",
+                      "f017_corrected_oracle_secondary_target_source_v11"}
+           for module, _, _ in secondary_imports):
+        raise ValueError("V11 secondary stale or shared target source")
+    if ("f017_secondary_read_observation_factory_v1", "create_descriptor_store",
+            "create_descriptor_store") not in prefix_imports:
+        raise ValueError("V11 secondary prefix factory linkage")
+    if ("f017_secondary_descriptor_source_v1", "SecondaryDescriptorStore",
+            "SecondaryDescriptorStore") not in factory_imports:
+        raise ValueError("V11 secondary descriptor producer linkage")
+    _reject_rebinding(secondary_wrapper, {"open_secondary_descriptor_prefix",
+                                         "validate_candidate_document"})
+    _reject_rebinding(prefix, {"create_descriptor_store"})
+    _reject_rebinding(factory, {"SecondaryDescriptorStore"})
+    _reject_rebinding(production, {"_execute_secondary_target"})
+    target = _one_function(secondary_wrapper, "_minimum_gate_execute_target_and_bank")
+    calls = [node for node in ast.walk(target) if isinstance(node, ast.Call)]
+    if sum(_call_name(call) == "open_secondary_descriptor_prefix" for call in calls) != 1:
+        raise ValueError("V11 secondary prefix construction")
+    if sum(_call_name(call) == "validate_candidate_document" for call in calls) != 1:
+        raise ValueError("V11 secondary candidate validation")
+    prefix_init = _one_method(prefix, "SecondaryDescriptorPrefix", "__init__")
+    prefix_calls = [node for node in ast.walk(prefix_init) if isinstance(node, ast.Call)]
+    if sum(_call_name(call) == "create_descriptor_store" for call in prefix_calls) != 1:
+        raise ValueError("V11 secondary prefix-to-factory linkage")
+    factory_target = _one_function(factory, "create_descriptor_store")
+    factory_calls = [node for node in ast.walk(factory_target) if isinstance(node, ast.Call)]
+    producer_calls = [call for call in factory_calls if _call_name(call) == "SecondaryDescriptorStore"]
+    if len(producer_calls) != 1:
+        raise ValueError("V11 secondary factory-to-producer linkage")
+    producer_keywords = {item.arg: item.value for item in producer_calls[0].keywords
+                         if item.arg is not None}
+    owner = producer_keywords.get("_observation_owner")
+    if not isinstance(owner, ast.Name) or owner.id != "_observation_owner":
+        raise ValueError("V11 secondary fixed owner linkage")
+    production_imports = _imports(production)
+    if ("f017_corrected_oracle_secondary_wrapper_v11", "_minimum_gate_execute_target_and_bank",
+            "_execute_secondary_target") not in production_imports:
+        raise ValueError("V11 production secondary wrapper linkage")
+    secondary = _one_method(production, "_ProductionNumericalEffect", "secondary")
+    targets = [call for call in ast.walk(secondary) if isinstance(call, ast.Call)
+               and _call_name(call) == "_execute_secondary_target"]
+    if len(targets) != 1:
+        raise ValueError("V11 production secondary target call")
+    keywords = {item.arg: item.value for item in targets[0].keywords if item.arg is not None}
+    if not _bridge_get(keywords.get("package_attempt_id"), "package_attempt_id"):
+        raise ValueError("V11 production package identity linkage")
+    if not _bridge_get(keywords.get("consumer_event_id"), "secondary_event_id"):
+        raise ValueError("V11 production secondary event identity linkage")
+
+
 def main() -> int:
     primary_v2 = RESEARCH / "f017_corrected_oracle_primary_numerics_v2.py"
     secondary_v2 = RESEARCH / "f017_corrected_oracle_secondary_numerics_v2.py"
@@ -51,9 +164,12 @@ def main() -> int:
         raise ValueError("V4 successor core binding")
     primary_wrapper = RESEARCH / "f017_corrected_oracle_primary_wrapper_v11.py"
     secondary_wrapper = RESEARCH / "f017_corrected_oracle_secondary_wrapper_v11.py"
-    if ("f017_corrected_oracle_primary_target_source_v11" not in primary_wrapper.read_text()
-            or "f017_corrected_oracle_secondary_target_source_v11" not in secondary_wrapper.read_text()):
-        raise ValueError("V11 target-source separation")
+    _validate_active_target_source_separation(
+        primary_wrapper, secondary_wrapper,
+        RESEARCH / "f017_secondary_read_observation_prefix_v1.py",
+        RESEARCH / "f017_secondary_read_observation_factory_v1.py",
+        RESEARCH / "f017_event06_minimum_gate_path_v1.py",
+    )
     p_calls = _calls(primary_wrapper, "_minimum_gate_execute_and_bank")
     s_calls = _calls(secondary_wrapper, "_minimum_gate_execute_and_bank")
     if sum(_call_name(call) == "execute_outputs" for call in p_calls) != 1:

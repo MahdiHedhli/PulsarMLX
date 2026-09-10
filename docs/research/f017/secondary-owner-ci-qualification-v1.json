@@ -1,0 +1,101 @@
+{
+  "schema": "pulsarmlx.f017.secondary-owner-ci-qualification/1",
+  "result": "PASS",
+  "scope": "SECONDARY_AUTHORITY_TO_OBSERVATION_OWNER_AND_ACTIVE_SOURCE_SEPARATION_ONLY",
+  "starting_source": {
+    "branch": "feat/f017-secondary-read-observation",
+    "head": "a5b3ee897526697b31038f575283019edcbae021",
+    "tree": "edcb4333ff151132e9344554c811344be7475695"
+  },
+  "implementation": {
+    "scripts/research/f017_secondary_read_observation_v1.py": "1e56ba20bf83055b04fc7433f57071b1798680d0405d3d3ab724802ea2d524e0",
+    "scripts/research/validate_f017_v11_execution_authority_v1.py": "e3aa216e231d970888a8ac4383bfe3c3d97c1b4c965eb73fb6500e4a59869f09",
+    "scripts/research/tests/f017_secondary_integration/secondary_owner_cases_v1.py": "e840f47973d61df86a3a5b5b5aa01cc42a9f849ac063fcd6f76f72c648e2fcc1",
+    "scripts/research/tests/f017_secondary_integration/secondary_owner_confined_runner_v1.py": "4d0c4721ba0bc3bbe1667e1cc0b16a06733784abaca12094a9aa4bc53f46b682",
+    "docs/research/f017/secondary-owner-ci-predeclaration-v1.json": "c7696b12772a13e97ef25cce8c40b87904f0a01b8291b52cf84ce9749c3f055d"
+  },
+  "trusted_doctor": {
+    "result": "HARNESS_READY",
+    "result_sha256": "cd0455e9f607fe02d0cafee5da9b4003d2dfab9579294fbddc5cd19053cb2ebb",
+    "executable": "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+    "executable_sha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+    "actual_target_starts": 12
+  },
+  "final_qualification": {
+    "result_sha256": "50bf3e9f1a78bc9cf90563043a91102692e43224f4e5fcc454025c2273e36cd1",
+    "fresh_roots": 2,
+    "actual_target_starts": 5,
+    "all_children_reaped": true,
+    "root_reports": [
+      {
+        "root": 1,
+        "report_sha256": "2e975cf7fc6f621fb95e5888fa8959ad3fe19cf6f6daa6db6f031b1d0fe43867",
+        "owner_cases": 19,
+        "complete_cases": 4,
+        "incomplete_cases": 15,
+        "separation_mutations_rejected": 9
+      },
+      {
+        "root": 2,
+        "report_sha256": "9236c72a25d132640f7219ac316a74f1bfc814ce4b2ca17c38f403d1293884ff",
+        "owner_cases": 19,
+        "complete_cases": 4,
+        "incomplete_cases": 15,
+        "separation_mutations_rejected": 9
+      }
+    ],
+    "unexpected_passes": 0
+  },
+  "production_authority_to_owner_binding": {
+    "candidate_source": "exact AST-extracted f017_event06_minimum_gate_path_v1._target_candidate",
+    "candidate_identity_copies": 0,
+    "package_attempt_id_source": "_ProductionNumericalEffect.secondary wrapper authority argument",
+    "consumer_event_id_source": "_ProductionNumericalEffect.secondary wrapper authority argument",
+    "actual_pread_exercised": true,
+    "complete_closure": "PASS"
+  },
+  "changed_edges": {
+    "optional_candidate_identity_equal": "PASS",
+    "conflicting_or_malformed_identity": "INCOMPLETE_BEFORE_PREAD",
+    "wrong_optional_role": "INCOMPLETE_BEFORE_PREAD",
+    "missing_or_malformed_authority": "INCOMPLETE_BEFORE_PREAD",
+    "partial_or_error_read_prefix": "TRUTHFUL_COMPLETE_TELEMETRY_CLOSURE",
+    "missing_replaced_or_reused_owner": "INCOMPLETE",
+    "durable_closure_failure": "INCOMPLETE",
+    "cross_attempt_readback": "INCOMPLETE",
+    "active_source_separation_mutations": "9_OF_9_REJECTED_WITH_RESTORED_BASELINE_PASS"
+  },
+  "historical_guards": {
+    "v2_cores": "BYTE_EXACT",
+    "v10_target_sources": "BYTE_EXACT",
+    "v4_successor_binding": "PASS",
+    "one_execution_per_role": "PASS",
+    "secondary_gate_order": "PASS",
+    "legacy_entrypoints_fail_closed": "PASS",
+    "binary_result_banking": "PASS",
+    "coordinator_causal_order": "PASS"
+  },
+  "predecessor_qualification": "REUSED_NOT_RERUN:38_CASES_PER_ROOT;76_ROWS;12_MUTATION_FAMILIES",
+  "instrumentation_numerical_equivalence": {
+    "returned_descriptor_bytes_and_request_order": "PASS_EXERCISED_SYNTHETIC_DIMENSION",
+    "numpy_numerical_core": "NOT_RUN",
+    "native": "NOT_RUN",
+    "full_model": "NOT_RUN"
+  },
+  "open_findings": [
+    "F017-SEC-02",
+    "F017-SEC-03",
+    "F017-SEC-04",
+    "F017-SEC-05",
+    "PRIMARY_OWNER_COMPLETENESS",
+    "NATIVE_FULL_FORWARD"
+  ],
+  "preserved_safety": {
+    "original_checkpoint_or_retained_event06_access": 0,
+    "event06_retry_or_go": false,
+    "p1_authority": false,
+    "macbook_activity": false,
+    "historical_master_ledger": 175,
+    "historical_unknown_counts": "UNKNOWN_UNCHANGED"
+  }
+}
