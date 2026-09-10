@@ -71,7 +71,7 @@ def main():
 
     def capture(argv, area, label):
         cap.need(shutil.disk_usage(parent).free >= 8 * 1024**3, "STORAGE_FLOOR")
-        result, out, err = bounded.capture(argv, area, label, env, timeout=180, limit=16 * 1024**2)
+        result, out, err = bounded.capture(argv, area, label, env, timeout=180, limit=12 * 1024**2)
         captures.append(result)
         cap.need(result["capture_integrity"] == "PASS" and result["reaped"], "BOUNDED_CAPTURE")
         return result, out, err
