@@ -1,0 +1,128 @@
+{
+  "baseline": "Direct os.pread on own synthetic descriptors at separately enumerated offsets 0/128, count16 for each shard2..6, in the same admitted child; no NumPy or project graph reference computation.",
+  "candidate_outputs_observed": false,
+  "classification": "POST_OBSERVATION_RELATIVE_TO_GENERATION_1_PRE_OBSERVATION_FOR_GENERATION_2",
+  "expected": "Both actual read streams, order, bytes, and request counts equal; original owner and readback COMPLETE. Physical storage faults/bytes remain NOT_MEASURABLE.",
+  "fresh_roots": 2,
+  "generation": 2,
+  "generation1_candidate": "2a192fb25b2ccaa7fd1de9b41d7814a2476bea52",
+  "generation1_result_sha256": "0542ff044c061b4d7cc4604e534220e55eda9de6da24e334e3e08ea09fcd5978",
+  "new_case": "real-synthetic-pread-vs-direct-baseline",
+  "reason": "Strengthen real positional-read coverage; controlled byte-only fakes alone do not establish actual pread syscall execution. No generation1 failure is relabeled.",
+  "schema": "pulsarmlx.secondary-descriptor-prefix-generation/1",
+  "successor": "Real source read_encoded path delegates to captured original os.pread, preserving returned bytes and request order. Independent transcript reduction supplies counters.",
+  "unchanged_criteria": {
+    "baseline_comparison": "Byte geometry/order and original descriptor stops; original full NumPy source/numerical equivalence remains NOT_QUALIFIED if dependency admission absent.",
+    "classification": "PRE_OBSERVATION",
+    "counter_oracle": "Separate recorded delegated request/outcome transcript reduced without candidate counters or authored totals.",
+    "fence": "Exact pinned bootstrap/profile/capture; current successful doctor bound before dependent imports.",
+    "fresh_root_confirmation": 1,
+    "frozen_authorities_changed": false,
+    "generation": 1,
+    "historical_placement": "UNKNOWN_REMAINS_UNKNOWN",
+    "mutants": [
+      {
+        "expected": "pending-or-unknown suffix; no COMPLETE totals",
+        "id": "drop-return",
+        "site": "_read_return"
+      },
+      {
+        "expected": "OBSERVATION_RETURN_FAILED; no COMPLETE totals",
+        "id": "double-return",
+        "site": "owner.complete"
+      },
+      {
+        "expected": "OBSERVATION_ATTRIBUTION_FAILED",
+        "id": "wrong-shard",
+        "site": "read event identity"
+      },
+      {
+        "expected": "OBSERVATION_READBACK_FAILED",
+        "id": "cross-attempt",
+        "site": "expected readback context"
+      },
+      {
+        "expected": "INCOMPLETE readback",
+        "id": "missing-prefix",
+        "site": "durable record removed"
+      },
+      {
+        "expected": "INCOMPLETE readback",
+        "id": "counter-transition",
+        "site": "record counter without causal predecessor"
+      },
+      {
+        "expected": "MEASUREMENT_SERIALIZATION_OVERFLOW",
+        "id": "overflow",
+        "site": "_encode_record before exclusive creation"
+      },
+      {
+        "expected": "owner loss; no COMPLETE totals",
+        "id": "owner-detach",
+        "site": "source owner field"
+      }
+    ],
+    "native_full_forward_full_result_P1": "NOT_QUALIFIED",
+    "privacy_scanner": "BINDING_UNRESOLVED_NO_EXTERNAL_SOURCE_REVIEW_OR_PUBLIC_PUSH",
+    "private_primary_candidate_used": false,
+    "restored_controls": "Each fault/mutant uses fresh identical synthetic inputs with original function restored; launch errors are not detections.",
+    "schema": "pulsarmlx.secondary-descriptor-prefix-generation/1",
+    "scope": "REAL_SECONDARY_STDLIB_DESCRIPTOR_TO_DURABLE_PREFIX_ONLY",
+    "source_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+    "source_edges": [
+      "success",
+      "error",
+      "short-return",
+      "zero-return",
+      "zero-request",
+      "bounds-pre-I/O-refusal",
+      "identity-pre-I/O-refusal",
+      "read-after-descriptor-close",
+      "per-shard-purpose-isolation",
+      "cross-attempt-isolation",
+      "never-bound-owner",
+      "detached-owner",
+      "unknown-owner",
+      "unknown-suffix",
+      "persistence-failure",
+      "serialization-overflow",
+      "source-record-substitution",
+      "repeated-finish",
+      "original-error-preservation"
+    ],
+    "source_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+    "synthetic_geometry": {
+      "bytes_per_shard": 256,
+      "encoded_columns": 4,
+      "encoded_rows": 4,
+      "formats": [
+        "F32"
+      ],
+      "graph_shards": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "numerical_decode_executed": false
+    },
+    "vocabulary": {
+      "attempts": "delegated pread calls with resolved return/error",
+      "error_returns": "delegated calls raising",
+      "physical_faults_or_disk_bytes": "NOT_MEASURABLE",
+      "requested_bytes": "sum of requested counts on delegated calls",
+      "returned_bytes": "actual returned byte lengths",
+      "scope_keys": [
+        "attempt",
+        "SECONDARY",
+        "shard_ordinal",
+        "FORMAT_PROBE_OR_NUMERICAL_PAYLOAD"
+      ],
+      "short_returns": "byte returns shorter than requested",
+      "successful_returns": "calls returning bytes including short and zero",
+      "zero_returns": "byte returns of length zero"
+    }
+  },
+  "utc": "2026-09-10T01:00:41+00:00"
+}
