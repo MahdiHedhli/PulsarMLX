@@ -700,3 +700,223 @@ async fn stream_generation_timeout_emits_bounded_error_event() {
     assert_eq!(follow_up.json()["choices"][0]["finish_reason"], "stop");
     server.stop().await;
 }
+
+/// Send a chunked request body, tolerating the server closing the connection
+/// as soon as it rejects the payload.
+async fn chunked_exchange(
+    address: std::net::SocketAddr,
+    head: &str,
+    chunks: &[Vec<u8>],
+) -> RawResponse {
+    let mut stream = TcpStream::connect(address).await.expect("connect");
+    if stream.write_all(head.as_bytes()).await.is_ok() {
+        'outer: for chunk in chunks {
+            for part in [
+                format!("{:x}\r\n", chunk.len()).into_bytes(),
+                chunk.clone(),
+                b"\r\n".to_vec(),
+            ] {
+                // A rejected body closes the connection early; that is the
+                // behaviour under test, not a harness failure.
+                if stream.write_all(&part).await.is_err() {
+                    break 'outer;
+                }
+            }
+        }
+        let _ = stream.write_all(b"0\r\n\r\n").await;
+    }
+    let mut raw = Vec::new();
+    tokio::time::timeout(Duration::from_secs(5), stream.read_to_end(&mut raw))
+        .await
+        .expect("read deadline")
+        .expect("read response");
+    parse_response(&raw)
+}
+
+/// F3: the accumulated-frame cap in `read_body` is a separate defence from the
+/// declared `Content-Length` cap. This request declares no length at all, so
+/// only the frame accumulation check can reject it.
+#[tokio::test]
+async fn chunked_body_exceeding_accumulated_limit_is_rejected() {
+    let server = TestServer::start().await;
+    let head = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n",
+        server.address.port(),
+        server.token
+    );
+    // Four 8 KiB frames, each individually under the cap, together over it.
+    let chunks: Vec<Vec<u8>> = (0..4).map(|_| vec![b'x'; 8 * 1024]).collect();
+    let total: usize = chunks.iter().map(Vec::len).sum();
+    assert!(total > MAX_BODY_BYTES);
+    assert!(chunks.iter().all(|c| c.len() <= MAX_BODY_BYTES));
+
+    let response = chunked_exchange(server.address, &head, &chunks).await;
+    assert_eq!(response.status, 413, "body: {:?}", response.text());
+    assert_eq!(response.json()["error"]["code"], "body_too_large");
+    assert_eq!(server.state.metrics().backend_started, 0);
+
+    // A chunked body under the cap still succeeds, so the guard is not simply
+    // rejecting all chunked framing.
+    let ok_body = chat_body("hello", false).into_bytes();
+    let ok = chunked_exchange(server.address, &head, &[ok_body]).await;
+    assert_eq!(ok.status, 200, "body: {:?}", ok.text());
+    assert_eq!(ok.json()["choices"][0]["finish_reason"], "stop");
+    server.stop().await;
+}
+
+/// F3: malformed JSON and an unsupported media type are distinct rejections
+/// and neither reaches the synthetic backend.
+#[tokio::test]
+async fn malformed_json_and_unsupported_content_type_are_rejected() {
+    let server = TestServer::start().await;
+
+    for invalid in [
+        "{\"model\":",
+        "not json at all",
+        "{\"model\":\"pulsarmlx-synthetic-v1\",}",
+        "",
+    ] {
+        let response = server
+            .request("POST", "/v1/chat/completions", Some(invalid), true)
+            .await;
+        assert_eq!(response.status, 400, "input {invalid:?}");
+        assert_eq!(
+            response.json()["error"]["code"],
+            "invalid_json",
+            "input {invalid:?}"
+        );
+    }
+
+    // Well-formed JSON carrying the wrong media type is refused before parsing.
+    let body = chat_body("hello", false);
+    for content_type in ["text/plain", "application/x-www-form-urlencoded", "*/*"] {
+        let response = custom_request(
+            &server,
+            format!(
+                "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: {}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                server.address.port(),
+                server.token,
+                content_type,
+                body.len(),
+                body
+            ),
+        )
+        .await;
+        assert_eq!(response.status, 415, "content-type {content_type}");
+        assert_eq!(
+            response.json()["error"]["code"],
+            "invalid_content_type",
+            "content-type {content_type}"
+        );
+    }
+
+    // A charset parameter on the supported type is still accepted.
+    let ok = custom_request(
+        &server,
+        format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            server.address.port(),
+            server.token,
+            body.len(),
+            body
+        ),
+    )
+    .await;
+    assert_eq!(ok.status, 200);
+    assert_eq!(server.state.metrics().backend_started, 1);
+    server.stop().await;
+}
+
+/// F3: a malformed declared length is rejected before any application code
+/// runs. hyper's parser refuses these during header parsing and answers with a
+/// bare 400 carrying no JSON body, so the crate's own `invalid_content_length`
+/// branch is currently unreachable; it is retained as defence in depth. This
+/// test records the behaviour that is actually observable.
+#[tokio::test]
+async fn invalid_declared_length_is_rejected_by_the_parser() {
+    let server = TestServer::start().await;
+    for value in ["abc", "99999999999999999999999999", "-1", "+5", "1 2"] {
+        let response = custom_request(
+            &server,
+            format!(
+                "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                server.address.port(),
+                server.token,
+                value
+            ),
+        )
+        .await;
+        assert_eq!(response.status, 400, "Content-Length: {value}");
+        assert!(
+            response.body.is_empty(),
+            "parser rejection carries no application body, got {:?}",
+            response.text()
+        );
+    }
+
+    // A declared length over the cap is the crate's own rejection and does
+    // carry the application error shape.
+    let oversized = custom_request(
+        &server,
+        format!(
+            "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            server.address.port(),
+            server.token,
+            MAX_BODY_BYTES + 1
+        ),
+    )
+    .await;
+    assert_eq!(oversized.status, 413);
+    assert_eq!(oversized.json()["error"]["code"], "body_too_large");
+    assert_eq!(server.state.metrics().backend_started, 0);
+    server.stop().await;
+}
+
+/// F3: token limits outside the supported range are refused before a
+/// generation permit is taken.
+#[tokio::test]
+async fn token_limits_outside_supported_range_are_rejected() {
+    let server = TestServer::start().await;
+    for max_tokens in ["0", "17", "65535"] {
+        let body = format!(
+            "{{\"model\":\"pulsarmlx-synthetic-v1\",\"messages\":[{{\"role\":\"user\",\"content\":\"hello\"}}],\"max_tokens\":{max_tokens}}}"
+        );
+        let response = server
+            .request("POST", "/v1/chat/completions", Some(&body), true)
+            .await;
+        assert_eq!(response.status, 400, "max_tokens={max_tokens}");
+        assert_eq!(
+            response.json()["error"]["code"],
+            "invalid_max_tokens",
+            "max_tokens={max_tokens}"
+        );
+    }
+
+    // Out-of-type values are refused as malformed input rather than accepted.
+    for max_tokens in ["-1", "65536", "1.5"] {
+        let body = format!(
+            "{{\"model\":\"pulsarmlx-synthetic-v1\",\"messages\":[{{\"role\":\"user\",\"content\":\"hello\"}}],\"max_tokens\":{max_tokens}}}"
+        );
+        let response = server
+            .request("POST", "/v1/chat/completions", Some(&body), true)
+            .await;
+        assert_eq!(response.status, 400, "max_tokens={max_tokens}");
+        assert_eq!(
+            response.json()["error"]["code"],
+            "invalid_json",
+            "max_tokens={max_tokens}"
+        );
+    }
+
+    // The upper bound itself remains accepted.
+    let body = format!(
+        "{{\"model\":\"pulsarmlx-synthetic-v1\",\"messages\":[{{\"role\":\"user\",\"content\":\"hello\"}}],\"max_tokens\":{}}}",
+        16
+    );
+    let ok = server
+        .request("POST", "/v1/chat/completions", Some(&body), true)
+        .await;
+    assert_eq!(ok.status, 200);
+    assert_eq!(server.state.metrics().backend_started, 1);
+    server.stop().await;
+}
