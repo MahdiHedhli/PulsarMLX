@@ -6,7 +6,8 @@ from pathlib import Path
 import hashlib
 
 import f017_corrected_oracle_secondary_numerics_v3 as secondary_core
-from f017_corrected_oracle_secondary_target_source_v11 import source_from_inherited_descriptors
+from f017_secondary_read_observation_prefix_v1 import open_secondary_descriptor_prefix
+from f017_secondary_read_observation_v1 import _phase_secondary_observation
 from f017_descriptor_lease_manager_v10 import validate_descriptors
 from f017_result_artifacts_v11 import require_primary_terminal
 from f017_result_bundle_builder_v11 import _minimum_gate_bank_output_bundle
@@ -44,11 +45,15 @@ def _minimum_gate_execute_and_bank(
     store=None,
     _write_once: bool = False,
 ) -> dict:
+    _phase_secondary_observation(store, "PRIMARY_PREREQUISITE")
     require_primary_terminal(
         primary_terminal, primary_result_terminal_sha256,
         primary_receipt_sha256, primary_manifest_sha256,
     )
+    _phase_secondary_observation(store, "CORE")
     outputs = secondary_core.execute_outputs(document, use_mlx=use_mlx, store=store)
+    _phase_secondary_observation(store, "CORE_COMPLETE")
+    _phase_secondary_observation(store, "BANK")
     return _minimum_gate_bank_output_bundle(
         outputs, directory, authorization_id=authorization_id,
         package_attempt_id=package_attempt_id, consumer_event_id=consumer_event_id,
@@ -74,19 +79,27 @@ def _minimum_gate_execute_target_and_bank(
 ) -> dict:
     validate_candidate_document(candidate)
     validate_descriptors(descriptors, [item["size_bytes"] for item in candidate["shards"][1:]])
-    store, document = source_from_inherited_descriptors(candidate, descriptors, file_descriptors)
-    bundle = _minimum_gate_execute_and_bank(document, directory, primary_terminal=primary_terminal,
-        primary_result_terminal_sha256=primary_result_terminal_sha256,
-        primary_receipt_sha256=primary_receipt_sha256,
-        primary_manifest_sha256=primary_manifest_sha256, use_mlx=use_mlx,
-        store=store, _write_once=True, **authority)
+    prefix = open_secondary_descriptor_prefix(candidate, descriptors, file_descriptors, directory, authority)
+    store, document = prefix.store, prefix.document
+    try:
+        store.exercise_format_probes()
+        bundle = _minimum_gate_execute_and_bank(document, directory, primary_terminal=primary_terminal,
+            primary_result_terminal_sha256=primary_result_terminal_sha256,
+            primary_receipt_sha256=primary_receipt_sha256,
+            primary_manifest_sha256=primary_manifest_sha256, use_mlx=use_mlx,
+            store=store, _write_once=True, **authority)
+    except BaseException:
+        prefix.finish_while_raising()
+        raise
+    observation = prefix.finish("RETURNED", "COMPLETE")
     return {**bundle, "role":"SECONDARY",
             "layers_completed":bundle["artifacts"]["routing"]["layer_count"],
             "path_reopen_count":store.path_reopen_count,
             "descriptor_count":len(descriptors),
             "format_coverage":sorted(store.formats),
             "consumed_graph_shards":sorted(store.consumed),
-            "tensor_read_operations":store.tensor_reads}
+            "tensor_read_operations":store.tensor_reads,
+            "secondary_read_observation":observation}
 
 
 _qualification_execute_and_bank = _minimum_gate_execute_and_bank
