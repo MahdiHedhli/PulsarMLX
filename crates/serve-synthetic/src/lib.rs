@@ -5,7 +5,7 @@ use hyper::header::{AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HOST, ORIGIN};
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper::{Method, Request, Response, StatusCode};
-use hyper_util::rt::TokioIo;
+use hyper_util::rt::{TokioIo, TokioTimer};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::convert::Infallible;
@@ -128,7 +128,11 @@ where
                 tasks.spawn(async move {
                     let service = service_fn(move |request| handle(request, app.clone(), expected_port));
                     let mut builder = http1::Builder::new();
-                    builder.keep_alive(false).max_buf_size(32 * 1024);
+                    builder
+                        .keep_alive(false)
+                        .timer(TokioTimer::new())
+                        .header_read_timeout(HEADER_DEADLINE)
+                        .max_buf_size(32 * 1024);
                     let connection = builder.serve_connection(TokioIo::new(stream), service);
                     let _permit = connection_permit;
                     let _ = tokio::time::timeout(CONNECTION_DEADLINE, connection).await;

@@ -99,6 +99,10 @@ async fn raw_exchange(address: std::net::SocketAddr, request: &[u8]) -> RawRespo
     parse_response(&raw)
 }
 
+async fn custom_request(server: &TestServer, headers_and_body: String) -> RawResponse {
+    raw_exchange(server.address, headers_and_body.as_bytes()).await
+}
+
 fn parse_response(raw: &[u8]) -> RawResponse {
     let split = raw
         .windows(4)
@@ -324,5 +328,128 @@ async fn stream_failure_has_no_success_terminal() {
     assert!(!text.contains("data: [DONE]"));
     assert!(!text.contains("finish_reason\":\"stop"));
     assert_eq!(server.state.metrics().backend_active, 0);
+    server.stop().await;
+}
+
+#[tokio::test]
+async fn host_origin_auth_and_header_limits_are_enforced() {
+    let server = TestServer::start().await;
+    let wrong_host = custom_request(
+        &server,
+        "GET /health HTTP/1.1\r\nHost: attacker.invalid\r\nConnection: close\r\n\r\n".into(),
+    )
+    .await;
+    assert_eq!(wrong_host.status, 403);
+    assert_eq!(wrong_host.json()["error"]["code"], "invalid_host");
+
+    let cross_origin = custom_request(
+        &server,
+        format!(
+            "GET /v1/models HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nOrigin: https://attacker.invalid\r\nAuthorization: Bearer {}\r\nConnection: close\r\n\r\n",
+            server.address.port(),
+            server.token
+        ),
+    )
+    .await;
+    assert_eq!(cross_origin.status, 403);
+    assert_eq!(cross_origin.json()["error"]["code"], "invalid_origin");
+
+    let wrong_auth = custom_request(
+        &server,
+        format!(
+            "GET /v1/models HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer definitely-wrong-token\r\nConnection: close\r\n\r\n",
+            server.address.port()
+        ),
+    )
+    .await;
+    assert_eq!(wrong_auth.status, 401);
+
+    let long_header = "a".repeat(8 * 1024);
+    let oversized_headers = custom_request(
+        &server,
+        format!(
+            "GET /health HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nX-Padding: {long_header}\r\nConnection: close\r\n\r\n",
+            server.address.port()
+        ),
+    )
+    .await;
+    assert_eq!(oversized_headers.status, 431);
+    assert_eq!(server.state.metrics().backend_started, 0);
+    server.stop().await;
+}
+
+#[tokio::test]
+async fn output_limit_and_unsupported_sampling_are_explicit() {
+    let server = TestServer::start().await;
+    let limited = serde_json::json!({
+        "model":"pulsarmlx-synthetic-v1",
+        "messages":[{"role":"user","content":"hello"}],
+        "max_tokens":1
+    })
+    .to_string();
+    let response = server
+        .request("POST", "/v1/chat/completions", Some(&limited), true)
+        .await
+        .json();
+    assert_eq!(
+        response["choices"][0]["message"]["content"],
+        "SYNTHETIC_OK:"
+    );
+    assert_eq!(response["choices"][0]["finish_reason"], "length");
+    assert_eq!(response["usage"]["completion_tokens"], 1);
+
+    let sampling = serde_json::json!({
+        "model":"pulsarmlx-synthetic-v1",
+        "messages":[{"role":"user","content":"hello"}],
+        "temperature":0.5
+    })
+    .to_string();
+    let rejected = server
+        .request("POST", "/v1/chat/completions", Some(&sampling), true)
+        .await;
+    assert_eq!(rejected.status, 400);
+    assert_eq!(rejected.json()["error"]["code"], "unsupported_parameter");
+    assert_eq!(server.state.metrics().backend_started, 1);
+    server.stop().await;
+}
+
+#[tokio::test]
+async fn disconnect_releases_stream_ownership() {
+    let server = TestServer::start().await;
+    let body = chat_body("__synthetic_slow__", true);
+    let mut stream = TcpStream::connect(server.address).await.expect("connect");
+    let request = format!(
+        "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+        server.address.port(),
+        server.token,
+        body.len(),
+        body
+    );
+    stream.write_all(request.as_bytes()).await.expect("write");
+    let mut headers = Vec::new();
+    tokio::time::timeout(Duration::from_secs(1), async {
+        let mut byte = [0_u8; 1];
+        while !headers.ends_with(b"\r\n\r\n") {
+            stream
+                .read_exact(&mut byte)
+                .await
+                .expect("read header byte");
+            headers.push(byte[0]);
+        }
+    })
+    .await
+    .expect("response headers");
+    drop(stream);
+    tokio::time::timeout(Duration::from_secs(4), async {
+        while server.state.metrics().backend_active != 0 {
+            tokio::task::yield_now().await;
+        }
+    })
+    .await
+    .expect("ownership released");
+    assert_eq!(
+        server.state.metrics().backend_started,
+        server.state.metrics().backend_finished
+    );
     server.stop().await;
 }
