@@ -17,11 +17,13 @@ That digest is the exact validator body at `5b39a21aa8369ea2e53ea8e406002cc74250
 The validator was subsequently hardened at `0ae4c6f13fb8a103d1cee7ee3d070db4477dbb94`
 and reached its reviewed current body at `f52cd00659a76c9a39d240451743d5b0175bc819`,
 digest `dec34ba2157f04dcea6e64347bb96dc4288bfc8d676fdb1b10801c5146602253`.
-This change updates only that stale digest.
+That D repair updated only the stale manifest digest. The inventory and
+verification discussion below retain that historical checkpoint's meaning;
+the subsequent embedded-pin repair is recorded separately at the end.
 
 ## Complete active inventory
 
-Every digest below is the SHA-256 of the named file in the candidate checkout.
+Every digest below is the SHA-256 of the named file in the D candidate checkout.
 “Active/legacy” identifies deliberately retained V2 numerical or V10 target
 source content that is still consumed from the active checkout. “Match” means
 the row needed no change.
@@ -88,3 +90,39 @@ historical records, runtime or numerical code, validators, wrappers, checkpoint
 access, Event 06 state, or the retained SEC02–SEC05 findings. The existing
 artifact ledger remains at 175. Hosted exact-head CI determines whether the
 formerly failing full step passes and whether any later independent step fails.
+
+## Embedded integration-pin successor (2026-09-11)
+
+Exact-head run `34492636466` at `21369318108cabf989b0a136acdc34f3265b2f16`
+passed the active manifest check but failed inside confined integration case 5.
+The helper still embedded the older validator digest even though its code view
+contained the reviewed `dec34ba2...` validator. This successor changes only that
+embedded pin and the helper's own active manifest row, plus regression tests and
+this documentation. It does not change the validator or the runtime digest guard.
+
+| Successor file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `scripts/research/tests/f017_primary_integration_cases.py` | 8977 | `73f6117f5b7c005cdf8082add2632bdfd8b3af1da5ddaf6e3861eeff85cd69b3` |
+
+The helper's embedded validator pin is now
+`dec34ba2157f04dcea6e64347bb96dc4288bfc8d676fdb1b10801c5146602253`.
+Commit `6f59d9db93e92afed142b543a0e2fc19e0362bb4` in historical row 32 is
+the provenance of the old helper, not the source of these new bytes. The
+successor commit and exact-head CI outcome are recorded separately at closeout;
+no future commit or numbered execution authority is implied by this note.
+
+The stdlib-only regression reads the restricted helper as AST data, checks its
+literal pin against an independently hashed, fixed reviewed-validator identity,
+and checks for a validator-pin assertion. It does not import the restricted
+helper. Parent verification ran the successor test file against the original
+source and observed two stale-pin assertion failures, then ran it against the
+repaired source and observed all 13 tests pass. The prior 11-test D result is
+unchanged. Existing wrong-digest and changed-validator-byte controls remain.
+
+The assertion-presence predicate is not a complete semantic guard proof: it
+does not require the precise digest expression/equality operator or reject a
+nested assertion. The stale-pin inequality is redundant with the fixed-pin
+equality. These are nonblocking test-coverage limitations identified in review,
+not runtime qualification. Full confined and hosted results remain separate.
+Frozen measurement and historical objects, numerical contracts, source-base and
+role identities, workflow/controllers, Event 06 and ledger 175 remain unchanged.

@@ -24,6 +24,7 @@ CONSUMER = ROOT / "scripts/research/tests/f017_primary_confined_ci_v1.py"
 MANIFEST = ROOT / "scripts/ci/f017_primary_ci_inputs_v1.json"
 MEASUREMENT = ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v8.json"
 VALIDATOR = "scripts/research/validate_f017_v11_execution_authority_v1.py"
+INTEGRATION = "scripts/research/tests/f017_primary_integration_cases.py"
 SECONDARY_WRAPPER = "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py"
 SCHEMA = "f017.current-primary-ci-inputs/1"
 ACTIVE_ROLE = "PROTECTED_RUNTIME_AND_ORIGINAL_FIXTURE_CONTENT_PINS_CARRIED_FORWARD_UNCHANGED"
@@ -35,6 +36,7 @@ MEASUREMENT_SHA256 = "c529221a53a338dfe57d65f855f1b9d9b11e0b0251562f84067a65a053
 STALE_VALIDATOR_SHA256 = "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102761872628c"
 CURRENT_VALIDATOR_SHA256 = "dec34ba2157f04dcea6e64347bb96dc4288bfc8d676fdb1b10801c5146602253"
 FROZEN_WRAPPER_SHA256 = "2dad5b54bdc875d981dd5d5f7cf6eb8c78c83f751925a063e5423f04b11a0d22"
+STALE_INTEGRATION_VALIDATOR_SHA256 = "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102761872628c"
 
 
 _consumer = runpy.run_path(str(CONSUMER))
@@ -78,6 +80,35 @@ def compile_real_active_loop():
     namespace: dict = {}
     exec(compile(module, str(CONSUMER), "exec"), namespace)
     return namespace["real_active_loop"]
+
+
+def embedded_integration_validator_sha() -> str:
+    tree = ast.parse((ROOT / INTEGRATION).read_text())
+    assignment = next(
+        node for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "VALIDATOR_SHA"
+                for target in node.targets)
+    )
+    value = assignment.value
+    need(isinstance(value, ast.Constant) and isinstance(value.value, str),
+         "INTEGRATION_VALIDATOR_PIN_LITERAL")
+    return value.value
+
+
+def has_runtime_validator_digest_guard() -> bool:
+    tree = ast.parse((ROOT / INTEGRATION).read_text())
+    function = next(
+        node for node in tree.body
+        if isinstance(node, ast.FunctionDef) and node.name == "historical_validator"
+    )
+    return any(
+        isinstance(node, ast.Assert)
+        and isinstance(node.test, ast.Compare)
+        and any(isinstance(comparator, ast.Name) and comparator.id == "VALIDATOR_SHA"
+                for comparator in node.test.comparators)
+        for node in ast.walk(function)
+    )
 
 
 real_active_loop = compile_real_active_loop()
@@ -155,6 +186,20 @@ class ActiveInputProvenanceTests(unittest.TestCase):
         self.row(policy, VALIDATOR)["sha256"] = STALE_VALIDATOR_SHA256
         with self.assertRaisesRegex(ValueError, "CURRENT_ACTIVE_SOURCE_DRIFT:" + VALIDATOR):
             validate_whole_active_manifest(policy, ROOT)
+
+    def test_integration_embedded_pin_matches_independent_reviewed_validator(self) -> None:
+        self.assertEqual(
+            sha((ROOT / VALIDATOR).read_bytes()),
+            CURRENT_VALIDATOR_SHA256,
+        )
+        self.assertEqual(
+            embedded_integration_validator_sha(),
+            CURRENT_VALIDATOR_SHA256,
+        )
+
+    def test_integration_pin_regression_controls_are_present(self) -> None:
+        self.assertNotEqual(embedded_integration_validator_sha(), STALE_INTEGRATION_VALIDATOR_SHA256)
+        self.assertTrue(has_runtime_validator_digest_guard())
 
     def test_wrong_digest_fails_real_loop(self) -> None:
         policy = self.mutated()
