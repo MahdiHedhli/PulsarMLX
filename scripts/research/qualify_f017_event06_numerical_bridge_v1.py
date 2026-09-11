@@ -25,7 +25,7 @@ IMMUTABLE = {
     "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py":"c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
     "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json":"a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
     "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json":"4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
-    "scripts/research/f017_result_bundle_builder_v11.py":"296fc64befb92fc47db4458d19df444a645bfd62e269d911e9c4a46b9773d145",
+    "scripts/research/f017_result_bundle_builder_v11.py":"8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b",
     "scripts/research/f017_binary_comparison_authority_v11.py":"10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
 }
 
