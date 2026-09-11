@@ -126,3 +126,36 @@ equality. These are nonblocking test-coverage limitations identified in review,
 not runtime qualification. Full confined and hosted results remain separate.
 Frozen measurement and historical objects, numerical contracts, source-base and
 role identities, workflow/controllers, Event 06 and ledger 175 remain unchanged.
+
+## Confined-input closure successor (2026-09-11)
+
+The active manifest now admits exactly three explicit source-as-data dependencies
+read and parsed by the unchanged validator's
+`_validate_active_target_source_separation` call. Their repository and confined
+view mappings are identical, and their exact current identities are:
+
+| Repository path | Confined view path | Bytes | SHA-256 | Last source-change commit (byte origin only) |
+| --- | --- | ---: | --- | --- |
+| `scripts/research/f017_secondary_read_observation_prefix_v1.py` | `scripts/research/f017_secondary_read_observation_prefix_v1.py` | 2818 | `f2d9350329e81016e7679679239165328c0fffcc94787e7df5b8bd28d17d6005` | `e7759c3e7be0edf8098e3c9e29c37db88e694e7f` |
+| `scripts/research/f017_secondary_read_observation_factory_v1.py` | `scripts/research/f017_secondary_read_observation_factory_v1.py` | 708 | `107947ca0c17b52e5696e796284ec3a75e932b902796a7a962166042cb0a3e13` | `e7759c3e7be0edf8098e3c9e29c37db88e694e7f` |
+| `scripts/research/f017_event06_minimum_gate_path_v1.py` | `scripts/research/f017_event06_minimum_gate_path_v1.py` | 275907 | `ed61519c14afe8e3a7353b31ad1192f35fbafc9c6cd1ea939fc68680001f282d` | `4b48167f9fd02b81ed1c5796022ad70b3c2a61b6` |
+
+All three byte sequences also match the parent repair commit
+`ef0eef7816f08f69f6c412344bc732bc26197e6d`. The source-change commits identify
+byte origins only; they do not grant new execution or Event 06 authority.
+
+This is a bounded closure: the validator reads these files as AST data and does
+not import or execute them. Their imports were not recursively admitted. The
+validator, primary and secondary wrappers, runtime/controller/bootstrap/dispatch
+bodies, source base, role declarations, historical measurement table and all
+previous manifest row bytes and digests remain unchanged. The active inventory
+therefore increases from 38 to 41 only by these three rows; no automatic discovery
+or unrelated digest regeneration was used.
+
+The focused stdlib-only regression extracts the unchanged production consumer loop
+and proves all three mappings resolve to the exact admitted bytes. Omission,
+wrong-view, bad-digest, and changed-source-byte controls cover each new path;
+existing validator stale-pin, historical-substitution, duplicate, and frozen
+36-object controls remain. This repair qualifies only the focused source-only
+provenance closure. It does not qualify the full supervisor, hosted CI, numerical
+execution, checkpoint access, Event 06/P1 action, or any later integration result.

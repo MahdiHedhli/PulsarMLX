@@ -169,6 +169,21 @@
       "view_path": "scripts/research/validate_f017_v11_execution_authority_v1.py"
     },
     {
+      "repository_path": "scripts/research/f017_secondary_read_observation_prefix_v1.py",
+      "sha256": "f2d9350329e81016e7679679239165328c0fffcc94787e7df5b8bd28d17d6005",
+      "view_path": "scripts/research/f017_secondary_read_observation_prefix_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_secondary_read_observation_factory_v1.py",
+      "sha256": "107947ca0c17b52e5696e796284ec3a75e932b902796a7a962166042cb0a3e13",
+      "view_path": "scripts/research/f017_secondary_read_observation_factory_v1.py"
+    },
+    {
+      "repository_path": "scripts/research/f017_event06_minimum_gate_path_v1.py",
+      "sha256": "ed61519c14afe8e3a7353b31ad1192f35fbafc9c6cd1ea939fc68680001f282d",
+      "view_path": "scripts/research/f017_event06_minimum_gate_path_v1.py"
+    },
+    {
       "repository_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json",
       "sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a",
       "view_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json"

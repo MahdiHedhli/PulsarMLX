@@ -37,6 +37,14 @@ STALE_VALIDATOR_SHA256 = "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102
 CURRENT_VALIDATOR_SHA256 = "dec34ba2157f04dcea6e64347bb96dc4288bfc8d676fdb1b10801c5146602253"
 FROZEN_WRAPPER_SHA256 = "2dad5b54bdc875d981dd5d5f7cf6eb8c78c83f751925a063e5423f04b11a0d22"
 STALE_INTEGRATION_VALIDATOR_SHA256 = "5a123ec88b805df77d00be1f42a6e6f13dcb7c6c69b06f09deb102761872628c"
+SECONDARY_CLOSURE = {
+    "scripts/research/f017_secondary_read_observation_prefix_v1.py":
+        "scripts/research/f017_secondary_read_observation_prefix_v1.py",
+    "scripts/research/f017_secondary_read_observation_factory_v1.py":
+        "scripts/research/f017_secondary_read_observation_factory_v1.py",
+    "scripts/research/f017_event06_minimum_gate_path_v1.py":
+        "scripts/research/f017_event06_minimum_gate_path_v1.py",
+}
 
 
 _consumer = runpy.run_path(str(CONSUMER))
@@ -127,7 +135,7 @@ def validate_whole_active_manifest(policy: dict, source: Path) -> dict[str, byte
     need(policy["controller_identity"] == CONTROLLER_ROLE, "CONTROLLER_ROLE")
     need(policy["historical_identity"] == HISTORICAL_ROLE, "HISTORICAL_ROLE_SEPARATION")
     rows = policy["inputs"]
-    need(type(rows) is list and len(rows) == 38, "ACTIVE_INVENTORY_38")
+    need(type(rows) is list and len(rows) == 41, "ACTIVE_INVENTORY_41")
     need(
         all(
             type(row) is dict
@@ -176,9 +184,58 @@ class ActiveInputProvenanceTests(unittest.TestCase):
         self.assertIn("CURRENT_ACTIVE_SOURCE_DRIFT:", literals)
         self.assertEqual(_consumer["SOURCE_BASE"], SOURCE_BASE)
 
-    def test_all_38_corrected_active_rows_pass_together(self) -> None:
+    def assert_secondary_closure(self, policy: dict) -> None:
+        current = real_active_loop(policy, ROOT, need, sha)
+        for repository_path, view_path in SECONDARY_CLOSURE.items():
+            self.assertEqual(current[view_path], (ROOT / repository_path).read_bytes())
+
+    def test_production_mapping_closes_secondary_validator_dependencies(self) -> None:
+        self.assert_secondary_closure(self.policy)
+
+    def test_omitting_each_secondary_dependency_fails_cardinality(self) -> None:
+        for repository_path in SECONDARY_CLOSURE:
+            with self.subTest(repository_path=repository_path):
+                policy = self.mutated()
+                policy["inputs"] = [
+                    row for row in policy["inputs"]
+                    if row["repository_path"] != repository_path
+                ]
+                with self.assertRaisesRegex(ValueError, "ACTIVE_INVENTORY_41"):
+                    validate_whole_active_manifest(policy, ROOT)
+
+    def test_wrong_confined_view_mapping_fails_closure(self) -> None:
+        for repository_path in SECONDARY_CLOSURE:
+            with self.subTest(repository_path=repository_path):
+                policy = self.mutated()
+                self.row(policy, repository_path)["view_path"] = "wrong/" + Path(repository_path).name
+                with self.assertRaises(KeyError):
+                    self.assert_secondary_closure(policy)
+
+    def test_bad_digest_for_each_secondary_dependency_fails_real_loop(self) -> None:
+        for repository_path in SECONDARY_CLOSURE:
+            with self.subTest(repository_path=repository_path):
+                policy = self.mutated()
+                self.row(policy, repository_path)["sha256"] = "0" * 64
+                with self.assertRaisesRegex(ValueError, "CURRENT_ACTIVE_SOURCE_DRIFT:" + repository_path):
+                    validate_whole_active_manifest(policy, ROOT)
+
+    def test_changed_bytes_for_each_secondary_dependency_fail_real_loop(self) -> None:
+        for repository_path in SECONDARY_CLOSURE:
+            with self.subTest(repository_path=repository_path):
+                with tempfile.TemporaryDirectory() as temporary:
+                    source = Path(temporary)
+                    for row in self.policy["inputs"]:
+                        target = source / row["repository_path"]
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        target.write_bytes((ROOT / row["repository_path"]).read_bytes())
+                    target = source / repository_path
+                    target.write_bytes(target.read_bytes() + b"\n")
+                    with self.assertRaisesRegex(ValueError, "CURRENT_ACTIVE_SOURCE_DRIFT:" + repository_path):
+                        validate_whole_active_manifest(self.policy, source)
+
+    def test_all_41_corrected_active_rows_pass_together(self) -> None:
         current = validate_whole_active_manifest(self.policy, ROOT)
-        self.assertEqual(len(current), 38)
+        self.assertEqual(len(current), 41)
         self.assertEqual(sha(current[VALIDATOR]), CURRENT_VALIDATOR_SHA256)
 
     def test_stale_validator_binding_reproduces_known_failure(self) -> None:
@@ -240,7 +297,7 @@ class ActiveInputProvenanceTests(unittest.TestCase):
     def test_missing_entry_fails_test_side_guard(self) -> None:
         policy = self.mutated()
         policy["inputs"] = [row for row in policy["inputs"] if row["repository_path"] != VALIDATOR]
-        with self.assertRaisesRegex(ValueError, "ACTIVE_INVENTORY_38"):
+        with self.assertRaisesRegex(ValueError, "ACTIVE_INVENTORY_41"):
             validate_whole_active_manifest(policy, ROOT)
 
     def test_duplicate_entry_fails_test_side_guard(self) -> None:
