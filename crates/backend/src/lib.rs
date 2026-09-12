@@ -3,9 +3,10 @@
 pub mod capability;
 pub mod error;
 pub mod evidence;
+pub mod generation;
 pub mod routing;
-pub mod tensor;
 pub mod runtime;
+pub mod tensor;
 
 pub use capability::{BackendCapabilityReport, BackendSelection, CapabilityProbe, DeviceState};
 pub use error::{ContractError, ErrorCategory, MAX_ERROR_MESSAGE_CHARS};
@@ -16,6 +17,10 @@ pub use evidence::{
     ModelCompatibilityDescriptor, ModelCompatibilityRecord, ModelSupportStatus,
     QuantizationCompatibilityDescriptor, QuantizationCompatibilityRecord, QuantizationStatus,
     ValidationCase, ValidationDescriptor,
+};
+pub use generation::{
+    generate_greedy, GenerationRequest, GenerationResult, GenerationStep, TerminationReason,
+    MAX_NEW_TOKENS, MAX_PROMPT_TOKENS, MAX_TOPK,
 };
 pub use routing::RoutingPlan;
 pub use runtime::{

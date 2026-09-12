@@ -1,4 +1,6 @@
 use crate::{ContractError, ErrorCategory};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 const SHA256_HEX_LENGTH: usize = 64;
@@ -135,26 +137,42 @@ pub struct RuntimeConfig {
     pub deterministic: bool,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct CancellationToken {
-    cancelled: bool,
+    cancelled: Arc<AtomicBool>,
 }
 
+impl Default for CancellationToken {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PartialEq for CancellationToken {
+    fn eq(&self, other: &Self) -> bool {
+        self.is_cancelled() == other.is_cancelled()
+    }
+}
+
+impl Eq for CancellationToken {}
+
 impl CancellationToken {
-    pub const fn new() -> Self {
-        Self { cancelled: false }
+    pub fn new() -> Self {
+        Self {
+            cancelled: Arc::new(AtomicBool::new(false)),
+        }
     }
 
-    pub const fn is_cancelled(self) -> bool {
-        self.cancelled
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled.load(Ordering::Acquire)
     }
 
-    pub fn cancel(&mut self) {
-        self.cancelled = true;
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Release);
     }
 
-    pub fn check(self) -> Result<(), ContractError> {
-        if self.cancelled {
+    pub fn check(&self) -> Result<(), ContractError> {
+        if self.is_cancelled() {
             Err(contract_error(
                 ErrorCategory::InvalidStateTransition,
                 "cancelled",
@@ -237,14 +255,15 @@ pub struct GenerationState {
 
 impl GenerationState {
     pub fn push_token(&mut self, token: u32) -> Result<(), ContractError> {
-        self.tokens.push(token);
-        self.position = self.position.checked_add(1).ok_or_else(|| {
+        let next_position = self.position.checked_add(1).ok_or_else(|| {
             contract_error(
                 ErrorCategory::ArithmeticOverflow,
                 "generation_position_overflow",
                 "generation position overflow",
             )
         })?;
+        self.tokens.push(token);
+        self.position = next_position;
         Ok(())
     }
 
@@ -344,7 +363,7 @@ mod tests {
         }
         .end()
         .is_err());
-        let mut token = CancellationToken::new();
+        let token = CancellationToken::new();
         assert!(token.check().is_ok());
         token.cancel();
         assert!(token.check().is_err());
@@ -369,6 +388,19 @@ mod tests {
         };
         assert_eq!(event.scope.layer, Some(3));
         assert_eq!(event.scope.expert, Some(15));
+    }
+
+    #[test]
+    fn generation_state_rejects_position_overflow_without_mutating_state() {
+        let mut state = GenerationState {
+            tokens: vec![9703],
+            position: u64::MAX,
+        };
+        let error = state.push_token(21615).unwrap_err();
+        assert_eq!(error.category(), ErrorCategory::ArithmeticOverflow);
+        assert_eq!(error.code(), "generation_position_overflow");
+        assert_eq!(state.tokens(), [9703]);
+        assert_eq!(state.position(), u64::MAX);
     }
 
     #[test]
