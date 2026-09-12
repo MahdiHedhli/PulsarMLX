@@ -41,6 +41,8 @@ const FIXTURE_SET_ID: &str = "mlx-tensor-fixtures-v1";
 const SYNTHETIC_MOE_FIXTURE_ID: &str = "synthetic-routed-moe-v1";
 const SYNTHETIC_GENERATION_FIXTURE_PATH: &str = "fixtures/mlx/generation-v1.json";
 const SYNTHETIC_GENERATION_FIXTURE_ID: &str = "synthetic-greedy-generation-v1";
+const SYNTHETIC_GENERATION_FIXTURE_SHA256: &str =
+    "d43b528de8cdc25140efcf1be2d83daab9a86dd5768a71978842b9f5687e6052";
 const SYNTHETIC_GENERATION_EXCLUSIONS: [&str; 3] = [
     "synthetic_fixture_only",
     "No model, checkpoint, tokenizer, MLX device, serving, or release claim is made.",
@@ -9109,6 +9111,12 @@ fn load_generation_fixture(
     if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
         return Err("the synthetic generation fixture violates its byte bound".to_owned());
     }
+    if sha256_bytes(&bytes) != SYNTHETIC_GENERATION_FIXTURE_SHA256 {
+        return Err(
+            "the committed synthetic generation fixture differs from its frozen whole-file identity"
+                .to_owned(),
+        );
+    }
     let fixture: GenerationFixture = parse_unique_json(&bytes, "synthetic generation fixture")?;
     validate_generation_fixture(&fixture)?;
     Ok((fixture, sha256_bytes(&bytes)))
@@ -9224,6 +9232,9 @@ fn execute_synthetic_generation(
         command.eos_token_id,
     )
     .map_err(|error| format!("generation request rejected: {error}"))?;
+    if request.eos_token_id() != fixture.eos_token_id {
+        return Err("generation request EOS token must match the committed fixture".to_owned());
+    }
     if request.prompt_token_ids() != fixture.prompt_token_ids
         || request.max_new_tokens() > fixture.max_new_tokens
     {
@@ -13494,6 +13505,61 @@ mod tests {
         assert!(execute_synthetic_generation(&fixture, &fixture_sha256, &cancel_during)
             .expect_err("mid-generation cancellation is rejected")
             .contains("cancelled"));
+    }
+
+    #[test]
+    fn synthetic_generation_rejects_same_path_modified_fixture_before_parsing() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let root = env::temp_dir().join(format!(
+            "pulsarmlx-generation-fixture-digest-{}-{nonce}",
+            std::process::id()
+        ));
+        let fixture_path = root.join(SYNTHETIC_GENERATION_FIXTURE_PATH);
+        fs::create_dir_all(fixture_path.parent().expect("fixture parent"))
+            .expect("create fixture parent");
+        let mut bytes = fs::read(project_root().join(SYNTHETIC_GENERATION_FIXTURE_PATH))
+            .expect("read committed fixture");
+        let mutation_index = bytes.len() / 2;
+        bytes[mutation_index] ^= 1;
+        fs::write(&fixture_path, bytes).expect("write mutated fixture");
+
+        let error = load_generation_fixture(&root, Path::new(SYNTHETIC_GENERATION_FIXTURE_PATH))
+            .expect_err("same-path modified fixture must be rejected");
+        assert!(error.contains("whole-file identity"));
+
+        fs::remove_file(fixture_path).expect("remove mutated fixture");
+        fs::remove_dir(root.join("fixtures/mlx")).expect("remove fixture directory");
+        fs::remove_dir(root.join("fixtures")).expect("remove fixtures directory");
+        fs::remove_dir(root).expect("remove fixture root");
+    }
+
+    #[test]
+    fn synthetic_generation_rejects_omitted_or_mismatched_eos() {
+        let (fixture, fixture_sha256) = load_generation_fixture(
+            &project_root(),
+            Path::new(SYNTHETIC_GENERATION_FIXTURE_PATH),
+        )
+        .expect("fixture loads");
+        for eos_token_id in [None, Some(9_u32)] {
+            let command = SyntheticGenerationCommand {
+                fixture: PathBuf::from(SYNTHETIC_GENERATION_FIXTURE_PATH),
+                prompt_token_ids: vec![1, 2],
+                max_new_tokens: 3,
+                eos_token_id,
+                cancel_before: false,
+                cancel_after_step: None,
+            };
+            assert!(
+                execute_synthetic_generation(&fixture, &fixture_sha256, &command)
+                    .expect_err("omitted or mismatched EOS must be rejected")
+                    .contains("EOS token")
+            );
+        }
     }
 
     #[test]
