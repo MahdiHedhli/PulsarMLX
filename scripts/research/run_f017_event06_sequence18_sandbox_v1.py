@@ -19,6 +19,31 @@ from f017_event06_storage_authority_v1 import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
+HISTORICAL_DAG_COMMIT = "9bfe3c0af88d774df15d595389f7f2778cea7806"
+HISTORICAL_BLOB_PATH = "scripts/research/f017_event06_readiness_authority_v3.py"
+
+HISTORICAL_PREFLIGHT = r'''
+import json
+import os
+from pathlib import Path
+
+from f017_historical_object_preflight_v1 import (
+    preflight_historical_object,
+    write_diagnostic,
+)
+
+root = Path(os.environ["PULSARMLX_F017_HISTORY_ROOT"])
+destination = Path(os.environ["PULSARMLX_F017_HISTORY_DIAGNOSTIC"])
+result = preflight_historical_object(
+    root,
+    os.environ["PULSARMLX_F017_HISTORY_COMMIT"],
+    os.environ["PULSARMLX_F017_HISTORY_PATH"],
+    environment=os.environ,
+)
+write_diagnostic(destination, result)
+print(json.dumps({"result": result["result"]}, sort_keys=True))
+raise SystemExit(0 if result["result"] == "PASS" else 1)
+'''
 
 
 def _allow(operation: str, kind: str, path: Path | str) -> str:
@@ -85,6 +110,7 @@ def run() -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="f017-seq18-sandbox-", dir="/private/tmp") as raw:
         graph_root = Path(raw)
         profile, rule_ids = _profile(graph_root)
+        diagnostic_path = graph_root / "historical-object-diagnostic.json"
         fixed = fixed_live_registry_root()
         pre_exists = os.path.lexists(fixed)
         probe = subprocess.run(
@@ -94,15 +120,39 @@ def run() -> dict[str, object]:
         post_probe_exists = os.path.lexists(fixed)
         if probe.returncode == 0 or post_probe_exists:
             raise RuntimeError("independent fixed-root denial probe failed")
-        output = graph_root / "qualification.json"
-        stderr_path = graph_root / "child.stderr"
         environment = {
             "TMPDIR": str(graph_root),
             "PYTHONPATH": os.pathsep.join((
                 str(ROOT / "scripts/research"),
                 str(ROOT / ".venv/lib/python3.13/site-packages"),
             )),
+            "PULSARMLX_MODEL_GGUF": "",
+            "PULSARMLX_F017_HISTORY_ROOT": str(ROOT),
+            "PULSARMLX_F017_HISTORY_COMMIT": HISTORICAL_DAG_COMMIT,
+            "PULSARMLX_F017_HISTORY_PATH": HISTORICAL_BLOB_PATH,
+            "PULSARMLX_F017_HISTORY_DIAGNOSTIC": str(diagnostic_path),
         }
+        preflight = subprocess.run(
+            [
+                "/usr/bin/sandbox-exec", "-p", profile, str(Path(sys.executable).resolve()),
+                "-c", HISTORICAL_PREFLIGHT,
+            ],
+            cwd=ROOT,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if preflight.returncode != 0:
+            raise RuntimeError(
+                "historical object preflight failed "
+                f"exit {preflight.returncode}, "
+                f"stdout_bytes={len(preflight.stdout)}, "
+                f"stdout_sha256={hashlib.sha256(preflight.stdout).hexdigest()}, "
+                f"stderr_bytes={len(preflight.stderr)}, "
+                f"stderr_sha256={hashlib.sha256(preflight.stderr).hexdigest()}"
+            )
+        output = graph_root / "qualification.json"
+        stderr_path = graph_root / "child.stderr"
         with stderr_path.open("wb") as stderr:
             child = subprocess.Popen(
                 [
@@ -141,10 +191,13 @@ def run() -> dict[str, object]:
                     checkpoint_filename_mentions += ".gguf" in listing.lower()
                 time.sleep(0.02)
             exit_status = child.wait()
+        diagnostic_raw = diagnostic_path.read_bytes() if diagnostic_path.is_file() else b""
         if exit_status != 0:
             diagnostic = stderr_path.read_text(encoding="utf-8", errors="replace")[-1000:]
             raise RuntimeError(
                 f"sandboxed qualification child exit {exit_status}: {diagnostic}"
+                f" historical_preflight_bytes={len(diagnostic_raw)}"
+                f" historical_preflight_sha256={hashlib.sha256(diagnostic_raw).hexdigest()}"
             )
         qualification = json.loads(output.read_text(encoding="utf-8"))
         post_exists = os.path.lexists(fixed)
@@ -158,6 +211,14 @@ def run() -> dict[str, object]:
             "denial_probe_exit_status": probe.returncode,
             "denial_probe_stderr_sha256": hashlib.sha256(probe.stderr).hexdigest(),
             "denial_probe_fixed_root_created": post_probe_exists,
+            "historical_preflight_exit_status": preflight.returncode,
+            "historical_preflight_stdout_bytes": len(preflight.stdout),
+            "historical_preflight_stdout_sha256": hashlib.sha256(preflight.stdout).hexdigest(),
+            "historical_preflight_stderr_bytes": len(preflight.stderr),
+            "historical_preflight_stderr_sha256": hashlib.sha256(preflight.stderr).hexdigest(),
+            "historical_preflight_bytes": len(diagnostic_raw),
+            "historical_preflight_sha256": hashlib.sha256(diagnostic_raw).hexdigest(),
+            "historical_preflight": json.loads(diagnostic_raw.decode("utf-8")),
             "child_exit_status": exit_status,
             "child_identity": "GRAPH_OWNED_SANDBOXED_QUALIFICATION",
             "observed_process_count": len(observed_pids),
