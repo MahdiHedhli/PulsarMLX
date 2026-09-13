@@ -13,12 +13,14 @@ use mlx_backend::router::{
     ROUTER_TENSOR_BYTES,
 };
 use mlx_backend::{
-    frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
+    frozen_qwen_model_memory_budget, inspect_external_qwen_model, parse_qwen3moe_synthetic_fixture,
+    run_qwen3moe_synthetic_generation_with_cancel_after_step, validate_device_smoke,
     CleanupOutcome, DeviceHello, DeviceProbe, ExternalModelInspection, ModelSliceRequest,
-    ModelSliceResult, RouterRequest, RouterResult, SyntheticMoeRequest, TensorFixtureRequest,
-    WorkerClient, WorkerConfig, WorkerError, WorkerTimeouts, MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID,
-    PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID, QWEN_REVISION,
-    QWEN_SHA256, ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID,
+    ModelSliceResult, Qwen3MoeSyntheticFixture, RouterRequest, RouterResult, SyntheticMoeRequest,
+    TensorFixtureRequest, WorkerClient, WorkerConfig, WorkerError, WorkerTimeouts,
+    MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID, PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES,
+    QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256, ROUTER_SINGLE_ROW_CASE_ID,
+    ROUTER_TWO_ROW_CASE_ID,
 };
 use serde::de::{DeserializeOwned, Error as DeError, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -47,6 +49,20 @@ const SYNTHETIC_GENERATION_EXCLUSIONS: [&str; 3] = [
     "synthetic_fixture_only",
     "No model, checkpoint, tokenizer, MLX device, serving, or release claim is made.",
     "A separately authorized model adapter must supply verified logits and its own evidence.",
+];
+const QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH: &str =
+    "fixtures/mlx/qwen3moe-ffn-generation-v1.json";
+const QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_SHA256: &str =
+    "c86a460a372a1d6fdfaa0f0e743b688fd1c79e93cc88ac16981fa59d1a706d85";
+const QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS: [&str; 8] = [
+    "checkpoint payload bytes",
+    "Q8_0 decode",
+    "external path/FD/range reads",
+    "MLX execution",
+    "attention/KV/full 48-layer forward",
+    "tokenizer",
+    "serving or benchmark",
+    "checkpoint qualification or production readiness",
 ];
 const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
 const MAX_GENERATION_OUTPUT_BYTES: usize = 64 * 1024;
@@ -161,18 +177,47 @@ const ROUTER_NEGATIVE_EXPECTATIONS: [(&str, &str, &str, &str); 7] = [
 
 fn main() {
     let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    let qwen3moe_synthetic_generation = arguments
+        .first()
+        .and_then(|value| value.to_str())
+        .is_some_and(|command| command == "qwen3moe-synthetic-generation");
     let synthetic_generation = arguments
         .first()
         .and_then(|value| value.to_str())
         .is_some_and(|command| command == "synthetic-generation");
     if let Err(error) = run(arguments) {
-        if synthetic_generation {
+        if qwen3moe_synthetic_generation {
+            eprintln!("{}", qwen3moe_synthetic_generation_error(&error));
+        } else if synthetic_generation {
             eprintln!("{}", synthetic_generation_error(&error));
         } else {
             eprintln!("pulsar-mlx: {error}");
         }
         std::process::exit(2);
     }
+}
+
+fn qwen3moe_synthetic_generation_error(error: &str) -> String {
+    let diagnostic = ContractError::new(
+        ErrorCategory::InvalidEvidence,
+        "qwen3moe_synthetic_generation_rejected",
+        error,
+    );
+    serde_json::to_string(&json!({
+        "schema_version": 1,
+        "validation": "qwen3moe-synthetic-ffn-greedy-v1",
+        "status": "rejected",
+        "evidence_level": "synthetic_fixture_only",
+        "model_free": true,
+        "error": {
+            "code": diagnostic.code(),
+            "message": diagnostic.message(),
+        },
+        "evaluated": false,
+        "fallback_used": false,
+        "exclusions": QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+    .expect("Qwen synthetic generation rejection is JSON-serializable")
 }
 
 fn synthetic_generation_error(error: &str) -> String {
@@ -205,6 +250,9 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
         Some("synthetic-generation") => {
             run_synthetic_generation(parse_synthetic_generation(arguments)?)
         }
+        Some("qwen3moe-synthetic-generation") => run_qwen3moe_synthetic_generation_command(
+            parse_qwen3moe_synthetic_generation(arguments)?,
+        ),
         Some("inspect-model") => {
             run_inspect_model(parse_external_model_command(arguments, "inspect-model")?)
         }
@@ -331,7 +379,7 @@ fn parse_device_smoke(arguments: Vec<OsString>) -> Result<DeviceSmokeCommand, St
 }
 
 fn usage() -> String {
-    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx synthetic-generation --fixture fixtures/mlx/generation-v1.json --prompt-ids ID[,ID...] --max-new-tokens N [--eos-token-id ID] [--cancel-before | --cancel-after-step N]\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx inspect-router --model ABSOLUTE_EXTERNAL_GGUF --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router-fixtures --manifest fixtures/research/router-v1/manifest.json --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router --model ABSOLUTE_EXTERNAL_GGUF --oracle ABSOLUTE_EXTERNAL_JSON --evidence-dir ABSOLUTE_EXTERNAL_DIRECTORY".to_owned()
+    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx synthetic-generation --fixture fixtures/mlx/generation-v1.json --prompt-ids ID[,ID...] --max-new-tokens N [--eos-token-id ID] [--cancel-before | --cancel-after-step N]\n       pulsar-mlx qwen3moe-synthetic-generation --fixture fixtures/mlx/qwen3moe-ffn-generation-v1.json --prompt-ids ID[,ID...] --max-new-tokens N --eos-token-id ID [--cancel-before | --cancel-after-step N]\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx inspect-router --model ABSOLUTE_EXTERNAL_GGUF --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router-fixtures --manifest fixtures/research/router-v1/manifest.json --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router --model ABSOLUTE_EXTERNAL_GGUF --oracle ABSOLUTE_EXTERNAL_JSON --evidence-dir ABSOLUTE_EXTERNAL_DIRECTORY".to_owned()
 }
 
 const ROUTER_FIXTURE_MANIFEST: &str = "fixtures/research/router-v1/manifest.json";
@@ -8640,6 +8688,231 @@ struct SyntheticGenerationCommand {
     eos_token_id: Option<u32>,
     cancel_before: bool,
     cancel_after_step: Option<u32>,
+}
+
+struct Qwen3MoeSyntheticGenerationCommand {
+    fixture: PathBuf,
+    prompt_token_ids: Vec<u32>,
+    max_new_tokens: u32,
+    eos_token_id: u32,
+    cancel_before: bool,
+    cancel_after_step: Option<u32>,
+}
+
+fn parse_qwen3moe_synthetic_generation(
+    arguments: Vec<OsString>,
+) -> Result<Qwen3MoeSyntheticGenerationCommand, String> {
+    let values = arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.first().map(String::as_str) != Some("qwen3moe-synthetic-generation") {
+        return Err(usage());
+    }
+
+    let mut fixture = None;
+    let mut prompt_token_ids = None;
+    let mut max_new_tokens = None;
+    let mut eos_token_id = None;
+    let mut cancel_before = false;
+    let mut cancel_after_step = None;
+    let mut index = 1;
+    while index < values.len() {
+        let key = values[index].as_str();
+        if key == "--cancel-before" {
+            if cancel_before {
+                return Err(usage());
+            }
+            cancel_before = true;
+            index += 1;
+            continue;
+        }
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match key {
+            "--fixture" if fixture.is_none() => fixture = Some(PathBuf::from(value)),
+            "--prompt-ids" if prompt_token_ids.is_none() => {
+                prompt_token_ids = Some(parse_prompt_token_ids(&value)?)
+            }
+            "--max-new-tokens" if max_new_tokens.is_none() => {
+                max_new_tokens = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--max-new-tokens must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--eos-token-id" if eos_token_id.is_none() => {
+                eos_token_id = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--eos-token-id must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--cancel-after-step" if cancel_after_step.is_none() => {
+                cancel_after_step = Some(value.parse::<u32>().map_err(|_| {
+                    "--cancel-after-step must be an unsigned integer".to_owned()
+                })?)
+            }
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    Ok(Qwen3MoeSyntheticGenerationCommand {
+        fixture: fixture.ok_or_else(usage)?,
+        prompt_token_ids: prompt_token_ids.ok_or_else(usage)?,
+        max_new_tokens: max_new_tokens.ok_or_else(usage)?,
+        eos_token_id: eos_token_id.ok_or_else(usage)?,
+        cancel_before,
+        cancel_after_step,
+    })
+}
+
+fn load_qwen3moe_synthetic_fixture(
+    project_root: &Path,
+    requested_path: &Path,
+) -> Result<(Qwen3MoeSyntheticFixture, String), String> {
+    if requested_path != Path::new(QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH) {
+        return Err("qwen3moe synthetic generation accepts only the committed fixture".to_owned());
+    }
+    let path = project_root.join(QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH);
+    let metadata = fs::symlink_metadata(&path)
+        .map_err(|_| "the committed Qwen synthetic fixture is unavailable".to_owned())?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(
+            "the committed Qwen synthetic fixture must be a regular non-link file".to_owned(),
+        );
+    }
+    let bytes = fs::read(&path)
+        .map_err(|_| "the committed Qwen synthetic fixture could not be read".to_owned())?;
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the Qwen synthetic fixture violates its byte bound".to_owned());
+    }
+    let sha256 = sha256_bytes(&bytes);
+    if sha256 != QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_SHA256 {
+        return Err(
+            "the committed Qwen synthetic fixture differs from its frozen whole-file identity"
+                .to_owned(),
+        );
+    }
+    let fixture = parse_qwen3moe_synthetic_fixture(&bytes)
+        .map_err(|error| format!("Qwen synthetic fixture rejected: {error}"))?;
+    Ok((fixture, sha256))
+}
+
+fn execute_qwen3moe_synthetic_generation(
+    fixture: &Qwen3MoeSyntheticFixture,
+    fixture_sha256: &str,
+    command: &Qwen3MoeSyntheticGenerationCommand,
+) -> Result<Value, String> {
+    let request = GenerationRequest::try_new(
+        command.prompt_token_ids.clone(),
+        command.max_new_tokens,
+        Some(command.eos_token_id),
+    )
+    .map_err(|error| format!("generation request rejected: {error}"))?;
+    if command.cancel_before && command.cancel_after_step.is_some() {
+        return Err("cancellation controls are mutually exclusive".to_owned());
+    }
+    if command.cancel_after_step == Some(0)
+        || command
+            .cancel_after_step
+            .is_some_and(|step| step > request.max_new_tokens())
+    {
+        return Err("cancel-after-step must name a requested generation step".to_owned());
+    }
+
+    let cancellation = CancellationToken::new();
+    if command.cancel_before {
+        cancellation.cancel();
+    }
+    let result = run_qwen3moe_synthetic_generation_with_cancel_after_step(
+        fixture,
+        &request,
+        &cancellation,
+        command.cancel_after_step,
+    )
+    .map_err(|error| format!("synthetic Qwen generation rejected: {error}"))?;
+    let steps = result
+        .steps
+        .iter()
+        .map(|step| {
+            let topk = step
+                .topk
+                .iter()
+                .map(|(token_id, score)| json!({ "token_id": token_id, "score": score }))
+                .collect::<Vec<_>>();
+            json!({
+                "step": step.step,
+                "position": step.position,
+                "normalized_input": step.normalized_input,
+                "router_logits": step.router_logits,
+                "full_softmax_probabilities": step.full_softmax_probabilities,
+                "selected_expert_ids": step.selected_expert_ids,
+                "selected_probabilities": step.selected_probabilities,
+                "normalized_selected_probabilities": step.normalized_selected_probabilities,
+                "expert_outputs": step.expert_outputs,
+                "routed_aggregate": step.routed_aggregate,
+                "residual": step.residual,
+                "logits": step.logits,
+                "topk": topk,
+                "argmax": step.argmax,
+            })
+        })
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "schema_version": 1,
+        "validation": "qwen3moe-synthetic-ffn-greedy-v1",
+        "status": "passed",
+        "evidence_level": "synthetic_fixture_only",
+        "model_free": true,
+        "fixture_identity": {
+            "fixture_id": result.fixture_id,
+            "contract_id": result.contract_id,
+            "sha256": fixture_sha256,
+        },
+        "target_dimensions": fixture.target_dimensions,
+        "execution_dimensions": fixture.execution_dimensions,
+        "operation_order": fixture.operation_order,
+        "routing": fixture.routing,
+        "request": {
+            "prompt_token_ids": result.prompt_token_ids(),
+            "max_new_tokens": request.max_new_tokens(),
+            "eos_token_id": request.eos_token_id(),
+        },
+        "prompt_token_ids": result.prompt_token_ids(),
+        "generated_token_ids": result.generated_token_ids(),
+        "full_token_ids": result.full_token_ids(),
+        "steps": steps,
+        "step_count": result.steps.len(),
+        "termination_reason": result.termination_reason().as_str(),
+        "evaluated": result.evaluated,
+        "fallback_used": result.fallback_used,
+        "exclusions": QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+}
+
+fn run_qwen3moe_synthetic_generation_command(
+    command: Qwen3MoeSyntheticGenerationCommand,
+) -> Result<(), String> {
+    let project_root = project_root();
+    let (fixture, fixture_sha256) =
+        load_qwen3moe_synthetic_fixture(&project_root, &command.fixture)?;
+    let evidence = execute_qwen3moe_synthetic_generation(&fixture, &fixture_sha256, &command)?;
+    let encoded = serde_json::to_vec(&evidence)
+        .map_err(|_| "Qwen synthetic generation evidence could not be encoded".to_owned())?;
+    if encoded.len() > MAX_GENERATION_OUTPUT_BYTES {
+        return Err("Qwen synthetic generation evidence exceeds its output bound".to_owned());
+    }
+    println!(
+        "{}",
+        String::from_utf8(encoded)
+            .map_err(|_| "Qwen synthetic generation evidence is not UTF-8".to_owned())?
+    );
+    Ok(())
 }
 
 fn parse_synthetic_generation(
