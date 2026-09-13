@@ -3,6 +3,10 @@
 //! This module validates caller-observed descriptors and can inspect one
 //! explicit external artifact read-only. It never acquires or executes a model.
 
+use crate::qwen3moe::{
+    admission_input_from_gguf, admit_qwen3moe_adapter, Qwen3MoeAdapterDescriptor,
+    Qwen3MoeArtifactBinding,
+};
 use crate::router::{
     admit_router_tensor, RouterTensorDescriptor, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH,
     ROUTER_TENSOR_BYTES, ROUTER_TENSOR_ELEMENTS, ROUTER_TENSOR_NAME, ROUTER_TOP_K,
@@ -202,6 +206,7 @@ pub struct ExternalModelInspection {
     f32_tensor_count: usize,
     q8_0_tensor_count: usize,
     encoded_slice_sha256: String,
+    qwen3moe_adapter: Qwen3MoeAdapterDescriptor,
 }
 
 /// Read-only, path-free observation of the exact layer-0 router tensor.
@@ -294,6 +299,12 @@ impl ExternalModelInspection {
 
     pub fn encoded_slice_sha256(&self) -> &str {
         &self.encoded_slice_sha256
+    }
+
+    /// The typed, complete Qwen3MoE metadata/tensor-role map admitted from
+    /// the same already-verified GGUF header. No tensor payload is decoded.
+    pub fn qwen3moe_adapter(&self) -> &Qwen3MoeAdapterDescriptor {
+        &self.qwen3moe_adapter
     }
 
     /// Inspect and admit the complete F32 layer-0 router range from the same
@@ -652,6 +663,16 @@ pub fn inspect_external_qwen_model(
     }
 
     let gguf = parse_bounded_header(&file)?;
+    let qwen3moe_adapter = admit_qwen3moe_adapter(admission_input_from_gguf(
+        &gguf,
+        Qwen3MoeArtifactBinding {
+            repository_id: REPOSITORY_ID.to_owned(),
+            revision: REVISION.to_owned(),
+            filename: FILENAME.to_owned(),
+            size_bytes: FILE_BYTES,
+            sha256: SHA256.to_owned(),
+        },
+    )?)?;
     let (metadata_descriptor, tensor_descriptor, f32_count, q8_0_count) =
         inspect_gguf_inventory(&gguf, metadata.len())?;
     let encoded_slice_sha256 = sha256_exact_range(
@@ -698,6 +719,7 @@ pub fn inspect_external_qwen_model(
         f32_tensor_count: f32_count,
         q8_0_tensor_count: q8_0_count,
         encoded_slice_sha256,
+        qwen3moe_adapter,
     })
 }
 

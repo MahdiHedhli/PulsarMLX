@@ -4,6 +4,7 @@ pub mod client;
 pub mod device;
 pub mod model;
 pub mod protocol;
+pub mod qwen3moe;
 pub mod router;
 
 pub use backend::DeviceState;
@@ -29,4 +30,12 @@ pub use protocol::{
     TensorFixtureComparison, TensorFixtureMemoryGauges, TensorFixtureRequest, TensorFixtureResult,
     WorkerError, WorkerErrorKind, WorkerHello, MODEL_SLICE_ID, ROUTER_SINGLE_ROW_CASE_ID,
     ROUTER_TWO_ROW_CASE_ID,
+};
+pub use qwen3moe::{
+    admit_qwen3moe_adapter, Qwen3MoeAdapterDescriptor, Qwen3MoeAdmissionInput,
+    Qwen3MoeArtifactBinding, Qwen3MoeMetadata, Qwen3MoeTensorDescriptor, Qwen3MoeTensorRole,
+    QWEN3MOE_ADAPTER_CONTRACT_ID, QWEN3MOE_EXPERT_COUNT, QWEN3MOE_EXPERT_FFN_WIDTH,
+    QWEN3MOE_FILENAME, QWEN3MOE_FILE_BYTES, QWEN3MOE_HIDDEN_WIDTH, QWEN3MOE_LAYER_COUNT,
+    QWEN3MOE_REPOSITORY_ID, QWEN3MOE_REVISION, QWEN3MOE_SHA256, QWEN3MOE_TENSOR_COUNT,
+    QWEN3MOE_TOP_K,
 };
