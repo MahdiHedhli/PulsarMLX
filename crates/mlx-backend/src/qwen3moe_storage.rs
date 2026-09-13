@@ -35,6 +35,7 @@ const MAX_SHAPE_RANK: usize = 8;
 // This deliberately bounded lane is for deterministic synthetic fixtures only;
 // real checkpoint qualification is outside this seam.
 const MAX_SYNTHETIC_DECODE_ELEMENTS: u64 = 1_048_576;
+const MAX_SYNTHETIC_ENCODED_BYTES: u64 = 1 << 20;
 const DECODE_CHUNK_BLOCKS: usize = 8;
 
 /// An explicit decoder contract/version selected before storage work begins.
@@ -454,6 +455,13 @@ fn validate_request_tensor(
             ErrorCategory::InvalidTensor,
             "qwen3moe_encoded_size_mismatch",
             "tensor encoded byte count does not match its Q8_0 shape",
+        ));
+    }
+    if expected_encoded_bytes >= MAX_SYNTHETIC_ENCODED_BYTES {
+        return Err(storage_error(
+            ErrorCategory::ResourceLimit,
+            "qwen3moe_synthetic_slab_bound_exceeded",
+            "encoded slab exceeds the bounded synthetic storage limit",
         ));
     }
     let expected_reader_shape = q8_reader_shape(&tensor.gguf_shape)?;
@@ -905,7 +913,10 @@ mod tests {
             QWEN3MOE_F32_HASH_ALGORITHM
         );
         assert_eq!((result.data().as_ptr() as usize) % result.alignment(), 0);
-        assert_eq!(result.content_sha256().len(), 64);
+        assert_eq!(
+            result.content_sha256(),
+            "ec80aebc6d51aa564b3ddf7f37845105ad576b3cfa5e8eaca2fa286e10e6194d"
+        );
         assert_eq!(store.reads.load(Ordering::Acquire), 1);
     }
 
@@ -1063,6 +1074,28 @@ mod tests {
                 .code(),
             "tensor_range_overflow"
         );
+    }
+
+    #[test]
+    fn synthetic_encoded_slab_is_bounded_before_allocation_or_store_read() {
+        let encoded_bytes = 31_000 * QWEN3MOE_Q8_0_BLOCK_BYTES;
+        let descriptor = descriptor(vec![32 * 31_000], encoded_bytes);
+        let request = request(&descriptor, CancellationToken::new());
+        let mut catalog = catalog();
+        catalog.tensor.range.length = encoded_bytes;
+        catalog.tensor.shape = vec![encoded_bytes];
+        let reads = Arc::new(AtomicUsize::new(0));
+        let store = FixtureStore {
+            encoded: Vec::new(),
+            reads: reads.clone(),
+            cancel_after_read: None,
+            reported_length: None,
+        };
+
+        let error = decode_qwen3moe_tensor(&request, &catalog, &store).unwrap_err();
+
+        assert_eq!(error.code(), "qwen3moe_synthetic_slab_bound_exceeded");
+        assert_eq!(reads.load(Ordering::Acquire), 0);
     }
 
     #[test]
