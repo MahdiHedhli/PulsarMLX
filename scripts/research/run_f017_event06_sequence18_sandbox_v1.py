@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -21,6 +22,28 @@ from f017_event06_storage_authority_v1 import (
 ROOT = Path(__file__).resolve().parents[2]
 HISTORICAL_DAG_COMMIT = "9bfe3c0af88d774df15d595389f7f2778cea7806"
 HISTORICAL_BLOB_PATH = "scripts/research/f017_event06_readiness_authority_v3.py"
+_SHA1 = re.compile(r"[0-9a-f]{40}\Z")
+_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
+MAX_FAILURE_ENVELOPE_BYTES = 16 * 1024
+MAX_PREFLIGHT_DIAGNOSTIC_BYTES = 64 * 1024
+_PREFLIGHT_SCHEMA = "pulsarmlx.f017.historical-object-preflight/1.0.0"
+_PREFLIGHT_COMMANDS = (
+    "git_version",
+    "git_dir",
+    "git_common_dir",
+    "git_object_path",
+    "shallow_repository",
+    "object_format",
+    "promisor_remote",
+    "partial_clone_filter",
+    "revision_check",
+    "path_check",
+    "cat_file_type",
+    "cat_file_exists",
+    "show",
+    "xcode_select",
+    "git_exec_path",
+)
 
 HISTORICAL_PREFLIGHT = r'''
 import json
@@ -104,21 +127,130 @@ def _profile(graph_root: Path) -> tuple[str, list[str]]:
     return "".join(rules), [f"SBPL-{index:03d}" for index in range(len(rules))]
 
 
+def _stream_bytes(value: object) -> bytes:
+    return value if isinstance(value, bytes) else b""
+
+
+def _stream_metadata(value: object) -> tuple[int, str]:
+    raw = _stream_bytes(value)
+    return len(raw), hashlib.sha256(raw).hexdigest()
+
+
+def _safe_int(value: object, *, lower: int = 0) -> int | None:
+    if type(value) is not int or value < lower or value > (2**63 - 1):
+        return None
+    return value
+
+
+def _safe_hash(value: object, pattern: re.Pattern[str]) -> str | None:
+    return value if isinstance(value, str) and pattern.fullmatch(value) else None
+
+
+def _project_command_observation(value: object) -> dict[str, object] | None:
+    if not isinstance(value, dict):
+        return None
+    returncode = value.get("returncode")
+    if type(returncode) is not int or returncode < -255 or returncode > 255:
+        return None
+    stdout_bytes = _safe_int(value.get("stdout_bytes"))
+    stderr_bytes = _safe_int(value.get("stderr_bytes"))
+    stdout_sha256 = _safe_hash(value.get("stdout_sha256"), _SHA256)
+    stderr_sha256 = _safe_hash(value.get("stderr_sha256"), _SHA256)
+    if None in (stdout_bytes, stderr_bytes, stdout_sha256, stderr_sha256):
+        return None
+    return {
+        "returncode": returncode,
+        "stdout_bytes": stdout_bytes,
+        "stdout_sha256": stdout_sha256,
+        "stderr_bytes": stderr_bytes,
+        "stderr_sha256": stderr_sha256,
+    }
+
+
+def _project_preflight_diagnostic(candidate: object) -> dict[str, object] | None:
+    """Project only typed, path-free fields from the child diagnostic."""
+    if not isinstance(candidate, dict) or candidate.get("schema") != _PREFLIGHT_SCHEMA:
+        return None
+    result = candidate.get("result")
+    revision = _safe_hash(candidate.get("revision"), _SHA1)
+    target = candidate.get("relative_path")
+    commands = candidate.get("commands")
+    if (
+        result not in {"PASS", "FAIL"}
+        or revision is None
+        or not isinstance(target, str)
+        or not target
+        or target.startswith("/")
+        or "\\" in target
+        or any(part in {"", ".", ".."} for part in target.split("/"))
+        or not isinstance(commands, dict)
+    ):
+        return None
+    if not all(type(candidate.get(name)) is bool for name in (
+        "model_environment_empty", "required_checks_clean", "historical_blob_is_blob"
+    )):
+        return None
+    projected_commands: dict[str, dict[str, object]] = {}
+    for name in _PREFLIGHT_COMMANDS:
+        if name in commands:
+            observation = _project_command_observation(commands[name])
+            if observation is None:
+                return None
+            projected_commands[name] = observation
+    if "show" not in projected_commands:
+        return None
+    try:
+        target_sha256 = hashlib.sha256(target.encode("utf-8")).hexdigest()
+    except UnicodeEncodeError:
+        return None
+    return {
+        "schema": _PREFLIGHT_SCHEMA,
+        "result": result,
+        "revision": revision,
+        "target_sha256": target_sha256,
+        "model_environment_empty": candidate["model_environment_empty"],
+        "required_checks_clean": candidate["required_checks_clean"],
+        "historical_blob_is_blob": candidate["historical_blob_is_blob"],
+        "commands": projected_commands,
+        "failed_command_names": [
+            name for name, observation in projected_commands.items()
+            if observation["returncode"] != 0 or observation["stderr_bytes"] != 0
+        ],
+    }
+
+
+def _load_preflight_diagnostic(
+    diagnostic_path: Path,
+) -> tuple[str, dict[str, object] | None]:
+    """Read a bounded diagnostic and never retain its raw or path-bearing fields."""
+    try:
+        if diagnostic_path.is_symlink() or not diagnostic_path.is_file():
+            return "MISSING", None
+        with diagnostic_path.open("rb") as handle:
+            raw = handle.read(MAX_PREFLIGHT_DIAGNOSTIC_BYTES + 1)
+    except OSError:
+        return "MISSING", None
+    if len(raw) > MAX_PREFLIGHT_DIAGNOSTIC_BYTES:
+        return "OVERSIZE", None
+    try:
+        candidate = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError):
+        return "MALFORMED", None
+    projected = _project_preflight_diagnostic(candidate)
+    return ("VALID", projected) if projected is not None else ("MALFORMED", None)
+
+
 def _write_preflight_failure(
     output: Path | str | None,
     preflight: subprocess.CompletedProcess[bytes],
     diagnostic_path: Path,
 ) -> None:
-    """Retain safe preflight evidence before the temporary root is removed."""
-    if output is None:
-        return
-    diagnostic: dict[str, object] | None = None
-    try:
-        candidate = json.loads(diagnostic_path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-        candidate = None
-    if isinstance(candidate, dict):
-        diagnostic = candidate
+    """Emit one bounded safe log line before the temporary root is removed."""
+    stdout_bytes, stdout_sha256 = _stream_metadata(preflight.stdout)
+    stderr_bytes, stderr_sha256 = _stream_metadata(preflight.stderr)
+    diagnostic_status, diagnostic = _load_preflight_diagnostic(diagnostic_path)
+    if diagnostic is not None and diagnostic["result"] != "FAIL":
+        diagnostic_status, diagnostic = "MALFORMED", None
     envelope = {
         "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-sandbox-failure/1.0.0",
         "mechanism": "MACOS_SANDBOX_EXEC_DEFAULT_DENY_PLUS_OUT_OF_PROCESS_MONITOR",
@@ -126,14 +258,27 @@ def _write_preflight_failure(
         "result": "FAIL",
         "failure_stage": "HISTORICAL_PREFLIGHT",
         "historical_preflight_exit_status": preflight.returncode,
-        "historical_preflight_stdout_bytes": len(preflight.stdout),
-        "historical_preflight_stdout_sha256": hashlib.sha256(preflight.stdout).hexdigest(),
-        "historical_preflight_stderr_bytes": len(preflight.stderr),
-        "historical_preflight_stderr_sha256": hashlib.sha256(preflight.stderr).hexdigest(),
+        "historical_preflight_stdout_bytes": stdout_bytes,
+        "historical_preflight_stdout_sha256": stdout_sha256,
+        "historical_preflight_stderr_bytes": stderr_bytes,
+        "historical_preflight_stderr_sha256": stderr_sha256,
+        "historical_preflight_diagnostic_status": diagnostic_status,
         "historical_preflight_diagnostic_available": diagnostic is not None,
         "historical_preflight": diagnostic,
     }
-    Path(output).write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    serialized = json.dumps(envelope, sort_keys=True, separators=(",", ":"))
+    if len(serialized.encode("utf-8")) > MAX_FAILURE_ENVELOPE_BYTES:
+        envelope["historical_preflight_diagnostic_status"] = "OVERSIZE"
+        envelope["historical_preflight_diagnostic_available"] = False
+        envelope["historical_preflight"] = None
+        serialized = json.dumps(envelope, sort_keys=True, separators=(",", ":"))
+    try:
+        sys.stderr.write(serialized + "\n")
+        sys.stderr.flush()
+    except OSError:
+        pass
+    if output is not None:
+        Path(output).write_text(serialized + "\n", encoding="utf-8")
 
 
 def run(output: Path | str | None = None) -> dict[str, object]:
