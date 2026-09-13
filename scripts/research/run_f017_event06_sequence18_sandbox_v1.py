@@ -51,11 +51,48 @@ def _allow(operation: str, kind: str, path: Path | str) -> str:
     return f'(allow {operation} ({kind} "{escaped}"))'
 
 
+def _git_common_dir(repository: Path) -> Path:
+    """Resolve Git's common directory from checkout metadata, not config."""
+    git_entry = repository / ".git"
+    if git_entry.is_dir():
+        git_dir = git_entry.resolve(strict=True)
+    else:
+        line = git_entry.read_text(encoding="utf-8").strip()
+        if not line.startswith("gitdir:"):
+            raise RuntimeError("invalid checkout gitdir metadata")
+        git_dir = (git_entry.parent / line.split(":", 1)[1].strip()).resolve(strict=True)
+    commondir = git_dir / "commondir"
+    if commondir.is_file():
+        return (git_dir / commondir.read_text(encoding="utf-8").strip()).resolve(strict=True)
+    return git_dir
+
+
+def _prepare_historical_git_context(repository: Path, graph_root: Path) -> tuple[Path, Path]:
+    """Create a config-free Git dir that shares the checkout's object store."""
+    common_git = _git_common_dir(repository)
+    isolated_git = graph_root / "historical-gitdir"
+    setup_environment = os.environ.copy()
+    setup_environment.update({"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"})
+    subprocess.run(
+        ["git", "init", "--quiet", "--bare", str(isolated_git)],
+        check=True,
+        cwd=graph_root,
+        env=setup_environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    subprocess.run(
+        ["git", "config", "--file", str(isolated_git / "config"), "core.bare", "false"],
+        check=True,
+        env=setup_environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    return isolated_git, common_git
+
+
 def _profile(graph_root: Path) -> tuple[str, list[str]]:
-    common_git = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        cwd=ROOT, check=True, text=True, stdout=subprocess.PIPE,
-    ).stdout.strip()
+    common_git = _git_common_dir(ROOT)
     python_runtime = Path(sys.base_prefix)
     rules = [
         "(version 1)", "(deny default)", "(allow process*)", "(allow sysctl-read)",
@@ -93,7 +130,7 @@ def _profile(graph_root: Path) -> tuple[str, list[str]]:
     # Permit traversal metadata for the exact common-git ancestry without
     # widening file contents beneath the user's home directory.
     ancestors = set()
-    for leaf in (Path(common_git), python_runtime, ROOT):
+    for leaf in (Path(common_git), python_runtime, ROOT, graph_root):
         cursor = leaf
         while cursor != Path("/"):
             ancestors.add(cursor)
@@ -142,6 +179,7 @@ def run(output: Path | str | None = None) -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="f017-seq18-sandbox-", dir="/private/tmp") as raw:
         graph_root = Path(raw)
         profile, rule_ids = _profile(graph_root)
+        isolated_git, common_git = _prepare_historical_git_context(ROOT, graph_root)
         diagnostic_path = graph_root / "historical-object-diagnostic.json"
         fixed = fixed_live_registry_root()
         pre_exists = os.path.lexists(fixed)
@@ -163,6 +201,14 @@ def run(output: Path | str | None = None) -> dict[str, object]:
             "PULSARMLX_F017_HISTORY_COMMIT": HISTORICAL_DAG_COMMIT,
             "PULSARMLX_F017_HISTORY_PATH": HISTORICAL_BLOB_PATH,
             "PULSARMLX_F017_HISTORY_DIAGNOSTIC": str(diagnostic_path),
+            # actions/checkout persists credentials as a local conditional
+            # include.  The historical child is offline and must not parse
+            # that irrelevant include outside the sandbox's read roots.
+            "GIT_DIR": str(isolated_git),
+            "GIT_COMMON_DIR": str(common_git),
+            "GIT_WORK_TREE": str(ROOT),
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
         }
         preflight = subprocess.run(
             [

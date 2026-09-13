@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 from typing import Any
 
 import pytest
@@ -163,6 +164,63 @@ def test_object_store_visibility_denial_fails_closed(tmp_path):
     assert envelope["result"] == "FAIL"
     assert envelope["commands"]["cat_file_exists"]["returncode"] != 0
     assert envelope["commands"]["show"]["stderr_bytes"] > 0
+
+
+def test_sandbox_context_ignores_local_credential_include_without_widening_reads():
+    if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the sandbox custody regression is macOS /usr/bin/sandbox-exec specific")
+
+    with tempfile.TemporaryDirectory(prefix="f017-include-regression-", dir="/private/tmp") as raw:
+        root = Path(raw)
+        graph = root / "graph"
+        graph.mkdir()
+        repository, historical, old, _current = _make_git_repository(graph)
+        denied = root / "denied"
+        denied.mkdir()
+        include = denied / "synthetic-credential.config"
+        include.write_text("[synthetic]\n\tmarker = harmless\n", encoding="utf-8")
+        environment = os.environ.copy()
+        environment.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null"})
+        key = f"includeIf.gitdir:{repository}/.git.path"
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "--local", key, str(include)],
+            check=True,
+            env=environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        isolated_git, common_git = sandbox_runner._prepare_historical_git_context(repository, graph)
+        profile, _rule_ids = sandbox_runner._profile(graph)
+        child_environment = {
+            "PATH": "/usr/bin:/bin",
+            "TMPDIR": str(graph),
+            "GIT_DIR": str(isolated_git),
+            "GIT_COMMON_DIR": str(common_git),
+            "GIT_WORK_TREE": str(repository),
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+        }
+        probes = (
+            ["rev-parse", "--verify", f"{historical}^{{commit}}"],
+            ["cat-file", "-t", f"{historical}:source.py"],
+            ["show", f"{historical}:source.py"],
+        )
+        results = [
+            subprocess.run(
+                ["/usr/bin/sandbox-exec", "-p", profile, "/usr/bin/git", *arguments],
+                cwd=repository,
+                env=child_environment,
+                check=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            for arguments in probes
+        ]
+        assert all(result.returncode == 0 and result.stderr == b"" for result in results), [
+            (result.returncode, result.stdout, result.stderr) for result in results
+        ]
+        assert results[1].stdout == b"blob\n"
+        assert results[2].stdout == old
 
 
 def test_source_drift_and_current_substitution_are_not_accepted(tmp_path):
