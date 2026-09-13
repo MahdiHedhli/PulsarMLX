@@ -13,8 +13,9 @@ use sha2::{Digest, Sha256};
 use std::mem::{align_of, size_of};
 
 use crate::qwen3moe::{
-    Qwen3MoeFullGraphDescriptor, Qwen3MoeTensorDescriptor, Qwen3MoeTensorRole, QWEN3MOE_FILENAME,
-    QWEN3MOE_FILE_BYTES, QWEN3MOE_FULL_GRAPH_CONTRACT_ID, QWEN3MOE_REPOSITORY_ID,
+    admit_qwen3moe_full_graph, Qwen3MoeAdapterDescriptor, Qwen3MoeArtifactBinding,
+    Qwen3MoeFullGraphAdmissionInput, Qwen3MoeFullGraphDescriptor, Qwen3MoeTensorDescriptor,
+    Qwen3MoeTensorRole, QWEN3MOE_ADAPTER_CONTRACT_ID, QWEN3MOE_FULL_GRAPH_CONTRACT_ID,
     QWEN3MOE_REVISION, QWEN3MOE_SHA256,
 };
 
@@ -78,11 +79,24 @@ impl Qwen3MoeDecoderContract {
     }
 }
 
+/// Destination ownership selected before storage access.
+///
+/// This bounded lane admits only Rust-owned output. Caller-owned storage is
+/// deliberately represented so it cannot be silently treated as Rust-owned
+/// until its alignment, size, mutability, lifetime, and release/fence proof
+/// are part of the contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Qwen3MoeDestinationPolicy {
+    RustOwned,
+    CallerOwned,
+}
+
 /// Immutable storage/decode request derived from one retained admitted tensor.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Qwen3MoeStorageRequest {
     checkpoint: CheckpointIdentity,
     tensor: Qwen3MoeTensorDescriptor,
+    destination_policy: Qwen3MoeDestinationPolicy,
     decoder_contract: Qwen3MoeDecoderContract,
     correlation_id: String,
     cancellation: CancellationToken,
@@ -98,10 +112,13 @@ impl Qwen3MoeStorageRequest {
         descriptor: &Qwen3MoeFullGraphDescriptor,
         role: Qwen3MoeTensorRole,
         layer_index: Option<u32>,
+        destination_policy: Qwen3MoeDestinationPolicy,
         decoder_contract: Qwen3MoeDecoderContract,
         correlation_id: impl Into<String>,
         cancellation: CancellationToken,
     ) -> Result<Self, ContractError> {
+        validate_destination_policy(destination_policy)?;
+        descriptor.verify_admission_proof()?;
         if descriptor.contract_id != QWEN3MOE_FULL_GRAPH_CONTRACT_ID {
             return Err(storage_error(
                 ErrorCategory::InvalidModel,
@@ -109,19 +126,16 @@ impl Qwen3MoeStorageRequest {
                 "storage requires the admitted Qwen3MoE full-graph contract",
             ));
         }
-        if descriptor.artifact.repository_id != QWEN3MOE_REPOSITORY_ID
-            || descriptor.artifact.revision != QWEN3MOE_REVISION
-            || descriptor.artifact.filename != QWEN3MOE_FILENAME
-            || descriptor.artifact.size_bytes != QWEN3MOE_FILE_BYTES
-            || descriptor.artifact.sha256 != QWEN3MOE_SHA256
-        {
-            return Err(storage_error(
-                ErrorCategory::InvalidModel,
-                "qwen3moe_artifact_identity_mismatch",
-                "storage requires the exact admitted Qwen3MoE artifact identity",
-            ));
-        }
-        let tensor = descriptor
+        let admitted = admit_qwen3moe_full_graph(Qwen3MoeFullGraphAdmissionInput {
+            adapter: Qwen3MoeAdapterDescriptor {
+                contract_id: QWEN3MOE_ADAPTER_CONTRACT_ID.to_owned(),
+                artifact: descriptor.artifact.clone(),
+                metadata: descriptor.metadata.clone(),
+                tensors: descriptor.tensors.clone(),
+            },
+            graph: descriptor.graph.clone(),
+        })?;
+        let tensor = admitted
             .tensors
             .iter()
             .find(|tensor| tensor.role == role && tensor.layer_index == layer_index)
@@ -133,16 +147,66 @@ impl Qwen3MoeStorageRequest {
                     "the requested typed tensor is absent from the admitted catalog",
                 )
             })?;
-        let checkpoint = CheckpointIdentity::try_new(
-            descriptor.artifact.sha256.clone(),
-            descriptor.artifact.revision.clone(),
-        )?;
+        Self::from_selected_tensor(
+            &admitted.artifact,
+            tensor,
+            destination_policy,
+            decoder_contract,
+            correlation_id,
+            cancellation,
+        )
+    }
+
+    #[cfg(test)]
+    fn try_new_synthetic_for_test(
+        descriptor: &Qwen3MoeFullGraphDescriptor,
+        role: Qwen3MoeTensorRole,
+        layer_index: Option<u32>,
+        destination_policy: Qwen3MoeDestinationPolicy,
+        decoder_contract: Qwen3MoeDecoderContract,
+        correlation_id: impl Into<String>,
+        cancellation: CancellationToken,
+    ) -> Result<Self, ContractError> {
+        validate_destination_policy(destination_policy)?;
+        let tensor = descriptor
+            .tensors
+            .iter()
+            .find(|tensor| tensor.role == role && tensor.layer_index == layer_index)
+            .cloned()
+            .ok_or_else(|| {
+                storage_error(
+                    ErrorCategory::InvalidTensor,
+                    "qwen3moe_tensor_not_admitted",
+                    "the requested typed tensor is absent from the synthetic fixture",
+                )
+            })?;
+        Self::from_selected_tensor(
+            &descriptor.artifact,
+            tensor,
+            destination_policy,
+            decoder_contract,
+            correlation_id,
+            cancellation,
+        )
+    }
+
+    fn from_selected_tensor(
+        artifact: &Qwen3MoeArtifactBinding,
+        tensor: Qwen3MoeTensorDescriptor,
+        destination_policy: Qwen3MoeDestinationPolicy,
+        decoder_contract: Qwen3MoeDecoderContract,
+        correlation_id: impl Into<String>,
+        cancellation: CancellationToken,
+    ) -> Result<Self, ContractError> {
+        let checkpoint =
+            CheckpointIdentity::try_new(artifact.sha256.clone(), artifact.revision.clone())?;
         let correlation_id = correlation_id.into();
         validate_correlation_id(&correlation_id)?;
 
         Ok(Self {
             checkpoint,
             tensor,
+            destination_policy,
             decoder_contract,
             correlation_id,
             cancellation,
@@ -155,6 +219,10 @@ impl Qwen3MoeStorageRequest {
 
     pub fn tensor(&self) -> &Qwen3MoeTensorDescriptor {
         &self.tensor
+    }
+
+    pub const fn destination_policy(&self) -> Qwen3MoeDestinationPolicy {
+        self.destination_policy
     }
 
     pub const fn decoder_contract(&self) -> Qwen3MoeDecoderContract {
@@ -194,6 +262,7 @@ pub struct Qwen3MoEDecodedTensor {
     shape: Vec<u64>,
     byte_length: u64,
     alignment: usize,
+    destination_policy: Qwen3MoeDestinationPolicy,
     decoder_version: &'static str,
     content_hash: Qwen3MoeContentHashMetadata,
 }
@@ -218,6 +287,10 @@ impl Qwen3MoEDecodedTensor {
     /// The alignment guaranteed by the owned `Vec<f32>` allocation.
     pub const fn alignment(&self) -> usize {
         self.alignment
+    }
+
+    pub const fn destination_policy(&self) -> Qwen3MoeDestinationPolicy {
+        self.destination_policy
     }
 
     pub const fn decoder_version(&self) -> &'static str {
@@ -268,6 +341,7 @@ pub fn decode_qwen3moe_tensor<C: TensorCatalog, S: TensorStore>(
     )?;
     let mut encoded = vec![0_u8; encoded_length];
     let bytes_read = store.read_range(&catalog_tensor, &mut encoded, request.cancellation())?;
+    request.cancellation.check()?;
     if bytes_read != encoded_length {
         let (code, message) = if bytes_read < encoded_length {
             (
@@ -282,8 +356,6 @@ pub fn decode_qwen3moe_tensor<C: TensorCatalog, S: TensorStore>(
         };
         return Err(storage_error(ErrorCategory::InvalidTensor, code, message));
     }
-    request.cancellation.check()?;
-
     let data = decode_q8_0(&request.tensor, &encoded, request.cancellation())?;
     request.cancellation.check()?;
     let decoded_elements = u64::try_from(data.len()).map_err(|_| {
@@ -305,6 +377,7 @@ pub fn decode_qwen3moe_tensor<C: TensorCatalog, S: TensorStore>(
         shape: request.tensor.execution_shape.clone(),
         byte_length,
         alignment: align_of::<f32>(),
+        destination_policy: request.destination_policy,
         decoder_version: request.decoder_contract.version(),
         content_hash,
     })
@@ -615,6 +688,17 @@ fn validate_correlation_id(value: &str) -> Result<(), ContractError> {
     Ok(())
 }
 
+fn validate_destination_policy(policy: Qwen3MoeDestinationPolicy) -> Result<(), ContractError> {
+    if policy != Qwen3MoeDestinationPolicy::RustOwned {
+        return Err(storage_error(
+            ErrorCategory::InvalidCapability,
+            "unsupported_qwen3moe_destination_policy",
+            "caller-owned Qwen3MoE destinations are not admitted by this lane",
+        ));
+    }
+    Ok(())
+}
+
 fn storage_error(
     category: ErrorCategory,
     code: &'static str,
@@ -697,16 +781,16 @@ mod tests {
             encoded_bytes,
             absolute_data_offset: OFFSET,
         };
-        Qwen3MoeFullGraphDescriptor {
-            contract_id: QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
-            artifact: Qwen3MoeArtifactBinding {
+        Qwen3MoeFullGraphDescriptor::new_synthetic_for_test(
+            QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
+            Qwen3MoeArtifactBinding {
                 repository_id: QWEN3MOE_REPOSITORY_ID.to_owned(),
                 revision: QWEN3MOE_REVISION.to_owned(),
                 filename: QWEN3MOE_FILENAME.to_owned(),
                 size_bytes: QWEN3MOE_FILE_BYTES,
                 sha256: QWEN3MOE_SHA256.to_owned(),
             },
-            metadata: Qwen3MoeMetadata {
+            Qwen3MoeMetadata {
                 architecture: "qwen3moe".to_owned(),
                 hidden_width: 2_048,
                 layer_count: 48,
@@ -720,14 +804,14 @@ mod tests {
                 feed_forward_width: 6_144,
                 context_length: 40_960,
             },
-            tensors: vec![tensor],
-            graph: Qwen3MoeGraphDescriptor {
+            vec![tensor],
+            Qwen3MoeGraphDescriptor {
                 token_embedding: binding.clone(),
                 layers: Vec::new(),
                 final_norm: binding.clone(),
                 output_projection: binding,
             },
-        }
+        )
     }
 
     fn q8_block(scale: u16, values: &[i8]) -> Vec<u8> {
@@ -741,10 +825,11 @@ mod tests {
         descriptor: &Qwen3MoeFullGraphDescriptor,
         cancellation: CancellationToken,
     ) -> Qwen3MoeStorageRequest {
-        Qwen3MoeStorageRequest::try_new(
+        Qwen3MoeStorageRequest::try_new_synthetic_for_test(
             descriptor,
             Qwen3MoeTensorRole::ExpertGateWeight,
             Some(0),
+            Qwen3MoeDestinationPolicy::RustOwned,
             Qwen3MoeDecoderContract::q8_0(),
             "synthetic-q8-0",
             cancellation,
@@ -810,6 +895,10 @@ mod tests {
         assert_eq!(result.shape(), [64]);
         assert_eq!(result.byte_length(), 64 * 4);
         assert_eq!(result.alignment(), align_of::<f32>());
+        assert_eq!(
+            result.destination_policy(),
+            Qwen3MoeDestinationPolicy::RustOwned
+        );
         assert_eq!(result.decoder_version(), QWEN3MOE_Q8_0_DECODER_VERSION);
         assert_eq!(
             result.content_hash().algorithm(),
@@ -1009,6 +1098,22 @@ mod tests {
                 .code(),
             "cancelled"
         );
+
+        for reported_length in [Some(33), Some(35)] {
+            let cancellation = CancellationToken::new();
+            let reads = Arc::new(AtomicUsize::new(0));
+            let store = FixtureStore {
+                encoded: q8_block(0x3c00, &[1; 32]),
+                reads: reads.clone(),
+                cancel_after_read: Some(cancellation.clone()),
+                reported_length,
+            };
+            let error =
+                decode_qwen3moe_tensor(&request(&descriptor, cancellation), &catalog(), &store)
+                    .unwrap_err();
+            assert_eq!(error.code(), "cancelled");
+            assert_eq!(reads.load(Ordering::Acquire), 1);
+        }
     }
 
     #[test]
@@ -1022,5 +1127,245 @@ mod tests {
             "synthetic.blk.0.ffn_gate_exps.weight"
         );
         assert_eq!(request.correlation_id(), "synthetic-q8-0");
+        assert_eq!(
+            request.destination_policy(),
+            Qwen3MoeDestinationPolicy::RustOwned
+        );
+    }
+
+    #[test]
+    fn caller_owned_destination_is_rejected_before_descriptor_admission() {
+        let descriptor = descriptor(vec![32], 34);
+        let error = Qwen3MoeStorageRequest::try_new(
+            &descriptor,
+            Qwen3MoeTensorRole::ExpertGateWeight,
+            Some(0),
+            Qwen3MoeDestinationPolicy::CallerOwned,
+            Qwen3MoeDecoderContract::q8_0(),
+            "synthetic-q8-0",
+            CancellationToken::new(),
+        )
+        .expect_err("caller-owned storage is not admitted in this lane");
+        assert_eq!(error.code(), "unsupported_qwen3moe_destination_policy");
+
+        let error = Qwen3MoeStorageRequest::try_new(
+            &descriptor,
+            Qwen3MoeTensorRole::ExpertGateWeight,
+            Some(0),
+            Qwen3MoeDestinationPolicy::RustOwned,
+            Qwen3MoeDecoderContract::q8_0(),
+            "synthetic-q8-0",
+            CancellationToken::new(),
+        )
+        .expect_err("synthetic fixtures cannot cross the production admission boundary");
+        assert_eq!(error.code(), "unexpected_tensor_role");
+    }
+
+    #[test]
+    fn every_public_full_graph_identity_mutation_is_rejected_at_request_boundary() {
+        let mutations: Vec<(&str, Box<dyn Fn(&mut Qwen3MoeFullGraphDescriptor)>)> = vec![
+            (
+                "contract",
+                Box::new(|descriptor| descriptor.contract_id = "forged".to_owned()),
+            ),
+            (
+                "artifact repository",
+                Box::new(|descriptor| descriptor.artifact.repository_id = "forged/repo".to_owned()),
+            ),
+            (
+                "artifact revision",
+                Box::new(|descriptor| descriptor.artifact.revision = "forged-revision".to_owned()),
+            ),
+            (
+                "artifact filename",
+                Box::new(|descriptor| descriptor.artifact.filename = "forged.gguf".to_owned()),
+            ),
+            (
+                "artifact size",
+                Box::new(|descriptor| descriptor.artifact.size_bytes += 1),
+            ),
+            (
+                "artifact checksum",
+                Box::new(|descriptor| descriptor.artifact.sha256.replace_range(..1, "0")),
+            ),
+            (
+                "metadata architecture",
+                Box::new(|descriptor| descriptor.metadata.architecture = "forged".to_owned()),
+            ),
+            (
+                "metadata hidden width",
+                Box::new(|descriptor| descriptor.metadata.hidden_width += 1),
+            ),
+            (
+                "metadata layer count",
+                Box::new(|descriptor| descriptor.metadata.layer_count -= 1),
+            ),
+            (
+                "metadata expert count",
+                Box::new(|descriptor| descriptor.metadata.expert_count -= 1),
+            ),
+            (
+                "metadata top k",
+                Box::new(|descriptor| descriptor.metadata.top_k -= 1),
+            ),
+            (
+                "metadata expert ffn width",
+                Box::new(|descriptor| descriptor.metadata.expert_ffn_width += 1),
+            ),
+            (
+                "metadata attention heads",
+                Box::new(|descriptor| descriptor.metadata.attention_head_count += 1),
+            ),
+            (
+                "metadata kv heads",
+                Box::new(|descriptor| descriptor.metadata.attention_head_count_kv += 1),
+            ),
+            (
+                "metadata key length",
+                Box::new(|descriptor| descriptor.metadata.key_length += 1),
+            ),
+            (
+                "metadata value length",
+                Box::new(|descriptor| descriptor.metadata.value_length += 1),
+            ),
+            (
+                "metadata feed forward width",
+                Box::new(|descriptor| descriptor.metadata.feed_forward_width += 1),
+            ),
+            (
+                "metadata context length",
+                Box::new(|descriptor| descriptor.metadata.context_length += 1),
+            ),
+            (
+                "tensor role",
+                Box::new(|descriptor| {
+                    descriptor.tensors[0].role = Qwen3MoeTensorRole::RouterWeight
+                }),
+            ),
+            (
+                "tensor layer",
+                Box::new(|descriptor| descriptor.tensors[0].layer_index = Some(1)),
+            ),
+            (
+                "tensor name",
+                Box::new(|descriptor| descriptor.tensors[0].name = "forged.tensor".to_owned()),
+            ),
+            (
+                "tensor gguf shape",
+                Box::new(|descriptor| descriptor.tensors[0].gguf_shape[0] = 64),
+            ),
+            (
+                "tensor reader shape",
+                Box::new(|descriptor| descriptor.tensors[0].reader_shape[0] = 64),
+            ),
+            (
+                "tensor execution shape",
+                Box::new(|descriptor| descriptor.tensors[0].execution_shape[0] = 64),
+            ),
+            (
+                "tensor gguf type",
+                Box::new(|descriptor| descriptor.tensors[0].gguf_type = "Q4_K".to_owned()),
+            ),
+            (
+                "tensor quantization",
+                Box::new(|descriptor| descriptor.tensors[0].quantization = "Q4_K".to_owned()),
+            ),
+            (
+                "tensor orientation",
+                Box::new(|descriptor| descriptor.tensors[0].orientation = "forged".to_owned()),
+            ),
+            (
+                "tensor logical elements",
+                Box::new(|descriptor| descriptor.tensors[0].logical_elements += 1),
+            ),
+            (
+                "tensor encoded bytes",
+                Box::new(|descriptor| descriptor.tensors[0].encoded_bytes += 1),
+            ),
+            (
+                "tensor data offset",
+                Box::new(|descriptor| descriptor.tensors[0].absolute_data_offset += 1),
+            ),
+            (
+                "graph token role",
+                Box::new(|descriptor| {
+                    descriptor.graph.token_embedding.role = Qwen3MoeTensorRole::RouterWeight
+                }),
+            ),
+            (
+                "graph token layer",
+                Box::new(|descriptor| descriptor.graph.token_embedding.layer_index = None),
+            ),
+            (
+                "graph token name",
+                Box::new(|descriptor| {
+                    descriptor.graph.token_embedding.tensor_name = "forged.tensor".to_owned()
+                }),
+            ),
+            (
+                "graph final norm role",
+                Box::new(|descriptor| {
+                    descriptor.graph.final_norm.role = Qwen3MoeTensorRole::RouterWeight
+                }),
+            ),
+            (
+                "graph final norm layer",
+                Box::new(|descriptor| descriptor.graph.final_norm.layer_index = None),
+            ),
+            (
+                "graph final norm name",
+                Box::new(|descriptor| {
+                    descriptor.graph.final_norm.tensor_name = "forged.tensor".to_owned()
+                }),
+            ),
+            (
+                "graph output role",
+                Box::new(|descriptor| {
+                    descriptor.graph.output_projection.role = Qwen3MoeTensorRole::RouterWeight
+                }),
+            ),
+            (
+                "graph output layer",
+                Box::new(|descriptor| descriptor.graph.output_projection.layer_index = None),
+            ),
+            (
+                "graph output name",
+                Box::new(|descriptor| {
+                    descriptor.graph.output_projection.tensor_name = "forged.tensor".to_owned()
+                }),
+            ),
+            (
+                "graph layers",
+                Box::new(|descriptor| {
+                    descriptor
+                        .graph
+                        .layers
+                        .push(crate::qwen3moe::Qwen3MoeLayerGraphDescriptor {
+                            layer_index: 0,
+                            nodes: Vec::new(),
+                        })
+                }),
+            ),
+        ];
+
+        for (label, mutation) in mutations {
+            let mut descriptor = descriptor(vec![32], 34);
+            mutation(&mut descriptor);
+            let error = Qwen3MoeStorageRequest::try_new(
+                &descriptor,
+                Qwen3MoeTensorRole::ExpertGateWeight,
+                Some(0),
+                Qwen3MoeDestinationPolicy::RustOwned,
+                Qwen3MoeDecoderContract::q8_0(),
+                "synthetic-q8-0",
+                CancellationToken::new(),
+            )
+            .unwrap_err();
+            assert_eq!(
+                error.code(),
+                "full_graph_admission_proof_mismatch",
+                "{label}"
+            );
+        }
     }
 }

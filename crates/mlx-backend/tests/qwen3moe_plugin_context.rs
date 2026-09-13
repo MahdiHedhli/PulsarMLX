@@ -32,16 +32,16 @@ fn admitted_descriptor_fixture() -> Qwen3MoeFullGraphDescriptor {
         "fixture.layer17.router",
     );
 
-    Qwen3MoeFullGraphDescriptor {
-        contract_id: QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
-        artifact: Qwen3MoeArtifactBinding {
+    Qwen3MoeFullGraphDescriptor::new_synthetic_for_test(
+        QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
+        Qwen3MoeArtifactBinding {
             repository_id: QWEN3MOE_REPOSITORY_ID.to_owned(),
             revision: QWEN3MOE_REVISION.to_owned(),
             filename: QWEN3MOE_FILENAME.to_owned(),
             size_bytes: QWEN3MOE_FILE_BYTES,
             sha256: QWEN3MOE_SHA256.to_owned(),
         },
-        metadata: Qwen3MoeMetadata {
+        Qwen3MoeMetadata {
             architecture: "qwen3moe".to_owned(),
             hidden_width: 2_048,
             layer_count: 48,
@@ -55,14 +55,14 @@ fn admitted_descriptor_fixture() -> Qwen3MoeFullGraphDescriptor {
             feed_forward_width: 6_144,
             context_length: 40_960,
         },
-        tensors: vec![
+        vec![
             tensor_descriptor(&token_embedding),
             tensor_descriptor(&final_norm),
             tensor_descriptor(&output_projection),
             tensor_descriptor(&ffn_norm),
             tensor_descriptor(&router),
         ],
-        graph: Qwen3MoeGraphDescriptor {
+        Qwen3MoeGraphDescriptor {
             token_embedding,
             layers: vec![Qwen3MoeLayerGraphDescriptor {
                 layer_index: 17,
@@ -80,7 +80,7 @@ fn admitted_descriptor_fixture() -> Qwen3MoeFullGraphDescriptor {
             final_norm,
             output_projection,
         },
-    }
+    )
 }
 
 fn tensor_binding(

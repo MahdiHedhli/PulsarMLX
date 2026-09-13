@@ -236,10 +236,32 @@ pub struct Qwen3MoeFullGraphAdmissionInput {
     pub graph: Qwen3MoeGraphDescriptor,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Qwen3MoeFullGraphAdmissionProof {
+    contract_id: String,
+    artifact: Qwen3MoeArtifactBinding,
+    metadata: Qwen3MoeMetadata,
+    tensors: Vec<Qwen3MoeTensorDescriptor>,
+    graph: Qwen3MoeGraphDescriptor,
+}
+
+impl Qwen3MoeFullGraphAdmissionProof {
+    fn matches(&self, descriptor: &Qwen3MoeFullGraphDescriptor) -> bool {
+        self.contract_id == descriptor.contract_id
+            && self.artifact == descriptor.artifact
+            && self.metadata == descriptor.metadata
+            && self.tensors == descriptor.tensors
+            && self.graph == descriptor.graph
+    }
+}
+
 /// Complete typed Qwen3MoE tensor catalog plus its admitted transformer graph.
 ///
-/// This descriptor is an admission result only. It contains identities,
-/// shapes, offsets, and operation topology; it cannot execute a model.
+/// This descriptor is an admission result only. Its private proof binds every
+/// public identity field to the exact value validated at admission, so a
+/// caller cannot mutate a descriptor into a different catalog after admission.
+/// It contains identities, shapes, offsets, and operation topology; it cannot
+/// execute a model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Qwen3MoeFullGraphDescriptor {
     pub contract_id: String,
@@ -247,6 +269,7 @@ pub struct Qwen3MoeFullGraphDescriptor {
     pub metadata: Qwen3MoeMetadata,
     pub tensors: Vec<Qwen3MoeTensorDescriptor>,
     pub graph: Qwen3MoeGraphDescriptor,
+    admission_proof: Qwen3MoeFullGraphAdmissionProof,
 }
 
 impl Qwen3MoeFullGraphDescriptor {
@@ -256,6 +279,56 @@ impl Qwen3MoeFullGraphDescriptor {
 
     pub fn layer(&self, layer_index: u32) -> Option<&Qwen3MoeLayerGraphDescriptor> {
         self.graph.layer(layer_index)
+    }
+
+    pub(crate) fn verify_admission_proof(&self) -> Result<(), ContractError> {
+        if !self.admission_proof.matches(self) {
+            return Err(graph_error(
+                "full_graph_admission_proof_mismatch",
+                "the Qwen3MoE full-graph descriptor changed after admission",
+            ));
+        }
+        Ok(())
+    }
+
+    fn new_with_proof(
+        contract_id: String,
+        artifact: Qwen3MoeArtifactBinding,
+        metadata: Qwen3MoeMetadata,
+        tensors: Vec<Qwen3MoeTensorDescriptor>,
+        graph: Qwen3MoeGraphDescriptor,
+    ) -> Self {
+        let admission_proof = Qwen3MoeFullGraphAdmissionProof {
+            contract_id: contract_id.clone(),
+            artifact: artifact.clone(),
+            metadata: metadata.clone(),
+            tensors: tensors.clone(),
+            graph: graph.clone(),
+        };
+        Self {
+            contract_id,
+            artifact,
+            metadata,
+            tensors,
+            graph,
+            admission_proof,
+        }
+    }
+
+    /// Construct a synthetic fixture for source-only tests.
+    ///
+    /// This deliberately does not perform canonical admission and must not be
+    /// used for storage requests; the storage request boundary rejects it
+    /// unless it is replaced by a canonical admission result.
+    #[doc(hidden)]
+    pub fn new_synthetic_for_test(
+        contract_id: String,
+        artifact: Qwen3MoeArtifactBinding,
+        metadata: Qwen3MoeMetadata,
+        tensors: Vec<Qwen3MoeTensorDescriptor>,
+        graph: Qwen3MoeGraphDescriptor,
+    ) -> Self {
+        Self::new_with_proof(contract_id, artifact, metadata, tensors, graph)
     }
 }
 
@@ -273,13 +346,13 @@ pub fn admit_qwen3moe_full_graph(
     let adapter = admit_qwen3moe_adapter(adapter_input(&input.adapter))?;
     validate_catalog_ranges(&adapter)?;
     validate_graph(&adapter, &input.graph)?;
-    Ok(Qwen3MoeFullGraphDescriptor {
-        contract_id: QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
-        artifact: adapter.artifact,
-        metadata: adapter.metadata,
-        tensors: adapter.tensors,
-        graph: input.graph,
-    })
+    Ok(Qwen3MoeFullGraphDescriptor::new_with_proof(
+        QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
+        adapter.artifact,
+        adapter.metadata,
+        adapter.tensors,
+        input.graph,
+    ))
 }
 
 /// Construct and admit the canonical full graph from one typed adapter.

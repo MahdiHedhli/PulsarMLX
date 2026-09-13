@@ -61,9 +61,8 @@ pub use qwen3moe_runtime::{
     QWEN3MOE_SYNTHETIC_MAX_ELEMENTS, QWEN3MOE_SYNTHETIC_OPERATION_COUNT,
 };
 pub use qwen3moe_storage::{
-    decode_qwen3moe_tensor, Qwen3MoeContentHashMetadata, Qwen3MoeDecoderContract,
-    Qwen3MoeStorageRequest, Qwen3MoEDecodedTensor, QWEN3MOE_F32_HASH_ALGORITHM,
-    QWEN3MOE_Q8_0_BLOCK_BYTES,
-    QWEN3MOE_Q8_0_BLOCK_ELEMENTS, QWEN3MOE_Q8_0_DECODER_CONTRACT_ID,
-    QWEN3MOE_Q8_0_DECODER_VERSION,
+    decode_qwen3moe_tensor, Qwen3MoEDecodedTensor, Qwen3MoeContentHashMetadata,
+    Qwen3MoeDecoderContract, Qwen3MoeDestinationPolicy, Qwen3MoeStorageRequest,
+    QWEN3MOE_F32_HASH_ALGORITHM, QWEN3MOE_Q8_0_BLOCK_BYTES, QWEN3MOE_Q8_0_BLOCK_ELEMENTS,
+    QWEN3MOE_Q8_0_DECODER_CONTRACT_ID, QWEN3MOE_Q8_0_DECODER_VERSION,
 };
