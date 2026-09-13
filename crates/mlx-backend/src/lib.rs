@@ -7,6 +7,7 @@ pub mod protocol;
 pub mod qwen3moe;
 pub mod qwen3moe_context;
 pub mod qwen3moe_runtime;
+pub mod qwen3moe_storage;
 pub mod router;
 
 pub use backend::DeviceState;
@@ -58,4 +59,11 @@ pub use qwen3moe_runtime::{
     Qwen3MoeSyntheticRuntime, Qwen3MoeSyntheticTensors, Qwen3MoeTargetDimensions,
     QWEN3MOE_SYNTHETIC_FIXTURE_ID, QWEN3MOE_SYNTHETIC_FIXTURE_SCHEMA,
     QWEN3MOE_SYNTHETIC_MAX_ELEMENTS, QWEN3MOE_SYNTHETIC_OPERATION_COUNT,
+};
+pub use qwen3moe_storage::{
+    decode_qwen3moe_tensor, Qwen3MoeContentHashMetadata, Qwen3MoeDecoderContract,
+    Qwen3MoeStorageRequest, Qwen3MoEDecodedTensor, QWEN3MOE_F32_HASH_ALGORITHM,
+    QWEN3MOE_Q8_0_BLOCK_BYTES,
+    QWEN3MOE_Q8_0_BLOCK_ELEMENTS, QWEN3MOE_Q8_0_DECODER_CONTRACT_ID,
+    QWEN3MOE_Q8_0_DECODER_VERSION,
 };
