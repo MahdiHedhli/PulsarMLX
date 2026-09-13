@@ -5,6 +5,7 @@ pub mod device;
 pub mod model;
 pub mod protocol;
 pub mod qwen3moe;
+pub mod qwen3moe_context;
 pub mod qwen3moe_runtime;
 pub mod router;
 
@@ -44,6 +45,9 @@ pub use qwen3moe::{
     QWEN3MOE_GRAPH_OPERATIONS_PER_LAYER, QWEN3MOE_HEAD_DIMENSION, QWEN3MOE_HIDDEN_WIDTH,
     QWEN3MOE_LAYER_COUNT, QWEN3MOE_REPOSITORY_ID, QWEN3MOE_REVISION, QWEN3MOE_ROPE_KIND,
     QWEN3MOE_SHA256, QWEN3MOE_TENSOR_COUNT, QWEN3MOE_TOP_K, QWEN3MOE_VOCAB_SIZE,
+};
+pub use qwen3moe_context::{
+    Qwen3MoeExecutionContext, Qwen3MoePlugin, QWEN3MOE_ARCHITECTURE_ID,
 };
 pub use qwen3moe_runtime::{
     deterministic_top_k, parse_qwen3moe_synthetic_fixture, run_qwen3moe_synthetic_generation,
