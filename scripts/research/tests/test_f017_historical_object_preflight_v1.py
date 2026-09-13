@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from typing import Any
 
 import pytest
 
@@ -36,8 +37,20 @@ def _environment(diagnostic: Path, **updates: str) -> dict[str, str]:
     return environment
 
 
-def _read_diagnostic(path: Path) -> dict[str, object]:
+def _read_diagnostic(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _git_output(repository: Path, *arguments: str) -> str:
+    environment = os.environ.copy()
+    environment["GIT_CONFIG_NOSYSTEM"] = "1"
+    return subprocess.run(
+        ["git", "-C", str(repository), *arguments],
+        check=True,
+        env=environment,
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout.strip()
 
 
 def _make_git_repository(root: Path) -> tuple[Path, str, bytes, bytes]:
@@ -57,10 +70,13 @@ def _make_git_repository(root: Path) -> tuple[Path, str, bytes, bytes]:
         env=environment,
     )
     source = repository / "source.py"
+    directory = repository / "directory"
+    directory.mkdir()
+    (directory / "file.txt").write_text("tree content\n")
     old = b"old historical source\n"
     current = b"current source\n"
     source.write_bytes(old)
-    subprocess.run(["git", "-C", str(repository), "add", "source.py"], check=True, env=environment)
+    subprocess.run(["git", "-C", str(repository), "add", "."], check=True, env=environment)
     subprocess.run(
         ["git", "-C", str(repository), "commit", "-q", "-m", "historical"],
         check=True,
@@ -74,7 +90,7 @@ def _make_git_repository(root: Path) -> tuple[Path, str, bytes, bytes]:
         text=True,
     ).stdout.strip()
     source.write_bytes(current)
-    subprocess.run(["git", "-C", str(repository), "add", "source.py"], check=True, env=environment)
+    subprocess.run(["git", "-C", str(repository), "add", "."], check=True, env=environment)
     subprocess.run(
         ["git", "-C", str(repository), "commit", "-q", "-m", "current"],
         check=True,
@@ -160,6 +176,42 @@ def test_source_drift_and_current_substitution_are_not_accepted(tmp_path):
     assert historical_bytes != current
     assert hashlib.sha256(historical_bytes).hexdigest() != hashlib.sha256(current).hexdigest()
     assert (repository / "source.py").read_bytes() == current
+
+
+def test_tree_path_is_rejected_and_diagnosed(tmp_path):
+    repository, historical, _old, _current = _make_git_repository(tmp_path)
+    diagnostic = tmp_path / "tree-path.json"
+    environment = _environment(diagnostic)
+
+    with pytest.raises(HistoricalObjectLookupError, match="historical repository blob"):
+        read_historical_blob(repository, historical, "directory", environment=environment)
+
+    envelope = _read_diagnostic(diagnostic)
+    assert envelope["result"] == "FAIL"
+    assert envelope["commands"]["show"]["returncode"] == 0
+    assert envelope["commands"]["show"]["stderr_bytes"] == 0
+    assert envelope["commands"]["revision_check"]["returncode"] == 0
+    assert envelope["commands"]["cat_file_type"]["returncode"] == 0
+    assert envelope["resolved"]["cat_file_type"] == "tree"
+    assert envelope["historical_blob_is_blob"] is False
+
+
+def test_non_commit_revision_is_rejected_and_diagnosed(tmp_path):
+    repository, historical, _old, _current = _make_git_repository(tmp_path)
+    tree_revision = _git_output(repository, "rev-parse", f"{historical}^{{tree}}")
+    diagnostic = tmp_path / "non-commit-revision.json"
+    environment = _environment(diagnostic)
+
+    with pytest.raises(HistoricalObjectLookupError, match="historical repository blob"):
+        read_historical_blob(repository, tree_revision, "source.py", environment=environment)
+
+    envelope = _read_diagnostic(diagnostic)
+    assert envelope["result"] == "FAIL"
+    assert envelope["commands"]["show"]["returncode"] == 0
+    assert envelope["commands"]["show"]["stderr_bytes"] == 0
+    assert envelope["commands"]["revision_check"]["returncode"] != 0
+    assert envelope["commands"]["cat_file_type"]["returncode"] == 0
+    assert envelope["resolved"]["cat_file_type"] == "blob"
 
 
 def test_source_blob_binding_drift_fails_before_historical_lookup():

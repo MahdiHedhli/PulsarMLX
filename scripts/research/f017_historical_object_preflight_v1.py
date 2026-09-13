@@ -113,6 +113,29 @@ def _decode_line(stdout: bytes, completed: dict[str, object]) -> str | None:
     return stdout.decode("utf-8", "replace").strip() or None
 
 
+def _successful_exact_object_checks(
+    root: Path,
+    revision: str,
+    object_name: str,
+    *,
+    environment: Mapping[str, str],
+) -> bool:
+    revision_check, revision_out, _ = _git_command(
+        ["rev-parse", "--verify", f"{revision}^{{commit}}"],
+        root=root,
+        environment=environment,
+    )
+    path_type, path_type_out, _ = _git_command(
+        ["cat-file", "-t", object_name],
+        root=root,
+        environment=environment,
+    )
+    return (
+        _decode_line(revision_out, revision_check) == revision
+        and _decode_line(path_type_out, path_type) == "blob"
+    )
+
+
 def preflight_historical_object(
     root: Path,
     revision: str,
@@ -274,10 +297,20 @@ def read_historical_blob(
     _validate_path(relative_path)
     env = dict(os.environ if environment is None else environment)
     object_name = f"{revision}:{relative_path}"
+    root = root.resolve(strict=True)
     observation, stdout, stderr = _git_command(
-        ["show", object_name], root=root.resolve(strict=True), environment=env
+        ["show", object_name], root=root, environment=env
     )
-    if observation["returncode"] != 0 or stderr:
+    if (
+        observation["returncode"] != 0
+        or stderr
+        or not _successful_exact_object_checks(
+            root,
+            revision,
+            object_name,
+            environment=env,
+        )
+    ):
         envelope = preflight_historical_object(
             root,
             revision,
