@@ -198,3 +198,30 @@ fn malformed_shape_non_finite_and_payload_fields_fail_closed() {
     let error = validate_qwen3moe_attention_kv_fixture(&non_finite).unwrap_err();
     assert_eq!(error.code(), "tensor_values_invalid");
 }
+
+#[test]
+fn qkv_projection_rows_must_match_hidden_width() {
+    for matrix_name in ["query_weight", "key_weight", "value_weight"] {
+        for overlong in [false, true] {
+            let mut malformed = fixture();
+            let matrix = match matrix_name {
+                "query_weight" => &mut malformed.tensors.query_weight,
+                "key_weight" => &mut malformed.tensors.key_weight,
+                "value_weight" => &mut malformed.tensors.value_weight,
+                _ => unreachable!("matrix name is fixed by the test table"),
+            };
+            if overlong {
+                matrix[0].push(0.0);
+            } else {
+                matrix[0].pop();
+            }
+
+            let error = validate_qwen3moe_attention_kv_fixture(&malformed).unwrap_err();
+            assert_eq!(
+                error.code(),
+                "tensor_shape_mismatch",
+                "{matrix_name} overlong={overlong}"
+            );
+        }
+    }
+}

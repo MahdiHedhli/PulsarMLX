@@ -610,6 +610,13 @@ fn rms_norm(input: &[f32], weight: &[f32], epsilon: f32) -> Result<Vec<f32>, Con
 }
 
 fn project(weight: &[Vec<f32>], input: &[f32]) -> Result<Vec<f32>, ContractError> {
+    if weight.iter().any(|row| row.len() != input.len()) {
+        return Err(attention_error(
+            ErrorCategory::InvalidTensor,
+            "tensor_shape_mismatch",
+            "attention projection rows must match the input width",
+        ));
+    }
     let mut output = Vec::with_capacity(weight.len());
     for row in weight {
         let value = row
@@ -852,8 +859,20 @@ fn validate_tensors(
         || tensors.query_norm_weight.len() != dimensions.head_dimension
         || tensors.key_norm_weight.len() != dimensions.head_dimension
         || tensors.query_weight.len() != dimensions.query_heads * dimensions.head_dimension
+        || tensors
+            .query_weight
+            .iter()
+            .any(|row| row.len() != dimensions.hidden_width)
         || tensors.key_weight.len() != dimensions.kv_heads * dimensions.head_dimension
+        || tensors
+            .key_weight
+            .iter()
+            .any(|row| row.len() != dimensions.hidden_width)
         || tensors.value_weight.len() != dimensions.kv_heads * dimensions.head_dimension
+        || tensors
+            .value_weight
+            .iter()
+            .any(|row| row.len() != dimensions.hidden_width)
         || tensors.attention_output_weight.len() != dimensions.hidden_width
         || tensors
             .attention_output_weight
