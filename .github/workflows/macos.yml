@@ -824,7 +824,19 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify Event 06 package-scoped terminal uniqueness
         run: |
-          set -euo pipefail
+          set -eEuo pipefail
+          STATUS_FILE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.status"
+          STDOUT_CAPTURE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stdout"
+          STDERR_CAPTURE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stderr"
+          REPORT_FILE="$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json"
+          rm -f "$STATUS_FILE" "$STDOUT_CAPTURE" "$STDERR_CAPTURE" "$REPORT_FILE"
+          printf '0\n' > "$STATUS_FILE"
+          record_failure() {
+            failure_status=$?
+            printf '%s\n' "$failure_status" > "$STATUS_FILE"
+            exit "$failure_status"
+          }
+          trap record_failure ERR
           test -z "$PULSARMLX_MODEL_GGUF"
           PYTHONPATH=scripts/research .venv/bin/python \
             scripts/research/generate_f017_event06_authority_dag_v2.py --check
@@ -841,7 +853,9 @@ jobs:
             > "$RUNNER_TEMP/f017-event06-sequence18-amendment-v1.json"
           PYTHONPATH=scripts/research .venv/bin/python \
             scripts/research/run_f017_event06_sequence18_sandbox_v1.py \
-            --output "$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json"
+            --output "$REPORT_FILE" \
+            > "$STDOUT_CAPTURE" \
+            2> "$STDERR_CAPTURE"
           .venv/bin/python - <<'PY'
           import json
           import os
@@ -909,6 +923,65 @@ jobs:
           assert sandbox["event06_executed"] is False
           PY
           test -z "$PULSARMLX_MODEL_GGUF"
+
+      - name: Retain Event 06 terminal uniqueness diagnostic
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          STATUS_FILE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.status"
+          STDOUT_CAPTURE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stdout"
+          STDERR_CAPTURE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stderr"
+          REPORT_FILE="$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json"
+          RETAINED_FILE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness-diagnostic.json"
+          SUMMARY_FILE="$RUNNER_TEMP/f017-event06-package-terminal-uniqueness-summary.json"
+          command_status=1
+          if test -s "$STATUS_FILE"; then
+            IFS= read -r command_status < "$STATUS_FILE"
+          fi
+          case "$command_status" in
+            ''|*[!0-9]*) command_status=1 ;;
+          esac
+          set +e
+          .venv/bin/python scripts/ci/retain_f017_diagnostic_v1.py \
+            --report "$REPORT_FILE" \
+            --output "$RETAINED_FILE" \
+            --stdout-capture "$STDOUT_CAPTURE" \
+            --stderr-capture "$STDERR_CAPTURE" \
+            --command-exit-status "$command_status" \
+            --stage EVENT06_PACKAGE_TERMINAL_UNIQUENESS \
+            > "$SUMMARY_FILE"
+          retention_status=$?
+          set -e
+          if test -s "$SUMMARY_FILE"; then
+            cat "$SUMMARY_FILE"
+            cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if test "$retention_status" -ne 0; then
+            echo 'bounded Event 06 diagnostic retention failed' >&2
+            exit "$retention_status"
+          fi
+
+      - name: Upload Event 06 terminal uniqueness diagnostic
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: f017-event06-package-terminal-uniqueness-diagnostic
+          path: ${{ runner.temp }}/f017-event06-package-terminal-uniqueness-diagnostic.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Clean transient Event 06 diagnostic captures
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          rm -f -- \
+            "$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.status" \
+            "$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stdout" \
+            "$RUNNER_TEMP/f017-event06-package-terminal-uniqueness.stderr" \
+            "$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json" \
+            "$RUNNER_TEMP/f017-event06-package-terminal-uniqueness-summary.json" \
+            "$RUNNER_TEMP/f017-event06-package-terminal-uniqueness-diagnostic.json"
+
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
