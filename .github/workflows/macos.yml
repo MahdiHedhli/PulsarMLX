@@ -949,7 +949,7 @@ jobs:
             --stderr-capture "$STDERR_CAPTURE" \
             --command-exit-status "$command_status" \
             --stage EVENT06_PACKAGE_TERMINAL_UNIQUENESS \
-            > "$SUMMARY_FILE"
+            --summary "$SUMMARY_FILE"
           retention_status=$?
           set -e
           if test -s "$SUMMARY_FILE"; then

@@ -63,11 +63,23 @@ def _file_observation(path: Path, *, limit: int) -> dict[str, Any]:
             if size > limit:
                 return observation
             digest = hashlib.sha256()
-            while True:
-                chunk = os.read(fd, 8192)
+            total_read = 0
+            while total_read < limit:
+                current = os.fstat(fd)
+                if current.st_size > limit:
+                    observation["bytes"] = current.st_size
+                    return observation
+                chunk = os.read(fd, min(8192, limit - total_read))
                 if not chunk:
                     break
+                total_read += len(chunk)
+                if total_read > limit:
+                    return observation
                 digest.update(chunk)
+            current = os.fstat(fd)
+            if current.st_size > limit:
+                observation["bytes"] = current.st_size
+                return observation
             observation["available"] = True
             observation["sha256"] = digest.hexdigest()
         finally:
@@ -129,7 +141,7 @@ def _safe_report(value: Any) -> dict[str, Any] | None:
         source = value
     commands = source.get("commands")
     result = source.get("result")
-    if not isinstance(commands, dict) or result not in {"PASS", "FAIL"}:
+    if not isinstance(commands, dict) or type(result) is not str or result not in {"PASS", "FAIL"}:
         return None
 
     safe: dict[str, Any] = {"result": result}
@@ -167,6 +179,25 @@ def _safe_stage(stage: str) -> str:
     return stage if _TOKEN.fullmatch(stage) else "UNSAFE_STAGE"
 
 
+def _write_exclusive_regular_file(path: Path, raw: bytes) -> None:
+    """Create a private regular file without following a pre-existing name."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    try:
+        details = os.fstat(fd)
+        if not stat.S_ISREG(details.st_mode):
+            raise OSError("retention output is not a regular file")
+        view = memoryview(raw)
+        while view:
+            written = os.write(fd, view)
+            if written <= 0:
+                raise OSError("retention output short write")
+            view = view[written:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def retain(
     report_path: Path,
     output_path: Path,
@@ -174,6 +205,7 @@ def retain(
     stderr_capture: Path,
     command_exit_status: int,
     stage: str,
+    summary_path: Path | None = None,
 ) -> tuple[dict[str, Any], int]:
     raw, report_bytes, report_sha256 = _report_bytes(report_path)
     parsed: Any = None
@@ -205,7 +237,10 @@ def retain(
         "stderr_sha256": stderr["sha256"],
         "diagnostic": diagnostic,
     }
-    output_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    serialized = (json.dumps(envelope, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    _write_exclusive_regular_file(output_path, serialized)
+    if summary_path is not None:
+        _write_exclusive_regular_file(summary_path, serialized)
     # A missing/malformed report must not convert a successful command into a
     # green step.  A prior nonzero command remains the original failure.
     return envelope, 0 if retained_passed or not original_passed else 1
@@ -219,6 +254,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--stderr-capture", type=Path, required=True)
     parser.add_argument("--command-exit-status", type=int, required=True)
     parser.add_argument("--stage", required=True)
+    parser.add_argument("--summary", type=Path)
     args = parser.parse_args(argv)
     try:
         envelope, status = retain(
@@ -228,6 +264,7 @@ def main(argv: list[str] | None = None) -> int:
             args.stderr_capture,
             args.command_exit_status,
             args.stage,
+            args.summary,
         )
     except (OSError, ValueError, TypeError):
         # Keep the log bounded and free of paths. The upload step will fail if
