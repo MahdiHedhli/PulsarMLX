@@ -53,11 +53,11 @@ pub use qwen3moe_attention::{
     parse_qwen3moe_attention_kv_fixture, run_qwen3moe_attention_kv,
     validate_qwen3moe_attention_kv_fixture, Qwen3MoeAttentionExecutionDimensions,
     Qwen3MoeAttentionInputStep, Qwen3MoeAttentionKvFixture, Qwen3MoeAttentionKvResult,
-    Qwen3MoeKvCacheSnapshot, Qwen3MoeAttentionOracle, Qwen3MoeAttentionOracleStep,
-    Qwen3MoeAttentionRuntime, Qwen3MoeAttentionStepEvidence, Qwen3MoeAttentionTargetDimensions,
-    Qwen3MoeAttentionTensors, QWEN3MOE_ATTENTION_KV_CONTRACT_ID,
-    QWEN3MOE_ATTENTION_KV_FIXTURE_ID, QWEN3MOE_ATTENTION_KV_FIXTURE_SCHEMA,
-    QWEN3MOE_ATTENTION_KV_MAX_ELEMENTS, QWEN3MOE_ATTENTION_KV_OPERATION_COUNT,
+    Qwen3MoeAttentionOracle, Qwen3MoeAttentionOracleStep, Qwen3MoeAttentionRuntime,
+    Qwen3MoeAttentionStepEvidence, Qwen3MoeAttentionTargetDimensions, Qwen3MoeAttentionTensors,
+    Qwen3MoeKvCacheSnapshot, QWEN3MOE_ATTENTION_KV_CONTRACT_ID, QWEN3MOE_ATTENTION_KV_FIXTURE_ID,
+    QWEN3MOE_ATTENTION_KV_FIXTURE_SCHEMA, QWEN3MOE_ATTENTION_KV_MAX_ELEMENTS,
+    QWEN3MOE_ATTENTION_KV_OPERATION_COUNT,
 };
 pub use qwen3moe_attention_generation::{
     parse_qwen3moe_attention_greedy_fixture, run_qwen3moe_attention_greedy_generation,
@@ -70,9 +70,7 @@ pub use qwen3moe_attention_generation::{
     QWEN3MOE_ATTENTION_GREEDY_FIXTURE_ID, QWEN3MOE_ATTENTION_GREEDY_FIXTURE_SCHEMA,
     QWEN3MOE_ATTENTION_GREEDY_MAX_ELEMENTS,
 };
-pub use qwen3moe_context::{
-    Qwen3MoeExecutionContext, Qwen3MoePlugin, QWEN3MOE_ARCHITECTURE_ID,
-};
+pub use qwen3moe_context::{Qwen3MoeExecutionContext, Qwen3MoePlugin, QWEN3MOE_ARCHITECTURE_ID};
 pub use qwen3moe_runtime::{
     deterministic_top_k, parse_qwen3moe_synthetic_fixture, run_qwen3moe_synthetic_generation,
     run_qwen3moe_synthetic_generation_with_cancel_after_step, validate_qwen3moe_synthetic_fixture,
@@ -84,8 +82,9 @@ pub use qwen3moe_runtime::{
     QWEN3MOE_SYNTHETIC_MAX_ELEMENTS, QWEN3MOE_SYNTHETIC_OPERATION_COUNT,
 };
 pub use qwen3moe_storage::{
-    decode_qwen3moe_tensor, Qwen3MoEDecodedTensor, Qwen3MoeContentHashMetadata,
-    Qwen3MoeDecoderContract, Qwen3MoeDestinationPolicy, Qwen3MoeStorageRequest,
-    QWEN3MOE_F32_HASH_ALGORITHM, QWEN3MOE_Q8_0_BLOCK_BYTES, QWEN3MOE_Q8_0_BLOCK_ELEMENTS,
-    QWEN3MOE_Q8_0_DECODER_CONTRACT_ID, QWEN3MOE_Q8_0_DECODER_VERSION,
+    decode_qwen3moe_tensor, read_admitted_tensor, Qwen3MoEDecodedTensor,
+    Qwen3MoeContentHashMetadata, Qwen3MoeDecoderContract, Qwen3MoeDestinationPolicy,
+    Qwen3MoeExternalStorage, Qwen3MoeStorageRequest, QWEN3MOE_F32_HASH_ALGORITHM,
+    QWEN3MOE_Q8_0_BLOCK_BYTES, QWEN3MOE_Q8_0_BLOCK_ELEMENTS, QWEN3MOE_Q8_0_DECODER_CONTRACT_ID,
+    QWEN3MOE_Q8_0_DECODER_VERSION,
 };

@@ -11,7 +11,7 @@ use crate::router::{
     admit_router_tensor, RouterTensorDescriptor, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH,
     ROUTER_TENSOR_BYTES, ROUTER_TENSOR_ELEMENTS, ROUTER_TENSOR_NAME, ROUTER_TOP_K,
 };
-use backend::{ContractError, ErrorCategory};
+use backend::{CheckpointIdentity, ContractError, ErrorCategory};
 use gguf::{Gguf, TensorType, Value};
 use sha2::{Digest, Sha256};
 use std::fs::{self, File, Metadata, OpenOptions};
@@ -210,6 +210,20 @@ pub struct ExternalModelInspection {
     qwen3moe_full_graph: Qwen3MoeFullGraphDescriptor,
 }
 
+/// Backend-private binding to one already-admitted external Qwen file.
+///
+/// This retains a clone of the inspection's open descriptor. The canonical
+/// path is retained solely for identity checks; this type has no path-opening
+/// capability.
+pub(crate) struct ExternalQwen3MoeStorageBinding {
+    pub(crate) file: File,
+    pub(crate) canonical_path: std::path::PathBuf,
+    pub(crate) opened_file_identity: ExternalFileIdentity,
+    pub(crate) file_size: u64,
+    pub(crate) checkpoint: CheckpointIdentity,
+    pub(crate) full_graph: Qwen3MoeFullGraphDescriptor,
+}
+
 /// Read-only, path-free observation of the exact layer-0 router tensor.
 ///
 /// The containing [`ExternalModelInspection`] has already established the
@@ -236,6 +250,10 @@ pub struct ExternalRouterInspection {
 }
 
 impl ExternalFileIdentity {
+    pub(crate) fn from_metadata(metadata: &Metadata) -> Self {
+        file_identity(metadata)
+    }
+
     /// Return the comparison tuple on Unix hosts.
     ///
     /// This is an admission-only value. It is not stable across copied files
@@ -267,6 +285,130 @@ impl ExternalModelInspection {
                 "model_read_failed",
                 "the admitted external model handle could not be cloned",
             )
+        })
+    }
+
+    /// Bind one clone of this inspection to a backend storage transaction.
+    ///
+    /// The binding copies the already-admitted full-graph descriptor and
+    /// rechecks the retained path/inode/size before returning. No path is
+    /// opened here and no payload bytes are read.
+    pub(crate) fn bind_qwen3moe_storage(
+        &self,
+    ) -> Result<ExternalQwen3MoeStorageBinding, ContractError> {
+        self.verify_storage_identity()?;
+        self.qwen3moe_full_graph.verify_admission_proof()?;
+        let metadata = self.file.metadata().map_err(|_| {
+            invalid_model(
+                "model_unavailable",
+                "the admitted external model metadata could not be read",
+            )
+        })?;
+        let checkpoint = CheckpointIdentity::try_new(
+            self.qwen3moe_full_graph.artifact.sha256.clone(),
+            self.qwen3moe_full_graph.artifact.revision.clone(),
+        )?;
+        Ok(ExternalQwen3MoeStorageBinding {
+            file: self.try_clone_file()?,
+            canonical_path: self.canonical_path.clone(),
+            opened_file_identity: self.opened_file_identity,
+            file_size: metadata.len(),
+            checkpoint,
+            full_graph: self.qwen3moe_full_graph.clone(),
+        })
+    }
+
+    fn verify_storage_identity(&self) -> Result<(), ContractError> {
+        verify_path_matches_open_file(&self.canonical_path, &self.file, self.opened_file_identity)?;
+        let metadata = self.file.metadata().map_err(|_| {
+            invalid_model(
+                "model_unavailable",
+                "the admitted external model metadata could not be read",
+            )
+        })?;
+        if !metadata.is_file() {
+            return Err(invalid_model(
+                "model_path_identity_changed",
+                "the admitted external model descriptor is no longer a regular file",
+            ));
+        }
+        Ok(())
+    }
+
+    /// Construct an inspection around ephemeral bytes for model-free tests.
+    ///
+    /// This helper never hashes, downloads, or executes a model and is not a
+    /// production admission path. It exists so integration tests can exercise
+    /// the same retained-file identity and storage transaction boundaries.
+    #[doc(hidden)]
+    pub fn new_synthetic_for_test(
+        file: File,
+        path: impl Into<std::path::PathBuf>,
+        qwen3moe_full_graph: Qwen3MoeFullGraphDescriptor,
+    ) -> Result<Self, ContractError> {
+        let canonical_path = path.into().canonicalize().map_err(|_| {
+            invalid_model(
+                "model_unavailable",
+                "the synthetic external model file is unavailable",
+            )
+        })?;
+        let metadata = file.metadata().map_err(|_| {
+            invalid_model(
+                "model_unavailable",
+                "the synthetic external model metadata could not be read",
+            )
+        })?;
+        let opened_file_identity = file_identity(&metadata);
+        verify_path_matches_open_file(&canonical_path, &file, opened_file_identity)?;
+        let artifact = &qwen3moe_full_graph.artifact;
+        let admission_descriptor = ModelAdmissionDescriptor {
+            identity: ModelIdentityDescriptor {
+                repository_id: artifact.repository_id.clone(),
+                revision: artifact.revision.clone(),
+                filename: artifact.filename.clone(),
+                license_spdx: QWEN_LICENSE_SPDX.to_owned(),
+                expected_size_bytes: artifact.size_bytes,
+                actual_size_bytes: metadata.len(),
+                expected_sha256: artifact.sha256.clone(),
+                actual_sha256: artifact.sha256.clone(),
+                stored_outside_repository: true,
+            },
+            metadata: ModelMetadataDescriptor {
+                architecture: qwen3moe_full_graph.metadata.architecture.clone(),
+                architecture_value_type: STRING_VALUE_TYPE.to_owned(),
+                embedding_length: qwen3moe_full_graph.metadata.hidden_width,
+                embedding_length_value_type: UINT32_VALUE_TYPE.to_owned(),
+                expert_feed_forward_length: qwen3moe_full_graph.metadata.expert_ffn_width,
+                expert_feed_forward_length_value_type: UINT32_VALUE_TYPE.to_owned(),
+                expert_count: qwen3moe_full_graph.metadata.expert_count,
+                expert_count_value_type: UINT32_VALUE_TYPE.to_owned(),
+                little_endian: true,
+            },
+            tensors: Vec::new(),
+            memory_budget: frozen_qwen_model_memory_budget(u64::MAX, u64::MAX),
+            execution_depth: ModelExecutionDepth::Layer0Expert0GateRows0To16Matvec,
+            automatic_download_requested: false,
+        };
+        let qwen3moe_adapter = Qwen3MoeAdapterDescriptor {
+            contract_id: crate::qwen3moe::QWEN3MOE_ADAPTER_CONTRACT_ID.to_owned(),
+            artifact: artifact.clone(),
+            metadata: qwen3moe_full_graph.metadata.clone(),
+            tensors: qwen3moe_full_graph.tensors.clone(),
+        };
+        Ok(Self {
+            file,
+            canonical_path,
+            opened_file_identity,
+            admission_descriptor,
+            admitted: AdmittedModelSlice { _private: () },
+            gguf_version: 3,
+            data_offset: crate::qwen3moe::QWEN3MOE_DATA_OFFSET,
+            tensor_count: qwen3moe_full_graph.tensors.len(),
+            f32_tensor_count: 0,
+            q8_0_tensor_count: qwen3moe_full_graph.tensors.len(),
+            encoded_slice_sha256: String::new(),
+            qwen3moe_adapter,
+            qwen3moe_full_graph,
         })
     }
 

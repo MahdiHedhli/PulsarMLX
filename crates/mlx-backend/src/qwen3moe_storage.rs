@@ -10,8 +10,10 @@ use backend::{
     TensorCatalog, TensorRange, TensorStore,
 };
 use sha2::{Digest, Sha256};
+use std::io::{Read, Seek, SeekFrom};
 use std::mem::{align_of, size_of};
 
+use crate::model::{ExternalFileIdentity, ExternalModelInspection, ExternalQwen3MoeStorageBinding};
 use crate::qwen3moe::{
     admit_qwen3moe_full_graph, Qwen3MoeAdapterDescriptor, Qwen3MoeArtifactBinding,
     Qwen3MoeFullGraphAdmissionInput, Qwen3MoeFullGraphDescriptor, Qwen3MoeTensorDescriptor,
@@ -158,8 +160,8 @@ impl Qwen3MoeStorageRequest {
         )
     }
 
-    #[cfg(test)]
-    fn try_new_synthetic_for_test(
+    #[doc(hidden)]
+    pub fn try_new_synthetic_for_test(
         descriptor: &Qwen3MoeFullGraphDescriptor,
         role: Qwen3MoeTensorRole,
         layer_index: Option<u32>,
@@ -237,6 +239,214 @@ impl Qwen3MoeStorageRequest {
     pub fn cancellation(&self) -> &CancellationToken {
         &self.cancellation
     }
+}
+
+/// File-backed catalog/store bound to one admitted external Qwen artifact.
+///
+/// The adapter owns only a clone of the inspection's already-opened read-only
+/// descriptor. It exposes no path, arbitrary tensor-name reader, or fixture
+/// fallback; each operation rechecks pathname identity and file metadata.
+pub struct Qwen3MoeExternalStorage {
+    binding: ExternalQwen3MoeStorageBinding,
+}
+
+impl Qwen3MoeExternalStorage {
+    /// Bind storage to one previously admitted inspection without reopening it.
+    pub fn try_from_inspection(
+        inspection: &ExternalModelInspection,
+    ) -> Result<Self, ContractError> {
+        let binding = inspection.bind_qwen3moe_storage()?;
+        let artifact = &binding.full_graph.artifact;
+        if binding.full_graph.contract_id != QWEN3MOE_FULL_GRAPH_CONTRACT_ID
+            || artifact.repository_id != crate::qwen3moe::QWEN3MOE_REPOSITORY_ID
+            || artifact.revision != QWEN3MOE_REVISION
+            || artifact.filename != crate::qwen3moe::QWEN3MOE_FILENAME
+            || artifact.size_bytes != crate::qwen3moe::QWEN3MOE_FILE_BYTES
+            || artifact.sha256 != QWEN3MOE_SHA256
+        {
+            return Err(storage_error(
+                ErrorCategory::InvalidModel,
+                "qwen3moe_checkpoint_identity_mismatch",
+                "the external storage binding is not tied to the admitted Qwen artifact",
+            ));
+        }
+        Ok(Self { binding })
+    }
+
+    fn verify_identity(&self) -> Result<(), ContractError> {
+        verify_binding_identity(&self.binding)
+    }
+}
+
+/// Read and decode one tensor through the retained external file binding.
+pub fn read_admitted_tensor(
+    storage: &Qwen3MoeExternalStorage,
+    request: &Qwen3MoeStorageRequest,
+) -> Result<Qwen3MoEDecodedTensor, ContractError> {
+    storage.verify_identity()?;
+    if request.checkpoint() != &storage.binding.checkpoint {
+        return Err(storage_error(
+            ErrorCategory::InvalidModel,
+            "qwen3moe_checkpoint_identity_mismatch",
+            "the storage request is bound to a different checkpoint identity",
+        ));
+    }
+    let requested = storage
+        .binding
+        .full_graph
+        .tensor(&request.tensor().name)
+        .ok_or_else(|| {
+            storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_tensor_not_admitted",
+                "the requested tensor name is absent from the bound graph",
+            )
+        })?;
+    if requested != request.tensor() {
+        return Err(storage_error(
+            ErrorCategory::InvalidModel,
+            "qwen3moe_admitted_tensor_identity_mismatch",
+            "the storage request tensor differs from the bound graph entry",
+        ));
+    }
+    let decoded = decode_qwen3moe_tensor(request, storage, storage)?;
+    storage.verify_identity()?;
+    Ok(decoded)
+}
+
+impl TensorCatalog for Qwen3MoeExternalStorage {
+    fn tensor(&self, name: &str) -> Result<Option<RuntimeTensor>, ContractError> {
+        self.verify_identity()?;
+        self.binding
+            .full_graph
+            .tensor(name)
+            .map(runtime_tensor)
+            .transpose()
+    }
+}
+
+impl TensorStore for Qwen3MoeExternalStorage {
+    fn read_range(
+        &self,
+        tensor: &RuntimeTensor,
+        destination: &mut [u8],
+        cancellation: &CancellationToken,
+    ) -> Result<usize, ContractError> {
+        cancellation.check()?;
+        self.verify_identity()?;
+        let admitted = self
+            .binding
+            .full_graph
+            .tensor(&tensor.name)
+            .ok_or_else(|| {
+                storage_error(
+                    ErrorCategory::InvalidTensor,
+                    "qwen3moe_catalog_entry_missing",
+                    "the requested tensor is absent from the bound graph",
+                )
+            })?;
+        let expected = runtime_tensor(admitted)?;
+        if *tensor != expected {
+            return Err(storage_error(
+                ErrorCategory::InvalidModel,
+                "qwen3moe_catalog_identity_mismatch",
+                "the requested runtime tensor differs from the bound graph entry",
+            ));
+        }
+        let length = usize::try_from(expected.range.length).map_err(|_| {
+            storage_error(
+                ErrorCategory::ResourceLimit,
+                "qwen3moe_encoded_allocation_too_large",
+                "encoded slab exceeds the bounded allocation limit",
+            )
+        })?;
+        if destination.len() != length {
+            return Err(storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_destination_length_mismatch",
+                "the destination does not cover the complete admitted tensor range",
+            ));
+        }
+        let end = expected.range.end()?;
+        if end > self.binding.file_size {
+            return Err(storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_short_read",
+                "the admitted tensor range exceeds the retained file",
+            ));
+        }
+        let mut file = self.binding.file.try_clone().map_err(|_| {
+            storage_error(
+                ErrorCategory::InvalidModel,
+                "qwen3moe_file_clone_failed",
+                "the retained external file could not be cloned for a bounded read",
+            )
+        })?;
+        file.seek(SeekFrom::Start(expected.range.offset))
+            .map_err(|_| {
+                storage_error(
+                    ErrorCategory::InvalidTensor,
+                    "qwen3moe_range_seek_failed",
+                    "the admitted tensor range could not be positioned",
+                )
+            })?;
+        let bytes_read = file.read(destination).map_err(|_| {
+            storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_read_failed",
+                "the admitted tensor range could not be read",
+            )
+        })?;
+        cancellation.check()?;
+        self.verify_identity()?;
+        Ok(bytes_read)
+    }
+}
+
+fn runtime_tensor(tensor: &Qwen3MoeTensorDescriptor) -> Result<RuntimeTensor, ContractError> {
+    let range = TensorRange {
+        offset: tensor.absolute_data_offset,
+        length: tensor.encoded_bytes,
+    };
+    range.end()?;
+    Ok(RuntimeTensor {
+        name: tensor.name.clone(),
+        shard: crate::qwen3moe::QWEN3MOE_FILENAME.to_owned(),
+        range,
+        shape: tensor.reader_shape.clone(),
+        quantization: tensor.quantization.clone(),
+    })
+}
+
+fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(), ContractError> {
+    let path_metadata = std::fs::symlink_metadata(&binding.canonical_path).map_err(|_| {
+        storage_error(
+            ErrorCategory::InvalidModel,
+            "model_path_identity_changed",
+            "the admitted model pathname is no longer available",
+        )
+    })?;
+    let open_metadata = binding.file.metadata().map_err(|_| {
+        storage_error(
+            ErrorCategory::InvalidModel,
+            "model_unavailable",
+            "the admitted external model descriptor metadata could not be read",
+        )
+    })?;
+    if path_metadata.file_type().is_symlink()
+        || !path_metadata.is_file()
+        || !open_metadata.is_file()
+        || ExternalFileIdentity::from_metadata(&path_metadata) != binding.opened_file_identity
+        || ExternalFileIdentity::from_metadata(&open_metadata) != binding.opened_file_identity
+        || open_metadata.len() != binding.file_size
+    {
+        return Err(storage_error(
+            ErrorCategory::InvalidModel,
+            "model_path_identity_changed",
+            "the admitted model pathname no longer resolves to the retained regular file",
+        ));
+    }
+    Ok(())
 }
 
 /// Hash metadata for the initialized decoded f32 content.
