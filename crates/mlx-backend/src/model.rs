@@ -306,7 +306,18 @@ impl ExternalModelInspection {
     }
 
     pub fn try_clone_file(&self) -> Result<File, ContractError> {
-        self.file.try_clone().map_err(|_| {
+        let cancellation = CancellationToken::new();
+        self.try_clone_file_cancellable(&cancellation)
+    }
+
+    fn try_clone_file_cancellable(
+        &self,
+        cancellation: &CancellationToken,
+    ) -> Result<File, ContractError> {
+        cancellation.check()?;
+        let clone_result = self.file.try_clone();
+        cancellation.check()?;
+        clone_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the admitted external model handle could not be cloned",
@@ -334,7 +345,9 @@ impl ExternalModelInspection {
         cancellation.check()?;
         self.qwen3moe_full_graph.verify_admission_proof()?;
         cancellation.check()?;
-        let metadata = self.file.metadata().map_err(|_| {
+        let metadata_result = self.file.metadata();
+        cancellation.check()?;
+        let metadata = metadata_result.map_err(|_| {
             invalid_model(
                 "model_unavailable",
                 "the admitted external model metadata could not be read",
@@ -375,7 +388,7 @@ impl ExternalModelInspection {
             self.qwen3moe_full_graph.artifact.revision.clone(),
         )?;
         cancellation.check()?;
-        let file = self.try_clone_file()?;
+        let file = self.try_clone_file_cancellable(cancellation)?;
         cancellation.check()?;
         Ok(ExternalQwen3MoeStorageBinding {
             file,
@@ -393,9 +406,16 @@ impl ExternalModelInspection {
         cancellation: &CancellationToken,
     ) -> Result<(), ContractError> {
         cancellation.check()?;
-        verify_path_matches_open_file(&self.canonical_path, &self.file, self.opened_file_identity)?;
+        verify_path_matches_open_file_cancellable(
+            &self.canonical_path,
+            &self.file,
+            self.opened_file_identity,
+            cancellation,
+        )?;
         cancellation.check()?;
-        let metadata = self.file.metadata().map_err(|_| {
+        let metadata_result = self.file.metadata();
+        cancellation.check()?;
+        let metadata = metadata_result.map_err(|_| {
             invalid_model(
                 "model_unavailable",
                 "the admitted external model metadata could not be read",
@@ -845,15 +865,37 @@ fn verify_path_matches_open_file_cancellable(
     expected_identity: ExternalFileIdentity,
     cancellation: &CancellationToken,
 ) -> Result<(), ContractError> {
+    verify_path_matches_open_file_with_metadata(
+        canonical_path,
+        file,
+        expected_identity,
+        cancellation,
+        |path| fs::symlink_metadata(path),
+        |file| file.metadata(),
+    )
+}
+
+fn verify_path_matches_open_file_with_metadata(
+    canonical_path: &Path,
+    file: &File,
+    expected_identity: ExternalFileIdentity,
+    cancellation: &CancellationToken,
+    mut path_metadata_reader: impl FnMut(&Path) -> std::io::Result<Metadata>,
+    mut open_metadata_reader: impl FnMut(&File) -> std::io::Result<Metadata>,
+) -> Result<(), ContractError> {
     cancellation.check()?;
-    let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
+    let path_metadata_result = path_metadata_reader(canonical_path);
+    cancellation.check()?;
+    let path_metadata = path_metadata_result.map_err(|_| {
         invalid_model(
             "model_path_identity_changed",
             "the admitted model pathname is no longer available",
         )
     })?;
     cancellation.check()?;
-    let open_metadata = file.metadata().map_err(|_| {
+    let open_metadata_result = open_metadata_reader(file);
+    cancellation.check()?;
+    let open_metadata = open_metadata_result.map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the admitted external model descriptor metadata could not be read",
@@ -888,7 +930,9 @@ fn open_read_only_no_follow_cancellable(
     cancellation: &CancellationToken,
 ) -> Result<(File, Metadata, ExternalFileIdentity), ContractError> {
     cancellation.check()?;
-    let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
+    let path_metadata_result = fs::symlink_metadata(canonical_path);
+    cancellation.check()?;
+    let path_metadata = path_metadata_result.map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file is unavailable",
@@ -907,14 +951,18 @@ fn open_read_only_no_follow_cancellable(
     #[cfg(unix)]
     options.custom_flags(libc::O_NOFOLLOW);
     cancellation.check()?;
-    let file = options.open(canonical_path).map_err(|_| {
+    let open_result = options.open(canonical_path);
+    cancellation.check()?;
+    let file = open_result.map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file could not be opened read-only without following a link",
         )
     })?;
     cancellation.check()?;
-    let metadata = file.metadata().map_err(|_| {
+    let metadata_result = file.metadata();
+    cancellation.check()?;
+    let metadata = metadata_result.map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model metadata could not be read",
@@ -972,14 +1020,18 @@ pub fn inspect_external_qwen_model_with_cancellation(
         ));
     }
     cancellation.check()?;
-    let canonical_path = requested_path.canonicalize().map_err(|_| {
+    let canonical_path_result = requested_path.canonicalize();
+    cancellation.check()?;
+    let canonical_path = canonical_path_result.map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file is unavailable",
         )
     })?;
     cancellation.check()?;
-    let canonical_root = repository_root.canonicalize().map_err(|_| {
+    let canonical_root_result = repository_root.canonicalize();
+    cancellation.check()?;
+    let canonical_root = canonical_root_result.map_err(|_| {
         invalid_model(
             "repository_unavailable",
             "the source repository root is unavailable",
@@ -1098,7 +1150,9 @@ fn sha256_reader_cancellable(
     cancellation: &CancellationToken,
 ) -> Result<String, ContractError> {
     cancellation.check()?;
-    file.seek(SeekFrom::Start(0)).map_err(|_| {
+    let seek_result = file.seek(SeekFrom::Start(0));
+    cancellation.check()?;
+    seek_result.map_err(|_| {
         invalid_model(
             "model_read_failed",
             "the external model could not be positioned for hashing",
@@ -1123,7 +1177,9 @@ fn sha256_stream_with_buffer(
     let mut buffer = vec![0_u8; buffer_size];
     loop {
         cancellation.check()?;
-        let count = reader.read(&mut buffer).map_err(|_| {
+        let read_result = reader.read(&mut buffer);
+        cancellation.check()?;
+        let count = read_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model could not be read completely for hashing",
@@ -1151,14 +1207,18 @@ fn parse_bounded_header_cancellable(
     let mut read_size = HEADER_READ_START;
     loop {
         cancellation.check()?;
-        let mut reader = file.try_clone().map_err(|_| {
+        let clone_result = file.try_clone();
+        cancellation.check()?;
+        let mut reader = clone_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model handle could not be cloned for header inspection",
             )
         })?;
         cancellation.check()?;
-        reader.seek(SeekFrom::Start(0)).map_err(|_| {
+        let seek_result = reader.seek(SeekFrom::Start(0));
+        cancellation.check()?;
+        seek_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model could not be positioned for header inspection",
@@ -1207,7 +1267,9 @@ fn read_header_prefix_with_reader(
         cancellation.check()?;
         let remaining = read_size - header.len();
         let limit = remaining.min(chunk.len());
-        let count = reader.read(&mut chunk[..limit]).map_err(|_| {
+        let read_result = reader.read(&mut chunk[..limit]);
+        cancellation.check()?;
+        let count = read_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model header could not be read completely",
@@ -1703,7 +1765,9 @@ fn sha256_exact_range_with_reader(
             .ok_or_else(|| {
                 invalid_model("invalid_tensor_range", "the bounded slice offset overflows")
             })?;
-        let count = reader(&mut bytes[read..], read_offset).map_err(|_| {
+        let read_result = reader(&mut bytes[read..], read_offset);
+        cancellation.check()?;
+        let count = read_result.map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model bounded slice could not be read",
@@ -2260,6 +2324,66 @@ mod tests {
     }
 
     #[test]
+    fn identity_cancellation_wins_over_path_metadata_error() {
+        let fixture = router_file(4 * 1024 * 1024);
+        let identity = ExternalFileIdentity::from_metadata(
+            &fixture
+                .file
+                .metadata()
+                .expect("synthetic identity fixture metadata is readable"),
+        );
+        let cancellation = CancellationToken::new();
+
+        let error = verify_path_matches_open_file_with_metadata(
+            &fixture.path,
+            &fixture.file,
+            identity,
+            &cancellation,
+            |_path| {
+                cancellation.cancel();
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "synthetic pathname metadata failure",
+                ))
+            },
+            |_file| panic!("open-file metadata must not run after cancellation"),
+        )
+        .expect_err("cancellation must win over pathname metadata failure");
+
+        assert_eq!(error.code(), "cancelled");
+    }
+
+    #[test]
+    fn identity_cancellation_wins_over_open_file_metadata_error() {
+        let fixture = router_file(4 * 1024 * 1024);
+        let identity = ExternalFileIdentity::from_metadata(
+            &fixture
+                .file
+                .metadata()
+                .expect("synthetic identity fixture metadata is readable"),
+        );
+        let cancellation = CancellationToken::new();
+
+        let error = verify_path_matches_open_file_with_metadata(
+            &fixture.path,
+            &fixture.file,
+            identity,
+            &cancellation,
+            |path| fs::symlink_metadata(path),
+            |_file| {
+                cancellation.cancel();
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "synthetic descriptor metadata failure",
+                ))
+            },
+        )
+        .expect_err("cancellation must win over descriptor metadata failure");
+
+        assert_eq!(error.code(), "cancelled");
+    }
+
+    #[test]
     fn cancellable_inspection_checks_token_before_path_access() {
         let nonce = FIXTURE_NONCE.fetch_add(1, Ordering::Relaxed);
         let missing = std::env::temp_dir()
@@ -2314,6 +2438,31 @@ mod tests {
         }
     }
 
+    struct CancelsThenReadError<'a> {
+        cancellation: &'a CancellationToken,
+    }
+
+    impl Read for CancelsThenReadError<'_> {
+        fn read(&mut self, _destination: &mut [u8]) -> std::io::Result<usize> {
+            self.cancellation.cancel();
+            Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "synthetic stream-read failure",
+            ))
+        }
+    }
+
+    struct ReadError;
+
+    impl Read for ReadError {
+        fn read(&mut self, _destination: &mut [u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "synthetic noncancelled stream-read failure",
+            ))
+        }
+    }
+
     #[test]
     fn full_hash_reader_honors_mid_stream_cancellation() {
         let cancellation = CancellationToken::new();
@@ -2342,6 +2491,68 @@ mod tests {
 
         assert_eq!(error.code(), "cancelled");
         assert_eq!(reader.reads, 1);
+    }
+
+    #[test]
+    fn full_hash_cancellation_wins_over_reader_error() {
+        let cancellation = CancellationToken::new();
+        let mut reader = CancelsThenReadError {
+            cancellation: &cancellation,
+        };
+
+        let error = sha256_stream_with_buffer(&mut reader, &cancellation, 1)
+            .expect_err("cancellation must win over a stream reader error");
+
+        assert_eq!(error.code(), "cancelled");
+    }
+
+    #[test]
+    fn bounded_header_cancellation_wins_over_reader_error() {
+        let cancellation = CancellationToken::new();
+        let mut reader = CancelsThenReadError {
+            cancellation: &cancellation,
+        };
+
+        let error = read_header_prefix_with_reader(&mut reader, 2, 1, &cancellation)
+            .expect_err("cancellation must win over a header reader error");
+
+        assert_eq!(error.code(), "cancelled");
+    }
+
+    #[test]
+    fn noncancelled_reader_failures_keep_their_model_read_errors() {
+        let cancellation = CancellationToken::new();
+        let range_error =
+            sha256_exact_range_with_reader(37, 1, &cancellation, |_destination, _| {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "synthetic noncancelled bounded-read failure",
+                ))
+            })
+            .expect_err("a noncancelled bounded-read error must fail");
+        assert_eq!(range_error.code(), "model_read_failed");
+
+        for count in [0, 2] {
+            let result =
+                sha256_exact_range_with_reader(37, 1, &cancellation, |_destination, _| Ok(count));
+            assert_eq!(
+                result
+                    .expect_err("a noncancelled malformed bounded read must fail")
+                    .code(),
+                "model_read_failed",
+                "reader count {count}"
+            );
+        }
+
+        let mut hash_reader = ReadError;
+        let hash_error = sha256_stream_with_buffer(&mut hash_reader, &cancellation, 1)
+            .expect_err("a noncancelled stream reader error must fail");
+        assert_eq!(hash_error.code(), "model_read_failed");
+
+        let mut header_reader = ReadError;
+        let header_error = read_header_prefix_with_reader(&mut header_reader, 1, 1, &cancellation)
+            .expect_err("a noncancelled header reader error must fail");
+        assert_eq!(header_error.code(), "model_read_failed");
     }
 
     #[test]
@@ -2388,5 +2599,44 @@ mod tests {
         );
         assert_eq!(reads, 1);
         assert_eq!(offsets, [37]);
+    }
+
+    #[test]
+    fn range_hash_cancellation_wins_over_short_and_overlong_reads() {
+        for count in [0, 2] {
+            let cancellation = CancellationToken::new();
+            let result = sha256_exact_range_with_reader(37, 1, &cancellation, |_destination, _| {
+                cancellation.cancel();
+                Ok(count)
+            });
+
+            assert_eq!(
+                result
+                    .expect_err("cancellation must win over malformed bounded-read counts")
+                    .code(),
+                "cancelled",
+                "reader count {count}"
+            );
+        }
+    }
+
+    #[test]
+    fn range_hash_cancellation_wins_over_reader_error() {
+        let cancellation = CancellationToken::new();
+        let result =
+            sha256_exact_range_with_reader(37, 1, &cancellation, |_destination, _offset| {
+                cancellation.cancel();
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "synthetic bounded-read failure",
+                ))
+            });
+
+        assert_eq!(
+            result
+                .expect_err("cancellation must win over a reader error")
+                .code(),
+            "cancelled"
+        );
     }
 }
