@@ -5,8 +5,8 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
-import subprocess
 
 from generate_f017_event06_authority_dag_v2 import (
     AUTHORITY_DISPOSITION,
@@ -14,6 +14,7 @@ from generate_f017_event06_authority_dag_v2 import (
     HISTORICAL_DAG_SHA256,
     build,
 )
+from f017_historical_object_preflight_v1 import read_historical_blob
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
@@ -21,22 +22,12 @@ DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12
 
 def _historical_bytes(relative_path: str) -> bytes:
     """Read one exact repository blob from the DAG's historical commit."""
-    if (
-        type(relative_path) is not str
-        or relative_path.startswith("/")
-        or "\\" in relative_path
-        or any(part in {"", ".", ".."} for part in Path(relative_path).parts)
-    ):
-        raise ValueError("historical repository path")
-    completed = subprocess.run(
-        ["git", "show", f"{HISTORICAL_DAG_COMMIT}:{relative_path}"],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
+    return read_historical_blob(
+        ROOT,
+        HISTORICAL_DAG_COMMIT,
+        relative_path,
+        environment=os.environ,
     )
-    if completed.returncode != 0 or completed.stderr:
-        raise ValueError(f"historical repository blob: {relative_path}")
-    return completed.stdout
 
 
 def _symbols(raw: bytes) -> set[str]:
