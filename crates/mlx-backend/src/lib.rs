@@ -6,6 +6,7 @@ pub mod model;
 pub mod protocol;
 pub mod qwen3moe;
 pub mod qwen3moe_attention;
+pub mod qwen3moe_attention_generation;
 pub mod qwen3moe_context;
 pub mod qwen3moe_runtime;
 pub mod qwen3moe_storage;
@@ -57,6 +58,17 @@ pub use qwen3moe_attention::{
     Qwen3MoeAttentionTensors, QWEN3MOE_ATTENTION_KV_CONTRACT_ID,
     QWEN3MOE_ATTENTION_KV_FIXTURE_ID, QWEN3MOE_ATTENTION_KV_FIXTURE_SCHEMA,
     QWEN3MOE_ATTENTION_KV_MAX_ELEMENTS, QWEN3MOE_ATTENTION_KV_OPERATION_COUNT,
+};
+pub use qwen3moe_attention_generation::{
+    parse_qwen3moe_attention_greedy_fixture, run_qwen3moe_attention_greedy_generation,
+    run_qwen3moe_attention_greedy_generation_with_cancel_after_logits,
+    validate_qwen3moe_attention_greedy_fixture, Qwen3MoeAttentionGreedyFixture,
+    Qwen3MoeAttentionGreedyGenerationResult, Qwen3MoeAttentionGreedyOracle,
+    Qwen3MoeAttentionGreedyOracleLogit, Qwen3MoeAttentionGreedyOracleStep,
+    Qwen3MoeAttentionGreedyOutputProjection, Qwen3MoeAttentionGreedyRuntime,
+    Qwen3MoeAttentionGreedyStepEvidence, QWEN3MOE_ATTENTION_GREEDY_CONTRACT_ID,
+    QWEN3MOE_ATTENTION_GREEDY_FIXTURE_ID, QWEN3MOE_ATTENTION_GREEDY_FIXTURE_SCHEMA,
+    QWEN3MOE_ATTENTION_GREEDY_MAX_ELEMENTS,
 };
 pub use qwen3moe_context::{
     Qwen3MoeExecutionContext, Qwen3MoePlugin, QWEN3MOE_ARCHITECTURE_ID,
