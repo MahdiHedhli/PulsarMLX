@@ -303,7 +303,9 @@ def test_denied_developer_path_fails_closed_on_macos(tmp_path):
     )
 
 
-def test_sandbox_preflight_failure_persists_sanitized_output_after_cleanup(tmp_path, monkeypatch):
+def test_sandbox_preflight_failure_persists_sanitized_output_after_cleanup(
+    tmp_path, monkeypatch, capsys
+):
     if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the sandbox custody regression is macOS /usr/bin/sandbox-exec specific")
 
@@ -334,6 +336,8 @@ def test_sandbox_preflight_failure_persists_sanitized_output_after_cleanup(tmp_p
     assert captured["path"].exists() is False
     assert output.is_file()
     envelope = json.loads(output.read_text(encoding="utf-8"))
+    log = capsys.readouterr().err
+    logged = json.loads(log)
     assert envelope["status"] == "FAIL"
     assert envelope["result"] == "FAIL"
     assert envelope["failure_stage"] == "HISTORICAL_PREFLIGHT"
@@ -341,11 +345,27 @@ def test_sandbox_preflight_failure_persists_sanitized_output_after_cleanup(tmp_p
     assert envelope["historical_preflight_diagnostic_available"] is True
     assert envelope["historical_preflight"]["result"] == "FAIL"
     assert envelope["historical_preflight"]["revision"] == "0" * 40
-    assert "controlled stderr" not in output.read_text(encoding="utf-8")
+    assert logged == envelope
+    assert len(log.encode("utf-8")) <= sandbox_runner.MAX_FAILURE_ENVELOPE_BYTES
+    assert str(ROOT) not in log
+    assert HISTORICAL_PATH not in log
+    assert "argv" not in log
+    assert "relative_path" not in log
+    assert "controlled stderr" not in log
+    assert "failed_command_names" in logged["historical_preflight"]
 
 
-def test_preflight_failure_without_diagnostic_retains_safe_metadata(tmp_path):
+@pytest.mark.parametrize(
+    ("diagnostic_contents", "expected_status"),
+    ((None, "MISSING"), (b"not-json", "MALFORMED")),
+)
+def test_preflight_failure_without_diagnostic_retains_safe_metadata(
+    tmp_path, diagnostic_contents, expected_status, capsys
+):
     output = tmp_path / "metadata-only-failure.json"
+    diagnostic_path = tmp_path / "diagnostic.json"
+    if diagnostic_contents is not None:
+        diagnostic_path.write_bytes(diagnostic_contents)
     preflight = subprocess.CompletedProcess(
         ["sandbox-exec", "python", "-c", "preflight"],
         23,
@@ -354,11 +374,14 @@ def test_preflight_failure_without_diagnostic_retains_safe_metadata(tmp_path):
     )
 
     sandbox_runner._write_preflight_failure(
-        output, preflight, tmp_path / "missing-diagnostic.json"
+        output, preflight, diagnostic_path
     )
 
     raw = output.read_text(encoding="utf-8")
+    log = capsys.readouterr().err
     envelope = json.loads(raw)
+    assert json.loads(log) == envelope
+    assert len(log.encode("utf-8")) <= sandbox_runner.MAX_FAILURE_ENVELOPE_BYTES
     assert envelope["status"] == "FAIL"
     assert envelope["result"] == "FAIL"
     assert envelope["failure_stage"] == "HISTORICAL_PREFLIGHT"
@@ -371,6 +394,51 @@ def test_preflight_failure_without_diagnostic_retains_safe_metadata(tmp_path):
     assert envelope["historical_preflight_stderr_sha256"] == hashlib.sha256(
         preflight.stderr
     ).hexdigest()
+    assert envelope["historical_preflight_diagnostic_status"] == expected_status
     assert envelope["historical_preflight_diagnostic_available"] is False
     assert envelope["historical_preflight"] is None
+    assert "diagnostic.json" not in log
+    assert "argv" not in log
     assert "secret stderr" not in raw
+    assert "secret stderr" not in log
+
+
+def test_contradictory_success_diagnostic_uses_safe_fallback(tmp_path, capsys):
+    diagnostic = tmp_path / "contradictory.json"
+    diagnostic.write_text(
+        json.dumps(
+            {
+                "schema": sandbox_runner._PREFLIGHT_SCHEMA,
+                "result": "PASS",
+                "revision": "a" * 40,
+                "relative_path": "scripts/research/input.py",
+                "model_environment_empty": True,
+                "required_checks_clean": True,
+                "historical_blob_is_blob": True,
+                "commands": {
+                    "show": {
+                        "returncode": 0,
+                        "stdout_bytes": 0,
+                        "stdout_sha256": "a" * 64,
+                        "stderr_bytes": 0,
+                        "stderr_sha256": "b" * 64,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    preflight = subprocess.CompletedProcess(
+        ["sandbox-exec", "python", "-c", "preflight"],
+        1,
+        b"",
+        b"",
+    )
+
+    sandbox_runner._write_preflight_failure(None, preflight, diagnostic)
+    log = capsys.readouterr().err
+    envelope = json.loads(log)
+    assert envelope["historical_preflight_diagnostic_status"] == "MALFORMED"
+    assert envelope["historical_preflight_diagnostic_available"] is False
+    assert envelope["historical_preflight"] is None
+    assert "input.py" not in log
