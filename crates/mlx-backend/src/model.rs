@@ -4,8 +4,8 @@
 //! explicit external artifact read-only. It never acquires or executes a model.
 
 use crate::qwen3moe::{
-    admission_input_from_gguf, admit_qwen3moe_adapter, Qwen3MoeAdapterDescriptor,
-    Qwen3MoeArtifactBinding,
+    admission_input_from_gguf, admit_qwen3moe_adapter, construct_qwen3moe_full_graph,
+    Qwen3MoeAdapterDescriptor, Qwen3MoeArtifactBinding, Qwen3MoeFullGraphDescriptor,
 };
 use crate::router::{
     admit_router_tensor, RouterTensorDescriptor, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH,
@@ -207,6 +207,7 @@ pub struct ExternalModelInspection {
     q8_0_tensor_count: usize,
     encoded_slice_sha256: String,
     qwen3moe_adapter: Qwen3MoeAdapterDescriptor,
+    qwen3moe_full_graph: Qwen3MoeFullGraphDescriptor,
 }
 
 /// Read-only, path-free observation of the exact layer-0 router tensor.
@@ -305,6 +306,12 @@ impl ExternalModelInspection {
     /// the same already-verified GGUF header. No tensor payload is decoded.
     pub fn qwen3moe_adapter(&self) -> &Qwen3MoeAdapterDescriptor {
         &self.qwen3moe_adapter
+    }
+
+    /// The complete metadata-only Qwen3MoE transformer graph admitted from
+    /// the same verified GGUF header. No tensor payload is decoded.
+    pub fn qwen3moe_full_graph(&self) -> &Qwen3MoeFullGraphDescriptor {
+        &self.qwen3moe_full_graph
     }
 
     /// Inspect and admit the complete F32 layer-0 router range from the same
@@ -673,6 +680,7 @@ pub fn inspect_external_qwen_model(
             sha256: SHA256.to_owned(),
         },
     )?)?;
+    let qwen3moe_full_graph = construct_qwen3moe_full_graph(qwen3moe_adapter.clone())?;
     let (metadata_descriptor, tensor_descriptor, f32_count, q8_0_count) =
         inspect_gguf_inventory(&gguf, metadata.len())?;
     let encoded_slice_sha256 = sha256_exact_range(
@@ -720,6 +728,7 @@ pub fn inspect_external_qwen_model(
         q8_0_tensor_count: q8_0_count,
         encoded_slice_sha256,
         qwen3moe_adapter,
+        qwen3moe_full_graph,
     })
 }
 

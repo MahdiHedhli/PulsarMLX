@@ -22,8 +22,16 @@ pub const QWEN3MOE_EXPERT_COUNT: u64 = 128;
 pub const QWEN3MOE_TOP_K: u64 = 8;
 pub const QWEN3MOE_EXPERT_FFN_WIDTH: u64 = 768;
 pub const QWEN3MOE_TENSOR_COUNT: usize = 579;
+pub const QWEN3MOE_FULL_GRAPH_CONTRACT_ID: &str = "qwen3moe-full-graph-admission-v1";
+pub const QWEN3MOE_GRAPH_OPERATIONS_PER_LAYER: usize = 19;
+pub const QWEN3MOE_GLOBAL_GRAPH_OPERATIONS: usize = 3;
+pub const QWEN3MOE_VOCAB_SIZE: u64 = 151_936;
+pub const QWEN3MOE_ATTENTION_HEAD_COUNT: u64 = 32;
+pub const QWEN3MOE_ATTENTION_KV_HEAD_COUNT: u64 = 4;
+pub const QWEN3MOE_HEAD_DIMENSION: u64 = 128;
+pub const QWEN3MOE_ROPE_KIND: &str = "neox";
 const QWEN3MOE_GGUF_VERSION: u32 = 3;
-const QWEN3MOE_DATA_OFFSET: u64 = 5_969_408;
+pub const QWEN3MOE_DATA_OFFSET: u64 = 5_969_408;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Qwen3MoeArtifactBinding {
@@ -114,6 +122,369 @@ impl Qwen3MoeAdapterDescriptor {
             .iter()
             .find(|tensor| tensor.layer_index == Some(0) && tensor.role == role)
     }
+}
+
+/// A graph operation in the fixed Qwen3MoE transformer layer.
+///
+/// This is a metadata-only description. The enum deliberately does not carry
+/// executable closures, device handles, or tensor payloads.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Qwen3MoeGraphOperation {
+    AttentionInputRmsNorm,
+    QueryProjection,
+    QueryRmsNorm,
+    KeyProjection,
+    KeyRmsNorm,
+    ValueProjection,
+    NeoxRotaryEmbedding,
+    GroupedQueryAttention,
+    AttentionOutputProjection,
+    AttentionResidualAdd,
+    FfnInputRmsNorm,
+    RouterProjection,
+    RouterTopK,
+    ExpertGateProjection,
+    ExpertUpProjection,
+    SwiGluActivation,
+    ExpertDownProjection,
+    RoutedExpertWeightedAggregate,
+    FfnResidualAdd,
+    TokenEmbedding,
+    FinalRmsNorm,
+    OutputProjection,
+}
+
+impl Qwen3MoeGraphOperation {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::AttentionInputRmsNorm => "attention_input_rms_norm",
+            Self::QueryProjection => "query_projection",
+            Self::QueryRmsNorm => "query_rms_norm",
+            Self::KeyProjection => "key_projection",
+            Self::KeyRmsNorm => "key_rms_norm",
+            Self::ValueProjection => "value_projection",
+            Self::NeoxRotaryEmbedding => "neox_rotary_embedding",
+            Self::GroupedQueryAttention => "grouped_query_attention",
+            Self::AttentionOutputProjection => "attention_output_projection",
+            Self::AttentionResidualAdd => "attention_residual_add",
+            Self::FfnInputRmsNorm => "ffn_input_rms_norm",
+            Self::RouterProjection => "router_projection",
+            Self::RouterTopK => "full_softmax_top_k",
+            Self::ExpertGateProjection => "expert_gate_projection",
+            Self::ExpertUpProjection => "expert_up_projection",
+            Self::SwiGluActivation => "swiglu_activation",
+            Self::ExpertDownProjection => "expert_down_projection",
+            Self::RoutedExpertWeightedAggregate => "routed_expert_weighted_aggregate",
+            Self::FfnResidualAdd => "ffn_residual_add",
+            Self::TokenEmbedding => "token_embedding",
+            Self::FinalRmsNorm => "final_rms_norm",
+            Self::OutputProjection => "output_projection",
+        }
+    }
+}
+
+/// A path-free reference from one graph operation to one admitted tensor.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeTensorBinding {
+    pub role: Qwen3MoeTensorRole,
+    pub layer_index: Option<u32>,
+    pub tensor_name: String,
+}
+
+/// One typed node in a Qwen3MoE graph. Operations such as RoPE and residual
+/// addition intentionally have no tensor binding.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeGraphNodeDescriptor {
+    pub operation: Qwen3MoeGraphOperation,
+    pub tensor: Option<Qwen3MoeTensorBinding>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeLayerGraphDescriptor {
+    pub layer_index: u32,
+    pub nodes: Vec<Qwen3MoeGraphNodeDescriptor>,
+}
+
+/// The canonical, metadata-only graph topology for the complete model.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeGraphDescriptor {
+    pub token_embedding: Qwen3MoeTensorBinding,
+    pub layers: Vec<Qwen3MoeLayerGraphDescriptor>,
+    pub final_norm: Qwen3MoeTensorBinding,
+    pub output_projection: Qwen3MoeTensorBinding,
+}
+
+impl Qwen3MoeGraphDescriptor {
+    pub fn layer(&self, layer_index: u32) -> Option<&Qwen3MoeLayerGraphDescriptor> {
+        self.layers
+            .iter()
+            .find(|layer| layer.layer_index == layer_index)
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.layers
+            .iter()
+            .map(|layer| layer.nodes.len())
+            .sum::<usize>()
+            + QWEN3MOE_GLOBAL_GRAPH_OPERATIONS
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeFullGraphAdmissionInput {
+    pub adapter: Qwen3MoeAdapterDescriptor,
+    pub graph: Qwen3MoeGraphDescriptor,
+}
+
+/// Complete typed Qwen3MoE tensor catalog plus its admitted transformer graph.
+///
+/// This descriptor is an admission result only. It contains identities,
+/// shapes, offsets, and operation topology; it cannot execute a model.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Qwen3MoeFullGraphDescriptor {
+    pub contract_id: String,
+    pub artifact: Qwen3MoeArtifactBinding,
+    pub metadata: Qwen3MoeMetadata,
+    pub tensors: Vec<Qwen3MoeTensorDescriptor>,
+    pub graph: Qwen3MoeGraphDescriptor,
+}
+
+impl Qwen3MoeFullGraphDescriptor {
+    pub fn tensor(&self, name: &str) -> Option<&Qwen3MoeTensorDescriptor> {
+        self.tensors.iter().find(|tensor| tensor.name == name)
+    }
+
+    pub fn layer(&self, layer_index: u32) -> Option<&Qwen3MoeLayerGraphDescriptor> {
+        self.graph.layer(layer_index)
+    }
+}
+
+/// Admit a caller-supplied graph only when it exactly matches the canonical
+/// Qwen3MoE topology and the already-admitted complete tensor catalog.
+pub fn admit_qwen3moe_full_graph(
+    input: Qwen3MoeFullGraphAdmissionInput,
+) -> Result<Qwen3MoeFullGraphDescriptor, ContractError> {
+    if input.adapter.contract_id != QWEN3MOE_ADAPTER_CONTRACT_ID {
+        return Err(graph_error(
+            "adapter_contract_mismatch",
+            "the graph input is not bound to the Qwen3MoE adapter contract",
+        ));
+    }
+    let adapter = admit_qwen3moe_adapter(adapter_input(&input.adapter))?;
+    validate_catalog_ranges(&adapter)?;
+    validate_graph(&adapter, &input.graph)?;
+    Ok(Qwen3MoeFullGraphDescriptor {
+        contract_id: QWEN3MOE_FULL_GRAPH_CONTRACT_ID.to_owned(),
+        artifact: adapter.artifact,
+        metadata: adapter.metadata,
+        tensors: adapter.tensors,
+        graph: input.graph,
+    })
+}
+
+/// Construct and admit the canonical full graph from one typed adapter.
+pub fn construct_qwen3moe_full_graph(
+    adapter: Qwen3MoeAdapterDescriptor,
+) -> Result<Qwen3MoeFullGraphDescriptor, ContractError> {
+    let adapter = admit_qwen3moe_adapter(adapter_input(&adapter))?;
+    let graph = canonical_graph(&adapter)?;
+    admit_qwen3moe_full_graph(Qwen3MoeFullGraphAdmissionInput { adapter, graph })
+}
+
+fn adapter_input(adapter: &Qwen3MoeAdapterDescriptor) -> Qwen3MoeAdmissionInput {
+    Qwen3MoeAdmissionInput {
+        artifact: adapter.artifact.clone(),
+        metadata: adapter.metadata.clone(),
+        tensors: adapter.tensors.clone(),
+    }
+}
+
+fn canonical_graph(
+    adapter: &Qwen3MoeAdapterDescriptor,
+) -> Result<Qwen3MoeGraphDescriptor, ContractError> {
+    let token_embedding = tensor_binding(adapter, None, Qwen3MoeTensorRole::TokenEmbedding)?;
+    let final_norm = tensor_binding(adapter, None, Qwen3MoeTensorRole::OutputNorm)?;
+    let output_projection = tensor_binding(adapter, None, Qwen3MoeTensorRole::OutputWeight)?;
+    let layers = (0..QWEN3MOE_LAYER_COUNT)
+        .map(|layer_index| {
+            Ok(Qwen3MoeLayerGraphDescriptor {
+                layer_index,
+                nodes: canonical_layer_nodes(adapter, layer_index)?,
+            })
+        })
+        .collect::<Result<Vec<_>, ContractError>>()?;
+    Ok(Qwen3MoeGraphDescriptor {
+        token_embedding,
+        layers,
+        final_norm,
+        output_projection,
+    })
+}
+
+fn canonical_layer_nodes(
+    adapter: &Qwen3MoeAdapterDescriptor,
+    layer_index: u32,
+) -> Result<Vec<Qwen3MoeGraphNodeDescriptor>, ContractError> {
+    expected_layer_operations()
+        .into_iter()
+        .map(|(operation, role)| {
+            Ok(Qwen3MoeGraphNodeDescriptor {
+                operation,
+                tensor: role
+                    .map(|role| tensor_binding(adapter, Some(layer_index), role))
+                    .transpose()?,
+            })
+        })
+        .collect()
+}
+
+fn expected_layer_operations(
+) -> [(Qwen3MoeGraphOperation, Option<Qwen3MoeTensorRole>); QWEN3MOE_GRAPH_OPERATIONS_PER_LAYER] {
+    [
+        (
+            Qwen3MoeGraphOperation::AttentionInputRmsNorm,
+            Some(Qwen3MoeTensorRole::AttentionNorm),
+        ),
+        (
+            Qwen3MoeGraphOperation::QueryProjection,
+            Some(Qwen3MoeTensorRole::AttentionQueryWeight),
+        ),
+        (
+            Qwen3MoeGraphOperation::QueryRmsNorm,
+            Some(Qwen3MoeTensorRole::AttentionQueryNorm),
+        ),
+        (
+            Qwen3MoeGraphOperation::KeyProjection,
+            Some(Qwen3MoeTensorRole::AttentionKeyWeight),
+        ),
+        (
+            Qwen3MoeGraphOperation::KeyRmsNorm,
+            Some(Qwen3MoeTensorRole::AttentionKeyNorm),
+        ),
+        (
+            Qwen3MoeGraphOperation::ValueProjection,
+            Some(Qwen3MoeTensorRole::AttentionValueWeight),
+        ),
+        (Qwen3MoeGraphOperation::NeoxRotaryEmbedding, None),
+        (Qwen3MoeGraphOperation::GroupedQueryAttention, None),
+        (
+            Qwen3MoeGraphOperation::AttentionOutputProjection,
+            Some(Qwen3MoeTensorRole::AttentionOutputWeight),
+        ),
+        (Qwen3MoeGraphOperation::AttentionResidualAdd, None),
+        (
+            Qwen3MoeGraphOperation::FfnInputRmsNorm,
+            Some(Qwen3MoeTensorRole::FfnNorm),
+        ),
+        (
+            Qwen3MoeGraphOperation::RouterProjection,
+            Some(Qwen3MoeTensorRole::RouterWeight),
+        ),
+        (Qwen3MoeGraphOperation::RouterTopK, None),
+        (
+            Qwen3MoeGraphOperation::ExpertGateProjection,
+            Some(Qwen3MoeTensorRole::ExpertGateWeight),
+        ),
+        (
+            Qwen3MoeGraphOperation::ExpertUpProjection,
+            Some(Qwen3MoeTensorRole::ExpertUpWeight),
+        ),
+        (Qwen3MoeGraphOperation::SwiGluActivation, None),
+        (
+            Qwen3MoeGraphOperation::ExpertDownProjection,
+            Some(Qwen3MoeTensorRole::ExpertDownWeight),
+        ),
+        (Qwen3MoeGraphOperation::RoutedExpertWeightedAggregate, None),
+        (Qwen3MoeGraphOperation::FfnResidualAdd, None),
+    ]
+}
+
+fn tensor_binding(
+    adapter: &Qwen3MoeAdapterDescriptor,
+    layer_index: Option<u32>,
+    role: Qwen3MoeTensorRole,
+) -> Result<Qwen3MoeTensorBinding, ContractError> {
+    let tensor = adapter
+        .tensors
+        .iter()
+        .find(|tensor| tensor.layer_index == layer_index && tensor.role == role)
+        .ok_or_else(|| {
+            graph_error(
+                "graph_tensor_binding_missing",
+                "the admitted Qwen3MoE catalog lacks a graph tensor binding",
+            )
+        })?;
+    Ok(Qwen3MoeTensorBinding {
+        role,
+        layer_index,
+        tensor_name: tensor.name.clone(),
+    })
+}
+
+fn validate_catalog_ranges(adapter: &Qwen3MoeAdapterDescriptor) -> Result<(), ContractError> {
+    let mut ranges = adapter
+        .tensors
+        .iter()
+        .map(|tensor| {
+            let end = tensor
+                .absolute_data_offset
+                .checked_add(tensor.encoded_bytes)
+                .ok_or_else(|| {
+                    graph_error(
+                        "invalid_tensor_range",
+                        "a Qwen3MoE tensor range overflows during graph admission",
+                    )
+                })?;
+            if tensor.absolute_data_offset < QWEN3MOE_DATA_OFFSET || end > QWEN3MOE_FILE_BYTES {
+                return Err(graph_error(
+                    "invalid_tensor_range",
+                    "a Qwen3MoE graph tensor range is outside the GGUF data section",
+                ));
+            }
+            Ok((tensor.absolute_data_offset, end))
+        })
+        .collect::<Result<Vec<_>, ContractError>>()?;
+    ranges.sort_unstable();
+    if ranges.windows(2).any(|window| window[0].1 > window[1].0) {
+        return Err(graph_error(
+            "overlapping_tensor_ranges",
+            "the Qwen3MoE tensor catalog contains overlapping payload ranges",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_graph(
+    adapter: &Qwen3MoeAdapterDescriptor,
+    graph: &Qwen3MoeGraphDescriptor,
+) -> Result<(), ContractError> {
+    let expected = canonical_graph(adapter)?;
+    if graph.token_embedding != expected.token_embedding
+        || graph.final_norm != expected.final_norm
+        || graph.output_projection != expected.output_projection
+    {
+        return Err(graph_error(
+            "graph_tensor_binding_mismatch",
+            "a Qwen3MoE global graph tensor binding differs from the admitted catalog",
+        ));
+    }
+    if graph.layers.len() != QWEN3MOE_LAYER_COUNT as usize {
+        return Err(graph_error(
+            "graph_layer_count_mismatch",
+            "the Qwen3MoE graph does not contain all transformer layers",
+        ));
+    }
+    if graph.layers != expected.layers {
+        return Err(graph_error(
+            "graph_node_sequence_mismatch",
+            "a Qwen3MoE layer graph differs from the canonical operation sequence",
+        ));
+    }
+    Ok(())
+}
+
+fn graph_error(code: &'static str, message: &'static str) -> ContractError {
+    ContractError::new(ErrorCategory::InvalidModel, code, message)
 }
 
 /// Admit one exact, typed Qwen3MoE catalog. No path or payload bytes are
@@ -764,6 +1135,96 @@ mod tests {
                 .expect_err("wrong layer count must fail")
                 .code(),
             "model_metadata_mismatch"
+        );
+    }
+
+    fn complete_adapter_with_disjoint_ranges() -> Qwen3MoeAdapterDescriptor {
+        let mut input = complete_input();
+        let mut offset = QWEN3MOE_DATA_OFFSET;
+        for tensor in &mut input.tensors {
+            tensor.absolute_data_offset = offset;
+            offset = offset
+                .checked_add(tensor.encoded_bytes)
+                .expect("model-free range fixture must not overflow");
+        }
+        assert!(offset <= QWEN3MOE_FILE_BYTES);
+        admit_qwen3moe_adapter(input).expect("complete disjoint map is admitted")
+    }
+
+    #[test]
+    fn canonical_full_graph_binds_all_layers_without_payload_access() {
+        let adapter = complete_adapter_with_disjoint_ranges();
+        let full = construct_qwen3moe_full_graph(adapter).expect("canonical graph is admitted");
+        assert_eq!(full.contract_id, QWEN3MOE_FULL_GRAPH_CONTRACT_ID);
+        assert_eq!(full.tensors.len(), QWEN3MOE_TENSOR_COUNT);
+        assert_eq!(full.graph.layers.len(), QWEN3MOE_LAYER_COUNT as usize);
+        assert_eq!(full.graph.node_count(), 48 * 19 + 3);
+        assert_eq!(
+            full.graph.layers[0].nodes[0].operation,
+            Qwen3MoeGraphOperation::AttentionInputRmsNorm
+        );
+        assert_eq!(
+            full.graph.layers[0].nodes[11]
+                .tensor
+                .as_ref()
+                .expect("layer-0 router binding")
+                .tensor_name,
+            "blk.0.ffn_gate_inp.weight"
+        );
+        assert_eq!(
+            full.graph.layers[47].nodes[16]
+                .tensor
+                .as_ref()
+                .expect("layer-47 down binding")
+                .tensor_name,
+            "blk.47.ffn_down_exps.weight"
+        );
+        assert_eq!(full.graph.token_embedding.tensor_name, "token_embd.weight");
+        assert_eq!(full.graph.output_projection.tensor_name, "output.weight");
+    }
+
+    #[test]
+    fn graph_sequence_binding_and_overlapping_ranges_fail_closed() {
+        let adapter = complete_adapter_with_disjoint_ranges();
+        let mut graph = canonical_graph(&adapter).expect("canonical graph");
+        graph.layers[0].nodes[12].operation = Qwen3MoeGraphOperation::RouterProjection;
+        assert_eq!(
+            admit_qwen3moe_full_graph(Qwen3MoeFullGraphAdmissionInput {
+                adapter: adapter.clone(),
+                graph,
+            })
+            .expect_err("mutated graph operation must fail")
+            .code(),
+            "graph_node_sequence_mismatch"
+        );
+
+        let mut graph = canonical_graph(&adapter).expect("canonical graph");
+        graph.layers[0].nodes[11]
+            .tensor
+            .as_mut()
+            .expect("router binding")
+            .tensor_name = "blk.0.ffn_gate_inp.bias".to_owned();
+        assert_eq!(
+            admit_qwen3moe_full_graph(Qwen3MoeFullGraphAdmissionInput {
+                adapter: adapter.clone(),
+                graph,
+            })
+            .expect_err("mutated graph binding must fail")
+            .code(),
+            "graph_node_sequence_mismatch"
+        );
+
+        let mut overlapping = adapter;
+        overlapping.tensors[1].absolute_data_offset = overlapping.tensors[0].absolute_data_offset;
+        let graph = canonical_graph(&overlapping).expect("graph uses catalog identities only");
+        assert_eq!(
+            admit_qwen3moe_full_graph(Qwen3MoeFullGraphAdmissionInput {
+                adapter: overlapping,
+                graph,
+            })
+            .expect_err("overlapping catalog ranges must fail")
+            .code(),
+            "overlapping_tensor_ranges"
         );
     }
 
