@@ -1,9 +1,9 @@
 //! Bounded, source-free Qwen3MoE storage and exact f32 decode seam.
 //!
 //! The public API consumes an already-admitted Qwen3MoE graph descriptor and
-//! backend-neutral catalog/store contracts. It performs one whole-slab read of
-//! a tiny, exact Q8_0 lane; it does not open paths, access model payloads, or
-//! provide a fallback decoder.
+//! backend-neutral catalog/store contracts. It validates the retained artifact
+//! and performs one whole-slab read of a tiny, exact Q8_0 lane; it does not open
+//! paths or provide a fallback decoder.
 
 use backend::{
     CancellationToken, CheckpointIdentity, ContractError, ErrorCategory, RuntimeTensor,
@@ -298,12 +298,18 @@ impl Qwen3MoeStorageRequest {
 /// fallback; each operation rechecks pathname identity and file metadata.
 struct Qwen3MoeExternalStorage {
     binding: ExternalQwen3MoeStorageBinding,
+    cancellation: CancellationToken,
 }
 
 impl Qwen3MoeExternalStorage {
     /// Bind storage to one previously admitted inspection without reopening it.
-    fn try_from_inspection(inspection: &ExternalModelInspection) -> Result<Self, ContractError> {
-        let binding = inspection.bind_qwen3moe_storage()?;
+    fn try_from_inspection(
+        inspection: &ExternalModelInspection,
+        cancellation: &CancellationToken,
+    ) -> Result<Self, ContractError> {
+        cancellation.check()?;
+        let binding = inspection.bind_qwen3moe_storage(cancellation)?;
+        cancellation.check()?;
         let artifact = &binding.full_graph.artifact;
         if binding.full_graph.contract_id != QWEN3MOE_FULL_GRAPH_CONTRACT_ID
             || artifact.repository_id != crate::qwen3moe::QWEN3MOE_REPOSITORY_ID
@@ -318,11 +324,15 @@ impl Qwen3MoeExternalStorage {
                 "the external storage binding is not tied to the admitted Qwen artifact",
             ));
         }
-        Ok(Self { binding })
+        cancellation.check()?;
+        Ok(Self {
+            binding,
+            cancellation: cancellation.clone(),
+        })
     }
 
     fn verify_identity(&self) -> Result<(), ContractError> {
-        verify_binding_identity(&self.binding)
+        verify_binding_identity(&self.binding, &self.cancellation)
     }
 }
 
@@ -332,7 +342,8 @@ pub fn read_admitted_layer0_expert_gate_rows_0_to_16(
     correlation_id: impl Into<String>,
     cancellation: CancellationToken,
 ) -> Result<Qwen3MoEDecodedTensor, ContractError> {
-    let storage = Qwen3MoeExternalStorage::try_from_inspection(inspection)?;
+    cancellation.check()?;
+    let storage = Qwen3MoeExternalStorage::try_from_inspection(inspection, &cancellation)?;
     let request = Qwen3MoeStorageRequest::try_new_admitted_layer0_slice(
         &storage.binding.full_graph,
         Qwen3MoeDestinationPolicy::RustOwned,
@@ -348,6 +359,7 @@ fn read_admitted_tensor_internal(
     request: &Qwen3MoeStorageRequest,
 ) -> Result<Qwen3MoEDecodedTensor, ContractError> {
     storage.verify_identity()?;
+    storage.cancellation.check()?;
     if request.checkpoint() != &storage.binding.checkpoint {
         return Err(storage_error(
             ErrorCategory::InvalidModel,
@@ -373,6 +385,7 @@ fn read_admitted_tensor_internal(
             "the storage request tensor differs from the bound graph entry",
         ));
     }
+    storage.cancellation.check()?;
     let decoded = decode_qwen3moe_tensor(request, storage, storage)?;
     storage.verify_identity()?;
     Ok(decoded)
@@ -381,6 +394,7 @@ fn read_admitted_tensor_internal(
 impl TensorCatalog for Qwen3MoeExternalStorage {
     fn tensor(&self, name: &str) -> Result<Option<RuntimeTensor>, ContractError> {
         self.verify_identity()?;
+        self.cancellation.check()?;
         if name != "blk.0.ffn_gate_exps.weight" {
             return Ok(None);
         }
@@ -403,8 +417,10 @@ impl TensorStore for Qwen3MoeExternalStorage {
         destination: &mut [u8],
         cancellation: &CancellationToken,
     ) -> Result<usize, ContractError> {
+        self.cancellation.check()?;
         cancellation.check()?;
         self.verify_identity()?;
+        self.cancellation.check()?;
         let admitted_source = self
             .binding
             .full_graph
@@ -417,6 +433,7 @@ impl TensorStore for Qwen3MoeExternalStorage {
                 )
             })?;
         let admitted = admitted_layer0_slice(admitted_source)?;
+        self.cancellation.check()?;
         let expected = runtime_tensor(&admitted)?;
         if *tensor != expected {
             return Err(storage_error(
@@ -451,8 +468,9 @@ impl TensorStore for Qwen3MoeExternalStorage {
             &self.binding.file,
             destination,
             expected.range.offset,
-            cancellation,
+            &self.cancellation,
         )?;
+        self.cancellation.check()?;
         self.verify_identity()?;
         Ok(bytes_read)
     }
@@ -568,7 +586,11 @@ fn admitted_layer0_slice(
     })
 }
 
-fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(), ContractError> {
+fn verify_binding_identity(
+    binding: &ExternalQwen3MoeStorageBinding,
+    cancellation: &CancellationToken,
+) -> Result<(), ContractError> {
+    cancellation.check()?;
     let path_metadata = std::fs::symlink_metadata(&binding.canonical_path).map_err(|_| {
         storage_error(
             ErrorCategory::InvalidModel,
@@ -576,6 +598,7 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
             "the admitted model pathname is no longer available",
         )
     })?;
+    cancellation.check()?;
     let open_metadata = binding.file.metadata().map_err(|_| {
         storage_error(
             ErrorCategory::InvalidModel,
@@ -595,6 +618,7 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
             "the admitted model pathname no longer resolves to the retained regular file",
         ));
     }
+    cancellation.check()?;
     let artifact_size = binding.full_graph.artifact.size_bytes;
     if open_metadata.len() != binding.file_size || open_metadata.len() != artifact_size {
         return Err(storage_error(
@@ -603,6 +627,7 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
             "the retained external model size differs from its immutable artifact",
         ));
     }
+    cancellation.check()?;
     let slice_hash = sha256_exact_range(
         &binding.file,
         QWEN_TENSOR_DATA_OFFSET,
@@ -613,7 +638,9 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
                 "the admitted slice hash size is not representable",
             )
         })?,
+        cancellation,
     )?;
+    cancellation.check()?;
     if slice_hash != binding.admitted_slice_sha256 {
         return Err(storage_error(
             ErrorCategory::InvalidModel,
@@ -705,9 +732,12 @@ fn sha256_exact_range(
     file: &File,
     offset: u64,
     byte_count: usize,
+    cancellation: &CancellationToken,
 ) -> Result<String, ContractError> {
+    cancellation.check()?;
     let mut bytes = vec![0_u8; byte_count];
-    read_exact_positional(file, &mut bytes, offset, &CancellationToken::new())?;
+    read_exact_positional(file, &mut bytes, offset, cancellation)?;
+    cancellation.check()?;
     Ok(format!("{:x}", Sha256::digest(bytes)))
 }
 

@@ -121,11 +121,37 @@ fn synthetic_inspection_cannot_bind_to_production_storage() {
     )
     .expect("construct synthetic inspection");
 
-    let error = match Qwen3MoeExternalStorage::try_from_inspection(&inspection) {
+    let error = match Qwen3MoeExternalStorage::try_from_inspection(
+        &inspection,
+        &CancellationToken::new(),
+    ) {
         Ok(_) => panic!("synthetic inspection must not cross production admission"),
         Err(error) => error,
     };
     assert_eq!(error.code(), "canonical_admission_required");
+}
+
+#[test]
+fn public_read_checks_cancellation_before_storage_binding() {
+    let encoded = q8_block();
+    let file = ephemeral_file(&encoded);
+    let inspection = ExternalModelInspection::new_synthetic_for_test(
+        file.file.try_clone().expect("clone test file"),
+        file.path.clone(),
+        descriptor(vec![32], encoded.len() as u64),
+    )
+    .expect("construct synthetic inspection");
+    let cancellation = CancellationToken::new();
+    cancellation.cancel();
+
+    let error = read_admitted_layer0_expert_gate_rows_0_to_16(
+        &inspection,
+        "pre-cancelled-public-read",
+        cancellation,
+    )
+    .expect_err("pre-cancelled public reads must stop before binding");
+
+    assert_eq!(error.code(), "cancelled");
 }
 
 #[test]
