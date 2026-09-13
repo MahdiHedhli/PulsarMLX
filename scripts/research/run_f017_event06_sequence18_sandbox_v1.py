@@ -49,10 +49,15 @@ _HISTORICAL_GIT_LOCATOR_VARIABLES = frozenset({
     "GIT_COMMON_DIR",
     "GIT_WORK_TREE",
 })
+_HISTORICAL_GIT_CONTEXT_VARIABLES = frozenset({
+    "PULSARMLX_F017_HISTORY_GIT_DIR",
+    "PULSARMLX_F017_HISTORY_GIT_COMMON_DIR",
+    "PULSARMLX_F017_HISTORY_GIT_WORK_TREE",
+})
 _HISTORICAL_GIT_VARIABLES = _HISTORICAL_GIT_LOCATOR_VARIABLES | frozenset({
     "GIT_CONFIG_GLOBAL",
     "GIT_CONFIG_NOSYSTEM",
-})
+}) | _HISTORICAL_GIT_CONTEXT_VARIABLES
 
 HISTORICAL_PREFLIGHT = r'''
 import json
@@ -127,23 +132,23 @@ def _prepare_historical_git_context(repository: Path, graph_root: Path) -> tuple
     return isolated_git, common_git
 
 
-def _historical_git_environment(
+def _historical_git_context_environment(
     base_environment: dict[str, str],
     *,
     isolated_git: Path,
     common_git: Path,
     work_tree: Path,
 ) -> dict[str, str]:
-    """Add Git locators only to subprocesses reading historical objects."""
+    """Transport historical Git context without native child locators."""
     environment = {
         name: value
         for name, value in base_environment.items()
         if name not in _HISTORICAL_GIT_VARIABLES
     }
     environment.update({
-        "GIT_DIR": str(isolated_git),
-        "GIT_COMMON_DIR": str(common_git),
-        "GIT_WORK_TREE": str(work_tree),
+        "PULSARMLX_F017_HISTORY_GIT_DIR": str(isolated_git),
+        "PULSARMLX_F017_HISTORY_GIT_COMMON_DIR": str(common_git),
+        "PULSARMLX_F017_HISTORY_GIT_WORK_TREE": str(work_tree),
         "GIT_CONFIG_GLOBAL": "/dev/null",
         "GIT_CONFIG_NOSYSTEM": "1",
     })
@@ -382,12 +387,12 @@ def run(output: Path | str | None = None) -> dict[str, object]:
             "PULSARMLX_F017_HISTORY_COMMIT": HISTORICAL_DAG_COMMIT,
             "PULSARMLX_F017_HISTORY_PATH": HISTORICAL_BLOB_PATH,
             "PULSARMLX_F017_HISTORY_DIAGNOSTIC": str(diagnostic_path),
-            # Keep Git config isolation for every sandboxed command; only the
-            # historical preflight receives checkout-specific locators below.
+            # Keep Git config isolation for every sandboxed command.  Private
+            # context values are translated to native locators per Git read.
             "GIT_CONFIG_GLOBAL": "/dev/null",
             "GIT_CONFIG_NOSYSTEM": "1",
         }
-        historical_environment = _historical_git_environment(
+        environment = _historical_git_context_environment(
             environment,
             isolated_git=isolated_git,
             common_git=common_git,
@@ -399,7 +404,7 @@ def run(output: Path | str | None = None) -> dict[str, object]:
                 "-c", HISTORICAL_PREFLIGHT,
             ],
             cwd=ROOT,
-            env=historical_environment,
+            env=environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

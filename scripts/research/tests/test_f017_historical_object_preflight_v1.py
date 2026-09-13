@@ -16,6 +16,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import run_f017_event06_sequence18_sandbox_v1 as sandbox_runner
+import f017_historical_object_preflight_v1 as historical_preflight
 from f017_historical_object_preflight_v1 import (
     HistoricalObjectLookupError,
     preflight_historical_object,
@@ -236,7 +237,7 @@ def test_sandbox_child_git_environment_keeps_fixture_commands_cwd_local(tmp_path
         "GIT_CONFIG_NOSYSTEM": "1",
     }
 
-    historical_environment = sandbox_runner._historical_git_environment(
+    historical_environment = sandbox_runner._historical_git_context_environment(
         base_environment,
         isolated_git=isolated_git,
         common_git=common_git,
@@ -246,9 +247,10 @@ def test_sandbox_child_git_environment_keeps_fixture_commands_cwd_local(tmp_path
     assert not set(base_environment) & sandbox_runner._HISTORICAL_GIT_LOCATOR_VARIABLES
     assert base_environment["GIT_CONFIG_GLOBAL"] == "/dev/null"
     assert base_environment["GIT_CONFIG_NOSYSTEM"] == "1"
-    assert historical_environment["GIT_DIR"] == str(isolated_git)
-    assert historical_environment["GIT_COMMON_DIR"] == str(common_git)
-    assert historical_environment["GIT_WORK_TREE"] == str(tmp_path)
+    assert not set(historical_environment) & sandbox_runner._HISTORICAL_GIT_LOCATOR_VARIABLES
+    assert historical_environment["PULSARMLX_F017_HISTORY_GIT_DIR"] == str(isolated_git)
+    assert historical_environment["PULSARMLX_F017_HISTORY_GIT_COMMON_DIR"] == str(common_git)
+    assert historical_environment["PULSARMLX_F017_HISTORY_GIT_WORK_TREE"] == str(tmp_path)
     assert historical_environment["GIT_CONFIG_GLOBAL"] == "/dev/null"
     assert historical_environment["GIT_CONFIG_NOSYSTEM"] == "1"
     completed = subprocess.run(
@@ -261,6 +263,298 @@ def test_sandbox_child_git_environment_keeps_fixture_commands_cwd_local(tmp_path
     assert completed.returncode == 0
     assert completed.stderr == b""
     assert (fixture / ".git").is_dir()
+
+
+def test_historical_context_is_complete_and_native_locators_are_per_read(tmp_path):
+    repository, historical, old, _current = _make_git_repository(tmp_path)
+    isolated_git, common_git = sandbox_runner._prepare_historical_git_context(
+        repository, tmp_path
+    )
+    base_environment = _environment(
+        tmp_path / "context-diagnostic.json",
+        TMPDIR=str(tmp_path),
+        GIT_DIR=str(tmp_path / "wrong-git-dir"),
+        GIT_COMMON_DIR=str(tmp_path / "wrong-common-dir"),
+        GIT_WORK_TREE=str(tmp_path / "wrong-work-tree"),
+    )
+    environment = sandbox_runner._historical_git_context_environment(
+        base_environment,
+        isolated_git=isolated_git,
+        common_git=common_git,
+        work_tree=repository,
+    )
+
+    child = historical_preflight._git_subprocess_environment(repository, environment)
+    assert child["GIT_DIR"] == str(isolated_git)
+    assert child["GIT_COMMON_DIR"] == str(common_git)
+    assert child["GIT_WORK_TREE"] == str(repository)
+    assert not set(child) & historical_preflight._HISTORICAL_GIT_CONTEXT_VARIABLES
+    assert child["GIT_CONFIG_GLOBAL"] == "/dev/null"
+    assert child["GIT_CONFIG_NOSYSTEM"] == "1"
+    assert read_historical_blob(
+        repository, historical, "source.py", environment=environment
+    ) == old
+
+    for missing in historical_preflight._HISTORICAL_GIT_CONTEXT_VARIABLES:
+        partial = dict(environment)
+        partial.pop(missing)
+        with pytest.raises(HistoricalObjectLookupError, match="historical Git checkout context"):
+            read_historical_blob(repository, historical, "source.py", environment=partial)
+
+    outside = dict(environment)
+    outside["PULSARMLX_F017_HISTORY_GIT_WORK_TREE"] = str(tmp_path)
+    with pytest.raises(HistoricalObjectLookupError, match="historical Git checkout context"):
+        read_historical_blob(repository, historical, "source.py", environment=outside)
+
+
+def test_main_validation_path_gets_per_read_context_and_keeps_fixture_local(tmp_path):
+    if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the orchestration custody regression is macOS /sandbox-exec specific")
+
+    with tempfile.TemporaryDirectory(prefix="f017-orchestration-regression-", dir="/private/tmp") as raw:
+        graph = Path(raw) / "graph"
+        graph.mkdir()
+        repository = graph / "repository"
+        subprocess.run(
+            ["git", "clone", "--quiet", "--no-hardlinks", str(ROOT), str(repository)],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        source_path = repository / "scripts/research/context_boundary_fixture.py"
+        symbols = (
+            "reserve_live_package_attempt",
+            "reserve_qualification_package_attempt",
+            "bank_live_package_start",
+            "claim_live_terminal_sinks",
+            "claim_qualification_terminal_sinks",
+            "bank_live_terminal",
+            "bank_qualification_terminal",
+        )
+        source = "\n".join(f"def {symbol}(): pass" for symbol in symbols) + "\n"
+        source_path.write_text(source, encoding="utf-8")
+        commit_environment = os.environ.copy()
+        commit_environment.update({
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_AUTHOR_NAME": "Fixture",
+            "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
+            "GIT_COMMITTER_NAME": "Fixture",
+            "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
+        })
+        subprocess.run(
+            ["git", "-C", str(repository), "add", str(source_path.relative_to(repository))],
+            check=True,
+            env=commit_environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "-C", str(repository), "-c", "user.name=Fixture", "-c",
+             "user.email=fixture@example.invalid", "commit", "-q", "-m", "fixture"],
+            check=True,
+            env=commit_environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        historical = _git_output(repository, "rev-parse", "HEAD")
+        denied = Path(raw).parent / f"{Path(raw).name}-denied-checkout-include"
+        denied.mkdir()
+        include = denied / "synthetic-credential.config"
+        include.write_text("[synthetic]\n\tmarker = harmless\n", encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "--local",
+             f"includeIf.gitdir:{repository}/.git.path", str(denied)],
+            check=True,
+            env=commit_environment,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        isolated_git, common_git = sandbox_runner._prepare_historical_git_context(
+            repository, graph
+        )
+        profile, _rule_ids = sandbox_runner._profile(graph)
+        base_environment = {
+            "PATH": "/usr/bin:/bin",
+            "TMPDIR": str(graph),
+            "PYTHONPATH": os.pathsep.join((
+                str(ROOT / "scripts/research"),
+                str(ROOT / ".venv/lib/python3.13/site-packages"),
+            )),
+            "PULSARMLX_MODEL_GGUF": "",
+            "PULSARMLX_TEST_HISTORY_ROOT": str(repository),
+            "PULSARMLX_TEST_HISTORY_COMMIT": historical,
+            "PULSARMLX_TEST_FIXTURE_ROOT": str(graph / "fixture"),
+        }
+        environment = sandbox_runner._historical_git_context_environment(
+            base_environment,
+            isolated_git=isolated_git,
+            common_git=common_git,
+            work_tree=repository,
+        )
+        control_environment = {
+            **base_environment,
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_CONFIG_NOSYSTEM": "1",
+        }
+        denied_include = subprocess.run(
+            ["/usr/bin/sandbox-exec", "-p", profile, "/usr/bin/git", "show",
+             f"{historical}:scripts/research/context_boundary_fixture.py"],
+            cwd=repository,
+            env=control_environment,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        assert denied_include.returncode != 0
+        assert denied_include.stderr
+
+        child_script = graph / "run-context-boundary.py"
+        child_script.write_text(
+            """
+import hashlib
+import json
+import os
+import subprocess
+from pathlib import Path
+
+from f017_historical_object_preflight_v1 import (
+    HistoricalObjectLookupError,
+    read_historical_blob,
+)
+import validate_f017_event06_authority_dag_v2 as validator
+
+repository = Path(os.environ["PULSARMLX_TEST_HISTORY_ROOT"])
+commit = os.environ["PULSARMLX_TEST_HISTORY_COMMIT"]
+source_path = "scripts/research/context_boundary_fixture.py"
+try:
+    locator_free_environment = dict(os.environ)
+    for name in (
+        "PULSARMLX_F017_HISTORY_GIT_DIR",
+        "PULSARMLX_F017_HISTORY_GIT_COMMON_DIR",
+        "PULSARMLX_F017_HISTORY_GIT_WORK_TREE",
+    ):
+        locator_free_environment.pop(name, None)
+    try:
+        read_historical_blob(
+            repository, commit, source_path, environment=locator_free_environment
+        )
+    except HistoricalObjectLookupError:
+        pass
+    else:
+        raise SystemExit("locator-free historical read unexpectedly succeeded")
+    source_sha256 = hashlib.sha256(
+        read_historical_blob(repository, commit, source_path, environment=os.environ)
+    ).hexdigest()
+except Exception as exc:
+    raise SystemExit(f"historical context probe: {type(exc).__name__}: {exc}") from exc
+symbols = (
+    "reserve_live_package_attempt",
+    "reserve_qualification_package_attempt",
+    "bank_live_package_start",
+    "claim_live_terminal_sinks",
+    "claim_qualification_terminal_sinks",
+    "bank_live_terminal",
+    "bank_qualification_terminal",
+)
+observed = {
+    "edges": [
+        {
+            "edge_id": f"EDGE-{index}",
+            "producer_module": source_path,
+            "consumer_module": source_path,
+            "producer_symbol": symbol,
+            "consumer_symbol": symbol,
+            "source_blob_sha256": source_sha256,
+            "composition_evidence": {
+                "kind": "SOURCE_AST_EXACT_CALL_PLUS_SHARED_IMPLEMENTATION_TEST",
+                "test_path": source_path,
+                "test_symbol": symbol,
+                "case_id": f"CASE-{index}",
+            },
+            "authority_mode": "LIVE_CANONICAL",
+            "lifecycle_phase": "TERMINAL",
+        }
+        for index, symbol in enumerate(symbols)
+    ],
+    "safety_storage_inventory": {
+        "result": "PASS",
+    },
+    "legacy_production_writers_reachable_to_safety_state": 0,
+    "production_public_storage_location_inputs": 0,
+    "production_indirect_storage_location_inputs": 0,
+}
+validator.ROOT = repository
+validator.HISTORICAL_DAG_COMMIT = commit
+validator.build = lambda: observed
+qualification = validator.validate_document(observed)
+
+fixture = Path(os.environ["PULSARMLX_TEST_FIXTURE_ROOT"])
+fixture.mkdir()
+marker = fixture / "marker.txt"
+marker.write_text("fixture\\n", encoding="utf-8")
+fixture_environment = os.environ.copy()
+created = subprocess.run(
+    ["git", "init", "-q"],
+    cwd=fixture,
+    env=fixture_environment,
+    check=False,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+)
+if created.returncode != 0 or not (fixture / ".git").is_dir():
+    raise SystemExit(f"fixture git init failed: {created.returncode}")
+for arguments in (
+    ["config", "user.name", "Fixture"],
+    ["config", "user.email", "fixture@example.invalid"],
+    ["add", "marker.txt"],
+    ["commit", "-q", "-m", "fixture"],
+):
+    completed = subprocess.run(
+        ["git", *arguments],
+        cwd=fixture,
+        env=fixture_environment,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.returncode != 0:
+        raise SystemExit(f"fixture git command failed: {arguments[0]}: {completed.returncode}")
+if "GIT_DIR" in os.environ or "GIT_COMMON_DIR" in os.environ or "GIT_WORK_TREE" in os.environ:
+    raise SystemExit("native Git locator leaked into qualification child")
+print(json.dumps({
+    "qualification": qualification["result"],
+    "fixture_git": (fixture / ".git").is_dir(),
+    "fixture_git_config": str((fixture / ".git" / "config").resolve()),
+    "fixture_head": subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=fixture,
+        env=fixture_environment,
+        check=True,
+        stdout=subprocess.PIPE,
+        text=True,
+    ).stdout.strip(),
+}, sort_keys=True))
+""",
+            encoding="utf-8",
+        )
+        completed = subprocess.run(
+            ["/usr/bin/sandbox-exec", "-p", profile,
+             str(Path(sys.executable).resolve()), str(child_script)],
+            cwd=repository,
+            env=environment,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        assert completed.returncode == 0, completed.stderr
+        result = json.loads(completed.stdout)
+        assert result["qualification"] == "PASS"
+        assert result["fixture_git"] is True
+        assert Path(result["fixture_git_config"]).is_relative_to(graph)
+        assert len(result["fixture_head"]) == 40
 
 
 def test_source_drift_and_current_substitution_are_not_accepted(tmp_path):

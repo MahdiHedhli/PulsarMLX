@@ -21,10 +21,98 @@ from typing import Mapping
 
 _SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 _DIAGNOSTIC_ENV = "PULSARMLX_F017_HISTORY_DIAGNOSTIC"
+_HISTORICAL_GIT_DIR_ENV = "PULSARMLX_F017_HISTORY_GIT_DIR"
+_HISTORICAL_GIT_COMMON_DIR_ENV = "PULSARMLX_F017_HISTORY_GIT_COMMON_DIR"
+_HISTORICAL_GIT_WORK_TREE_ENV = "PULSARMLX_F017_HISTORY_GIT_WORK_TREE"
+_HISTORICAL_GIT_CONTEXT_VARIABLES = frozenset({
+    _HISTORICAL_GIT_DIR_ENV,
+    _HISTORICAL_GIT_COMMON_DIR_ENV,
+    _HISTORICAL_GIT_WORK_TREE_ENV,
+})
+_NATIVE_GIT_LOCATOR_VARIABLES = frozenset({
+    "GIT_DIR",
+    "GIT_COMMON_DIR",
+    "GIT_WORK_TREE",
+})
 
 
 class HistoricalObjectLookupError(ValueError):
     """The exact historical blob could not be read without relaxing the guard."""
+
+
+def _checkout_common_git_dir(root: Path) -> Path:
+    """Resolve the checkout common directory without consulting Git config."""
+    git_entry = root / ".git"
+    try:
+        if git_entry.is_dir():
+            git_dir = git_entry.resolve(strict=True)
+        else:
+            line = git_entry.read_text(encoding="utf-8").strip()
+            if not line.startswith("gitdir:"):
+                raise ValueError("invalid checkout gitdir metadata")
+            git_dir = (git_entry.parent / line.split(":", 1)[1].strip()).resolve(strict=True)
+        commondir = git_dir / "commondir"
+        if commondir.is_file():
+            return (git_dir / commondir.read_text(encoding="utf-8").strip()).resolve(strict=True)
+        return git_dir
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise HistoricalObjectLookupError("historical Git checkout context") from exc
+
+
+def _context_path(environment: Mapping[str, str], name: str) -> Path:
+    value = environment.get(name)
+    if type(value) is not str or not value or not Path(value).is_absolute():
+        raise HistoricalObjectLookupError("historical Git checkout context")
+    try:
+        return Path(value).resolve(strict=True)
+    except OSError as exc:
+        raise HistoricalObjectLookupError("historical Git checkout context") from exc
+
+
+def _historical_git_context(
+    root: Path, environment: Mapping[str, str]
+) -> tuple[Path, Path, Path] | None:
+    """Validate the complete private context, rejecting partial fallbacks."""
+    present = _HISTORICAL_GIT_CONTEXT_VARIABLES.intersection(environment)
+    if not present:
+        return None
+    if present != _HISTORICAL_GIT_CONTEXT_VARIABLES:
+        raise HistoricalObjectLookupError("historical Git checkout context")
+
+    try:
+        resolved_root = root.resolve(strict=True)
+        isolated_git = _context_path(environment, _HISTORICAL_GIT_DIR_ENV)
+        common_git = _context_path(environment, _HISTORICAL_GIT_COMMON_DIR_ENV)
+        work_tree = _context_path(environment, _HISTORICAL_GIT_WORK_TREE_ENV)
+        tmpdir = _context_path(environment, "TMPDIR")
+    except (OSError, RuntimeError) as exc:
+        raise HistoricalObjectLookupError("historical Git checkout context") from exc
+
+    if work_tree != resolved_root or isolated_git.parent != tmpdir:
+        raise HistoricalObjectLookupError("historical Git checkout context")
+    if not isolated_git.is_dir() or not (isolated_git / "config").is_file():
+        raise HistoricalObjectLookupError("historical Git checkout context")
+    if common_git != _checkout_common_git_dir(resolved_root):
+        raise HistoricalObjectLookupError("historical Git checkout context")
+    return isolated_git, common_git, work_tree
+
+
+def _git_subprocess_environment(
+    root: Path, environment: Mapping[str, str]
+) -> dict[str, str]:
+    """Apply historical locators only to this one Git subprocess."""
+    child = dict(environment)
+    for name in _NATIVE_GIT_LOCATOR_VARIABLES | _HISTORICAL_GIT_CONTEXT_VARIABLES:
+        child.pop(name, None)
+    context = _historical_git_context(root, environment)
+    if context is not None:
+        isolated_git, common_git, work_tree = context
+        child.update({
+            "GIT_DIR": str(isolated_git),
+            "GIT_COMMON_DIR": str(common_git),
+            "GIT_WORK_TREE": str(work_tree),
+        })
+    return child
 
 
 def _validate_revision(revision: str) -> None:
@@ -80,7 +168,11 @@ def _run(
 def _git_command(
     arguments: list[str], *, root: Path, environment: Mapping[str, str]
 ) -> tuple[dict[str, object], bytes, bytes]:
-    return _run(["git", *arguments], root=root, environment=environment)
+    return _run(
+        ["git", *arguments],
+        root=root,
+        environment=_git_subprocess_environment(root, environment),
+    )
 
 
 def _visibility(path: str | None) -> dict[str, object]:
