@@ -44,6 +44,15 @@ _PREFLIGHT_COMMANDS = (
     "xcode_select",
     "git_exec_path",
 )
+_HISTORICAL_GIT_LOCATOR_VARIABLES = frozenset({
+    "GIT_DIR",
+    "GIT_COMMON_DIR",
+    "GIT_WORK_TREE",
+})
+_HISTORICAL_GIT_VARIABLES = _HISTORICAL_GIT_LOCATOR_VARIABLES | frozenset({
+    "GIT_CONFIG_GLOBAL",
+    "GIT_CONFIG_NOSYSTEM",
+})
 
 HISTORICAL_PREFLIGHT = r'''
 import json
@@ -94,7 +103,11 @@ def _prepare_historical_git_context(repository: Path, graph_root: Path) -> tuple
     """Create a config-free Git dir that shares the checkout's object store."""
     common_git = _git_common_dir(repository)
     isolated_git = graph_root / "historical-gitdir"
-    setup_environment = os.environ.copy()
+    setup_environment = {
+        name: value
+        for name, value in os.environ.items()
+        if name not in _HISTORICAL_GIT_VARIABLES
+    }
     setup_environment.update({"GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"})
     subprocess.run(
         ["git", "init", "--quiet", "--bare", str(isolated_git)],
@@ -112,6 +125,29 @@ def _prepare_historical_git_context(repository: Path, graph_root: Path) -> tuple
         stderr=subprocess.PIPE,
     )
     return isolated_git, common_git
+
+
+def _historical_git_environment(
+    base_environment: dict[str, str],
+    *,
+    isolated_git: Path,
+    common_git: Path,
+    work_tree: Path,
+) -> dict[str, str]:
+    """Add Git locators only to subprocesses reading historical objects."""
+    environment = {
+        name: value
+        for name, value in base_environment.items()
+        if name not in _HISTORICAL_GIT_VARIABLES
+    }
+    environment.update({
+        "GIT_DIR": str(isolated_git),
+        "GIT_COMMON_DIR": str(common_git),
+        "GIT_WORK_TREE": str(work_tree),
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+    })
+    return environment
 
 
 def _profile(graph_root: Path) -> tuple[str, list[str]]:
@@ -346,22 +382,24 @@ def run(output: Path | str | None = None) -> dict[str, object]:
             "PULSARMLX_F017_HISTORY_COMMIT": HISTORICAL_DAG_COMMIT,
             "PULSARMLX_F017_HISTORY_PATH": HISTORICAL_BLOB_PATH,
             "PULSARMLX_F017_HISTORY_DIAGNOSTIC": str(diagnostic_path),
-            # actions/checkout persists credentials as a local conditional
-            # include.  The historical child is offline and must not parse
-            # that irrelevant include outside the sandbox's read roots.
-            "GIT_DIR": str(isolated_git),
-            "GIT_COMMON_DIR": str(common_git),
-            "GIT_WORK_TREE": str(ROOT),
+            # Keep Git config isolation for every sandboxed command; only the
+            # historical preflight receives checkout-specific locators below.
             "GIT_CONFIG_GLOBAL": "/dev/null",
             "GIT_CONFIG_NOSYSTEM": "1",
         }
+        historical_environment = _historical_git_environment(
+            environment,
+            isolated_git=isolated_git,
+            common_git=common_git,
+            work_tree=ROOT,
+        )
         preflight = subprocess.run(
             [
                 "/usr/bin/sandbox-exec", "-p", profile, str(Path(sys.executable).resolve()),
                 "-c", HISTORICAL_PREFLIGHT,
             ],
             cwd=ROOT,
-            env=environment,
+            env=historical_environment,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

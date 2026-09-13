@@ -223,6 +223,46 @@ def test_sandbox_context_ignores_local_credential_include_without_widening_reads
         assert results[2].stdout == old
 
 
+def test_sandbox_child_git_environment_keeps_fixture_commands_cwd_local(tmp_path):
+    fixture = tmp_path / "disposable-fixture"
+    fixture.mkdir()
+    isolated_git = tmp_path / "historical-gitdir"
+    common_git = tmp_path / "historical-common-gitdir"
+    base_environment = {
+        "PATH": "/usr/bin:/bin",
+        "TMPDIR": str(tmp_path),
+        "PULSARMLX_MODEL_GGUF": "",
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_CONFIG_NOSYSTEM": "1",
+    }
+
+    historical_environment = sandbox_runner._historical_git_environment(
+        base_environment,
+        isolated_git=isolated_git,
+        common_git=common_git,
+        work_tree=tmp_path,
+    )
+
+    assert not set(base_environment) & sandbox_runner._HISTORICAL_GIT_LOCATOR_VARIABLES
+    assert base_environment["GIT_CONFIG_GLOBAL"] == "/dev/null"
+    assert base_environment["GIT_CONFIG_NOSYSTEM"] == "1"
+    assert historical_environment["GIT_DIR"] == str(isolated_git)
+    assert historical_environment["GIT_COMMON_DIR"] == str(common_git)
+    assert historical_environment["GIT_WORK_TREE"] == str(tmp_path)
+    assert historical_environment["GIT_CONFIG_GLOBAL"] == "/dev/null"
+    assert historical_environment["GIT_CONFIG_NOSYSTEM"] == "1"
+    completed = subprocess.run(
+        ["git", "init", "-q"],
+        cwd=fixture,
+        env=base_environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    assert completed.returncode == 0
+    assert completed.stderr == b""
+    assert (fixture / ".git").is_dir()
+
+
 def test_source_drift_and_current_substitution_are_not_accepted(tmp_path):
     repository, historical, old, current = _make_git_repository(tmp_path)
     diagnostic = tmp_path / "historical-drift.json"
