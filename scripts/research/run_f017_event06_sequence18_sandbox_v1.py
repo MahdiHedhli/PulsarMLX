@@ -104,7 +104,39 @@ def _profile(graph_root: Path) -> tuple[str, list[str]]:
     return "".join(rules), [f"SBPL-{index:03d}" for index in range(len(rules))]
 
 
-def run() -> dict[str, object]:
+def _write_preflight_failure(
+    output: Path | str | None,
+    preflight: subprocess.CompletedProcess[bytes],
+    diagnostic_path: Path,
+) -> None:
+    """Retain safe preflight evidence before the temporary root is removed."""
+    if output is None:
+        return
+    diagnostic: dict[str, object] | None = None
+    try:
+        candidate = json.loads(diagnostic_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        candidate = None
+    if isinstance(candidate, dict):
+        diagnostic = candidate
+    envelope = {
+        "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-sandbox-failure/1.0.0",
+        "mechanism": "MACOS_SANDBOX_EXEC_DEFAULT_DENY_PLUS_OUT_OF_PROCESS_MONITOR",
+        "status": "FAIL",
+        "result": "FAIL",
+        "failure_stage": "HISTORICAL_PREFLIGHT",
+        "historical_preflight_exit_status": preflight.returncode,
+        "historical_preflight_stdout_bytes": len(preflight.stdout),
+        "historical_preflight_stdout_sha256": hashlib.sha256(preflight.stdout).hexdigest(),
+        "historical_preflight_stderr_bytes": len(preflight.stderr),
+        "historical_preflight_stderr_sha256": hashlib.sha256(preflight.stderr).hexdigest(),
+        "historical_preflight_diagnostic_available": diagnostic is not None,
+        "historical_preflight": diagnostic,
+    }
+    Path(output).write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def run(output: Path | str | None = None) -> dict[str, object]:
     if not Path("/usr/bin/sandbox-exec").is_file():
         raise RuntimeError("NO_ACCESS_ASSURANCE_UNAVAILABLE")
     with tempfile.TemporaryDirectory(prefix="f017-seq18-sandbox-", dir="/private/tmp") as raw:
@@ -143,6 +175,7 @@ def run() -> dict[str, object]:
             stderr=subprocess.PIPE,
         )
         if preflight.returncode != 0:
+            _write_preflight_failure(output, preflight, diagnostic_path)
             raise RuntimeError(
                 "historical object preflight failed "
                 f"exit {preflight.returncode}, "
@@ -248,4 +281,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    args.output.write_text(json.dumps(run(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(run(output=args.output), indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )

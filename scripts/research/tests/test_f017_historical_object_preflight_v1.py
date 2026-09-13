@@ -14,6 +14,7 @@ import pytest
 # PYTHONPATH setup used by the CI harness.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import run_f017_event06_sequence18_sandbox_v1 as sandbox_runner
 from f017_historical_object_preflight_v1 import (
     HistoricalObjectLookupError,
     preflight_historical_object,
@@ -242,3 +243,76 @@ def test_denied_developer_path_fails_closed_on_macos(tmp_path):
     assert envelope["developer_tool_selection"]["developer_dir"]["path"] is None or (
         envelope["developer_tool_selection"]["developer_dir"]["exists"] is False
     )
+
+
+def test_sandbox_preflight_failure_persists_sanitized_output_after_cleanup(tmp_path, monkeypatch):
+    if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
+        pytest.skip("the sandbox custody regression is macOS /usr/bin/sandbox-exec specific")
+
+    output = tmp_path / "qualification-failure.json"
+    captured: dict[str, Path] = {}
+    real_temporary_directory = sandbox_runner.tempfile.TemporaryDirectory
+
+    class CapturedTemporaryDirectory:
+        def __init__(self, *args, **kwargs):
+            self.inner = real_temporary_directory(*args, **kwargs)
+
+        def __enter__(self):
+            raw = self.inner.__enter__()
+            captured["path"] = Path(raw)
+            return raw
+
+        def __exit__(self, *args):
+            return self.inner.__exit__(*args)
+
+    monkeypatch.setattr(
+        sandbox_runner.tempfile, "TemporaryDirectory", CapturedTemporaryDirectory
+    )
+    monkeypatch.setattr(sandbox_runner, "HISTORICAL_DAG_COMMIT", "0" * 40)
+
+    with pytest.raises(RuntimeError, match="historical object preflight failed"):
+        sandbox_runner.run(output=output)
+
+    assert captured["path"].exists() is False
+    assert output.is_file()
+    envelope = json.loads(output.read_text(encoding="utf-8"))
+    assert envelope["status"] == "FAIL"
+    assert envelope["result"] == "FAIL"
+    assert envelope["failure_stage"] == "HISTORICAL_PREFLIGHT"
+    assert envelope["historical_preflight_exit_status"] != 0
+    assert envelope["historical_preflight_diagnostic_available"] is True
+    assert envelope["historical_preflight"]["result"] == "FAIL"
+    assert envelope["historical_preflight"]["revision"] == "0" * 40
+    assert "controlled stderr" not in output.read_text(encoding="utf-8")
+
+
+def test_preflight_failure_without_diagnostic_retains_safe_metadata(tmp_path):
+    output = tmp_path / "metadata-only-failure.json"
+    preflight = subprocess.CompletedProcess(
+        ["sandbox-exec", "python", "-c", "preflight"],
+        23,
+        b"safe stdout",
+        b"secret stderr",
+    )
+
+    sandbox_runner._write_preflight_failure(
+        output, preflight, tmp_path / "missing-diagnostic.json"
+    )
+
+    raw = output.read_text(encoding="utf-8")
+    envelope = json.loads(raw)
+    assert envelope["status"] == "FAIL"
+    assert envelope["result"] == "FAIL"
+    assert envelope["failure_stage"] == "HISTORICAL_PREFLIGHT"
+    assert envelope["historical_preflight_exit_status"] == 23
+    assert envelope["historical_preflight_stdout_bytes"] == len(preflight.stdout)
+    assert envelope["historical_preflight_stdout_sha256"] == hashlib.sha256(
+        preflight.stdout
+    ).hexdigest()
+    assert envelope["historical_preflight_stderr_bytes"] == len(preflight.stderr)
+    assert envelope["historical_preflight_stderr_sha256"] == hashlib.sha256(
+        preflight.stderr
+    ).hexdigest()
+    assert envelope["historical_preflight_diagnostic_available"] is False
+    assert envelope["historical_preflight"] is None
+    assert "secret stderr" not in raw
