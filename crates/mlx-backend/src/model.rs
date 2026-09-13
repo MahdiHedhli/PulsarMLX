@@ -17,7 +17,9 @@ use sha2::{Digest, Sha256};
 use std::fs::{self, File, Metadata, OpenOptions};
 use std::io::{Read, Seek, SeekFrom};
 #[cfg(unix)]
-use std::os::unix::fs::{MetadataExt, OpenOptionsExt};
+use std::os::unix::fs::{FileExt, MetadataExt, OpenOptionsExt};
+#[cfg(windows)]
+use std::os::windows::fs::FileExt;
 use std::path::Path;
 
 pub const QWEN_REPOSITORY_ID: &str = "Qwen/Qwen3-30B-A3B-GGUF";
@@ -52,8 +54,9 @@ pub const QWEN_TENSOR_DATA_OFFSET: u64 = 901_175_808;
 const TENSOR_DATA_OFFSET: u64 = QWEN_TENSOR_DATA_OFFSET;
 
 pub const QWEN_ENCODED_SLICE_BYTES: u64 = 34_816;
+pub const QWEN_DECODED_SLICE_BYTES: u64 = 131_072;
 const ENCODED_SLICE_BYTES: u64 = QWEN_ENCODED_SLICE_BYTES;
-const DECODED_SLICE_BYTES: u64 = 131_072;
+const DECODED_SLICE_BYTES: u64 = QWEN_DECODED_SLICE_BYTES;
 const ACTIVATION_BYTES: u64 = 8_192;
 const OUTPUT_BYTES: u64 = 64;
 
@@ -169,10 +172,32 @@ pub struct ModelAdmissionDescriptor {
     pub automatic_download_requested: bool,
 }
 
+/// Private provenance carried only by canonical model admission.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CanonicalAdmissionToken {
+    _private: (),
+}
+
 /// Proof that the descriptor matched the one frozen, bounded model operation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AdmittedModelSlice {
-    _private: (),
+    canonical: Option<CanonicalAdmissionToken>,
+}
+
+impl AdmittedModelSlice {
+    fn canonical() -> Self {
+        Self {
+            canonical: Some(CanonicalAdmissionToken { _private: () }),
+        }
+    }
+
+    fn synthetic() -> Self {
+        Self { canonical: None }
+    }
+
+    pub(crate) fn is_canonical(self) -> bool {
+        self.canonical.is_some()
+    }
 }
 
 /// Stable identity of the regular file behind an admitted checkpoint handle.
@@ -220,6 +245,7 @@ pub(crate) struct ExternalQwen3MoeStorageBinding {
     pub(crate) canonical_path: std::path::PathBuf,
     pub(crate) opened_file_identity: ExternalFileIdentity,
     pub(crate) file_size: u64,
+    pub(crate) admitted_slice_sha256: String,
     pub(crate) checkpoint: CheckpointIdentity,
     pub(crate) full_graph: Qwen3MoeFullGraphDescriptor,
 }
@@ -296,6 +322,12 @@ impl ExternalModelInspection {
     pub(crate) fn bind_qwen3moe_storage(
         &self,
     ) -> Result<ExternalQwen3MoeStorageBinding, ContractError> {
+        if !self.admitted.is_canonical() {
+            return Err(invalid_model(
+                "canonical_admission_required",
+                "synthetic inspections cannot bind to production external storage",
+            ));
+        }
         self.verify_storage_identity()?;
         self.qwen3moe_full_graph.verify_admission_proof()?;
         let metadata = self.file.metadata().map_err(|_| {
@@ -304,6 +336,33 @@ impl ExternalModelInspection {
                 "the admitted external model metadata could not be read",
             )
         })?;
+        let artifact_size = self.qwen3moe_full_graph.artifact.size_bytes;
+        if metadata.len() != artifact_size
+            || metadata.len() != self.admission_descriptor.identity.expected_size_bytes
+            || self.admission_descriptor.identity.actual_size_bytes != artifact_size
+            || self.encoded_slice_sha256.is_empty()
+        {
+            return Err(invalid_model(
+                "model_size_mismatch",
+                "the admitted external model size does not match its immutable artifact",
+            ));
+        }
+        let slice_hash = sha256_exact_range(
+            &self.file,
+            TENSOR_DATA_OFFSET,
+            usize::try_from(ENCODED_SLICE_BYTES).map_err(|_| {
+                invalid_model(
+                    "invalid_tensor_range",
+                    "the admitted encoded slice size is not representable",
+                )
+            })?,
+        )?;
+        if slice_hash != self.encoded_slice_sha256 {
+            return Err(invalid_model(
+                "model_checksum_mismatch",
+                "the admitted external model slice changed before storage binding",
+            ));
+        }
         let checkpoint = CheckpointIdentity::try_new(
             self.qwen3moe_full_graph.artifact.sha256.clone(),
             self.qwen3moe_full_graph.artifact.revision.clone(),
@@ -312,7 +371,8 @@ impl ExternalModelInspection {
             file: self.try_clone_file()?,
             canonical_path: self.canonical_path.clone(),
             opened_file_identity: self.opened_file_identity,
-            file_size: metadata.len(),
+            file_size: artifact_size,
+            admitted_slice_sha256: self.encoded_slice_sha256.clone(),
             checkpoint,
             full_graph: self.qwen3moe_full_graph.clone(),
         })
@@ -332,6 +392,14 @@ impl ExternalModelInspection {
                 "the admitted external model descriptor is no longer a regular file",
             ));
         }
+        if metadata.len() != self.qwen3moe_full_graph.artifact.size_bytes
+            || metadata.len() != self.admission_descriptor.identity.expected_size_bytes
+        {
+            return Err(invalid_model(
+                "model_size_mismatch",
+                "the admitted external model size changed from its immutable artifact",
+            ));
+        }
         Ok(())
     }
 
@@ -341,7 +409,7 @@ impl ExternalModelInspection {
     /// production admission path. It exists so integration tests can exercise
     /// the same retained-file identity and storage transaction boundaries.
     #[doc(hidden)]
-    pub fn new_synthetic_for_test(
+    pub(crate) fn new_synthetic_for_test(
         file: File,
         path: impl Into<std::path::PathBuf>,
         qwen3moe_full_graph: Qwen3MoeFullGraphDescriptor,
@@ -367,7 +435,7 @@ impl ExternalModelInspection {
                 revision: artifact.revision.clone(),
                 filename: artifact.filename.clone(),
                 license_spdx: QWEN_LICENSE_SPDX.to_owned(),
-                expected_size_bytes: artifact.size_bytes,
+                expected_size_bytes: metadata.len(),
                 actual_size_bytes: metadata.len(),
                 expected_sha256: artifact.sha256.clone(),
                 actual_sha256: artifact.sha256.clone(),
@@ -395,18 +463,41 @@ impl ExternalModelInspection {
             metadata: qwen3moe_full_graph.metadata.clone(),
             tensors: qwen3moe_full_graph.tensors.clone(),
         };
+        let encoded_slice_sha256 = match qwen3moe_full_graph.tensors.iter().find(|tensor| {
+            tensor.role == crate::qwen3moe::Qwen3MoeTensorRole::ExpertGateWeight
+                && tensor.layer_index == Some(0)
+        }) {
+            Some(tensor)
+                if tensor
+                    .absolute_data_offset
+                    .checked_add(tensor.encoded_bytes)
+                    .is_some_and(|end| end <= metadata.len()) =>
+            {
+                sha256_exact_range(
+                    &file,
+                    tensor.absolute_data_offset,
+                    usize::try_from(tensor.encoded_bytes).map_err(|_| {
+                        invalid_model(
+                            "invalid_tensor_range",
+                            "the synthetic encoded slice size is not representable",
+                        )
+                    })?,
+                )?
+            }
+            _ => String::new(),
+        };
         Ok(Self {
             file,
             canonical_path,
             opened_file_identity,
             admission_descriptor,
-            admitted: AdmittedModelSlice { _private: () },
+            admitted: AdmittedModelSlice::synthetic(),
             gguf_version: 3,
             data_offset: crate::qwen3moe::QWEN3MOE_DATA_OFFSET,
             tensor_count: qwen3moe_full_graph.tensors.len(),
             f32_tensor_count: 0,
             q8_0_tensor_count: qwen3moe_full_graph.tensors.len(),
-            encoded_slice_sha256: String::new(),
+            encoded_slice_sha256,
             qwen3moe_adapter,
             qwen3moe_full_graph,
         })
@@ -473,21 +564,57 @@ impl ExternalModelInspection {
                 "the admitted external model metadata could not be rechecked",
             )
         })?;
-        if !metadata.is_file() || metadata.len() != FILE_BYTES {
+        if !metadata.is_file()
+            || metadata.len() != self.admission_descriptor.identity.expected_size_bytes
+        {
             return Err(invalid_model(
                 "model_size_mismatch",
                 "the admitted external model size changed during validation",
             ));
         }
-        let mut file = self.try_clone_file()?;
-        if sha256_reader(&mut file)? != SHA256
-            || sha256_exact_range(&self.file, TENSOR_DATA_OFFSET, ENCODED_SLICE_BYTES as usize)?
-                != self.encoded_slice_sha256
-        {
+        let tensor = self
+            .qwen3moe_full_graph
+            .tensors
+            .iter()
+            .find(|tensor| {
+                tensor.role == crate::qwen3moe::Qwen3MoeTensorRole::ExpertGateWeight
+                    && tensor.layer_index == Some(0)
+            })
+            .ok_or_else(|| {
+                invalid_model(
+                    "missing_tensor_role",
+                    "the admitted Qwen expert-gate slice is missing",
+                )
+            })?;
+        let slice_bytes = if self.admitted.is_canonical() {
+            ENCODED_SLICE_BYTES
+        } else {
+            tensor.encoded_bytes
+        };
+        let slice_hash = sha256_exact_range(
+            &self.file,
+            tensor.absolute_data_offset,
+            usize::try_from(slice_bytes).map_err(|_| {
+                invalid_model(
+                    "invalid_tensor_range",
+                    "the admitted encoded slice size is not representable",
+                )
+            })?,
+        )?;
+        if slice_hash != self.encoded_slice_sha256 {
             return Err(invalid_model(
                 "model_checksum_mismatch",
                 "the admitted external model changed during validation",
             ));
+        }
+        if self.admitted.is_canonical() {
+            let mut file = self.try_clone_file()?;
+            if sha256_reader(&mut file)? != SHA256 {
+                return Err(invalid_model(
+                    "model_checksum_mismatch",
+                    "the admitted external model changed during validation",
+                ));
+            }
         }
         verify_path_matches_open_file(&self.canonical_path, &self.file, self.opened_file_identity)?;
         Ok(())
@@ -641,7 +768,7 @@ pub fn admit_qwen3_q8_0_slice(
         ));
     }
 
-    Ok(AdmittedModelSlice { _private: () })
+    Ok(AdmittedModelSlice::canonical())
 }
 
 /// Construct the exact frozen budget with fresh disk and host observations.
@@ -1367,26 +1494,53 @@ fn sha256_exact_range(
     offset: u64,
     byte_count: usize,
 ) -> Result<String, ContractError> {
-    let mut reader = file.try_clone().map_err(|_| {
-        invalid_model(
-            "model_read_failed",
-            "the external model handle could not be cloned for the bounded slice",
-        )
-    })?;
-    reader.seek(SeekFrom::Start(offset)).map_err(|_| {
-        invalid_model(
-            "model_read_failed",
-            "the external model could not be positioned at the bounded slice",
-        )
-    })?;
     let mut bytes = vec![0_u8; byte_count];
-    reader.read_exact(&mut bytes).map_err(|_| {
-        invalid_model(
-            "model_read_failed",
-            "the external model did not provide the complete bounded slice",
-        )
-    })?;
+    let mut read = 0_usize;
+    while read < bytes.len() {
+        let read_offset = offset
+            .checked_add(u64::try_from(read).map_err(|_| {
+                invalid_model(
+                    "invalid_tensor_range",
+                    "the bounded slice offset is not representable",
+                )
+            })?)
+            .ok_or_else(|| {
+                invalid_model("invalid_tensor_range", "the bounded slice offset overflows")
+            })?;
+        let count = positional_read(file, &mut bytes[read..], read_offset).map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the external model bounded slice could not be read",
+            )
+        })?;
+        if count == 0 || count > bytes.len() - read {
+            return Err(invalid_model(
+                "model_read_failed",
+                "the external model did not provide the complete bounded slice",
+            ));
+        }
+        read += count;
+    }
     Ok(format!("{:x}", Sha256::digest(bytes)))
+}
+
+fn positional_read(file: &File, destination: &mut [u8], offset: u64) -> std::io::Result<usize> {
+    #[cfg(unix)]
+    {
+        file.read_at(destination, offset)
+    }
+    #[cfg(windows)]
+    {
+        file.seek_read(destination, offset)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (file, destination, offset);
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "positional file reads are unsupported on this platform",
+        ))
+    }
 }
 
 fn validate_identity(identity: &ModelIdentityDescriptor) -> Result<(), ContractError> {

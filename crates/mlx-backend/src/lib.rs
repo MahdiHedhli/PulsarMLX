@@ -25,9 +25,9 @@ pub use model::{
     admit_qwen3_q8_0_slice, frozen_qwen_model_memory_budget, inspect_external_qwen_model,
     AdmittedModelSlice, ExternalFileIdentity, ExternalModelInspection, ExternalRouterInspection,
     ModelAdmissionDescriptor, ModelExecutionDepth, ModelIdentityDescriptor, ModelMemoryBudget,
-    ModelMetadataDescriptor, ModelTensorDescriptor, QWEN_ENCODED_SLICE_BYTES, QWEN_FILENAME,
-    QWEN_FILE_BYTES, QWEN_LICENSE_SPDX, QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256,
-    QWEN_TENSOR_DATA_OFFSET,
+    ModelMetadataDescriptor, ModelTensorDescriptor, QWEN_DECODED_SLICE_BYTES,
+    QWEN_ENCODED_SLICE_BYTES, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_LICENSE_SPDX,
+    QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256, QWEN_TENSOR_DATA_OFFSET,
 };
 pub use protocol::{
     FetchedExpertEvidence, ModelSliceMemoryGauges, ModelSliceRequest, ModelSliceResult,
@@ -82,9 +82,6 @@ pub use qwen3moe_runtime::{
     QWEN3MOE_SYNTHETIC_MAX_ELEMENTS, QWEN3MOE_SYNTHETIC_OPERATION_COUNT,
 };
 pub use qwen3moe_storage::{
-    decode_qwen3moe_tensor, read_admitted_tensor, Qwen3MoEDecodedTensor,
-    Qwen3MoeContentHashMetadata, Qwen3MoeDecoderContract, Qwen3MoeDestinationPolicy,
-    Qwen3MoeExternalStorage, Qwen3MoeStorageRequest, QWEN3MOE_F32_HASH_ALGORITHM,
-    QWEN3MOE_Q8_0_BLOCK_BYTES, QWEN3MOE_Q8_0_BLOCK_ELEMENTS, QWEN3MOE_Q8_0_DECODER_CONTRACT_ID,
-    QWEN3MOE_Q8_0_DECODER_VERSION,
+    read_admitted_layer0_expert_gate_rows_0_to_16, Qwen3MoEDecodedTensor,
+    Qwen3MoeContentHashMetadata, QWEN3MOE_F32_HASH_ALGORITHM,
 };

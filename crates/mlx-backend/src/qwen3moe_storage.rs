@@ -10,15 +10,23 @@ use backend::{
     TensorCatalog, TensorRange, TensorStore,
 };
 use sha2::{Digest, Sha256};
-use std::io::{Read, Seek, SeekFrom};
+use std::fs::File;
+use std::io;
 use std::mem::{align_of, size_of};
+#[cfg(unix)]
+use std::os::unix::fs::FileExt;
+#[cfg(windows)]
+use std::os::windows::fs::FileExt;
 
-use crate::model::{ExternalFileIdentity, ExternalModelInspection, ExternalQwen3MoeStorageBinding};
+use crate::model::{
+    ExternalFileIdentity, ExternalModelInspection, ExternalQwen3MoeStorageBinding,
+    QWEN_DECODED_SLICE_BYTES, QWEN_ENCODED_SLICE_BYTES, QWEN_TENSOR_DATA_OFFSET,
+};
 use crate::qwen3moe::{
     admit_qwen3moe_full_graph, Qwen3MoeAdapterDescriptor, Qwen3MoeArtifactBinding,
     Qwen3MoeFullGraphAdmissionInput, Qwen3MoeFullGraphDescriptor, Qwen3MoeTensorDescriptor,
-    Qwen3MoeTensorRole, QWEN3MOE_ADAPTER_CONTRACT_ID, QWEN3MOE_FULL_GRAPH_CONTRACT_ID,
-    QWEN3MOE_REVISION, QWEN3MOE_SHA256,
+    Qwen3MoeTensorRole, QWEN3MOE_ADAPTER_CONTRACT_ID, QWEN3MOE_EXPERT_FFN_WIDTH,
+    QWEN3MOE_FULL_GRAPH_CONTRACT_ID, QWEN3MOE_HIDDEN_WIDTH, QWEN3MOE_REVISION, QWEN3MOE_SHA256,
 };
 
 /// The only decoder contract admitted by this bounded synthetic lane.
@@ -96,9 +104,11 @@ pub enum Qwen3MoeDestinationPolicy {
 
 /// Immutable storage/decode request derived from one retained admitted tensor.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Qwen3MoeStorageRequest {
+pub(crate) struct Qwen3MoeStorageRequest {
     checkpoint: CheckpointIdentity,
     tensor: Qwen3MoeTensorDescriptor,
+    source_tensor: Qwen3MoeTensorDescriptor,
+    production_slice: bool,
     destination_policy: Qwen3MoeDestinationPolicy,
     decoder_contract: Qwen3MoeDecoderContract,
     correlation_id: String,
@@ -111,7 +121,7 @@ impl Qwen3MoeStorageRequest {
     /// The tensor name, shard identity, checkpoint identity, and range are all
     /// retained from the descriptor. Callers cannot provide a free-form tensor
     /// name or path to this constructor.
-    pub fn try_new(
+    fn try_new(
         descriptor: &Qwen3MoeFullGraphDescriptor,
         role: Qwen3MoeTensorRole,
         layer_index: Option<u32>,
@@ -152,7 +162,9 @@ impl Qwen3MoeStorageRequest {
             })?;
         Self::from_selected_tensor(
             &admitted.artifact,
+            tensor.clone(),
             tensor,
+            false,
             destination_policy,
             decoder_contract,
             correlation_id,
@@ -161,7 +173,7 @@ impl Qwen3MoeStorageRequest {
     }
 
     #[doc(hidden)]
-    pub fn try_new_synthetic_for_test(
+    fn try_new_synthetic_for_test(
         descriptor: &Qwen3MoeFullGraphDescriptor,
         role: Qwen3MoeTensorRole,
         layer_index: Option<u32>,
@@ -185,7 +197,9 @@ impl Qwen3MoeStorageRequest {
             })?;
         Self::from_selected_tensor(
             &descriptor.artifact,
+            tensor.clone(),
             tensor,
+            false,
             destination_policy,
             decoder_contract,
             correlation_id,
@@ -196,6 +210,8 @@ impl Qwen3MoeStorageRequest {
     fn from_selected_tensor(
         artifact: &Qwen3MoeArtifactBinding,
         tensor: Qwen3MoeTensorDescriptor,
+        source_tensor: Qwen3MoeTensorDescriptor,
+        production_slice: bool,
         destination_policy: Qwen3MoeDestinationPolicy,
         decoder_contract: Qwen3MoeDecoderContract,
         correlation_id: impl Into<String>,
@@ -209,6 +225,8 @@ impl Qwen3MoeStorageRequest {
         Ok(Self {
             checkpoint,
             tensor,
+            source_tensor,
+            production_slice,
             destination_policy,
             decoder_contract,
             correlation_id,
@@ -239,6 +257,38 @@ impl Qwen3MoeStorageRequest {
     pub fn cancellation(&self) -> &CancellationToken {
         &self.cancellation
     }
+
+    fn try_new_admitted_layer0_slice(
+        descriptor: &Qwen3MoeFullGraphDescriptor,
+        destination_policy: Qwen3MoeDestinationPolicy,
+        decoder_contract: Qwen3MoeDecoderContract,
+        correlation_id: impl Into<String>,
+        cancellation: CancellationToken,
+    ) -> Result<Self, ContractError> {
+        validate_destination_policy(destination_policy)?;
+        descriptor.verify_admission_proof()?;
+        let source_tensor = descriptor
+            .tensor("blk.0.ffn_gate_exps.weight")
+            .cloned()
+            .ok_or_else(|| {
+                storage_error(
+                    ErrorCategory::InvalidTensor,
+                    "qwen3moe_tensor_not_admitted",
+                    "the admitted layer-0 expert-gate tensor is absent",
+                )
+            })?;
+        let tensor = admitted_layer0_slice(&source_tensor)?;
+        Self::from_selected_tensor(
+            &descriptor.artifact,
+            tensor,
+            source_tensor,
+            true,
+            destination_policy,
+            decoder_contract,
+            correlation_id,
+            cancellation,
+        )
+    }
 }
 
 /// File-backed catalog/store bound to one admitted external Qwen artifact.
@@ -246,15 +296,13 @@ impl Qwen3MoeStorageRequest {
 /// The adapter owns only a clone of the inspection's already-opened read-only
 /// descriptor. It exposes no path, arbitrary tensor-name reader, or fixture
 /// fallback; each operation rechecks pathname identity and file metadata.
-pub struct Qwen3MoeExternalStorage {
+struct Qwen3MoeExternalStorage {
     binding: ExternalQwen3MoeStorageBinding,
 }
 
 impl Qwen3MoeExternalStorage {
     /// Bind storage to one previously admitted inspection without reopening it.
-    pub fn try_from_inspection(
-        inspection: &ExternalModelInspection,
-    ) -> Result<Self, ContractError> {
+    fn try_from_inspection(inspection: &ExternalModelInspection) -> Result<Self, ContractError> {
         let binding = inspection.bind_qwen3moe_storage()?;
         let artifact = &binding.full_graph.artifact;
         if binding.full_graph.contract_id != QWEN3MOE_FULL_GRAPH_CONTRACT_ID
@@ -278,8 +326,24 @@ impl Qwen3MoeExternalStorage {
     }
 }
 
-/// Read and decode one tensor through the retained external file binding.
-pub fn read_admitted_tensor(
+/// Read and decode the exact admitted layer-0 expert-gate rows 0 through 16.
+pub fn read_admitted_layer0_expert_gate_rows_0_to_16(
+    inspection: &ExternalModelInspection,
+    correlation_id: impl Into<String>,
+    cancellation: CancellationToken,
+) -> Result<Qwen3MoEDecodedTensor, ContractError> {
+    let storage = Qwen3MoeExternalStorage::try_from_inspection(inspection)?;
+    let request = Qwen3MoeStorageRequest::try_new_admitted_layer0_slice(
+        &storage.binding.full_graph,
+        Qwen3MoeDestinationPolicy::RustOwned,
+        Qwen3MoeDecoderContract::q8_0(),
+        correlation_id,
+        cancellation,
+    )?;
+    read_admitted_tensor_internal(&storage, &request)
+}
+
+fn read_admitted_tensor_internal(
     storage: &Qwen3MoeExternalStorage,
     request: &Qwen3MoeStorageRequest,
 ) -> Result<Qwen3MoEDecodedTensor, ContractError> {
@@ -294,7 +358,7 @@ pub fn read_admitted_tensor(
     let requested = storage
         .binding
         .full_graph
-        .tensor(&request.tensor().name)
+        .tensor(&request.source_tensor.name)
         .ok_or_else(|| {
             storage_error(
                 ErrorCategory::InvalidTensor,
@@ -302,7 +366,7 @@ pub fn read_admitted_tensor(
                 "the requested tensor name is absent from the bound graph",
             )
         })?;
-    if requested != request.tensor() {
+    if requested != &request.source_tensor || admitted_layer0_slice(requested)? != request.tensor {
         return Err(storage_error(
             ErrorCategory::InvalidModel,
             "qwen3moe_admitted_tensor_identity_mismatch",
@@ -317,11 +381,18 @@ pub fn read_admitted_tensor(
 impl TensorCatalog for Qwen3MoeExternalStorage {
     fn tensor(&self, name: &str) -> Result<Option<RuntimeTensor>, ContractError> {
         self.verify_identity()?;
-        self.binding
-            .full_graph
-            .tensor(name)
-            .map(runtime_tensor)
-            .transpose()
+        if name != "blk.0.ffn_gate_exps.weight" {
+            return Ok(None);
+        }
+        let source = self.binding.full_graph.tensor(name).ok_or_else(|| {
+            storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_catalog_entry_missing",
+                "the admitted layer-0 expert-gate tensor is absent",
+            )
+        })?;
+        let slice = admitted_layer0_slice(source)?;
+        Ok(Some(runtime_tensor(&slice)?))
     }
 }
 
@@ -334,10 +405,10 @@ impl TensorStore for Qwen3MoeExternalStorage {
     ) -> Result<usize, ContractError> {
         cancellation.check()?;
         self.verify_identity()?;
-        let admitted = self
+        let admitted_source = self
             .binding
             .full_graph
-            .tensor(&tensor.name)
+            .tensor("blk.0.ffn_gate_exps.weight")
             .ok_or_else(|| {
                 storage_error(
                     ErrorCategory::InvalidTensor,
@@ -345,7 +416,8 @@ impl TensorStore for Qwen3MoeExternalStorage {
                     "the requested tensor is absent from the bound graph",
                 )
             })?;
-        let expected = runtime_tensor(admitted)?;
+        let admitted = admitted_layer0_slice(admitted_source)?;
+        let expected = runtime_tensor(&admitted)?;
         if *tensor != expected {
             return Err(storage_error(
                 ErrorCategory::InvalidModel,
@@ -375,29 +447,12 @@ impl TensorStore for Qwen3MoeExternalStorage {
                 "the admitted tensor range exceeds the retained file",
             ));
         }
-        let mut file = self.binding.file.try_clone().map_err(|_| {
-            storage_error(
-                ErrorCategory::InvalidModel,
-                "qwen3moe_file_clone_failed",
-                "the retained external file could not be cloned for a bounded read",
-            )
-        })?;
-        file.seek(SeekFrom::Start(expected.range.offset))
-            .map_err(|_| {
-                storage_error(
-                    ErrorCategory::InvalidTensor,
-                    "qwen3moe_range_seek_failed",
-                    "the admitted tensor range could not be positioned",
-                )
-            })?;
-        let bytes_read = file.read(destination).map_err(|_| {
-            storage_error(
-                ErrorCategory::InvalidTensor,
-                "qwen3moe_read_failed",
-                "the admitted tensor range could not be read",
-            )
-        })?;
-        cancellation.check()?;
+        let bytes_read = read_exact_positional(
+            &self.binding.file,
+            destination,
+            expected.range.offset,
+            cancellation,
+        )?;
         self.verify_identity()?;
         Ok(bytes_read)
     }
@@ -415,6 +470,101 @@ fn runtime_tensor(tensor: &Qwen3MoeTensorDescriptor) -> Result<RuntimeTensor, Co
         range,
         shape: tensor.reader_shape.clone(),
         quantization: tensor.quantization.clone(),
+    })
+}
+
+fn admitted_layer0_slice(
+    source: &Qwen3MoeTensorDescriptor,
+) -> Result<Qwen3MoeTensorDescriptor, ContractError> {
+    let row_bytes = *source.reader_shape.last().ok_or_else(|| {
+        storage_error(
+            ErrorCategory::InvalidTensor,
+            "qwen3moe_slice_layout_mismatch",
+            "the admitted expert-gate tensor has no Q8_0 row-byte axis",
+        )
+    })?;
+    let full_rows = QWEN3MOE_EXPERT_FFN_WIDTH.checked_mul(128).ok_or_else(|| {
+        storage_error(
+            ErrorCategory::ArithmeticOverflow,
+            "qwen3moe_slice_layout_overflow",
+            "the admitted expert-gate row count overflowed",
+        )
+    })?;
+    let slice_rows = QWEN_ENCODED_SLICE_BYTES
+        .checked_div(row_bytes)
+        .filter(|_| QWEN_ENCODED_SLICE_BYTES % row_bytes == 0)
+        .ok_or_else(|| {
+            storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_slice_layout_mismatch",
+                "the admitted encoded slice does not contain whole Q8_0 rows",
+            )
+        })?;
+    let full_encoded_bytes = row_bytes.checked_mul(full_rows).ok_or_else(|| {
+        storage_error(
+            ErrorCategory::ArithmeticOverflow,
+            "qwen3moe_slice_layout_overflow",
+            "the admitted expert-gate encoded size overflowed",
+        )
+    })?;
+    let source_end = source
+        .absolute_data_offset
+        .checked_add(source.encoded_bytes)
+        .ok_or_else(|| {
+            storage_error(
+                ErrorCategory::ArithmeticOverflow,
+                "qwen3moe_slice_layout_overflow",
+                "the admitted expert-gate range overflowed",
+            )
+        })?;
+    let slice_end = QWEN_TENSOR_DATA_OFFSET
+        .checked_add(QWEN_ENCODED_SLICE_BYTES)
+        .ok_or_else(|| {
+            storage_error(
+                ErrorCategory::ArithmeticOverflow,
+                "qwen3moe_slice_layout_overflow",
+                "the admitted slice range overflowed",
+            )
+        })?;
+    if source.role != Qwen3MoeTensorRole::ExpertGateWeight
+        || source.layer_index != Some(0)
+        || source.name != "blk.0.ffn_gate_exps.weight"
+        || source.gguf_shape != [QWEN3MOE_HIDDEN_WIDTH, QWEN3MOE_EXPERT_FFN_WIDTH, 128]
+        || source.reader_shape != [128, QWEN3MOE_EXPERT_FFN_WIDTH, row_bytes]
+        || source.execution_shape != [128, QWEN3MOE_EXPERT_FFN_WIDTH, QWEN3MOE_HIDDEN_WIDTH]
+        || source.gguf_type != "Q8_0"
+        || source.quantization != "Q8_0"
+        || source.absolute_data_offset != QWEN_TENSOR_DATA_OFFSET
+        || source.encoded_bytes != full_encoded_bytes
+        || slice_rows == 0
+        || slice_rows > QWEN3MOE_EXPERT_FFN_WIDTH
+        || slice_end > source_end
+        || QWEN_DECODED_SLICE_BYTES
+            != slice_rows
+                .checked_mul(QWEN3MOE_HIDDEN_WIDTH)
+                .and_then(|elements| elements.checked_mul(size_of::<f32>() as u64))
+                .unwrap_or(u64::MAX)
+    {
+        return Err(storage_error(
+            ErrorCategory::InvalidTensor,
+            "qwen3moe_slice_not_admitted",
+            "the requested range is not the admitted layer-0 expert-gate slice",
+        ));
+    }
+    let logical_elements = slice_rows * QWEN3MOE_HIDDEN_WIDTH;
+    Ok(Qwen3MoeTensorDescriptor {
+        role: source.role,
+        layer_index: source.layer_index,
+        name: source.name.clone(),
+        gguf_shape: vec![QWEN3MOE_HIDDEN_WIDTH, slice_rows],
+        reader_shape: vec![slice_rows, row_bytes],
+        execution_shape: vec![slice_rows, QWEN3MOE_HIDDEN_WIDTH],
+        gguf_type: source.gguf_type.clone(),
+        quantization: source.quantization.clone(),
+        orientation: "expert_0_rows_0_to_16".to_owned(),
+        logical_elements,
+        encoded_bytes: QWEN_ENCODED_SLICE_BYTES,
+        absolute_data_offset: QWEN_TENSOR_DATA_OFFSET,
     })
 }
 
@@ -438,7 +588,6 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
         || !open_metadata.is_file()
         || ExternalFileIdentity::from_metadata(&path_metadata) != binding.opened_file_identity
         || ExternalFileIdentity::from_metadata(&open_metadata) != binding.opened_file_identity
-        || open_metadata.len() != binding.file_size
     {
         return Err(storage_error(
             ErrorCategory::InvalidModel,
@@ -446,7 +595,120 @@ fn verify_binding_identity(binding: &ExternalQwen3MoeStorageBinding) -> Result<(
             "the admitted model pathname no longer resolves to the retained regular file",
         ));
     }
+    let artifact_size = binding.full_graph.artifact.size_bytes;
+    if open_metadata.len() != binding.file_size || open_metadata.len() != artifact_size {
+        return Err(storage_error(
+            ErrorCategory::InvalidModel,
+            "model_size_mismatch",
+            "the retained external model size differs from its immutable artifact",
+        ));
+    }
+    let slice_hash = sha256_exact_range(
+        &binding.file,
+        QWEN_TENSOR_DATA_OFFSET,
+        usize::try_from(QWEN_ENCODED_SLICE_BYTES).map_err(|_| {
+            storage_error(
+                ErrorCategory::ArithmeticOverflow,
+                "qwen3moe_slice_hash_size_overflow",
+                "the admitted slice hash size is not representable",
+            )
+        })?,
+    )?;
+    if slice_hash != binding.admitted_slice_sha256 {
+        return Err(storage_error(
+            ErrorCategory::InvalidModel,
+            "model_checksum_mismatch",
+            "the admitted external model slice content changed",
+        ));
+    }
     Ok(())
+}
+
+fn read_exact_positional(
+    file: &File,
+    destination: &mut [u8],
+    offset: u64,
+    cancellation: &CancellationToken,
+) -> Result<usize, ContractError> {
+    let mut total = 0_usize;
+    while total < destination.len() {
+        cancellation.check()?;
+        let read_offset = offset
+            .checked_add(u64::try_from(total).map_err(|_| {
+                storage_error(
+                    ErrorCategory::ArithmeticOverflow,
+                    "qwen3moe_read_offset_overflow",
+                    "the positional read offset is not representable",
+                )
+            })?)
+            .ok_or_else(|| {
+                storage_error(
+                    ErrorCategory::ArithmeticOverflow,
+                    "qwen3moe_read_offset_overflow",
+                    "the positional read offset overflowed",
+                )
+            })?;
+        let count = loop {
+            match positional_read(file, &mut destination[total..], read_offset) {
+                Ok(count) => break count,
+                Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+                Err(_) => {
+                    return Err(storage_error(
+                        ErrorCategory::InvalidTensor,
+                        "qwen3moe_read_failed",
+                        "the admitted tensor range could not be read",
+                    ));
+                }
+            }
+        };
+        let remaining = destination.len() - total;
+        if count == 0 {
+            return Err(storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_short_read",
+                "the admitted tensor range ended before the requested byte count",
+            ));
+        }
+        if count > remaining {
+            return Err(storage_error(
+                ErrorCategory::InvalidTensor,
+                "qwen3moe_overlong_read",
+                "the positional reader returned more bytes than requested",
+            ));
+        }
+        total += count;
+        cancellation.check()?;
+    }
+    Ok(total)
+}
+
+fn positional_read(file: &File, destination: &mut [u8], offset: u64) -> io::Result<usize> {
+    #[cfg(unix)]
+    {
+        file.read_at(destination, offset)
+    }
+    #[cfg(windows)]
+    {
+        file.seek_read(destination, offset)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        let _ = (file, destination, offset);
+        Err(io::Error::new(
+            io::ErrorKind::Unsupported,
+            "positional file reads are unsupported on this platform",
+        ))
+    }
+}
+
+fn sha256_exact_range(
+    file: &File,
+    offset: u64,
+    byte_count: usize,
+) -> Result<String, ContractError> {
+    let mut bytes = vec![0_u8; byte_count];
+    read_exact_positional(file, &mut bytes, offset, &CancellationToken::new())?;
+    Ok(format!("{:x}", Sha256::digest(bytes)))
 }
 
 /// Hash metadata for the initialized decoded f32 content.
@@ -522,7 +784,7 @@ impl Qwen3MoEDecodedTensor {
 /// The catalog is resolved by the retained admitted tensor name and then the
 /// complete returned entry is compared before the store is called. The store
 /// receives exactly one bounded destination covering the whole slab.
-pub fn decode_qwen3moe_tensor<C: TensorCatalog, S: TensorStore>(
+pub(crate) fn decode_qwen3moe_tensor<C: TensorCatalog, S: TensorStore>(
     request: &Qwen3MoeStorageRequest,
     catalog: &C,
     store: &S,
@@ -609,7 +871,7 @@ fn validate_request_tensor(
         return Err(storage_error(
             ErrorCategory::InvalidQuantization,
             "unsupported_qwen3moe_quantization",
-            "only the exact Q8_0 synthetic decoder lane is admitted",
+            "only the exact admitted Q8_0 decoder lane is admitted",
         ));
     }
     if tensor.gguf_shape.is_empty() || tensor.gguf_shape.len() > MAX_SHAPE_RANK {
@@ -627,7 +889,7 @@ fn validate_request_tensor(
             "tensor logical element count differs from its checked shape",
         ));
     }
-    if logical_elements > MAX_SYNTHETIC_DECODE_ELEMENTS {
+    if !request.production_slice && logical_elements > MAX_SYNTHETIC_DECODE_ELEMENTS {
         return Err(storage_error(
             ErrorCategory::ResourceLimit,
             "qwen3moe_decode_bound_exceeded",
@@ -667,7 +929,7 @@ fn validate_request_tensor(
             "tensor encoded byte count does not match its Q8_0 shape",
         ));
     }
-    if expected_encoded_bytes >= MAX_SYNTHETIC_ENCODED_BYTES {
+    if !request.production_slice && expected_encoded_bytes >= MAX_SYNTHETIC_ENCODED_BYTES {
         return Err(storage_error(
             ErrorCategory::ResourceLimit,
             "qwen3moe_synthetic_slab_bound_exceeded",
@@ -683,6 +945,13 @@ fn validate_request_tensor(
             ErrorCategory::InvalidTensor,
             "qwen3moe_shape_layout_mismatch",
             "tensor reader or execution shape differs from its Q8_0 layout",
+        ));
+    }
+    if request.production_slice && admitted_layer0_slice(&request.source_tensor)? != *tensor {
+        return Err(storage_error(
+            ErrorCategory::InvalidTensor,
+            "qwen3moe_slice_not_admitted",
+            "the production request is not the exact admitted layer-0 slice",
         ));
     }
     let range = TensorRange {
@@ -925,6 +1194,9 @@ fn storage_error(
     ContractError::new(category, code, message)
 }
 
+#[cfg(test)]
+#[path = "qwen3moe_storage_external_tests.rs"]
+mod external_storage_tests;
 #[cfg(test)]
 mod tests {
     use super::*;
