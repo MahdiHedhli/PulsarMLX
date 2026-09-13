@@ -23,11 +23,12 @@ pub use device::{
 };
 pub use model::{
     admit_qwen3_q8_0_slice, frozen_qwen_model_memory_budget, inspect_external_qwen_model,
-    AdmittedModelSlice, ExternalFileIdentity, ExternalModelInspection, ExternalRouterInspection,
-    ModelAdmissionDescriptor, ModelExecutionDepth, ModelIdentityDescriptor, ModelMemoryBudget,
-    ModelMetadataDescriptor, ModelTensorDescriptor, QWEN_DECODED_SLICE_BYTES,
-    QWEN_ENCODED_SLICE_BYTES, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_LICENSE_SPDX,
-    QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256, QWEN_TENSOR_DATA_OFFSET,
+    inspect_external_qwen_model_with_cancellation, AdmittedModelSlice, ExternalFileIdentity,
+    ExternalModelInspection, ExternalRouterInspection, ModelAdmissionDescriptor,
+    ModelExecutionDepth, ModelIdentityDescriptor, ModelMemoryBudget, ModelMetadataDescriptor,
+    ModelTensorDescriptor, QWEN_DECODED_SLICE_BYTES, QWEN_ENCODED_SLICE_BYTES, QWEN_FILENAME,
+    QWEN_FILE_BYTES, QWEN_LICENSE_SPDX, QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256,
+    QWEN_TENSOR_DATA_OFFSET,
 };
 pub use protocol::{
     FetchedExpertEvidence, ModelSliceMemoryGauges, ModelSliceRequest, ModelSliceResult,

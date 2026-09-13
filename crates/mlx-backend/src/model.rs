@@ -830,18 +830,36 @@ fn verify_path_matches_open_file(
     file: &File,
     expected_identity: ExternalFileIdentity,
 ) -> Result<(), ContractError> {
+    let cancellation = CancellationToken::new();
+    verify_path_matches_open_file_cancellable(
+        canonical_path,
+        file,
+        expected_identity,
+        &cancellation,
+    )
+}
+
+fn verify_path_matches_open_file_cancellable(
+    canonical_path: &Path,
+    file: &File,
+    expected_identity: ExternalFileIdentity,
+    cancellation: &CancellationToken,
+) -> Result<(), ContractError> {
+    cancellation.check()?;
     let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
         invalid_model(
             "model_path_identity_changed",
             "the admitted model pathname is no longer available",
         )
     })?;
+    cancellation.check()?;
     let open_metadata = file.metadata().map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the admitted external model descriptor metadata could not be read",
         )
     })?;
+    cancellation.check()?;
     if path_metadata.file_type().is_symlink()
         || !path_metadata.is_file()
         || !open_metadata.is_file()
@@ -853,18 +871,30 @@ fn verify_path_matches_open_file(
             "the admitted model pathname no longer resolves to the retained regular file",
         ));
     }
+    cancellation.check()?;
     Ok(())
 }
 
+#[cfg(test)]
 fn open_read_only_no_follow(
     canonical_path: &Path,
 ) -> Result<(File, Metadata, ExternalFileIdentity), ContractError> {
+    let cancellation = CancellationToken::new();
+    open_read_only_no_follow_cancellable(canonical_path, &cancellation)
+}
+
+fn open_read_only_no_follow_cancellable(
+    canonical_path: &Path,
+    cancellation: &CancellationToken,
+) -> Result<(File, Metadata, ExternalFileIdentity), ContractError> {
+    cancellation.check()?;
     let path_metadata = fs::symlink_metadata(canonical_path).map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file is unavailable",
         )
     })?;
+    cancellation.check()?;
     if path_metadata.file_type().is_symlink() || !path_metadata.is_file() {
         return Err(invalid_model(
             "model_unavailable",
@@ -876,18 +906,21 @@ fn open_read_only_no_follow(
     options.read(true);
     #[cfg(unix)]
     options.custom_flags(libc::O_NOFOLLOW);
+    cancellation.check()?;
     let file = options.open(canonical_path).map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file could not be opened read-only without following a link",
         )
     })?;
+    cancellation.check()?;
     let metadata = file.metadata().map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model metadata could not be read",
         )
     })?;
+    cancellation.check()?;
     let opened_file_identity = file_identity(&metadata);
     if !metadata.is_file() || opened_file_identity != path_identity {
         return Err(invalid_model(
@@ -895,7 +928,12 @@ fn open_read_only_no_follow(
             "the external model pathname changed while its descriptor was opened",
         ));
     }
-    verify_path_matches_open_file(canonical_path, &file, opened_file_identity)?;
+    verify_path_matches_open_file_cancellable(
+        canonical_path,
+        &file,
+        opened_file_identity,
+        cancellation,
+    )?;
     Ok((file, metadata, opened_file_identity))
 }
 
@@ -909,24 +947,45 @@ pub fn inspect_external_qwen_model(
     repository_root: &Path,
     memory_budget: ModelMemoryBudget,
 ) -> Result<ExternalModelInspection, ContractError> {
+    let cancellation = CancellationToken::new();
+    inspect_external_qwen_model_with_cancellation(
+        requested_path,
+        repository_root,
+        memory_budget,
+        &cancellation,
+    )
+}
+
+/// Hash, parse, inventory, and admit the exact external Qwen artifact with a
+/// caller-owned cancellation token covering every admission boundary.
+pub fn inspect_external_qwen_model_with_cancellation(
+    requested_path: &Path,
+    repository_root: &Path,
+    memory_budget: ModelMemoryBudget,
+    cancellation: &CancellationToken,
+) -> Result<ExternalModelInspection, ContractError> {
+    cancellation.check()?;
     if !requested_path.is_absolute() {
         return Err(invalid_model(
             "model_path_not_absolute",
             "the external model path must be absolute",
         ));
     }
+    cancellation.check()?;
     let canonical_path = requested_path.canonicalize().map_err(|_| {
         invalid_model(
             "model_unavailable",
             "the external model file is unavailable",
         )
     })?;
+    cancellation.check()?;
     let canonical_root = repository_root.canonicalize().map_err(|_| {
         invalid_model(
             "repository_unavailable",
             "the source repository root is unavailable",
         )
     })?;
+    cancellation.check()?;
     if canonical_path.starts_with(&canonical_root) {
         return Err(invalid_model(
             "model_path_not_external",
@@ -940,7 +999,10 @@ pub fn inspect_external_qwen_model(
         ));
     }
 
-    let (mut file, metadata, opened_file_identity) = open_read_only_no_follow(&canonical_path)?;
+    cancellation.check()?;
+    let (mut file, metadata, opened_file_identity) =
+        open_read_only_no_follow_cancellable(&canonical_path, cancellation)?;
+    cancellation.check()?;
     if !metadata.is_file() || metadata.len() != FILE_BYTES {
         return Err(invalid_model(
             "model_size_mismatch",
@@ -948,7 +1010,9 @@ pub fn inspect_external_qwen_model(
         ));
     }
 
-    let actual_sha256 = sha256_reader(&mut file)?;
+    cancellation.check()?;
+    let actual_sha256 = sha256_reader_cancellable(&mut file, cancellation)?;
+    cancellation.check()?;
     if actual_sha256 != SHA256 {
         return Err(invalid_model(
             "model_checksum_mismatch",
@@ -956,7 +1020,9 @@ pub fn inspect_external_qwen_model(
         ));
     }
 
-    let gguf = parse_bounded_header(&file)?;
+    cancellation.check()?;
+    let gguf = parse_bounded_header_cancellable(&file, cancellation)?;
+    cancellation.check()?;
     let qwen3moe_adapter = admit_qwen3moe_adapter(admission_input_from_gguf(
         &gguf,
         Qwen3MoeArtifactBinding {
@@ -967,20 +1033,14 @@ pub fn inspect_external_qwen_model(
             sha256: SHA256.to_owned(),
         },
     )?)?;
+    cancellation.check()?;
     let qwen3moe_full_graph = construct_qwen3moe_full_graph(qwen3moe_adapter.clone())?;
+    cancellation.check()?;
     let (metadata_descriptor, tensor_descriptor, f32_count, q8_0_count) =
         inspect_gguf_inventory(&gguf, metadata.len())?;
-    let encoded_slice_sha256 = sha256_exact_range(
-        &file,
-        TENSOR_DATA_OFFSET,
-        usize::try_from(ENCODED_SLICE_BYTES).map_err(|_| {
-            invalid_model(
-                "invalid_tensor_range",
-                "the encoded model slice size is not representable",
-            )
-        })?,
-        &CancellationToken::new(),
-    )?;
+    cancellation.check()?;
+    let encoded_slice_sha256 = sha256_qwen_encoded_slice(&file, cancellation)?;
+    cancellation.check()?;
 
     let admission_descriptor = ModelAdmissionDescriptor {
         identity: ModelIdentityDescriptor {
@@ -1000,8 +1060,16 @@ pub fn inspect_external_qwen_model(
         execution_depth: ModelExecutionDepth::Layer0Expert0GateRows0To16Matvec,
         automatic_download_requested: false,
     };
+    cancellation.check()?;
     let admitted = admit_qwen3_q8_0_slice(&admission_descriptor)?;
-    verify_path_matches_open_file(&canonical_path, &file, opened_file_identity)?;
+    cancellation.check()?;
+    verify_path_matches_open_file_cancellable(
+        &canonical_path,
+        &file,
+        opened_file_identity,
+        cancellation,
+    )?;
+    cancellation.check()?;
 
     Ok(ExternalModelInspection {
         file,
@@ -1021,54 +1089,89 @@ pub fn inspect_external_qwen_model(
 }
 
 fn sha256_reader(file: &mut File) -> Result<String, ContractError> {
+    let cancellation = CancellationToken::new();
+    sha256_reader_cancellable(file, &cancellation)
+}
+
+fn sha256_reader_cancellable(
+    file: &mut File,
+    cancellation: &CancellationToken,
+) -> Result<String, ContractError> {
+    cancellation.check()?;
     file.seek(SeekFrom::Start(0)).map_err(|_| {
         invalid_model(
             "model_read_failed",
             "the external model could not be positioned for hashing",
         )
     })?;
+    cancellation.check()?;
+    sha256_stream_with_buffer(file, cancellation, HASH_BUFFER_BYTES)
+}
+
+fn sha256_stream_with_buffer(
+    reader: &mut impl Read,
+    cancellation: &CancellationToken,
+    buffer_size: usize,
+) -> Result<String, ContractError> {
+    if buffer_size == 0 {
+        return Err(invalid_model(
+            "model_read_failed",
+            "the external model hash buffer size must be nonzero",
+        ));
+    }
     let mut digest = Sha256::new();
-    let mut buffer = vec![0_u8; HASH_BUFFER_BYTES];
+    let mut buffer = vec![0_u8; buffer_size];
     loop {
-        let count = file.read(&mut buffer).map_err(|_| {
+        cancellation.check()?;
+        let count = reader.read(&mut buffer).map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model could not be read completely for hashing",
             )
         })?;
+        cancellation.check()?;
         if count == 0 {
             break;
         }
         digest.update(&buffer[..count]);
+        cancellation.check()?;
     }
     Ok(format!("{:x}", digest.finalize()))
 }
 
 fn parse_bounded_header(file: &File) -> Result<Gguf, ContractError> {
+    let cancellation = CancellationToken::new();
+    parse_bounded_header_cancellable(file, &cancellation)
+}
+
+fn parse_bounded_header_cancellable(
+    file: &File,
+    cancellation: &CancellationToken,
+) -> Result<Gguf, ContractError> {
     let mut read_size = HEADER_READ_START;
     loop {
+        cancellation.check()?;
         let mut reader = file.try_clone().map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model handle could not be cloned for header inspection",
             )
         })?;
+        cancellation.check()?;
         reader.seek(SeekFrom::Start(0)).map_err(|_| {
             invalid_model(
                 "model_read_failed",
                 "the external model could not be positioned for header inspection",
             )
         })?;
-        let mut header = Vec::with_capacity(read_size);
-        reader
-            .take(read_size as u64)
-            .read_to_end(&mut header)
-            .map_err(|_| {
-                invalid_model(
-                    "model_read_failed",
-                    "the external model header could not be read completely",
-                )
-            })?;
+        cancellation.check()?;
+        let header = read_header_prefix_with_reader(
+            &mut reader,
+            read_size,
+            HASH_BUFFER_BYTES,
+            cancellation,
+        )?;
+        cancellation.check()?;
         match Gguf::parse(&header) {
             Ok(gguf) => return Ok(gguf),
             Err(gguf::Error::Truncated { .. })
@@ -1084,6 +1187,40 @@ fn parse_bounded_header(file: &File) -> Result<Gguf, ContractError> {
             }
         }
     }
+}
+
+fn read_header_prefix_with_reader(
+    reader: &mut impl Read,
+    read_size: usize,
+    chunk_size: usize,
+    cancellation: &CancellationToken,
+) -> Result<Vec<u8>, ContractError> {
+    if chunk_size == 0 {
+        return Err(invalid_model(
+            "model_read_failed",
+            "the external model header read chunk size must be nonzero",
+        ));
+    }
+    let mut header = Vec::with_capacity(read_size);
+    let mut chunk = vec![0_u8; chunk_size.min(read_size.max(1))];
+    while header.len() < read_size {
+        cancellation.check()?;
+        let remaining = read_size - header.len();
+        let limit = remaining.min(chunk.len());
+        let count = reader.read(&mut chunk[..limit]).map_err(|_| {
+            invalid_model(
+                "model_read_failed",
+                "the external model header could not be read completely",
+            )
+        })?;
+        cancellation.check()?;
+        if count == 0 {
+            break;
+        }
+        header.extend_from_slice(&chunk[..count]);
+        cancellation.check()?;
+    }
+    Ok(header)
 }
 
 fn inspect_gguf_inventory(
@@ -1507,6 +1644,28 @@ fn exact_u32_metadata(gguf: &Gguf, key: &str, expected: u64) -> Result<u64, Cont
             "required GGUF metadata is missing or not UINT32",
         )),
     }
+}
+
+fn sha256_qwen_encoded_slice(
+    file: &File,
+    cancellation: &CancellationToken,
+) -> Result<String, ContractError> {
+    sha256_qwen_encoded_slice_with_reader(cancellation, |destination, read_offset| {
+        positional_read(file, destination, read_offset)
+    })
+}
+
+fn sha256_qwen_encoded_slice_with_reader(
+    cancellation: &CancellationToken,
+    reader: impl FnMut(&mut [u8], u64) -> std::io::Result<usize>,
+) -> Result<String, ContractError> {
+    let slice_bytes = usize::try_from(ENCODED_SLICE_BYTES).map_err(|_| {
+        invalid_model(
+            "invalid_tensor_range",
+            "the encoded model slice size is not representable",
+        )
+    })?;
+    sha256_exact_range_with_reader(TENSOR_DATA_OFFSET, slice_bytes, cancellation, reader)
 }
 
 fn sha256_exact_range(
@@ -2098,6 +2257,114 @@ mod tests {
 
         fs::remove_file(&fixture.path).expect("remove replacement path");
         fs::rename(&displaced, &fixture.path).expect("restore original fixture for cleanup");
+    }
+
+    #[test]
+    fn cancellable_inspection_checks_token_before_path_access() {
+        let nonce = FIXTURE_NONCE.fetch_add(1, Ordering::Relaxed);
+        let missing = std::env::temp_dir()
+            .join(format!(
+                "pulsarmlx-missing-qwen-{pid}-{nonce}",
+                pid = std::process::id()
+            ))
+            .join(FILENAME);
+        let invalid_parent = std::env::temp_dir().join(format!(
+            "pulsarmlx-invalid-qwen-{pid}-{nonce}",
+            pid = std::process::id()
+        ));
+        fs::create_dir(&invalid_parent).expect("create invalid metadata parent");
+        let invalid_directory = invalid_parent.join(FILENAME);
+        fs::create_dir(&invalid_directory).expect("create directory where model file would be");
+        let repository_root = std::env::current_dir().expect("current repository root");
+        let budget = frozen_qwen_model_memory_budget(u64::MAX, u64::MAX);
+        let cancellation = CancellationToken::new();
+        cancellation.cancel();
+
+        for requested_path in [&missing, &invalid_directory] {
+            let error = match inspect_external_qwen_model_with_cancellation(
+                requested_path,
+                &repository_root,
+                budget.clone(),
+                &cancellation,
+            ) {
+                Ok(_) => panic!("pre-cancelled admission must fail before path I/O"),
+                Err(error) => error,
+            };
+            assert_eq!(error.code(), "cancelled");
+        }
+
+        fs::remove_dir(&invalid_directory).expect("remove invalid directory");
+        fs::remove_dir(&invalid_parent).expect("remove invalid parent");
+    }
+
+    struct CancelsAfterFirstRead<'a> {
+        cancellation: &'a CancellationToken,
+        reads: usize,
+    }
+
+    impl Read for CancelsAfterFirstRead<'_> {
+        fn read(&mut self, destination: &mut [u8]) -> std::io::Result<usize> {
+            if destination.is_empty() {
+                return Ok(0);
+            }
+            self.reads += 1;
+            destination[0] = 0x5a;
+            self.cancellation.cancel();
+            Ok(1)
+        }
+    }
+
+    #[test]
+    fn full_hash_reader_honors_mid_stream_cancellation() {
+        let cancellation = CancellationToken::new();
+        let mut reader = CancelsAfterFirstRead {
+            cancellation: &cancellation,
+            reads: 0,
+        };
+
+        let error = sha256_stream_with_buffer(&mut reader, &cancellation, 1)
+            .expect_err("hashing must stop after caller cancellation");
+
+        assert_eq!(error.code(), "cancelled");
+        assert_eq!(reader.reads, 1);
+    }
+
+    #[test]
+    fn bounded_header_reader_honors_mid_stream_cancellation() {
+        let cancellation = CancellationToken::new();
+        let mut reader = CancelsAfterFirstRead {
+            cancellation: &cancellation,
+            reads: 0,
+        };
+
+        let error = read_header_prefix_with_reader(&mut reader, 2, 1, &cancellation)
+            .expect_err("header reading must stop after caller cancellation");
+
+        assert_eq!(error.code(), "cancelled");
+        assert_eq!(reader.reads, 1);
+    }
+
+    #[test]
+    fn qwen_initial_slice_hash_uses_the_caller_cancellation_token() {
+        let cancellation = CancellationToken::new();
+        let mut reads = 0_usize;
+        let mut offsets = Vec::new();
+        let result = sha256_qwen_encoded_slice_with_reader(&cancellation, |destination, offset| {
+            reads += 1;
+            offsets.push(offset);
+            destination[0] = 0;
+            cancellation.cancel();
+            Ok(1)
+        });
+
+        assert_eq!(
+            result
+                .expect_err("caller cancellation must stop the initial Qwen slice hash")
+                .code(),
+            "cancelled"
+        );
+        assert_eq!(reads, 1);
+        assert_eq!(offsets, [TENSOR_DATA_OFFSET]);
     }
 
     #[test]
