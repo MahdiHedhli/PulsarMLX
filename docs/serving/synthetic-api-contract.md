@@ -1,6 +1,8 @@
 # Synthetic OpenAI-style API contract
 
 Status: implemented and tested for the synthetic backend only. This server does
+not attach a real runtime. Its deterministic backend is constructor-injected;
+the HTTP API cannot select a backend, endpoint, credential, or filesystem path.
 not load a checkpoint, use MLX or CUDA, perform inference, or advertise GLM
 availability. It is a bounded protocol and client-integration fixture.
 

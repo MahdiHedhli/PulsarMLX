@@ -53,6 +53,7 @@ pub type BoxBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
 #[derive(Clone)]
 pub struct AppState {
     token: Arc<[u8]>,
+    backend: Arc<dyn CompletionBackend>,
     generation_slots: Arc<Semaphore>,
     next_id: Arc<AtomicU64>,
     metrics: Arc<Metrics>,
@@ -83,6 +84,13 @@ pub struct MetricsSnapshot {
 
 impl AppState {
     pub fn new(token: String) -> Result<Self, &'static str> {
+        Self::with_backend(token, Arc::new(SyntheticBackend))
+    }
+
+    pub fn with_backend(
+        token: String,
+        backend: Arc<dyn CompletionBackend>,
+    ) -> Result<Self, &'static str> {
         let token = token.into_bytes();
         if token.len() < 16 || token.len() > 256 || token.iter().any(u8::is_ascii_whitespace) {
             return Err("synthetic token must be 16..=256 non-whitespace bytes");
@@ -90,6 +98,7 @@ impl AppState {
         let (shutdown, _) = watch::channel(false);
         Ok(Self {
             token: token.into(),
+            backend,
             generation_slots: Arc::new(Semaphore::new(MAX_GENERATIONS)),
             next_id: Arc::new(AtomicU64::new(1)),
             metrics: Arc::new(Metrics::default()),
@@ -297,7 +306,7 @@ async fn handle_inner(
             StatusCode::OK,
             json!({
                 "object":"list",
-                "data":[{"id":MODEL_ID,"object":"model","created":1789000000_u64,"owned_by":"pulsarmlx-synthetic","capabilities":["chat.completions","streaming","synthetic-only"]}]
+                "data":[{"id":state.backend.descriptor().model_id,"object":"model","created":1789000000_u64,"owned_by":state.backend.descriptor().owned_by,"capabilities":state.backend.descriptor().capabilities}]
             }),
         ),
         (Method::POST, "/v1/chat/completions") => chat(request, state).await,
@@ -378,7 +387,7 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
             )
         }
     };
-    if let Err((code, message)) = parsed.validate() {
+    if let Err((code, message)) = parsed.validate(state.backend.descriptor().model_id) {
         return api_error(StatusCode::BAD_REQUEST, code, message);
     }
     let permit = match state.generation_slots.clone().try_acquire_owned() {
@@ -393,11 +402,27 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     };
     let request_id = state.next_id.fetch_add(1, Ordering::SeqCst);
     let completion_id = format!("chatcmpl-synthetic-{request_id:08}");
-    let mode = BackendMode::from_request(&parsed);
+    let cancellation = BackendCancellation::new(state.shutdown.subscribe());
+    let session = match state.backend.begin(
+        BackendRequest {
+            messages: parsed
+                .messages
+                .iter()
+                .map(|message| message.content.clone())
+                .collect(),
+            max_output_tokens: parsed.max_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
+        },
+        cancellation,
+    ) {
+        Ok(session) => session,
+        Err(error) => {
+            return api_error(StatusCode::INTERNAL_SERVER_ERROR, error.code, error.message)
+        }
+    };
     if parsed.stream {
-        stream_chat(state, permit, parsed, completion_id, mode)
+        stream_chat(state, permit, parsed, completion_id, session.mode)
     } else {
-        nonstream_chat(state, permit, parsed, completion_id, mode).await
+        nonstream_chat(state, permit, parsed, completion_id, session.mode).await
     }
 }
 
@@ -496,8 +521,8 @@ enum Role {
 }
 
 impl ChatRequest {
-    fn validate(&self) -> Result<(), (&'static str, &'static str)> {
-        if self.model != MODEL_ID {
+    fn validate(&self, model_id: &str) -> Result<(), (&'static str, &'static str)> {
+        if self.model != model_id {
             return Err(("model_not_found", "requested model is not available"));
         }
         if self.messages.is_empty() || self.messages.len() > MAX_MESSAGES {
@@ -541,16 +566,78 @@ enum BackendMode {
     Slow,
 }
 
-impl BackendMode {
-    fn from_request(request: &ChatRequest) -> Self {
-        match request.messages.last().map(|m| m.content.as_str()) {
-            Some("__synthetic_empty__") => Self::Empty,
-            Some("__synthetic_disconnect__") => Self::DisconnectProbe,
-            Some("__synthetic_fail_before__") => Self::FailBefore,
-            Some("__synthetic_fail_after__") => Self::FailAfter,
-            Some("__synthetic_slow__") => Self::Slow,
-            _ => Self::Success,
+/// Semantic input constructed only after HTTP admission and server-side limits.
+pub struct BackendRequest {
+    pub messages: Vec<String>,
+    pub max_output_tokens: u16,
+}
+
+/// Shutdown observation supplied by the server; providers never own server permits.
+pub struct BackendCancellation {
+    shutdown: watch::Receiver<bool>,
+}
+
+impl BackendCancellation {
+    fn new(shutdown: watch::Receiver<bool>) -> Self {
+        Self { shutdown }
+    }
+    pub fn is_cancelled(&self) -> bool {
+        *self.shutdown.borrow()
+    }
+}
+
+pub struct BackendDescriptor {
+    pub model_id: &'static str,
+    pub owned_by: &'static str,
+    pub capabilities: &'static [&'static str],
+}
+
+pub struct BackendFailure {
+    code: &'static str,
+    message: &'static str,
+}
+
+/// Constructor-injected provider boundary. Providers receive validated semantic
+/// input and cannot be selected by any HTTP request field.
+pub trait CompletionBackend: Send + Sync {
+    fn descriptor(&self) -> BackendDescriptor;
+    fn begin(
+        &self,
+        request: BackendRequest,
+        cancellation: BackendCancellation,
+    ) -> Result<BackendSession, BackendFailure>;
+}
+
+pub struct BackendSession {
+    mode: BackendMode,
+}
+
+struct SyntheticBackend;
+
+impl CompletionBackend for SyntheticBackend {
+    fn descriptor(&self) -> BackendDescriptor {
+        BackendDescriptor {
+            model_id: MODEL_ID,
+            owned_by: "pulsarmlx-synthetic",
+            capabilities: &["chat.completions", "streaming", "synthetic-only"],
         }
+    }
+
+    fn begin(
+        &self,
+        request: BackendRequest,
+        cancellation: BackendCancellation,
+    ) -> Result<BackendSession, BackendFailure> {
+        let _ = cancellation.is_cancelled();
+        let mode = match request.messages.last().map(String::as_str) {
+            Some("__synthetic_empty__") => BackendMode::Empty,
+            Some("__synthetic_disconnect__") => BackendMode::DisconnectProbe,
+            Some("__synthetic_fail_before__") => BackendMode::FailBefore,
+            Some("__synthetic_fail_after__") => BackendMode::FailAfter,
+            Some("__synthetic_slow__") => BackendMode::Slow,
+            _ => BackendMode::Success,
+        };
+        Ok(BackendSession { mode })
     }
 }
 
@@ -914,6 +1001,40 @@ pub fn limits() -> Limits {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct TestBackend;
+
+    impl CompletionBackend for TestBackend {
+        fn descriptor(&self) -> BackendDescriptor {
+            BackendDescriptor {
+                model_id: "test-constructor-model",
+                owned_by: "test-owner",
+                capabilities: &["chat.completions"],
+            }
+        }
+
+        fn begin(
+            &self,
+            _request: BackendRequest,
+            _cancellation: BackendCancellation,
+        ) -> Result<BackendSession, BackendFailure> {
+            Ok(BackendSession {
+                mode: BackendMode::Success,
+            })
+        }
+    }
+
+    #[test]
+    fn backend_is_selected_only_at_state_construction() {
+        let state =
+            AppState::with_backend("synthetic-test-token-value".into(), Arc::new(TestBackend))
+                .expect("valid token");
+        assert_eq!(
+            state.backend.descriptor().model_id,
+            "test-constructor-model"
+        );
+        assert_eq!(state.backend.descriptor().owned_by, "test-owner");
+    }
 
     #[test]
     fn accept_errors_are_tolerated_then_surrendered() {
