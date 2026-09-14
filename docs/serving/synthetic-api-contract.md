@@ -3,7 +3,7 @@
 Status: implemented and tested for the synthetic backend only. This server does
 not attach a real runtime. Its deterministic backend is constructor-injected;
 the HTTP API cannot select a backend, endpoint, credential, or filesystem path.
-not load a checkpoint, use MLX or CUDA, perform inference, or advertise GLM
+It does not load a checkpoint, use MLX or CUDA, perform inference, or advertise GLM
 availability. It is a bounded protocol and client-integration fixture.
 
 ## Starting the server
@@ -43,7 +43,8 @@ synthetic vocabulary tokens. `max_tokens` truncates that synthetic sequence and
 uses `finish_reason: length`; these counts are not estimates of model-token
 usage. The empty fixture reports zero completion tokens because this backend
 authoritatively produced an empty synthetic sequence. A future backend without
-authoritative usage must omit usage.
+authoritative usage cannot complete successfully through this interface;
+estimates are not relabeled as actual counts.
 
 SSE chunks retain one completion ID, model ID, and creation time, split content
 on UTF-8 character boundaries, emit an explicit finish reason, and emit
@@ -94,6 +95,8 @@ have a second, contradictory terminal appended by a concurrent shutdown.
 | Whole connection | 15 seconds | Bounds request read and response service lifetime. |
 | Generation | 2 seconds | Cancels work, omits the success terminal, and emits a bounded `generation_timeout` error event on expiry. |
 | Stream channel send | 500 milliseconds | Cancels a producer stalled by downstream backpressure. |
+| Backend semantic events | 64 | Rejects an unbounded or post-terminal provider sequence. |
+| Backend text | 16 KiB UTF-8 | Rejects provider output beyond the semantic buffer limit. |
 
 Shutdown stops accepting connections, signals active stream producers, waits a
 bounded grace window for them to flush a terminal event, then aborts owned

@@ -21,6 +21,14 @@ use tokio::sync::{mpsc, watch, OwnedSemaphorePermit, Semaphore};
 use tokio::task::JoinSet;
 use tokio_stream::wrappers::ReceiverStream;
 
+mod backend;
+pub use backend::{
+    ActualUsage, BackendCancellation, BackendDescriptor, BackendEvent, BackendEventSender,
+    BackendFailure, BackendFinishReason, BackendFuture, BackendMessage, BackendRequest,
+    BackendRole, BackendSession, CompletionBackend, MAX_BACKEND_EVENTS, MAX_BACKEND_OUTPUT_BYTES,
+};
+use backend::{SyntheticBackend, BACKEND_EVENT_CAPACITY};
+
 pub const MODEL_ID: &str = "pulsarmlx-synthetic-v1";
 pub const MAX_HEADER_BYTES: usize = 8 * 1024;
 pub const MAX_BODY_BYTES: usize = 16 * 1024;
@@ -54,6 +62,7 @@ pub type BoxBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
 pub struct AppState {
     token: Arc<[u8]>,
     backend: Arc<dyn CompletionBackend>,
+    descriptor: BackendDescriptor,
     generation_slots: Arc<Semaphore>,
     next_id: Arc<AtomicU64>,
     metrics: Arc<Metrics>,
@@ -65,6 +74,7 @@ pub struct Metrics {
     backend_started: AtomicUsize,
     backend_active: AtomicUsize,
     backend_finished: AtomicUsize,
+    backend_protocol_failures: AtomicUsize,
     connections_spawned: AtomicUsize,
     connections_reaped: AtomicUsize,
 }
@@ -74,6 +84,7 @@ pub struct MetricsSnapshot {
     pub backend_started: usize,
     pub backend_active: usize,
     pub backend_finished: usize,
+    pub backend_protocol_failures: usize,
     /// Connection tasks handed to the accept loop's `JoinSet`.
     pub connections_spawned: usize,
     /// Connection tasks joined and removed from that set. F1 requires this to
@@ -96,9 +107,14 @@ impl AppState {
             return Err("synthetic token must be 16..=256 non-whitespace bytes");
         }
         let (shutdown, _) = watch::channel(false);
+        let descriptor = backend.descriptor();
+        if descriptor.model_id.is_empty() {
+            return Err("backend model identifier must not be empty");
+        }
         Ok(Self {
             token: token.into(),
             backend,
+            descriptor,
             generation_slots: Arc::new(Semaphore::new(MAX_GENERATIONS)),
             next_id: Arc::new(AtomicU64::new(1)),
             metrics: Arc::new(Metrics::default()),
@@ -111,6 +127,10 @@ impl AppState {
             backend_started: self.metrics.backend_started.load(Ordering::SeqCst),
             backend_active: self.metrics.backend_active.load(Ordering::SeqCst),
             backend_finished: self.metrics.backend_finished.load(Ordering::SeqCst),
+            backend_protocol_failures: self
+                .metrics
+                .backend_protocol_failures
+                .load(Ordering::SeqCst),
             connections_spawned: self.metrics.connections_spawned.load(Ordering::SeqCst),
             connections_reaped: self.metrics.connections_reaped.load(Ordering::SeqCst),
         }
@@ -306,7 +326,7 @@ async fn handle_inner(
             StatusCode::OK,
             json!({
                 "object":"list",
-                "data":[{"id":state.backend.descriptor().model_id,"object":"model","created":1789000000_u64,"owned_by":state.backend.descriptor().owned_by,"capabilities":state.backend.descriptor().capabilities}]
+                "data":[{"id":state.descriptor.model_id,"object":"model","created":1789000000_u64,"owned_by":state.descriptor.owned_by,"capabilities":state.descriptor.capabilities}]
             }),
         ),
         (Method::POST, "/v1/chat/completions") => chat(request, state).await,
@@ -387,7 +407,7 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
             )
         }
     };
-    if let Err((code, message)) = parsed.validate(state.backend.descriptor().model_id) {
+    if let Err((code, message)) = parsed.validate(state.descriptor.model_id) {
         return api_error(StatusCode::BAD_REQUEST, code, message);
     }
     let permit = match state.generation_slots.clone().try_acquire_owned() {
@@ -402,27 +422,53 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     };
     let request_id = state.next_id.fetch_add(1, Ordering::SeqCst);
     let completion_id = format!("chatcmpl-synthetic-{request_id:08}");
-    let cancellation = BackendCancellation::new(state.shutdown.subscribe());
+    let descriptor = state.descriptor;
+    let (cancel_sender, cancellation) = BackendCancellation::pair();
+    let (event_sender, event_receiver) = mpsc::channel(BACKEND_EVENT_CAPACITY);
+    let guard = GenerationGuard::new(state.clone(), permit);
     let session = match state.backend.begin(
         BackendRequest {
+            model_id: parsed.model.clone(),
             messages: parsed
                 .messages
                 .iter()
-                .map(|message| message.content.clone())
+                .map(|message| BackendMessage {
+                    role: (&message.role).into(),
+                    content: message.content.clone(),
+                })
                 .collect(),
             max_output_tokens: parsed.max_tokens.unwrap_or(MAX_OUTPUT_TOKENS),
         },
         cancellation,
+        event_sender,
     ) {
         Ok(session) => session,
         Err(error) => {
-            return api_error(StatusCode::INTERNAL_SERVER_ERROR, error.code, error.message)
+            drop(guard);
+            return backend_error_response(error);
         }
     };
     if parsed.stream {
-        stream_chat(state, permit, parsed, completion_id, session.mode)
+        stream_chat(
+            state,
+            guard,
+            completion_id,
+            descriptor.model_id,
+            session,
+            event_receiver,
+            cancel_sender,
+        )
     } else {
-        nonstream_chat(state, permit, parsed, completion_id, session.mode).await
+        nonstream_chat(
+            state,
+            guard,
+            completion_id,
+            descriptor.model_id,
+            session,
+            event_receiver,
+            cancel_sender,
+        )
+        .await
     }
 }
 
@@ -520,6 +566,16 @@ enum Role {
     Assistant,
 }
 
+impl From<&Role> for BackendRole {
+    fn from(role: &Role) -> Self {
+        match role {
+            Role::System => Self::System,
+            Role::User => Self::User,
+            Role::Assistant => Self::Assistant,
+        }
+    }
+}
+
 impl ChatRequest {
     fn validate(&self, model_id: &str) -> Result<(), (&'static str, &'static str)> {
         if self.model != model_id {
@@ -556,114 +612,6 @@ impl ChatRequest {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum BackendMode {
-    Success,
-    Empty,
-    DisconnectProbe,
-    FailBefore,
-    FailAfter,
-    Slow,
-}
-
-/// Semantic input constructed only after HTTP admission and server-side limits.
-pub struct BackendRequest {
-    pub messages: Vec<String>,
-    pub max_output_tokens: u16,
-}
-
-/// Shutdown observation supplied by the server; providers never own server permits.
-pub struct BackendCancellation {
-    shutdown: watch::Receiver<bool>,
-}
-
-impl BackendCancellation {
-    fn new(shutdown: watch::Receiver<bool>) -> Self {
-        Self { shutdown }
-    }
-    pub fn is_cancelled(&self) -> bool {
-        *self.shutdown.borrow()
-    }
-}
-
-pub struct BackendDescriptor {
-    pub model_id: &'static str,
-    pub owned_by: &'static str,
-    pub capabilities: &'static [&'static str],
-}
-
-pub struct BackendFailure {
-    code: &'static str,
-    message: &'static str,
-}
-
-/// Constructor-injected provider boundary. Providers receive validated semantic
-/// input and cannot be selected by any HTTP request field.
-pub trait CompletionBackend: Send + Sync {
-    fn descriptor(&self) -> BackendDescriptor;
-    fn begin(
-        &self,
-        request: BackendRequest,
-        cancellation: BackendCancellation,
-    ) -> Result<BackendSession, BackendFailure>;
-}
-
-pub struct BackendSession {
-    mode: BackendMode,
-}
-
-struct SyntheticBackend;
-
-impl CompletionBackend for SyntheticBackend {
-    fn descriptor(&self) -> BackendDescriptor {
-        BackendDescriptor {
-            model_id: MODEL_ID,
-            owned_by: "pulsarmlx-synthetic",
-            capabilities: &["chat.completions", "streaming", "synthetic-only"],
-        }
-    }
-
-    fn begin(
-        &self,
-        request: BackendRequest,
-        cancellation: BackendCancellation,
-    ) -> Result<BackendSession, BackendFailure> {
-        let _ = cancellation.is_cancelled();
-        let mode = match request.messages.last().map(String::as_str) {
-            Some("__synthetic_empty__") => BackendMode::Empty,
-            Some("__synthetic_disconnect__") => BackendMode::DisconnectProbe,
-            Some("__synthetic_fail_before__") => BackendMode::FailBefore,
-            Some("__synthetic_fail_after__") => BackendMode::FailAfter,
-            Some("__synthetic_slow__") => BackendMode::Slow,
-            _ => BackendMode::Success,
-        };
-        Ok(BackendSession { mode })
-    }
-}
-
-/// How a streaming generation finished. `Completed` covers every path the
-/// generation body already terminated itself, including its own `event: error`
-/// and the abort taken when the consumer stopped reading.
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum StreamOutcome {
-    Completed,
-    GenerationTimeout,
-    ServerShutdown,
-}
-
-impl StreamOutcome {
-    fn error_terminal(self) -> Option<(&'static str, &'static str)> {
-        match self {
-            Self::Completed => None,
-            Self::GenerationTimeout => Some((
-                "generation_timeout",
-                "synthetic generation exceeded its deadline",
-            )),
-            Self::ServerShutdown => Some(("server_shutdown", "server is shutting down")),
-        }
-    }
-}
-
 struct GenerationGuard {
     state: AppState,
     _permit: OwnedSemaphorePermit,
@@ -695,115 +643,158 @@ impl Drop for GenerationGuard {
 
 async fn nonstream_chat(
     state: AppState,
-    permit: OwnedSemaphorePermit,
-    request: ChatRequest,
+    _guard: GenerationGuard,
     id: String,
-    mode: BackendMode,
+    model_id: &'static str,
+    mut session: BackendSession,
+    mut events: mpsc::Receiver<BackendEvent>,
+    cancel: watch::Sender<bool>,
 ) -> Response<BoxBody> {
-    let _guard = GenerationGuard::new(state, permit);
-    if mode == BackendMode::FailBefore || mode == BackendMode::FailAfter {
-        return api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "backend_failure",
-            "synthetic backend failed",
-        );
-    }
-    let work = async {
-        if mode == BackendMode::Slow {
-            tokio::time::sleep(GENERATION_DEADLINE + Duration::from_millis(250)).await;
+    let mut shutdown = state.shutdown.subscribe();
+    let deadline = tokio::time::sleep(GENERATION_DEADLINE);
+    tokio::pin!(deadline);
+    let mut transcript = BackendTranscript::default();
+    let mut future_done = false;
+    loop {
+        if future_done && events.is_empty() {
+            break;
         }
-        let (content, finish_reason, output_tokens) =
-            render_output(mode, request.max_tokens.unwrap_or(MAX_OUTPUT_TOKENS));
-        json_response(
+        tokio::select! {
+            biased;
+            event = events.recv() => match event {
+                Some(event) => if let Err(error) = transcript.accept(event) {
+                    state.metrics.backend_protocol_failures.fetch_add(1, Ordering::SeqCst);
+                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                    return backend_error_response(error);
+                },
+                None => future_done = true,
+            },
+            _ = &mut session.future, if !future_done => future_done = true,
+            _ = shutdown.changed() => {
+                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                return api_error(StatusCode::SERVICE_UNAVAILABLE, "server_shutdown", "server is shutting down");
+            }
+            _ = &mut deadline => {
+                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                return api_error(StatusCode::GATEWAY_TIMEOUT, "generation_timeout", "synthetic generation exceeded its deadline");
+            }
+        }
+    }
+    match transcript.finish() {
+        Ok((content, reason, usage)) => json_response(
             StatusCode::OK,
             json!({
-                "id":id,"object":"chat.completion","created":1789000000_u64,"model":MODEL_ID,
-                "choices":[{"index":0,"message":{"role":"assistant","content":content},"finish_reason":finish_reason}],
-                "usage":{"prompt_tokens":request.messages.len(),"completion_tokens":output_tokens,"total_tokens":request.messages.len()+output_tokens}
+                "id":id,"object":"chat.completion","created":1789000000_u64,"model":model_id,
+                "choices":[{"index":0,"message":{"role":"assistant","content":content},"finish_reason":reason.as_str()}],
+                "usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":usage.total_tokens()}
             }),
-        )
-    };
-    match tokio::time::timeout(GENERATION_DEADLINE, work).await {
-        Ok(response) => response,
-        Err(_) => api_error(
-            StatusCode::GATEWAY_TIMEOUT,
-            "generation_timeout",
-            "synthetic generation exceeded its deadline",
         ),
+        Err(error) => {
+            if error == BackendFailure::Protocol {
+                state
+                    .metrics
+                    .backend_protocol_failures
+                    .fetch_add(1, Ordering::SeqCst);
+            }
+            backend_error_response(error)
+        }
     }
 }
 
 fn stream_chat(
     state: AppState,
-    permit: OwnedSemaphorePermit,
-    request: ChatRequest,
+    guard: GenerationGuard,
     id: String,
-    mode: BackendMode,
+    model_id: &'static str,
+    mut session: BackendSession,
+    mut events: mpsc::Receiver<BackendEvent>,
+    cancel: watch::Sender<bool>,
 ) -> Response<BoxBody> {
-    if mode == BackendMode::FailBefore {
-        drop(GenerationGuard::new(state, permit));
-        return api_error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "backend_failure",
-            "synthetic backend failed",
-        );
-    }
     let (sender, receiver) = mpsc::channel::<Result<Frame<Bytes>, Infallible>>(1);
     let mut shutdown = state.shutdown.subscribe();
     tokio::spawn(async move {
-        let _guard = GenerationGuard::new(state, permit);
-        let generation = async {
-            if mode == BackendMode::Slow {
-                tokio::time::sleep(GENERATION_DEADLINE + Duration::from_millis(250)).await;
-            }
-            let role = json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":MODEL_ID,"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]});
-            if !send_sse(&sender, &role).await {
-                return;
-            }
-            if mode == BackendMode::DisconnectProbe {
-                tokio::time::sleep(Duration::from_millis(250)).await;
-            }
-            if mode == BackendMode::FailAfter {
-                let error = json!({"error":{"code":"backend_failure","message":"synthetic backend failed","type":"server_error"}});
-                let _ = send_event(&sender, "error", &error).await;
-                return;
-            }
-            let (content, finish_reason, _) =
-                render_output(mode, request.max_tokens.unwrap_or(MAX_OUTPUT_TOKENS));
-            for chunk in utf8_chunks(&content) {
-                let item = json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":MODEL_ID,"choices":[{"index":0,"delta":{"content":chunk},"finish_reason":null}]});
-                if !send_sse(&sender, &item).await {
-                    return;
+        let _guard = guard;
+        let deadline = tokio::time::sleep(GENERATION_DEADLINE);
+        tokio::pin!(deadline);
+        let mut transcript = BackendTranscript::default();
+        let mut future_done = false;
+        let mut wire_terminal = false;
+        loop {
+            if future_done && events.is_empty() {
+                if !transcript.has_terminal() && !wire_terminal {
+                    state
+                        .metrics
+                        .backend_protocol_failures
+                        .fetch_add(1, Ordering::SeqCst);
+                    let _ = send_backend_error(&sender, BackendFailure::Protocol).await;
                 }
+                break;
             }
-            let terminal = json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":MODEL_ID,"choices":[{"index":0,"delta":{},"finish_reason":finish_reason}]});
-            if !send_sse(&sender, &terminal).await {
-                return;
+            let event = tokio::select! {
+                biased;
+                event = events.recv() => event,
+                _ = &mut session.future, if !future_done => {
+                    future_done = true;
+                    continue;
+                }
+                _ = shutdown.changed() => {
+                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                    if !wire_terminal {
+                        let _ = send_backend_error_code(&sender, "server_shutdown", "server is shutting down").await;
+                    }
+                    break;
+                }
+                _ = &mut deadline => {
+                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                    if !wire_terminal {
+                        let _ = send_backend_error_code(&sender, "generation_timeout", "synthetic generation exceeded its deadline").await;
+                    }
+                    break;
+                }
+            };
+            let Some(event) = event else {
+                future_done = true;
+                continue;
+            };
+            let accepted = match transcript.accept(event) {
+                Ok(accepted) => accepted,
+                Err(error) => {
+                    state
+                        .metrics
+                        .backend_protocol_failures
+                        .fetch_add(1, Ordering::SeqCst);
+                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                    if !wire_terminal {
+                        let _ = send_backend_error(&sender, error).await;
+                    }
+                    break;
+                }
+            };
+            if wire_terminal {
+                continue;
             }
-            let _ = send_raw(&sender, Bytes::from_static(b"data: [DONE]\n\n")).await;
-        };
-        // F2: an SSE body that has already sent headers must never be closed
-        // silently. Classify how the generation ended and, when the stream can
-        // still accept bytes, emit a bounded `event: error` terminal. A stream
-        // that ended because the consumer stalled or vanished is left alone:
-        // delivery is no longer possible there.
-        let outcome = tokio::select! {
-            // `biased` matters for correctness, not fairness: when the
-            // generation has just finished (already sending `data: [DONE]`, or
-            // its own FailAfter error) and shutdown fires in the same poll,
-            // random branch order could pick shutdown and append a second,
-            // contradictory terminal after the success terminal. Polling the
-            // generation first makes a completed generation always win.
-            biased;
-            result = tokio::time::timeout(GENERATION_DEADLINE, generation) => match result {
-                Ok(()) => StreamOutcome::Completed,
-                Err(_) => StreamOutcome::GenerationTimeout,
-            },
-            _ = shutdown.changed() => StreamOutcome::ServerShutdown,
-        };
-        if let Some((code, message)) = outcome.error_terminal() {
-            let error = json!({"error":{"code":code,"message":message,"type":"server_error"}});
-            let _ = send_event(&sender, "error", &error).await;
+            let delivered = match accepted {
+                AcceptedEvent::Role => send_sse(&sender, &json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":model_id,"choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]})).await,
+                AcceptedEvent::Delta(content) => send_sse(&sender, &json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":model_id,"choices":[{"index":0,"delta":{"content":content},"finish_reason":null}]})).await,
+                AcceptedEvent::Finished(reason) => {
+                    let terminal = send_sse(&sender, &json!({"id":id,"object":"chat.completion.chunk","created":1789000000_u64,"model":model_id,"choices":[{"index":0,"delta":{},"finish_reason":reason.as_str()}]})).await;
+                    if terminal {
+                        wire_terminal = send_raw(&sender, Bytes::from_static(b"data: [DONE]\n\n")).await;
+                    }
+                    terminal && wire_terminal
+                }
+                AcceptedEvent::Failed(error) => {
+                    wire_terminal = send_backend_error(&sender, error).await;
+                    wire_terminal
+                }
+            };
+            if !delivered {
+                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                break;
+            }
+        }
+        if !future_done {
+            cancel_owned_backend(&cancel, &mut session.future, false).await;
         }
     });
     let stream = ReceiverStream::new(receiver);
@@ -816,47 +807,97 @@ fn stream_chat(
         .expect("valid response")
 }
 
-fn render_output(mode: BackendMode, max_tokens: u16) -> (String, &'static str, usize) {
-    if mode == BackendMode::Empty {
-        return (String::new(), "stop", 0);
-    }
-    let tokens = ["SYNTHETIC_OK:", " café", " 🚀"];
-    let take = usize::from(max_tokens).min(tokens.len());
-    let finish = if take < tokens.len() {
-        "length"
-    } else {
-        "stop"
-    };
-    (tokens[..take].concat(), finish, take)
+#[derive(Default)]
+struct BackendTranscript {
+    role_seen: bool,
+    terminal: Option<Result<(BackendFinishReason, ActualUsage), BackendFailure>>,
+    content: String,
+    event_count: usize,
 }
 
-/// Split streamed content so that every multibyte character sits exactly on a
-/// chunk boundary.
-///
-/// F6: the previous implementation cut after the first and second characters
-/// only, so for "SYNTHETIC_OK: café 🚀" it produced "S", "Y" and the whole
-/// remainder - the multibyte characters never landed on a boundary and the
-/// UTF-8-safe delta claim was only weakly exercised. Placing a cut immediately
-/// before and after each multibyte character means a consumer that concatenates
-/// deltas must handle real boundaries.
-fn utf8_chunks(content: &str) -> Vec<&str> {
-    if content.is_empty() {
-        return Vec::new();
-    }
-    let mut cuts = vec![0usize];
-    for (index, character) in content.char_indices() {
-        let width = character.len_utf8();
-        if width > 1 {
-            cuts.push(index);
-            cuts.push(index + width);
+enum AcceptedEvent {
+    Role,
+    Delta(String),
+    Finished(BackendFinishReason),
+    Failed(BackendFailure),
+}
+
+impl BackendTranscript {
+    fn accept(&mut self, event: BackendEvent) -> Result<AcceptedEvent, BackendFailure> {
+        self.event_count = self.event_count.saturating_add(1);
+        if self.event_count > MAX_BACKEND_EVENTS || self.terminal.is_some() {
+            return Err(BackendFailure::Protocol);
+        }
+        match event {
+            BackendEvent::AssistantRole if !self.role_seen => {
+                self.role_seen = true;
+                Ok(AcceptedEvent::Role)
+            }
+            BackendEvent::TextDelta(content) if self.role_seen => {
+                if self.content.len().saturating_add(content.len()) > MAX_BACKEND_OUTPUT_BYTES {
+                    return Err(BackendFailure::Protocol);
+                }
+                self.content.push_str(&content);
+                Ok(AcceptedEvent::Delta(content))
+            }
+            BackendEvent::Finished { reason, usage } if self.role_seen => {
+                self.terminal = Some(Ok((reason, usage)));
+                Ok(AcceptedEvent::Finished(reason))
+            }
+            BackendEvent::Failed(error) if self.role_seen => {
+                self.terminal = Some(Err(error));
+                Ok(AcceptedEvent::Failed(error))
+            }
+            _ => Err(BackendFailure::Protocol),
         }
     }
-    cuts.push(content.len());
-    cuts.dedup();
-    cuts.windows(2)
-        .filter(|window| window[0] < window[1])
-        .map(|window| &content[window[0]..window[1]])
-        .collect()
+
+    fn has_terminal(&self) -> bool {
+        self.terminal.is_some()
+    }
+
+    fn finish(self) -> Result<(String, BackendFinishReason, ActualUsage), BackendFailure> {
+        match self.terminal {
+            Some(Ok((reason, usage))) if self.role_seen => Ok((self.content, reason, usage)),
+            Some(Err(error)) => Err(error),
+            _ => Err(BackendFailure::Protocol),
+        }
+    }
+}
+
+async fn cancel_owned_backend(
+    cancel: &watch::Sender<bool>,
+    future: &mut BackendFuture,
+    future_done: bool,
+) {
+    cancel.send_replace(true);
+    if !future_done {
+        let _ = tokio::time::timeout(STREAM_SEND_DEADLINE, future).await;
+    }
+}
+
+fn backend_error_response(error: BackendFailure) -> Response<BoxBody> {
+    api_error(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        error.code(),
+        error.message(),
+    )
+}
+
+async fn send_backend_error(
+    sender: &mpsc::Sender<Result<Frame<Bytes>, Infallible>>,
+    error: BackendFailure,
+) -> bool {
+    send_backend_error_code(sender, error.code(), error.message()).await
+}
+
+async fn send_backend_error_code(
+    sender: &mpsc::Sender<Result<Frame<Bytes>, Infallible>>,
+    code: &'static str,
+    message: &'static str,
+) -> bool {
+    let error = json!({"error":{"code":code,"message":message,"type":"server_error"}});
+    send_event(sender, "error", &error).await
 }
 
 async fn send_sse(sender: &mpsc::Sender<Result<Frame<Bytes>, Infallible>>, value: &Value) -> bool {
@@ -1017,10 +1058,20 @@ mod tests {
             &self,
             _request: BackendRequest,
             _cancellation: BackendCancellation,
+            events: BackendEventSender,
         ) -> Result<BackendSession, BackendFailure> {
-            Ok(BackendSession {
-                mode: BackendMode::Success,
-            })
+            Ok(BackendSession::new(Box::pin(async move {
+                let _ = events.send(BackendEvent::AssistantRole).await;
+                let _ = events
+                    .send(BackendEvent::Finished {
+                        reason: BackendFinishReason::Stop,
+                        usage: ActualUsage {
+                            prompt_tokens: 0,
+                            completion_tokens: 0,
+                        },
+                    })
+                    .await;
+            })))
         }
     }
 
@@ -1029,11 +1080,28 @@ mod tests {
         let state =
             AppState::with_backend("synthetic-test-token-value".into(), Arc::new(TestBackend))
                 .expect("valid token");
-        assert_eq!(
-            state.backend.descriptor().model_id,
-            "test-constructor-model"
-        );
-        assert_eq!(state.backend.descriptor().owned_by, "test-owner");
+        assert_eq!(state.descriptor.model_id, "test-constructor-model");
+        assert_eq!(state.descriptor.owned_by, "test-owner");
+    }
+
+    #[test]
+    fn semantic_transcript_retains_provider_usage() {
+        let mut transcript = BackendTranscript::default();
+        transcript
+            .accept(BackendEvent::AssistantRole)
+            .expect("role");
+        transcript
+            .accept(BackendEvent::Finished {
+                reason: BackendFinishReason::Stop,
+                usage: ActualUsage {
+                    prompt_tokens: 17,
+                    completion_tokens: 9,
+                },
+            })
+            .expect("finish");
+        let (_, _, usage) = transcript.finish().expect("valid transcript");
+        assert_eq!(usage.prompt_tokens, 17);
+        assert_eq!(usage.completion_tokens, 9);
     }
 
     #[test]
@@ -1067,13 +1135,13 @@ mod tests {
 
     #[test]
     fn utf8_chunks_isolate_multibyte_characters() {
-        assert!(utf8_chunks("").is_empty());
-        assert_eq!(utf8_chunks("abc"), vec!["abc"]);
-        assert_eq!(utf8_chunks("café"), vec!["caf", "é"]);
-        assert_eq!(utf8_chunks("éé"), vec!["é", "é"]);
-        assert_eq!(utf8_chunks("🚀a"), vec!["🚀", "a"]);
+        assert!(backend::utf8_chunks("").is_empty());
+        assert_eq!(backend::utf8_chunks("abc"), vec!["abc"]);
+        assert_eq!(backend::utf8_chunks("café"), vec!["caf", "é"]);
+        assert_eq!(backend::utf8_chunks("éé"), vec!["é", "é"]);
+        assert_eq!(backend::utf8_chunks("🚀a"), vec!["🚀", "a"]);
         let content = "SYNTHETIC_OK: café 🚀";
-        let chunks = utf8_chunks(content);
+        let chunks = backend::utf8_chunks(content);
         assert_eq!(chunks.concat(), content);
         assert!(chunks.contains(&"é"));
         assert!(chunks.contains(&"🚀"));

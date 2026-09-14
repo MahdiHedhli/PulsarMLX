@@ -5,6 +5,8 @@ synthetic serving fixture, and exactly which client behaviours are qualified.
 
 The server performs **no inference**. Everything below is synthetic. A passing
 client integration here is not evidence that any real model backend works.
+The executable chooses its deterministic provider at construction; no client
+request can select a provider, endpoint, credential, plugin, or filesystem path.
 
 ## Scope
 

@@ -86,20 +86,22 @@ def rust_mutation(
     new: str,
     test_name: str,
     count: int = 1,
+    source_path: str = "src/lib.rs",
+    test_target: str = "raw_http",
 ) -> None:
     mutant = scratch / name
     shutil.copytree(pristine, mutant)
-    replace_exact(mutant / "src/lib.rs", old, new, count)
+    replace_exact(mutant / source_path, old, new, count)
     env = os.environ.copy()
     env["CARGO_TARGET_DIR"] = str(target)
-    build = run(["cargo", "test", "--offline", "--test", "raw_http", "--no-run"], mutant, env)
+    build = run(["cargo", "test", "--offline", "--test", test_target, "--no-run"], mutant, env)
     if build.returncode != 0:
         raise RuntimeError(
             f"mutant {name} does not compile, so its test never ran; this is not "
             f"a kill. Output:\n{(build.stdout or '')[-4000:]}"
         )
     expect_test_failed(
-        ["cargo", "test", "--offline", "--test", "raw_http", test_name, "--", "--exact"],
+        ["cargo", "test", "--offline", "--test", test_target, test_name, "--", "--exact"],
         mutant,
         env,
         test_name,
@@ -180,8 +182,8 @@ def main() -> None:
         args.scratch,
         args.target,
         "silent-stream-failure",
-        "        if let Some((code, message)) = outcome.error_terminal() {",
-        "        if let Some((code, message)) = Option::<(&'static str, &'static str)>::None {",
+        '                        let _ = send_backend_error_code(&sender, "generation_timeout", "synthetic generation exceeded its deadline").await;\n',
+        "",
         "stream_generation_timeout_emits_bounded_error_event",
     )
     rust_mutation(
@@ -198,9 +200,11 @@ def main() -> None:
         args.scratch,
         args.target,
         "false-terminal",
-        "let _ = send_event(&sender, \"error\", &error).await;\n                return;",
-        "let _ = send_event(&sender, \"error\", &error).await;",
+        "BackendEvent::Failed(BackendFailure::Generation),",
+        "BackendEvent::Finished { reason: BackendFinishReason::Stop, usage: ActualUsage { prompt_tokens: 1, completion_tokens: 1 } },",
         "stream_failure_has_no_success_terminal",
+        1,
+        "src/backend.rs",
     )
     # Shutdown must not cut an active stream off before its terminal reaches
     # the wire; removing the grace window must not survive.
@@ -242,6 +246,51 @@ def main() -> None:
         'StatusCode::UNAUTHORIZED => "invalid_request_error",',
         "error_types_are_classified_by_status",
     )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "early-permit-release",
+        "        let _guard = guard;",
+        "        drop(guard);",
+        "disconnect_releases_stream_ownership",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "skipped-provider-cancellation",
+        "    cancel.send_replace(true);",
+        "    cancel.send_replace(false);",
+        "timeout_cancels_owned_provider_before_releasing_permit",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "invalid-terminal-accepted",
+        "        if self.event_count > MAX_BACKEND_EVENTS || self.terminal.is_some() {",
+        "        if self.event_count > MAX_BACKEND_EVENTS {",
+        "malformed_provider_terminals_never_become_nonstream_success",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "consumer-authored-usage",
+        '"usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":usage.total_tokens()}',
+        '"usage":{"prompt_tokens":0,"completion_tokens":0,"total_tokens":0}',
+        "admission_projection_model_and_provider_usage_are_authoritative",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
     python_mutation(
         pristine,
         args.scratch,
@@ -258,7 +307,7 @@ def main() -> None:
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=False,\n",
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=True,\n",
     )
-    print("MUTATION_GUARDS_OK count=12")
+    print("MUTATION_GUARDS_OK count=16")
 
 
 if __name__ == "__main__":
