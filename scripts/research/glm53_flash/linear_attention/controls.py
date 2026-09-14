@@ -8,7 +8,7 @@ import types
 import unittest
 
 FIXTURE='fixtures/research/glm53-flash-linear-attention-v1/fixtures.json'
-FIXTURE_SHA256='7262c2f5bfbf58b3730ca14a6b35fcc3430c9fad26547168a661b4c3df6fccdf'
+FIXTURE_SHA256='b427557eef3357cbfbe6d1dab4afabf3793fda14c29bffe9fdd6790df4196abd'
 
 
 class Mismatch(AssertionError):

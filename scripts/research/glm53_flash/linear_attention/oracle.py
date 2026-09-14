@@ -146,6 +146,20 @@ def validate(case):
             or not 1 <= S <= 5 or I not in (4, 8) or H not in (1, 2) or D != 32 or K not in (2, 3)
             or cfg['linear_lower_bound'] not in (None, -2.) or cfg['rms_norm_eps'] != 1e-6):
         raise InputError('FINITE_DOMAIN')
+    for key, minimum, prefix in (
+            ('initial_lengths', S, 'ORACLE_INITIAL_LENGTHS'),
+            ('initial_padding', 0, 'ORACLE_INITIAL_PADDING')):
+        if key not in case:
+            raise InputError(prefix + '_MISSING')
+        values = case[key]
+        if not isinstance(values, list):
+            raise InputError(prefix + '_TYPE')
+        if len(values) != B:
+            raise InputError(prefix + '_SHAPE')
+        if any(type(value) is not int for value in values):
+            raise InputError(prefix + '_TYPE')
+        if any(value < minimum for value in values):
+            raise InputError(prefix + '_RANGE')
     shapes = parameter_shapes(cfg)
     if set(case['parameters']) != set(shapes):
         raise InputError('PARAMETER_CENSUS')
@@ -252,8 +266,10 @@ def module_reference(case, accepted_recurrence):
             block_outputs.append(result['output']); block_states.append(result['state'])
         accepted_y = [[sum([block_outputs[z][b][0][h] for z in range(4)], []) for h in range(H)] for b in range(B)]
         accepted_state = [[sum([block_states[z][b][h] for z in range(4)], []) for h in range(H)] for b in range(B)]
-        assert close(mapping(recur_y, lambda x:x.v), accepted_y, 1e-14, 1e-13)
-        assert close(mapping(state, lambda x:x.v), accepted_state, 1e-14, 1e-13)
+        if not close(mapping(recur_y, lambda x:x.v), accepted_y, 1e-14, 1e-13):
+            raise InputError('ORACLE_RECURRENCE_CROSSCHECK_OUTPUT')
+        if not close(mapping(state, lambda x:x.v), accepted_state, 1e-14, 1e-13):
+            raise InputError('ORACLE_RECURRENCE_CROSSCHECK_STATE')
         for b in range(B):
             normed = []
             for h in range(H):

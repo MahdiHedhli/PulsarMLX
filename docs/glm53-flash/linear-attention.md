@@ -23,6 +23,17 @@ launch grid is `(32,32,B*H)` and threadgroup `(32,4,1)`. Bounds are conditional
 on32-lane SIMD/x-major packing. Metadata checks establish sizes and index
 bounds under that assumption and do not attest physical driver behavior.
 
+Before source loading or array construction, `initial_lengths` and
+`initial_padding` are each admitted as lists of exactly B built-in integers.
+Lengths must be at least S; padding must be nonnegative with no upper bound.
+The explicit refusal reasons are `ORACLE_INITIAL_LENGTHS_MISSING`, `_TYPE`,
+`_SHAPE`, `_RANGE` and the corresponding `ORACLE_INITIAL_PADDING_*` tokens.
+These are initial-input rules only: later bookkeeping may produce negative
+padding. The independent recurrence comparisons use
+`ORACLE_RECURRENCE_CROSSCHECK_OUTPUT` and
+`ORACLE_RECURRENCE_CROSSCHECK_STATE` for internal oracle inconsistency; they
+are not input-refusal results and remain active under optimized Python.
+
 All thirteen consumed parameter leaves are replaced with explicit dyadic FP32
 fixtures before the first call. The live parameter census, exact installed
 values, native Linear/Conv1d instances and absent quantization attributes are
