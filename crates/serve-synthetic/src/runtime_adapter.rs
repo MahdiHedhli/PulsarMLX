@@ -572,10 +572,14 @@ mod ownership_tests {
         .await
         .unwrap();
         owner.reap();
-        assert!(worker.is_joined());
+        let owner_joined = worker.is_joined();
+        if !owner_joined {
+            assert!(worker.join_finished());
+        }
         assert!(worker.actually_joined());
         state.reap_cleanup();
         assert!(spy.destroyed.load(Ordering::SeqCst));
+        assert!(owner_joined, "OWNED_REAPER_JOINED");
         assert!(held && no_false_finish, "HELD_UNTIL_REAL_JOIN");
         assert_eq!(
             state.generation_slots.available_permits(),
@@ -708,9 +712,13 @@ mod ownership_tests {
         .await
         .unwrap();
         owner.reap();
-        assert!(worker.is_joined());
+        let owner_joined = worker.is_joined();
+        if !owner_joined {
+            assert!(worker.join_finished());
+        }
         state.reap_cleanup();
         assert_eq!(count, 6, "BOUNDED_BACKPRESSURE");
+        assert!(owner_joined, "OWNED_REAPER_JOINED");
         assert!(held && destroyed.load(Ordering::SeqCst));
         assert_eq!(state.metrics().runtime_workers_joined, 1);
         assert_eq!(state.generation_slots.available_permits(), 1);
