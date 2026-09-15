@@ -127,11 +127,15 @@ pub type BackendEventSender = mpsc::Sender<BackendEvent>;
 
 pub struct BackendSession {
     pub(crate) future: BackendFuture,
+    pub(crate) worker: Option<std::sync::Arc<crate::runtime_adapter::Worker>>,
 }
 
 impl BackendSession {
     pub fn new(future: BackendFuture) -> Self {
-        Self { future }
+        Self {
+            future,
+            worker: None,
+        }
     }
 }
 

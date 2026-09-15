@@ -14,7 +14,7 @@ use std::io::Read;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio::sync::{mpsc, watch, OwnedSemaphorePermit, Semaphore};
@@ -22,6 +22,7 @@ use tokio::task::JoinSet;
 use tokio_stream::wrappers::ReceiverStream;
 
 mod backend;
+pub mod runtime_adapter;
 pub use backend::{
     ActualUsage, BackendCancellation, BackendDescriptor, BackendEvent, BackendEventSender,
     BackendFailure, BackendFinishReason, BackendFuture, BackendMessage, BackendRequest,
@@ -69,10 +70,13 @@ pub struct AppState {
     next_id: Arc<AtomicU64>,
     metrics: Arc<Metrics>,
     shutdown: watch::Sender<bool>,
+    cleanup: Arc<Mutex<Vec<PendingGeneration>>>,
+    stream_tasks: Arc<Mutex<JoinSet<()>>>,
 }
 
 #[derive(Default)]
 pub struct Metrics {
+    runtime_workers_joined: AtomicUsize,
     backend_started: AtomicUsize,
     backend_active: AtomicUsize,
     backend_finished: AtomicUsize,
@@ -84,6 +88,12 @@ pub struct Metrics {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MetricsSnapshot {
+    pub runtime_workers_joined: usize,
+    pub runtime_producers_returned_unjoined: usize,
+    /// Capacity leases retained for workers not yet actually joined.
+    pub runtime_cleanup_pending: usize,
+    /// Owned stream tasks still present in the cleanup JoinSet.
+    pub stream_tasks_pending: usize,
     pub backend_started: usize,
     pub backend_active: usize,
     /// Admitted request ownership released, regardless of its wire outcome or
@@ -127,11 +137,27 @@ impl AppState {
             next_id: Arc::new(AtomicU64::new(1)),
             metrics: Arc::new(Metrics::default()),
             shutdown,
+            cleanup: Arc::new(Mutex::new(Vec::new())),
+            stream_tasks: Arc::new(Mutex::new(JoinSet::new())),
         })
     }
 
     pub fn metrics(&self) -> MetricsSnapshot {
+        let (pending_count, returned_unjoined) = {
+            let pending = self.cleanup.lock().expect("cleanup registry");
+            (
+                pending.len(),
+                pending
+                    .iter()
+                    .filter(|entry| entry.worker.producer_returned())
+                    .count(),
+            )
+        };
         MetricsSnapshot {
+            runtime_workers_joined: self.metrics.runtime_workers_joined.load(Ordering::SeqCst),
+            runtime_producers_returned_unjoined: returned_unjoined,
+            runtime_cleanup_pending: pending_count,
+            stream_tasks_pending: self.stream_tasks.lock().expect("stream registry").len(),
             backend_started: self.metrics.backend_started.load(Ordering::SeqCst),
             backend_active: self.metrics.backend_active.load(Ordering::SeqCst),
             backend_finished: self.metrics.backend_finished.load(Ordering::SeqCst),
@@ -145,6 +171,39 @@ impl AppState {
                 .load(Ordering::SeqCst),
             connections_spawned: self.metrics.connections_spawned.load(Ordering::SeqCst),
             connections_reaped: self.metrics.connections_reaped.load(Ordering::SeqCst),
+        }
+    }
+
+    /// Nonblocking joins only: running synchronous workers remain owned.
+    pub fn reap_cleanup(&self) {
+        let mut pending = self.cleanup.lock().expect("cleanup registry");
+        let mut index = 0;
+        while index < pending.len() {
+            if pending[index].worker.join_finished() {
+                let joined = pending.swap_remove(index);
+                drop(joined.lease);
+            } else {
+                index += 1;
+            }
+        }
+        drop(pending);
+        let mut streams = self.stream_tasks.lock().expect("stream registry");
+        while streams.try_join_next().is_some() {}
+    }
+
+    /// Finite drain. Caller must retain this owner on incomplete cleanup and
+    /// retry after its controlled worker supervisor has released/joined work.
+    pub async fn drain_cleanup(&self, timeout: Duration) -> MetricsSnapshot {
+        let deadline = tokio::time::Instant::now() + timeout;
+        loop {
+            self.reap_cleanup();
+            let snapshot = self.metrics();
+            if (snapshot.backend_active == 0 && snapshot.stream_tasks_pending == 0)
+                || tokio::time::Instant::now() >= deadline
+            {
+                return snapshot;
+            }
+            tokio::time::sleep(SHUTDOWN_POLL).await;
         }
     }
 }
@@ -200,6 +259,7 @@ where
     loop {
         tokio::select! {
             _ = &mut shutdown => break,
+            _ = tokio::time::sleep(SHUTDOWN_POLL) => state.reap_cleanup(),
             // F1: reap finished connection tasks during normal operation so
             // completed JoinHandles do not accumulate for the process lifetime.
             // The `!tasks.is_empty()` guard disables the branch when the set is
@@ -264,6 +324,7 @@ where
     while state.metrics.backend_active.load(Ordering::SeqCst) > 0
         && tokio::time::Instant::now() < deadline
     {
+        state.reap_cleanup();
         tokio::time::sleep(SHUTDOWN_POLL).await;
     }
     tasks.abort_all();
@@ -272,6 +333,14 @@ where
             .metrics
             .connections_reaped
             .fetch_add(1, Ordering::SeqCst);
+    }
+    state.reap_cleanup();
+    let snapshot = state.metrics();
+    if snapshot.backend_active != 0 || snapshot.stream_tasks_pending != 0 {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::TimedOut,
+            "shutdown incomplete: retain AppState and drain owned cleanup",
+        ));
     }
     Ok(())
 }
@@ -437,7 +506,7 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     let descriptor = state.descriptor;
     let (cancel_sender, cancellation) = BackendCancellation::pair();
     let (event_sender, event_receiver) = mpsc::channel(BACKEND_EVENT_CAPACITY);
-    let guard = GenerationGuard::new(state.clone(), permit);
+    let mut guard = GenerationGuard::new(state.clone(), permit);
     let session = match state.backend.begin(
         BackendRequest {
             model_id: parsed.model.clone(),
@@ -460,6 +529,8 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
             return backend_error_response(error);
         }
     };
+    guard.worker = session.worker.clone();
+    guard.lease.as_mut().expect("generation lease").worker = session.worker.clone();
     if parsed.stream {
         stream_chat(
             state,
@@ -626,7 +697,18 @@ impl ChatRequest {
 
 struct GenerationGuard {
     state: AppState,
+    lease: Option<GenerationLease>,
+    worker: Option<Arc<runtime_adapter::Worker>>,
+}
+
+struct GenerationLease {
+    state: AppState,
     _permit: OwnedSemaphorePermit,
+    worker: Option<Arc<runtime_adapter::Worker>>,
+}
+struct PendingGeneration {
+    worker: Arc<runtime_adapter::Worker>,
+    lease: GenerationLease,
 }
 
 impl GenerationGuard {
@@ -634,14 +716,47 @@ impl GenerationGuard {
         state.metrics.backend_started.fetch_add(1, Ordering::SeqCst);
         state.metrics.backend_active.fetch_add(1, Ordering::SeqCst);
         Self {
-            state,
-            _permit: permit,
+            state: state.clone(),
+            lease: Some(GenerationLease {
+                state,
+                _permit: permit,
+                worker: None,
+            }),
+            worker: None,
         }
     }
 }
 
 impl Drop for GenerationGuard {
     fn drop(&mut self) {
+        if let Some(worker) = &self.worker {
+            worker.request_cancel();
+            if !worker.join_finished() {
+                self.state
+                    .cleanup
+                    .lock()
+                    .expect("cleanup registry")
+                    .push(PendingGeneration {
+                        worker: worker.clone(),
+                        lease: self.lease.take().expect("generation lease"),
+                    });
+            }
+        }
+    }
+}
+
+impl Drop for GenerationLease {
+    fn drop(&mut self) {
+        if self
+            .worker
+            .as_ref()
+            .is_some_and(|worker| worker.actually_joined())
+        {
+            self.state
+                .metrics
+                .runtime_workers_joined
+                .fetch_add(1, Ordering::SeqCst);
+        }
         self.state
             .metrics
             .backend_active
@@ -747,7 +862,8 @@ fn stream_chat(
 ) -> Response<BoxBody> {
     let (sender, receiver) = mpsc::channel::<Result<Frame<Bytes>, Infallible>>(1);
     let mut shutdown = state.shutdown.subscribe();
-    tokio::spawn(async move {
+    let task_owner = state.stream_tasks.clone();
+    task_owner.lock().expect("stream registry").spawn(async move {
         let mut guard = Some(guard);
         let deadline = tokio::time::sleep(GENERATION_DEADLINE);
         tokio::pin!(deadline);
@@ -758,6 +874,10 @@ fn stream_chat(
         loop {
             let event = tokio::select! {
                 biased;
+                _ = sender.closed() => {
+                    cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Downstream).await;
+                    break;
+                }
                 event = events.recv() => event,
                 _ = future.as_mut().expect("polling backend future"), if future_state == BackendFutureState::Polling => {
                     future_state = BackendFutureState::Returned;

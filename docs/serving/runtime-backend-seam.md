@@ -52,3 +52,41 @@ and its explicitly synthetic usage units. The two-second generation policy is a
 synthetic qualification limit, not a real-runtime latency claim. No real model,
 LM Studio integration, cloud destination, or tokenizer accounting is provided
 by this seam.
+
+## Injected synchronous fixture sessions
+
+`runtime_adapter::RuntimeBackend` is a model-free injected provider selected at
+`AppState` construction. It is not a real engine or GLM template. Each request
+creates one exclusive `RuntimeSession`, renders explicit fixture prompt IDs
+(capped at 4096), and runs that session on an actual owned synchronous thread.
+Generated callback ordinals must be contiguous; vocabulary IDs may repeat.
+The adapter derives usage from rendered prompt-ID length and accepted non-stop
+generated IDs, never text length, words, messages, or producer-authored totals.
+A stopping ID has no visible bytes and is excluded from completion usage. Text
+bytes are buffered across token fragments until a valid UTF-8 prefix exists;
+invalid or incomplete UTF-8 cannot produce a successful finish.
+
+The worker's raw-output EOF, successful terminal, cancellation flag and async
+wrapper destruction are not join acknowledgements. The actual thread handle
+is joined only after `is_finished`; running workers are never blocking-joined
+on an async executor thread. If the existing 500 ms inline cleanup expires,
+the async future is destroyed but the generation lease moves into AppState's
+owned cleanup registry. Admission and active ownership remain occupied until
+the worker really exits, is joined and its session is destroyed. The existing
+cleanup-bound-drop metric describes the wrapper, not native worker reaping.
+
+Stream producer tasks now belong to AppState's JoinSet. Shutdown still has a
+250 ms wire grace, shorter than the 500 ms producer cleanup bound; it does not
+promise a shutdown terminal for uncooperative producers. `serve` returns a
+`TimedOut` I/O error when generations or owned stream tasks remain; it does not
+claim complete shutdown or zero resources. The caller must retain AppState and
+use its finite `drain_cleanup` after its independent controlled-worker supervisor
+releases the fixture barrier. Pending leases retain the cleanup owner until
+join; no detached reaper or timeout-and-forget path is added.
+
+This qualifies only controlled in-process synthetic workers with a retained
+cleanup owner. Abandonment of the last externally reachable owner during an
+uncooperative worker can retain an unreachable cleanup cycle. It is an unresolved
+resource-lifetime blocker for real runtime installation, not a bounded native
+shutdown guarantee. Real engine binding, real tokenizer/GLM history rendering,
+native cancellation and real client dogfood remain unqualified.
