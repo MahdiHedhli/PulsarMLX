@@ -1,18 +1,50 @@
 {
-  "schema": "glm53-flash-dense-ffn-v1",
+  "schema": "flash-k-dense-ffn-provenance-v1",
+  "upstream_commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90",
   "language_sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
   "hyperconnection_sha256": "141fbe47d99f8eda9ab9a4c78665e5eb439cbf73b53a604c4da2a77845167bb3",
-  "capsule_sha256": "2e11f6c86c88f1f5da929433d9dd2fa97aee6153706c7cd399e676a870dcfcfe",
-  "language_nodes": {
-    "ClampedSwiGLU": {"ast_sha256": "11986d0e92428281b834831e609493c9b037b27dce035e955d71d01211730d91"},
-    "ClampedMLP": {"ast_sha256": "0b37709dc710ba676c16935524e136157561d53fd4ed8bbd1bd75b59bccc363e"}
+  "loader_template_sha256": "0409b7047df40e3f679df62f2cec58efdaa0515ca7f4754ec71261987c9dcda4",
+  "graph_sha256": {
+    "scripts/research/glm53_flash/decoder_ffn/capsule.py": "c00d7b16a94eec40fbc01ce89207b6df58ca6cd7756ab6e29a732b774b429147",
+    "scripts/research/glm53_flash/decoder_ffn/oracle.py": "53fc1bf7428ec71cbac894a8fcfc45cd605c7e854fed7d55d56665a9385595eb",
+    "scripts/research/glm53_flash/decoder_ffn/controls.py": "18ff5d94a8c3a86a0a0f2e3eeb1660f2ae670b0f3e1b0a5907a35842f3edf369",
+    "fixtures/research/glm53-flash-decoder-ffn-v1/fixtures.json": "0551bc23c9146efc2fbdbd689307817f99f497ab8d3167058e44c37f299d3592",
+    "scripts/research/tests/test_glm53_flash_decoder_ffn.py": "22bc4b8a0e4c576fef0cfe24341e5aacac54e42b3c044479a7395195ad0ac690",
+    "docs/glm53-flash/decoder-ffn.md": "881cddcbc140fd8eb21b05c0b7174cf5fa5faa23c2302781d8a528fb3bbf22fa"
   },
-  "hc_nodes": {
-    "_hc_split_sinkhorn_ops": {"ast_sha256": "1c57fc5371ef801bd4eab1e8e57bcf1a69a46c10273f4eb2105dee91446d717a"},
-    "_hc_ops": {"ast_sha256": "1edcf5d97f3555748130f4ca2ed17bb5efa07d9c90eab1f53699437923350262"},
-    "HyperConnection": {"ast_sha256": "7a0ba5673e7698c054e002f52ad0bc92a8ad416610460b827b97e4980db13b07"},
-    "_hc_expand_op": {"ast_sha256": "1abf3c6901f5f25475b1261d7df1fcabd9a4d3ef41be48e1143e88ac1e32a74e"},
-    "hc_expand": {"ast_sha256": "c0ef4838327af3978b9301462abd3e835a2f06f1e6860342385d8462c8a8a8c3"}
+  "caller_contract": {
+    "original_ast_sha256": "3cb11d509e8d17516808284dad71059a70ad8d7efda43aafe1dc6c73d2a394cc",
+    "transformed_ast_sha256": "6737945cc5b37d08a3ccb09def4ccbe8ed8118739b400cad61c15b91a5b7ba46",
+    "transformations": [
+      "rename _ffn_block to source_ffn_block only"
+    ]
   },
-  "excluded": ["_hc_kernel", "_make_hc_sinkhorn_collapse_kernel", "Glm5NextDecoderLayer.__init__", "attention", "routed_experts"]
+  "original_caller_body": "def _ffn_block(self, x: mx.array) -> mx.array:\n    # Stateless FFN half (no cache) -> compiles cleanly at a fixed decode shape.\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)\n",
+  "transformed_caller_body": "def source_ffn_block(self, x: mx.array) -> mx.array:\n    # Stateless FFN half (no cache) -> compiles cleanly at a fixed decode shape.\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)\n",
+  "node_ast_sha256": {
+    "ClampedSwiGLU": "11986d0e92428281b834831e609493c9b037b27dce035e955d71d01211730d91",
+    "ClampedMLP": "0b37709dc710ba676c16935524e136157561d53fd4ed8bbd1bd75b59bccc363e",
+    "_hc_split_sinkhorn_ops": "1c57fc5371ef801bd4eab1e8e57bcf1a69a46c10273f4eb2105dee91446d717a",
+    "_hc_ops": "1edcf5d97f3555748130f4ca2ed17bb5efa07d9c90eab1f53699437923350262",
+    "HyperConnection": "7a0ba5673e7698c054e002f52ad0bc92a8ad416610460b827b97e4980db13b07",
+    "_hc_expand_op": "1abf3c6901f5f25475b1261d7df1fcabd9a4d3ef41be48e1143e88ac1e32a74e",
+    "hc_expand": "c0ef4838327af3978b9301462abd3e835a2f06f1e6860342385d8462c8a8a8c3",
+    "source_ffn_block": "6737945cc5b37d08a3ccb09def4ccbe8ed8118739b400cad61c15b91a5b7ba46"
+  },
+  "closure_globals": [
+    "ClampedSwiGLU",
+    "Tuple",
+    "_hc_expand_op",
+    "_hc_kernel",
+    "_hc_ops",
+    "_hc_split_sinkhorn_ops",
+    "float",
+    "hc_expand",
+    "int",
+    "max",
+    "mx",
+    "nn",
+    "range",
+    "super"
+  ]
 }

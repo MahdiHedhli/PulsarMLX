@@ -1,6 +1,5 @@
-"""The retained decoder caller body, adapted only by name for explicit execution."""
-
-def source_ffn_block(self, x):
+def source_ffn_block(self, x: mx.array) -> mx.array:
+    # Stateless FFN half (no cache) -> compiles cleanly at a fixed decode shape.
     residual = x
     xc, post, comb = self.ffn_hc(x)
     m = self.mlp(self.post_attention_layernorm(xc))
