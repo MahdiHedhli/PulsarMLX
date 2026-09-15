@@ -32,7 +32,8 @@ chmod 600 "$TOKEN_FILE"
 cargo build --locked --quiet --bin pulsar-serve-synthetic
 
 LOG="$WORK/server.log"
-./target/debug/pulsar-serve-synthetic --token-file "$TOKEN_FILE" --port 0 >"$LOG" 2>&1 &
+BINARY_DIR="${CARGO_TARGET_DIR:-$CRATE_DIR/target}"
+"$BINARY_DIR/debug/pulsar-serve-synthetic" --token-file "$TOKEN_FILE" --port 0 >"$LOG" 2>&1 &
 SERVER_PID=$!
 
 ADDRESS=""

@@ -31,6 +31,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Prepare owned synthetic graph
+        run: |
+          GRAPH_ROOT="$RUNNER_TEMP/serving-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$GRAPH_ROOT"
+          mkdir -m 700 "$GRAPH_ROOT/cache" "$GRAPH_ROOT/tmp" "$GRAPH_ROOT/target"
+          {
+            echo "SERVING_GRAPH_ROOT=$GRAPH_ROOT"
+            echo "CARGO_HOME=$GRAPH_ROOT/cache/cargo"
+            echo "CARGO_TARGET_DIR=$GRAPH_ROOT/target"
+            echo "TMPDIR=$GRAPH_ROOT/tmp"
+            echo "PIP_CONFIG_FILE=/dev/null"
+            echo "RUSTUP_AUTO_INSTALL=0"
+          } >> "$GITHUB_ENV"
+
       - name: Confirm synthetic boundary
         run: |
           uname -m
@@ -59,31 +73,30 @@ jobs:
 
       - name: Install pinned SDK environment
         run: |
-          python3 -m venv "$RUNNER_TEMP/sdkvenv"
-          "$RUNNER_TEMP/sdkvenv/bin/pip" install --quiet --disable-pip-version-check \
+          python3 -m venv "$SERVING_GRAPH_ROOT/sdkvenv"
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/pip" install --no-cache-dir --quiet --disable-pip-version-check \
             -r crates/serve-synthetic/tests/sdk-requirements.txt
 
       - name: OpenAI SDK loopback smoke
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
-          PYTHON="$RUNNER_TEMP/sdkvenv/bin/python" \
+          PYTHON="$SERVING_GRAPH_ROOT/sdkvenv/bin/python" \
             crates/serve-synthetic/tests/sdk_smoke.sh
+
+      - name: CI interface tests
+        run: |
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
+            crates/serve-synthetic/tests/test_ci_campaign.py
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
+            crates/serve-synthetic/tests/q_capture_lifecycle_tests.py \
+            --mode fake --output "$SERVING_GRAPH_ROOT/lifecycle-fake"
 
       - name: Mutation guards
         run: |
-          RUN_ROOT="$RUNNER_TEMP/serving-mutation-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          mkdir -p "$RUN_ROOT"
-          MATRIX="$RUN_ROOT/matrix.json"
-          "$RUNNER_TEMP/sdkvenv/bin/python" \
-            crates/serve-synthetic/tests/q_matrix.py \
-            --pristine crates/serve-synthetic > "$MATRIX"
-          "$RUNNER_TEMP/sdkvenv/bin/python" \
-            crates/serve-synthetic/tests/mutation_guards.py \
-            --root "$RUN_ROOT" \
-            --evidence "$RUN_ROOT/evidence" \
-            --scratch "$RUN_ROOT/scratch" \
-            --target "$RUN_ROOT/target" \
-            --matrix "$MATRIX"
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
+            crates/serve-synthetic/tests/ci_campaign.py \
+            --root "$SERVING_GRAPH_ROOT/campaign" \
+            --source crates/serve-synthetic
 
       - name: Confirm no model assets were introduced
         run: test -z "$PULSARMLX_MODEL_GGUF"

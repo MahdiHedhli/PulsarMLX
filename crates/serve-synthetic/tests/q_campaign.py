@@ -83,11 +83,14 @@ def result(name, case, outcome, details):
 
 def rust_env(root, target):
     env = clean_env(root)
-    env.update({"PATH": "/Users/mhedhli/.rustup/toolchains/stable-aarch64-apple-darwin/bin:" + env["PATH"], "RUSTC": "/Users/mhedhli/.rustup/toolchains/stable-aarch64-apple-darwin/bin/rustc", "CARGO_TARGET_DIR": str(target), "CARGO_NET_OFFLINE": "true", "RUSTUP_AUTO_INSTALL": "0"})
+    cargo = Path(os.environ["CI_SELECTED_CARGO"])
+    rustc = Path(os.environ["CI_SELECTED_RUSTC"])
+    if not cargo.is_file() or not rustc.is_file():
+        raise RuntimeError("TOOLING_NOT_READY: selected installed Rust tools missing")
+    env.update({"PATH": str(cargo.parent) + os.pathsep + env["PATH"], "RUSTC": str(rustc), "CARGO_TARGET_DIR": str(target), "CARGO_NET_OFFLINE": "true", "RUSTUP_AUTO_INSTALL": "0"})
     for key in ("CARGO_HOME", "RUSTUP_HOME"):
         if key in os.environ:
             env[key] = os.environ[key]
-    env["CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER"] = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
     return env
 
 
@@ -115,7 +118,7 @@ def rust_mutation(pristine, scratch, target, name, old, new, test_name, count=1,
     if mutant_target.exists():
         raise RuntimeError("MUTATION_REJECTED: mutant target was not fresh")
     env = rust_env(owned_root, mutant_target)
-    cargo = "/Users/mhedhli/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo"
+    cargo = os.environ["CI_SELECTED_CARGO"]
     terminal, output, _ = recorded([cargo, "test", "--offline", "--locked", "--test", test_target, "--no-run", "--message-format=json"], pristine, pristine_env, case / "pristine-compile")
     if terminal["code"] != 0:
         raise RuntimeError("TOOLING_NOT_READY: pristine did not compile")

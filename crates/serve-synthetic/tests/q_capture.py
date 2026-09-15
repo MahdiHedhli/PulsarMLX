@@ -9,6 +9,7 @@ from pathlib import Path
 import selectors
 import signal
 import subprocess
+import threading
 import time
 
 STREAM_LIMIT = 64 * 1024 * 1024
@@ -41,6 +42,90 @@ def utc():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
+class CaptureOwner:
+    """Serialize reaping and signal admission for one immediate child.
+
+    All poll/wait/signal decisions run in this controller under one lock. A
+    natural exit between poll and kill remains unreaped, reserving the PID;
+    observing/reaping it retires authority before any later callback. This
+    does not establish arbitrary descendant or hostile same-UID containment.
+    """
+    NEVER_STARTED = "NEVER_STARTED"
+    LIVE_OWNED = "LIVE_OWNED"
+    EXIT_OBSERVED = "EXIT_OBSERVED"
+    CLOSED = "CLOSED"
+
+    def __init__(self, child=None, signal_group=None):
+        self.child = child
+        self.state = self.NEVER_STARTED if child is None else self.LIVE_OWNED
+        self.signal_group = signal_group or os.killpg
+        self.lock = threading.RLock()
+        self.history = []
+        self.sent = set()
+
+    @property
+    def retired(self):
+        return self.state in {self.EXIT_OBSERVED, self.CLOSED}
+
+    def _retire(self, code):
+        self.state = self.EXIT_OBSERVED
+        self.history.append({"event": "EXIT_OBSERVED", "code": code})
+
+    def poll(self):
+        with self.lock:
+            if self.child is None or self.retired:
+                return None if self.child is None else self.child.returncode
+            code = self.child.poll()
+            if code is not None:
+                self._retire(code)
+            return code
+
+    def wait(self, timeout):
+        with self.lock:
+            if self.retired:
+                return self.child.returncode
+            code = self.child.wait(timeout=timeout)
+            self._retire(code)
+            return code
+
+    def _send(self, signum):
+        with self.lock:
+            self.poll()
+            if self.state != self.LIVE_OWNED or signum in self.sent:
+                return False
+            self.sent.add(signum)
+            self.history.append({"event": "SIGNAL_REQUEST", "signal": signum, "state": self.state})
+            try:
+                self.signal_group(self.child.pid, signum)
+            except ProcessLookupError:
+                self.poll()
+            return True
+
+    def stop(self, grace):
+        with self.lock:
+            self.poll()
+            if self.state != self.LIVE_OWNED:
+                return
+            self._send(signal.SIGTERM)
+            try:
+                self.wait(grace)
+                return  # Observed exit during grace retires KILL authority.
+            except subprocess.TimeoutExpired:
+                self._send(signal.SIGKILL)
+                self.wait(5)
+
+    def pipe_eof(self):
+        # EOF does not prove exit; a live child must still be waited/reaped.
+        self.poll()
+        return self.retired
+
+    def close(self):
+        with self.lock:
+            self.poll()
+            if self.retired or self.child is None:
+                self.state = self.CLOSED
+
+
 def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_failure=False, termination_grace=0.5):
     output = Path(output)
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
@@ -55,6 +140,9 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
     selector = selectors.DefaultSelector()
     lifecycle = None
     previous_signals = {}
+    ownership = CaptureOwner()
+    exit_observed = False
+    post_exit_deadline = None
 
     def interrupted(signum, _frame):
         raise CaptureInterrupted("supervisor interrupted by signal " + str(signum))
@@ -63,21 +151,7 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
         write_all(lifecycle, (json.dumps({"event": kind, "wall": utc(), "monotonic": time.monotonic(), **extra}, sort_keys=True) + "\n").encode())
 
     def stop_owned():
-        if child is None:
-            return
-        try:
-            os.killpg(child.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-        try:
-            child.wait(timeout=termination_grace)
-        except subprocess.TimeoutExpired:
-            pass
-        try:
-            os.killpg(child.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        child.wait(timeout=5)
+        ownership.stop(termination_grace)
 
     try:
         for signum in (signal.SIGTERM, signal.SIGINT):
@@ -102,6 +176,7 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
         event("PRECREATED")
         try:
             child = subprocess.Popen(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+            ownership = CaptureOwner(child)
         except OSError as exc:
             spawn_error = type(exc).__name__ + ": " + str(exc)
             event("SPAWN_ERROR", error=spawn_error)
@@ -112,6 +187,13 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
                 os.set_blocking(stream.fileno(), False)
                 selector.register(stream, selectors.EVENT_READ, name)
             while selector.get_map():
+                ownership.poll()
+                if ownership.retired and not exit_observed:
+                    exit_observed = True
+                    post_exit_deadline = min(start + timeout, time.monotonic() + 5)
+                    event("EXIT", code=child.returncode, signaling_authority_retired=True)
+                if ownership.retired and time.monotonic() >= post_exit_deadline:
+                    raise OSError("post-exit pipe drain incomplete; descendant cleanup not established")
                 if time.monotonic() - start >= timeout:
                     timed_out = True
                     event("TIMEOUT")
@@ -134,17 +216,26 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
                     write_all(fds[name], data)
                     counts[name] += len(data)
             if not timed_out:
-                child.wait(timeout=max(0.01, timeout - (time.monotonic() - start)))
-            # Kill any remaining members even when the leader exited normally.
+                if not ownership.pipe_eof():
+                    ownership.wait(timeout=max(0.01, timeout - (time.monotonic() - start)))
+            # Idempotent; an observed exit never admits late group signals.
             stop_owned()
     except BaseException as exc:
         failure = type(exc).__name__ + ": " + str(exc)
-        stop_owned()
+        try:
+            stop_owned()
+        except BaseException:
+            pass  # Preserve the original failure; finally records cleanup state.
     finally:
         if child is not None:
-            stop_owned()
+            try:
+                stop_owned()
+            except BaseException as exc:
+                failure = failure or type(exc).__name__ + ": " + str(exc)
+        ownership.close()
         code = child.returncode if child is not None else None
-        terminal = {"status": "EVIDENCE_INCOMPLETE" if failure else "TIMEOUT" if timed_out else "SPAWN_ERROR" if spawn_error else "CLOSED", "code": code if code is None or code >= 0 else None, "native_signal": -code if code is not None and code < 0 else None, "spawn_error": spawn_error, "capture_error": failure, "timeout": timed_out, "child_pid": child.pid if child else None, "reaped": child is None or child.poll() is not None, "closed_wall": utc(), "closed_monotonic": time.monotonic(), "stream_bytes": counts}
+        terminal = {"status": "EVIDENCE_INCOMPLETE" if failure else "TIMEOUT" if timed_out else "SPAWN_ERROR" if spawn_error else "CLOSED", "code": code if code is None or code >= 0 else None, "native_signal": -code if code is not None and code < 0 else None, "spawn_error": spawn_error, "capture_error": failure, "timeout": timed_out, "child_pid": child.pid if child else None, "reaped": child is None or child.returncode is not None, "closed_wall": utc(), "closed_monotonic": time.monotonic(), "stream_bytes": counts}
+        terminal.update({"ownership_state": ownership.state, "signaling_authority_retired": ownership.retired, "ownership_history": ownership.history, "descendant_cleanup": "NOT_SEPARATELY_QUALIFIED", "post_exit_drain_seconds": 5})
         try:
             terminal["stream_sha256"] = {name: digest(output / (name + ".raw")) for name in counts if (output / (name + ".raw")).is_file()}
             if lifecycle is not None:
