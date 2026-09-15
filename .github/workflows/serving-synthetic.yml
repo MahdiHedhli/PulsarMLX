@@ -71,10 +71,19 @@ jobs:
 
       - name: Mutation guards
         run: |
+          RUN_ROOT="$RUNNER_TEMP/serving-mutation-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$RUN_ROOT"
+          MATRIX="$RUN_ROOT/matrix.json"
+          "$RUNNER_TEMP/sdkvenv/bin/python" \
+            crates/serve-synthetic/tests/q_matrix.py \
+            --pristine crates/serve-synthetic > "$MATRIX"
           "$RUNNER_TEMP/sdkvenv/bin/python" \
             crates/serve-synthetic/tests/mutation_guards.py \
-            --scratch "$RUNNER_TEMP/mutants" \
-            --target "$RUNNER_TEMP/mutant-target"
+            --root "$RUN_ROOT" \
+            --evidence "$RUN_ROOT/evidence" \
+            --scratch "$RUN_ROOT/scratch" \
+            --target "$RUN_ROOT/target" \
+            --matrix "$MATRIX"
 
       - name: Confirm no model assets were introduced
         run: test -z "$PULSARMLX_MODEL_GGUF"
