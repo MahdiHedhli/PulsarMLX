@@ -4,137 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import os
 from pathlib import Path
-import shutil
-import subprocess
 import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from q_campaign import configure, executed_cases, python_mutation, rust_mutation
 
-def replace_once(path: Path, old: str, new: str) -> None:
-    source = path.read_text(encoding="utf-8")
-    if source.count(old) != 1:
-        raise RuntimeError(f"mutation anchor count for {path.name}: {source.count(old)}")
-    path.write_text(source.replace(old, new), encoding="utf-8")
+EXPECTED_CASES = {"missing-auth", "declared-length-cap", "frame-accumulation-cap", "unreaped-connections", "silent-stream-failure", "missing-release", "false-terminal", "no-shutdown-grace", "first-host-wins", "flat-error-type", "early-permit-release", "skipped-provider-cancellation", "invalid-terminal-accepted", "consumer-authored-usage", "eof-as-provider-return", "omitted-eof-cancellation", "forgotten-future-at-cleanup-bound", "saturating-usage-total", "cloud-destination", "redirect-follow"}
 
-
-def replace_exact(path: Path, old: str, new: str, expected: int) -> None:
-    source = path.read_text(encoding="utf-8")
-    if source.count(old) != expected:
-        raise RuntimeError(f"mutation anchor count for {path.name}: {source.count(old)}")
-    path.write_text(source.replace(old, new), encoding="utf-8")
-
-
-def run(command: list[str], cwd: Path, env: dict[str, str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=cwd,
-        env=env,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=300,
-        text=True,
-        check=False,
-    )
-
-
-def expect_test_failed(command: list[str], cwd: Path, env: dict[str, str], test_name: str) -> None:
-    """Require the named test to have actually run and reported FAILED.
-
-    F7: treating any non-zero exit as a kill counted mutants that failed to
-    compile, panicked in harness setup, or crashed before the intended test ran.
-    Those are not evidence that the test guards the behaviour.
-    """
-    result = run(command, cwd, env)
-    output = result.stdout or ""
-    if result.returncode == 0:
-        raise RuntimeError(f"mutation survived: {test_name}")
-    if f"test {test_name} ... FAILED" not in output:
-        raise RuntimeError(
-            f"mutant for {test_name} exited {result.returncode} without the test "
-            f"reporting FAILED; this is not a kill. Output:\n{output[-4000:]}"
-        )
-    if "test result: FAILED. 0 passed; 1 failed" not in output:
-        raise RuntimeError(
-            f"expected exactly one failing test for {test_name}. Output:\n{output[-4000:]}"
-        )
-    print(f"MUTANT_KILLED assertion={test_name}")
-
-
-def expect_python_guard_failed(command: list[str], cwd: Path, env: dict[str, str], name: str) -> None:
-    """Require a Python guard mutant to fail its assertion, not its import."""
-    result = run(command, cwd, env)
-    output = result.stdout or ""
-    if result.returncode == 0:
-        raise RuntimeError(f"mutation survived: {name}")
-    for broken in ("SyntaxError", "ImportError", "ModuleNotFoundError", "NameError", "IndentationError"):
-        if broken in output:
-            raise RuntimeError(
-                f"mutant {name} failed to load ({broken}); this is not a kill. "
-                f"Output:\n{output[-4000:]}"
-            )
-    if "AssertionError" not in output and "Traceback" not in output:
-        raise RuntimeError(f"mutant {name} produced no diagnosable failure. Output:\n{output[-4000:]}")
-    print(f"MUTANT_KILLED assertion={name}")
-
-
-def rust_mutation(
-    pristine: Path,
-    scratch: Path,
-    target: Path,
-    name: str,
-    old: str,
-    new: str,
-    test_name: str,
-    count: int = 1,
-    source_path: str = "src/lib.rs",
-    test_target: str = "raw_http",
-) -> None:
-    mutant = scratch / name
-    shutil.copytree(pristine, mutant)
-    replace_exact(mutant / source_path, old, new, count)
-    env = os.environ.copy()
-    env["CARGO_TARGET_DIR"] = str(target)
-    build = run(
-        ["cargo", "test", "--offline", "--locked", "--test", test_target, "--no-run"],
-        mutant,
-        env,
-    )
-    if build.returncode != 0:
-        raise RuntimeError(
-            f"mutant {name} does not compile, so its test never ran; this is not "
-            f"a kill. Output:\n{(build.stdout or '')[-4000:]}"
-        )
-    print(f"MUTANT_COMPILE_OK name={name}")
-    expect_test_failed(
-        [
-            "cargo",
-            "test",
-            "--offline",
-            "--locked",
-            "--test",
-            test_target,
-            test_name,
-            "--",
-            "--exact",
-        ],
-        mutant,
-        env,
-        test_name,
-    )
-
-
-def python_mutation(pristine: Path, scratch: Path, python: str, name: str, old: str, new: str) -> None:
-    mutant = scratch / f"{name}.py"
-    shutil.copy2(pristine / "tests/sdk_client.py", mutant)
-    replace_once(mutant, old, new)
-    expect_python_guard_failed(
-        [python, "-c", f"exec(open({str(mutant)!r}).read().split('def main()')[0]); prove_destination_and_redirect_guards()"],
-        pristine,
-        os.environ.copy(),
-        name,
-    )
 
 
 def main() -> None:
@@ -142,8 +19,12 @@ def main() -> None:
     parser.add_argument("--scratch", required=True, type=Path)
     parser.add_argument("--target", required=True, type=Path)
     parser.add_argument("--python", default=sys.executable)
+    parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument("--evidence", required=True, type=Path)
+    parser.add_argument("--matrix", required=True, type=Path)
     args = parser.parse_args()
     pristine = Path(__file__).resolve().parents[1]
+    configure(pristine, args.root, args.evidence, args.matrix)
     if args.scratch.exists():
         raise RuntimeError("scratch path must not exist")
     args.scratch.mkdir(parents=True, mode=0o700)
@@ -187,9 +68,7 @@ def main() -> None:
         args.scratch,
         args.target,
         "unreaped-connections",
-        "            Some(_) = tasks.join_next(), if !tasks.is_empty() => {\n"
-        "                state.metrics.connections_reaped.fetch_add(1, Ordering::SeqCst);\n"
-        "            }\n",
+        "            _ = tokio::time::sleep(SHUTDOWN_POLL) => state.reap_cleanup(),\n",
         "",
         "repeated_connections_are_reaped_during_normal_operation",
     )
@@ -208,9 +87,13 @@ def main() -> None:
         args.scratch,
         args.target,
         "missing-release",
-        ".fetch_sub(1, Ordering::SeqCst);",
-        ".fetch_add(1, Ordering::SeqCst);",
+        "if released && joined {\n"
+        "                self.metrics.backend_active.fetch_sub(1, Ordering::SeqCst);",
+        "if released && joined {\n"
+        "                self.metrics.backend_active.fetch_add(1, Ordering::SeqCst);",
         "disconnect_releases_stream_ownership",
+        1,
+        "src/cleanup_owner.rs",
     )
     rust_mutation(
         pristine,
@@ -234,6 +117,7 @@ def main() -> None:
         "    while state.metrics.backend_active.load(Ordering::SeqCst) > 0\n"
         "        && tokio::time::Instant::now() < deadline\n"
         "    {\n"
+        "        state.reap_cleanup();\n"
         "        tokio::time::sleep(SHUTDOWN_POLL).await;\n"
         "    }\n",
         "",
@@ -375,7 +259,9 @@ def main() -> None:
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=False,\n",
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=True,\n",
     )
-    print("MUTATION_GUARDS_OK count=20")
+    if executed_cases != EXPECTED_CASES:
+        raise RuntimeError(f"mutation campaign census mismatch missing={sorted(EXPECTED_CASES - executed_cases)}")
+    print(f"MUTATION_GUARDS_OK count={len(executed_cases)}")
 
 
 if __name__ == "__main__":

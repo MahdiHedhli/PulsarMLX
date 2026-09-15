@@ -47,8 +47,14 @@ impl TestServer {
 
     async fn stop(mut self) {
         let _ = self.shutdown.take().expect("shutdown sender").send(());
-        self.task.await.expect("join").expect("serve result");
-        assert!(self.owner.drain(Duration::from_secs(2)).await.is_complete());
+        let shutdown = self.task.await.expect("join").expect("serve result");
+        let drained = self.owner.drain(Duration::from_secs(2)).await;
+        assert!(
+            drained.is_complete(),
+            "Q_CLEANUP_INCOMPLETE: shutdown={shutdown:?}; drained={drained:?}"
+        );
+        assert_eq!(drained.snapshot().stream_tasks_pending, 0);
+        assert_eq!(drained.snapshot().connection_tasks_pending, 0);
     }
 
     async fn request(
@@ -1131,12 +1137,14 @@ async fn shutdown_delivers_a_server_shutdown_event_to_an_active_stream() {
 
     let reader = tokio::spawn(async move {
         let mut raw = Vec::new();
-        let _ = tokio::time::timeout(Duration::from_secs(5), stream.read_to_end(&mut raw)).await;
-        raw
+        let read = tokio::time::timeout(Duration::from_secs(5), stream.read_to_end(&mut raw)).await;
+        (raw, read)
     });
 
     server.stop().await;
-    let raw = reader.await.expect("reader task");
+    let (raw, read) = reader.await.expect("reader task");
+    read.expect("shutdown reader deadline")
+        .expect("shutdown reader I/O");
     let text = String::from_utf8_lossy(&raw).into_owned();
 
     assert!(

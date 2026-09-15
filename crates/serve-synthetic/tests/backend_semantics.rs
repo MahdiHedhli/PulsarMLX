@@ -278,8 +278,14 @@ impl TestServer {
     }
 
     async fn join(self) {
-        self.task.await.expect("join").expect("serve");
-        assert!(self.owner.drain(Duration::from_secs(2)).await.is_complete());
+        let shutdown = self.task.await.expect("join").expect("serve");
+        let drained = self.owner.drain(Duration::from_secs(2)).await;
+        assert!(
+            drained.is_complete(),
+            "Q_CLEANUP_INCOMPLETE: shutdown={shutdown:?}; drained={drained:?}"
+        );
+        assert_eq!(drained.snapshot().stream_tasks_pending, 0);
+        assert_eq!(drained.snapshot().connection_tasks_pending, 0);
     }
 
     async fn stop(mut self) {
