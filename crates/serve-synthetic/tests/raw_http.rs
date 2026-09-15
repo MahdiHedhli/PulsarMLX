@@ -872,22 +872,27 @@ async fn invalid_declared_length_is_rejected_by_the_parser() {
         );
     }
 
-    // A declared length over the cap is the crate's own rejection and does
-    // carry the application error shape.
-    let oversized = custom_request(
-        &server,
+    // Declare an oversized body, then explicitly end the request's write side
+    // without transmitting body bytes. The length guard must win with 413;
+    // without it, read_body reaches the incomplete-body rejection (400).
+    // This isolates declared length from accumulated frames and avoids waiting
+    // for an absent body or writing after the early 413 response.
+    let oversized = raw_exchange_with_eof(
+        server.address,
         format!(
             "POST /v1/chat/completions HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
             server.address.port(),
             server.token,
             MAX_BODY_BYTES + 1
-        ),
+        ).as_bytes(),
     )
     .await;
+    // Reclaim owned tasks before the semantic assertion, including its failure.
+    let backend_started = server.state.metrics().backend_started;
+    server.stop().await;
     assert_eq!(oversized.status, 413);
     assert_eq!(oversized.json()["error"]["code"], "body_too_large");
-    assert_eq!(server.state.metrics().backend_started, 0);
-    server.stop().await;
+    assert_eq!(backend_started, 0);
 }
 
 /// F3: token limits outside the supported range are refused before a

@@ -146,6 +146,7 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
         code = child.returncode if child is not None else None
         terminal = {"status": "EVIDENCE_INCOMPLETE" if failure else "TIMEOUT" if timed_out else "SPAWN_ERROR" if spawn_error else "CLOSED", "code": code if code is None or code >= 0 else None, "native_signal": -code if code is not None and code < 0 else None, "spawn_error": spawn_error, "capture_error": failure, "timeout": timed_out, "child_pid": child.pid if child else None, "reaped": child is None or child.poll() is not None, "closed_wall": utc(), "closed_monotonic": time.monotonic(), "stream_bytes": counts}
         try:
+            terminal["stream_sha256"] = {name: digest(output / (name + ".raw")) for name in counts if (output / (name + ".raw")).is_file()}
             if lifecycle is not None:
                 event("CLOSE", **terminal)
             fd = exclusive(output / "terminal.json")
@@ -169,7 +170,9 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
 
 def clean_env(root):
     env = {key: os.environ[key] for key in ("HOME", "USER", "LOGNAME", "LANG") if key in os.environ}
-    env.update({"PATH": "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin", "TMPDIR": str(Path(root) / "tmp"), "PIP_CACHE_DIR": str(Path(root) / "cache" / "pip"), "XDG_CACHE_HOME": str(Path(root) / "cache" / "xdg"), "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"})
+    env.update({"PATH": "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin", "TMPDIR": str(Path(root) / "tmp"), "PIP_CONFIG_FILE": os.devnull, "XDG_CACHE_HOME": str(Path(root) / "cache" / "xdg"), "CLANG_MODULE_CACHE_PATH": str(Path(root) / "cache" / "module"), "LLVM_CACHE_DIR": str(Path(root) / "cache" / "lto"), "PYTHONDONTWRITEBYTECODE": "1", "PYTHONNOUSERSITE": "1"})
+    if "CODEX_HOME" in os.environ:
+        env["CODEX_HOME"] = os.environ["CODEX_HOME"]
     return env
 
 

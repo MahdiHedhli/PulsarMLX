@@ -16,13 +16,26 @@ def read_capture(path):
     for name in ("stdout", "stderr"):
         file = path / (name + ".raw")
         body = file.read_bytes()
-        if len(body) != terminal["stream_bytes"][name]:
+        if len(body) != terminal["stream_bytes"][name] or hashlib.sha256(body).hexdigest() != terminal.get("stream_sha256", {}).get(name):
             raise RuntimeError("EVIDENCE_INCOMPLETE: stream byte mismatch")
         streams[name] = body.decode("utf-8", errors="strict")
         rows.append({"path": str(file), "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest()})
     if terminal["status"] != "CLOSED" or terminal["capture_error"] or terminal["timeout"] or terminal["native_signal"] or terminal["spawn_error"] or not terminal["reaped"]:
         raise RuntimeError("NON_SEMANTIC_TERMINAL: " + terminal["status"])
     return terminal, streams["stdout"] + "\n" + streams["stderr"], rows
+
+
+def validate_identity(path, executable, executable_sha256, scripts=()):
+    launch = json.loads((Path(path) / "launch.json").read_bytes())
+    if launch["executable"] != str(Path(executable).resolve()) or launch["executable_sha256"] != executable_sha256:
+        raise RuntimeError("EVIDENCE_INCOMPLETE: wrong binary identity")
+    if hashlib.sha256(Path(executable).read_bytes()).hexdigest() != executable_sha256:
+        raise RuntimeError("EVIDENCE_INCOMPLETE: binary changed after launch")
+    actual = {row['path']: row['sha256'] for row in launch['script_identities']}
+    for source, expected in scripts:
+        if actual.get(str(Path(source).resolve())) != expected or hashlib.sha256(Path(source).read_bytes()).hexdigest() != expected:
+            raise RuntimeError("EVIDENCE_INCOMPLETE: wrong source identity")
+    return "IDENTITY_PASS"
 
 
 def validate_rust(terminal, output, test, assertion=None, active=True):

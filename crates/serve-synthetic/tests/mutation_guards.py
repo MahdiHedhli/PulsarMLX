@@ -31,15 +31,6 @@ def main() -> None:
     args.scratch.mkdir(parents=True, mode=0o700)
     args.target.mkdir(parents=True, exist_ok=True)
 
-    rust_mutation(
-        pristine,
-        args.scratch,
-        args.target,
-        "missing-auth",
-        "if !valid_auth(request.headers().get(AUTHORIZATION), &state.token) {",
-        "if false {",
-        "health_and_models_enforce_the_boundary",
-    )
     # F3: the declared-length cap and the accumulated-frame cap are separate
     # defences and are mutated separately. Mutating both at once (as the former
     # "excess-body" mutant did) let a single test conceal a missing check: a
@@ -53,6 +44,16 @@ def main() -> None:
         "if length > MAX_BODY_BYTES {",
         "if length > usize::MAX {",
         "invalid_declared_length_is_rejected_by_the_parser",
+    )
+    # R's corrected independent length oracle is the first targeted gate.
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "missing-auth",
+        "if !valid_auth(request.headers().get(AUTHORIZATION), &state.token) {",
+        "if false {",
+        "health_and_models_enforce_the_boundary",
     )
     rust_mutation(
         pristine,
@@ -262,7 +263,10 @@ def main() -> None:
     )
     if executed_cases != EXPECTED_CASES:
         raise RuntimeError(f"mutation campaign census mismatch missing={sorted(EXPECTED_CASES - executed_cases)}")
-    print(f"MUTATION_GUARDS_OK count={len(executed_cases)}")
+    from q_campaign import qualified_cases
+    if qualified_cases != EXPECTED_CASES:
+        raise RuntimeError(f"PARTIAL: unqualified properties={sorted(EXPECTED_CASES-qualified_cases)}")
+    print(f"MUTATION_GUARDS_OK count={len(qualified_cases)}")
 
 
 if __name__ == "__main__":

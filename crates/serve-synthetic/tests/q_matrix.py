@@ -27,6 +27,20 @@ SPECS = {
     "redirect-follow": ("SDK does not follow redirects beyond its original loopback request", "prove_destination_and_redirect_guards", None, "Q_REDIRECT_FOLLOW_ATTEMPT"),
 }
 
+# Exact source attribution, corrected prospectively from Q's retained aliases.
+SYMBOLS = {
+    "missing-auth": "handle_inner", "declared-length-cap": "chat",
+    "silent-stream-failure": "stream_chat", "flat-error-type": "error_type",
+    "early-permit-release": "stream_chat / release_owned_backend",
+    "skipped-provider-cancellation": "cancel_owned_backend",
+    "invalid-terminal-accepted": "BackendTranscript::accept",
+    "consumer-authored-usage": "nonstream_chat",
+    "eof-as-provider-return": "nonstream_chat / BackendFutureState",
+    "missing-release": "Core::reap / Drop for Core::drop",
+    "false-terminal": "SyntheticBackend::begin",
+    "cloud-destination": "LoopbackGuardTransport.handle_request / require_loopback",
+}
+
 
 def inventory(pristine):
     pristine = Path(pristine)
@@ -51,6 +65,7 @@ def inventory(pristine):
         if actual != cardinality:
             raise RuntimeError("PROPERTY_UNCOVERED: " + name + " anchor count=" + str(actual))
         safety, symbol, needle, message = SPECS[name]
+        symbol = SYMBOLS.get(name, symbol)
         assertion = message
         if kind == "rust":
             test_path = "tests/" + target + ".rs"
@@ -69,7 +84,7 @@ def inventory(pristine):
                 if position < start:
                     raise RuntimeError("PROPERTY_UNCOVERED: assertion not found")
             assertion = {"path": test_path, "line": tests[:position].count("\n") + 1, "message": message, "source_excerpt": needle, "test_source_sha256": hashlib.sha256(tests.encode()).hexdigest()}
-        rows.append({"id": name, "kind": kind, "safety_property": safety, "source_path": source_path, "source_symbol": symbol, "source_sha256": hashlib.sha256(source.encode()).hexdigest(), "anchor": old, "expected_cardinality": cardinality, "actual_cardinality": actual, "replacement": new, "injected_semantic_fault": "Replace the exact guarded mechanism with the frozen replacement", "pristine_named_test": test, "test_target": target if kind == "rust" else None, "intended_failing_assertion": assertion})
+        rows.append({"id": name, "kind": kind, "safety_property": safety, "source_path": source_path, "source_symbol": symbol, "source_sha256": hashlib.sha256(source.encode()).hexdigest(), "anchor": old, "expected_cardinality": cardinality, "actual_cardinality": actual, "replacement": new, "injected_semantic_fault": "Replace the exact guarded mechanism with the frozen replacement", "pristine_named_test": test, "test_target": target if kind == "rust" else None, "intended_failing_assertion": assertion, "test_source_sha256": hashlib.sha256((pristine / (test_path if kind == "rust" else "tests/sdk_client.py")).read_bytes()).hexdigest(), "independence": {"independent": True, "dependency_ids": [], "independent_of_ids": sorted(set(SPECS)-{name}), "basis": "Each selected pristine test has fresh server/cleanup owners; each fault starts from immutable pristine bytes in a fresh source and target root, with no prior mutant state or evidence dependency"}, "stimulus_contract": "Headers only, oversized declared length, explicit write-half-close; pristine413/body_too_large, cap-disabled400/invalid_body; no frame accumulation; exact status assertion after complete owned drain" if name == "declared-length-cap" else "Existing independent named test and exact frozen assertion; no helper/signal/deadline substitutes"})
     if len(rows) != 20 or {row["id"] for row in rows} != set(SPECS):
         raise RuntimeError("PROPERTY_UNCOVERED: complete census mismatch")
     return {"status": "MATRIX_ADMITTED", "harness_sha256": hashlib.sha256(harness.read_bytes()).hexdigest(), "properties": rows, "historical_p_results_used": False}
