@@ -149,9 +149,9 @@ except o.InputError as error:
     sys.exit(0 if str(error) == 'ORACLE_RECURRENCE_CROSSCHECK_OUTPUT' else 2)
 sys.exit(3)
 """ % root
-        optimized=subprocess.run([sys.executable,'-O','-c',child],text=True,capture_output=True)
+        optimized=subprocess.run([sys.executable,'-O','-c',child],text=True,capture_output=True,timeout=30)
         self.assertEqual(optimized.returncode,0,optimized.stdout+optimized.stderr)
-        canary=subprocess.run([sys.executable,'-O','-c',"import unittest;unittest.TestCase().fail('OPTIMIZED_CANARY')"],text=True,capture_output=True)
+        canary=subprocess.run([sys.executable,'-O','-c',"import unittest;unittest.TestCase().fail('OPTIMIZED_CANARY')"],text=True,capture_output=True,timeout=30)
         self.assertNotEqual(canary.returncode,0)
         self.assertIn('OPTIMIZED_CANARY',canary.stderr)
 
