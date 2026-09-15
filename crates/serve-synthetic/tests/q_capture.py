@@ -14,6 +14,11 @@ import time
 STREAM_LIMIT = 64 * 1024 * 1024
 
 
+class CaptureInterrupted(BaseException):
+    """Distinct from InterruptedError, which selectors may suppress."""
+    pass
+
+
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -36,7 +41,7 @@ def utc():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
 
-def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_failure=False):
+def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_failure=False, termination_grace=0.5):
     output = Path(output)
     output.mkdir(mode=0o700, parents=True, exist_ok=False)
     start = time.monotonic()
@@ -49,6 +54,10 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
     terminal = None
     selector = selectors.DefaultSelector()
     lifecycle = None
+    previous_signals = {}
+
+    def interrupted(signum, _frame):
+        raise CaptureInterrupted("supervisor interrupted by signal " + str(signum))
 
     def event(kind, **extra):
         write_all(lifecycle, (json.dumps({"event": kind, "wall": utc(), "monotonic": time.monotonic(), **extra}, sort_keys=True) + "\n").encode())
@@ -61,7 +70,7 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
         except ProcessLookupError:
             pass
         try:
-            child.wait(timeout=0.5)
+            child.wait(timeout=termination_grace)
         except subprocess.TimeoutExpired:
             pass
         try:
@@ -71,6 +80,8 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
         child.wait(timeout=5)
 
     try:
+        for signum in (signal.SIGTERM, signal.SIGINT):
+            previous_signals[signum] = signal.signal(signum, interrupted)
         for name in ("stdout", "stderr"):
             fds[name] = exclusive(output / (name + ".raw"))
         lifecycle = os.open(output / "lifecycle.jsonl", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_APPEND | os.O_NOFOLLOW, 0o600)
@@ -82,7 +93,7 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
                 candidate = Path(cwd) / candidate
             if candidate.suffix in {".py", ".sh", ".rs"} and candidate.is_file():
                 script_identities.append({"path": str(candidate.resolve()), "sha256": digest(candidate)})
-        launch = {"argv": argv, "cwd": str(cwd), "environment_keys": sorted(env), "executable": str(executable), "executable_sha256": digest(executable) if executable.is_file() else None, "script_identities": script_identities, "supervisor_pid": os.getpid(), "supervisor_sha256": digest(__file__), "timeout_seconds": timeout, "stream_limit_bytes": limit, "started_wall": utc(), "started_monotonic": start}
+        launch = {"argv": argv, "cwd": str(cwd), "environment_keys": sorted(env), "executable": str(executable), "executable_sha256": digest(executable) if executable.is_file() else None, "script_identities": script_identities, "supervisor_pid": os.getpid(), "supervisor_sha256": digest(__file__), "timeout_seconds": timeout, "termination_grace_seconds": termination_grace, "stream_limit_bytes": limit, "started_wall": utc(), "started_monotonic": start}
         fd = exclusive(output / "launch.json")
         try:
             write_all(fd, (json.dumps(launch, indent=2) + "\n").encode())
@@ -151,6 +162,8 @@ def capture(argv, cwd, env, output, timeout=120, limit=STREAM_LIMIT, inject_fail
             os.close(fd)
         if lifecycle is not None:
             os.close(lifecycle)
+        for signum, previous in previous_signals.items():
+            signal.signal(signum, previous)
     return terminal
 
 
@@ -169,6 +182,6 @@ if __name__ == "__main__":
     parser.add_argument("argv", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     argv = args.argv[1:] if args.argv and args.argv[0] == "--" else args.argv
-    result = capture(argv, args.cwd, clean_env(args.root), args.output, args.timeout)
+    result = capture(argv, args.cwd, clean_env(args.root), args.output, args.timeout, termination_grace=5)
     print(json.dumps(result, sort_keys=True))
     raise SystemExit(0 if result["status"] == "CLOSED" and result["code"] == 0 else 1)

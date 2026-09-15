@@ -91,6 +91,25 @@ def main():
     rows = [{"path": str(path.relative_to(output)), "bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in sorted(case.iterdir())]
     require({row["path"].split("/")[-1] for row in rows} == {"stdout.raw", "terminal.json"}, "open failure inventory was fabricated")
     manifests.append({"case": "open-failure", "terminal": terminal, "actual_files": rows})
+    # Interrupt an actual nested supervisor. It must preserve an incomplete
+    # terminal and reap its separately owned child group before returning.
+    nested = output / "interrupted-inner"
+    helper = "import sys,threading,time,os,signal; sys.path.insert(0," + repr(str(Path(__file__).parent)) + "); import q_capture; threading.Thread(target=lambda:(time.sleep(.2),os.kill(os.getpid(),signal.SIGTERM)),daemon=True).start(); result=q_capture.capture([sys.executable,'-I','-B','-c','import time;print(\\\"prefix\\\",flush=True);time.sleep(30)']," + repr(args.root) + ",q_capture.clean_env(" + repr(args.root) + ")," + repr(str(nested)) + "); print(result); raise SystemExit(3)"
+    outer = output / "interrupted-outer"
+    result = q.capture([sys.executable, "-I", "-B", "-c", helper], args.root, env, outer, termination_grace=5)
+    inner = json.loads((nested / "terminal.json").read_bytes())
+    require(result["status"] == "CLOSED" and result["code"] == 3 and inner["status"] == "EVIDENCE_INCOMPLETE" and inner["reaped"], "supervisor interruption was not truthfully closed")
+    require("CaptureInterrupted" in inner["capture_error"] and (nested / "stdout.raw").read_bytes() == b"prefix\n", "interrupted prefix/error missing")
+    try:
+        os.killpg(inner["child_pid"], 0)
+    except ProcessLookupError:
+        pass
+    else:
+        raise RuntimeError("interrupted owned child group remains")
+    for name, case, terminal in (("interrupted-inner", nested, inner), ("interrupted-outer", outer, result)):
+        rows = [{"path": str(path.relative_to(output)), "bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in sorted(case.iterdir())]
+        require(len(rows) == 5, "interruption actual inventory incomplete")
+        manifests.append({"case": name, "terminal": terminal, "actual_files": rows})
     fd = q.exclusive(output / "qualification-manifest.json")
     try:
         q.write_all(fd, (json.dumps({"mode": "optimized" if sys.flags.optimize else "normal", "status": "CAPTURE_SYNTHETIC_QUALIFIED", "cases": manifests}, indent=2) + "\n").encode())
