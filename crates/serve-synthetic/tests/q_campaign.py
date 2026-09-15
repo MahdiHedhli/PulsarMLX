@@ -50,6 +50,7 @@ def rust_env(root, target):
     for key in ("CARGO_HOME", "RUSTUP_HOME"):
         if key in os.environ:
             env[key] = os.environ[key]
+    env["CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER"] = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
     return env
 
 
