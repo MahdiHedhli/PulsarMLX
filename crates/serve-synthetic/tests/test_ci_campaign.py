@@ -20,7 +20,7 @@ REPOSITORY=SOURCE.parents[1]
 WORKFLOW=REPOSITORY/'.github/workflows/serving-synthetic.yml'
 
 class Contract(unittest.TestCase):
-    def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.graph=Path(self.tmp.name)
+    def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.graph=Path(self.tmp.name).resolve()
     def tearDown(self):self.tmp.cleanup()
     def fake_tools(self):return {k:{'path':sys.executable,'sha256':'inert-tool-stub','version':'not-qualification'} for k in ['cargo','rustc']}
     def stub(self,command,source,env,output,seconds):
