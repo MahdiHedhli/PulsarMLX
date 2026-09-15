@@ -40,7 +40,7 @@ def validate_rust(terminal, output, test, assertion=None, active=True):
         return "SURVIVED" if active else "EXPECTED_INACTIVE"
     if terminal["code"] != 101 or selected[0][1] != "FAILED" or results[0] != ("FAILED", "0", "1"):
         raise RuntimeError("NON_SEMANTIC_TEST_FAILURE")
-    sites = re.findall(r"thread '([^']+)' panicked at ([^\n]+):", output)
+    sites = re.findall(r"thread '([^']+)'(?: \([0-9]+\))? panicked at ([^\n]+):", output)
     site = assertion["path"] + ":" + str(assertion["line"]) + ":"
     if len(sites) != 1 or sites[0][0] != test or not sites[0][1].startswith(site) or assertion["message"] not in output:
         raise RuntimeError("WRONG_ASSERTION_FAILURE")

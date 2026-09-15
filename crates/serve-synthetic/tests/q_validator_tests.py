@@ -27,6 +27,7 @@ def main():
         ("capture-failure", {**closed, "status": "EVIDENCE_INCOMPLETE", "capture_error": "write failed"}, fail, assertion, True, None),
         ("no-selected-test", closed, "test result: ok. 0 passed; 0 failed;", assertion, True, None),
         ("valid-semantic-kill", closed, fail, assertion, True, "SEMANTIC_KILL"),
+        ("numeric-rust-thread-id", closed, fail.replace("' panicked", "' (46239811) panicked"), assertion, True, "SEMANTIC_KILL"),
         ("expected-inactive", {**closed, "code": 0}, passed, assertion, False, "EXPECTED_INACTIVE"),
         ("pristine-pass", {**closed, "code": 0}, passed, None, True, "PRISTINE_PASS"),
     ]
