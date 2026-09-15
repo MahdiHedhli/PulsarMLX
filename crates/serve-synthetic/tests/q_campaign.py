@@ -73,9 +73,13 @@ def rust_mutation(pristine, scratch, target, name, old, new, test_name, count=1,
     row, case = begin(name)
     if (old, new, count, source_path, test_name, test_target) != (row["anchor"], row["replacement"], row["expected_cardinality"], row["source_path"], row["pristine_named_test"], row["test_target"]):
         raise RuntimeError("PROPERTY_UNCOVERED: fault differs from frozen matrix")
-    env = rust_env(owned_root, target)
+    pristine_env = rust_env(owned_root, target / "pristine")
+    mutant_target = target / "mutants" / name
+    if mutant_target.exists():
+        raise RuntimeError("MUTATION_REJECTED: mutant target was not fresh")
+    env = rust_env(owned_root, mutant_target)
     cargo = "/Users/mhedhli/.rustup/toolchains/stable-aarch64-apple-darwin/bin/cargo"
-    terminal, output, _ = recorded([cargo, "test", "--offline", "--locked", "--test", test_target, test_name, "--", "--exact", "--nocapture"], pristine, env, case / "pristine-test")
+    terminal, output, _ = recorded([cargo, "test", "--offline", "--locked", "--test", test_target, test_name, "--", "--exact", "--nocapture"], pristine, pristine_env, case / "pristine-test")
     validate_rust(terminal, output, test_name)
     mutant = scratch / name
     shutil.copytree(pristine, mutant, ignore=shutil.ignore_patterns("target", "__pycache__"))
