@@ -1,4 +1,4 @@
-use pulsar_serve_synthetic::{bind_loopback, read_token_file, serve, AppState};
+use pulsar_serve_synthetic::{bind_loopback, read_token_file, serve, AppState, CleanupOwner};
 use std::path::PathBuf;
 
 #[tokio::main]
@@ -37,7 +37,8 @@ async fn run() -> Result<(), String> {
     }
     let token_path = token_file.ok_or("missing --token-file")?;
     let token = read_token_file(&token_path)?;
-    let state = AppState::new(token).map_err(str::to_owned)?;
+    let owner = CleanupOwner::new();
+    let state = AppState::new(token, &owner).map_err(str::to_owned)?;
     let listener = bind_loopback(port)
         .await
         .map_err(|_| "failed to bind IPv4 loopback")?;
@@ -45,9 +46,21 @@ async fn run() -> Result<(), String> {
         .local_addr()
         .map_err(|_| "failed to read listener address")?;
     eprintln!("pulsar-serve-synthetic: listening on {address}");
-    serve(listener, state, async {
+    let outcome = serve(listener, state, async {
         let _ = tokio::signal::ctrl_c().await;
     })
     .await
-    .map_err(|_| "server failed".to_owned())
+    .map_err(|_| "server failed".to_owned())?;
+    if outcome.is_complete() {
+        Ok(())
+    } else {
+        // The CLI currently installs only the inline synthetic provider. Keep
+        // its designated owner through explicit finite recovery as well.
+        let recovered = owner.drain(std::time::Duration::from_secs(1)).await;
+        if recovered.is_complete() {
+            Ok(())
+        } else {
+            Err("shutdown incomplete; outstanding cleanup retained".into())
+        }
+    }
 }

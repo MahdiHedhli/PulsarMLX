@@ -14,14 +14,16 @@ use std::io::Read;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tokio::sync::{mpsc, watch, OwnedSemaphorePermit, Semaphore};
-use tokio::task::JoinSet;
+use tokio::sync::{mpsc, watch, Semaphore};
 use tokio_stream::wrappers::ReceiverStream;
 
 mod backend;
+mod cleanup_owner;
+use cleanup_owner::GenerationGuard;
+pub use cleanup_owner::{CleanupOwner, DrainHandle, PendingCleanup, ShutdownOutcome};
 pub mod runtime_adapter;
 pub use backend::{
     ActualUsage, BackendCancellation, BackendDescriptor, BackendEvent, BackendEventSender,
@@ -70,8 +72,7 @@ pub struct AppState {
     next_id: Arc<AtomicU64>,
     metrics: Arc<Metrics>,
     shutdown: watch::Sender<bool>,
-    cleanup: Arc<Mutex<Vec<PendingGeneration>>>,
-    stream_tasks: Arc<Mutex<JoinSet<()>>>,
+    cleanup: DrainHandle,
 }
 
 #[derive(Default)]
@@ -88,6 +89,10 @@ pub struct Metrics {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MetricsSnapshot {
+    pub cleanup_owner_alive: bool,
+    pub cleanup_join_in_progress: bool,
+    pub server_running: bool,
+    pub connection_tasks_pending: usize,
     pub runtime_workers_joined: usize,
     pub runtime_producers_returned_unjoined: usize,
     /// Capacity leases retained for workers not yet actually joined.
@@ -112,13 +117,14 @@ pub struct MetricsSnapshot {
 }
 
 impl AppState {
-    pub fn new(token: String) -> Result<Self, &'static str> {
-        Self::with_backend(token, Arc::new(SyntheticBackend))
+    pub fn new(token: String, owner: &CleanupOwner) -> Result<Self, &'static str> {
+        Self::with_backend(token, Arc::new(SyntheticBackend), owner)
     }
 
     pub fn with_backend(
         token: String,
         backend: Arc<dyn CompletionBackend>,
+        owner: &CleanupOwner,
     ) -> Result<Self, &'static str> {
         let token = token.into_bytes();
         if token.len() < 16 || token.len() > 256 || token.iter().any(u8::is_ascii_whitespace) {
@@ -133,66 +139,25 @@ impl AppState {
             token: token.into(),
             backend,
             descriptor,
-            generation_slots: Arc::new(Semaphore::new(MAX_GENERATIONS)),
+            generation_slots: owner.slots(),
             next_id: Arc::new(AtomicU64::new(1)),
-            metrics: Arc::new(Metrics::default()),
+            metrics: owner.metric_storage(),
             shutdown,
-            cleanup: Arc::new(Mutex::new(Vec::new())),
-            stream_tasks: Arc::new(Mutex::new(JoinSet::new())),
+            cleanup: owner.handle(),
         })
     }
 
     pub fn metrics(&self) -> MetricsSnapshot {
-        let (pending_count, returned_unjoined) = {
-            let pending = self.cleanup.lock().expect("cleanup registry");
-            (
-                pending.len(),
-                pending
-                    .iter()
-                    .filter(|entry| entry.worker.producer_returned())
-                    .count(),
-            )
-        };
-        MetricsSnapshot {
-            runtime_workers_joined: self.metrics.runtime_workers_joined.load(Ordering::SeqCst),
-            runtime_producers_returned_unjoined: returned_unjoined,
-            runtime_cleanup_pending: pending_count,
-            stream_tasks_pending: self.stream_tasks.lock().expect("stream registry").len(),
-            backend_started: self.metrics.backend_started.load(Ordering::SeqCst),
-            backend_active: self.metrics.backend_active.load(Ordering::SeqCst),
-            backend_finished: self.metrics.backend_finished.load(Ordering::SeqCst),
-            backend_protocol_failures: self
-                .metrics
-                .backend_protocol_failures
-                .load(Ordering::SeqCst),
-            backend_cleanup_bound_drops: self
-                .metrics
-                .backend_cleanup_bound_drops
-                .load(Ordering::SeqCst),
-            connections_spawned: self.metrics.connections_spawned.load(Ordering::SeqCst),
-            connections_reaped: self.metrics.connections_reaped.load(Ordering::SeqCst),
-        }
+        self.cleanup.metrics()
     }
 
     /// Nonblocking joins only: running synchronous workers remain owned.
     pub fn reap_cleanup(&self) {
-        let mut pending = self.cleanup.lock().expect("cleanup registry");
-        let mut index = 0;
-        while index < pending.len() {
-            if pending[index].worker.join_finished() {
-                let joined = pending.swap_remove(index);
-                drop(joined.lease);
-            } else {
-                index += 1;
-            }
-        }
-        drop(pending);
-        let mut streams = self.stream_tasks.lock().expect("stream registry");
-        while streams.try_join_next().is_some() {}
+        self.cleanup.reap();
     }
 
-    /// Finite drain. Caller must retain this owner on incomplete cleanup and
-    /// retry after its controlled worker supervisor has released/joined work.
+    /// Request-resource snapshot only. Retain the separate CleanupOwner; use
+    /// its typed drain result for complete server/task shutdown qualification.
     pub async fn drain_cleanup(&self, timeout: Duration) -> MetricsSnapshot {
         let deadline = tokio::time::Instant::now() + timeout;
         loop {
@@ -204,6 +169,28 @@ impl AppState {
                 return snapshot;
             }
             tokio::time::sleep(SHUTDOWN_POLL).await;
+        }
+    }
+}
+
+impl Metrics {
+    fn snapshot(&self) -> MetricsSnapshot {
+        MetricsSnapshot {
+            cleanup_owner_alive: false,
+            cleanup_join_in_progress: false,
+            server_running: false,
+            connection_tasks_pending: 0,
+            runtime_workers_joined: self.runtime_workers_joined.load(Ordering::SeqCst),
+            runtime_producers_returned_unjoined: 0,
+            runtime_cleanup_pending: 0,
+            stream_tasks_pending: 0,
+            backend_started: self.backend_started.load(Ordering::SeqCst),
+            backend_active: self.backend_active.load(Ordering::SeqCst),
+            backend_finished: self.backend_finished.load(Ordering::SeqCst),
+            backend_protocol_failures: self.backend_protocol_failures.load(Ordering::SeqCst),
+            backend_cleanup_bound_drops: self.backend_cleanup_bound_drops.load(Ordering::SeqCst),
+            connections_spawned: self.connections_spawned.load(Ordering::SeqCst),
+            connections_reaped: self.connections_reaped.load(Ordering::SeqCst),
         }
     }
 }
@@ -238,7 +225,10 @@ pub fn read_token_file(path: &Path) -> Result<String, String> {
     file.read_to_string(&mut token)
         .map_err(|_| "cannot read token file")?;
     let token = token.strip_suffix('\n').unwrap_or(&token);
-    AppState::new(token.to_owned()).map_err(str::to_owned)?;
+    if token.len() < 16 || token.len() > 256 || token.bytes().any(|byte| byte.is_ascii_whitespace())
+    {
+        return Err("synthetic token must be 16..=256 non-whitespace bytes".into());
+    }
     Ok(token.to_owned())
 }
 
@@ -246,13 +236,22 @@ pub async fn bind_loopback(port: u16) -> std::io::Result<TcpListener> {
     TcpListener::bind(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), port)).await
 }
 
-pub async fn serve<F>(listener: TcpListener, state: AppState, shutdown: F) -> std::io::Result<()>
+pub async fn serve<F>(
+    listener: TcpListener,
+    state: AppState,
+    shutdown: F,
+) -> std::io::Result<ShutdownOutcome>
 where
     F: Future<Output = ()>,
 {
     let expected_port = listener.local_addr()?.port();
     let connection_slots = Arc::new(Semaphore::new(MAX_CONNECTIONS));
-    let mut tasks = JoinSet::new();
+    let server_guard = state
+        .cleanup
+        .begin_server(state.shutdown.clone())
+        .ok_or_else(|| {
+            std::io::Error::other("reachable cleanup supervisor required; one server per owner")
+        })?;
     let mut consecutive_accept_errors = 0usize;
     tokio::pin!(shutdown);
 
@@ -264,9 +263,6 @@ where
             // completed JoinHandles do not accumulate for the process lifetime.
             // The `!tasks.is_empty()` guard disables the branch when the set is
             // empty, which would otherwise return `None` immediately and spin.
-            Some(_) = tasks.join_next(), if !tasks.is_empty() => {
-                state.metrics.connections_reaped.fetch_add(1, Ordering::SeqCst);
-            }
             accepted = listener.accept() => {
                 // F8: a transient per-connection failure - a peer that vanished
                 // between the SYN and the accept, or descriptor exhaustion under
@@ -302,7 +298,7 @@ where
                 };
                 let app = state.clone();
                 state.metrics.connections_spawned.fetch_add(1, Ordering::SeqCst);
-                tasks.spawn(async move {
+                state.cleanup.spawn_connection(async move {
                     let service = service_fn(move |request| handle(request, app.clone(), expected_port));
                     let mut builder = http1::Builder::new();
                     builder
@@ -327,22 +323,8 @@ where
         state.reap_cleanup();
         tokio::time::sleep(SHUTDOWN_POLL).await;
     }
-    tasks.abort_all();
-    while tasks.join_next().await.is_some() {
-        state
-            .metrics
-            .connections_reaped
-            .fetch_add(1, Ordering::SeqCst);
-    }
-    state.reap_cleanup();
-    let snapshot = state.metrics();
-    if snapshot.backend_active != 0 || snapshot.stream_tasks_pending != 0 {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::TimedOut,
-            "shutdown incomplete: retain AppState and drain owned cleanup",
-        ));
-    }
-    Ok(())
+    drop(server_guard);
+    Ok(state.cleanup.drain(SHUTDOWN_GRACE).await)
 }
 
 async fn handle(
@@ -506,7 +488,13 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
     let descriptor = state.descriptor;
     let (cancel_sender, cancellation) = BackendCancellation::pair();
     let (event_sender, event_receiver) = mpsc::channel(BACKEND_EVENT_CAPACITY);
-    let mut guard = GenerationGuard::new(state.clone(), permit);
+    let Some(mut guard) = state.cleanup.register(permit) else {
+        return api_error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "cleanup_owner_missing",
+            "cleanup supervisor is unavailable",
+        );
+    };
     let session = match state.backend.begin(
         BackendRequest {
             model_id: parsed.model.clone(),
@@ -529,8 +517,7 @@ async fn chat(request: Request<Incoming>, state: AppState) -> Response<BoxBody> 
             return backend_error_response(error);
         }
     };
-    guard.worker = session.worker.clone();
-    guard.lease.as_mut().expect("generation lease").worker = session.worker.clone();
+    guard.attach_worker(session.worker.clone());
     if parsed.stream {
         stream_chat(
             state,
@@ -695,79 +682,6 @@ impl ChatRequest {
     }
 }
 
-struct GenerationGuard {
-    state: AppState,
-    lease: Option<GenerationLease>,
-    worker: Option<Arc<runtime_adapter::Worker>>,
-}
-
-struct GenerationLease {
-    state: AppState,
-    _permit: OwnedSemaphorePermit,
-    worker: Option<Arc<runtime_adapter::Worker>>,
-}
-struct PendingGeneration {
-    worker: Arc<runtime_adapter::Worker>,
-    lease: GenerationLease,
-}
-
-impl GenerationGuard {
-    fn new(state: AppState, permit: OwnedSemaphorePermit) -> Self {
-        state.metrics.backend_started.fetch_add(1, Ordering::SeqCst);
-        state.metrics.backend_active.fetch_add(1, Ordering::SeqCst);
-        Self {
-            state: state.clone(),
-            lease: Some(GenerationLease {
-                state,
-                _permit: permit,
-                worker: None,
-            }),
-            worker: None,
-        }
-    }
-}
-
-impl Drop for GenerationGuard {
-    fn drop(&mut self) {
-        if let Some(worker) = &self.worker {
-            worker.request_cancel();
-            if !worker.join_finished() {
-                self.state
-                    .cleanup
-                    .lock()
-                    .expect("cleanup registry")
-                    .push(PendingGeneration {
-                        worker: worker.clone(),
-                        lease: self.lease.take().expect("generation lease"),
-                    });
-            }
-        }
-    }
-}
-
-impl Drop for GenerationLease {
-    fn drop(&mut self) {
-        if self
-            .worker
-            .as_ref()
-            .is_some_and(|worker| worker.actually_joined())
-        {
-            self.state
-                .metrics
-                .runtime_workers_joined
-                .fetch_add(1, Ordering::SeqCst);
-        }
-        self.state
-            .metrics
-            .backend_active
-            .fetch_sub(1, Ordering::SeqCst);
-        self.state
-            .metrics
-            .backend_finished
-            .fetch_add(1, Ordering::SeqCst);
-    }
-}
-
 async fn nonstream_chat(
     state: AppState,
     guard: GenerationGuard,
@@ -862,8 +776,8 @@ fn stream_chat(
 ) -> Response<BoxBody> {
     let (sender, receiver) = mpsc::channel::<Result<Frame<Bytes>, Infallible>>(1);
     let mut shutdown = state.shutdown.subscribe();
-    let task_owner = state.stream_tasks.clone();
-    task_owner.lock().expect("stream registry").spawn(async move {
+    let task_owner = state.cleanup.clone();
+    task_owner.spawn_stream(async move {
         let mut guard = Some(guard);
         let deadline = tokio::time::sleep(GENERATION_DEADLINE);
         tokio::pin!(deadline);
@@ -1310,9 +1224,13 @@ mod tests {
 
     #[test]
     fn backend_is_selected_only_at_state_construction() {
-        let state =
-            AppState::with_backend("synthetic-test-token-value".into(), Arc::new(TestBackend))
-                .expect("valid token");
+        let owner = CleanupOwner::new();
+        let state = AppState::with_backend(
+            "synthetic-test-token-value".into(),
+            Arc::new(TestBackend),
+            &owner,
+        )
+        .expect("valid token");
         assert_eq!(state.descriptor.model_id, "test-constructor-model");
         assert_eq!(state.descriptor.owned_by, "test-owner");
     }

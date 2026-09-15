@@ -1,7 +1,8 @@
 use pulsar_serve_synthetic::{
     bind_loopback, serve, ActualUsage, AppState, BackendCancellation, BackendDescriptor,
     BackendEvent, BackendEventSender, BackendFailure, BackendFinishReason, BackendFuture,
-    BackendMessage, BackendRequest, BackendRole, BackendSession, CompletionBackend,
+    BackendMessage, BackendRequest, BackendRole, BackendSession, CleanupOwner, CompletionBackend,
+    ShutdownOutcome,
 };
 use serde_json::Value;
 use std::future::{pending, Future};
@@ -230,17 +231,20 @@ impl CompletionBackend for LifecycleBackend {
 }
 
 struct TestServer {
+    owner: CleanupOwner,
     address: std::net::SocketAddr,
     token: String,
     state: AppState,
     shutdown: Option<oneshot::Sender<()>>,
-    task: tokio::task::JoinHandle<std::io::Result<()>>,
+    task: tokio::task::JoinHandle<std::io::Result<ShutdownOutcome>>,
 }
 
 impl TestServer {
     async fn start<B: CompletionBackend + 'static>(backend: B) -> Self {
         let token = "semantic-provider-test-token".to_owned();
-        let state = AppState::with_backend(token.clone(), Arc::new(backend)).expect("state");
+        let owner = CleanupOwner::new();
+        let state =
+            AppState::with_backend(token.clone(), Arc::new(backend), &owner).expect("state");
         let listener = bind_loopback(0).await.expect("bind");
         let address = listener.local_addr().expect("address");
         let (shutdown, receiver) = oneshot::channel();
@@ -248,6 +252,7 @@ impl TestServer {
             let _ = receiver.await;
         }));
         Self {
+            owner,
             address,
             token,
             state,
@@ -274,6 +279,7 @@ impl TestServer {
 
     async fn join(self) {
         self.task.await.expect("join").expect("serve");
+        assert!(self.owner.drain(Duration::from_secs(2)).await.is_complete());
     }
 
     async fn stop(mut self) {

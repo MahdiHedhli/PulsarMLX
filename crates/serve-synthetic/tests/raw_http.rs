@@ -1,4 +1,6 @@
-use pulsar_serve_synthetic::{bind_loopback, serve, AppState, MAX_BODY_BYTES};
+use pulsar_serve_synthetic::{
+    bind_loopback, serve, AppState, CleanupOwner, ShutdownOutcome, MAX_BODY_BYTES,
+};
 use serde_json::Value;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
@@ -9,11 +11,12 @@ use tokio::sync::oneshot;
 static TOKEN_ID: AtomicU64 = AtomicU64::new(1);
 
 struct TestServer {
+    owner: CleanupOwner,
     address: std::net::SocketAddr,
     token: String,
     state: AppState,
     shutdown: Option<oneshot::Sender<()>>,
-    task: tokio::task::JoinHandle<std::io::Result<()>>,
+    task: tokio::task::JoinHandle<std::io::Result<ShutdownOutcome>>,
 }
 
 impl TestServer {
@@ -23,7 +26,8 @@ impl TestServer {
             std::process::id(),
             TOKEN_ID.fetch_add(1, Ordering::SeqCst)
         );
-        let state = AppState::new(token.clone()).expect("test token");
+        let owner = CleanupOwner::new();
+        let state = AppState::new(token.clone(), &owner).expect("test token");
         let listener = bind_loopback(0).await.expect("bind");
         let address = listener.local_addr().expect("address");
         let (shutdown, receiver) = oneshot::channel();
@@ -32,6 +36,7 @@ impl TestServer {
             let _ = receiver.await;
         }));
         Self {
+            owner,
             address,
             token,
             state,
@@ -43,6 +48,7 @@ impl TestServer {
     async fn stop(mut self) {
         let _ = self.shutdown.take().expect("shutdown sender").send(());
         self.task.await.expect("join").expect("serve result");
+        assert!(self.owner.drain(Duration::from_secs(2)).await.is_complete());
     }
 
     async fn request(

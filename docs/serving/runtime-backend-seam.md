@@ -70,23 +70,65 @@ The worker's raw-output EOF, successful terminal, cancellation flag and async
 wrapper destruction are not join acknowledgements. The actual thread handle
 is joined only after `is_finished`; running workers are never blocking-joined
 on an async executor thread. If the existing 500 ms inline cleanup expires,
-the async future is destroyed but the generation lease moves into AppState's
-owned cleanup registry. Admission and active ownership remain occupied until
+the async future is destroyed but the designated supervisor's registry keeps
+its generation lease. Admission and active ownership remain occupied until
 the worker really exits, is joined and its session is destroyed. The existing
 cleanup-bound-drop metric describes the wrapper, not native worker reaping.
 
-Stream producer tasks now belong to AppState's JoinSet. Shutdown still has a
-250 ms wire grace, shorter than the 500 ms producer cleanup bound; it does not
-promise a shutdown terminal for uncooperative producers. `serve` returns a
-`TimedOut` I/O error when generations or owned stream tasks remain; it does not
-claim complete shutdown or zero resources. The caller must retain AppState and
-use its finite `drain_cleanup` after its independent controlled-worker supervisor
-releases the fixture barrier. Pending leases retain the cleanup owner until
-join; no detached reaper or timeout-and-forget path is added.
+## Caller-owned cleanup supervisor
 
-This qualifies only controlled in-process synthetic workers with a retained
-cleanup owner. Abandonment of the last externally reachable owner during an
-uncooperative worker can retain an unreachable cleanup cycle. It is an unresolved
-resource-lifetime blocker for real runtime installation, not a bounded native
-shutdown guarantee. Real engine binding, real tokenizer/GLM history rendering,
-native cancellation and real client dogfood remain unqualified.
+Every `AppState::new(token, &owner)` or `AppState::with_backend(token, backend,
+&owner)` requires a caller-owned `CleanupOwner`. Keep this owner separate from
+the spawned `serve` future. Request state, registration tickets, semantic
+futures and tracked tasks carry only weak cleanup capabilities and leaf metrics
+or semaphore resources. The supervisor alone owns the canonical permit entries
+and connection/stream task sets. Neither pending leases nor tracked tasks retain
+the full supervisor/state graph. An unregistered RuntimeBackend session cannot
+launch a synchronous worker; missing-owner admission is refused.
+
+```rust,ignore
+let owner = CleanupOwner::new();
+let state = AppState::with_backend(token, backend, &owner)?;
+let outcome = serve(listener, state, shutdown_signal).await?;
+match outcome {
+    ShutdownOutcome::Complete(snapshot) => { /* actual joins, empty tasks */ }
+    ShutdownOutcome::Incomplete(pending) => {
+        // Keep owner reachable. Cancellation is only a request.
+        let recovered = pending.drain.drain(recovery_budget).await;
+        // recovered can still be INCOMPLETE; no thread is forcibly killed.
+    }
+}
+```
+
+Shutdown retains the 250 ms wire grace, shorter than the 500 ms inline producer
+cleanup bound; uncooperative producers have no promised shutdown wire terminal.
+`serve` then cancels subordinate tasks and performs a finite supervisor drain.
+Its typed COMPLETE result requires no running serve, no active leases, no join
+in progress and empty owned connection/stream task state. INCOMPLETE carries a
+truthful snapshot and a weak drain capability to the same designated owner; it
+does not duplicate ownership. Actual joins and unique permit releases happen
+once, and repeated/concurrent drain callers cannot report COMPLETE early.
+`AppState::drain_cleanup` is only a request-resource snapshot, not a complete
+server-shutdown result.
+
+Aborting serve, connection, stream or request futures requests cancellation and
+preserves the caller's designated owner and registered capacity. No registry or
+worker-handle mutex is held across joins or user session destruction. Reentrant
+reaping returns without stealing an in-progress join. Even cancellation before
+generation launch destroys its session on an actual owned cleanup thread, so a
+blocking native destructor cannot block the async reaper. Thread spawn refusal
+retains session/capacity and cannot establish COMPLETE.
+
+Keep the designated supervisor until typed COMPLETE. Arbitrarily forgetting it
+or terminating the process remains unqualified. Its bounded abandonment path
+aborts tasks and warns INCOMPLETE, deliberately retaining outstanding handles,
+task sets and permits rather than releasing live capacity or blocking forever.
+This is an explicit resource leak under supervisor abandonment, not a cycle or
+a successful cleanup guarantee. Reclaiming arbitrary uncooperative work would
+require a separate process-supervision boundary. No detached reaper, background
+service, process killing or successful native shutdown bound is supplied.
+
+This qualifies only controlled synthetic workers while the designated supervisor
+is retained. Real engine binding, tokenizer/GLM history rendering, native
+cancellation, real client dogfood and arbitrary final-supervisor reclamation
+remain unqualified.

@@ -3,6 +3,7 @@ use pulsar_serve_synthetic::runtime_adapter::{
 };
 use pulsar_serve_synthetic::{
     bind_loopback, serve, AppState, BackendDescriptor, BackendFailure, BackendMessage, BackendRole,
+    CleanupOwner, ShutdownOutcome,
 };
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -29,6 +30,9 @@ enum Mode {
 }
 #[derive(Default)]
 struct Spy {
+    cleanup: Mutex<Option<pulsar_serve_synthetic::DrainHandle>>,
+    reentrant_drop: AtomicBool,
+    factory_dropped: AtomicUsize,
     entered: AtomicBool,
     returned: AtomicBool,
     dropped: AtomicUsize,
@@ -41,6 +45,11 @@ struct Factory {
     mode: Mode,
     spy: Arc<Spy>,
     refuse: bool,
+}
+impl Drop for Factory {
+    fn drop(&mut self) {
+        self.spy.factory_dropped.fetch_add(1, Ordering::SeqCst);
+    }
 }
 impl RuntimeSessionFactory for Factory {
     fn create(&self) -> Result<Box<dyn RuntimeSession>, BackendFailure> {
@@ -59,6 +68,11 @@ struct Session {
 }
 impl Drop for Session {
     fn drop(&mut self) {
+        let cleanup = self.spy.cleanup.lock().unwrap().clone();
+        if let Some(cleanup) = cleanup {
+            cleanup.reap();
+            self.spy.reentrant_drop.store(true, Ordering::SeqCst);
+        }
         if matches!(self.mode, Mode::DropBarrier) && self.spy.entered.load(Ordering::SeqCst) {
             while !self.spy.release.load(Ordering::SeqCst) {
                 std::thread::sleep(Duration::from_millis(1));
@@ -154,10 +168,12 @@ impl RuntimeSession for Session {
 }
 
 struct Server {
+    backend_life: std::sync::Weak<RuntimeBackend>,
+    owner: Arc<CleanupOwner>,
     state: AppState,
     port: u16,
     shutdown: Option<oneshot::Sender<()>>,
-    task: tokio::task::JoinHandle<std::io::Result<()>>,
+    task: tokio::task::JoinHandle<std::io::Result<ShutdownOutcome>>,
     supervisor: Option<std::thread::JoinHandle<()>>,
     stop_supervisor: Option<std::sync::mpsc::Sender<()>>,
 }
@@ -176,7 +192,11 @@ impl Server {
                 refuse,
             }),
         );
-        let state = AppState::with_backend(AUTH.into(), Arc::new(backend)).unwrap();
+        let owner = Arc::new(CleanupOwner::new());
+        *spy.cleanup.lock().unwrap() = Some(owner.handle());
+        let backend = Arc::new(backend);
+        let backend_life = Arc::downgrade(&backend);
+        let state = AppState::with_backend(AUTH.into(), backend, &owner).unwrap();
         let listener = bind_loopback(0).await.unwrap();
         let port = listener.local_addr().unwrap().port();
         let (tx, rx) = oneshot::channel();
@@ -186,19 +206,21 @@ impl Server {
         }));
         let (stop_tx, stop_rx) = std::sync::mpsc::channel();
         let supervisor_spy = spy.clone();
-        let cleanup = state.clone();
+        let cleanup = owner.clone();
         // Independent outer supervisor always opens the barrier, including panic paths.
         let supervisor = std::thread::spawn(move || {
             let _ = stop_rx.recv_timeout(Duration::from_secs(8));
             supervisor_spy.release.store(true, Ordering::SeqCst);
             let end = std::time::Instant::now() + Duration::from_secs(2);
             while cleanup.metrics().backend_active > 0 && std::time::Instant::now() < end {
-                cleanup.reap_cleanup();
+                cleanup.reap();
                 std::thread::sleep(Duration::from_millis(2));
             }
         });
         (
             Self {
+                backend_life,
+                owner,
                 state,
                 port,
                 shutdown: Some(tx),
@@ -238,6 +260,7 @@ impl Server {
         assert_eq!(snapshot.backend_active, 0, "NO_FALSE_RESOURCE_ZERO");
         assert_eq!(snapshot.runtime_cleanup_pending, 0);
         assert_eq!(snapshot.stream_tasks_pending, 0);
+        assert!(self.owner.drain(Duration::from_secs(2)).await.is_complete());
         self.stop_supervisor.take().unwrap().send(()).unwrap();
         let supervisor = self.supervisor.take().unwrap();
         while !supervisor.is_finished() {
@@ -409,12 +432,19 @@ async fn shutdown_reports_incomplete_then_owned_drain_joins() {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::TimedOut);
+    let ShutdownOutcome::Incomplete(pending) = result.unwrap() else {
+        panic!("TRUTHFUL_INCOMPLETE_SHUTDOWN")
+    };
     let snapshot = server.state.drain_cleanup(Duration::from_millis(20)).await;
     assert_eq!(snapshot.backend_active, 1, "TRUTHFUL_INCOMPLETE_SHUTDOWN");
     assert_eq!(snapshot.runtime_workers_joined, 0);
     spy.release.store(true, Ordering::SeqCst);
     released(&server.state).await;
+    assert!(pending
+        .drain
+        .drain(Duration::from_secs(2))
+        .await
+        .is_complete());
     // Task already joined: finish supervisor directly.
     server.stop_supervisor.take().unwrap().send(()).unwrap();
     let supervisor = server.supervisor.take().unwrap();
@@ -453,4 +483,154 @@ async fn bounded_large_stream_disconnect_reaps_backpressured_worker() {
     drop(socket);
     released(&server.state).await;
     server.finish(&spy).await;
+}
+
+// Each scenario uses the real serve/owner APIs. Capture observations first,
+// release the controlled worker and join the independent harness supervisor,
+// then assert so a mutant failure cannot strand a fixture.
+async fn recover_after_state_drop(abort_server: bool, abort_tasks: bool, stream: bool) {
+    let (server, spy) = Server::new(Mode::Uncooperative, false).await;
+    let _socket = server.open(stream, "user", 3).await;
+    wait(&spy.entered).await;
+    let Server {
+        owner,
+        state,
+        shutdown,
+        mut task,
+        supervisor,
+        stop_supervisor,
+        backend_life,
+        ..
+    } = server;
+    let capability = owner.handle();
+    let incomplete = if abort_server {
+        task.abort();
+        let _ = (&mut task).await;
+        owner.drain(Duration::from_millis(20)).await
+    } else {
+        if abort_tasks {
+            owner.cancel_tasks();
+        }
+        shutdown.unwrap().send(()).unwrap();
+        tokio::time::timeout(Duration::from_secs(1), &mut task)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap()
+    };
+    drop(state); // Final explicit request-state clone; tracked tasks hold only Weak owner.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
+    while (owner.metrics().connection_tasks_pending != 0
+        || owner.metrics().stream_tasks_pending != 0)
+        && tokio::time::Instant::now() < deadline
+    {
+        owner.reap();
+        tokio::time::sleep(Duration::from_millis(2)).await;
+    }
+    let before = owner.metrics();
+    let held = owner.available_capacity() == 0;
+    let state_reclaimed =
+        backend_life.upgrade().is_none() && spy.factory_dropped.load(Ordering::SeqCst) == 1;
+    let pending_recovery = match incomplete {
+        ShutdownOutcome::Incomplete(pending) => Some(pending.drain),
+        ShutdownOutcome::Complete(_) => None,
+    };
+    let not_complete = pending_recovery.is_some();
+    spy.release.store(true, Ordering::SeqCst);
+    let recovered = pending_recovery
+        .unwrap_or_else(|| capability.clone())
+        .drain(Duration::from_secs(2))
+        .await;
+    let again = owner.drain(Duration::from_millis(20)).await;
+    let capacity_after = owner.available_capacity();
+    stop_supervisor.unwrap().send(()).unwrap();
+    let supervisor = supervisor.unwrap();
+    while !supervisor.is_finished() {
+        tokio::time::sleep(Duration::from_millis(2)).await;
+    }
+    supervisor.join().unwrap();
+    drop(owner);
+    let owner_reclaimed = !capability.metrics().cleanup_owner_alive;
+    assert!(
+        not_complete && before.backend_active == 1 && before.runtime_workers_joined == 0,
+        "NO_FAKE_COMPLETE_OR_JOIN"
+    );
+    assert!(held, "CAPACITY_HELD_UNTIL_ACTUAL_JOIN");
+    assert!(
+        state_reclaimed,
+        "REQUEST_STATE_RECLAIMED_WHILE_WORKER_PENDING"
+    );
+    assert!(
+        recovered.is_complete() && again.is_complete(),
+        "RETAINED_OWNER_RECOVERY"
+    );
+    assert_eq!(
+        recovered.snapshot().runtime_workers_joined,
+        1,
+        "EXACTLY_ONE_ACTUAL_JOIN"
+    );
+    assert_eq!(again.snapshot().backend_finished, 1, "EXACTLY_ONE_RELEASE");
+    assert_eq!(capacity_after, 1);
+    assert_eq!(spy.dropped.load(Ordering::SeqCst), 1);
+    assert!(owner_reclaimed, "ACYCLIC_OWNER_RECLAIMED_AFTER_DRAIN");
+}
+
+#[tokio::test]
+async fn server_abort_retains_owner_and_reclaims_state() {
+    recover_after_state_drop(true, false, true).await;
+}
+#[tokio::test]
+async fn typed_incomplete_capability_recovers_after_state_drop() {
+    recover_after_state_drop(false, false, true).await;
+}
+#[tokio::test]
+async fn stream_and_connection_abort_recover_through_owner() {
+    recover_after_state_drop(false, true, true).await;
+}
+#[tokio::test]
+async fn nonstream_connection_abort_recovers_through_owner() {
+    recover_after_state_drop(false, true, false).await;
+}
+
+#[tokio::test]
+async fn concurrent_drain_callers_do_not_complete_before_destructor_exit() {
+    let (mut server, spy) = Server::new(Mode::DropBarrier, false).await;
+    let _socket = server.open(true, "user", 3).await;
+    wait(&spy.returned).await;
+    server.task.abort();
+    let _ = (&mut server.task).await;
+    let (a, b) = tokio::join!(
+        server.owner.drain(Duration::from_millis(20)),
+        server.owner.drain(Duration::from_millis(20))
+    );
+    let before = server.owner.metrics();
+    let held = server.owner.available_capacity() == 0;
+    spy.release.store(true, Ordering::SeqCst);
+    let (c, d) = tokio::join!(
+        server.owner.drain(Duration::from_secs(2)),
+        server.owner.drain(Duration::from_secs(2))
+    );
+    server.stop_supervisor.take().unwrap().send(()).unwrap();
+    let supervisor = server.supervisor.take().unwrap();
+    while !supervisor.is_finished() {
+        tokio::time::sleep(Duration::from_millis(2)).await;
+    }
+    supervisor.join().unwrap();
+    assert!(
+        !a.is_complete() && !b.is_complete() && held && before.runtime_workers_joined == 0,
+        "CONCURRENT_INCOMPLETE_UNTIL_ACTUAL_JOIN"
+    );
+    assert!(c.is_complete() && d.is_complete());
+    assert_eq!(server.owner.metrics().runtime_workers_joined, 1);
+    assert_eq!(server.owner.metrics().backend_finished, 1);
+}
+
+#[tokio::test]
+async fn worker_destructor_reenters_actual_owner_without_deadlock() {
+    let (server, spy) = Server::new(Mode::Stop, false).await;
+    let response = server.request(false, "user", 3).await;
+    server.finish(&spy).await;
+    assert!(response.starts_with("HTTP/1.1 200"));
+    assert!(spy.reentrant_drop.load(Ordering::SeqCst));
+    assert_eq!(spy.dropped.load(Ordering::SeqCst), 1);
 }

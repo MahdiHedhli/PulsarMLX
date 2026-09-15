@@ -1,8 +1,6 @@
 //! Injected model-free synchronous sessions. No engine, tokenizer or model I/O.
 //!
-//! A server owner must retain AppState and drain cleanup after incomplete
-//! shutdown. Abandoning the last cleanup owner with a live native worker is not
-//! qualified by this in-process adapter.
+//! The caller retains CleanupOwner; AppState and semantic futures cannot own it.
 use crate::{
     ActualUsage, BackendCancellation, BackendDescriptor, BackendEvent, BackendEventSender,
     BackendFailure, BackendFinishReason, BackendMessage, BackendRequest, BackendSession,
@@ -70,7 +68,11 @@ impl RuntimeBackend {
 
 type Outcome = Result<RuntimeStop, BackendFailure>;
 pub(crate) struct Worker {
-    session: Mutex<Option<Box<dyn RuntimeSession>>>,
+    owner: Mutex<Option<crate::DrainHandle>>,
+    started: AtomicBool,
+    starting: AtomicBool,
+    joining: AtomicBool,
+    session: Arc<Mutex<Option<Box<dyn RuntimeSession>>>>,
     handle: Mutex<Option<JoinHandle<()>>>,
     outcome: Arc<Mutex<Option<Outcome>>>,
     cancel: Arc<AtomicBool>,
@@ -81,7 +83,11 @@ pub(crate) struct Worker {
 impl Worker {
     fn new(session: Box<dyn RuntimeSession>) -> Self {
         Self {
-            session: Mutex::new(Some(session)),
+            owner: Mutex::new(None),
+            started: AtomicBool::new(false),
+            starting: AtomicBool::new(false),
+            joining: AtomicBool::new(false),
+            session: Arc::new(Mutex::new(Some(session))),
             handle: Mutex::new(None),
             outcome: Arc::new(Mutex::new(None)),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -93,22 +99,72 @@ impl Worker {
     pub(crate) fn request_cancel(&self) {
         self.cancel.store(true, Ordering::SeqCst);
     }
+    pub(crate) fn register(&self, owner: crate::DrainHandle) {
+        *self.owner.lock().expect("worker owner") = Some(owner);
+    }
+    pub(crate) fn request_reap(&self) {
+        let owner = self.owner.lock().expect("worker owner").clone();
+        if let Some(owner) = owner {
+            owner.reap();
+        }
+    }
+    pub(crate) fn has_started(&self) -> bool {
+        self.started.load(Ordering::SeqCst)
+    }
+    pub(crate) fn is_joined(&self) -> bool {
+        self.joined.load(Ordering::SeqCst)
+    }
     pub(crate) fn join_finished(&self) -> bool {
-        let mut handle = self.handle.lock().expect("worker handle mutex");
         if self.joined.load(Ordering::SeqCst) {
             return true;
         }
+        if self
+            .joining
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .is_err()
+        {
+            return false;
+        }
+        struct Reset<'a>(&'a AtomicBool);
+        impl Drop for Reset<'_> {
+            fn drop(&mut self) {
+                self.0.store(false, Ordering::SeqCst);
+            }
+        }
+        let _reset = Reset(&self.joining);
+        if self.starting.load(Ordering::SeqCst) {
+            return false;
+        }
+        let mut handle = self.handle.lock().expect("worker handle mutex");
         if handle.is_none() {
-            // CREATED: no synchronous work was launched; destroy the session.
-            drop(self.session.lock().expect("worker session mutex").take());
-            self.joined.store(true, Ordering::SeqCst);
-            return true;
+            // CREATED cancellation may destroy user/native state. Run that
+            // destructor on an owned thread too, never under a mutex or on the
+            // async executor. A spawn refusal retains the session and capacity.
+            drop(handle);
+            if self.session.lock().expect("worker session mutex").is_none() {
+                self.joined.store(true, Ordering::SeqCst);
+                return true;
+            }
+            let slot = self.session.clone();
+            let launched = std::thread::Builder::new()
+                .name("synthetic-session-drop".into())
+                .spawn(move || {
+                    let session = slot.lock().expect("worker session mutex").take();
+                    drop(session);
+                });
+            if let Ok(handle) = launched {
+                self.started.store(true, Ordering::SeqCst);
+                *self.handle.lock().expect("worker handle mutex") = Some(handle);
+            }
+            return false;
         }
         if !handle.as_ref().expect("worker handle").is_finished() {
             return false;
         }
         // Only an already exited thread may be joined on this async thread.
-        let result = handle.take().expect("worker handle").join();
+        let exited = handle.take().expect("worker handle");
+        drop(handle);
+        let result = exited.join();
         self.actual_joined.store(true, Ordering::SeqCst);
         if result.is_err() {
             *self.outcome.lock().expect("worker outcome mutex") =
@@ -129,46 +185,75 @@ impl Worker {
         maximum: u16,
         output: mpsc::Sender<GeneratedToken>,
     ) -> Result<(), BackendFailure> {
-        let mut handle = self.handle.lock().expect("worker handle mutex");
-        if self.joined.load(Ordering::SeqCst) {
+        let owner = self.owner.lock().expect("worker owner").clone();
+        if !owner.as_ref().is_some_and(|owner| owner.is_alive())
+            || self.joined.load(Ordering::SeqCst)
+            || self
+                .starting
+                .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+                .is_err()
+        {
             return Err(BackendFailure::Generation);
         }
-        let mut session = self
-            .session
-            .lock()
-            .expect("worker session mutex")
-            .take()
-            .ok_or(BackendFailure::Generation)?;
+        struct ResetStarting<'a>(&'a AtomicBool);
+        impl Drop for ResetStarting<'_> {
+            fn drop(&mut self) {
+                self.0.store(false, Ordering::SeqCst);
+            }
+        }
+        let _reset_starting = ResetStarting(&self.starting);
+        if self.joining.load(Ordering::SeqCst) || self.joined.load(Ordering::SeqCst) {
+            return Err(BackendFailure::Generation);
+        }
+        if self.started.swap(true, Ordering::SeqCst) {
+            self.starting.store(false, Ordering::SeqCst);
+            return Err(BackendFailure::Generation);
+        }
+        let session_slot = self.session.clone();
         let cancel = self.cancel.clone();
         let outcome = self.outcome.clone();
         let producer_returned = self.producer_returned.clone();
-        *handle = Some(
-            std::thread::Builder::new()
-                .name("synthetic-runtime".into())
-                .spawn(move || {
-                    let probe = CancelProbe(cancel);
-                    let mut emit = |mut token| loop {
-                        if probe.is_cancelled() {
-                            return Err(BackendFailure::Generation);
+        let launched = std::thread::Builder::new()
+            .name("synthetic-runtime".into())
+            .spawn(move || {
+                let Some(mut session) = session_slot.lock().expect("worker session mutex").take()
+                else {
+                    *outcome.lock().expect("worker outcome mutex") =
+                        Some(Err(BackendFailure::Generation));
+                    return;
+                };
+                let probe = CancelProbe(cancel);
+                let mut emit = |mut token| loop {
+                    if probe.is_cancelled() {
+                        return Err(BackendFailure::Generation);
+                    }
+                    match output.try_send(token) {
+                        Ok(()) => return Ok(()),
+                        Err(mpsc::error::TrySendError::Closed(_)) => {
+                            return Err(BackendFailure::Generation)
                         }
-                        match output.try_send(token) {
-                            Ok(()) => return Ok(()),
-                            Err(mpsc::error::TrySendError::Closed(_)) => {
-                                return Err(BackendFailure::Generation)
-                            }
-                            Err(mpsc::error::TrySendError::Full(returned)) => token = returned,
-                        }
-                        std::thread::sleep(Duration::from_millis(1));
-                    };
-                    let result = session.generate(&prompt, maximum, &probe, &mut emit);
-                    producer_returned.store(true, Ordering::SeqCst);
-                    drop(output); // Raw EOF can precede the session destructor/thread exit.
-                    drop(session);
-                    *outcome.lock().expect("worker outcome mutex") = Some(result);
-                })
-                .map_err(|_| BackendFailure::Generation)?,
-        );
-        Ok(())
+                        Err(mpsc::error::TrySendError::Full(returned)) => token = returned,
+                    }
+                    std::thread::sleep(Duration::from_millis(1));
+                };
+                let result = session.generate(&prompt, maximum, &probe, &mut emit);
+                producer_returned.store(true, Ordering::SeqCst);
+                drop(output); // Raw EOF can precede the session destructor/thread exit.
+                drop(session);
+                *outcome.lock().expect("worker outcome mutex") = Some(result);
+            })
+            .map_err(|_| BackendFailure::Generation);
+        match launched {
+            Ok(handle) => {
+                *self.handle.lock().expect("worker handle mutex") = Some(handle);
+                self.starting.store(false, Ordering::SeqCst);
+                Ok(())
+            }
+            Err(error) => {
+                self.starting.store(false, Ordering::SeqCst);
+                Err(error)
+            }
+        }
     }
 }
 
@@ -298,7 +383,11 @@ impl CompletionBackend for RuntimeBackend {
             if failed || cancellation.is_cancelled() {
                 owned.request_cancel();
             }
-            while !owned.join_finished() {
+            loop {
+                owned.request_reap();
+                if owned.is_joined() {
+                    break;
+                }
                 if cancellation.is_cancelled() {
                     owned.request_cancel();
                 }
@@ -351,7 +440,7 @@ impl CompletionBackend for RuntimeBackend {
 #[cfg(test)]
 mod ownership_tests {
     use super::*;
-    use crate::{AppState, GenerationGuard};
+    use crate::{AppState, CleanupOwner, GenerationGuard};
     #[derive(Default)]
     struct Spy {
         entered: AtomicBool,
@@ -414,7 +503,8 @@ mod ownership_tests {
     }
     async fn scenario(eof: bool, cooperative: bool) {
         let spy = Arc::new(Spy::default());
-        let state = AppState::new("unit-fixture-auth-123456789".into()).unwrap();
+        let owner = CleanupOwner::new();
+        let state = AppState::new("unit-fixture-auth-123456789".into(), &owner).unwrap();
         let backend = RuntimeBackend::new(
             BackendDescriptor {
                 model_id: "unit",
@@ -443,8 +533,7 @@ mod ownership_tests {
         let worker = session.worker.clone().unwrap();
         let permit = state.generation_slots.clone().try_acquire_owned().unwrap();
         let mut guard = GenerationGuard::new(state.clone(), permit);
-        guard.worker = Some(worker.clone());
-        guard.lease.as_mut().unwrap().worker = Some(worker.clone());
+        guard.attach_worker(Some(worker.clone()));
         let task = tokio::spawn(async move {
             let _guard = guard;
             session.future.await;
@@ -482,7 +571,8 @@ mod ownership_tests {
         })
         .await
         .unwrap();
-        assert!(worker.join_finished());
+        owner.reap();
+        assert!(worker.is_joined());
         assert!(worker.actually_joined());
         state.reap_cleanup();
         assert!(spy.destroyed.load(Ordering::SeqCst));
@@ -559,7 +649,8 @@ mod ownership_tests {
         }
         let emitted = Arc::new(AtomicUsize::new(0));
         let destroyed = Arc::new(AtomicBool::new(false));
-        let state = AppState::new("backpressure-fixture-auth-123456".into()).unwrap();
+        let owner = CleanupOwner::new();
+        let state = AppState::new("backpressure-fixture-auth-123456".into(), &owner).unwrap();
         let backend = RuntimeBackend::new(
             BackendDescriptor {
                 model_id: "fixture",
@@ -587,8 +678,7 @@ mod ownership_tests {
         let worker = session.worker.clone().unwrap();
         let permit = state.generation_slots.clone().try_acquire_owned().unwrap();
         let mut guard = GenerationGuard::new(state.clone(), permit);
-        guard.worker = Some(worker.clone());
-        guard.lease.as_mut().unwrap().worker = Some(worker.clone());
+        guard.attach_worker(Some(worker.clone()));
         let task = tokio::spawn(async move {
             let _guard = guard;
             session.future.await;
@@ -617,7 +707,8 @@ mod ownership_tests {
         })
         .await
         .unwrap();
-        assert!(worker.join_finished());
+        owner.reap();
+        assert!(worker.is_joined());
         state.reap_cleanup();
         assert_eq!(count, 6, "BOUNDED_BACKPRESSURE");
         assert!(held && destroyed.load(Ordering::SeqCst));
