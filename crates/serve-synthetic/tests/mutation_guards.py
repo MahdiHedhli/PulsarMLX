@@ -59,6 +59,7 @@ def expect_test_failed(command: list[str], cwd: Path, env: dict[str, str], test_
         raise RuntimeError(
             f"expected exactly one failing test for {test_name}. Output:\n{output[-4000:]}"
         )
+    print(f"MUTANT_KILLED assertion={test_name}")
 
 
 def expect_python_guard_failed(command: list[str], cwd: Path, env: dict[str, str], name: str) -> None:
@@ -75,6 +76,7 @@ def expect_python_guard_failed(command: list[str], cwd: Path, env: dict[str, str
             )
     if "AssertionError" not in output and "Traceback" not in output:
         raise RuntimeError(f"mutant {name} produced no diagnosable failure. Output:\n{output[-4000:]}")
+    print(f"MUTANT_KILLED assertion={name}")
 
 
 def rust_mutation(
@@ -94,14 +96,29 @@ def rust_mutation(
     replace_exact(mutant / source_path, old, new, count)
     env = os.environ.copy()
     env["CARGO_TARGET_DIR"] = str(target)
-    build = run(["cargo", "test", "--offline", "--test", test_target, "--no-run"], mutant, env)
+    build = run(
+        ["cargo", "test", "--offline", "--locked", "--test", test_target, "--no-run"],
+        mutant,
+        env,
+    )
     if build.returncode != 0:
         raise RuntimeError(
             f"mutant {name} does not compile, so its test never ran; this is not "
             f"a kill. Output:\n{(build.stdout or '')[-4000:]}"
         )
+    print(f"MUTANT_COMPILE_OK name={name}")
     expect_test_failed(
-        ["cargo", "test", "--offline", "--test", test_target, test_name, "--", "--exact"],
+        [
+            "cargo",
+            "test",
+            "--offline",
+            "--locked",
+            "--test",
+            test_target,
+            test_name,
+            "--",
+            "--exact",
+        ],
         mutant,
         env,
         test_name,
@@ -182,7 +199,7 @@ def main() -> None:
         args.scratch,
         args.target,
         "silent-stream-failure",
-        '                        let _ = send_backend_error_code(&sender, "generation_timeout", "synthetic generation exceeded its deadline").await;\n',
+        '                        let _ = send_backend_error_code(&sender, "generation_timeout", message).await;\n',
         "",
         "stream_generation_timeout_emits_bounded_error_event",
     )
@@ -251,9 +268,12 @@ def main() -> None:
         args.scratch,
         args.target,
         "early-permit-release",
-        "        let _guard = guard;",
-        "        drop(guard);",
-        "disconnect_releases_stream_ownership",
+        "        let mut guard = Some(guard);",
+        "        drop(guard);\n        let mut guard = None;",
+        "uncooperative_valid_eof_drops_future_before_release_and_preserves_wire_precedence",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
     )
     rust_mutation(
         pristine,
@@ -284,11 +304,59 @@ def main() -> None:
         args.scratch,
         args.target,
         "consumer-authored-usage",
-        '"usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":usage.total_tokens()}',
+        '"usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":total_tokens}',
         '"usage":{"prompt_tokens":0,"completion_tokens":0,"total_tokens":0}',
         "admission_projection_model_and_provider_usage_are_authoritative",
         1,
         "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "eof-as-provider-return",
+        "                        cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Eof).await;",
+        "                        future_state = BackendFutureState::Returned;",
+        "eof_before_return_observes_true_cancellation_and_cooperative_completion",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "omitted-eof-cancellation",
+        "    cancel.send_replace(true);",
+        "    if _trigger != CleanupTrigger::Eof {\n        cancel.send_replace(true);\n    }",
+        "eof_before_return_observes_true_cancellation_and_cooperative_completion",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "forgotten-future-at-cleanup-bound",
+        "        let owned_future = future.take().expect(\"polling backend future\");\n        drop(owned_future);",
+        "        let owned_future = future.take().expect(\"polling backend future\");\n        std::mem::forget(owned_future);",
+        "uncooperative_valid_eof_drops_future_before_release_and_preserves_wire_precedence",
+        1,
+        "src/lib.rs",
+        "backend_semantics",
+    )
+    rust_mutation(
+        pristine,
+        args.scratch,
+        args.target,
+        "saturating-usage-total",
+        "        self.prompt_tokens.checked_add(self.completion_tokens)",
+        "        Some(self.prompt_tokens.saturating_add(self.completion_tokens))",
+        "usage_overflow_is_safe_protocol_failure_in_both_response_modes",
+        1,
+        "src/backend.rs",
         "backend_semantics",
     )
     python_mutation(
@@ -307,7 +375,7 @@ def main() -> None:
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=False,\n",
         "        transport=LoopbackGuardTransport(redirect_inner),\n        follow_redirects=True,\n",
     )
-    print("MUTATION_GUARDS_OK count=16")
+    print("MUTATION_GUARDS_OK count=20")
 
 
 if __name__ == "__main__":

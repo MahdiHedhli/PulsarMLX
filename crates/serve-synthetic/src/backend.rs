@@ -36,8 +36,11 @@ pub struct ActualUsage {
 }
 
 impl ActualUsage {
-    pub fn total_tokens(self) -> usize {
-        self.prompt_tokens.saturating_add(self.completion_tokens)
+    /// Returns the exact total when the provider counts can be represented.
+    /// An overflow is a provider protocol failure rather than a plausible but
+    /// false saturated total.
+    pub fn total_tokens(self) -> Option<usize> {
+        self.prompt_tokens.checked_add(self.completion_tokens)
     }
 }
 

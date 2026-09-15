@@ -45,6 +45,11 @@ usage. The empty fixture reports zero completion tokens because this backend
 authoritatively produced an empty synthetic sequence. A future backend without
 authoritative usage cannot complete successfully through this interface;
 estimates are not relabeled as actual counts.
+Prompt and completion counts must also have an exactly representable checked
+sum. Overflow is rejected as `backend_protocol_error` before a success terminal;
+ordinary values, zero, and the largest representable total are serialized as
+exact JSON integers. Streaming retains its existing schema and does not add a
+usage payload.
 
 SSE chunks retain one completion ID, model ID, and creation time, split content
 on UTF-8 character boundaries, emit an explicit finish reason, and emit
@@ -79,6 +84,12 @@ shuts down without waiting.
 The generation branch of the stream's outcome select is polled first
 (`biased`), so a generation that has already emitted its own terminal cannot
 have a second, contradictory terminal appended by a concurrent shutdown.
+Semantic-event EOF is handled separately from provider-future return. If EOF
+arrives first, the server signals cancellation and retains the generation permit
+until the inline future returns or is destroyed at the 500 ms cleanup bound. An
+already emitted stream terminal is not retracted or followed by another
+terminal; body closure follows the cleanup disposition. EOF without a terminal
+remains `backend_protocol_error`.
 
 ## Resource and time limits
 
@@ -95,6 +106,7 @@ have a second, contradictory terminal appended by a concurrent shutdown.
 | Whole connection | 15 seconds | Bounds request read and response service lifetime. |
 | Generation | 2 seconds | Cancels work, omits the success terminal, and emits a bounded `generation_timeout` error event on expiry. |
 | Stream channel send | 500 milliseconds | Cancels a producer stalled by downstream backpressure. |
+| Owned provider cleanup | 500 milliseconds | Uses the same `STREAM_SEND_DEADLINE` value for a distinct purpose; destroys an unreturned inline future before permit release and records a cleanup-bound drop. |
 | Backend semantic events | 64 | Rejects an unbounded or post-terminal provider sequence. |
 | Backend text | 16 KiB UTF-8 | Rejects provider output beyond the semantic buffer limit. |
 
@@ -104,6 +116,12 @@ connection tasks, waits for those tasks to be reaped, and releases all
 generation permits through owned guards. In-flight connections are aborted, not
 drained. Each connection is HTTP/1.1 with
 keep-alive disabled.
+
+The internal `backend_finished` metric means admitted request ownership was
+released, regardless of wire success or provider return. The separate
+`backend_cleanup_bound_drops` metric identifies cleanup expiry and increments
+only when an owned provider future is actually destroyed at that bound. A
+protocol failure that also expires cleanup increments both facts once.
 
 ## Errors and destination boundary
 

@@ -54,6 +54,8 @@ const SHUTDOWN_POLL: Duration = Duration::from_millis(2);
 pub const HEADER_DEADLINE: Duration = Duration::from_secs(5);
 pub const CONNECTION_DEADLINE: Duration = Duration::from_secs(15);
 pub const GENERATION_DEADLINE: Duration = Duration::from_secs(2);
+/// Fixed bound used for two distinct waits: sending a stream frame to the body
+/// channel and cooperative cleanup of an owned provider future.
 pub const STREAM_SEND_DEADLINE: Duration = Duration::from_millis(500);
 
 pub type BoxBody = http_body_util::combinators::BoxBody<Bytes, Infallible>;
@@ -75,6 +77,7 @@ pub struct Metrics {
     backend_active: AtomicUsize,
     backend_finished: AtomicUsize,
     backend_protocol_failures: AtomicUsize,
+    backend_cleanup_bound_drops: AtomicUsize,
     connections_spawned: AtomicUsize,
     connections_reaped: AtomicUsize,
 }
@@ -83,8 +86,13 @@ pub struct Metrics {
 pub struct MetricsSnapshot {
     pub backend_started: usize,
     pub backend_active: usize,
+    /// Admitted request ownership released, regardless of its wire outcome or
+    /// whether the provider future returned cooperatively.
     pub backend_finished: usize,
     pub backend_protocol_failures: usize,
+    /// Owned in-process provider futures destroyed after the fixed cooperative
+    /// cleanup bound elapsed. This is distinct from a returned future.
+    pub backend_cleanup_bound_drops: usize,
     /// Connection tasks handed to the accept loop's `JoinSet`.
     pub connections_spawned: usize,
     /// Connection tasks joined and removed from that set. F1 requires this to
@@ -130,6 +138,10 @@ impl AppState {
             backend_protocol_failures: self
                 .metrics
                 .backend_protocol_failures
+                .load(Ordering::SeqCst),
+            backend_cleanup_bound_drops: self
+                .metrics
+                .backend_cleanup_bound_drops
                 .load(Ordering::SeqCst),
             connections_spawned: self.metrics.connections_spawned.load(Ordering::SeqCst),
             connections_reaped: self.metrics.connections_reaped.load(Ordering::SeqCst),
@@ -643,10 +655,10 @@ impl Drop for GenerationGuard {
 
 async fn nonstream_chat(
     state: AppState,
-    _guard: GenerationGuard,
+    guard: GenerationGuard,
     id: String,
     model_id: &'static str,
-    mut session: BackendSession,
+    session: BackendSession,
     mut events: mpsc::Receiver<BackendEvent>,
     cancel: watch::Sender<bool>,
 ) -> Response<BoxBody> {
@@ -654,41 +666,62 @@ async fn nonstream_chat(
     let deadline = tokio::time::sleep(GENERATION_DEADLINE);
     tokio::pin!(deadline);
     let mut transcript = BackendTranscript::default();
-    let mut future_done = false;
+    let mut future = Some(session.future);
+    let mut future_state = BackendFutureState::Polling;
     loop {
-        if future_done && events.is_empty() {
-            break;
-        }
         tokio::select! {
             biased;
             event = events.recv() => match event {
                 Some(event) => if let Err(error) = transcript.accept(event) {
                     state.metrics.backend_protocol_failures.fetch_add(1, Ordering::SeqCst);
-                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
-                    return backend_error_response(error);
+                    cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Protocol).await;
+                    let response = backend_error_response(error);
+                    release_owned_backend(&mut future, guard);
+                    return response;
                 },
-                None => future_done = true,
+                None => {
+                    if future_state == BackendFutureState::Polling {
+                        cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Eof).await;
+                    }
+                    break;
+                }
             },
-            _ = &mut session.future, if !future_done => future_done = true,
+            _ = future.as_mut().expect("polling backend future"), if future_state == BackendFutureState::Polling => {
+                future_state = BackendFutureState::Returned;
+            },
             _ = shutdown.changed() => {
-                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
-                return api_error(StatusCode::SERVICE_UNAVAILABLE, "server_shutdown", "server is shutting down");
+                cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Shutdown).await;
+                let response = api_error(StatusCode::SERVICE_UNAVAILABLE, "server_shutdown", "server is shutting down");
+                release_owned_backend(&mut future, guard);
+                return response;
             }
             _ = &mut deadline => {
-                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
-                return api_error(StatusCode::GATEWAY_TIMEOUT, "generation_timeout", "synthetic generation exceeded its deadline");
+                cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Deadline).await;
+                let response = api_error(StatusCode::GATEWAY_TIMEOUT, "generation_timeout", "synthetic generation exceeded its deadline");
+                release_owned_backend(&mut future, guard);
+                return response;
             }
         }
     }
-    match transcript.finish() {
-        Ok((content, reason, usage)) => json_response(
-            StatusCode::OK,
-            json!({
-                "id":id,"object":"chat.completion","created":1789000000_u64,"model":model_id,
-                "choices":[{"index":0,"message":{"role":"assistant","content":content},"finish_reason":reason.as_str()}],
-                "usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":usage.total_tokens()}
-            }),
+    let response = match transcript.finish() {
+        Ok(_) if future_state == BackendFutureState::DroppedAtCleanupBound => api_error(
+            StatusCode::GATEWAY_TIMEOUT,
+            "generation_timeout",
+            "synthetic generation cleanup exceeded its deadline",
         ),
+        Ok((content, reason, usage)) => {
+            let total_tokens = usage
+                .total_tokens()
+                .expect("accepted provider usage remains representable");
+            json_response(
+                StatusCode::OK,
+                json!({
+                    "id":id,"object":"chat.completion","created":1789000000_u64,"model":model_id,
+                    "choices":[{"index":0,"message":{"role":"assistant","content":content},"finish_reason":reason.as_str()}],
+                    "usage":{"prompt_tokens":usage.prompt_tokens,"completion_tokens":usage.completion_tokens,"total_tokens":total_tokens}
+                }),
+            )
+        }
         Err(error) => {
             if error == BackendFailure::Protocol {
                 state
@@ -698,7 +731,9 @@ async fn nonstream_chat(
             }
             backend_error_response(error)
         }
-    }
+    };
+    release_owned_backend(&mut future, guard);
+    response
 }
 
 fn stream_chat(
@@ -706,21 +741,59 @@ fn stream_chat(
     guard: GenerationGuard,
     id: String,
     model_id: &'static str,
-    mut session: BackendSession,
+    session: BackendSession,
     mut events: mpsc::Receiver<BackendEvent>,
     cancel: watch::Sender<bool>,
 ) -> Response<BoxBody> {
     let (sender, receiver) = mpsc::channel::<Result<Frame<Bytes>, Infallible>>(1);
     let mut shutdown = state.shutdown.subscribe();
     tokio::spawn(async move {
-        let _guard = guard;
+        let mut guard = Some(guard);
         let deadline = tokio::time::sleep(GENERATION_DEADLINE);
         tokio::pin!(deadline);
         let mut transcript = BackendTranscript::default();
-        let mut future_done = false;
+        let mut future = Some(session.future);
+        let mut future_state = BackendFutureState::Polling;
         let mut wire_terminal = false;
         loop {
-            if future_done && events.is_empty() {
+            let event = tokio::select! {
+                biased;
+                event = events.recv() => event,
+                _ = future.as_mut().expect("polling backend future"), if future_state == BackendFutureState::Polling => {
+                    future_state = BackendFutureState::Returned;
+                    continue;
+                }
+                _ = shutdown.changed() => {
+                    cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Shutdown).await;
+                    if !wire_terminal {
+                        let _ = send_backend_error_code(&sender, "server_shutdown", "server is shutting down").await;
+                    }
+                    break;
+                }
+                _ = &mut deadline => {
+                    cancel_owned_backend(&state, &cancel, &mut future, &mut future_state, CleanupTrigger::Deadline).await;
+                    if !wire_terminal {
+                        let message = if future_state == BackendFutureState::DroppedAtCleanupBound {
+                            "synthetic generation cleanup exceeded its deadline"
+                        } else {
+                            "synthetic generation exceeded its deadline"
+                        };
+                        let _ = send_backend_error_code(&sender, "generation_timeout", message).await;
+                    }
+                    break;
+                }
+            };
+            let Some(event) = event else {
+                if future_state == BackendFutureState::Polling {
+                    cancel_owned_backend(
+                        &state,
+                        &cancel,
+                        &mut future,
+                        &mut future_state,
+                        CleanupTrigger::Eof,
+                    )
+                    .await;
+                }
                 if !transcript.has_terminal() && !wire_terminal {
                     state
                         .metrics
@@ -729,32 +802,6 @@ fn stream_chat(
                     let _ = send_backend_error(&sender, BackendFailure::Protocol).await;
                 }
                 break;
-            }
-            let event = tokio::select! {
-                biased;
-                event = events.recv() => event,
-                _ = &mut session.future, if !future_done => {
-                    future_done = true;
-                    continue;
-                }
-                _ = shutdown.changed() => {
-                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
-                    if !wire_terminal {
-                        let _ = send_backend_error_code(&sender, "server_shutdown", "server is shutting down").await;
-                    }
-                    break;
-                }
-                _ = &mut deadline => {
-                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
-                    if !wire_terminal {
-                        let _ = send_backend_error_code(&sender, "generation_timeout", "synthetic generation exceeded its deadline").await;
-                    }
-                    break;
-                }
-            };
-            let Some(event) = event else {
-                future_done = true;
-                continue;
             };
             let accepted = match transcript.accept(event) {
                 Ok(accepted) => accepted,
@@ -763,7 +810,14 @@ fn stream_chat(
                         .metrics
                         .backend_protocol_failures
                         .fetch_add(1, Ordering::SeqCst);
-                    cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                    cancel_owned_backend(
+                        &state,
+                        &cancel,
+                        &mut future,
+                        &mut future_state,
+                        CleanupTrigger::Protocol,
+                    )
+                    .await;
                     if !wire_terminal {
                         let _ = send_backend_error(&sender, error).await;
                     }
@@ -789,13 +843,29 @@ fn stream_chat(
                 }
             };
             if !delivered {
-                cancel_owned_backend(&cancel, &mut session.future, future_done).await;
+                cancel_owned_backend(
+                    &state,
+                    &cancel,
+                    &mut future,
+                    &mut future_state,
+                    CleanupTrigger::Downstream,
+                )
+                .await;
                 break;
             }
         }
-        if !future_done {
-            cancel_owned_backend(&cancel, &mut session.future, false).await;
+        if future_state == BackendFutureState::Polling {
+            cancel_owned_backend(
+                &state,
+                &cancel,
+                &mut future,
+                &mut future_state,
+                CleanupTrigger::Downstream,
+            )
+            .await;
         }
+        drop(sender);
+        release_owned_backend(&mut future, guard.take().expect("owned generation guard"));
     });
     let stream = ReceiverStream::new(receiver);
     let body = StreamBody::new(stream).boxed();
@@ -841,6 +911,7 @@ impl BackendTranscript {
                 Ok(AcceptedEvent::Delta(content))
             }
             BackendEvent::Finished { reason, usage } if self.role_seen => {
+                usage.total_tokens().ok_or(BackendFailure::Protocol)?;
                 self.terminal = Some(Ok((reason, usage)));
                 Ok(AcceptedEvent::Finished(reason))
             }
@@ -865,15 +936,57 @@ impl BackendTranscript {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BackendFutureState {
+    Polling,
+    Returned,
+    DroppedAtCleanupBound,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum CleanupTrigger {
+    Eof,
+    Shutdown,
+    Deadline,
+    Protocol,
+    Downstream,
+}
+
 async fn cancel_owned_backend(
+    state: &AppState,
     cancel: &watch::Sender<bool>,
-    future: &mut BackendFuture,
-    future_done: bool,
+    future: &mut Option<BackendFuture>,
+    future_state: &mut BackendFutureState,
+    _trigger: CleanupTrigger,
 ) {
-    cancel.send_replace(true);
-    if !future_done {
-        let _ = tokio::time::timeout(STREAM_SEND_DEADLINE, future).await;
+    if *future_state != BackendFutureState::Polling {
+        return;
     }
+    cancel.send_replace(true);
+    let returned = tokio::time::timeout(
+        STREAM_SEND_DEADLINE,
+        future.as_mut().expect("polling backend future"),
+    )
+    .await
+    .is_ok();
+    if returned {
+        *future_state = BackendFutureState::Returned;
+    } else {
+        let owned_future = future.take().expect("polling backend future");
+        drop(owned_future);
+        state
+            .metrics
+            .backend_cleanup_bound_drops
+            .fetch_add(1, Ordering::SeqCst);
+        *future_state = BackendFutureState::DroppedAtCleanupBound;
+    }
+}
+
+fn release_owned_backend(future: &mut Option<BackendFuture>, guard: GenerationGuard) {
+    if let Some(owned_future) = future.take() {
+        drop(owned_future);
+    }
+    drop(guard);
 }
 
 fn backend_error_response(error: BackendFailure) -> Response<BoxBody> {
