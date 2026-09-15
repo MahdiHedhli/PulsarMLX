@@ -22,16 +22,18 @@ def write_original(path, value):
         os.fsync(stream.fileno())
 
 
-def configure(pristine, root, evidence, matrix):
+def configure(pristine, root, evidence, matrix, campaign_seconds=2700):
     global owned_root, evidence_root, matrix_rows, deadline
+    if not 120 <= campaign_seconds <= 2700:
+        raise RuntimeError("PARTIAL: campaign limit is outside the admitted bound")
     frozen = json.loads(matrix.read_bytes())
     if frozen != inventory(pristine):
         raise RuntimeError("PROPERTY_UNCOVERED: frozen matrix no longer matches source")
     owned_root, evidence_root = root, evidence
     matrix_rows = {row["id"]: row for row in frozen["properties"]}
     evidence_root.mkdir(mode=0o700, parents=True, exist_ok=False)
-    deadline = time.monotonic() + 2700
-    write_original(evidence_root / "campaign-source.json", {"harness_sha256": frozen["harness_sha256"], "matrix_sha256": hashlib.sha256(matrix.read_bytes()).hexdigest(), "python": sys.executable, "properties": 20, "aggregate_limit_seconds": 2700})
+    deadline = time.monotonic() + campaign_seconds
+    write_original(evidence_root / "campaign-source.json", {"harness_sha256": frozen["harness_sha256"], "matrix_sha256": hashlib.sha256(matrix.read_bytes()).hexdigest(), "python": sys.executable, "properties": 20, "aggregate_limit_seconds": campaign_seconds})
 
 
 def recorded(command, cwd, env, path):

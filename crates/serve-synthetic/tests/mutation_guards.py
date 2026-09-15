@@ -22,9 +22,10 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--evidence", required=True, type=Path)
     parser.add_argument("--matrix", required=True, type=Path)
+    parser.add_argument("--campaign-seconds", type=int, default=2700)
     args = parser.parse_args()
     pristine = Path(__file__).resolve().parents[1]
-    configure(pristine, args.root, args.evidence, args.matrix)
+    configure(pristine, args.root, args.evidence, args.matrix, args.campaign_seconds)
     if args.scratch.exists():
         raise RuntimeError("scratch path must not exist")
     args.scratch.mkdir(parents=True, mode=0o700)
