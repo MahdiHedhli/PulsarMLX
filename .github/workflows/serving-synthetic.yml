@@ -53,8 +53,7 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
           # The crate must stay outside the root workspace; if it is ever added
           # there, this job's reason to exist changes and should be revisited.
-          ! cargo metadata --format-version 1 --no-deps --quiet \
-            | grep -q '"name":"pulsar-serve-synthetic"'
+          python3 -I -B crates/serve-synthetic/tests/test_ci_campaign.py --check-membership
 
       - name: Formatting
         run: cargo fmt --manifest-path crates/serve-synthetic/Cargo.toml --check
@@ -87,6 +86,10 @@ jobs:
         run: |
           "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
             crates/serve-synthetic/tests/test_ci_campaign.py
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
+            crates/serve-synthetic/tests/contention_contract_tests.py
+          "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
+            crates/serve-synthetic/tests/q_contention_mutation.py
           "$SERVING_GRAPH_ROOT/sdkvenv/bin/python" -I -B \
             crates/serve-synthetic/tests/q_capture_lifecycle_tests.py \
             --mode fake --output "$SERVING_GRAPH_ROOT/lifecycle-fake"

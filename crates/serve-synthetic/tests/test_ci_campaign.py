@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -18,6 +19,24 @@ import ci_campaign as ci
 SOURCE=Path(__file__).resolve().parents[1]
 REPOSITORY=SOURCE.parents[1]
 WORKFLOW=REPOSITORY/'.github/workflows/serving-synthetic.yml'
+
+def verify_production_workspace_membership(runner=subprocess.run):
+    """Fail closed unless root metadata proves the synthetic crate is absent."""
+    result=runner(
+        ['cargo','metadata','--format-version','1','--no-deps','--quiet'],
+        cwd=REPOSITORY,capture_output=True,text=True,timeout=120,
+    )
+    if result.returncode!=0:raise RuntimeError('WORKSPACE_METADATA_FAILED')
+    try:
+        metadata=json.loads(result.stdout)
+        packages=metadata['packages'];members=metadata['workspace_members']
+        names={package['id']:package['name'] for package in packages}
+        member_names={names[member] for member in members}
+    except (KeyError,TypeError,json.JSONDecodeError) as error:
+        raise RuntimeError('WORKSPACE_METADATA_MALFORMED') from error
+    if 'pulsar-serve-synthetic' in member_names:
+        raise RuntimeError('SYNTHETIC_CRATE_IN_PRODUCTION_WORKSPACE')
+    return member_names
 
 class Contract(unittest.TestCase):
     def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.graph=Path(self.tmp.name).resolve()
@@ -44,6 +63,19 @@ class Contract(unittest.TestCase):
         self.assertIn('tests/ci_campaign.py',block);self.assertIn('--root "$SERVING_GRAPH_ROOT/campaign"',block);self.assertIn('--source crates/serve-synthetic',block)
         self.assertLess(text.index('      - name: CI interface tests'),text.index('      - name: Mutation guards'))
         self.run_stub();self.assertEqual(len(ci.inventory(SOURCE)['properties']),20)
+    def test_workspace_membership_failure_modes(self):
+        class Result:
+            def __init__(self,code,stdout):self.returncode=code;self.stdout=stdout
+        valid=json.dumps({'packages':[{'id':'root','name':'pulsarmlx'}],'workspace_members':['root']})
+        self.assertEqual(verify_production_workspace_membership(lambda *_,**__:Result(0,valid)),{'pulsarmlx'})
+        forbidden=json.dumps({'packages':[{'id':'synthetic','name':'pulsar-serve-synthetic'}],'workspace_members':['synthetic']})
+        for result in [Result(1,''),Result(0,'{'),Result(0,'{}'),Result(0,forbidden)]:
+            with self.assertRaises(RuntimeError):verify_production_workspace_membership(lambda *_,**__:result)
+    def test_actual_membership_and_workflow_boundary(self):
+        names=verify_production_workspace_membership();self.assertNotIn('pulsar-serve-synthetic',names)
+        text=WORKFLOW.read_text()
+        self.assertIn('test_ci_campaign.py --check-membership',text)
+        self.assertNotIn('! cargo metadata',text)
     def test_stale_root_refused_before_child(self):
         root=self.graph/'stale';root.mkdir();self.assertRaises(RuntimeError,self.run_stub,root)
     def test_source_output_ancestor_refused(self):
@@ -68,4 +100,9 @@ class Contract(unittest.TestCase):
     def test_stale_matrix_refused(self):
         self.run_stub();path=self.graph/'campaign/input/matrix.json';digest=ci.sha(path)
         with patch.object(ci,'inventory',return_value={'status':'source-changed-stub'}):self.assertRaises(RuntimeError,ci.admit_matrix,path,SOURCE,digest)
-if __name__=='__main__':unittest.main()
+if __name__=='__main__':
+    if '--check-membership' in sys.argv:
+        if len(sys.argv)!=2:raise SystemExit('--check-membership takes no value')
+        verify_production_workspace_membership()
+        print('WORKSPACE_MEMBERSHIP_OK')
+    else:unittest.main()

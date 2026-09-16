@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import contextlib
 import io
 import ipaddress
 import logging
@@ -103,6 +102,69 @@ def error_body(error: openai.APIStatusError) -> dict:
     return {}
 
 
+class ContentionHolder:
+    """Own a streaming generation until an explicit local release."""
+
+    def __init__(self, client: openai.OpenAI) -> None:
+        self.client = client
+        self.started = threading.Event()
+        self.admitted = threading.Event()
+        self.release = threading.Event()
+        self.finished = threading.Event()
+        self.failure: BaseException | None = None
+        self.thread = threading.Thread(target=self._run, daemon=True)
+
+    def start(self) -> None:
+        self.thread.start()
+
+    def _run(self) -> None:
+        stream = None
+        self.started.set()
+        try:
+            stream = chat(self.client, "__synthetic_hold__", stream=True)
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta.role == "assistant":
+                    self.admitted.set()
+                    break
+            if not self.admitted.is_set():
+                raise AssertionError("holder stream ended before admission")
+            if not self.release.wait(10.0):
+                raise AssertionError("holder release was not requested")
+        except BaseException as error:
+            self.failure = error
+        finally:
+            if stream is not None:
+                stream.close()
+            self.finished.set()
+
+    def await_admission(self, seconds: float = 5.0) -> None:
+        if not self.started.wait(seconds):
+            raise AssertionError("holder did not start")
+        if not self.admitted.wait(seconds):
+            if self.failure is not None:
+                raise AssertionError(
+                    f"holder failed before admission: {type(self.failure).__name__}"
+                ) from self.failure
+            raise AssertionError("holder did not acknowledge admission")
+        if self.failure is not None:
+            raise AssertionError(
+                f"holder failed after admission: {type(self.failure).__name__}"
+            ) from self.failure
+        if self.finished.is_set():
+            raise AssertionError("holder released before contender response")
+
+    def close(self) -> None:
+        self.release.set()
+        self.thread.join(timeout=10.0)
+        if self.thread.is_alive():
+            raise AssertionError("holder did not finish after release")
+        if self.failure is not None:
+            raise AssertionError(
+                f"holder failed: {type(self.failure).__name__}"
+            ) from self.failure
+
+
 def prove_authentication_and_errors(base_url: str, token: str) -> None:
     """Authentication and error handling for the supported route subset."""
     bad_client, bad_http = make_client(base_url, "not-the-right-token-value", )
@@ -156,39 +218,31 @@ def prove_authentication_and_errors(base_url: str, token: str) -> None:
 
 
 def prove_rate_limit(base_url: str, token: str) -> None:
-    """The single generation slot must surface as a rate limit, not a hang."""
+    """A holder proven admitted must make one contender receive server_busy."""
     holder_client, holder_http = make_client(base_url, token, timeout=10.0)
-    observed: list[object] = []
-
-    def hold() -> None:
-        with contextlib.suppress(Exception):
-            chat(holder_client, "__synthetic_slow__")
-
-    thread = threading.Thread(target=hold, daemon=True)
     with holder_http:
-        thread.start()
+        holder = ContentionHolder(holder_client)
+        holder.start()
+        holder.await_admission()
         client, http_client = make_client(base_url, token)
         with http_client:
-            deadline = threading.Event()
-            for _ in range(50):
-                try:
-                    chat(client, "hello")
-                except openai.RateLimitError as error:
-                    assert error.status_code == 429
-                    body = error_body(error)
-                    assert body.get("code") == "server_busy", body
-                    # F5: a busy generation slot must not look like a caller
-                    # mistake, or SDK backoff cannot engage.
-                    assert body.get("type") == "rate_limit_error", body
-                    observed.append(error)
-                    break
-                except openai.APIError:
-                    break
-                deadline.wait(0.02)
+            try:
+                chat(client, "hello")
+            except openai.RateLimitError as error:
+                assert error.status_code == 429
+                body = error_body(error)
+                assert body.get("code") == "server_busy", body
+                assert body.get("type") == "rate_limit_error", body
+            except openai.APIError as error:
+                raise AssertionError(
+                    f"contender received wrong API error: {type(error).__name__}"
+                ) from error
+            else:
+                raise AssertionError("contender succeeded while holder owned the slot")
+            assert not holder.finished.is_set(), "holder released before contender response"
             client.close()
-        thread.join(timeout=15)
+        holder.close()
     holder_client.close()
-    assert observed, "the busy generation slot never surfaced as a rate limit"
 
 
 def prove_timeout_cancellation_and_disconnect(base_url: str, token: str) -> None:

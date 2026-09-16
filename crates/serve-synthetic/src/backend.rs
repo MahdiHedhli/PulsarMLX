@@ -172,6 +172,17 @@ impl CompletionBackend for SyntheticBackend {
             return Err(BackendFailure::Generation);
         }
         let future = Box::pin(async move {
+            // This test-only mode makes backend admission observable to the
+            // loopback SDK smoke test.  It emits the initial streaming role
+            // only after the request owns its generation permit, then holds
+            // that permit until the client cancels the stream.
+            if mode == SyntheticMode::Hold {
+                if !send(&mut cancellation, &events, BackendEvent::AssistantRole).await {
+                    return;
+                }
+                cancellation.cancelled().await;
+                return;
+            }
             if mode == SyntheticMode::Slow
                 && !cancel_or_sleep(
                     &mut cancellation,
@@ -237,6 +248,7 @@ enum SyntheticMode {
     FailBefore,
     FailAfter,
     Slow,
+    Hold,
 }
 
 impl SyntheticMode {
@@ -251,6 +263,7 @@ impl SyntheticMode {
             Some("__synthetic_fail_before__") => Self::FailBefore,
             Some("__synthetic_fail_after__") => Self::FailAfter,
             Some("__synthetic_slow__") => Self::Slow,
+            Some("__synthetic_hold__") => Self::Hold,
             _ => Self::Success,
         }
     }
