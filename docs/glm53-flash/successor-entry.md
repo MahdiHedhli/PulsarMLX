@@ -36,3 +36,9 @@ The `convolution` operation adds source-bound causal convolution and saved-state
 composition through an explicit research cache adapter. See
 [its finite contract and limits](convolution-state.md) for the extracted source
 boundary, K1 diagnostic, mutation controls and distinct archive layout.
+
+# Decoder-layer composition
+
+The `layer` operation composes the admitted linear-attention module and the
+dense-FFN graph into the renamed upstream decoder layer and checks it against a
+composed independent oracle; see [its contract and limits](decoder-layer.md).
