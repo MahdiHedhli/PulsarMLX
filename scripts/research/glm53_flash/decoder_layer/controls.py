@@ -20,6 +20,7 @@ import unittest
 
 FIXTURE = 'fixtures/research/glm53-flash-decoder-layer-v1/fixtures.json'
 LINEAR_FIXTURE = 'fixtures/research/glm53-flash-linear-attention-v1/fixtures.json'
+CACHE_FIXTURE = 'fixtures/research/glm53-flash-cache-lifecycle-v1/fixtures.json'
 
 
 class Mismatch(AssertionError):
@@ -88,11 +89,12 @@ def observe(layer, x, mx):
     return seen
 
 
-def run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_oracle, attention_source, attention_oracle, accepted_recurrence):
+def run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_oracle, attention_source, attention_oracle, accepted_recurrence, cache_source):
     root = context.roots['code']
     raw = context.read_verified(root / FIXTURE)
     fixture = json.loads(raw)
     linear_fixture = json.loads(context.read_verified(root / LINEAR_FIXTURE))
+    cache_fixture = json.loads(context.read_verified(root / CACHE_FIXTURE))
     capsule_raw = context.read_verified(root / layer_source.CAPSULE)
     language_raw = context.read_verified(root / ffn_source.LANGUAGE)
     tol = fixture['tolerances']
@@ -187,6 +189,41 @@ def run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_or
                 emit('layer_mutant', **row)
                 for r in results:
                     self.assertEqual(r['observed'], r['expected_cell'], f"{label}/{r['fixture_id']}: {r}")
+
+        def test_cache_lifecycle_split_run(self):
+            # Split run: S=1 then S=1 carrying the real cache object across calls.
+            # Outputs must reproduce the whole run; the actual cache tensors must
+            # match the reference's per-time states within its declared tolerances.
+            bound, attention = admitted()
+            cache_classes, _, cache_binding = cache_source.load(context, cache_fixture)
+            for case in fixture['cases']:
+                exp = fixture['expected'][case['fixture_id']]
+                layer = build_layer(bound.namespace, case, mx, nn)
+                cache = cache_classes.source_make_cache()
+                cache.state = [None, None]
+                cache.prepare([case['shape'][1]])
+                cache.left_padding = mx.array([0])
+                x = mx.array(case['x'], dtype=mx.float32)
+                rows = []
+                for t in range(case['shape'][1]):
+                    y = layer(x[:, t:t + 1], None, cache)
+                    c0, c1 = cache.state
+                    mx.eval(y, c0, c1)
+                    ev = exp['attention_cache_events'][t]
+                    err_out = max_error(y.tolist(), [[exp['boundaries']['output'][0][t]]])
+                    ok0 = attention_oracle.close(c0.tolist(), ev['cache0'], tol['cache0_atol'], tol['cache0_rtol'])
+                    ok1 = attention_oracle.close(c1.tolist(), ev['cache1'], tol['cache1_atol'], tol['cache1_rtol'])
+                    rows.append({'time': t, 'output_error': err_out, 'output_ok': err_out <= tol['output'],
+                                 'cache0_ok': ok0, 'cache1_ok': ok1, 'cache0_shape': list(c0.shape), 'cache1_shape': list(c1.shape),
+                                 'lengths': cache.lengths.tolist(), 'padding': cache.left_padding.tolist()})
+                final_ok = (attention_oracle.close(cache.state[0].tolist(), exp['attention_final_cache']['cache0'], tol['cache0_atol'], tol['cache0_rtol'])
+                            and attention_oracle.close(cache.state[1].tolist(), exp['attention_final_cache']['cache1'], tol['cache1_atol'], tol['cache1_rtol']))
+                row = {'fixture_id': case['fixture_id'], 'steps': rows, 'final_cache_ok': final_ok, 'cache_class': type(cache).__name__,
+                       'cache_binding': cache_binding, 'attention_counters': dict(attention.stats)}
+                emit('cache_lifecycle_split_run', **row)
+                for r in rows:
+                    self.assertTrue(r['output_ok'] and r['cache0_ok'] and r['cache1_ok'], f"{case['fixture_id']} t={r['time']}: {r}")
+                self.assertTrue(final_ok, case['fixture_id'])
 
         def test_refusals(self):
             bound, _ = admitted()

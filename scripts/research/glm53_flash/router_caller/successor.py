@@ -56,7 +56,7 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 5}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 6}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
@@ -66,8 +66,8 @@ def producer_pass(stdout, stderr, stop, operation):
                 'test_whole_and_partitions']:
             return False
         if operation == 'layer' and result.get('test_ids') != [
-                'test_compiled_decode_step', 'test_frozen_reference_recomputes', 'test_layer_boundaries',
-                'test_refusals', 'test_semantic_mutants']:
+                'test_cache_lifecycle_split_run', 'test_compiled_decode_step', 'test_frozen_reference_recomputes',
+                'test_layer_boundaries', 'test_refusals', 'test_semantic_mutants']:
             return False
         if operation == 'convolution' and result.get('test_ids') != [
                 'test_classifier_wrong_type_and_message', 'test_interleaved_and_new_cache',

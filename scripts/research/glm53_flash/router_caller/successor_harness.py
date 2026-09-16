@@ -66,9 +66,10 @@ def run(context, mode, backend):
         ffn_oracle = component(context, 'oracle', {}, folder='decoder_ffn')
         layer_oracle = component(context, 'oracle', {}, folder='decoder_layer')
         layer_source = component(context, 'source', {}, folder='decoder_layer')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
         controls = component(context, 'controls', {}, folder='decoder_layer')
         return controls.run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_oracle,
-                            attention_source, attention_oracle, accepted_recurrence)
+                            attention_source, attention_oracle, accepted_recurrence, actual_cache)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
