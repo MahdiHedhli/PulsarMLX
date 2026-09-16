@@ -89,14 +89,23 @@ def main():
             assert r['clamp_active_elements'] > 0, 'clamp inactive for an active-declared case'
         cases.append(c)
         expected[c['fixture_id']] = {'boundaries': r['boundaries'], 'clamp_active_elements': r['clamp_active_elements'],
-                                     'attention_maximum_radii': r['attention_reference']['maximum_radii']}
+                                     'attention_maximum_radii': r['attention_reference']['maximum_radii'],
+                                     'attention_cache_events': r['attention_cache_events'],
+                                     'attention_final_cache': r['attention_final_cache']}
     tolerances = {'attn_pre': 1e-4, 'attn_post': 1e-4, 'attn_comb': 1e-4, 'attn_xc': 1e-4, 'attn_norm': 1e-4,
-                  'attention': 1e-4, 'x1': 1e-4, 'output': 1e-4}
+                  'attention': 1e-4, 'x1': 1e-4, 'output': 1e-4,
+                  'cache0_atol': 1e-4, 'cache0_rtol': 1e-5, 'cache1_atol': 1e-4, 'cache1_rtol': 1e-5}
     out = {'schema': 'glm53-flash-decoder-layer-v1', 'generator': {'seed': hex(SEED), 'module': 'decoder_layer/generate_fixtures.py'},
            'linear_config': LINEAR, 'tolerances': tolerances, 'cases': cases, 'expected': expected,
            'limits': ['norm stage exercised only at the symmetric +/-1 point (accepted linear reference domain)',
-                      'cache=None; cache lifecycle across calls is slice 2', 'fixture scale; not real-model correctness']}
+                      'slice 2 (split run S=1+S=1 with the real cache object) compares outputs and cache tensors to the whole run and the reference per-time caches', 'fixture scale; not real-model correctness']}
     target = ROOT / 'fixtures/research/glm53-flash-decoder-layer-v1/fixtures.json'
+    if target.exists():
+        # The expected-kill matrix is frozen separately (design-derived) and is
+        # carried through regeneration unchanged.
+        previous = json.loads(target.read_text())
+        if 'expected_kill_matrix' in previous:
+            out['expected_kill_matrix'] = previous['expected_kill_matrix']
     target.write_text(json.dumps(out, indent=1) + '\n')
     print(json.dumps({'cases': [c['fixture_id'] for c in cases], 'clamp_active': {k: v['clamp_active_elements'] for k, v in expected.items()},
                       'attention_radii': {k: v['attention_maximum_radii'] for k, v in expected.items()}}))

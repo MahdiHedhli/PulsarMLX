@@ -125,6 +125,11 @@ def run(case, attention_reference, accepted_recurrence, ffn_reference):
                 batch[k].append(v)
         for k in boundaries:
             boundaries[k].append(batch[k])
+    # Per-time cache states from the accepted reference, for the split-run
+    # (cache lifecycle) comparison: cache0 [B,K-1,3Q] and cache1 [B,H,D,D] after
+    # each token, plus the final states. Comparison-only values, never inputs.
+    cache_events = [{'time': e['time'], 'cache0': e['cache0'], 'cache1': e['cache1']} for e in attention['events']]
     return {'boundaries': boundaries, 'attention_reference': {'maximum_radii': attention['maximum_radii']},
+            'attention_cache_events': cache_events, 'attention_final_cache': {'cache0': attention['cache0'], 'cache1': attention['cache1']},
             'clamp_active_elements': sum(f['clamp_active_elements'] for f in ffn_results),
             'ffn_boundaries': [f['boundaries'] for f in ffn_results]}
