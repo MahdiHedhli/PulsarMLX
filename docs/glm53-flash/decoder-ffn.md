@@ -94,3 +94,17 @@ oracle `comb` asymmetry is 0.07. Thirty-five cells: twenty-five expected
 kills, six expected inactive, four declared weak-structural. The kill-margin factor was not lowered. This
 remains fixture-scale method qualification of the adapted caller, not real
 model or runtime correctness.
+
+## Compile-gate equivalence (AN, Graph 7)
+
+`Glm5NextDecoderLayer.__call__` routes B=1, L=1 decode steps through
+`mx.compile(self._ffn_block)`. `test_glm53_flash_decoder_ffn_compile.py` consumes
+the admitted closed graph without altering it and compares the compiled
+function with the eager one on every dense-FFN fixture, on CPU and on Metal,
+for the full fixture input and its L=1 decode-step slice. The predeclared rule
+is the fixture output allowance (1e-4); bitwise equality is recorded but not
+required. Observed: bitwise-equal everywhere except the hc_mult-3 fixture on
+CPU (1.8e-7 / 2.4e-7, float32 reassociation under compile); Metal bit-equal
+on all fixtures. A compiled residual-omitting mutant exceeds the allowance on
+every device/fixture cell. On hosted CI a missing Metal device fails the test;
+locally it is recorded as NOT_EXECUTED, never as a pass.

@@ -26,7 +26,7 @@
   "digest_scheme": "canonical-ast/1",
   "digest_scheme_note": "canonical structural AST digests are interpreter-independent; see source._canonical",
   "graph_sha256": {
-    "docs/glm53-flash/decoder-ffn.md": "61d725293d89577c3f90deaff9f411f88e71b06099acc32f11ebe2fc58a2ccfe",
+    "docs/glm53-flash/decoder-ffn.md": "21eaeb03592b8c3ffbe36dd57aaa1c09a89c1c2adc4832bdd130c8d27930b5f1",
     "fixtures/research/glm53-flash-decoder-ffn-v1/fixtures.json": "337b92967a64dccfbf64761ac01dc4f45599abb508a48009b2ef07d4343a9de5",
     "scripts/research/glm53_flash/decoder_ffn/capsule.py": "c00d7b16a94eec40fbc01ce89207b6df58ca6cd7756ab6e29a732b774b429147",
     "scripts/research/glm53_flash/decoder_ffn/controls.py": "efec7448f104d2b1fb8a6e5e89ec1976745f5f10b20a02a347df33f5ef51f639",
