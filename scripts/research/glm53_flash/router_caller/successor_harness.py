@@ -70,6 +70,15 @@ def run(context, mode, backend):
         controls = component(context, 'controls', {}, folder='decoder_layer')
         return controls.run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_oracle,
                             attention_source, attention_oracle, accepted_recurrence, actual_cache)
+    if mode == 'moe':
+        import mlx.nn as nn
+        rc_oracle = component(context, 'rc_oracle', {})
+        rc_source = component(context, 'rc_source', {'guard': context}, ('import rc_guard as guard',))
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        moe_oracle = component(context, 'oracle', {}, folder='decoder_moe')
+        moe_source = component(context, 'source', {}, folder='decoder_moe')
+        controls = component(context, 'controls', {}, folder='decoder_moe')
+        return controls.run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, moe_oracle)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
