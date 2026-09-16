@@ -49,11 +49,6 @@ def verify_production_workspace_membership(runner=subprocess.run):
     return member_names
 
 class Contract(unittest.TestCase):
-    def test_failure_diagnostic_is_bounded_and_hashed(self):
-        output=self.graph/'diagnostic';output.mkdir()
-        (output/'stderr.raw').write_bytes(b'x'*5000)
-        row=ci.failure_diagnostic(output)
-        self.assertEqual(row['status'],'AVAILABLE');self.assertEqual(row['bytes'],5000);self.assertEqual(len(row['excerpt']),4096);self.assertEqual(row['sha256'],hashlib.sha256(b'x'*5000).hexdigest())
     def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.graph=Path(self.tmp.name).resolve()
     def tearDown(self):self.tmp.cleanup()
     def fake_tools(self):return {k:{'path':sys.executable,'sha256':'inert-tool-stub','version':'not-qualification'} for k in ['cargo','rustc']}

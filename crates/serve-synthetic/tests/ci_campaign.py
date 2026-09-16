@@ -44,15 +44,67 @@ def tools():
         version=subprocess.run([str(path),'--version'],cwd=Path(__file__).parent,capture_output=True,text=True,timeout=120,check=True).stdout.strip()
         result[name]={'path':str(path),'sha256':sha(path),'version':version}
     return result
-def failure_diagnostic(output,limit=4096):
-    path=Path(output)/'stderr.raw'
-    if path.is_symlink() or not path.is_file():return {'status':'UNAVAILABLE'}
-    body=path.read_bytes()
-    return {'status':'AVAILABLE','bytes':len(body),'sha256':hashlib.sha256(body).hexdigest(),'excerpt':body[:limit].decode('utf-8','replace').replace('\x00','\\u0000')}
-def launch(command,source,env,output,seconds):
-    terminal=q_capture.capture(command,str(source),env,output,timeout=seconds,termination_grace=5)
+def unavailable_diagnostic(error):
+    return {'status':'UNAVAILABLE','error_type':error if isinstance(error,str) else type(error).__name__}
+def failure_diagnostic(output,terminal=None,excerpt_limit=4096,capacity=q_capture.STREAM_LIMIT):
+    """Read capture-owned stderr without letting diagnostics replace the terminal."""
+    directory_fd=None;stream_fd=None
+    try:
+        if not isinstance(excerpt_limit,int) or excerpt_limit<0 or not isinstance(capacity,int) or capacity<0:
+            raise ValueError('invalid diagnostic bound')
+        output=Path(output)
+        absolute=output.absolute()
+        resolved=output.resolve(strict=True)
+        if absolute!=resolved: return unavailable_diagnostic('OutputNotCanonical')
+        flags=os.O_RDONLY|getattr(os,'O_CLOEXEC',0)|getattr(os,'O_DIRECTORY',0)|os.O_NOFOLLOW
+        directory_fd=os.open(resolved,flags)
+        directory_stat=os.fstat(directory_fd)
+        if not stat.S_ISDIR(directory_stat.st_mode) or directory_stat.st_uid!=os.geteuid() or stat.S_IMODE(directory_stat.st_mode)&0o077:
+            return unavailable_diagnostic('OutputNotOwnedPrivateDirectory')
+        stream_fd=os.open('stderr.raw',os.O_RDONLY|getattr(os,'O_CLOEXEC',0)|os.O_NOFOLLOW,dir_fd=directory_fd)
+        before=os.fstat(stream_fd)
+        if not stat.S_ISREG(before.st_mode) or before.st_uid!=os.geteuid() or stat.S_IMODE(before.st_mode)&0o077:
+            return unavailable_diagnostic('ArtifactNotOwnedPrivateRegular')
+        if before.st_size>capacity:return unavailable_diagnostic('ArtifactCapacityExceeded')
+        digest=hashlib.sha256();head=bytearray();total=0
+        while True:
+            block=os.read(stream_fd,min(65536,capacity-total+1))
+            if not block:break
+            total+=len(block)
+            if total>capacity:return unavailable_diagnostic('ArtifactCapacityExceeded')
+            digest.update(block)
+            if len(head)<excerpt_limit:head.extend(block[:excerpt_limit-len(head)])
+        after=os.fstat(stream_fd)
+        if (before.st_dev,before.st_ino)!=(after.st_dev,after.st_ino) or after.st_size!=total:
+            return unavailable_diagnostic('ArtifactChangedDuringRead')
+        sha256=digest.hexdigest()
+        if terminal is not None:
+            try:
+                expected_bytes=terminal['stream_bytes']['stderr'];expected_sha256=terminal['stream_sha256']['stderr']
+            except (KeyError,TypeError):
+                return unavailable_diagnostic('TerminalEvidenceMissing')
+            if expected_bytes!=total or expected_sha256!=sha256:
+                return unavailable_diagnostic('TerminalEvidenceMismatch')
+        excerpt=bytes(head)
+        capture_complete=bool(terminal is None or (terminal.get('status') in {'CLOSED','SPAWN_ERROR'} and not terminal.get('capture_error') and not terminal.get('timeout')))
+        return {'status':'AVAILABLE','bytes':total,'sha256':sha256,'digest_complete':True,
+                'capture_complete':capture_complete,'excerpt_bytes':len(excerpt),
+                'excerpt_sha256':hashlib.sha256(excerpt).hexdigest(),
+                'excerpt_truncated':total>len(excerpt),'excerpt_encoding':'utf-8-backslashreplace',
+                'excerpt':excerpt.decode('utf-8','backslashreplace')}
+    except Exception as error:
+        return unavailable_diagnostic(error)
+    finally:
+        if stream_fd is not None:os.close(stream_fd)
+        if directory_fd is not None:os.close(directory_fd)
+def launch(command,source,env,output,seconds,diagnostic_provider=failure_diagnostic,capture_limit=None):
+    capture_options={'timeout':seconds,'termination_grace':5}
+    if capture_limit is not None:capture_options['limit']=capture_limit
+    terminal=q_capture.capture(command,str(source),env,output,**capture_options)
     if terminal['status']!='CLOSED' or terminal['native_signal'] or terminal['code']!=0 or not terminal['reaped']:
-        raise RuntimeError('CAMPAIGN_FAILED: '+json.dumps({'terminal':terminal,'diagnostic':failure_diagnostic(output)},sort_keys=True))
+        try:diagnostic=diagnostic_provider(output,terminal)
+        except Exception as error:diagnostic=unavailable_diagnostic(error)
+        raise RuntimeError('CAMPAIGN_FAILED: '+json.dumps({'terminal':terminal,'diagnostic':diagnostic},sort_keys=True))
     return terminal
 def run(source,root,python,seconds=2700,launcher=launch,tool_provider=tools):
     source,root=layout(source,root)
