@@ -55,6 +55,26 @@ CODE_FILES += (
     'scripts/research/glm53_flash/linear_attention/edges.json',
     'fixtures/research/glm53-flash-linear-attention-v1/fixtures.json',
 )
+# Dense-FFN admitted graph (its loader anchors these bytes by digest; listing
+# them here makes them manifest members as well) and the decoder-layer graph.
+CODE_FILES += (
+    'scripts/research/glm53_flash/decoder_ffn/source.py',
+    'scripts/research/glm53_flash/decoder_ffn/capsule.py',
+    'scripts/research/glm53_flash/decoder_ffn/oracle.py',
+    'scripts/research/glm53_flash/decoder_ffn/controls.py',
+    'scripts/research/glm53_flash/decoder_ffn/provenance.json',
+    'scripts/research/glm53_flash/decoder_ffn/upstream-hyper-connection.txt',
+    'scripts/research/glm53_flash/decoder_ffn/regenerate_provenance.py',
+    'scripts/research/tests/test_glm53_flash_decoder_ffn.py',
+    'docs/glm53-flash/decoder-ffn.md',
+    'fixtures/research/glm53-flash-decoder-ffn-v1/fixtures.json',
+    'scripts/research/glm53_flash/decoder_layer/capsule.py',
+    'scripts/research/glm53_flash/decoder_layer/source.py',
+    'scripts/research/glm53_flash/decoder_layer/oracle.py',
+    'scripts/research/glm53_flash/decoder_layer/controls.py',
+    'scripts/research/glm53_flash/decoder_layer/generate_fixtures.py',
+    'fixtures/research/glm53-flash-decoder-layer-v1/fixtures.json',
+)
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',
                   'mlx-vlm/mlx_vlm/models/deepseek_v32/language.py', 'pipenetwork/LICENSE',

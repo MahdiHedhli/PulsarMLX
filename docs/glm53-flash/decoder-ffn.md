@@ -84,9 +84,12 @@ Tolerance comes from the fixture contract; a wrong-shaped mutant output is a
 A fifth fixture, `sinkhorn-3-h3-clamp-active` (hc_mult 3, shape [1,2,3,2],
 deterministic generator recorded in the fixture), exists because the weak
 transpose margin reported by earlier reviews on the Sinkhorn-3 fixtures is
-structural: a converged 2x2 doubly-stochastic `comb` is symmetric, so
+structural on those fixtures: a converged 2x2 doubly-stochastic `comb` is
+symmetric, and on those fixtures three rounds converge it to within ~1e-3, so
 transposing it is nearly the identity and only the convergence residual
-(8.3e-4) is observable. The same fixed-point argument makes the initial-axis flip
+(8.3e-4) is observable. Convergence within three rounds is fixture-dependent
+(the decoder-layer fixtures show 2e-2 residual asymmetry at H=2), so the
+symmetry argument is not a general statement about three rounds. The same fixed-point argument makes the initial-axis flip
 (`hc-axis-initial`) weak on those fixtures (9.1e-4). Those four cells are
 declared `WEAK_STRUCTURAL` (error strictly between the allowance and the
 margin) and both mutants must kill at full margin on the H=3 fixture, whose

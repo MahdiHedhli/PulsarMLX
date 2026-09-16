@@ -55,6 +55,20 @@ def run(context, mode, backend):
                              'accepted_recurrence': accepted_recurrence, 'source': module_source,
                              'cache_source': actual_cache, 'archive': archive}, folder='linear_attention')
         return controls.run(context, backend)
+    if mode == 'layer':
+        import mlx.nn as nn
+        accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
+        recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
+        attention_oracle = component(context, 'oracle', {}, folder='linear_attention')
+        attention_source = component(context, 'source', {'mx': mx, 'nn': nn,
+                                     'recurrent_verifier': recurrent_verifier}, folder='linear_attention')
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        ffn_oracle = component(context, 'oracle', {}, folder='decoder_ffn')
+        layer_oracle = component(context, 'oracle', {}, folder='decoder_layer')
+        layer_source = component(context, 'source', {}, folder='decoder_layer')
+        controls = component(context, 'controls', {}, folder='decoder_layer')
+        return controls.run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_oracle,
+                            attention_source, attention_oracle, accepted_recurrence)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
