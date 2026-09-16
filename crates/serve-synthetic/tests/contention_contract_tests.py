@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from aa_behavior_oracle import execute,load
 HERE=Path(__file__).resolve().parent
-CASES=['omitted_admission','swallowed_failure','premature_release','weakened_busy','lost_finally','metadata_failure_absence','genuine_busy','success_while_held','early_release','wrong_status','wrong_code','wrong_class','failure_before_admission','failure_after_admission','delayed_admission','cancellation','close_error']
+CASES=['omitted_admission','swallowed_failure','premature_release','weakened_busy','lost_finally','metadata_failure_absence','genuine_busy','success_while_held','early_release','wrong_status','wrong_code','wrong_class','failure_before_admission','failure_after_admission','delayed_admission','cancellation','close_error','lease_expired']
 class Contract(unittest.TestCase):
     def test_behavioral_cases(self):
         for case in CASES:

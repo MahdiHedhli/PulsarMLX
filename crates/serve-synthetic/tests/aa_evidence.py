@@ -46,6 +46,7 @@ def packet(source,outcomes,campaign,transport,output):
     files.extend([repo/'Cargo.toml',repo/'.github/workflows/serving-synthetic.yml',repo/'.github/workflows/macos.yml'])
     files.extend(transport.glob('*.mjs'))
     files.extend([outcomes/'admission.json',outcomes/'independent-expectations.json',outcomes/'semantic-readback.json'])
+    files.extend(outcomes.glob('*.json'));files.extend(outcomes.glob('*.md'))
     # Complete noncompiler raw behavioral outcomes from every retained generation.
     for generation in sorted(outcomes.glob('generation-*')):
         files.extend(p for p in generation.rglob('*') if p.is_file() and p.suffix not in ['.bundle','.tar'] and p.name!='cumulative.diff')

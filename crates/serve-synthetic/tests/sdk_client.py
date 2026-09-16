@@ -148,6 +148,7 @@ class ContentionHolder:
                 raise InvalidContentionExperiment("HOLDER_STREAM_ENDED")
         except BaseException as error:
             if not self.release.is_set():
+                self.note("holder_failed_" + type(error).__name__)
                 self.failure = error
         finally:
             try:
@@ -284,7 +285,8 @@ def prove_authentication_and_errors(base_url: str, token: str) -> None:
 
 def prove_rate_limit(base_url: str, token: str) -> None:
     """A holder proven admitted must make one contender receive server_busy."""
-    holder_client, holder_http = make_client(base_url, token, timeout=10.0)
+    # Keep cancellation's read wakeup strictly inside the owned join bound.
+    holder_client, holder_http = make_client(base_url, token, timeout=1.0)
     holder = ContentionHolder(holder_client)
     client, http_client = make_client(base_url, token)
     try:

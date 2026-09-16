@@ -38,10 +38,14 @@ def verify_production_workspace_membership(runner=subprocess.run):
         names={package['id']:package['name'] for package in packages}
         if len(names)!=len(packages):raise TypeError('duplicate package identity')
         member_names={names[member] for member in members}
+        dependencies=[p['dependencies'] for p in packages if p['id'] in members]
+        if any(not isinstance(d,list) or any(not isinstance(item,dict) or not isinstance(item.get('name'),str) for item in d) for d in dependencies):raise TypeError('dependency identities required')
     except (KeyError,TypeError,json.JSONDecodeError) as error:
         raise RuntimeError('WORKSPACE_METADATA_MALFORMED') from error
     if 'pulsar-serve-synthetic' in member_names:
         raise RuntimeError('SYNTHETIC_CRATE_IN_PRODUCTION_WORKSPACE')
+    if any(item['name']=='pulsar-serve-synthetic' for deps in dependencies for item in deps):
+        raise RuntimeError('SYNTHETIC_CRATE_IN_PRODUCTION_DEPENDENCIES')
     return member_names
 
 class Contract(unittest.TestCase):
@@ -72,10 +76,11 @@ class Contract(unittest.TestCase):
     def test_workspace_membership_failure_modes(self):
         class Result:
             def __init__(self,code,stdout):self.returncode=code;self.stdout=stdout
-        valid=json.dumps({'packages':[{'id':'root','name':'pulsarmlx'}],'workspace_members':['root']})
+        valid=json.dumps({'packages':[{'id':'root','name':'pulsarmlx','dependencies':[]}],'workspace_members':['root']})
         self.assertEqual(verify_production_workspace_membership(lambda *_,**__:Result(0,valid)),{'pulsarmlx'})
-        forbidden=json.dumps({'packages':[{'id':'synthetic','name':'pulsar-serve-synthetic'}],'workspace_members':['synthetic']})
-        for result,code in [(Result(1,''),'WORKSPACE_METADATA_FAILED'),(Result(0,''),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{}'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,forbidden),'SYNTHETIC_CRATE_IN_PRODUCTION_WORKSPACE')]:
+        forbidden=json.dumps({'packages':[{'id':'synthetic','name':'pulsar-serve-synthetic','dependencies':[]}],'workspace_members':['synthetic']})
+        dependency=json.dumps({'packages':[{'id':'root','name':'pulsarmlx','dependencies':[{'name':'pulsar-serve-synthetic'}]}],'workspace_members':['root']})
+        for result,code in [(Result(1,''),'WORKSPACE_METADATA_FAILED'),(Result(0,''),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{}'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,forbidden),'SYNTHETIC_CRATE_IN_PRODUCTION_WORKSPACE'),(Result(0,dependency),'SYNTHETIC_CRATE_IN_PRODUCTION_DEPENDENCIES')]:
             with self.assertRaises(RuntimeError) as caught:verify_production_workspace_membership(lambda *_,**__:result)
             self.assertEqual(str(caught.exception),code)
     def test_actual_membership_and_workflow_boundary(self):

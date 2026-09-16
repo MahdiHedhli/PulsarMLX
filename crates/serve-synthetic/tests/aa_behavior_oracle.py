@@ -61,7 +61,7 @@ def execute(case,sdk,membership):
         except RuntimeError as error:assert str(error)=='WORKSPACE_METADATA_FAILED','AA_METADATA_FAILURE_ACCEPTED'
         else:raise AssertionError('AA_METADATA_FAILURE_ACCEPTED')
         return
-    if case in ['swallowed_failure','lost_finally','failure_before_admission','failure_after_admission','delayed_admission','cancellation','close_error']:
+    if case in ['swallowed_failure','lost_finally','failure_before_admission','failure_after_admission','delayed_admission','cancellation','close_error','lease_expired']:
         stream=Stream(admitted=case!='delayed_admission',failure=RuntimeError('fake holder failure') if case in ['swallowed_failure','lost_finally','failure_before_admission'] else None,close_error=case in ['lost_finally','close_error'])
         if case=='failure_after_admission':
             class AfterStream(Stream):
@@ -74,17 +74,27 @@ def execute(case,sdk,membership):
         try:
             if case=='delayed_admission':
                 assert holder.started.wait(.5),'AA_DELAY_NOT_STARTED';assert not holder.admitted.wait(.02),'AA_DELAY_FALSE_ADMISSION'
+                expect_error(lambda:holder.await_admission(.01),'holder did not acknowledge admission','AA_DELAY_FALSE_ADMISSION')
                 stream.admission_gate.set();holder.await_admission(.5)
-            elif case in ['cancellation','close_error']:holder.await_admission(.5)
+            elif case in ['cancellation','close_error','lease_expired']:
+                holder.await_admission(.5)
+                if case=='lease_expired':
+                    sdk.time=SimpleNamespace(monotonic=lambda:holder.request_started+3)
+                    expect_error(holder.ensure_active,'HOLDER_LEASE_WINDOW_EXPIRED','AA_EXPIRED_LEASE_ACCEPTED')
             else:
                 holder.thread.join(1);assert not holder.thread.is_alive(),'AA_HOLDER_THREAD_NOT_JOINED'
                 assert isinstance(holder.failure,RuntimeError),'AA_HOLDER_FAILURE_SWALLOWED'
-                assert holder.finished.is_set(),'AA_FINALLY_SIGNAL_LOST';return
+                assert holder.finished.is_set(),'AA_FINALLY_SIGNAL_LOST'
+                if case in ['failure_before_admission','failure_after_admission']:
+                    phase='before' if case=='failure_before_admission' else 'after'
+                    expect_error(lambda:holder.await_admission(.01),'holder failed '+phase+' admission: RuntimeError','AA_HOLDER_FAILURE_SWALLOWED')
+                return
         finally:
             if holder.thread.is_alive():
                 try:holder.close()
-                except AssertionError:
+                except AssertionError as error:
                     if case!='close_error':raise
+                    assert str(error)=='holder failed: RuntimeError','AA_CLOSE_ERROR_HIDDEN'
         assert holder.finished.is_set(),'AA_FINALLY_SIGNAL_LOST';assert stream.closed.is_set(),'AA_CANCEL_NOT_CLOSED';assert not holder.thread.is_alive(),'AA_HOLDER_THREAD_NOT_JOINED'
         if case=='close_error':assert isinstance(holder.failure,RuntimeError),'AA_CLOSE_ERROR_HIDDEN'
         return
