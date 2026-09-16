@@ -28,7 +28,14 @@ here (asymmetry 2e-2), the mutant kills at 9.9e-3, and the misprediction is
 preserved in the fixture record.
 
 Two fixtures (hc_mult 2 and 3, hidden 4, one linear head of dim 32, kernel 2,
-S=2, cache `None`). Input design is constrained by the accepted
+S=2). Slice 1 runs with cache `None`. Slice 2 runs the same inputs as a split
+run (S=1, then S=1) carrying the real `ArraysCache` object from the admitted
+cache-lifecycle source across the two layer calls: each step's output matches
+the whole run within 2e-7, and the actual `cache0`/`cache1` tensors match the
+reference's per-time and final cache states within the linear reference's
+declared cache tolerances (1e-4 absolute, 1e-5 relative); lengths and padding
+bookkeeping advance as in the linear-attention track. Cache-path mutants are
+not re-run at layer level; they remain the linear-attention track's controls. Input design is constrained by the accepted
 linear-attention reference, which admits inputs only with |v| <= 1: an
 RMS-normalised vector always has an element >= 1 unless magnitudes are equal,
 so the layer inputs use a rank-1 sign pattern whose normalised attention input
@@ -36,8 +43,7 @@ has uniform magnitude just below 1. The norm stage is therefore exercised only
 at that point. Widening the reference's input domain is a separate,
 consequential change to an accepted reference and is not made here.
 
-Not covered: cache lifecycle across calls (slice 2), sparse attention and
-indexer, MoE experts and combine, the model stack, real weights, quantized or
+Not covered: sparse attention and indexer, MoE experts and combine, the model stack, real weights, quantized or
 native-BF16 parity, and any real-model claim. The supervised operation runs
 under the admitted `env-g1` identity (mlx 0.32.2); the light-harness CI
 qualification of the dense-FFN caller runs at the lockfile's mlx 0.32.0.
