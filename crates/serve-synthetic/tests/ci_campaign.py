@@ -44,10 +44,15 @@ def tools():
         version=subprocess.run([str(path),'--version'],cwd=Path(__file__).parent,capture_output=True,text=True,timeout=120,check=True).stdout.strip()
         result[name]={'path':str(path),'sha256':sha(path),'version':version}
     return result
+def failure_diagnostic(output,limit=4096):
+    path=Path(output)/'stderr.raw'
+    if path.is_symlink() or not path.is_file():return {'status':'UNAVAILABLE'}
+    body=path.read_bytes()
+    return {'status':'AVAILABLE','bytes':len(body),'sha256':hashlib.sha256(body).hexdigest(),'excerpt':body[:limit].decode('utf-8','replace').replace('\x00','\\u0000')}
 def launch(command,source,env,output,seconds):
     terminal=q_capture.capture(command,str(source),env,output,timeout=seconds,termination_grace=5)
     if terminal['status']!='CLOSED' or terminal['native_signal'] or terminal['code']!=0 or not terminal['reaped']:
-        raise RuntimeError('CAMPAIGN_FAILED: '+json.dumps(terminal,sort_keys=True))
+        raise RuntimeError('CAMPAIGN_FAILED: '+json.dumps({'terminal':terminal,'diagnostic':failure_diagnostic(output)},sort_keys=True))
     return terminal
 def run(source,root,python,seconds=2700,launcher=launch,tool_provider=tools):
     source,root=layout(source,root)
