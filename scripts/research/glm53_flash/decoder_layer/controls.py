@@ -114,7 +114,10 @@ def run(context, backend, mx, nn, ffn_source, ffn_oracle, layer_source, layer_or
         def test_frozen_reference_recomputes(self):
             for case in fixture['cases']:
                 r = layer_oracle.run(case, attention_oracle.module_reference, accepted_recurrence, ffn_oracle.run)
-                self.assertEqual(r['boundaries'], fixture['expected'][case['fixture_id']]['boundaries'], case['fixture_id'])
+                exp = fixture['expected'][case['fixture_id']]
+                self.assertEqual(r['boundaries'], exp['boundaries'], case['fixture_id'])
+                self.assertEqual(r['attention_cache_events'], exp['attention_cache_events'], case['fixture_id'])
+                self.assertEqual(r['attention_final_cache'], exp['attention_final_cache'], case['fixture_id'])
             emit('frozen_reference', status='RECOMPUTED_EQUAL', cases=len(fixture['cases']))
 
         def test_layer_boundaries(self):
