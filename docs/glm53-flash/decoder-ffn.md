@@ -55,3 +55,42 @@ answers. Source acceptance remains a separate parent review decision.
 I's missing historical pre-repair fixture remains UNKNOWN and is never
 reconstructed. This fixture performs no model access, checkpoint/tokenizer
 access, full forward, real inference, GO/P1 or ledger operation.
+
+## AN repair (2026-09-16): interpreter-stable provenance and asserted kill matrix
+
+The K provenance digests were built on `ast.dump`, whose output changed across
+Python releases, so the candidate failed `DENSE_FFN_CALLER_CONTRACT` under the
+CI-pinned 3.12 line while passing on the 3.14 that produced it, and recorded no
+interpreter binding. Digests now use a canonical structural AST form
+(`source._canonical`, scheme `canonical-ast/1`) that was shown to produce
+identical digests under 3.12.11 and 3.14.6. `provenance.json` records the
+scheme, and `load()` cross-checks the language/hyper-connection anchors and the
+stored caller bodies (via their canonical AST) instead of pinning them only
+transitively. `regenerate_provenance.py --check` verifies that the committed
+provenance and the loader pin equal a fresh regeneration; a test runs it.
+
+Mutant outcomes are no longer accepted by "any fixture killed it". The frozen
+`expected_kill_matrix` in `fixtures.json` declares, per mutant and fixture,
+`KILL` or `INACTIVE`, with a declared kill-margin factor of 10 over the output
+allowance: a `KILL` cell needs `max_absolute_error >= 10 * 1e-4`, an `INACTIVE`
+cell needs it `<= 1e-4`, and anything between is `WEAK` and fails. Mutants are
+single-site with a declared occurrence index and asserted needle count; the
+former two-site `hc-axis` mutant is split into `hc-axis-initial` and
+`hc-axis-loop` (the loop site is expected `INACTIVE` for one Sinkhorn round).
+Tolerance comes from the fixture contract; a wrong-shaped mutant output is a
+`shape` kill rather than a comparison error. Events carry computed values
+(AST equality, caught refusal messages, counted evaluations), not literals.
+
+A fifth fixture, `sinkhorn-3-h3-clamp-active` (hc_mult 3, shape [1,2,3,2],
+deterministic generator recorded in the fixture), exists because the weak
+transpose margin reported by earlier reviews on the Sinkhorn-3 fixtures is
+structural: a converged 2x2 doubly-stochastic `comb` is symmetric, so
+transposing it is nearly the identity and only the convergence residual
+(8.3e-4) is observable. The same fixed-point argument makes the initial-axis flip
+(`hc-axis-initial`) weak on those fixtures (9.1e-4). Those four cells are
+declared `WEAK_STRUCTURAL` (error strictly between the allowance and the
+margin) and both mutants must kill at full margin on the H=3 fixture, whose
+oracle `comb` asymmetry is 0.07. Thirty-five cells: twenty-five expected
+kills, six expected inactive, four declared weak-structural. The kill-margin factor was not lowered. This
+remains fixture-scale method qualification of the adapted caller, not real
+model or runtime correctness.

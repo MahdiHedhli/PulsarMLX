@@ -17,7 +17,7 @@ CAPSULE = ROOT + 'decoder_ffn/capsule.py'
 PROVENANCE = ROOT + 'decoder_ffn/provenance.json'
 LANGUAGE_SHA256 = '6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196'
 HC_SHA256 = '141fbe47d99f8eda9ab9a4c78665e5eb439cbf73b53a604c4da2a77845167bb3'
-PROVENANCE_SHA256 = '0969e1a4ddfa8a09035826420995bda61f00b69917e059e759fd2d28c5fcca57'
+PROVENANCE_SHA256 = 'f3d7b18724aee068be152554159de3af061768b1e5a5e2851d336aa105fa0a9c'
 LANGUAGE_NAMES = ('ClampedSwiGLU', 'ClampedMLP')
 HC_NAMES = ('_hc_split_sinkhorn_ops','_hc_ops','HyperConnection','_hc_expand_op','hc_expand')
 GRAPH_FILES = (CAPSULE, ROOT+'decoder_ffn/oracle.py', ROOT+'decoder_ffn/controls.py',
@@ -30,8 +30,37 @@ def sha(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+DIGEST_SCHEME = 'canonical-ast/1'
+
+
+def _canonical(node):
+    """Interpreter-independent structural form of an AST node.
+
+    ``ast.dump`` output changed between Python releases (3.13 omits default
+    fields), so digests built on it were bound to the interpreter that produced
+    them without saying so (M-F04). This walk emits only node type names, the
+    ``_fields`` names in declaration order and leaf values; positions, type
+    comments and other attributes are excluded.
+    """
+    if isinstance(node, ast.AST):
+        return [type(node).__name__,
+                [[field, _canonical(getattr(node, field, None))]
+                 for field in node._fields if field != 'type_comment']]
+    if isinstance(node, list):
+        return [_canonical(item) for item in node]
+    if node is None or isinstance(node, (bool, int, float, str)):
+        return node
+    return ['repr', repr(node)]
+
+
 def ast_sha(node):
-    return sha(ast.dump(node, include_attributes=False).encode())
+    return sha(json.dumps(_canonical(node), separators=(',', ':'),
+                          ensure_ascii=True, allow_nan=False).encode())
+
+
+def body_sha(text):
+    """Digest of a stored caller body via its canonical AST, not its text."""
+    return ast_sha(ast.parse(text).body[0])
 
 
 def _node(tree, name):
@@ -104,9 +133,19 @@ def load(root, mx, nn):
         raise ValueError('DENSE_FFN_CALLER_TRANSFORM')
     contract = {'original_ast_sha256':ast_sha(original),
                 'transformed_ast_sha256':ast_sha(transformed),
-                'transformations':['rename _ffn_block to source_ffn_block only']}
+                'transformations':['rename _ffn_block to source_ffn_block only'],
+                'digest_scheme':DIGEST_SCHEME}
     if p['caller_contract'] != contract:
         raise ValueError('DENSE_FFN_CALLER_CONTRACT')
+    # Informational provenance fields are cross-checked against the anchored
+    # bytes and structures, not pinned only transitively (M-F04).
+    if p['language_sha256'] != LANGUAGE_SHA256 or p['hyperconnection_sha256'] != HC_SHA256:
+        raise ValueError('DENSE_FFN_PROVENANCE_ANCHORS')
+    if (body_sha(p['original_caller_body']) != ast_sha(original)
+            or body_sha(p['transformed_caller_body']) != ast_sha(transformed)):
+        raise ValueError('DENSE_FFN_CALLER_BODY')
+    if p.get('digest_scheme') != DIGEST_SCHEME:
+        raise ValueError('DENSE_FFN_DIGEST_SCHEME')
     all_nodes = language_nodes+hc_nodes+[call]
     if p['node_ast_sha256'] != {n.name:ast_sha(n) for n in all_nodes}:
         raise ValueError('DENSE_FFN_NODE_DIGEST')

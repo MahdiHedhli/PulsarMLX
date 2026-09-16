@@ -1,4 +1,7 @@
-"""Bounded, prospective K qualification. Mutants live only in test scratch."""
+"""Bounded, prospective qualification (K origin, AN repair). Mutants live only in test scratch.
+
+Expected mutant outcomes come from the frozen kill matrix in fixtures.json, cell by cell;
+nothing here is derived from observed output."""
 import ast
 import copy
 import difflib
@@ -13,6 +16,29 @@ import unittest
 
 ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT))
+
+# Qualification preconditions. When unmet the module skips as NOT_EXECUTED (the
+# sibling supervisor-required pattern) instead of erroring under plain
+# discovery: the pinned MLX build and a temporary root without symlinked
+# ancestors are both required for the captured qualification runs.
+REQUIRED_MLX='0.32.0'
+def _precondition():
+    # Version is read from package metadata so plain discovery never imports
+    # mlx itself (test_expert_oracle asserts mlx stays out of sys.modules).
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        installed=version('mlx')
+    except PackageNotFoundError:
+        return 'mlx unavailable'
+    if installed!=REQUIRED_MLX:
+        return f'mlx {installed} != required {REQUIRED_MLX}'
+    tmp=Path(os.environ.get('TMPDIR',''))
+    if not os.environ.get('TMPDIR') or not tmp.is_dir() or tmp.resolve(strict=True)!=tmp:
+        return 'TMPDIR unset or has symlinked ancestors'
+    return None
+_UNMET=_precondition()
+if _UNMET:
+    raise unittest.SkipTest('DENSE_FFN_QUALIFICATION_ENV_REQUIRED ('+_UNMET+'); NOT_EXECUTED')
 from scripts.research.glm53_flash.decoder_ffn import source, oracle, controls
 import mlx.core as mx
 import mlx.nn as nn
@@ -134,54 +160,95 @@ class Qualification(unittest.TestCase):
         transformed=copy.deepcopy(original)
         transformed.name='source_ffn_block'
         candidate=ast.parse((ROOT/source.CAPSULE).read_bytes()).body[0]
-        self.assertEqual(ast.dump(transformed),ast.dump(candidate))
-        self.assertEqual(p['caller_contract']['original_ast_sha256'],source.ast_sha(original))
-        self.assertIsInstance(candidate.returns,ast.Attribute)
-        self.assertIsInstance(candidate.args.args[1].annotation,ast.Attribute)
+        whole_ast_equal=source.ast_sha(transformed)==source.ast_sha(candidate)
+        annotations_retained=(isinstance(candidate.returns,ast.Attribute)
+                              and isinstance(candidate.args.args[1].annotation,ast.Attribute))
+        contract_matches=p['caller_contract']['original_ast_sha256']==source.ast_sha(original)
+        scheme_stable=p['caller_contract'].get('digest_scheme')==source.DIGEST_SCHEME
+        # Computed values are emitted, then asserted; the event is informative on its own (M-F06).
         event('caller_contract',contract=p['caller_contract'],closure=p['closure_globals'],
-              whole_ast_equal=True,annotations_retained=True)
+              whole_ast_equal=whole_ast_equal,annotations_retained=annotations_retained,
+              original_contract_matches=contract_matches,digest_scheme=p['caller_contract'].get('digest_scheme'),
+              interpreter=sys.version.split()[0])
+        self.assertTrue(whole_ast_equal); self.assertTrue(annotations_retained)
+        self.assertTrue(contract_matches); self.assertTrue(scheme_stable)
         # Direct closure check has no adaptation path, independent expected rejection.
         bad=ast.parse('def source_ffn_block(self,x):\n    return unauthorized(x)').body
-        with self.assertRaisesRegex(ValueError,'UNSUPPORTED_CLOSURE'):
+        caught={}
+        try:
             source._closure(bad)
-        with self.assertRaisesRegex(RuntimeError,'FUSED_HC_FORBIDDEN'):
+        except ValueError as exc:
+            caught['closure']=str(exc)
+        try:
             bound.namespace['_hc_kernel']()
-        event('closure_and_fused_refusal',unsupported_closure_refused=True,fused_refused=True)
+        except RuntimeError as exc:
+            caught['fused']=str(exc)
+        event('closure_and_fused_refusal',closure_message=caught.get('closure'),fused_message=caught.get('fused'))
+        self.assertIn('UNSUPPORTED_CLOSURE',caught.get('closure',''))
+        self.assertIn('FUSED_HC_FORBIDDEN',caught.get('fused',''))
+
+    def test_provenance_regenerates_identically(self):
+        # The committed provenance must equal a fresh regeneration from the anchored
+        # bytes under THIS interpreter; digests are interpreter-independent by scheme.
+        from scripts.research.glm53_flash.decoder_ffn import regenerate_provenance as rp
+        fresh=rp.render(rp.compute(ROOT))
+        committed=(ROOT/source.PROVENANCE).read_bytes()
+        event('provenance_regeneration',interpreter=sys.version.split()[0],
+              committed_sha256=digest(committed),regenerated_sha256=digest(fresh),identical=fresh==committed)
+        self.assertEqual(fresh,committed)
+        self.assertEqual(source.PROVENANCE_SHA256,digest(committed))
 
     def test_paired_finite_matrix(self):
         self.assertEqual([c['fixture_id'] for c in self.cases],
             ['sinkhorn-1-clamp-active','sinkhorn-1-clamp-inactive',
-             'sinkhorn-3-clamp-active','sinkhorn-3-clamp-inactive'])
+             'sinkhorn-3-clamp-active','sinkhorn-3-clamp-inactive',
+             'sinkhorn-3-h3-clamp-active'])
         for f in self.cases:
             result=controls.run(ROOT,f,self.matrix)
             event('numerical_case',**result)
             self.assertEqual(result['status'],'PASS')
-            self.assertEqual(set(result['candidate']),set(self.matrix['boundary_shapes']))
+            self.assertEqual(set(result['candidate']),set(f.get('boundary_shapes',self.matrix['boundary_shapes'])))
             self.assertTrue(result['observation_output_equivalent'])
 
     def test_actual_numerical_mutants(self):
+        # (label, path, needle, replacement, node, occurrence index or None for all)
         recipes=[
             ('caller-wrong-wiring',source.CAPSULE,
-             'hc_expand(m, residual, post, comb)','hc_expand(m, residual, post, comb.swapaxes(-1, -2))','source_ffn_block'),
+             'hc_expand(m, residual, post, comb)','hc_expand(m, residual, post, comb.swapaxes(-1, -2))','source_ffn_block',0),
             ('omitted-normalization',source.CAPSULE,
-             'self.post_attention_layernorm(xc)','xc','source_ffn_block'),
+             'self.post_attention_layernorm(xc)','xc','source_ffn_block',0),
             ('omitted-residual',source.CAPSULE,
-             'residual = x','residual = mx.zeros_like(x)','source_ffn_block'),
-            ('hc-axis',source.HC,
-             'comb.sum(axis=-2, keepdims=True)','comb.sum(axis=-1, keepdims=True)','_hc_split_sinkhorn_ops'),
+             'residual = x','residual = mx.zeros_like(x)','source_ffn_block',0),
+            ('hc-axis-initial',source.HC,
+             'comb.sum(axis=-2, keepdims=True)','comb.sum(axis=-1, keepdims=True)','_hc_split_sinkhorn_ops',0),
+            ('hc-axis-loop',source.HC,
+             'comb.sum(axis=-2, keepdims=True)','comb.sum(axis=-1, keepdims=True)','_hc_split_sinkhorn_ops',1),
             ('sinkhorn-count',source.HC,
-             'range(max(sinkhorn_iters - 1, 0))','range(0)','_hc_split_sinkhorn_ops'),
+             'range(max(sinkhorn_iters - 1, 0))','range(0)','_hc_split_sinkhorn_ops',0),
             ('clamp-omitted',source.LANGUAGE,
-             'gate = mx.minimum(gate, self.limit)','gate = gate','ClampedSwiGLU')]
-        for label,path,before,after,node_name in recipes:
+             'gate = mx.minimum(gate, self.limit)','gate = gate','ClampedSwiGLU',0)]
+        matrix=self.matrix['expected_kill_matrix']
+        tolerance=self.matrix['tolerances']['output']
+        factor=matrix['kill_margin_factor']
+        self.assertEqual([r[0] for r in recipes],list(matrix['matrix']))
+        self.assertEqual([f['fixture_id'] for f in self.cases],matrix['fixtures'])
+        for label,path,before,after,node_name,occurrence in recipes:
             original=(ROOT/path).read_text()
-            self.assertIn(before,original)
-            mutated=original.replace(before,after)
+            count=original.count(before)
+            self.assertEqual(count,matrix['needle_counts'][label],label)
+            # Single-site mutation: replace exactly one declared occurrence (M-F03 / Q-F5).
+            at=-1
+            for _ in range(occurrence+1):
+                at=original.index(before,at+1)
+            mutated=original[:at]+after+original[at+len(before):]
             raw=mutated.encode()
             diff=''.join(difflib.unified_diff(original.splitlines(True),
                 mutated.splitlines(True),fromfile=path,tofile=label+'/'+path))
-            event('mutant_body',label=label,path=path,sha256=digest(raw),
-                  body=mutated,diff=diff)
+            removed=[l for l in diff.splitlines() if l.startswith('-') and not l.startswith('---')]
+            added=[l for l in diff.splitlines() if l.startswith('+') and not l.startswith('+++')]
+            self.assertEqual((len(removed),len(added)),(1,1),label)  # exactly one line out, one line in
+            event('mutant_body',label=label,path=path,sha256=digest(raw),occurrence=occurrence,
+                  needle_count=count,body=mutated,diff=diff)
             self.refuse(path,raw,label)
             bound=source.load(ROOT,mx,nn)
             n=bound.namespace
@@ -191,24 +258,35 @@ class Qualification(unittest.TestCase):
             compiled=compile(ast.Module(body=[node],type_ignores=[]),'test-only:'+label,'exec')
             exec(compiled,n)
             results=[]
-            for f in self.cases:
+            for expected_cell,f in zip(matrix['matrix'][label],self.cases):
                 output=n['source_ffn_block'](controls._owner(n,f),
                     mx.array(f['x'],dtype=mx.float32))
                 mx.eval(output)
                 value=output.tolist()
                 reference=oracle.run(f)['output']
                 valid=(controls._shape(value)==tuple(f['shape']))
-                mismatch=valid and not controls._close(value,reference,1e-4,f['shape'])
-                results.append({'fixture_id':f['fixture_id'],'runnable':True,
-                    'reached_semantic_assertion':True,'shape_valid':valid,
-                    'actual':value,'expected':reference,'killed':mismatch,
-                    'max_absolute_error':tensor_error(value,reference)})
-            killed=any(r['killed'] for r in results)
+                error=tensor_error(value,reference) if valid else None
+                if not valid:
+                    killed,reason='KILL','shape'
+                elif error>=factor*tolerance:
+                    killed,reason='KILL','margin'
+                elif error<=tolerance:
+                    killed,reason='INACTIVE','within-tolerance'
+                else:
+                    # Declared only for the structural H=2 Sinkhorn-3 transpose cells.
+                    killed,reason='WEAK_STRUCTURAL','between-tolerance-and-margin'
+                results.append({'fixture_id':f['fixture_id'],'shape_valid':valid,
+                    'actual':value,'expected':reference,'max_absolute_error':error,
+                    'observed':killed,'kill_reason':reason,'expected_cell':expected_cell,
+                    'cell_pass':killed==expected_cell})
             event('semantic_mutant',label=label,input_sha256=digest(raw),
-                node_ast_sha256=source.ast_sha(node),compiled=True,runnable=True,
+                node_ast_sha256=source.ast_sha(node),occurrence=occurrence,
                 candidate_evaluations=len(results),oracle_evaluations=len(results),
-                killed=killed,results=results)
-            self.assertTrue(killed,label)
+                tolerance=tolerance,kill_margin_factor=factor,results=results,
+                all_cells_pass=all(r['cell_pass'] for r in results))
+            for r in results:
+                self.assertEqual(r['observed'],r['expected_cell'],
+                    f"{label}/{r['fixture_id']}: expected {r['expected_cell']} observed {r['observed']} ({r['kill_reason']}, err={r['max_absolute_error']})")
 
     def test_shape_and_late_integrity_mutants(self):
         path=source.ROOT+'decoder_ffn/controls.py'

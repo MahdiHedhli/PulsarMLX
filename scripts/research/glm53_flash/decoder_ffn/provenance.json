@@ -1,35 +1,11 @@
 {
-  "schema": "flash-k-dense-ffn-provenance-v1",
-  "upstream_commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90",
-  "language_sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
-  "hyperconnection_sha256": "141fbe47d99f8eda9ab9a4c78665e5eb439cbf73b53a604c4da2a77845167bb3",
-  "loader_template_sha256": "0409b7047df40e3f679df62f2cec58efdaa0515ca7f4754ec71261987c9dcda4",
-  "graph_sha256": {
-    "scripts/research/glm53_flash/decoder_ffn/capsule.py": "c00d7b16a94eec40fbc01ce89207b6df58ca6cd7756ab6e29a732b774b429147",
-    "scripts/research/glm53_flash/decoder_ffn/oracle.py": "53fc1bf7428ec71cbac894a8fcfc45cd605c7e854fed7d55d56665a9385595eb",
-    "scripts/research/glm53_flash/decoder_ffn/controls.py": "18ff5d94a8c3a86a0a0f2e3eeb1660f2ae670b0f3e1b0a5907a35842f3edf369",
-    "fixtures/research/glm53-flash-decoder-ffn-v1/fixtures.json": "0551bc23c9146efc2fbdbd689307817f99f497ab8d3167058e44c37f299d3592",
-    "scripts/research/tests/test_glm53_flash_decoder_ffn.py": "22bc4b8a0e4c576fef0cfe24341e5aacac54e42b3c044479a7395195ad0ac690",
-    "docs/glm53-flash/decoder-ffn.md": "881cddcbc140fd8eb21b05c0b7174cf5fa5faa23c2302781d8a528fb3bbf22fa"
-  },
   "caller_contract": {
-    "original_ast_sha256": "3cb11d509e8d17516808284dad71059a70ad8d7efda43aafe1dc6c73d2a394cc",
-    "transformed_ast_sha256": "6737945cc5b37d08a3ccb09def4ccbe8ed8118739b400cad61c15b91a5b7ba46",
+    "digest_scheme": "canonical-ast/1",
+    "original_ast_sha256": "5e046055c56391f10898fd29061469ff9bf07a993274d561e3ea36be387fa725",
     "transformations": [
       "rename _ffn_block to source_ffn_block only"
-    ]
-  },
-  "original_caller_body": "def _ffn_block(self, x: mx.array) -> mx.array:\n    # Stateless FFN half (no cache) -> compiles cleanly at a fixed decode shape.\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)\n",
-  "transformed_caller_body": "def source_ffn_block(self, x: mx.array) -> mx.array:\n    # Stateless FFN half (no cache) -> compiles cleanly at a fixed decode shape.\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)\n",
-  "node_ast_sha256": {
-    "ClampedSwiGLU": "11986d0e92428281b834831e609493c9b037b27dce035e955d71d01211730d91",
-    "ClampedMLP": "0b37709dc710ba676c16935524e136157561d53fd4ed8bbd1bd75b59bccc363e",
-    "_hc_split_sinkhorn_ops": "1c57fc5371ef801bd4eab1e8e57bcf1a69a46c10273f4eb2105dee91446d717a",
-    "_hc_ops": "1edcf5d97f3555748130f4ca2ed17bb5efa07d9c90eab1f53699437923350262",
-    "HyperConnection": "7a0ba5673e7698c054e002f52ad0bc92a8ad416610460b827b97e4980db13b07",
-    "_hc_expand_op": "1abf3c6901f5f25475b1261d7df1fcabd9a4d3ef41be48e1143e88ac1e32a74e",
-    "hc_expand": "c0ef4838327af3978b9301462abd3e835a2f06f1e6860342385d8462c8a8a8c3",
-    "source_ffn_block": "6737945cc5b37d08a3ccb09def4ccbe8ed8118739b400cad61c15b91a5b7ba46"
+    ],
+    "transformed_ast_sha256": "c1279bc4fa74805a9763b8fbfb9226da961bf9566bd785365b76c71a6fa57804"
   },
   "closure_globals": [
     "ClampedSwiGLU",
@@ -46,5 +22,32 @@
     "nn",
     "range",
     "super"
-  ]
+  ],
+  "digest_scheme": "canonical-ast/1",
+  "digest_scheme_note": "canonical structural AST digests are interpreter-independent; see source._canonical",
+  "graph_sha256": {
+    "docs/glm53-flash/decoder-ffn.md": "61d725293d89577c3f90deaff9f411f88e71b06099acc32f11ebe2fc58a2ccfe",
+    "fixtures/research/glm53-flash-decoder-ffn-v1/fixtures.json": "337b92967a64dccfbf64761ac01dc4f45599abb508a48009b2ef07d4343a9de5",
+    "scripts/research/glm53_flash/decoder_ffn/capsule.py": "c00d7b16a94eec40fbc01ce89207b6df58ca6cd7756ab6e29a732b774b429147",
+    "scripts/research/glm53_flash/decoder_ffn/controls.py": "efec7448f104d2b1fb8a6e5e89ec1976745f5f10b20a02a347df33f5ef51f639",
+    "scripts/research/glm53_flash/decoder_ffn/oracle.py": "53fc1bf7428ec71cbac894a8fcfc45cd605c7e854fed7d55d56665a9385595eb",
+    "scripts/research/tests/test_glm53_flash_decoder_ffn.py": "50cc0c848afd6b5660eed408772fca4581f3607c4f858373357bdb2abb8ac937"
+  },
+  "hyperconnection_sha256": "141fbe47d99f8eda9ab9a4c78665e5eb439cbf73b53a604c4da2a77845167bb3",
+  "language_sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
+  "loader_template_sha256": "e94d2bc736aa08aabab32301d9374af94b04bfa06733e7846106c3a8257c7162",
+  "node_ast_sha256": {
+    "ClampedMLP": "8aa3bc82a891011e0dded6444d31382800d7231c7880806ccac695976c927cc5",
+    "ClampedSwiGLU": "a7b909996e02993c0b5b53fb5c15366ad981bac5ecb243d4ba18bb151a67cac5",
+    "HyperConnection": "6fe7652fb2504cf5296e9cfca2e49719598306281f1701e2ef01f8f134135d2a",
+    "_hc_expand_op": "6448227de92c841ed1ed3a276301de15eacedb2568e04c5a4dce172cc4e27b6a",
+    "_hc_ops": "d9e7f3c9c2e810f70da7bad511555731f9c7f2442d79beeb18d689eea157484f",
+    "_hc_split_sinkhorn_ops": "030bcad9f274c1a6755ebaf24e3999059ee7bf2f269c4464c69a5303e83c419f",
+    "hc_expand": "9cb2c1b336ebdcb85a6331fda452a22f0bb24778ca25fa7dac70ce7029cf749f",
+    "source_ffn_block": "c1279bc4fa74805a9763b8fbfb9226da961bf9566bd785365b76c71a6fa57804"
+  },
+  "original_caller_body": "def _ffn_block(self, x: mx.array) -> mx.array:\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)",
+  "schema": "glm53-flash-decoder-ffn-provenance/2",
+  "transformed_caller_body": "def source_ffn_block(self, x: mx.array) -> mx.array:\n    residual = x\n    xc, post, comb = self.ffn_hc(x)\n    m = self.mlp(self.post_attention_layernorm(xc))\n    return hc_expand(m, residual, post, comb)",
+  "upstream_commit": "8d79dbcf82a7885ddfc56fb4a55440fa9c5dfb90"
 }

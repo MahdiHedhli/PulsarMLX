@@ -88,6 +88,17 @@ jobs:
             -p test_iq2_xxs_numpy.py \
             -v
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify GLM-5.3-Flash dense-FFN caller (synthetic, pinned MLX)
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          mkdir -p "$RUNNER_TEMP/flash-ffn-tmp"
+          for flags in "-I -B" "-I -B -O"; do
+            TMPDIR="$RUNNER_TEMP/flash-ffn-tmp" .venv/bin/python $flags \
+              scripts/research/tests/test_glm53_flash_decoder_ffn.py \
+              > "$RUNNER_TEMP/flash-ffn-$(echo $flags | tr -d ' -').stdout"
+          done
+          .venv/bin/python -I -B scripts/research/glm53_flash/decoder_ffn/regenerate_provenance.py --check
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
           PYTHONPATH=python .venv/bin/python -m unittest discover \

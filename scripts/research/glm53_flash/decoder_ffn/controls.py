@@ -102,14 +102,27 @@ def run(root,fixture,contract):
     bound=source.load(Path(root),mx,nn)
     n=bound.namespace
     x=mx.array(fixture['x'],dtype=mx.float32)
-    actual,candidate,dtypes,calls=_observe(n,_owner(n,fixture),x)
-    unobserved=n['source_ffn_block'](_owner(n,fixture),x)
+    evaluations={'candidate':0,'oracle':0}
+    block=n['source_ffn_block']
+    def counted_block(*args):
+        evaluations['candidate']+=1
+        return block(*args)
+    def counted_oracle(f):
+        evaluations['oracle']+=1
+        return oracle.run(f)
+    n['source_ffn_block']=counted_block
+    try:
+        actual,candidate,dtypes,calls=_observe(n,_owner(n,fixture),x)
+        unobserved=counted_block(_owner(n,fixture),x)
+    finally:
+        n['source_ffn_block']=block
     mx.eval(unobserved)
     equivalent=actual.tolist()==unobserved.tolist()
-    expected=oracle.run(fixture)
+    expected=counted_oracle(fixture)
+    shapes=fixture.get('boundary_shapes',contract['boundary_shapes'])
     decisions={name:_close(candidate[name],expected['boundaries'][name],
-        contract['tolerances'][name],contract['boundary_shapes'][name])
-        for name in contract['boundary_shapes']}
+        contract['tolerances'][name],shapes[name])
+        for name in shapes}
     clamp_ok=(expected['clamp_active_elements']>0 if fixture['clamp_expected']=='active'
               else expected['clamp_active_elements']==0)
     status=(all(decisions.values()) and equivalent and clamp_ok
@@ -118,9 +131,9 @@ def run(root,fixture,contract):
     return {'fixture_id':fixture['fixture_id'],'status':'PASS' if status else 'FAIL',
         'candidate':candidate,'oracle':expected['boundaries'],
         'observed_shapes':{name:list(_shape(v)) for name,v in candidate.items()},
-        'expected_shapes':contract['boundary_shapes'],'dtypes':dtypes,
+        'expected_shapes':shapes,'dtypes':dtypes,
         'decisions':decisions,'clamp_active_elements':expected['clamp_active_elements'],
         'clamp_case_decision':clamp_ok,'observation_output_equivalent':equivalent,
         'uninstrumented_output':unobserved.tolist(),'branch_calls':calls,
         'capsule_sha256':bound.provenance['graph_sha256'][source.CAPSULE],
-        'candidate_evaluations':2,'oracle_evaluations':1}
+        'candidate_evaluations':evaluations['candidate'],'oracle_evaluations':evaluations['oracle']}
