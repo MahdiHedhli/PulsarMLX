@@ -30,7 +30,13 @@ def verify_production_workspace_membership(runner=subprocess.run):
     try:
         metadata=json.loads(result.stdout)
         packages=metadata['packages'];members=metadata['workspace_members']
+        if not isinstance(packages,list) or not isinstance(members,list) or not members:
+            raise TypeError('metadata lists required')
+        if any(not isinstance(p,dict) or not isinstance(p.get('id'),str) or not isinstance(p.get('name'),str) for p in packages):
+            raise TypeError('package identity required')
+        if any(not isinstance(m,str) for m in members):raise TypeError('member identity required')
         names={package['id']:package['name'] for package in packages}
+        if len(names)!=len(packages):raise TypeError('duplicate package identity')
         member_names={names[member] for member in members}
     except (KeyError,TypeError,json.JSONDecodeError) as error:
         raise RuntimeError('WORKSPACE_METADATA_MALFORMED') from error
@@ -69,8 +75,9 @@ class Contract(unittest.TestCase):
         valid=json.dumps({'packages':[{'id':'root','name':'pulsarmlx'}],'workspace_members':['root']})
         self.assertEqual(verify_production_workspace_membership(lambda *_,**__:Result(0,valid)),{'pulsarmlx'})
         forbidden=json.dumps({'packages':[{'id':'synthetic','name':'pulsar-serve-synthetic'}],'workspace_members':['synthetic']})
-        for result in [Result(1,''),Result(0,'{'),Result(0,'{}'),Result(0,forbidden)]:
-            with self.assertRaises(RuntimeError):verify_production_workspace_membership(lambda *_,**__:result)
+        for result,code in [(Result(1,''),'WORKSPACE_METADATA_FAILED'),(Result(0,''),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,'{}'),'WORKSPACE_METADATA_MALFORMED'),(Result(0,forbidden),'SYNTHETIC_CRATE_IN_PRODUCTION_WORKSPACE')]:
+            with self.assertRaises(RuntimeError) as caught:verify_production_workspace_membership(lambda *_,**__:result)
+            self.assertEqual(str(caught.exception),code)
     def test_actual_membership_and_workflow_boundary(self):
         names=verify_production_workspace_membership();self.assertNotIn('pulsar-serve-synthetic',names)
         text=WORKFLOW.read_text()

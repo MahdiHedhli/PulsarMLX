@@ -175,7 +175,8 @@ impl CompletionBackend for SyntheticBackend {
             // This test-only mode makes backend admission observable to the
             // loopback SDK smoke test.  It emits the initial streaming role
             // only after the request owns its generation permit, then holds
-            // that permit until the client cancels the stream.
+            // that permit until cancellation, including the unchanged server
+            // generation deadline. This is a bounded lease, not an indefinite hold.
             if mode == SyntheticMode::Hold {
                 if !send(&mut cancellation, &events, BackendEvent::AssistantRole).await {
                     return;

@@ -1190,6 +1190,115 @@ pub fn limits() -> Limits {
 mod tests {
     use super::*;
 
+    fn synthetic_hold_response(state: &AppState) -> Response<BoxBody> {
+        let permit = state
+            .generation_slots
+            .clone()
+            .try_acquire_owned()
+            .expect("holder permit");
+        let guard = state.cleanup.register(permit).expect("registered holder");
+        let (cancel, cancellation) = BackendCancellation::pair();
+        let (events, receiver) = mpsc::channel(BACKEND_EVENT_CAPACITY);
+        let session = state
+            .backend
+            .begin(
+                BackendRequest {
+                    model_id: MODEL_ID.into(),
+                    messages: vec![BackendMessage {
+                        role: BackendRole::User,
+                        content: "__synthetic_hold__".into(),
+                    }],
+                    max_output_tokens: MAX_OUTPUT_TOKENS,
+                },
+                cancellation,
+                events,
+            )
+            .expect("synthetic hold session");
+        stream_chat(
+            state.clone(),
+            guard,
+            "hold-test".into(),
+            MODEL_ID,
+            session,
+            receiver,
+            cancel,
+        )
+    }
+
+    #[tokio::test]
+    async fn synthetic_hold_proves_permit_overlap_and_cancellation_release() {
+        let owner = CleanupOwner::new();
+        let state = AppState::new("synthetic-test-token-value".into(), &owner).expect("state");
+        let mut body = synthetic_hold_response(&state).into_body();
+        let first = tokio::time::timeout(Duration::from_secs(1), body.frame())
+            .await
+            .expect("admission event deadline")
+            .expect("role frame")
+            .expect("infallible frame")
+            .into_data()
+            .expect("data");
+        assert!(String::from_utf8_lossy(&first).contains("\"role\":\"assistant\""));
+        assert_eq!(
+            state.generation_slots.available_permits(),
+            0,
+            "admitted holder owns permit"
+        );
+        assert!(
+            state.generation_slots.clone().try_acquire_owned().is_err(),
+            "contender denied while holder admitted"
+        );
+        println!("AA_HOLD_EVENTS admitted contender_denied");
+        drop(body); // The actual downstream-close path cancels the Hold future.
+        let metrics = state.drain_cleanup(Duration::from_secs(1)).await;
+        assert_eq!(
+            metrics.backend_active, 0,
+            "cancelled hold released ownership"
+        );
+        assert_eq!(
+            state.generation_slots.available_permits(),
+            1,
+            "cancelled hold permit reusable"
+        );
+        println!("AA_HOLD_EVENTS downstream_cancel released");
+    }
+
+    #[tokio::test]
+    async fn synthetic_hold_deadline_is_an_explicit_lease_loss() {
+        let owner = CleanupOwner::new();
+        let state = AppState::new("synthetic-test-token-value".into(), &owner).expect("state");
+        let mut body = synthetic_hold_response(&state).into_body();
+        let first = body
+            .frame()
+            .await
+            .expect("role frame")
+            .expect("infallible")
+            .into_data()
+            .expect("data");
+        assert!(String::from_utf8_lossy(&first).contains("\"role\":\"assistant\""));
+        assert_eq!(state.generation_slots.available_permits(), 0);
+        let terminal =
+            tokio::time::timeout(GENERATION_DEADLINE + Duration::from_secs(1), body.frame())
+                .await
+                .expect("bounded actual deadline event")
+                .expect("error frame")
+                .expect("infallible")
+                .into_data()
+                .expect("data");
+        assert!(
+            String::from_utf8_lossy(&terminal).contains("generation_timeout"),
+            "deadline reports explicit lease loss"
+        );
+        drop(body);
+        let metrics = state.drain_cleanup(Duration::from_secs(1)).await;
+        assert_eq!(metrics.backend_active, 0);
+        assert_eq!(
+            state.generation_slots.available_permits(),
+            1,
+            "deadline releases actual holder permit"
+        );
+        println!("AA_HOLD_EVENTS admitted deadline_cancel released INVALID_CONTENTION_EXPERIMENT");
+    }
+
     struct TestBackend;
 
     impl CompletionBackend for TestBackend {

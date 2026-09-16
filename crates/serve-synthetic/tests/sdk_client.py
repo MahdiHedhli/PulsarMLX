@@ -8,6 +8,8 @@ import io
 import ipaddress
 import logging
 import threading
+import time
+import json
 from pathlib import Path
 
 import httpx2 as httpx
@@ -102,8 +104,12 @@ def error_body(error: openai.APIStatusError) -> dict:
     return {}
 
 
+class InvalidContentionExperiment(AssertionError):
+    """The holder lost its bounded lease; no capacity conclusion is valid."""
+
+
 class ContentionHolder:
-    """Own a streaming generation until an explicit local release."""
+    """Continuously observe a streaming holder within its unchanged 2s lease."""
 
     def __init__(self, client: openai.OpenAI) -> None:
         self.client = client
@@ -112,31 +118,46 @@ class ContentionHolder:
         self.release = threading.Event()
         self.finished = threading.Event()
         self.failure: BaseException | None = None
-        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.stream = None
+        self.request_started = None
+        self.events = []
+        self.lock = threading.Lock()
+        self.thread = threading.Thread(target=self._run)
+
+    def note(self, event: str) -> None:
+        with self.lock:
+            self.events.append({"event": event, "monotonic": time.monotonic()})
 
     def start(self) -> None:
         self.thread.start()
 
     def _run(self) -> None:
-        stream = None
+        self.request_started = time.monotonic()
+        self.note("request_started")
         self.started.set()
         try:
-            stream = chat(self.client, "__synthetic_hold__", stream=True)
-            for chunk in stream:
+            self.stream = chat(self.client, "__synthetic_hold__", stream=True)
+            for chunk in self.stream:
                 delta = chunk.choices[0].delta
                 if delta.role == "assistant":
+                    self.note("admitted")
                     self.admitted.set()
-                    break
             if not self.admitted.is_set():
                 raise AssertionError("holder stream ended before admission")
-            if not self.release.wait(10.0):
-                raise AssertionError("holder release was not requested")
+            if not self.release.is_set():
+                raise InvalidContentionExperiment("HOLDER_STREAM_ENDED")
         except BaseException as error:
-            self.failure = error
+            if not self.release.is_set():
+                self.failure = error
         finally:
-            if stream is not None:
-                stream.close()
-            self.finished.set()
+            try:
+                if self.stream is not None:
+                    self.stream.close()
+            except BaseException as error:
+                self.failure = self.failure or error
+            finally:
+                self.note("reader_finished")
+                self.finished.set()
 
     def await_admission(self, seconds: float = 5.0) -> None:
         if not self.started.wait(seconds):
@@ -151,18 +172,62 @@ class ContentionHolder:
             raise AssertionError(
                 f"holder failed after admission: {type(self.failure).__name__}"
             ) from self.failure
-        if self.finished.is_set():
-            raise AssertionError("holder released before contender response")
+        self.ensure_active()
+
+    def ensure_active(self) -> None:
+        if self.failure is not None:
+            raise InvalidContentionExperiment("HOLDER_FAILED") from self.failure
+        if self.finished.is_set() or self.release.is_set():
+            raise InvalidContentionExperiment("HOLDER_RELEASED")
+        # A conservative bound starts before the server creates its deadline.
+        # We never infer continued ownership merely from Python scheduling.
+        if self.request_started is None or time.monotonic() - self.request_started >= 2.0:
+            raise InvalidContentionExperiment("HOLDER_LEASE_WINDOW_EXPIRED")
 
     def close(self) -> None:
+        self.note("release_requested")
         self.release.set()
+        close_error = None
+        try:
+            if self.stream is not None:
+                self.stream.close()
+        except BaseException as error:
+            close_error = error
         self.thread.join(timeout=10.0)
         if self.thread.is_alive():
             raise AssertionError("holder did not finish after release")
-        if self.failure is not None:
+        if not self.finished.is_set():
+            raise AssertionError("holder cleanup signaling was lost")
+        if close_error is not None or self.failure is not None:
+            error = close_error or self.failure
             raise AssertionError(
-                f"holder failed: {type(self.failure).__name__}"
-            ) from self.failure
+                f"holder failed: {type(error).__name__}"
+            ) from error
+
+
+def validate_busy_error(error: openai.APIError) -> None:
+    if not isinstance(error, openai.RateLimitError):
+        raise AssertionError("CONTENDER_WRONG_ERROR_CLASS")
+    assert error.status_code == 429, "CONTENDER_WRONG_BUSY_STATUS"
+    body = error_body(error)
+    assert body.get("code") == "server_busy", "CONTENDER_WRONG_BUSY_CODE"
+    assert body.get("type") == "rate_limit_error", "CONTENDER_WRONG_BUSY_TYPE"
+
+
+def perform_contention(holder, contender) -> None:
+    holder.await_admission()
+    holder.ensure_active()
+    holder.note("contender_started")
+    try:
+        contender()
+    except openai.APIError as error:
+        holder.note("contender_response")
+        holder.ensure_active()
+        validate_busy_error(error)
+    else:
+        holder.note("contender_response")
+        holder.ensure_active()
+        raise AssertionError("CONTENDER_SUCCEEDED_WHILE_HELD")
 
 
 def prove_authentication_and_errors(base_url: str, token: str) -> None:
@@ -220,29 +285,22 @@ def prove_authentication_and_errors(base_url: str, token: str) -> None:
 def prove_rate_limit(base_url: str, token: str) -> None:
     """A holder proven admitted must make one contender receive server_busy."""
     holder_client, holder_http = make_client(base_url, token, timeout=10.0)
-    with holder_http:
-        holder = ContentionHolder(holder_client)
+    holder = ContentionHolder(holder_client)
+    client, http_client = make_client(base_url, token)
+    try:
         holder.start()
-        holder.await_admission()
-        client, http_client = make_client(base_url, token)
         with http_client:
-            try:
-                chat(client, "hello")
-            except openai.RateLimitError as error:
-                assert error.status_code == 429
-                body = error_body(error)
-                assert body.get("code") == "server_busy", body
-                assert body.get("type") == "rate_limit_error", body
-            except openai.APIError as error:
-                raise AssertionError(
-                    f"contender received wrong API error: {type(error).__name__}"
-                ) from error
-            else:
-                raise AssertionError("contender succeeded while holder owned the slot")
-            assert not holder.finished.is_set(), "holder released before contender response"
+            perform_contention(holder, lambda: chat(client, "hello"))
             client.close()
-        holder.close()
-    holder_client.close()
+    finally:
+        try:
+            holder.close()
+        finally:
+            holder_client.close()
+            holder_http.close()
+            client.close()
+            http_client.close()
+    print("SDK_CONTENTION_EVENTS " + json.dumps(holder.events, sort_keys=True))
 
 
 def prove_timeout_cancellation_and_disconnect(base_url: str, token: str) -> None:
