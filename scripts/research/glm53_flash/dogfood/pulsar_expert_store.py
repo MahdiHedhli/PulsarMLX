@@ -15,6 +15,11 @@ can reclaim; refetch is a lazy mx.load from the same file). Differences:
   * get_all keeps upstream's semantics (bulk load for a call touching most of a layer; no accounting).
   * eviction is O(log n) through a heap with lazy invalidation (an O(n) min() per miss measurably slowed decode
     at ~2,000 residents); the warm set is materialized at construction so a warm hit is a real hit.
+  * allocator-cache clearing is bounded (graph 22): upstream calls mx.clear_cache() after every eviction batch,
+    which hands the freed fixed-size expert buffers back to the OS so the next miss re-allocates them (measured
+    10-13% of decode once the store is full). This store clears only when MLX's cache memory is at or above
+    `cache_clear_threshold_bytes` (default 2 GiB; 0 reproduces upstream; None never clears); the allocator reuses
+    cached buffers by size in between.
 """
 from __future__ import annotations
 
@@ -32,7 +37,8 @@ class PulsarExpertStore:
     policy = "lfu-decay"
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0,
-                 decay: float = 0.5, decay_every: int = 4096, warm_start: bool = True):
+                 decay: float = 0.5, decay_every: int = 4096, warm_start: bool = True,
+                 cache_clear_threshold_bytes: Optional[int] = 2 << 30):
         import mlx.core as mx
 
         idx = json.load(open(os.path.join(offload_dir, "offload_index.json")))
@@ -51,6 +57,8 @@ class PulsarExpertStore:
         self._touch: dict = {}           # (layer, expert) -> last access ordinal
         self._heap: list = []            # (count, touch, key) entries; stale entries are skipped on pop (lazy invalidation)
         self._materialize_warm = True
+        self.cache_clear_threshold_bytes = None if cache_clear_threshold_bytes is None else int(cache_clear_threshold_bytes)
+        self._cache_clears = 0
         self._resident_bytes = 0
         self._accesses = 0
         self._hits = self._misses = self._evictions = 0
@@ -92,11 +100,15 @@ class PulsarExpertStore:
             self._resident_bytes -= nbytes
             self._evictions += 1
             evicted = True
-        if evicted:
-            try:
-                mx.clear_cache()
-            except Exception:
-                pass
+        if evicted and self._cache_over_threshold(mx):
+            mx.clear_cache()
+            self._cache_clears += 1
+
+    def _cache_over_threshold(self, mx) -> bool:
+        """True when the allocator's cache is at or above the threshold (None: never; 0: always)."""
+        if self.cache_clear_threshold_bytes is None:
+            return False
+        return mx.get_cache_memory() >= self.cache_clear_threshold_bytes
 
     def _priority(self, key):
         """Eviction order: least frequent first, least recently touched among equals."""
@@ -165,7 +177,8 @@ class PulsarExpertStore:
                 "resident_experts": len(self._resident), "num_experts": self.num_experts, "num_layers": len(self._maps),
                 "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
                 "hit_rate": (self._hits / total) if total else None, "warm_admitted": self._warm_admitted,
-                "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
+                "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses,
+                "cache_clear_threshold_bytes": self.cache_clear_threshold_bytes, "cache_clears": self._cache_clears}
 
     # --- warm state ------------------------------------------------------------------------------
     def save_warm_state(self) -> str:

@@ -52,7 +52,7 @@ def find_store(language_model):
     return None
 
 
-def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_policy: str = 'lru', warm_start: bool = True):
+def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_policy: str = 'lru', warm_start: bool = True, cache_clear_threshold_gb=2.0):
     """Pipenetwork's load_model() replayed on a repack output, with patch_model and the eager-FFN remedy."""
     import mlx.core as mx
     import mlx.nn as nn
@@ -80,7 +80,8 @@ def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_p
     if store_policy == 'pulsar':
         # PulsarMLX-native policy (graph 21): LFU with decay + persisted warm state, same interface and on-disk format
         from pulsar_expert_store import PulsarExpertStore
-        pstore = PulsarExpertStore(offload_dir, store._budget, 0, warm_start=warm_start)
+        threshold = None if cache_clear_threshold_gb is None else int(cache_clear_threshold_gb * (1 << 30))
+        pstore = PulsarExpertStore(offload_dir, store._budget, 0, warm_start=warm_start, cache_clear_threshold_bytes=threshold)
         for layer in model.language_model.model.layers:
             switch = getattr(getattr(layer, 'mlp', None), 'switch_mlp', None)
             if switch is not None and hasattr(switch, 'store'):
@@ -108,6 +109,7 @@ def main():
     ap.add_argument('--store', choices=('lru', 'pulsar'), default='lru', help="'lru' = upstream ExpertStore; 'pulsar' = PulsarExpertStore (LFU with decay + warm state)")
     ap.add_argument('--no-warm', action='store_true', help='pulsar: ignore a saved warm state (cold start)')
     ap.add_argument('--save-warm', action='store_true', help='pulsar: save the warm state after the run')
+    ap.add_argument('--cache-clear-threshold-gb', type=float, default=2.0, help='pulsar: clear the MLX allocator cache after an eviction batch only when it is at or above this (GiB); 0 = upstream behaviour (every batch); negative = never')
     args = ap.parse_args()
 
     import mlx.core as mx
@@ -123,7 +125,8 @@ def main():
 
     t1 = time.time()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_gb, store_policy=args.store, warm_start=not args.no_warm)
+    threshold_gb = None if args.cache_clear_threshold_gb < 0 else args.cache_clear_threshold_gb
+    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_gb, store_policy=args.store, warm_start=not args.no_warm, cache_clear_threshold_gb=threshold_gb)
     t_load = time.time() - t1
     print(f'loaded in {t_load:.1f}s; patched layers on the eager FFN path: {eager}; store: {store.stats()}', flush=True)
 
@@ -133,7 +136,7 @@ def main():
     t_gen = time.time() - t2
     text = out.text if hasattr(out, 'text') else str(out)
     warm_path = store.save_warm_state() if (args.store == 'pulsar' and args.save_warm) else None
-    record = {'build': args.build, 'offload': args.offload, 'store_policy': args.store, 'warm_state_saved': warm_path, 'expert_cache_gb': args.expert_cache_gb, 'repack_seconds': round(t_repack, 1),
+    record = {'build': args.build, 'offload': args.offload, 'store_policy': args.store, 'cache_clear_threshold_gb': threshold_gb, 'warm_state_saved': warm_path, 'expert_cache_gb': args.expert_cache_gb, 'repack_seconds': round(t_repack, 1),
               'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': args.max_tokens, 'prefill_step_size': args.prefill_step_size,
               'patched_layers_eager_ffn': eager, 'store_stats': store.stats(), 'peak_memory_bytes': int(mx.get_peak_memory()),
               'device_info': {k: v for k, v in mx.device_info().items() if isinstance(v, (int, str))}, 'prompt': args.prompt, 'text': text,

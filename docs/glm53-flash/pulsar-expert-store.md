@@ -67,3 +67,29 @@ throughput at this budget. Next: bound the cache clearing (clear only when
 MLX's buffer cache exceeds a threshold — a store-level change with the
 measured 10–13% upside for both policies), then re-measure warm vs cold at
 budgets that leave page-cache headroom, on longer generations.
+
+## Graph 22: bounded allocator-cache clearing
+
+`PulsarExpertStore(..., cache_clear_threshold_bytes=2 << 30)`: after an
+evicting `get()` the store calls `mx.clear_cache()` only when
+`mx.get_cache_memory()` is at or above the threshold (0 reproduces upstream's
+clear-per-eviction; `None` never clears). In between, MLX's allocator reuses
+the freed fixed-size expert buffers for the next miss. `stats()` reports
+`cache_clear_threshold_bytes` and `cache_clears`. The residency policy,
+values and warm state are untouched.
+
+Qualification (same `offload-pulsar` operation, fixture v2): the stdlib
+model additionally counts evicting gets (`eviction_events`); every case runs
+under threshold 0 (the store's `cache_clears` must equal `eviction_events`
+— 19 and 16 on the two cases — and must equal the number of real
+`mx.clear_cache()` invocations counted through a wrapper) and under a 1 GiB
+bound the tiny fixtures never reach (`cache_clears` must be 0). Two
+structural mutants, recorded in the matrix before any run: `clear-always`
+(threshold ignored) and `never-clear`; both KILL on both cases with reason
+`cache-clears-mismatch`, alongside graph 21's three policy mutants.
+Supervised PASS on CPU and Metal. Two fixture-contact corrections are in the
+record: the model first counted evicting *calls* (10) where the store clears
+per evicting *get* (19), and "cache is empty after the call" is not a valid
+check (later allocations in the same call refill it) — replaced by the
+invocation count. `run_offload.py --cache-clear-threshold-gb` (default 2;
+0 = upstream; negative = never) selects it for the A/B.
