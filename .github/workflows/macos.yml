@@ -126,6 +126,8 @@ jobs:
               > "$RUNNER_TEMP/flash-topology-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_linear_long.py \
               > "$RUNNER_TEMP/flash-linear-long-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_offload.py \
+              > "$RUNNER_TEMP/flash-offload-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

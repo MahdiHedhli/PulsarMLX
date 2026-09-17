@@ -105,3 +105,10 @@ prefill/decode self-consistency; it has no numeric reference; see
 The `linear-long` operation runs single-call prefills of up to 64 tokens
 through the admitted linear attention module against the chunked composition
 of the accepted reference; see [its contract and limits](linear-long.md).
+
+# Expert offload
+
+The `offload` operation writes a repack-format store from the frozen
+quantized arrays and runs the retained `ExpertStore` + `OffloadedSwitchGLU`
+under a two-expert byte budget against the value reference and an explicit
+LRU policy model; see [its contract and limits](decoder-offload.md).

@@ -136,6 +136,22 @@ def run(context, mode, backend):
                                  'from scripts.research.glm53_flash.recurrent_dispatch import oracle as recurrence'), folder='linear_long')
         controls = component(context, 'controls', {}, folder='linear_long')
         return controls.run(context, backend, mx, nn, attention_source, attention_oracle, accepted_recurrence, actual_cache, long_oracle)
+    if mode == 'offload':
+        import mlx.nn as nn
+        import numpy as np
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        moe_source = component(context, 'source', {}, folder='decoder_moe')
+        moe_oracle = component(context, 'oracle', {}, folder='decoder_moe')
+        sparse_source = component(context, 'source', {}, folder='decoder_sparse')
+        quantized_source = component(context, 'source', {}, folder='decoder_quantized')
+        quantized_oracle = component(context, 'oracle', {'moe': moe_oracle},
+                                     ('from scripts.research.glm53_flash.decoder_moe import oracle as moe',), folder='decoder_quantized')
+        quantized_controls = component(context, 'controls', {}, folder='decoder_quantized')
+        offload_source = component(context, 'source', {}, folder='decoder_offload')
+        offload_oracle = component(context, 'oracle', {'quantized': quantized_oracle},
+                                   ('from scripts.research.glm53_flash.decoder_quantized import oracle as quantized',), folder='decoder_offload')
+        controls = component(context, 'controls', {}, folder='decoder_offload')
+        return controls.run(context, backend, mx, nn, np, ffn_source, moe_source, sparse_source, quantized_source, quantized_controls, offload_source, offload_oracle)
     if mode == 'quantized':
         import mlx.nn as nn
         ffn_source = component(context, 'source', {}, folder='decoder_ffn')
