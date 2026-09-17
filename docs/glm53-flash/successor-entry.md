@@ -42,3 +42,10 @@ boundary, K1 diagnostic, mutation controls and distinct archive layout.
 The `layer` operation composes the admitted linear-attention module and the
 dense-FFN graph into the renamed upstream decoder layer and checks it against a
 composed independent oracle; see [its contract and limits](decoder-layer.md).
+
+# MoE block composition
+
+The `moe` operation composes the router track's gate, the retained
+switch-layer experts with the dense-FFN clamped activation and the shared
+`ClampedMLP` into the renamed upstream `Glm5NextMoE` and checks it against a
+composed independent oracle; see [its contract and limits](decoder-moe.md).
