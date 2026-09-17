@@ -35,7 +35,7 @@ class PulsarStoreOffline(unittest.TestCase):
         predicted = generator.predicted_cells(cases, expected, {k: (v['before'], v['after']) for k, v in matrix['oracle_variants'].items()}, text)
         self.assertEqual(predicted, matrix['matrix'])
         store = STORE.read_text()
-        for needle in ('self._counts[k] *= self.decay', 'self._touch.get(key, 0))', 'self._warm_admitted = self._admit_warm_state()'):
+        for needle in ('self._counts[k] *= self.decay', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n', 'self._warm_admitted = self._admit_warm_state()'):
             self.assertEqual(store.count(needle), 1, needle)
 
 

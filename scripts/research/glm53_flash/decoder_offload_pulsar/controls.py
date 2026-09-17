@@ -108,7 +108,7 @@ def run(context, backend, mx, nn, np, ffn_source, moe_source, sparse_source, qua
 
         def test_structural_controls(self):
             recipes = [('decay-disabled', '                self._counts[k] *= self.decay\n', '                self._counts[k] *= 1.0\n'),
-                       ('tie-break-most-recent', 'key=lambda key: (self._counts.get(key, 0.0), self._touch.get(key, 0))', 'key=lambda key: (self._counts.get(key, 0.0), -self._touch.get(key, 0))'),
+                       ('tie-break-most-recent', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n', '        return (self._counts.get(key, 0.0), -self._touch.get(key, 0))\n'),
                        ('warm-state-ignored', '            self._warm_admitted = self._admit_warm_state()\n', '            self._warm_admitted = 0\n')]
             self.assertEqual(sorted(r[0] for r in recipes), sorted(matrix['matrix']))
             bound, activation, _ = admitted()

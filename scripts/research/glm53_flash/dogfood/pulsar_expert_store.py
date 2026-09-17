@@ -13,10 +13,13 @@ can reclaim; refetch is a lazy mx.load from the same file). Differences:
     <offload_dir>/pulsar-warm-state.json; a new store re-admits those experts (most frequent first,
     within the budget) at construction, so a second request starts warm instead of cold.
   * get_all keeps upstream's semantics (bulk load for a call touching most of a layer; no accounting).
+  * eviction is O(log n) through a heap with lazy invalidation (an O(n) min() per miss measurably slowed decode
+    at ~2,000 residents); the warm set is materialized at construction so a warm hit is a real hit.
 """
 from __future__ import annotations
 
 import glob
+import heapq
 import json
 import os
 from typing import Optional, Tuple
@@ -46,6 +49,8 @@ class PulsarExpertStore:
         self._counts: dict = {}          # (layer, expert) -> frequency (decayed)
         self._resident: dict = {}        # (layer, expert) -> nbytes
         self._touch: dict = {}           # (layer, expert) -> last access ordinal
+        self._heap: list = []            # (count, touch, key) entries; stale entries are skipped on pop (lazy invalidation)
+        self._materialize_warm = True
         self._resident_bytes = 0
         self._accesses = 0
         self._hits = self._misses = self._evictions = 0
@@ -78,7 +83,7 @@ class PulsarExpertStore:
             return
         evicted = False
         while self._resident and self._resident_bytes + incoming_bytes > self._budget:
-            victim = min(self._resident, key=lambda key: (self._counts.get(key, 0.0), self._touch.get(key, 0)))
+            victim = self._pop_victim()
             nbytes = self._resident.pop(victim)
             lid, j = victim
             m = self._maps[lid]
@@ -93,6 +98,28 @@ class PulsarExpertStore:
             except Exception:
                 pass
 
+    def _priority(self, key):
+        """Eviction order: least frequent first, least recently touched among equals."""
+        return (self._counts.get(key, 0.0), self._touch.get(key, 0))
+
+    def _pop_victim(self):
+        """The resident with the smallest priority: pop heap entries until one is current."""
+        while self._heap:
+            count, touch, key = heapq.heappop(self._heap)
+            if key in self._resident and self._priority(key) == (count, touch):
+                return key
+        # heap drained of current entries (e.g. after a decay rebuild): rebuild from the resident set
+        self._rebuild_heap()
+        count, touch, key = heapq.heappop(self._heap)
+        return key
+
+    def _push(self, key) -> None:
+        heapq.heappush(self._heap, (*self._priority(key), key))
+
+    def _rebuild_heap(self) -> None:
+        self._heap = [(*self._priority(k), k) for k in self._resident]
+        heapq.heapify(self._heap)
+
     def _count(self, key) -> None:
         self._accesses += 1
         self._counts[key] = self._counts.get(key, 0.0) + 1.0
@@ -100,6 +127,9 @@ class PulsarExpertStore:
         if self._accesses % self.decay_every == 0:
             for k in list(self._counts):
                 self._counts[k] *= self.decay
+            self._rebuild_heap()   # every resident's priority changed
+        elif key in self._resident:
+            self._push(key)        # the old entry goes stale and is skipped on pop
 
     def get(self, layer_id: int, j: int):
         m = self._maps[layer_id]
@@ -114,6 +144,7 @@ class PulsarExpertStore:
             self._evict_until_fits(nbytes)
             self._resident[key] = nbytes
             self._resident_bytes += nbytes
+            self._push(key)
         trip = lambda p: (m[f"e{j}.{p}.weight"], m.get(f"e{j}.{p}.scales"), m.get(f"e{j}.{p}.biases"))
         return (trip("gate_proj"), trip("up_proj"), trip("down_proj"))
 
@@ -162,5 +193,9 @@ class PulsarExpertStore:
                 break
             self._resident[(l, j)] = nbytes
             self._resident_bytes += nbytes
+            self._push((l, j))
             admitted += 1
+        if self._materialize_warm and admitted:
+            import mlx.core as mx
+            mx.eval([self._maps[l][f"e{j}.{k}"] for (l, j) in self._resident for k in _PROJ_KEYS if f"e{j}.{k}" in self._maps[l]])
         return admitted
