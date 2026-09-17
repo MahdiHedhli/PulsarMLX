@@ -112,3 +112,10 @@ The `offload` operation writes a repack-format store from the frozen
 quantized arrays and runs the retained `ExpertStore` + `OffloadedSwitchGLU`
 under a two-expert byte budget against the value reference and an explicit
 LRU policy model; see [its contract and limits](decoder-offload.md).
+
+# Loading path end to end
+
+The `load-offload` operation writes a synthetic converted checkpoint, runs the
+retained `repack`, patches the admitted stack with `patch_model` over an
+`ExpertStore`, loads the resident shard strictly and checks prefill+decode
+against the resident-quantized model; see [its contract, finding and limits](decoder-load-offload.md).

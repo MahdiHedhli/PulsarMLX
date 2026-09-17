@@ -136,6 +136,12 @@ CODE_FILES += (
     'scripts/research/glm53_flash/decoder_offload/upstream-moe-offload.txt',
     'scripts/research/glm53_flash/decoder_offload/LICENSE.upstream',
     'fixtures/research/glm53-flash-decoder-offload-v1/fixtures.json',
+    'scripts/research/glm53_flash/decoder_load_offload/source.py',
+    'scripts/research/glm53_flash/decoder_load_offload/controls.py',
+    'scripts/research/glm53_flash/decoder_load_offload/generate_fixtures.py',
+    'scripts/research/glm53_flash/decoder_load_offload/upstream-one-bit.txt',
+    'scripts/research/glm53_flash/decoder_load_offload/LICENSE.upstream',
+    'fixtures/research/glm53-flash-decoder-load-offload-v1/fixtures.json',
 )
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',
