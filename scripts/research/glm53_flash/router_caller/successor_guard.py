@@ -91,6 +91,13 @@ CODE_FILES += (
     'scripts/research/glm53_flash/decoder_sparse/upstream-base.txt',
     'scripts/research/glm53_flash/decoder_sparse/LICENSE.upstream',
     'fixtures/research/glm53-flash-decoder-sparse-v1/fixtures.json',
+    'scripts/research/glm53_flash/decoder_stack/capsule.py',
+    'scripts/research/glm53_flash/decoder_stack/source.py',
+    'scripts/research/glm53_flash/decoder_stack/oracle.py',
+    'scripts/research/glm53_flash/decoder_stack/controls.py',
+    'scripts/research/glm53_flash/decoder_stack/generate_fixtures.py',
+    'scripts/research/glm53_flash/decoder_stack/LICENSE.upstream',
+    'fixtures/research/glm53-flash-decoder-stack-v1/fixtures.json',
 )
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',

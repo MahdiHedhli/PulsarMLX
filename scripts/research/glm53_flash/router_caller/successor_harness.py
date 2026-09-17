@@ -86,6 +86,33 @@ def run(context, mode, backend):
         sparse_source = component(context, 'source', {}, folder='decoder_sparse')
         controls = component(context, 'controls', {}, folder='decoder_sparse')
         return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_oracle)
+    if mode == 'stack':
+        import mlx.nn as nn
+        accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
+        recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
+        attention_oracle = component(context, 'oracle', {}, folder='linear_attention')
+        attention_source = component(context, 'source', {'mx': mx, 'nn': nn,
+                                     'recurrent_verifier': recurrent_verifier}, folder='linear_attention')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        ffn_oracle = component(context, 'oracle', {}, folder='decoder_ffn')
+        layer_oracle = component(context, 'oracle', {}, folder='decoder_layer')
+        rc_oracle = component(context, 'rc_oracle', {})
+        rc_source = component(context, 'rc_source', {'guard': context}, ('import rc_guard as guard',))
+        moe_oracle = component(context, 'oracle', {}, folder='decoder_moe')
+        moe_source = component(context, 'source', {}, folder='decoder_moe')
+        sparse_oracle = component(context, 'oracle', {}, folder='decoder_sparse')
+        sparse_source = component(context, 'source', {}, folder='decoder_sparse')
+        stack_oracle = component(context, 'oracle', {}, folder='decoder_stack')
+        stack_source = component(context, 'source', {}, folder='decoder_stack')
+        controls = component(context, 'controls', {}, folder='decoder_stack')
+        refs = {'layer_run': layer_oracle.run, 'attention_reference': attention_oracle.module_reference,
+                'accepted_recurrence': accepted_recurrence, 'ffn_run': ffn_oracle.run, 'hc': layer_oracle,
+                'sparse_run': sparse_oracle.run, 'moe_run': moe_oracle.run, 'router_reference': rc_oracle.reference,
+                'stack_run': stack_oracle.run}
+        sources = {'ffn': ffn_source, 'attention': attention_source, 'cache': actual_cache, 'rc': rc_source,
+                   'moe': moe_source, 'sparse': sparse_source, 'stack': stack_source}
+        return controls.run(context, backend, mx, nn, refs, sources)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')

@@ -56,3 +56,10 @@ The `sparse` operation composes the renamed upstream `Glm5NextSparseAttention`
 with the unchanged `Glm5NextIndexer`, the retained `MultiLinear` and the
 retained `scaled_dot_product_attention` for one prefill pass and checks it
 against an independent oracle; see [its contract and limits](decoder-sparse.md).
+
+# Two-layer model stack
+
+The `stack` operation composes the admitted decoder layers of both types into
+the unchanged upstream `Glm5NextModel` and the renamed `LanguageModel`, checks
+one prefill pass against an oracle composed from the accepted references, and
+checks `make_cache` on the real classes; see [its contract and limits](decoder-stack.md).
