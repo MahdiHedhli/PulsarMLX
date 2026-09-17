@@ -16,7 +16,7 @@ The reference re-slices the frozen stack reference into the schedule (every
 stage is causal, so the logits at position t are those of the whole-sequence
 reference) and adds the accepted linear-attention reference's per-time cache
 states as comparison-only values. Observed on CPU and Metal: logits at every
-position (1.4e-7 to 3.0e-7), the linear `ArraysCache` slots after each step
+position (1.4e-7 to 7.7e-7), the linear `ArraysCache` slots after each step
 against the reference's `cache0`/`cache1` (atol 1e-4, rtol 1e-5) and the
 final cache, `KVCache` offsets 2→3→4 on both latent and indexer caches, the
 cache routing by layer type, and that `_ffn_c` is absent after the prefill
