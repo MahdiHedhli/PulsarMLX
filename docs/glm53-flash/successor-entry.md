@@ -119,3 +119,11 @@ The `load-offload` operation writes a synthetic converted checkpoint, runs the
 retained `repack`, patches the admitted stack with `patch_model` over an
 `ExpertStore`, loads the resident shard strictly and checks prefill+decode
 against the resident-quantized model; see [its contract, finding and limits](decoder-load-offload.md).
+
+# Quantized resident weights
+
+The `quantized-load` operation quantizes the admitted stack per a config-style
+block (8-bit resident, 4-bit experts, fp32 router), exports and strictly
+reloads it bit-identically, runs the mixed layout through repack/patch_model,
+and exercises the DeepSeek-V3.2 quantized kv_b split; see
+[its contract and limits](decoder-quantized-load.md).

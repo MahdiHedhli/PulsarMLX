@@ -85,7 +85,8 @@ def verify_capsule(capsule_raw, language_raw, ffn_source):
                           'capsule_mx_ops': {n.name: _mx_ops(n) for n in capsule.body}}
 
 
-def load(capsule_raw, language_raw, mla_raw, base_raw, mx, nn, ffn_source):
+def load(capsule_raw, language_raw, mla_raw, base_raw, mx, nn, ffn_source, quantized_multilinear=None):
+    """quantized_multilinear: the graph-15 admitted QuantizedMultiLinear class, for operations that quantize resident weights; default refused."""
     multilinear, ml_sha = verify_dependency(mla_raw, MLA_SHA256, 'MultiLinear', MULTILINEAR_GLOBALS, ffn_source)
     sdpa, sdpa_sha = verify_dependency(base_raw, BASE_SHA256, 'scaled_dot_product_attention', SDPA_GLOBALS, ffn_source)
     if [op for op in _mx_ops(multilinear) if op in QUANTIZED_OPS] != ['quantize']:
@@ -94,7 +95,7 @@ def load(capsule_raw, language_raw, mla_raw, base_raw, mx, nn, ffn_source):
         raise ValueError('DECODER_SPARSE_SDPA_OPS')
     nodes, contract = verify_capsule(capsule_raw, language_raw, ffn_source)
     dep_ns = {'__name__': 'decoder_sparse_dependencies_verified', 'mx': mx, 'nn': nn, 'math': math, 'Optional': typing.Optional,
-              'QuantizedMultiLinear': _refused('QUANTIZED_MULTILINEAR'),
+              'QuantizedMultiLinear': quantized_multilinear if quantized_multilinear is not None else _refused('QUANTIZED_MULTILINEAR'),
               'TurboQuantKVCache': _RefusedCacheType, 'BatchTurboQuantKVCache': _RefusedCacheType,
               '_turboquant_attention_applies': _refused('TURBOQUANT_ATTENTION'),
               'quantized_scaled_dot_product_attention': _refused('QUANTIZED_SDPA')}

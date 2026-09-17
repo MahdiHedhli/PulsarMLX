@@ -62,7 +62,7 @@ def max_abs_diff(a, b, mx):
     return v if math.isfinite(v) else float('inf')
 
 
-def run(context, backend, mx, nn, np, refs, sources, stack_controls, topology_controls, offload_source, load_source):
+def run(context, backend, mx, nn, np, refs, sources, stack_controls, topology_controls, quantized_source, offload_source, load_source):
     root = context.roots['code']
     raw = context.read_verified(root / FIXTURE); fixture = json.loads(raw)
     case = fixture['cases'][0]; expected = fixture['expected'][case['fixture_id']]; quantization = case['config']['quantization']
@@ -82,8 +82,11 @@ def run(context, backend, mx, nn, np, refs, sources, stack_controls, topology_co
         attention = sources['attention'].load(context, linear_fixture, None)
         cache_ns, _, cache_binding = sources['cache'].load(context, cache_fixture)
         gate = sources['rc'].Builder(context.phase, mx, nn, context.verify_environment(context.phase)).new()
-        moe = sources['moe'].load(moe_capsule, language_raw, switch_raw, mx, nn, sources['ffn'], ffn.namespace, gate['caller'])
-        sparse = sources['sparse'].load(sparse_capsule, language_raw, mla_raw, base_raw, mx, nn, sources['ffn'])
+        quantized = quantized_source.load(switch_raw, mla_raw, mx, nn, sources['ffn'], sources['moe'], sources['sparse'], ffn.namespace)  # graph 15 admitted classes
+        moe = sources['moe'].load(moe_capsule, language_raw, switch_raw, mx, nn, sources['ffn'], ffn.namespace, gate['caller'],
+                                  quantized_switch_linear=quantized.switch_namespace['QuantizedSwitchLinear'])
+        sparse = sources['sparse'].load(sparse_capsule, language_raw, mla_raw, base_raw, mx, nn, sources['ffn'],
+                                        quantized_multilinear=quantized.mla_namespace['QuantizedMultiLinear'])
         dsv = sources['stack'].load_dsv32_sanitize(dsv32_raw, mx, sources['ffn'], allow_quantized=allow_quantized_sanitize)
         stack = sources['stack'].load(capsule_raw, language_raw, cache_raw, base_raw, mx, nn, sources['ffn'], sources['sparse'],
                                       {'ffn_namespace': ffn.namespace, 'attention_namespace': attention.namespace, 'cache_namespace': cache_ns,

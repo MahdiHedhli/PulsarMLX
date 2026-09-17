@@ -56,18 +56,19 @@ DSV32_UNEXECUTED_OPS = ('from_fp8', 'quantize', 'dequantize')
 
 
 class _TripwireMx:
-    """Forwards every attribute of the admitted mx except the fp8/quantized ops, which raise: the
-    sanitize fixture is unquantized and those branches must not execute."""
-    def __init__(self, mx):
-        self._mx = mx
+    """Forwards every attribute of the admitted mx except the refused ops, which raise. Graph 14 refuses
+    from_fp8/quantize/dequantize (unquantized fixture); graph 20 lifts quantize/dequantize for the quantized
+    kv_b split branch and keeps from_fp8 refused."""
+    def __init__(self, mx, refused=DSV32_UNEXECUTED_OPS):
+        self._mx = mx; self._refused = tuple(refused)
 
     def __getattr__(self, name):
-        if name in DSV32_UNEXECUTED_OPS:
+        if name in self._refused:
             raise RuntimeError('DECODER_STACK_DSV32_' + name.upper() + '_NOT_ADMITTED')
         return getattr(self._mx, name)
 
 
-def load_dsv32_sanitize(dsv32_raw, mx, ffn_source):
+def load_dsv32_sanitize(dsv32_raw, mx, ffn_source, allow_quantized=False):
     """The DeepSeek-V3.2 Model.sanitize method taken whole from the retained mlx-vlm text, as a plain function."""
     if ffn_source.sha(dsv32_raw) != DSV32_LANGUAGE_SHA256:
         raise ValueError('DECODER_STACK_DSV32_DIGEST')
@@ -75,9 +76,9 @@ def load_dsv32_sanitize(dsv32_raw, mx, ffn_source):
     node = next(n for n in model.body if isinstance(n, ast.FunctionDef) and n.name == 'sanitize')
     if _census(ast.unparse(node), 'dsv32-sanitize') != DSV32_SANITIZE_GLOBALS:
         raise ValueError('DECODER_STACK_DSV32_CLOSURE:' + repr(_census(ast.unparse(node), 'dsv32-sanitize')))
-    ns = {'__name__': 'decoder_stack_dsv32_sanitize_verified', 'mx': _TripwireMx(mx)}
+    ns = {'__name__': 'decoder_stack_dsv32_sanitize_verified', 'mx': _TripwireMx(mx, ('from_fp8',) if allow_quantized else DSV32_UNEXECUTED_OPS)}
     exec(compile(ast.Module(body=[node], type_ignores=[]), 'decoder-stack-dsv32-sanitize', 'exec'), ns)
-    return types.SimpleNamespace(sanitize=ns['sanitize'], node=node, ast_sha256=ffn_source.ast_sha(node), mx_ops=_mx_ops(node))
+    return types.SimpleNamespace(sanitize=ns['sanitize'], node=node, ast_sha256=ffn_source.ast_sha(node), mx_ops=_mx_ops(node), refused_ops=list(ns['mx']._refused))
 
 
 def _census(text, name):

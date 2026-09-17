@@ -86,7 +86,7 @@ def run(context, mode, backend):
         sparse_source = component(context, 'source', {}, folder='decoder_sparse')
         controls = component(context, 'controls', {}, folder='decoder_sparse')
         return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_oracle)
-    if mode in ('stack', 'stack-decode', 'sanitize', 'topology', 'load-offload'):
+    if mode in ('stack', 'stack-decode', 'sanitize', 'topology', 'load-offload', 'quantized-load'):
         import mlx.nn as nn
         accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
         recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
@@ -114,6 +114,14 @@ def run(context, mode, backend):
                    'moe': moe_source, 'sparse': sparse_source, 'stack': stack_source}
         if mode == 'stack':
             return controls.run(context, backend, mx, nn, refs, sources)
+        if mode == 'quantized-load':
+            import numpy as np
+            topology_controls = component(context, 'controls', {}, folder='decoder_topology')
+            quantized_source = component(context, 'source', {}, folder='decoder_quantized')
+            offload_source = component(context, 'source', {}, folder='decoder_offload')
+            load_source = component(context, 'source', {}, folder='decoder_load_offload')
+            ql_controls = component(context, 'controls', {}, folder='decoder_quantized_load')
+            return ql_controls.run(context, backend, mx, nn, np, refs, sources, controls, topology_controls, quantized_source, offload_source, load_source)
         if mode == 'load-offload':
             import numpy as np
             topology_controls = component(context, 'controls', {}, folder='decoder_topology')

@@ -99,12 +99,13 @@ def verify_quantized_exclusion(nodes):
     return census
 
 
-def load(capsule_raw, language_raw, switch_raw, mx, nn, ffn_source, ffn_namespace, gate_class):
+def load(capsule_raw, language_raw, switch_raw, mx, nn, ffn_source, ffn_namespace, gate_class, quantized_switch_linear=None):
+    """quantized_switch_linear: the graph-15 admitted QuantizedSwitchLinear class, for operations that quantize resident weights; default refused."""
     switch_nodes, switch_digests = verify_switch(switch_raw, ffn_source)
     quantized_census = verify_quantized_exclusion(switch_nodes)
     node, contract = verify_capsule(capsule_raw, language_raw, ffn_source)
     switch_ns = {'__name__': 'decoder_moe_switch_verified', 'mx': mx, 'nn': nn, 'math': math,
-                 'swiglu': _refused('DEFAULT_SWIGLU'), 'QuantizedSwitchLinear': _refused('QUANTIZED_SWITCH_LINEAR')}
+                 'swiglu': _refused('DEFAULT_SWIGLU'), 'QuantizedSwitchLinear': quantized_switch_linear if quantized_switch_linear is not None else _refused('QUANTIZED_SWITCH_LINEAR')}
     for n in switch_nodes:
         exec(compile(ast.Module(body=[n], type_ignores=[]), 'decoder-moe-switch:' + n.name, 'exec'), switch_ns)
     ns = {'__name__': 'decoder_moe_verified', 'mx': mx, 'nn': nn, 'SwitchGLU': switch_ns['SwitchGLU'],
