@@ -121,7 +121,9 @@ def run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, 
                 ('shared-expert-omitted', 'y = y + self.shared_experts(x)', 'y = y'),
                 ('expert-score-pairing-reversed', 'y = self.switch_mlp(x, inds)', 'y = self.switch_mlp(x, inds[..., ::-1])'),
                 ('combine-axis-wrong', '.sum(axis=-2)', '.sum(axis=-1)'),
-                ('routed-activation-unclamped', 'activation=ClampedSwiGLU(config.swiglu_limit)', 'activation=SwiGLU()'),
+                # A limit far above every pre-activation removes the clamp while the
+                # admitted (observable) activation path stays in place.
+                ('routed-activation-unclamped', 'activation=ClampedSwiGLU(config.swiglu_limit)', 'activation=ClampedSwiGLU(1e30)'),
             ]
             self.assertEqual([r[0] for r in recipes], list(matrix['matrix']))
             text = capsule_raw.decode()
@@ -133,10 +135,6 @@ def run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, 
                     moe_source.verify_capsule(mutated, language_raw, ffn_source)
                 bound, _ = admitted()
                 ns = dict(bound.namespace)
-                # The unclamped mutant references SwiGLU; supply the admitted switch-layer
-                # SwiGLU (its default swiglu is a refused stub, so the mutant must be
-                # constructed with an unclamped activation that is observable, not a crash):
-                ns['SwiGLU'] = bound.switch_namespace['SwiGLU']
                 node = ast.parse(mutated).body[0]
                 exec(compile(ast.Module(body=[node], type_ignores=[]), 'test-only:' + label, 'exec'), ns)
                 results = []
@@ -146,8 +144,10 @@ def run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, 
                     try:
                         y = block(mx.array(case['x'], dtype=mx.float32)); mx.eval(y)
                         err = max_error(y.tolist(), expected); reason = 'value'
-                    except RuntimeError as exc:
-                        err, reason = float('inf'), 'refused:' + str(exc)
+                    except (RuntimeError, ValueError) as exc:
+                        # A refused stub (RuntimeError) or an MLX shape rejection (ValueError)
+                        # raised by the mutated block is a kill by rule, never a survivor.
+                        err, reason = float('inf'), 'rejected:' + type(exc).__name__ + ':' + str(exc)
                     observed = 'KILL' if err >= factor * allowance else 'INACTIVE' if err <= allowance else 'WEAK_STRUCTURAL'
                     results.append({'fixture_id': case['fixture_id'], 'max_absolute_error': err if err != float('inf') else 'inf', 'reason': reason,
                                     'observed': observed, 'expected_cell': expected_cell, 'cell_pass': observed == expected_cell})
