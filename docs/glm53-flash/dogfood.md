@@ -165,8 +165,14 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    curl http://studio:8080/v1/chat/completions -H 'Content-Type: application/json' \
      -d '{"model":"glm-5.3-flash-reap50","reasoning_effort":"low","messages":[{"role":"user","content":"Hi"}]}'
    ```
-2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
-   (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
-   miss reads overlapped with compute.
+2. **Paged tiers (graph 24, `--store slot`)**: `PulsarSlotStore` +
+   `PulsarSwitchGLU` — stacked per-layer slots, `gather_qmm` over them, one
+   small host read per layer, waves for calls wider than the slot count,
+   header-parsed-once reads routed by `mincore` (memmap when resident,
+   threaded `preadv` when not). All-hit cost 0.83 ms/layer (was 4–5).
+   Measured: Studio 70 GB slot cold 3.85/3.83, warm **4.69/4.61** vs LRU
+   3.49; MacBook internal 32 GB slot 2.00/2.03 vs LRU 1.14. Prefill is worse
+   than the bulk path (1.2–1.3 vs 2.7 tok/s on the Studio) until rung 3.
+   Full numbers, mechanisms and the decision log: `performance-notes.md`.
 3. **Prefill served from the store** instead of bulk-loading every expert
    file per chunk.

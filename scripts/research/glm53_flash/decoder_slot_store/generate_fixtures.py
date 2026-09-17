@@ -20,9 +20,13 @@ VARIANTS = {
 }
 # value-only structural mutants of the runtime file: the stdlib model has no slot tensors, so their cells follow by
 # construction (a token computed from the wrong slot changes the output) and are recorded before any run
-STRUCTURAL = {'stale-slot-map': {'expected_reason': 'value', 'kills_on': 'any eviction followed by a touch of the evicted expert'},
+STRUCTURAL = {'map-not-refreshed': {'expected_reason': 'rejected-or-value', 'kills_on': 'the first miss (the GPU slot map is not rebuilt after reads: the gather sees stale slots)'},
               'missing-check-removed': {'expected_reason': 'rejected-or-value', 'kills_on': 'the first miss'},
               'victim-slot-wrong': {'expected_reason': 'value', 'kills_on': 'the first eviction'}}
+REVISION = {'revision': 2, 'first_contact': "revision 1 recorded 'stale-slot-map' (expert_to_slot[victim] not cleared on eviction) as KILL by construction; the "
+                                            "supervised run observed INACTIVE on both cases: slot_of is the authority for hits, a stale map entry is only read for "
+                                            "experts of the current call, which are always just-filled, so the clear is redundant and the mutant equivalent. "
+                                            "Replaced before the re-run by 'map-not-refreshed' (L.map_array not invalidated after reads), which the gather depends on."}
 
 
 def predicted_cells(cases, expected, variants, text):
@@ -68,10 +72,10 @@ def main(out_path):
     for label in STRUCTURAL:
         predicted[label] = ['KILL' for _ in cases]
     search = {'seed': hex(0x20260917E1), 'attempt': attempt, 'schedule_length': len(schedule), 'policy': policy}
-    matrix = {'schema': 'flash-slot-store-expected-kill-matrix/1', 'frozen_before_tests': True, 'prospective_from_oracle_variants': True, 'schedule_search': search,
+    matrix = {'schema': 'flash-slot-store-expected-kill-matrix/2', 'frozen_before_tests': True, 'prospective_from_oracle_variants': True, 'schedule_search': search,
               'fixtures': [c['fixture_id'] for c in cases], 'cell_scope': 'per-call stats and slot map, or the warm-state slot assignment; structural mutants by value',
               'matrix': predicted, 'oracle_variants': {k: {'before': b, 'after': a} for k, (b, a) in VARIANTS.items()}, 'needle_counts': {k: 1 for k in VARIANTS},
-              'structural_mutants': STRUCTURAL}
+              'structural_mutants': STRUCTURAL, **REVISION}
     doc = {'schema': 'flash-slot-store-fixtures/1', 'oracle': 'scripts/research/glm53_flash/decoder_slot_store/oracle.py', 'store': 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py',
            'tolerances': {'output': 1e-4}, 'cases': cases, 'expected': expected, 'expected_kill_matrix': matrix}
     Path(out_path).write_text(json.dumps(doc, indent=1, sort_keys=True) + '\n')

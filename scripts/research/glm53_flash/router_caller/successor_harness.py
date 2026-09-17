@@ -183,6 +183,17 @@ def run(context, mode, backend):
         pulsar_oracle = component(context, 'oracle', {'base': offload_oracle}, ('from scripts.research.glm53_flash.decoder_offload import oracle as base',), folder='decoder_offload_pulsar')
         controls = component(context, 'controls', {}, folder='decoder_offload_pulsar')
         return controls.run(context, backend, mx, nn, np, ffn_source, moe_source, sparse_source, quantized_source, offload_source, offload_controls, pulsar_oracle)
+    if mode == 'slot-store':
+        import mlx.nn as nn
+        import numpy as np
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        moe_oracle = component(context, 'oracle', {}, folder='decoder_moe')
+        quantized_oracle = component(context, 'oracle', {'moe': moe_oracle}, ('from scripts.research.glm53_flash.decoder_moe import oracle as moe',), folder='decoder_quantized')
+        offload_oracle = component(context, 'oracle', {'quantized': quantized_oracle}, ('from scripts.research.glm53_flash.decoder_quantized import oracle as quantized',), folder='decoder_offload')
+        offload_controls = component(context, 'controls', {}, folder='decoder_offload')
+        slot_oracle = component(context, 'oracle', {'base': offload_oracle}, ('from scripts.research.glm53_flash.decoder_offload import oracle as base',), folder='decoder_slot_store')
+        controls = component(context, 'controls', {}, folder='decoder_slot_store')
+        return controls.run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     if mode == 'quantized':
         import mlx.nn as nn
         ffn_source = component(context, 'source', {}, folder='decoder_ffn')

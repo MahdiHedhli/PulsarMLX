@@ -67410,6 +67410,7 @@
  },
  "expected_kill_matrix": {
   "cell_scope": "per-call stats and slot map, or the warm-state slot assignment; structural mutants by value",
+  "first_contact": "revision 1 recorded 'stale-slot-map' (expert_to_slot[victim] not cleared on eviction) as KILL by construction; the supervised run observed INACTIVE on both cases: slot_of is the authority for hits, a stale map entry is only read for experts of the current call, which are always just-filled, so the clear is redundant and the mutant equivalent. Replaced before the re-run by 'map-not-refreshed' (L.map_array not invalidated after reads), which the gather depends on.",
   "fixtures": [
    "slot-4bit-g64",
    "slot-8bit-g32"
@@ -67420,15 +67421,15 @@
     "KILL",
     "KILL"
    ],
+   "map-not-refreshed": [
+    "KILL",
+    "KILL"
+   ],
    "missing-check-removed": [
     "KILL",
     "KILL"
    ],
    "pin-ignored": [
-    "KILL",
-    "KILL"
-   ],
-   "stale-slot-map": [
     "KILL",
     "KILL"
    ],
@@ -67470,6 +67471,7 @@
    }
   },
   "prospective_from_oracle_variants": true,
+  "revision": 2,
   "schedule_search": {
    "attempt": 2714,
    "policy": {
@@ -67479,15 +67481,15 @@
    "schedule_length": 13,
    "seed": "0x20260917e1"
   },
-  "schema": "flash-slot-store-expected-kill-matrix/1",
+  "schema": "flash-slot-store-expected-kill-matrix/2",
   "structural_mutants": {
+   "map-not-refreshed": {
+    "expected_reason": "rejected-or-value",
+    "kills_on": "the first miss (the GPU slot map is not rebuilt after reads: the gather sees stale slots)"
+   },
    "missing-check-removed": {
     "expected_reason": "rejected-or-value",
     "kills_on": "the first miss"
-   },
-   "stale-slot-map": {
-    "expected_reason": "value",
-    "kills_on": "any eviction followed by a touch of the evicted expert"
    },
    "victim-slot-wrong": {
     "expected_reason": "value",
