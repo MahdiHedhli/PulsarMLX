@@ -138,7 +138,13 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    recorded 8-token warm-up (`--warmup 8`, i.e. a long-lived server process)
    the measured runs give **prompt 67 / 68 / 86 tok/s** (25, 25, 67 tokens)
    and decode 22.3 / 22.1 / 21.2 tok/s. A quiescent host would not pay the
-   settle at all.
+   settle at all. Two caveats from the review: the default wiring assumes a
+   dedicated serving host (co-located desktop applications are paged out to
+   swap for the life of the process; use `--no-wire` where that is not
+   acceptable), and steady-state prefill remains MoE-bound — the isolated
+   MoE block scales from 5 ms at 16 tokens (82 active experts) to 25 ms at
+   256 (131 of 144), so prefill throughput settles toward the ~25 ms per
+   layer expert fan-out rather than growing further with prompt length.
 2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
    (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
    miss reads overlapped with compute.

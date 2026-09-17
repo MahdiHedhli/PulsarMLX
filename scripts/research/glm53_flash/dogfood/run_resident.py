@@ -34,7 +34,7 @@ def main():
     ap.add_argument('--prompt', default='What is the capital of France? Answer in one short sentence.')
     ap.add_argument('--max-tokens', type=int, default=96)
     ap.add_argument('--prefill-step-size', type=int, default=256)
-    ap.add_argument('--no-wire', action='store_true', help='do not wire the Metal buffers (default: wire up to max_recommended_working_set_size)')
+    ap.add_argument('--no-wire', action='store_true', help='do not wire the Metal buffers. The default wires up to max_recommended_working_set_size, which assumes a dedicated serving host: co-located desktop applications get paged out to swap while the process lives')
     ap.add_argument('--warmup', type=int, default=0, help='tokens of a recorded warm-up generate before the measured run (0 = none)')
     ap.add_argument('--lazy', action='store_true', help='do not materialize the weights before the first token (default: materialize)')
     ap.add_argument('--log', default='dogfood-resident.json')
