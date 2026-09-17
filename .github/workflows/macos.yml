@@ -110,6 +110,8 @@ jobs:
           for flags in "-I -B" "-I -B -O"; do
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_moe.py \
               > "$RUNNER_TEMP/flash-moe-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_sparse.py \
+              > "$RUNNER_TEMP/flash-sparse-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

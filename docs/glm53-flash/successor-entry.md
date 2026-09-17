@@ -49,3 +49,10 @@ The `moe` operation composes the router track's gate, the retained
 switch-layer experts with the dense-FFN clamped activation and the shared
 `ClampedMLP` into the renamed upstream `Glm5NextMoE` and checks it against a
 composed independent oracle; see [its contract and limits](decoder-moe.md).
+
+# Sparse attention with lightning indexer
+
+The `sparse` operation composes the renamed upstream `Glm5NextSparseAttention`
+with the unchanged `Glm5NextIndexer`, the retained `MultiLinear` and the
+retained `scaled_dot_product_attention` for one prefill pass and checks it
+against an independent oracle; see [its contract and limits](decoder-sparse.md).

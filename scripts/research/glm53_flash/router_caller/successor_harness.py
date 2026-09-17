@@ -79,6 +79,13 @@ def run(context, mode, backend):
         moe_source = component(context, 'source', {}, folder='decoder_moe')
         controls = component(context, 'controls', {}, folder='decoder_moe')
         return controls.run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, moe_oracle)
+    if mode == 'sparse':
+        import mlx.nn as nn
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        sparse_oracle = component(context, 'oracle', {}, folder='decoder_sparse')
+        sparse_source = component(context, 'source', {}, folder='decoder_sparse')
+        controls = component(context, 'controls', {}, folder='decoder_sparse')
+        return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_oracle)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
