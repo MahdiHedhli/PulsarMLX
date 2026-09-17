@@ -92,3 +92,10 @@ The `quantized` operation admits the retained `QuantizedSwitchLinear` and
 `QuantizedMultiLinear` and checks `gather_qmm` and `quantized_matmul` over
 frozen stdlib-quantized arrays against an affine-dequantization reference;
 see [its contract and limits](decoder-quantized.md).
+
+# 45-layer topology (structural)
+
+The `topology` operation instantiates the admitted model with the retained
+config's real 45-layer pattern at tiny width and checks structure and
+prefill/decode self-consistency; it has no numeric reference; see
+[its contract and limits](decoder-topology.md).

@@ -122,6 +122,8 @@ jobs:
               > "$RUNNER_TEMP/flash-stack-sanitize-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_quantized.py \
               > "$RUNNER_TEMP/flash-quantized-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_topology.py \
+              > "$RUNNER_TEMP/flash-topology-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
