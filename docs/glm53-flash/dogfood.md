@@ -116,15 +116,29 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    PYTHONPATH=/path/glm53-flash-mlx-a61a7c7d python scripts/research/glm53_flash/dogfood/run_resident.py \
      --model /path/GLM-5.3-Flash-REAP50-MLX-mixed-4_8bit --max-tokens 96 --log reap50.json
    ```
-   **Measured (Studio, 2026-09-17, three runs):** load 24–27 s from the
-   internal SSD (96.3 GB materialized), **decode 22.6 / 22.5 / 22.4 tok/s**
-   (96, 96 and 256 tokens), peak 100.2–100.5 GB, coherent text on both
-   prompts. Prefill is the new blocker: 0.66, 2.0 and 6.0 tok/s (25, 25 and
-   67 prompt tokens; the first run also paid for the host's swapping —
-   1.47 M page-outs — because ~20 GB of unrelated applications were resident
-   on the Studio). A 1,000-token prompt at that rate is minutes, so the next
-   rung is profiling the resident prefill path (per-layer: linear attention
-   under the S≤5 kernel domain, the DSA indexer/MLA prefill, the MoE path).
+   **Measured (Studio, 2026-09-17).** Load 24–29 s from the internal SSD
+   (96.3 GB materialized); **decode 21.2–22.7 tok/s** across nine runs (96
+   and 256 tokens); peak 100.2–100.5 GB (under the 115.4 GB recommended
+   working set); coherent text on both prompts.
+
+   **Prefill finding.** The first runs showed 0.7–6 tok/s prompt processing.
+   A per-stage profile (private `graph23/evidence/profile_*.py`) put ~3 s of
+   every prefill pass in the MoE FFN blocks, ~70 ms per layer *flat in the
+   token count*, while the same block on the same activations, timed warm,
+   costs 4–5 ms. Decode only touches 8 of 144 experts per layer, so under
+   the host's memory pressure (~20 GB of unrelated applications; swap at
+   21.9 of 22.5 GB) the OS evicted the cold experts and every prefill paged
+   them back. Back-to-back A/B on the same host state: **unwired 2.2 / 17 /
+   58 tok/s vs wired 59 / 98 / 187 tok/s** at 16 / 64 / 256 prompt tokens
+   (`mx.set_wired_limit` to the max recommended working set, as mlx-lm does
+   for large models). `run_resident.py` now wires by default (`--no-wire`
+   reproduces the old behaviour). Making the wired set resident is a
+   one-time cost per process — 31–45 s on this host, the OS paging the other
+   applications out — so the first prompt of a fresh process is slow; with a
+   recorded 8-token warm-up (`--warmup 8`, i.e. a long-lived server process)
+   the measured runs give **prompt 67 / 68 / 86 tok/s** (25, 25, 67 tokens)
+   and decode 22.3 / 22.1 / 21.2 tok/s. A quiescent host would not pay the
+   settle at all.
 2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
    (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
    miss reads overlapped with compute.
