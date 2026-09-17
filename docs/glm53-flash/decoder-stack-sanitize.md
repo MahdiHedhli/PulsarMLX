@@ -29,7 +29,7 @@ the model's, by the strict load), no dtype mismatch (the bf16 inputs come out
 float32), every value equals the fp32 rounding of the reference value
 exactly, the three dropped keys are absent, the strictly loaded fresh model's
 parameters equal the directly built model's bit for bit, and its logits match
-the frozen stack logits (8.2e-7 / 8.9e-7). The fp8 dequantisation path is
+the frozen stack logits (1.5e-6 on CPU, 8.9e-7 on Metal in the supervised runs). The fp8 dequantisation path is
 asserted refused. All eight prospective cells match: six capsule mutants
 (MTP filter, hc rename collision, conv fusion order, conv axis move, fp32
 cast, forget-gate move) and two DeepSeek-V3.2 mutants (untransposed `kv_b`
