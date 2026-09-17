@@ -27,7 +27,7 @@ UNQUANTIZED_MODULES = ['model.layers.1.mlp.gate (Glm5NextMoEGate: no to_quantize
 def main(out_path):
     base = json.loads(LOAD.read_bytes())['cases'][0]
     # 32-wide input axes at this tiny geometry (head_dim 32, qk_nope 32) take group 32; the real model's are 128/256
-    NARROW = ('model.layers.0.self_attn.forget_gate.f_b_proj', 'model.layers.0.self_attn.g_b_proj', 'model.layers.1.self_attn.embed_q')
+    NARROW = ('model.layers.0.self_attn.forget_gate.f_b_proj', 'model.layers.0.self_attn.g_b_proj', 'model.layers.0.self_attn.o_proj', 'model.layers.1.self_attn.embed_q')
     quantization = {'group_size': 64, 'bits': 4, 'mode': 'affine', **{p: {'group_size': 32 if p in NARROW else 64, 'bits': 8} for p in RESIDENT_8BIT}}
     config = {**base['config'], 'quantization': quantization}
     case = {'fixture_id': 'quantized-load-2layer-h64', 'config': config, 'init': base['init'], 'schedule': {'prefill_tokens': 3, 'ids': [3, 9, 1, 14, 7]},
@@ -41,7 +41,7 @@ def main(out_path):
            'structural_controls': {'predicate-bits-swapped': 'strict load rejects (scales/biases shapes)', 'resident-scales-dropped': 'strict load rejects',
                                    'kv-b-split-transposed': 'dequantized split mismatch or shape rejection'},
            'scope': 'STRUCTURAL + EQUIVALENCE; no numeric oracle at hidden 64; mlx core nn.quantize/QuantizedLinear/QuantizedEmbedding are environment-bound, not upstream code',
-           'revision': 'v1 used group 64 everywhere; three 32-wide inputs and the kv_b split along dq=32 were rejected by mx.quantize at first contact, before any observation; v2 gives those group 32'}
+           'revision': 'v1 used group 64 everywhere; three 32-wide inputs and the kv_b split along dq=32 were rejected by mx.quantize at first contact, before any observation; v2 gives those group 32 (incl. the linear attention o_proj, input head_dim 32)'}
     Path(out_path).write_text(json.dumps(doc, indent=1, sort_keys=True) + '\n'); print('written', len(RESIDENT_8BIT), '8-bit modules,', len(EXPERTS_4BIT), '4-bit')
 
 

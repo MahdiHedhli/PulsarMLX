@@ -90,7 +90,7 @@
      },
      "model.layers.0.self_attn.o_proj": {
       "bits": 8,
-      "group_size": 64
+      "group_size": 32
      },
      "model.layers.0.self_attn.q_proj": {
       "bits": 8,
@@ -435,7 +435,7 @@
    ]
   }
  },
- "revision": "v1 used group 64 everywhere; three 32-wide inputs and the kv_b split along dq=32 were rejected by mx.quantize at first contact, before any observation; v2 gives those group 32",
+ "revision": "v1 used group 64 everywhere; three 32-wide inputs and the kv_b split along dq=32 were rejected by mx.quantize at first contact, before any observation; v2 gives those group 32 (incl. the linear attention o_proj, input head_dim 32)",
  "schema": "flash-quantized-load-fixtures/1",
  "scope": "STRUCTURAL + EQUIVALENCE; no numeric oracle at hidden 64; mlx core nn.quantize/QuantizedLinear/QuantizedEmbedding are environment-bound, not upstream code",
  "structural_controls": {
