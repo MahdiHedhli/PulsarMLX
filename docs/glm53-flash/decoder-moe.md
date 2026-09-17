@@ -41,6 +41,19 @@ are recorded with their type and count as a kill, and the unclamped mutant
 now relaxes the clamp limit so the admitted activation path is observed. The
 matrix itself is unchanged.
 
+Slice 2 (quantized-path exclusion): the loader now takes a census of every
+`mx.<name>` attribute referenced by each function of the admitted switch-layer
+nodes and refuses admission if `gather_qmm`, `quantized_matmul`, `quantize` or
+`dequantize` appears anywhere except `SwitchLinear.to_quantized` (whose target
+class is the refused stub); `SwitchLinear.__call__` must reference exactly
+`expand_dims` and `gather_mm`. A test-only control rebuilds the block over a
+tripwire `mx` that raises on those ops and reproduces the admitted output
+bit-for-bit, and a `gather_mm -> gather_qmm` mutant of `SwitchLinear.__call__`
+is refused by the digest, by the census, and trips at forward time. This
+establishes that the executed expert path is the unquantized `gather_mm`
+path only; `gather_qmm`/`QuantizedSwitchLinear` (the mixed-4/8 checkpoint's
+expert path) remain unqualified.
+
 Run history: the first supervised attempt (`moe-cpu-1`, 18:25 on
 2026-09-16) exited before the harness ran, inside the child's own doctor
 probe (the MLX cpu/metal compiled-addition check), about fifty seconds before

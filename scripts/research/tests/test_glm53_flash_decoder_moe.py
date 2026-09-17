@@ -83,6 +83,17 @@ class DecoderMoEOffline(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'DECODER_MOE_(CALLER_TRANSFORM|CLOSURE)'):
                 moe_source.verify_capsule(mutated, self.language_raw, ffn_source)
 
+    def test_quantized_ops_excluded_from_admitted_nodes(self):
+        nodes, _ = moe_source.verify_switch(self.switch_raw, ffn_source)
+        census = moe_source.verify_quantized_exclusion(nodes)
+        self.assertEqual(census['SwitchLinear.__call__'], ['expand_dims', 'gather_mm'])
+        self.assertEqual([k for k, v in census.items() if set(v) & set(moe_source.QUANTIZED_OPS)], ['SwitchLinear.to_quantized'])
+        text = self.switch_raw.decode()
+        mutated = text.replace('x = mx.gather_mm(', 'x = mx.gather_qmm(', 1)
+        node = ffn_source._node(ast.parse(mutated), 'SwitchLinear')
+        with self.assertRaisesRegex(ValueError, 'QUANTIZED_OP_IN_ADMITTED_NODE:SwitchLinear.__call__:gather_qmm'):
+            moe_source.verify_quantized_exclusion([node])
+
     def test_tampered_texts_are_refused(self):
         with self.assertRaisesRegex(ValueError, 'DECODER_MOE_SWITCH_DIGEST'):
             moe_source.verify_switch(self.switch_raw + b'\n', ffn_source)

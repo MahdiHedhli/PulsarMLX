@@ -158,6 +158,49 @@ def run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, 
                 for r in results:
                     self.assertEqual(r['observed'], r['expected_cell'], f"{label}: {r}")
 
+        def test_quantized_path_excluded(self):
+            # Slice 2: the executed expert path never reaches a quantized op.
+            bound, _ = admitted()
+            census = bound.contract['mx_attribute_census']
+            self.assertEqual(census['SwitchLinear.__call__'], ['expand_dims', 'gather_mm'])
+            self.assertEqual([k for k, v in census.items() if 'quantize' in v], ['SwitchLinear.to_quantized'])
+            self.assertFalse(any(op in v for v in census.values() for op in ('gather_qmm', 'quantized_matmul')))
+            # Test-only control (not the qualification path): the switch namespace's mx is a
+            # tripwire that forwards every attribute except the quantized ops, which raise.
+            class Tripwire:
+                def __getattr__(self, name):
+                    if name in moe_source.QUANTIZED_OPS:
+                        raise AssertionError('QUANTIZED_OP_REACHED:' + name)
+                    return getattr(mx, name)
+            trip = moe_source.load(capsule_raw, language_raw, switch_raw, Tripwire(), nn, ffn_source,
+                                   ffn_source.load(root, mx, nn).namespace, bound.namespace['Glm5NextMoEGate'])
+            case = fixture['cases'][0]
+            x = mx.array(case['x'], dtype=mx.float32)
+            y_admitted = build(bound.namespace, case, mx)(x); mx.eval(y_admitted)
+            y_trip = build(trip.namespace, case, mx)(x); mx.eval(y_trip)
+            self.assertEqual(y_trip.tolist(), y_admitted.tolist())
+            # Mutant: SwitchLinear.__call__ rerouted to gather_qmm must trip (and fails the digest).
+            text = switch_raw.decode()
+            self.assertEqual(text.count('x = mx.gather_mm('), 1)
+            mutated = text.replace('x = mx.gather_mm(', 'x = mx.gather_qmm(', 1).encode()
+            with self.assertRaisesRegex(ValueError, 'DECODER_MOE_SWITCH_DIGEST'):
+                moe_source.verify_switch(mutated, ffn_source)
+            node = ffn_source._node(ast.parse(mutated), 'SwitchLinear')
+            with self.assertRaisesRegex(ValueError, 'DECODER_MOE_QUANTIZED_OP_IN_ADMITTED_NODE:SwitchLinear.__call__:gather_qmm'):
+                moe_source.verify_quantized_exclusion([node])
+            # Classes resolve their globals from the dict they were executed in, so the
+            # whole switch node set is re-executed into one fresh tripwire namespace.
+            mutant_ns = {k: v for k, v in trip.switch_namespace.items() if k in ('__name__', 'mx', 'nn', 'math', 'swiglu', 'QuantizedSwitchLinear')}
+            for n in trip.switch_nodes:
+                body = node if n.name == 'SwitchLinear' else n
+                exec(compile(ast.Module(body=[body], type_ignores=[]), 'test-only:switch-gather-qmm:' + n.name, 'exec'), mutant_ns)
+            ns = {k: v for k, v in trip.namespace.items() if k != 'source_moe'}; ns['SwitchGLU'] = mutant_ns['SwitchGLU']
+            exec(compile(ast.Module(body=[ast.parse(capsule_raw).body[0]], type_ignores=[]), 'test-only:capsule-over-gather-qmm', 'exec'), ns)
+            with self.assertRaisesRegex(AssertionError, 'QUANTIZED_OP_REACHED:gather_qmm'):
+                y = build(ns, case, mx)(x); mx.eval(y)
+            emit('quantized_exclusion', census=census, tripwire_forward='EQUAL_TO_ADMITTED',
+                 gather_qmm_mutant='TRIPPED_AND_DIGEST_REFUSED', scope='executed expert path only; gather_qmm/QuantizedSwitchLinear not qualified')
+
         def test_refusals(self):
             bound, _ = admitted()
             with self.assertRaisesRegex(RuntimeError, 'DEFAULT_SWIGLU_NOT_ADMITTED'):
