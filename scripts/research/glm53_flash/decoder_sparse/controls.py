@@ -56,6 +56,10 @@ def causal_mask(S, mx):
 
 
 def observe(block, x, mask, mx):
+    return observe_with_cache(block, x, mask, None, mx)
+
+
+def observe_with_cache(block, x, mask, cache, mx):
     seen = {}
     q_norm, kv_norm, indexer, o_proj = block.q_a_layernorm, block.kv_a_layernorm, block.indexer, block.o_proj
     def observed_q_norm(v):
@@ -67,13 +71,13 @@ def observe(block, x, mask, mx):
         if r is None:
             seen['topk'] = None
         else:
-            mx.eval(r); seen['topk'] = r[0, 0].tolist()
+            mx.eval(r); seen['topk'] = r[0, 0].tolist()  # [S][W]
         return r
     def observed_o_proj(v):
         mx.eval(v); seen['attention_concat'] = v[0].tolist(); r = o_proj(v); mx.eval(r); return r
     block.q_a_layernorm, block.kv_a_layernorm, block.indexer, block.o_proj = observed_q_norm, observed_kv_norm, observed_indexer, observed_o_proj
     try:
-        y = block(x, mask, None); mx.eval(y)
+        y = block(x, mask, cache); mx.eval(y)
     finally:
         block.q_a_layernorm, block.kv_a_layernorm, block.indexer, block.o_proj = q_norm, kv_norm, indexer, o_proj
     seen['output'] = y[0].tolist()

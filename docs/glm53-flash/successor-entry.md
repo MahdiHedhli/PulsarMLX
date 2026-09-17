@@ -63,3 +63,10 @@ The `stack` operation composes the admitted decoder layers of both types into
 the unchanged upstream `Glm5NextModel` and the renamed `LanguageModel`, checks
 one prefill pass against an oracle composed from the accepted references, and
 checks `make_cache` on the real classes; see [its contract and limits](decoder-stack.md).
+
+# Sparse attention decode
+
+The `sparse-decode` operation runs the admitted sparse attention through a
+prefill and one-token decode steps with the admitted `KVCache`/`CacheList`,
+checking the incremental indexer pool and the absorbed-query attention
+against an explicit-state reference; see [its contract and limits](decoder-sparse-decode.md).

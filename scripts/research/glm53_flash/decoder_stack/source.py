@@ -7,6 +7,8 @@ track), the MoE block (MoE track), ClampedMLP/HyperConnection/hc_expand
 create_causal_mask are taken whole from the retained mlx-vlm cache.py;
 create_attention_mask, create_ssm_mask and LanguageModelOutput from the
 retained mlx-vlm base.py; all by canonical-AST identity with a global census.
+The cache module's own create_attention_mask (N, offset, ...) is bound for
+KVCache.make_mask; base.py's create_attention_mask (h, cache, ...) for the model.
 DSV32Model (sanitize), the batch/quantized cache classes and the TurboQuant
 paths are refused stubs.
 """
@@ -29,6 +31,7 @@ DEPENDENCIES = {
                           'int', 'max', 'min', 'mx', 'property']),
     'CacheList': ('cache', ['CacheList', '_BaseCache', 'all', 'classmethod', 'globals', 'len', 'max', 'property', 'range', 'sum', 'tuple', 'type', 'zip']),
     'create_causal_mask': ('cache', ['Optional', 'int', 'mx']),
+    'cache_create_attention_mask': ('cache', ['Optional', 'bool', 'create_causal_mask', 'int']),
     'create_attention_mask': ('base', ['Optional', 'bool', 'create_causal_mask', 'hasattr', 'int', 'isinstance', 'mx']),
     'create_ssm_mask': ('base', ['hasattr', 'isinstance', 'mx']),
     'LanguageModelOutput': ('base', ['Dict', 'List', 'Optional', 'dataclass', 'mx', 'str', 'tuple']),
@@ -66,7 +69,7 @@ def verify_dependencies(cache_raw, base_raw, ffn_source, sparse_source):
     trees = {'cache': ast.parse(cache_raw), 'base': ast.parse(base_raw)}
     nodes, digests = {}, {}
     for name, (origin, expected) in DEPENDENCIES.items():
-        node = ffn_source._node(trees[origin], name)
+        node = ffn_source._node(trees[origin], name.removeprefix('cache_'))
         if _census(ast.unparse(node), name) != expected:
             raise ValueError('DECODER_STACK_DEPENDENCY_CLOSURE:' + name + ':' + repr(_census(ast.unparse(node), name)))
         for fn in [n for n in ast.walk(node) if isinstance(n, ast.FunctionDef)]:
@@ -97,24 +100,35 @@ def verify_capsule(capsule_raw, language_raw, ffn_source):
                           'capsule_ast_sha256': [ffn_source.ast_sha(n) for n in capsule.body], 'digest_scheme': ffn_source.DIGEST_SCHEME}
 
 
+def load_cache_classes(cache_raw, base_raw, mx, nn, ffn_source, sparse_source, base_cache_class):
+    """KVCache and CacheList over the admitted _BaseCache, with the cache module's own mask helpers."""
+    dep_nodes, dep_digests = verify_dependencies(cache_raw, base_raw, ffn_source, sparse_source)
+    cache_ns = {'__name__': 'decoder_stack_cache_classes_verified', 'mx': mx, 'nn': nn, 'Optional': typing.Optional,
+                '_BaseCache': base_cache_class, 'BatchKVCache': _refused('BATCH_KV_CACHE'), 'QuantizedKVCache': _refused('QUANTIZED_KV_CACHE')}
+    for name in ('create_causal_mask', 'cache_create_attention_mask', 'KVCache', 'CacheList'):
+        exec(compile(ast.Module(body=[dep_nodes[name]], type_ignores=[]), 'decoder-stack-cache-dependency:' + name, 'exec'), cache_ns)
+    return types.SimpleNamespace(namespace=cache_ns, nodes=dep_nodes, digests=dep_digests)
+
+
 def load(capsule_raw, language_raw, cache_raw, base_raw, mx, nn, ffn_source, sparse_source, bindings):
     """bindings: ffn_namespace, attention_namespace, cache_namespace, moe_class, sparse_class."""
-    dep_nodes, dep_digests = verify_dependencies(cache_raw, base_raw, ffn_source, sparse_source)
+    caches = load_cache_classes(cache_raw, base_raw, mx, nn, ffn_source, sparse_source, bindings['cache_namespace']._BaseCache)
     nodes, contract = verify_capsule(capsule_raw, language_raw, ffn_source)
-    dep_ns = {'__name__': 'decoder_stack_dependencies_verified', 'mx': mx, 'nn': nn, 'Optional': typing.Optional, 'List': typing.List,
-              'Dict': typing.Dict, 'dataclass': dataclasses.dataclass, '_BaseCache': bindings['cache_namespace']._BaseCache,
-              'BatchKVCache': _refused('BATCH_KV_CACHE'), 'QuantizedKVCache': _refused('QUANTIZED_KV_CACHE')}
-    for name in ('create_causal_mask', 'create_attention_mask', 'create_ssm_mask', 'LanguageModelOutput', 'KVCache', 'CacheList'):
-        exec(compile(ast.Module(body=[dep_nodes[name]], type_ignores=[]), 'decoder-stack-dependency:' + name, 'exec'), dep_ns)
+    base_ns = {'__name__': 'decoder_stack_base_dependencies_verified', 'mx': mx, 'Optional': typing.Optional, 'List': typing.List,
+               'Dict': typing.Dict, 'dataclass': dataclasses.dataclass}
+    for name in ('create_causal_mask', 'create_attention_mask', 'create_ssm_mask', 'LanguageModelOutput'):
+        exec(compile(ast.Module(body=[caches.nodes[name]], type_ignores=[]), 'decoder-stack-base-dependency:' + name, 'exec'), base_ns)
     ns = {'__name__': 'decoder_stack_verified', 'mx': mx, 'nn': nn, 'Optional': typing.Optional, 'Any': typing.Any,
           'TextConfig': object, 'ModelConfig': object, 'DSV32Model': _RefusedSanitize,
           'Glm5NextLinearAttention': bindings['attention_namespace']['Glm5NextLinearAttention'],
           'Glm5NextSparseAttention': bindings['sparse_class'], 'Glm5NextMoE': bindings['moe_class'],
           'ClampedMLP': bindings['ffn_namespace']['ClampedMLP'], 'HyperConnection': bindings['ffn_namespace']['HyperConnection'],
           'hc_expand': bindings['ffn_namespace']['hc_expand'], 'ArraysCache': bindings['cache_namespace'].ArraysCache,
-          'KVCache': dep_ns['KVCache'], 'CacheList': dep_ns['CacheList'], 'LanguageModelOutput': dep_ns['LanguageModelOutput'],
-          'create_attention_mask': dep_ns['create_attention_mask'], 'create_ssm_mask': dep_ns['create_ssm_mask']}
+          'KVCache': caches.namespace['KVCache'], 'CacheList': caches.namespace['CacheList'], 'LanguageModelOutput': base_ns['LanguageModelOutput'],
+          'create_attention_mask': base_ns['create_attention_mask'], 'create_ssm_mask': base_ns['create_ssm_mask']}
     for n in nodes:
         exec(compile(ast.Module(body=[n], type_ignores=[]), 'decoder-stack-admitted:' + n.name, 'exec'), ns)
-    contract['dependency_ast_sha256'] = dep_digests
-    return types.SimpleNamespace(namespace=ns, dependency_namespace=dep_ns, contract=contract)
+    contract['dependency_ast_sha256'] = caches.digests
+    dependency_namespace = {**caches.namespace, **{k: v for k, v in base_ns.items() if k not in ('__name__', 'create_causal_mask')}}
+    return types.SimpleNamespace(namespace=ns, dependency_namespace=dependency_namespace, cache_namespace=caches.namespace,
+                                 base_namespace=base_ns, contract=contract)

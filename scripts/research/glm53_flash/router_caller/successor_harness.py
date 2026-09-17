@@ -113,6 +113,18 @@ def run(context, mode, backend):
         sources = {'ffn': ffn_source, 'attention': attention_source, 'cache': actual_cache, 'rc': rc_source,
                    'moe': moe_source, 'sparse': sparse_source, 'stack': stack_source}
         return controls.run(context, backend, mx, nn, refs, sources)
+    if mode == 'sparse-decode':
+        import mlx.nn as nn
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        sparse_oracle = component(context, 'oracle', {}, folder='decoder_sparse')
+        sparse_source = component(context, 'source', {}, folder='decoder_sparse')
+        sparse_controls = component(context, 'controls', {}, folder='decoder_sparse')
+        decode_oracle = component(context, 'oracle', {'prefill': sparse_oracle},
+                                  ('from scripts.research.glm53_flash.decoder_sparse import oracle as prefill',), folder='decoder_sparse_decode')
+        stack_source = component(context, 'source', {}, folder='decoder_stack')
+        controls = component(context, 'controls', {}, folder='decoder_sparse_decode')
+        return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_controls, decode_oracle, actual_cache, stack_source)
     if mode == 'dispatch':
         import mlx.nn as nn
         independent = component(context, 'oracle', {}, folder='recurrent_dispatch')
