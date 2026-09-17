@@ -26,7 +26,11 @@ The 6×1 matrix was filled prospectively from oracle variants; all cells match
 on both backends with matching changed-step sets. Two cells are designed
 inactive controls (forcing the eager FFN path; recompiling every step): the
 reference has no compile distinction, so these establish that the compiled
-decode block equals the eager block. Dropping the layer caches kills at the
+decode block equals the eager block **on Metal**. Correction recorded in
+graph 19: under the successor fence (process-fork denied) MLX's CPU JIT
+cannot spawn the system compiler and `mx.compile` silently falls back to
+eager, so on CPU the `_ffn_c` presence check is real but the compiled
+numerics are not exercised; the CPU half of this compile claim is vacuous. Dropping the layer caches kills at the
 decode steps only; normalising before the stream mean kills everywhere;
 misrouting the cache list and a one-slot linear cache are rejected by the
 candidate and unmodelled-by-construction in the reference.

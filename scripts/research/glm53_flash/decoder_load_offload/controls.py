@@ -170,14 +170,29 @@ def run(context, backend, mx, nn, np, refs, sources, stack_controls, topology_co
             with self.assertRaisesRegex(RuntimeError, 'KV_RESERVE_AUTO_BUDGET_NOT_ADMITTED'):
                 loader.namespace['patch_model'](build_fresh(stack), str(out))
             emit('refusal', auto_budget='REFUSED', sanitizer_fallback='REFUSED_BY_BINDING')
+            # Probe: is mx.compile actually tracing on this backend in this child? Under the fence (process-fork
+            # denied) MLX's CPU JIT cannot spawn the system compiler and silently falls back to eager execution;
+            # Metal compilation is shader-based and real. The control below is decisive only where tracing is real.
+            def probe(x):
+                return x + np.asarray(x).sum()
+            try:
+                r = mx.compile(probe)(mx.array([1, 2])); mx.eval(r); tracing = False
+            except ValueError:
+                tracing = True
+            emit('compile_probe', backend=backend, mx_compile_traces=tracing,
+                 note='False means mx.compile is inert here (CPU JIT needs a subprocess the fence denies); compiled-path claims on this backend are then vacuous')
             # control: with the layer's compiled decode FFN left on, the offloaded decode step is rejected by MLX
             model_c, _, _ = path_b(loader.namespace, stack, build, work / 'offloaded-compiled', budget_gb=31000 / 1e9, eager_ffn_on_patched=False)
             try:
-                logits_paths(model_c, ids, S0, mx); outcome = 'DECODE_SUCCEEDED_UNEXPECTEDLY'
+                logits_paths(model_c, ids, S0, mx); outcome = 'DECODE_SUCCEEDED' + ('_UNEXPECTEDLY' if tracing else '_BECAUSE_COMPILE_IS_INERT_HERE')
             except ValueError as exc:
                 outcome = 'REJECTED:' + str(exc)[:120]
-            emit('compile_ffn_control', outcome=outcome, finding='OffloadedSwitchGLU inside mx.compile: host eval of indices is forbidden; offloaded layers must run the eager FFN path')
-            self.assertTrue(outcome.startswith('REJECTED'), outcome)
+            emit('compile_ffn_control', outcome=outcome, decisive=tracing,
+                 finding='OffloadedSwitchGLU inside mx.compile: host eval of indices is forbidden; offloaded layers must run the eager FFN path')
+            if tracing:
+                self.assertTrue(outcome.startswith('REJECTED'), outcome)
+            else:
+                self.assertEqual(outcome, 'DECODE_SUCCEEDED_BECAUSE_COMPILE_IS_INERT_HERE')
 
         def test_structural_controls(self):
             recipes = [('plan-shared-experts-not-resident', '        if "shared_expert" in name:  # shared_expert / shared_experts -> resident', '        if False:'),
@@ -215,7 +230,7 @@ def run(context, backend, mx, nn, np, refs, sources, stack_controls, topology_co
                     logits_b, _ = logits_paths(model_b, ids, S0, mx)
                     d = max_abs_diff(logits_a, logits_b, mx); outcome = 'EQUIVALENCE_BROKEN' if d > expected['equivalence_tolerance'] else 'EQUIVALENCE_HELD'
                 except (RuntimeError, ValueError, TypeError, AttributeError, IndexError, KeyError) as exc:
-                    d, outcome = float('inf'), 'REJECTED:' + type(exc).__name__ + ':' + str(exc)[:140]
+                    d, outcome = float('inf'), 'REJECTED:' + type(exc).__name__ + ':' + str(exc).replace(str(work), '<work>')[:140]
                 row = {'label': label, 'mutant_sha256': digest(mutated), 'max_difference': d if d != float('inf') else 'inf', 'outcome': outcome,
                        'expected': fixture['structural_controls'][label], 'pass': outcome != 'EQUIVALENCE_HELD'}
                 control_rows.append(row); emit('load_offload_control', **row)

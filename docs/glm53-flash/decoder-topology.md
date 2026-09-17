@@ -17,7 +17,8 @@ by type; logits are finite; a 5-token prefill followed by five one-token
 steps equals ten single-token steps at every position within 3.7e-6 (CPU) and 1.6e-6 (Metal) in the supervised runs — causal
 self-consistency through all 45 layers, both cache kinds, the indexer's
 sparse regime (reached at T ≥ 9 in every sparse layer, pools at T=10) and
-the compiled decode FFN on every layer; the linear layers' cache slots are
+the compiled decode FFN on every layer (compilation is real on Metal only:
+under the fence the CPU JIT is inert, see decoder-stack-decode.md); the linear layers' cache slots are
 populated and every `KVCache` ends at offset 10. Two structural controls:
 swapping the mask routing is rejected (the linear layer cannot consume the
 attention mask), and dropping the layer caches breaks the equivalence
