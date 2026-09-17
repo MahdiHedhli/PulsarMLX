@@ -21,9 +21,9 @@ SEED = 0x20260917E5
 def main(out_path):
     raw = UPSTREAM.read_bytes(); c = json.loads(raw); tc = c.get('text_config', c)
     pattern_keys = ('layer_types', 'mlp_layer_types', 'first_k_dense_replace', 'hc_mult', 'hc_sinkhorn_iters', 'hc_eps', 'rms_norm_eps', 'swiglu_limit',
-                    'n_group', 'topk_group', 'norm_topk_prob', 'routed_scaling_factor', 'topk_method', 'num_experts_per_tok', 'index_kpool',
+                    'n_group', 'topk_group', 'norm_topk_prob', 'routed_scaling_factor', 'topk_method', 'index_kpool',
                     'index_kpool_always_select_tail', 'mla_use_nope', 'attention_bias', 'qk_rope_head_dim', 'tie_word_embeddings', 'model_type', 'num_hidden_layers')
-    pattern = {k: tc[k] for k in pattern_keys}
+    pattern = {k: tc[k] for k in pattern_keys}  # structural pattern only; capacity fields (experts per token, widths) are scaled below
     assert pattern['num_hidden_layers'] == 45 and len(pattern['layer_types']) == 45
     config = {**pattern,
               'vocab_size': 16, 'hidden_size': 8, 'intermediate_size': 8, 'moe_intermediate_size': 8, 'n_routed_experts': 4, 'num_experts_per_tok': 2, 'n_shared_experts': 1,

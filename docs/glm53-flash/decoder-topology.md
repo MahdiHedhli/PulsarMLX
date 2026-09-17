@@ -14,7 +14,7 @@ from the frozen init recipe, under the supervised successor harness
 What it establishes, on CPU and Metal: construction with the expected
 per-layer attention and MLP types; `make_cache()` returns 45 caches routed
 by type; logits are finite; a 5-token prefill followed by five one-token
-steps equals ten single-token steps at every position within 1.6e-6 — causal
+steps equals ten single-token steps at every position within 3.7e-6 (CPU) and 1.6e-6 (Metal) in the supervised runs — causal
 self-consistency through all 45 layers, both cache kinds, the indexer's
 sparse regime (reached at T ≥ 9 in every sparse layer, pools at T=10) and
 the compiled decode FFN on every layer; the linear layers' cache slots are

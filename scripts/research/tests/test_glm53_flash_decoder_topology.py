@@ -23,8 +23,8 @@ class DecoderTopologyOffline(unittest.TestCase):
         self.assertEqual(fx['upstream_config_sha256'], hashlib.sha256(raw).hexdigest())
         cfg = fx['cases'][0]['config']
         for k in fx['pattern_keys']:
-            if k != 'num_experts_per_tok':
-                self.assertEqual(cfg[k], tc[k], k)
+            self.assertEqual(cfg[k], tc[k], k)
+        self.assertNotIn('num_experts_per_tok', fx['pattern_keys'])  # capacity, scaled with the widths
         self.assertEqual(cfg['num_hidden_layers'], 45); self.assertEqual(sum(t == 'linear_attention' for t in cfg['layer_types']), 34)
         exp = fx['expected']['topology-45-layers-tiny']
         self.assertEqual(exp['sparse_layers'], [3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43]); self.assertEqual(len(exp['moe_layers']), 42)
