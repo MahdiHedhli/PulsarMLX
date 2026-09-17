@@ -36,3 +36,34 @@ little time to learn in 96 tokens; longer sessions and the persisted state
 are where frequency should pay. Prefill is unchanged (upstream's bulk layer
 loads). The bigger levers remain cross-layer prefetch and a prefill path that
 does not read every expert file per chunk.
+
+**A/B on the Mac Studio (M1 Ultra, 128 GB; offload dir on the internal SSD;
+70 GB budget; same prompt and 96 tokens; 2026-09-17).** The warm start does
+*not* pay here:
+
+| Store | Decode (runs) | Hit rate | Decode misses | Warm load |
+|---|---|---|---|---|
+| upstream LRU | 3.00, 3.01, 3.08 tok/s | 77.8% | 4,325 | — |
+| Pulsar v2 cold | 3.02, 2.98, 3.03, 3.05 | 77.8% | 4,342 | — |
+| Pulsar v2 warm | 2.24, 2.14, 2.32, 2.35 | 85.1% | 3,678 | 17–20 s (70 GB) |
+
+A per-token probe (dt, hits, misses, evictions per generated token; private
+`dogfood/studio-ab.json`) separates two effects. First, both stores call
+`mx.clear_cache()` after every eviction; with the store full from token 0 the
+warm run makes 5,403 such calls and each following miss re-allocates its
+14.2 MB buffers from the OS instead of reusing freed ones — stubbing the call
+gives 2.32 → 2.62 (warm) and 3.03 → 3.35 (cold). Second, the least-squares
+cost per miss is 2.4–3.1 ms in the cold runs but 7.4–9.7 ms in the warm runs
+(and 5.8–7.9 ms for every store at a 50 GB budget: LRU 1.50, cold 1.66, warm
+1.50 tok/s). The cold runs fill the store during the first quarter of decode
+and degrade quarter by quarter (0.27 → 0.39 s/token); the warm runs sit at
+0.43–0.45 throughout. So the 15% fewer misses of the warm set are each ~3×
+more expensive, and at 96 tokens the cold runs are still riding the page
+cache left by prefill's bulk loads. The reading: on a host where the store
+plus the resident weights plus other applications fill memory, the warm
+state's extra residency competes with the page cache that serves its misses;
+the policy's hit-rate gain is real (85% vs 78%) and does not convert to
+throughput at this budget. Next: bound the cache clearing (clear only when
+MLX's buffer cache exceeds a threshold — a store-level change with the
+measured 10–13% upside for both policies), then re-measure warm vs cold at
+budgets that leave page-cache headroom, on longer generations.

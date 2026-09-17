@@ -1,6 +1,6 @@
 # Dogfood plan: GLM-5.3-Flash with cold experts on NVMe (Flash AN)
 
-**Status: entrypoint written and unit-checked; not yet run on real weights.**
+**Status: run on real weights on both target machines (2026-09-17); numbers below.**
 
 The model is 320B/18B-active; the unpruned mixed-4/8 build is 169.4 GiB:
 ~159.5 GiB of routed experts (42 layers × 288 experts × 14.2 MB at 4-bit/g64
@@ -48,3 +48,35 @@ python scripts/research/glm53_flash/dogfood/run_offload.py \
   --build /path/GLM-5.3-Flash-MLX-mixed-4_8bit --offload /path/GLM-5.3-Flash-offload \
   --max-tokens 64 --prefill-step-size 256 --log dogfood-run.json
 ```
+
+## Measured (2026-09-17, unpruned mixed-4/8, greedy, one short prompt, 96 tokens)
+
+Prompt: "What is the capital of France? Answer in one short sentence." Every
+run below produced the identical text (the model reasons, then answers
+"The capital of France is Paris.").
+
+| Machine | Offload dir | Budget | Store | Decode | Prompt | Hit rate | Peak |
+|---|---|---|---|---|---|---|---|
+| MacBook Pro M2 Max 64 GB | external NVMe | 32 GB | upstream LRU | 0.590 tok/s | 0.62 tok/s | 57.8% | 45.4 GB |
+| MacBook Pro M2 Max 64 GB | external NVMe | 32 GB | Pulsar v2 cold / warm | 0.616 / 0.620 | 0.62 | 59.1% / 62.3% | 45.4 GB |
+| Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | upstream LRU (×2) | 3.00 / 3.01 | 1.16–2.44 | 77.8% | 83.4 GB |
+| Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | Pulsar v2 cold (×2) | 3.02 / 2.98 | 2.28–2.45 | 77.8% | 83.4 GB |
+| Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | Pulsar v2 warm (×4) | 2.14–2.35 | 1.32–2.69 | 85.1% | 83.4 GB |
+| Mac Studio M1 Ultra 128 GB | internal SSD | 50 GB | LRU / Pulsar cold / Pulsar warm | 1.50 / 1.66 / 1.50 | 1.8–2.4 | 68% / 70% / 74% | — |
+
+The Studio's prompt tok/s varies with the page-cache state left by the
+previous run (prefill bulk-loads every expert file per chunk); the 70 GB
+budget on a 128 GB host that also carries ~20 GB of other applications
+leaves ~12 GB of page cache during decode. Repack to the internal SSD took
+569 s for 170 GB; re-admitting a 70 GB warm state takes 17–20 s.
+
+Two effects measured with a per-token probe (private evidence
+`dogfood/studio-ab.json`): (1) `mx.clear_cache()` after every eviction —
+upstream `ExpertStore` behaviour that `PulsarExpertStore` inherited — costs
+10–13% once the store is full (3.03 → 3.35 cold, 2.32 → 2.62 warm with the
+call stubbed); (2) the per-miss cost is 2.4–3.1 ms in cold runs at 70 GB but
+7.4–9.7 ms in warm runs and 5.8–7.9 ms for every store at 50 GB, so the cold
+70 GB numbers are partly a 96-token transient (the store fills over the first
+quarter of decode and the last quarter already runs at 0.37–0.39 s/token
+against the warm runs' 0.43–0.45). See `pulsar-expert-store.md` for the
+store-level reading.
