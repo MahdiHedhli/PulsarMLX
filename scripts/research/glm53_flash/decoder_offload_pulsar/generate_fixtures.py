@@ -11,40 +11,62 @@ from scripts.research.glm53_flash.decoder_offload import oracle as lru_oracle  #
 from scripts.research.glm53_flash.decoder_offload_pulsar import oracle  # noqa: E402
 
 OFFLOAD = ROOT / 'fixtures/research/glm53-flash-decoder-offload-v1/fixtures.json'
-SCHEDULE = [{'tokens': [0]}, {'tokens': [0]}, {'tokens': [1]}, {'tokens': [0]}, {'tokens': [2]}, {'tokens': [1]}, {'tokens': [0]}, {'tokens': [2]}, {'tokens': [0, 1, 2]}, {'tokens': [0]}]
-POLICY = {'decay': 0.5, 'decay_every': 6}
 
 
-def main(out_path):
-    base = json.loads(OFFLOAD.read_bytes())
-    cases, expected = [], {}
-    for b in base['cases']:
-        case = {**b, 'fixture_id': b['fixture_id'].replace('offload', 'pulsar'), 'schedule': SCHEDULE, 'policy': POLICY}
-        r = oracle.run(case); lru = lru_oracle.run({**b, 'schedule': SCHEDULE})
-        differs = [i for i, (a, c) in enumerate(zip(r['calls'], lru['calls'])) if a['stats'] != c['stats']]
-        assert differs, 'schedule does not discriminate LFU from LRU for ' + case['fixture_id']
-        r['lru_differs_at_calls'] = differs; r['lru_final_stats'] = lru['final_stats']
-        cases.append(case); expected[case['fixture_id']] = r
-    variants = {
-        'decay-disabled': ("                        counts[k] *= decay", "                        counts[k] *= 1.0"),
-        'tie-break-most-recent': ("victim = min(resident, key=lambda k: (counts.get(k, 0.0), touch.get(k, 0)))", "victim = min(resident, key=lambda k: (counts.get(k, 0.0), -touch.get(k, 0)))"),
-        'warm-state-ignored': ("    warm_order = sorted(resident, key=lambda j: -counts.get(j, 0.0))", "    warm_order = []"),
-    }
-    text = Path(oracle.__file__).read_text()
+def predicted_cells(cases, expected, variants, text):
     predicted = {}
     for label, (before, after) in variants.items():
-        assert text.count(before) == 1, label
         ns = {'__name__': 'variant', 'base': oracle.base}
         exec(compile(text.replace(before, after).replace('from scripts.research.glm53_flash.decoder_offload import oracle as base', ''), 'variant:' + label, 'exec'), ns)
         cells = []
         for c in cases:
             v = ns['run'](c); e = expected[c['fixture_id']]
             stats_differ = any(vc['stats'] != ec['stats'] for vc, ec in zip(v['calls'], e['calls']))
-            warm_differ = v['warm_state']['admitted_on_restart'] != e['warm_state']['admitted_on_restart']
+            warm_differ = sorted(v['warm_state']['admitted_on_restart']) != sorted(e['warm_state']['admitted_on_restart'])
             cells.append('KILL' if (stats_differ or warm_differ) else 'INACTIVE')
         predicted[label] = cells
-    matrix = {'schema': 'flash-pulsar-store-expected-kill-matrix/1', 'frozen_before_tests': True, 'prospective_from_oracle_variants': True,
-              'fixtures': [c['fixture_id'] for c in cases], 'cell_scope': 'policy counts per call or the warm-state admission set',
+    return predicted
+
+
+VARIANTS = {
+    'decay-disabled': ("                        counts[k] *= decay", "                        counts[k] *= 1.0"),
+    'tie-break-most-recent': ("victim = min(resident, key=lambda k: (counts.get(k, 0.0), touch.get(k, 0)))", "victim = min(resident, key=lambda k: (counts.get(k, 0.0), -touch.get(k, 0)))"),
+    'warm-state-ignored': ("    warm_order = sorted(resident, key=lambda j: -counts.get(j, 0.0))", "    warm_order = []"),
+}
+
+
+def main(out_path):
+    import random
+    base = json.loads(OFFLOAD.read_bytes())
+    text = Path(oracle.__file__).read_text()
+    for before, _ in VARIANTS.values():
+        assert text.count(before) == 1
+    rng = random.Random(0x20260917D8)
+    # search a seeded family of schedules for one where LFU != LRU on both cases and every control kills on both
+    for attempt in range(1, 5001):
+        n = rng.randint(10, 16)
+        schedule = [{'tokens': [rng.randrange(3)]} for _ in range(n)] + [{'tokens': [0, 1, 2]}, {'tokens': [rng.randrange(3)]}]
+        policy = {'decay': 0.5, 'decay_every': rng.choice([3, 4, 5, 6])}
+        cases, expected, ok = [], {}, True
+        for b in base['cases']:
+            case = {**b, 'fixture_id': b['fixture_id'].replace('offload', 'pulsar'), 'schedule': schedule, 'policy': policy}
+            r = oracle.run(case); lru = lru_oracle.run({**b, 'schedule': schedule})
+            differs = [i for i, (a, c) in enumerate(zip(r['calls'], lru['calls'])) if a['stats'] != c['stats']]
+            if not differs or r['final_stats']['hits'] <= lru['final_stats']['hits']:
+                ok = False; break
+            r['lru_differs_at_calls'] = differs; r['lru_final_stats'] = lru['final_stats']
+            cases.append(case); expected[case['fixture_id']] = r
+        if not ok:
+            continue
+        predicted = predicted_cells(cases, expected, VARIANTS, text)
+        if all(c == 'KILL' for v in predicted.values() for c in v):
+            break
+    else:
+        raise SystemExit('no discriminating schedule found')
+    variants = VARIANTS
+    search = {'seed': hex(0x20260917D8), 'attempt': attempt, 'schedule_length': len(schedule), 'policy': policy}
+    matrix = {'schema': 'flash-pulsar-store-expected-kill-matrix/1', 'frozen_before_tests': True, 'prospective_from_oracle_variants': True, 'schedule_search': search,
+              'fixtures': [c['fixture_id'] for c in cases], 'cell_scope': 'policy counts per call or the warm-state admitted SET (order is not part of the claim)',
               'matrix': predicted, 'oracle_variants': {k: {'before': b, 'after': a} for k, (b, a) in variants.items()}, 'needle_counts': {k: 1 for k in variants}}
     doc = {'schema': 'flash-pulsar-store-fixtures/1', 'oracle': 'scripts/research/glm53_flash/decoder_offload_pulsar/oracle.py', 'store': 'scripts/research/glm53_flash/dogfood/pulsar_expert_store.py',
            'tolerances': {'output': 1e-4}, 'cases': cases, 'expected': expected, 'expected_kill_matrix': matrix}
