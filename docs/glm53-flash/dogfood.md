@@ -145,6 +145,26 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    MoE block scales from 5 ms at 16 tokens (82 active experts) to 25 ms at
    256 (131 of 144), so prefill throughput settles toward the ~25 ms per
    layer expert fan-out rather than growing further with prompt length.
+   **Serving (`serve_resident.py`).** An OpenAI-style server over the same
+   load path (mlx-vlm's own server cannot resolve the pinned `glm5_next`
+   runtime): `GET /v1/models`, `POST /v1/chat/completions` (streaming and
+   non-streaming, usage with prompt/generation tok/s, `max_tokens`,
+   `temperature`, `top_p`, `repetition_penalty`), `GET /health`. Buffers
+   wired, one warm-up generate at startup, one generation at a time. The
+   template opens a `<think>` block, so reasoning is returned as
+   `reasoning_content` and the answer as `content` (in streaming too, with a
+   partial-marker hold-back); `reasoning_effort` low|medium|high maps onto
+   the template's Reasoning Effort line (default Max, which will spend a
+   short `max_tokens` entirely on thinking — use `low` for direct answers).
+   Measured from the MacBook over the LAN against the Studio: 22.3–22.7
+   tok/s decode, prompt 56 tok/s once warm; `reasoning_effort: low` answered
+   the commit-message question in 149 tokens, `high` used all 400 thinking.
+   ```bash
+   PYTHONPATH=/path/glm53-flash-mlx-a61a7c7d python scripts/research/glm53_flash/dogfood/serve_resident.py \
+     --model /path/GLM-5.3-Flash-REAP50-MLX-mixed-4_8bit --host 0.0.0.0 --port 8080
+   curl http://studio:8080/v1/chat/completions -H 'Content-Type: application/json' \
+     -d '{"model":"glm-5.3-flash-reap50","reasoning_effort":"low","messages":[{"role":"user","content":"Hi"}]}'
+   ```
 2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
    (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
    miss reads overlapped with compute.
