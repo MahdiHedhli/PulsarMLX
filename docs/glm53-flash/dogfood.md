@@ -102,3 +102,22 @@ tiers, replace the per-expert loop with a gather-matmul over a stacked
 resident buffer per layer (routing stays on the GPU) and overlap miss reads
 with compute — that lifts the paged ceiling toward the bandwidth bound but
 stays below 20 tok/s whenever misses per token exceed a handful.
+
+## The ladder to a usable rate (graph 23 onward)
+
+1. **Fully resident REAP50 on the Studio** (`run_resident.py`): pipenetwork's
+   saliency-pruned build keeps 144 of 288 experts per MoE layer (96.3 GB,
+   revision `63114f52…`, `reap` block in its config). The pinned loader
+   sizes `SwitchGLU`, the router and `e_score_correction_bias` from
+   `text_config.n_routed_experts`, so no loader change is needed; the
+   strict load is the shape check. Every weight is materialized before the
+   first token (`lazy=False`), no offload patching, compiled FFN path.
+   ```bash
+   PYTHONPATH=/path/glm53-flash-mlx-a61a7c7d python scripts/research/glm53_flash/dogfood/run_resident.py \
+     --model /path/GLM-5.3-Flash-REAP50-MLX-mixed-4_8bit --max-tokens 96 --log reap50.json
+   ```
+2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
+   (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
+   miss reads overlapped with compute.
+3. **Prefill served from the store** instead of bulk-loading every expert
+   file per chunk.
