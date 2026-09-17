@@ -116,6 +116,15 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    PYTHONPATH=/path/glm53-flash-mlx-a61a7c7d python scripts/research/glm53_flash/dogfood/run_resident.py \
      --model /path/GLM-5.3-Flash-REAP50-MLX-mixed-4_8bit --max-tokens 96 --log reap50.json
    ```
+   **Measured (Studio, 2026-09-17, three runs):** load 24–27 s from the
+   internal SSD (96.3 GB materialized), **decode 22.6 / 22.5 / 22.4 tok/s**
+   (96, 96 and 256 tokens), peak 100.2–100.5 GB, coherent text on both
+   prompts. Prefill is the new blocker: 0.66, 2.0 and 6.0 tok/s (25, 25 and
+   67 prompt tokens; the first run also paid for the host's swapping —
+   1.47 M page-outs — because ~20 GB of unrelated applications were resident
+   on the Studio). A 1,000-token prompt at that rate is minutes, so the next
+   rung is profiling the resident prefill path (per-layer: linear attention
+   under the S≤5 kernel domain, the DSA indexer/MLA prefill, the MoE path).
 2. **Paged tiers**: gather-matmul over a stacked per-layer resident buffer
    (routing stays on the GPU; removes the ~0.2 s all-hit intercept) plus
    miss reads overlapped with compute.
