@@ -121,6 +121,17 @@ def run(context, mode, backend):
         decode_oracle = component(context, 'oracle', {}, folder='decoder_stack_decode')
         decode_controls = component(context, 'controls', {}, folder='decoder_stack_decode')
         return decode_controls.run(context, backend, mx, nn, refs, sources, controls, attention_oracle, decode_oracle)
+    if mode == 'quantized':
+        import mlx.nn as nn
+        ffn_source = component(context, 'source', {}, folder='decoder_ffn')
+        moe_source = component(context, 'source', {}, folder='decoder_moe')
+        moe_oracle = component(context, 'oracle', {}, folder='decoder_moe')
+        sparse_source = component(context, 'source', {}, folder='decoder_sparse')
+        quantized_source = component(context, 'source', {}, folder='decoder_quantized')
+        quantized_oracle = component(context, 'oracle', {'moe': moe_oracle},
+                                     ('from scripts.research.glm53_flash.decoder_moe import oracle as moe',), folder='decoder_quantized')
+        controls = component(context, 'controls', {}, folder='decoder_quantized')
+        return controls.run(context, backend, mx, nn, ffn_source, moe_source, sparse_source, quantized_source, quantized_oracle)
     if mode == 'sparse-decode':
         import mlx.nn as nn
         actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')

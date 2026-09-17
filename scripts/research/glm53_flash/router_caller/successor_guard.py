@@ -113,6 +113,12 @@ CODE_FILES += (
     'scripts/research/glm53_flash/decoder_stack_sanitize/generate_fixtures.py',
     'scripts/research/glm53_flash/decoder_stack_sanitize/LICENSE.upstream',
     'fixtures/research/glm53-flash-decoder-stack-sanitize-v1/fixtures.json',
+    'scripts/research/glm53_flash/decoder_quantized/oracle.py',
+    'scripts/research/glm53_flash/decoder_quantized/source.py',
+    'scripts/research/glm53_flash/decoder_quantized/controls.py',
+    'scripts/research/glm53_flash/decoder_quantized/generate_fixtures.py',
+    'scripts/research/glm53_flash/decoder_quantized/LICENSE.upstream',
+    'fixtures/research/glm53-flash-decoder-quantized-v1/fixtures.json',
 )
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
                   'capsules/group_expert_select.py', 'mlx-vlm/LICENSE',

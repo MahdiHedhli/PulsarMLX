@@ -85,3 +85,10 @@ admitted `LanguageModel.sanitize` (with the retained DeepSeek-V3.2
 `Model.sanitize`) and strictly loads it into the admitted stack, checking
 keys, dtypes, exact values, dropped keys and the forward logits; see
 [its contract and limits](decoder-stack-sanitize.md).
+
+# Quantized projections
+
+The `quantized` operation admits the retained `QuantizedSwitchLinear` and
+`QuantizedMultiLinear` and checks `gather_qmm` and `quantized_matmul` over
+frozen stdlib-quantized arrays against an affine-dequantization reference;
+see [its contract and limits](decoder-quantized.md).

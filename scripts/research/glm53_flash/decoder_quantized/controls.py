@@ -63,9 +63,9 @@ def run_switch(glu, case, mx):
     seen = {}
     gate, up = glu.gate_proj, glu.up_proj
     def og(x, inds, **k):
-        r = gate(x, inds, **k); mx.eval(r); seen['gate'] = r[0].tolist(); return r
+        r = gate(x, inds, **k); mx.eval(r); seen['gate'] = r[0].squeeze(-2).tolist(); return r
     def ou(x, inds, **k):
-        r = up(x, inds, **k); mx.eval(r); seen['up'] = r[0].tolist(); return r
+        r = up(x, inds, **k); mx.eval(r); seen['up'] = r[0].squeeze(-2).tolist(); return r
     glu.gate_proj, glu.up_proj = og, ou
     try:
         y = glu(mx.array([case['x']], dtype=mx.float32), mx.array([case['indices']], dtype=mx.int32)); mx.eval(y)
@@ -135,7 +135,8 @@ def run(context, backend, mx, nn, ffn_source, moe_source, sparse_source, quantiz
                 if case['kind'] == 'predicate':
                     continue
                 errs = evaluate(bound, case)
-                row = {'fixture_id': fid, 'kind': case['kind'], 'errors': errs, 'pass': all(e <= tol['output'] for e in errs.values()), 'contract': bound.contract}
+                row = {'fixture_id': fid, 'kind': case['kind'], 'errors': {k: (v if v != float('inf') else 'inf') for k, v in errs.items()},
+                       'pass': all(e <= tol['output'] for e in errs.values()), 'contract': bound.contract}
                 observations.append(row); emit('quantized_observation', **row)
                 self.assertTrue(row['pass'], json.dumps({k: v for k, v in row.items() if k != 'contract'}))
             # quant_predicate by name on real key names, against the frozen mapping
