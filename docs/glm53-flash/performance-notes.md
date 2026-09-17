@@ -160,6 +160,27 @@ serialized with the scatters, where upstream's bulk path streams whole files
 MacBook, internal NVMe, 32 GB: **slot cold 2.00 / warm 2.03 tok/s vs LRU
 1.14 (+75%)**, prompt 0.8–0.9 vs 2.2.
 
+**Prefill on the paged tier (rung 3, measured, partially resolved).** With
+the page cache evicted before every run (reading the 96 GB REAP50 files
+through), Studio 70 GB: LRU prompt 2.43 / 2.60 tok/s; slot warm 3.58 / 3.78
+(8 read workers) but 1.19–2.94 in other runs of the same configuration;
+slot cold 1.24 / 1.41. A 25-token prompt is the worst case for a paged
+store: it touches ~200 of 288 experts per layer, so its cost is per unique
+expert (≥83 misses per layer with 117 slots ≈ 49 GB minimum, ~118 GB from a
+cold store), not per token — longer prompts amortize. Read-path numbers for
+a 93-expert cold batch: thread pool 676 ms, `mx.load` lazy loads evaluated
+together 233 ms (5.7 GB/s) — MLX's reader parallelizes big batches better,
+at a 4–5 ms header parse per call. `fill` therefore uses `mx.load` (entries
+popped, nothing retained) when a batch has ≥4 cold experts and the
+mincore/memmap/preadv path otherwise; warm-state load dropped 29 → 18 s.
+32 read workers thrash (prompt 0.63). The repack files are hash-ordered
+(an expert's nine tensors are scattered), so expert-contiguous coalescing
+— one 14 MB sequential read per expert, adjacent misses merged into large
+streaming reads — needs a re-repack with a sorted layout: the next
+structural step for cold prefill. Quiet host: after the background apps were
+quit, the resident server's load was 15.3 s and its warm-up 1.0 s (the
+31–45 s settle was entirely the OS paging other apps out).
+
 **Numerics.** The slot path's greedy text diverges from the upstream loop's
 after ~50 tokens ("The user explicitly" → "The user has explicitly"; the
 rest equivalent; slot runs are self-consistent per host). First-token logits
@@ -186,7 +207,8 @@ and hit statistics, not by text hash.
 | Waves (≤C experts, pinned) for calls touching more experts than slots | refuse; grow slots temporarily; fall back to the per-expert loop | exact and simple; tiny fixtures force a split (C=2, 3 tokens) so it is under test |
 | In-place slot writes via `__setitem__` | `slice_update` (2.6 ms) ; rebuild tensors (full copy) | measured 0.34 ms per 4 MB slot in a 256 MB tensor; a full copy would be 25× |
 | Parse each layer's safetensors header once, read by byte range | `mx.load` per fill (lazy dict) ; cache the `mx.load` dict | header parse 4–5 ms × 42 layers ≈ 190 ms/token; a cached dict retains every materialized expert (memory grows to the whole model) |
-| Hybrid read path: `mincore` → memmap copy if resident, else `preadv` in an 8-thread pool | memmap only; pread only; threaded memmap | measured per 14.2 MB expert: memmap hot 36–40 GB/s but cold 0.7 GB/s (2.3 with 16 threads); preadv cold 6.3 GB/s ×8 threads, hot 7 GB/s; mincore costs ~1 µs |
+| Hybrid read path: `mincore` → memmap copy if resident; else `preadv` in an 8-thread pool for small batches; else (≥4 cold experts) `mx.load` lazy loads evaluated together | memmap only; pread only; threaded memmap; `mx.load` always | per 14.2 MB expert: memmap hot 36–40 GB/s but cold 0.7 GB/s (2.3 with 16 threads); preadv cold 6.3 GB/s ×8 threads, hot 7 GB/s; 93-expert cold batch: pool 676 ms vs `mx.load` 233 ms; `mx.load` header parse 4–5 ms rules it out per decode miss; 32 threads thrash |
+| Compare paged prefill only from an evicted page cache, and by unique-expert reads, not tokens | compare prompt tok/s across consecutive runs | consecutive runs share the page cache; a 25-token prompt's cost is per unique expert |
 | No cross-layer prefetch yet | predict layer L+1's experts from the previous token | routing is unknown before the layer; predictor untested; recorded as open |
 | Compare paged variants by logits/hits, not text hash | require identical greedy text | sorted vs per-expert kernels differ at bf16 ulp level; text flips at near-ties |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
@@ -212,10 +234,10 @@ and hit statistics, not by text hash.
 
 ## 6. Open items (ordered)
 
-1. Rung 3: prefill served from the store without the wave serialization
-   (batch all waves' reads first; or stream whole files when the miss count
-   of a layer exceeds a threshold, i.e. the bulk path with store admission).
-2. Warm-state load through the pool at full SSD rate (29 s for 69 GB → ~12 s).
+1. Rung 3 remainder: re-repack with an expert-contiguous, numerically
+   ordered layout so cold misses coalesce into large sequential reads;
+   then re-measure cold prefill from an evicted cache.
+2. Warm-state load at full SSD rate (now 18 s for 69 GB; ~12 s possible).
 3. Cross-layer prefetch is blocked on routing unknown before the layer;
    the previous token's routes as a predictor is untested.
 4. Multi-prompt / longer-generation variance for every table above.

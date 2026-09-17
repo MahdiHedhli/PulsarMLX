@@ -23,9 +23,12 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     Studio: ~190 ms per token across 42 layers), so each layer's header is parsed once and misses are read by byte
     range. Measured on the Studio's internal SSD per 14.2 MB expert: a page-cache-resident range copies from a memmap
     at ~40 GB/s but faults in from disk at <1 GB/s (synchronous 16 KB faults, 2.3 GB/s with 16 threads), while
-    preadv into a buffer reaches 6.3 GB/s cold with 8 threads (7 GB/s hot). So each miss's range is checked with
-    mincore: resident -> memmap copy on the calling thread; otherwise -> preadv in a small thread pool. The arrays
-    are stacked and scattered into the slots in one go per (projection, part).
+    preadv into a buffer reaches 6.3 GB/s cold with 8 threads (7 GB/s hot), and for a large cold batch mx.load's own
+    lazy loads evaluated together are fastest (93 cold experts: 233 ms = 5.7 GB/s, vs 676 ms through the pool) but
+    cost a 4-5 ms header parse per call. So each miss's range is checked with mincore: resident -> memmap copy on
+    the calling thread; otherwise, fewer than `bulk_min` cold experts -> preadv in a small thread pool (decode:
+    ~1 miss per layer), else -> one mx.load whose entries are popped as they are consumed (nothing retained). The
+    arrays are stacked and scattered into the slots in one go per (projection, part).
 
 Quantized experts only (weight/scales/biases per projection, as repack writes them for a quantized build).
 """
@@ -142,7 +145,8 @@ class PulsarSlotStore:
     policy = "lfu-decay-slots"
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
-                 decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8):
+                 decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
+                 bulk_min: int = 4):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -167,7 +171,8 @@ class PulsarSlotStore:
         self._accesses = 0
         self._hits = self._misses = self._evictions = 0
         self._read_bytes = 0
-        self._hot_reads = self._cold_reads = 0
+        self._hot_reads = self._cold_reads = self._bulk_reads = 0
+        self.bulk_min = int(bulk_min)
         self._pool = ThreadPoolExecutor(max_workers=max(1, int(read_workers)))
         self._warm_admitted = 0
         if warm_start:
@@ -248,10 +253,21 @@ class PulsarSlotStore:
         # the weight range decides hot/cold per expert (scales/biases are small and sit next to it in the file)
         hot = {j: f.resident(f"e{j}.gate_proj.weight") for j, _ in reads}
         cold_names = [n for j, n in names if not hot[j]]
-        cold = dict(zip(cold_names, self._pool.map(f.read_cold_np, cold_names))) if cold_names else {}
+        n_cold = sum(1 for v in hot.values() if not v)
         arrays = {}
+        if n_cold >= self.bulk_min:
+            lazy = mx.load(self._paths[lid])          # one header parse; MLX evaluates the loads together (parallel I/O)
+            for n in cold_names:
+                arrays[n] = lazy.pop(n)
+            del lazy
+            self._bulk_reads += n_cold
+        elif cold_names:
+            cold = dict(zip(cold_names, self._pool.map(f.read_cold_np, cold_names)))
+            for n in cold_names:
+                arrays[n] = f.to_mx(n, cold[n])
         for j, n in names:
-            arrays[n] = f.to_mx(n, cold[n]) if n in cold else f.read_hot(n)
+            if n not in arrays:
+                arrays[n] = f.read_hot(n)
         for p in _PROJS:
             for ki, k in enumerate(_PARTS):
                 group = [arrays[f"e{j}.{p}.{k}"] for j, _ in reads]
@@ -282,7 +298,7 @@ class PulsarSlotStore:
         return {"policy": self.policy, "budget_bytes": self._budget, "capacity_per_layer": self.capacity, "expert_bytes": self.expert_bytes,
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
-                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "warm_admitted": self._warm_admitted,
+                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
@@ -378,14 +394,14 @@ class PulsarSwitchGLU:
         return out
 
 
-def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096):
+def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096, read_workers: int = 8):
     """After mlx_vlm.moe_offload.patch_model has swapped every MoE layer's switch_mlp for an OffloadedSwitchGLU (which
     drops the resident expert parameters and computes the byte budget), replace each with a PulsarSwitchGLU over one
     shared PulsarSlotStore, reusing the upstream module's quant triples and activation."""
     from mlx_vlm.moe_offload import patch_model
 
     upstream = patch_model(model, offload_dir, expert_cache_gb=expert_cache_gb)
-    store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start)
+    store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start, read_workers=read_workers)
     patched = 0
     for layer in model.language_model.model.layers:
         switch = getattr(getattr(layer, "mlp", None), "switch_mlp", None)
