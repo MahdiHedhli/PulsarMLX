@@ -82,7 +82,7 @@ def main(out):
         ns = {'__name__': 'oracle_variant_' + label}; exec(compile(text.replace(before, after), 'oracle-variant:' + label, 'exec'), ns)
         try:
             out = ns['run'](case)['output']
-        except AssertionError as exc:  # empty attention row
+        except ValueError as exc:  # EMPTY_ATTENTION_ROW
             return 'KILL', 'rejected:' + str(exc)
         exp = expected[case['fixture_id']]['output']
         err = max(abs(a - b) for ra, rb in zip(out, exp) for a, b in zip(ra, rb))

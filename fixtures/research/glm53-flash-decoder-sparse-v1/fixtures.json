@@ -1778,7 +1778,7 @@
    ],
    "tail-selection-omitted": [
     0.0,
-    "rejected:empty attention row"
+    "rejected:EMPTY_ATTENTION_ROW"
    ]
   },
   "prospective_from_oracle_variants": true,

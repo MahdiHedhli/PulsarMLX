@@ -89,7 +89,7 @@ class DecoderSparseOffline(unittest.TestCase):
                 exp = self.fixture['expected'][case['fixture_id']]['output']
                 try:
                     out = ns['run'](case)['output']
-                except AssertionError:
+                except ValueError:
                     self.assertEqual(cell, 'KILL', label); continue
                 err = max(abs(a - b) for ra, rb in zip(out, exp) for a, b in zip(ra, rb))
                 self.assertEqual(cell, 'KILL' if err >= 1e-3 else 'INACTIVE' if err <= 1e-4 else 'WEAK_STRUCTURAL', label)

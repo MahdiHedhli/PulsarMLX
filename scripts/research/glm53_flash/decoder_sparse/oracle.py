@@ -102,7 +102,8 @@ def run(case):
     attn = []
     for t in range(S):
         allowed = [j for j in range(t + 1)] if bypass else index_rows[t]['allowed']
-        assert allowed, 'empty attention row'
+        if not allowed:  # explicit, not an assert: the rejection must survive -O
+            raise ValueError('EMPTY_ATTENTION_ROW')
         concat = []
         for h in range(H):
             logits = [_dot(q[t][h], keys[h][j]) * scale for j in allowed]
