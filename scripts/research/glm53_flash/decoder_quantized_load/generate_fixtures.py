@@ -26,10 +26,12 @@ UNQUANTIZED_MODULES = ['model.layers.1.mlp.gate (Glm5NextMoEGate: no to_quantize
 
 def main(out_path):
     base = json.loads(LOAD.read_bytes())['cases'][0]
-    quantization = {'group_size': 64, 'bits': 4, 'mode': 'affine', **{p: {'group_size': 64, 'bits': 8} for p in RESIDENT_8BIT}}
+    # 32-wide input axes at this tiny geometry (head_dim 32, qk_nope 32) take group 32; the real model's are 128/256
+    NARROW = ('model.layers.0.self_attn.forget_gate.f_b_proj', 'model.layers.0.self_attn.g_b_proj', 'model.layers.1.self_attn.embed_q')
+    quantization = {'group_size': 64, 'bits': 4, 'mode': 'affine', **{p: {'group_size': 32 if p in NARROW else 64, 'bits': 8} for p in RESIDENT_8BIT}}
     config = {**base['config'], 'quantization': quantization}
     case = {'fixture_id': 'quantized-load-2layer-h64', 'config': config, 'init': base['init'], 'schedule': {'prefill_tokens': 3, 'ids': [3, 9, 1, 14, 7]},
-            'kv_b': {'bits': 8, 'group_size': 64, 'note': 'an HF-style kv_b_proj [heads*(dq+dv), kvr] = [128, 64] quantized at 8-bit g64 for the DeepSeek-V3.2 quantized split branch'}}
+            'kv_b': {'bits': 8, 'group_size': 32, 'note': 'an HF-style kv_b_proj [heads*(dq+dv), kvr] = [128, 64] quantized at 8-bit g32 (the branch re-quantizes the split along dq=32; the real dq is 256)'}}
     expected = {'quantized_modules_8bit': RESIDENT_8BIT, 'quantized_modules_4bit': EXPERTS_4BIT, 'unquantized': UNQUANTIZED_MODULES,
                 'scales_present_for': sorted(RESIDENT_8BIT + EXPERTS_4BIT), 'bits_by_module': {**{p: 8 for p in RESIDENT_8BIT}, **{p: 4 for p in EXPERTS_4BIT}},
                 'reload_bit_identical': True, 'mixed_layout_equivalence_tolerance': 1e-4,
@@ -38,7 +40,8 @@ def main(out_path):
     doc = {'schema': 'flash-quantized-load-fixtures/1', 'derived_from': 'fixtures/research/glm53-flash-decoder-load-offload-v1/fixtures.json', 'cases': [case], 'expected': {case['fixture_id']: expected},
            'structural_controls': {'predicate-bits-swapped': 'strict load rejects (scales/biases shapes)', 'resident-scales-dropped': 'strict load rejects',
                                    'kv-b-split-transposed': 'dequantized split mismatch or shape rejection'},
-           'scope': 'STRUCTURAL + EQUIVALENCE; no numeric oracle at hidden 64; mlx core nn.quantize/QuantizedLinear/QuantizedEmbedding are environment-bound, not upstream code'}
+           'scope': 'STRUCTURAL + EQUIVALENCE; no numeric oracle at hidden 64; mlx core nn.quantize/QuantizedLinear/QuantizedEmbedding are environment-bound, not upstream code',
+           'revision': 'v1 used group 64 everywhere; three 32-wide inputs and the kv_b split along dq=32 were rejected by mx.quantize at first contact, before any observation; v2 gives those group 32'}
     Path(out_path).write_text(json.dumps(doc, indent=1, sort_keys=True) + '\n'); print('written', len(RESIDENT_8BIT), '8-bit modules,', len(EXPERTS_4BIT), '4-bit')
 
 
