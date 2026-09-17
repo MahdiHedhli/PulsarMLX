@@ -77,7 +77,9 @@ def run(context, backend, mx, nn, ffn_source, rc_source, rc_oracle, moe_source, 
 
     def admitted(capsule=capsule_raw):
         ffn = ffn_source.load(root, mx, nn)
-        gate = rc_source.Builder(context.phase, mx, nn, context.manifest).new()
+        # Builder binds mx/nn origins against the environment manifest (as rc_runtime does),
+        # not the inputs manifest.
+        gate = rc_source.Builder(context.phase, mx, nn, context.verify_environment(context.phase)).new()
         return moe_source.load(capsule, language_raw, switch_raw, mx, nn, ffn_source, ffn.namespace, gate['caller']), gate['record']
 
     observations, mutant_rows = [], []
