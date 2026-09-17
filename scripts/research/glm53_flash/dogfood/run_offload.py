@@ -82,7 +82,8 @@ def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True):
     if not lazy:
         mx.eval(model.parameters())
     model.eval()
-    processor = load_processor(offload_dir, add_detokenizer=True)
+    from pathlib import Path
+    processor = load_processor(Path(offload_dir), add_detokenizer=True)
     return model, processor, config, store, eager
 
 
