@@ -81,7 +81,7 @@ def run(context, backend, mx, nn, np, ffn_source, moe_source, sparse_source, qua
     cases = {c['fixture_id']: c for c in fixture['cases']}; expected = fixture['expected']
     work = context.roots['work'] / 'offload'
     emit('offload_binding', fixture_sha256=digest(raw), offload_sha256=digest(offload_raw), switch_sha256=digest(switch_raw), backend=backend,
-         actual_default_device=str(mx.default_device()), store_root=str(work))
+         actual_default_device=str(mx.default_device()), store_root='work/offload')  # relative: the archive redacts absolute locators
 
     def admitted():
         ffn = ffn_source.load(root, mx, nn)
