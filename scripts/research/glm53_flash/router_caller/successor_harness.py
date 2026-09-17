@@ -124,6 +124,18 @@ def run(context, mode, backend):
         decode_oracle = component(context, 'oracle', {}, folder='decoder_stack_decode')
         decode_controls = component(context, 'controls', {}, folder='decoder_stack_decode')
         return decode_controls.run(context, backend, mx, nn, refs, sources, controls, attention_oracle, decode_oracle)
+    if mode == 'linear-long':
+        import mlx.nn as nn
+        accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
+        recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
+        attention_oracle = component(context, 'oracle', {}, folder='linear_attention')
+        attention_source = component(context, 'source', {'mx': mx, 'nn': nn, 'recurrent_verifier': recurrent_verifier}, folder='linear_attention')
+        actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')
+        long_oracle = component(context, 'oracle', {'accepted': attention_oracle, 'recurrence': accepted_recurrence},
+                                ('from scripts.research.glm53_flash.linear_attention import oracle as accepted',
+                                 'from scripts.research.glm53_flash.recurrent_dispatch import oracle as recurrence'), folder='linear_long')
+        controls = component(context, 'controls', {}, folder='linear_long')
+        return controls.run(context, backend, mx, nn, attention_source, attention_oracle, accepted_recurrence, actual_cache, long_oracle)
     if mode == 'quantized':
         import mlx.nn as nn
         ffn_source = component(context, 'source', {}, folder='decoder_ffn')

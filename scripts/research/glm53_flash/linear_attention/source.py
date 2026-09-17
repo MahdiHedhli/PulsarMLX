@@ -47,15 +47,18 @@ def verify_module(raw, original, provenance):
     return observed
 
 
-def kernel_buffers(arguments, input_names):
-    """Bounds conditional on32-lane SIMD/x-major packing; not device proof."""
+def kernel_buffers(arguments, input_names, max_sequence=5):
+    """Bounds conditional on32-lane SIMD/x-major packing; not device proof.
+
+    max_sequence is 5 for every operation accepted before graph 17; the
+    'linear-long' operation raises it explicitly for its own load."""
     if input_names != ['q','k','v','g','beta','state_in','T'] or len(arguments['inputs']) != 7:
         raise ValueError('MODULE_KERNEL_INPUTS')
     q,k,v,g,beta,state,T = arguments['inputs']
     if len(q.shape)!=4:
         raise ValueError('MODULE_KERNEL_RANK')
     B,S,H,D = q.shape
-    if (B not in (1,2) or not 1<=S<=5 or H not in (1,2) or D!=32 or type(T) is not int or T!=S):
+    if (B not in (1,2) or not 1<=S<=max_sequence or H not in (1,2) or D!=32 or type(T) is not int or T!=S):
         raise ValueError('MODULE_KERNEL_DOMAIN')
     expected = [(B,S,H,32)]*4 + [(B,S,H),(B,H,32,32)]
     for value,dims in zip(arguments['inputs'][:6],expected):
@@ -75,7 +78,7 @@ def kernel_buffers(arguments, input_names):
             'maximum_external_bytes_per_array':16384}
 
 
-def load(context, fixture, mutation=None):
+def load(context, fixture, mutation=None, max_sequence=5):
     root = context.roots['code']
     raw = context.read_verified(root/PREFIX/'capsule.py')
     pbytes = context.read_verified(root/PREFIX/'provenance.json')
@@ -108,7 +111,7 @@ def load(context, fixture, mutation=None):
              'compile_options':kw.get('compile_options'),'effective_math':'NOT_OBSERVED'}
         factories.append(row)
         def submit(**args):
-            proof=kernel_buffers(args,kw['input_names'])
+            proof=kernel_buffers(args,kw['input_names'],max_sequence)
             stats['kernel_API_submissions']+=1
             submissions.append({**row,'bounds':proof})
             return native(**args)

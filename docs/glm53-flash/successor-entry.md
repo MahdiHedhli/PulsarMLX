@@ -99,3 +99,9 @@ The `topology` operation instantiates the admitted model with the retained
 config's real 45-layer pattern at tiny width and checks structure and
 prefill/decode self-consistency; it has no numeric reference; see
 [its contract and limits](decoder-topology.md).
+
+# Linear attention beyond 5 tokens
+
+The `linear-long` operation runs single-call prefills of up to 64 tokens
+through the admitted linear attention module against the chunked composition
+of the accepted reference; see [its contract and limits](linear-long.md).
