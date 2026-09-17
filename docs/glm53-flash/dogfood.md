@@ -63,6 +63,9 @@ run below produced the identical text (the model reasons, then answers
 | Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | Pulsar v2 cold (×2) | 3.02 / 2.98 | 2.28–2.45 | 77.8% | 83.4 GB |
 | Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | Pulsar v2 warm (×4) | 2.14–2.35 | 1.32–2.69 | 85.1% | 83.4 GB |
 | Mac Studio M1 Ultra 128 GB | internal SSD | 50 GB | LRU / Pulsar cold / Pulsar warm | 1.50 / 1.66 / 1.50 | 1.8–2.4 | 68% / 70% / 74% | — |
+| MacBook Pro M2 Max 64 GB | **internal NVMe** | 32 GB | upstream LRU | 0.951 | 1.42 | 57.8% | 45.4 GB |
+| MacBook Pro M2 Max 64 GB | **internal NVMe** | 32 GB | Pulsar cold / warm (graph 22, bounded clearing) | 1.109 / 1.139 | 1.6–2.0 | 59.1% / 62.3% | 45.4 GB |
+| Mac Studio M1 Ultra 128 GB | internal SSD | 70 GB | Pulsar cold / warm (graph 22, bounded clearing, ×2) | 3.16–3.46 / 2.65–2.67 | 1.5–2.9 | 77.8% / 85.1% | 83.4 GB |
 
 The Studio's prompt tok/s varies with the page-cache state left by the
 previous run (prefill bulk-loads every expert file per chunk); the 70 GB
@@ -79,4 +82,23 @@ call stubbed); (2) the per-miss cost is 2.4–3.1 ms in cold runs at 70 GB but
 70 GB numbers are partly a 96-token transient (the store fills over the first
 quarter of decode and the last quarter already runs at 0.37–0.39 s/token
 against the warm runs' 0.43–0.45). See `pulsar-expert-store.md` for the
-store-level reading.
+store-level reading and graph 22's bounded clearing.
+
+**Where the time goes (and what 20–30 tok/s would take).** Per token the
+model touches 42 × 8 routed experts (4.8 GB at 4-bit) plus ~10 GB of 8-bit
+resident weights. Fully resident, that is ~15 GB of memory traffic per token:
+~19 ms on an M1 Ultra (800 GB/s), ~37 ms on an M2 Max (400 GB/s) — a 25–50
+tok/s bandwidth ceiling, before compute. Paged, every miss costs a 14.2 MB
+read: at 78% hits on the Studio that is ~74 misses ≈ 1 GB per token from
+the SSD (≥ 0.2 s at 5 GB/s), so no residency policy reaches 20 tok/s on the
+unpruned build with 160 GB of experts and 128 GB of RAM: it would need
+≥ 95% hits *with* the reads fully overlapped, or ≥ 99.5% without. On top of
+that the current offload path has an all-hit cost of ~0.16–0.22 s per token
+(the eager per-expert loop with one host sync per layer — the intercept of
+the per-token fits), which alone caps it near 5 tok/s. The routes to a
+usable rate are therefore: (a) a fully resident build on the Studio (REAP50,
+96 GB, fits 128 GB with the compiled path and no store); (b) for paged
+tiers, replace the per-expert loop with a gather-matmul over a stacked
+resident buffer per layer (routing stays on the GPU) and overlap miss reads
+with compute — that lifts the paged ceiling toward the bandwidth bound but
+stays below 20 tok/s whenever misses per token exceed a handful.

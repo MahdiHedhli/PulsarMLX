@@ -93,3 +93,25 @@ per evicting *get* (19), and "cache is empty after the call" is not a valid
 check (later allocations in the same call refill it) — replaced by the
 invocation count. `run_offload.py --cache-clear-threshold-gb` (default 2;
 0 = upstream; negative = never) selects it for the A/B.
+
+**A/B (same prompt, 96 tokens; `thr0` = upstream-equivalent clearing,
+`thr2` = the 2 GiB default; interleaved, two repetitions on the Studio):**
+
+| Host / budget | LRU | Pulsar cold thr0 | cold thr2 | warm thr0 | warm thr2 |
+|---|---|---|---|---|---|
+| Studio M1 Ultra, 70 GB | 2.96 / 3.15 | 3.06 / 3.15 | 3.46 / 3.16 | 2.35 / 1.28¹ | 2.65 / 2.67 |
+| MacBook M2 Max, internal NVMe, 32 GB | 0.951 | 1.081 | 1.109 | 1.040 | **1.139** |
+
+¹ outlier: 46 s warm load and 0.57 prompt tok/s (host memory pressure at
+load time; the other apps on that machine were not closed).
+
+Bounded clearing is worth +13% on the Studio's warm runs and +9.5% on the
+MacBook's, and 0–13% on cold runs (inside the cold side's run-to-run noise).
+`cache_clears` stayed 0 at the 2 GiB threshold in every run — MLX's cache
+never reaches it at an evicting get on this model, so the default behaves as
+never-clear with MLX's own cache limit in charge — and peak memory was
+identical with and without clearing (83.4 GB / 45.4 GB). On the MacBook the
+warm start is now a gain (1.139 vs 1.109 cold, +20% over LRU); on the Studio
+at 70 GB it is still a loss, consistent with the page-cache reading above.
+Moving the MacBook's offload directory from the external drive to the
+internal NVMe alone took LRU from 0.590 to 0.951 tok/s.
