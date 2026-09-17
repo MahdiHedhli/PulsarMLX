@@ -86,7 +86,7 @@ def run(context, mode, backend):
         sparse_source = component(context, 'source', {}, folder='decoder_sparse')
         controls = component(context, 'controls', {}, folder='decoder_sparse')
         return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_oracle)
-    if mode == 'stack':
+    if mode in ('stack', 'stack-decode'):
         import mlx.nn as nn
         accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
         recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
@@ -112,7 +112,11 @@ def run(context, mode, backend):
                 'stack_run': stack_oracle.run}
         sources = {'ffn': ffn_source, 'attention': attention_source, 'cache': actual_cache, 'rc': rc_source,
                    'moe': moe_source, 'sparse': sparse_source, 'stack': stack_source}
-        return controls.run(context, backend, mx, nn, refs, sources)
+        if mode == 'stack':
+            return controls.run(context, backend, mx, nn, refs, sources)
+        decode_oracle = component(context, 'oracle', {}, folder='decoder_stack_decode')
+        decode_controls = component(context, 'controls', {}, folder='decoder_stack_decode')
+        return decode_controls.run(context, backend, mx, nn, refs, sources, controls, attention_oracle, decode_oracle)
     if mode == 'sparse-decode':
         import mlx.nn as nn
         actual_cache = component(context, 'source', {'mx': mx, 'nn': nn}, folder='cache_lifecycle')

@@ -70,3 +70,10 @@ The `sparse-decode` operation runs the admitted sparse attention through a
 prefill and one-token decode steps with the admitted `KVCache`/`CacheList`,
 checking the incremental indexer pool and the absorbed-query attention
 against an explicit-state reference; see [its contract and limits](decoder-sparse-decode.md).
+
+# Two-layer stack decode
+
+The `stack-decode` operation runs the admitted stack through a prefill and
+one-token decode steps with the caches from `make_cache()`, checking logits,
+the linear cache states, the KV offsets and the compiled decode-step FFN
+against the re-sliced stack reference; see [its contract and limits](decoder-stack-decode.md).
