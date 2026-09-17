@@ -86,7 +86,7 @@ def run(context, mode, backend):
         sparse_source = component(context, 'source', {}, folder='decoder_sparse')
         controls = component(context, 'controls', {}, folder='decoder_sparse')
         return controls.run(context, backend, mx, nn, ffn_source, sparse_source, sparse_oracle)
-    if mode in ('stack', 'stack-decode'):
+    if mode in ('stack', 'stack-decode', 'sanitize'):
         import mlx.nn as nn
         accepted_recurrence = component(context, 'oracle', {}, folder='recurrent_dispatch')
         recurrent_verifier = component(context, 'source', {'mx': mx, 'nn': nn}, folder='recurrent_dispatch')
@@ -114,6 +114,10 @@ def run(context, mode, backend):
                    'moe': moe_source, 'sparse': sparse_source, 'stack': stack_source}
         if mode == 'stack':
             return controls.run(context, backend, mx, nn, refs, sources)
+        if mode == 'sanitize':
+            sanitize_oracle = component(context, 'oracle', {}, folder='decoder_stack_sanitize')
+            sanitize_controls = component(context, 'controls', {}, folder='decoder_stack_sanitize')
+            return sanitize_controls.run(context, backend, mx, nn, refs, sources, controls, sanitize_oracle)
         decode_oracle = component(context, 'oracle', {}, folder='decoder_stack_decode')
         decode_controls = component(context, 'controls', {}, folder='decoder_stack_decode')
         return decode_controls.run(context, backend, mx, nn, refs, sources, controls, attention_oracle, decode_oracle)

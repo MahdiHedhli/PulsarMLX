@@ -118,6 +118,8 @@ jobs:
               > "$RUNNER_TEMP/flash-sparse-decode-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_stack_decode.py \
               > "$RUNNER_TEMP/flash-stack-decode-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_decoder_stack_sanitize.py \
+              > "$RUNNER_TEMP/flash-stack-sanitize-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

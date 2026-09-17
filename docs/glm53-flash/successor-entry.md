@@ -77,3 +77,11 @@ The `stack-decode` operation runs the admitted stack through a prefill and
 one-token decode steps with the caches from `make_cache()`, checking logits,
 the linear cache states, the KV offsets and the compiled decode-step FFN
 against the re-sliced stack reference; see [its contract and limits](decoder-stack-decode.md).
+
+# sanitize and strict weight loading
+
+The `sanitize` operation passes a synthetic HF-named checkpoint through the
+admitted `LanguageModel.sanitize` (with the retained DeepSeek-V3.2
+`Model.sanitize`) and strictly loads it into the admitted stack, checking
+keys, dtypes, exact values, dropped keys and the forward logits; see
+[its contract and limits](decoder-stack-sanitize.md).

@@ -49,6 +49,37 @@ class _RefusedSanitize:
     sanitize = staticmethod(_refused('DSV32_SANITIZE'))
 
 
+DSV32_LANGUAGE = 'mlx-vlm/mlx_vlm/models/deepseek_v32/language.py'  # under the upstream root
+DSV32_LANGUAGE_SHA256 = 'cd210c73ce3e569ab5270a47a92941cd5ec1450c6ff7b55b8be57c51263f4cb6'
+DSV32_SANITIZE_GLOBALS = ['int', 'len', 'mx', 'range']
+DSV32_UNEXECUTED_OPS = ('from_fp8', 'quantize', 'dequantize')
+
+
+class _TripwireMx:
+    """Forwards every attribute of the admitted mx except the fp8/quantized ops, which raise: the
+    sanitize fixture is unquantized and those branches must not execute."""
+    def __init__(self, mx):
+        self._mx = mx
+
+    def __getattr__(self, name):
+        if name in DSV32_UNEXECUTED_OPS:
+            raise RuntimeError('DECODER_STACK_DSV32_' + name.upper() + '_NOT_ADMITTED')
+        return getattr(self._mx, name)
+
+
+def load_dsv32_sanitize(dsv32_raw, mx, ffn_source):
+    """The DeepSeek-V3.2 Model.sanitize method taken whole from the retained mlx-vlm text, as a plain function."""
+    if ffn_source.sha(dsv32_raw) != DSV32_LANGUAGE_SHA256:
+        raise ValueError('DECODER_STACK_DSV32_DIGEST')
+    model = ffn_source._node(ast.parse(dsv32_raw), 'Model')
+    node = next(n for n in model.body if isinstance(n, ast.FunctionDef) and n.name == 'sanitize')
+    if _census(ast.unparse(node), 'dsv32-sanitize') != DSV32_SANITIZE_GLOBALS:
+        raise ValueError('DECODER_STACK_DSV32_CLOSURE:' + repr(_census(ast.unparse(node), 'dsv32-sanitize')))
+    ns = {'__name__': 'decoder_stack_dsv32_sanitize_verified', 'mx': _TripwireMx(mx)}
+    exec(compile(ast.Module(body=[node], type_ignores=[]), 'decoder-stack-dsv32-sanitize', 'exec'), ns)
+    return types.SimpleNamespace(sanitize=ns['sanitize'], node=node, ast_sha256=ffn_source.ast_sha(node), mx_ops=_mx_ops(node))
+
+
 def _census(text, name):
     table = symtable.symtable(text, name, 'exec')
     observed, pending = set(), [table]
@@ -119,7 +150,7 @@ def load(capsule_raw, language_raw, cache_raw, base_raw, mx, nn, ffn_source, spa
     for name in ('create_causal_mask', 'create_attention_mask', 'create_ssm_mask', 'LanguageModelOutput'):
         exec(compile(ast.Module(body=[caches.nodes[name]], type_ignores=[]), 'decoder-stack-base-dependency:' + name, 'exec'), base_ns)
     ns = {'__name__': 'decoder_stack_verified', 'mx': mx, 'nn': nn, 'Optional': typing.Optional, 'Any': typing.Any,
-          'TextConfig': object, 'ModelConfig': object, 'DSV32Model': _RefusedSanitize,
+          'TextConfig': object, 'ModelConfig': object, 'DSV32Model': bindings.get('dsv32_model', _RefusedSanitize),
           'Glm5NextLinearAttention': bindings['attention_namespace']['Glm5NextLinearAttention'],
           'Glm5NextSparseAttention': bindings['sparse_class'], 'Glm5NextMoE': bindings['moe_class'],
           'ClampedMLP': bindings['ffn_namespace']['ClampedMLP'], 'HyperConnection': bindings['ffn_namespace']['HyperConnection'],

@@ -56,7 +56,7 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 6, 'moe': 5, 'sparse': 4, 'stack': 4, 'sparse-decode': 3, 'stack-decode': 3}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 6, 'moe': 5, 'sparse': 4, 'stack': 4, 'sparse-decode': 3, 'stack-decode': 3, 'sanitize': 3}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
@@ -84,6 +84,9 @@ def producer_pass(stdout, stderr, stop, operation):
             return False
         if operation == 'stack-decode' and result.get('test_ids') != [
                 'test_decode_boundaries', 'test_frozen_reference_recomputes', 'test_semantic_mutants']:
+            return False
+        if operation == 'sanitize' and result.get('test_ids') != [
+                'test_frozen_reference_recomputes', 'test_sanitize_and_strict_load', 'test_semantic_mutants']:
             return False
         if operation == 'convolution' and result.get('test_ids') != [
                 'test_classifier_wrong_type_and_message', 'test_interleaved_and_new_cache',
@@ -349,7 +352,7 @@ def main():
     if len(sys.argv) == 3 and sys.argv[1] == '--child':
         return child(Path(sys.argv[2]))
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'dispatch', 'linear', 'layer', 'moe', 'sparse', 'stack', 'sparse-decode', 'stack-decode', 'archive-verify'))
+    parser.add_argument('operation', choices=('manifest', 'doctor', 'case', 'matrix', 'discrimination', 'convolution', 'cache', 'recurrent', 'dispatch', 'linear', 'layer', 'moe', 'sparse', 'stack', 'sparse-decode', 'stack-decode', 'sanitize', 'archive-verify'))
     for name in ('source', 'environment', 'fixtures', 'upstream', 'environment-identity', 'output'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--manifest')
