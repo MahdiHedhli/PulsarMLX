@@ -21,6 +21,8 @@ def f32(v):
 def quantize_rows(rows, bits, group_size):
     """Affine: per group scale=(max-min)/(2^bits-1) (1 if zero), bias=min, code=round((w-bias)/scale) clipped; little-endian packing."""
     per_word, levels = 32 // bits, (1 << bits) - 1
+    if len(rows[0]) % group_size or len(rows[0]) % per_word:
+        raise ValueError('INPUT_AXIS_NOT_GROUPABLE')
     words, scales, biases, err = [], [], [], 0.0
     for row in rows:
         codes, s_row, b_row = [], [], []
@@ -41,7 +43,7 @@ def mat(rng, rows, cols, scale):
 
 
 def switch_case(rng, fixture_id, bits, group_size):
-    E, D, I, T, k = 4, 64, 48, 3, 2
+    E, D, I, T, k = 4, 64, 128, 3, 2  # every quantized input axis (hidden for gate/up, intermediate for down) must be a multiple of the group size
     fp32 = {'gate': [mat(rng, I, D, .25) for _ in range(E)], 'up': [mat(rng, I, D, .25) for _ in range(E)], 'down': [mat(rng, D, I, .25) for _ in range(E)]}
     q, errs = {}, {}
     for p in fp32:
@@ -113,6 +115,7 @@ def main(out_path):
               'targets': targets, 'cases_by_target': {'switch': ['switch-4bit-g64', 'switch-8bit-g32'], 'multilinear': ['multilinear-4bit-g64']}}
     doc = {'schema': 'flash-quantized-fixtures/1', 'oracle': 'scripts/research/glm53_flash/decoder_quantized/oracle.py',
            'format': 'mlx affine: little-endian bit packing into uint32, per-group scale/bias along the input axis, value = code*scale + bias',
+           'revision': 'v1 used intermediate 48 (down projection input not a multiple of the group size; rejected by mx.quantize/mx.dequantize at first contact, before any numeric observation); regenerated with intermediate 128',
            'tolerances': {'output': 1e-4, 'dequantize_cross_check': 1e-6}, 'cases': cases, 'expected': expected, 'expected_kill_matrix': matrix}
     Path(out_path).write_text(json.dumps(doc, indent=1, sort_keys=True) + '\n')
     for c in cases[:3]:
