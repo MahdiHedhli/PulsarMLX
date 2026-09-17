@@ -248,7 +248,7 @@
     "seed": 138077083621
    },
    "schedule": {
-    "decode_tokens": 4,
+    "decode_tokens": 5,
     "ids": [
      3,
      9,
@@ -261,7 +261,11 @@
      8,
      12
     ],
-    "prefill_tokens": 6
+    "paths": [
+     "prefill5+decode5",
+     "stepwise10"
+    ],
+    "prefill_tokens": 5
    }
   }
  ],
@@ -493,6 +497,7 @@
   "model_type",
   "num_hidden_layers"
  ],
+ "revision": "v1 scheduled a 6-token prefill and a 10-token full prefill; the admitted linear-attention Metal kernel domain is S <= 5 per call (MODULE_KERNEL_DOMAIN at first Metal contact); v2 compares prefill 5 + decode 5 against 10 single steps",
  "schema": "flash-topology-fixtures/1",
  "scope": "STRUCTURAL AND SELF-CONSISTENT ONLY; no numeric reference; not an oracle qualification",
  "structural_controls": {

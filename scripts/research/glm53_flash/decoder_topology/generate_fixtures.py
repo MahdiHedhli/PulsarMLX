@@ -37,7 +37,8 @@ def main(out_path):
         ['e_score_correction_bias', 'uniform', 0.1], ['index_kpool_compress_ape', 'uniform', 0.3], ['index_kpool_compress_gate', 'uniform', 0.3],
         ['conv1d.weight', 'uniform', 0.3], ['embed_tokens.weight', 'uniform', 0.5], ['lm_head.weight', 'uniform', 0.5], ['', 'uniform', 0.25]],
         'note': 'first matching rule by substring wins; uniform(-m, m); uniform_around_one is 1 + uniform(-m, m); drawn by mx.random after mx.random.seed(seed)'}
-    schedule = {'prefill_tokens': 6, 'decode_tokens': 4, 'ids': [3, 9, 1, 14, 7, 5, 11, 2, 8, 12]}
+    # every prefill call stays inside the admitted linear-attention kernel domain (S <= 5); the sparse regime (T > index_topk) is reached through decode
+    schedule = {'prefill_tokens': 5, 'decode_tokens': 5, 'ids': [3, 9, 1, 14, 7, 5, 11, 2, 8, 12], 'paths': ['prefill5+decode5', 'stepwise10']}
     linear_idx = [i for i, t in enumerate(pattern['layer_types']) if t == 'linear_attention']; sparse_idx = [i for i, t in enumerate(pattern['layer_types']) if t != 'linear_attention']
     expected = {'is_linear': [t == 'linear_attention' for t in pattern['layer_types']], 'linear_layers': linear_idx, 'sparse_layers': sparse_idx,
                 'moe_layers': [i for i in range(45) if i >= pattern['first_k_dense_replace'] and pattern['mlp_layer_types'][i] == 'sparse'],
@@ -47,7 +48,8 @@ def main(out_path):
     doc = {'schema': 'flash-topology-fixtures/1', 'upstream_config_sha256': hashlib.sha256(raw).hexdigest(), 'pattern_keys': list(pattern_keys),
            'cases': [{'fixture_id': 'topology-45-layers-tiny', 'config': config, 'init': init, 'schedule': schedule}], 'expected': {'topology-45-layers-tiny': expected},
            'structural_controls': {'mask-routing-swapped': 'must be rejected or break prefill/decode equivalence', 'layer-caches-dropped': 'must break prefill/decode equivalence'},
-           'scope': 'STRUCTURAL AND SELF-CONSISTENT ONLY; no numeric reference; not an oracle qualification'}
+           'scope': 'STRUCTURAL AND SELF-CONSISTENT ONLY; no numeric reference; not an oracle qualification',
+           'revision': 'v1 scheduled a 6-token prefill and a 10-token full prefill; the admitted linear-attention Metal kernel domain is S <= 5 per call (MODULE_KERNEL_DOMAIN at first Metal contact); v2 compares prefill 5 + decode 5 against 10 single steps'}
     Path(out_path).write_text(json.dumps(doc, indent=1, sort_keys=True) + '\n')
     print('sparse layers', sparse_idx, 'moe layers', len(expected['moe_layers']), 'regimes', expected['indexer_regime_by_T'])
 
