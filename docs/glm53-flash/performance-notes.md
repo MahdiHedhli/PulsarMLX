@@ -256,6 +256,35 @@ linear-attention pre/post ops, router select): ~1.2–1.3× (46 → 35–38
 ms/token) for weeks of Metal work with per-kernel qualification. Deferred;
 recorded here so the next attempt starts from these numbers.
 
+## 3.7 REAP37 does not fit the 128 GB Studio (graph 27)
+
+Three attempts, all on an emptied host (every login item and daemon quit;
+~98 GB free at idle). Eager load (`lazy=False`, wired limit set): RSS
+climbed to 86 GB with the shard files' page cache at ~28 GB, then the
+kernel **compressed 74 GB of the model's own pages** within 40 s (RSS fell
+to 21 GB, 4.6 GB swapped out) — wiring had never applied, because Metal's
+residency set only holds buffers while a command buffer is in flight and a
+pure load submits none (`vm_stat` wired stayed ~5 GB throughout). Lazy load
+(weights pulled in by the first forward, so each command buffer wires what
+it touches): wired rose with the layers to ~38 GB, then dropped between
+buffers; at 57 GB resident the compressor started (11.6 GB), swap resumed,
+and the process died with a Metal GPU timeout (`kIOGPUCommandBufferCallback
+ErrorTimeout`) — a command buffer stalled on paged-out weights. The kernel
+prefers compressing inactive anonymous pages (already-loaded layers) to
+dropping the active file-cache pages of the shard being read, so 118.3 GB
+of weights plus the cache needed to read them exceeds RAM transiently on
+both strategies. A page-cache-bypassing loader (`F_NOCACHE` byte-range
+reads, as the slot store does) would probably get it loaded, but the
+serving margin would be ~2 GB on 128 GB — any KV growth on a longer prompt
+pushes it back into compression. **Verdict: REAP37 is a paged-only build on
+this hardware; REAP50 (96.3 GB, peak 100–105 GB) is the largest resident
+build.** Operational lesson recorded twice over: never `kill -9` a process
+holding >100 GB of wired/compressed memory on a saturated box — the first
+attempt's teardown wedged the host for an hour (two processes stuck in exit
+state holding 117 GB, graceful restart impossible, hard reboot required);
+kill on the *compressor* signal while free memory still exists, not on
+"free pages" (the file cache makes that read zero during any large load).
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -275,6 +304,8 @@ recorded here so the next attempt starts from these numbers.
 | Build MTP speculation before kernel work | kernel fusion first | MTP reuses existing weights and a day of runtime work; measured +0–13%, and it stacks with any later per-token gain |
 | Per-position linear states by recomputing the delta rule over the accepted prefix on rollback | stepwise T=1 verification (34 × k extra attention calls ≈ 20 ms); mlx-vlm-style per-position state output (kernel change) | one small kernel per layer only on rejection; verbatim copy of the pinned forward keeps the pinned file untouched and the T=2 logits identical |
 | MTP hidden = post-final-norm | pre-norm stream mean (DeepSeek-V3 convention) | acceptance A/B on three prompts favours post-norm on all three (small margin); kept switchable |
+| Kill switch keyed on compressor/swap-out growth, not free pages | free-pages threshold | free pages hit zero from file cache during any large load (false trigger); compression + swap-outs are the true distress signal; killing at true saturation wedged the host |
+| REAP37 declared paged-only after three loading strategies | NOCACHE loader; more daemons killed | eager and lazy loads both compressed/thrashed on an empty host; the margin would be ~2 GB even if loaded |
 | Kernel fusion (fewer launches per layer) as the next resident-tier track, not more speculation | more draft tokens; tree drafts | acceptance decays 0.8 → 0.65 → 0.53 by position and the fixed step cost caps every speculative variant near 27–31 tok/s |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
 | Quit the Studio's background apps (Docker VM, Hermes, Codex, Claude, Bark, CC, LM Studio, MEGAsync, Parallels); keep RustDesk; leave NotificationCenter/coreaudiod | kill everything; leave everything | operator's list; ~20 GB freed; the two daemons are system-owned and were only flagged |
