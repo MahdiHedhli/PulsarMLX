@@ -17,7 +17,9 @@ STORE = ROOT / 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py'
 NEEDLES = ('                self._counts[k] *= self.decay\n', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n',
            '            self._warm_admitted = self._admit_warm_state()\n', '                candidates = [k for k in L.slot_of if k not in pinned]\n',
            '        if reads:\n            L.map_array = None\n        return reads\n', '            store.fill(lid, store.touch_wave(lid, waves[0]))\n',
-           '            L.slot_of[j] = s; L.expert_to_slot[j] = s\n            reads.append((j, s))\n')
+           '            L.slot_of[j] = s; L.expert_to_slot[j] = s\n            reads.append((j, s))\n',
+           '        return np.frombuffer(buf[a - lo:b - lo], dtype=np_dtype).reshape(e["shape"])\n',
+           '        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"\n')
 
 
 class SlotStoreOffline(unittest.TestCase):
@@ -39,8 +41,8 @@ class SlotStoreOffline(unittest.TestCase):
         for label in matrix['structural_mutants']:
             predicted[label] = ['KILL' for _ in fx['cases']]
         self.assertEqual(predicted, matrix['matrix'])
-        self.assertEqual(sorted(matrix['structural_mutants']), ['map-not-refreshed', 'missing-check-removed', 'victim-slot-wrong'])
-        self.assertEqual(matrix['revision'], 2)
+        self.assertEqual(sorted(matrix['structural_mutants']), ['coalesce-offset-wrong', 'layout-flag-ignored', 'map-not-refreshed', 'missing-check-removed', 'victim-slot-wrong'])
+        self.assertEqual(matrix['revision'], 3)
         store = STORE.read_text()
         for needle in NEEDLES:
             self.assertEqual(store.count(needle), 1, needle)

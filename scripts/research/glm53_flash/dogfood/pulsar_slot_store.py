@@ -33,6 +33,11 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     page cache, which on slow storage otherwise grows at the expense of the store's own slot tensors) in a small thread pool (decode:
     ~1 miss per layer), else -> one mx.load whose entries are popped as they are consumed (nothing retained). The
     arrays are stacked and scattered into the slots in one go per (projection, part).
+  * graph 29: with an expert-contiguous layout (repack_v2.py; offload_index.json layout='expert-contiguous/1', every
+    expert one byte range in numeric order) a cold batch is read as MERGED RANGES: cold experts sorted, runs whose gap
+    is at most `coalesce_gap_experts` experts merged into one preadv each (the gap is read and discarded at streaming
+    rate), the merged ranges read through the thread pool, and each tensor sliced out of its buffer. The hash-ordered
+    layout keeps the per-tensor paths.
 
 Quantized experts only (weight/scales/biases per projection, as repack writes them for a quantized build).
 """
@@ -82,7 +87,7 @@ def _mincore_resident(mm, offset: int, length: int) -> bool:
 class _LayerFile:
     """One repack layer file: header parsed once (name -> dtype, shape, byte range); data read by byte range, from the
     memmap when the range is page-cache resident, else with preadv into a buffer (thread-pool friendly)."""
-    __slots__ = ("path", "entries", "data_start", "mmap", "fd")
+    __slots__ = ("path", "entries", "data_start", "mmap", "fd", "contiguous", "_ranges", "_lock")
 
     def __init__(self, path):
         import struct
@@ -94,16 +99,59 @@ class _LayerFile:
         self.entries = {k: v for k, v in header.items() if k != "__metadata__"}
         self.mmap = None
         self.fd = None
+        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"
+        self._ranges = {}
+        import threading
+        self._lock = threading.Lock()
+
+    def expert_range(self, j: int):
+        """[start, end) of expert j's nine tensors (contiguous layouts only; cached)."""
+        if j not in self._ranges:
+            parts = [self.entries[f"e{j}.{p}.{k}"]["data_offsets"] for p in _PROJS for k in _PARTS if f"e{j}.{p}.{k}" in self.entries]
+            lo, hi = min(a for a, _ in parts), max(b for _, b in parts)
+            if hi - lo != sum(b - a for a, b in parts):
+                raise ValueError(f"NOT_CONTIGUOUS e{j}")
+            self._ranges[j] = (lo, hi)
+        return self._ranges[j]
+
+    def merged_ranges(self, experts, gap_experts: int):
+        """Sorted experts -> list of (lo, hi, [experts]) with runs merged when the gap is <= gap_experts expert sizes."""
+        runs = []
+        for j in sorted(experts):
+            lo, hi = self.expert_range(j)
+            if runs and lo - runs[-1][1] <= gap_experts * (hi - lo):
+                runs[-1][1] = hi; runs[-1][2].append(j)
+            else:
+                runs.append([lo, hi, [j]])
+        return [(lo, hi, js) for lo, hi, js in runs]
+
+    def read_range_np(self, lo: int, hi: int):
+        self._open()
+        buf = np.empty(hi - lo, dtype=np.uint8)
+        got = os.preadv(self.fd, [memoryview(buf)], self.data_start + lo)
+        if got != hi - lo:
+            raise IOError(f"SHORT_READ range {lo}-{hi}: {got}")
+        return buf
+
+    def slice_np(self, buf, lo: int, name: str):
+        e = self.entries[name]; np_dtype, _ = _SAFETENSORS_DTYPES[e["dtype"]]
+        a, b = e["data_offsets"]
+        return np.frombuffer(buf[a - lo:b - lo], dtype=np_dtype).reshape(e["shape"])
 
     def _open(self):
-        if self.mmap is None:
-            self.mmap = np.memmap(self.path, dtype=np.uint8, mode="r")
-            self.fd = os.open(self.path, os.O_RDONLY)
+        if self.fd is not None:
+            return
+        with self._lock:   # readers run on a thread pool: open exactly once, descriptor before the map
+            if self.fd is not None:
+                return
+            fd = os.open(self.path, os.O_RDONLY)
             try:   # cold reads must not populate the page cache: on a slow array the kernel compresses the store's own
                 import fcntl   # (inactive) slot tensors in favour of the active file pages - measured on the Studio
-                fcntl.fcntl(self.fd, fcntl.F_NOCACHE, 1)
+                fcntl.fcntl(fd, fcntl.F_NOCACHE, 1)
             except (ImportError, AttributeError, OSError):
                 pass
+            self.mmap = np.memmap(self.path, dtype=np.uint8, mode="r")
+            self.fd = fd
 
     def resident(self, name) -> bool:
         self._open()
@@ -114,6 +162,7 @@ class _LayerFile:
         """memmap copy (call only when resident): one copy page cache -> MLX buffer."""
         import mlx.core as mx
 
+        self._open()
         e = self.entries[name]; np_dtype, mx_dtype = _SAFETENSORS_DTYPES[e["dtype"]]
         a, b = e["data_offsets"]
         view = np.frombuffer(self.mmap[self.data_start + a:self.data_start + b], dtype=np_dtype).reshape(e["shape"])
@@ -122,6 +171,7 @@ class _LayerFile:
 
     def read_cold_np(self, name):
         """preadv into a numpy buffer (releases the GIL; safe from a thread); the caller converts."""
+        self._open()
         e = self.entries[name]; np_dtype, _ = _SAFETENSORS_DTYPES[e["dtype"]]
         a, b = e["data_offsets"]
         buf = np.empty(b - a, dtype=np.uint8)
@@ -155,7 +205,7 @@ class PulsarSlotStore:
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
                  decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
-                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30):
+                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -186,6 +236,12 @@ class PulsarSlotStore:
         self.bulk_min = int(os.environ.get("PULSAR_SLOT_BULK_MIN", bulk_min))
         self.cache_clear_threshold_bytes = None if cache_clear_threshold_bytes is None else int(cache_clear_threshold_bytes)
         self._cache_clears = 0
+        self.coalesce_gap_experts = int(coalesce_gap_experts)
+        self.layout = idx.get("layout", "hash-ordered")
+        self._coalesced_ranges = 0
+        # force_cold: treat every read as not resident (skip mincore): the qualification runs the cold paths on files that
+        # are page-cache resident, and storage whose residency reporting is unreliable can use it too
+        self.force_cold = os.environ.get("PULSAR_SLOT_FORCE_COLD", "") == "1"
         self._pool = ThreadPoolExecutor(max_workers=max(1, int(read_workers)))
         self._warm_admitted = 0
         if warm_start:
@@ -260,15 +316,27 @@ class PulsarSlotStore:
         if not reads:
             return
         self._ensure_tensors(lid)
-        L = self._layers[lid]; f = self._file(lid)
+        L = self._layers[lid]; f = self._file(lid); f._open()
         slots = mx.array([s for _, s in reads], dtype=mx.int32)
         names = [(j, f"e{j}.{p}.{k}") for j, _ in reads for p in _PROJS for k in _PARTS]
         # the weight range decides hot/cold per expert (scales/biases are small and sit next to it in the file)
-        hot = {j: f.resident(f"e{j}.gate_proj.weight") for j, _ in reads}
+        hot = {j: (False if self.force_cold else f.resident(f"e{j}.gate_proj.weight")) for j, _ in reads}
         cold_names = [n for j, n in names if not hot[j]]
         n_cold = sum(1 for v in hot.values() if not v)
         arrays = {}
-        if n_cold >= self.bulk_min:
+        if cold_names and f.contiguous:
+            cold_experts = [j for j, _ in reads if not hot[j]]
+            runs = f.merged_ranges(cold_experts, self.coalesce_gap_experts)
+            bufs = list(self._pool.map(lambda r: f.read_range_np(r[0], r[1]), runs))
+            for (lo, hi, js), buf in zip(runs, bufs):
+                for j in js:
+                    for p in _PROJS:
+                        for k in _PARTS:
+                            n = f"e{j}.{p}.{k}"
+                            if n in f.entries:
+                                arrays[n] = f.to_mx(n, f.slice_np(buf, lo, n))
+            self._coalesced_ranges += len(runs)
+        elif n_cold >= self.bulk_min:
             lazy = mx.load(self._paths[lid])          # one header parse; MLX evaluates the loads together (parallel I/O)
             for n in cold_names:
                 arrays[n] = lazy.pop(n)
@@ -314,7 +382,7 @@ class PulsarSlotStore:
         return {"policy": self.policy, "budget_bytes": self._budget, "capacity_per_layer": self.capacity, "expert_bytes": self.expert_bytes,
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
-                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "coalesced_ranges": self._coalesced_ranges, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------

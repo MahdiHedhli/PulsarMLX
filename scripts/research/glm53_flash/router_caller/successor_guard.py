@@ -157,6 +157,7 @@ CODE_FILES += (
     'scripts/research/glm53_flash/decoder_slot_store/generate_fixtures.py',
     'scripts/research/glm53_flash/decoder_slot_store/LICENSE.upstream',
     'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py',
+    'scripts/research/glm53_flash/dogfood/repack_v2.py',
     'fixtures/research/glm53-flash-decoder-slot-store-v1/fixtures.json',
 )
 UPSTREAM_FILES = ('config.json', 'capsules/Glm5NextMoEGate.py', 'capsules/MoEGate.py',
