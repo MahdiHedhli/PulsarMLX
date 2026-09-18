@@ -197,6 +197,12 @@ async def models():
     return {"object": "list", "data": [{"id": STATE.get("model_id"), "object": "model", "owned_by": "pulsarmlx"}]}
 
 
+def _prepare(messages, effort):
+    """(prompt text, token ids): the chat template and the tokenizer, run on a worker thread."""
+    prompt = STATE["render"](messages, **({"reasoning_effort": effort} if effort else {}))
+    return prompt, STATE["tokenize"](prompt)
+
+
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
     body = await request.json()
@@ -207,7 +213,7 @@ async def chat_completions(request: Request):
         return JSONResponse({"error": {"message": "messages required"}}, status_code=400)
     processor = STATE["processor"]
     effort = _reasoning_effort(body)
-    prompt = STATE["render"](messages, **({"reasoning_effort": effort} if effort else {}))
+    prompt, ids = await asyncio.to_thread(_prepare, messages, effort)   # template + tokenizer off the event loop (graph 34 review)
     kwargs = {"max_tokens": int(body.get("max_tokens") or STATE["default_max_tokens"]), "temperature": float(body.get("temperature", 0.0)),
               "prefill_step_size": STATE["prefill_step_size"]}
     if body.get("top_p") is not None:
@@ -217,8 +223,7 @@ async def chat_completions(request: Request):
     rid = "chatcmpl-" + uuid.uuid4().hex[:24]; created = int(time.time()); model_id = STATE["model_id"]
     stream = bool(body.get("stream", False))
 
-    spec = STATE.get("speculator")
-    ids = STATE["tokenize"](prompt)             # preflight: the prompt length decides speculation before any response byte
+    spec = STATE.get("speculator")              # preflight: the prompt length decides speculation before any response byte
     speculative, why = speculative_eligible(spec is not None, kwargs["temperature"], kwargs.get("top_p"), kwargs.get("repetition_penalty"), len(ids), STATE["speculative_max_prompt"])
 
     def make_generator():                       # runs on the worker thread only
