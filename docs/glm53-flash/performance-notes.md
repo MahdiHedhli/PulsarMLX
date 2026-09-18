@@ -360,6 +360,40 @@ finished in 6 minutes once its repack was copied to the internal SSD
 (3.2 GB/s). Paged runs used a 50 GB store; REAP50 resident and paged
 agree bit for bit (graph 27), so the paths compare like with like.
 
+## 3.10 Expert-contiguous repack (graph 29) and the memory policy behind every thrash
+
+`repack_v2.py` writes each layer file with every expert's nine tensors in
+one byte range, experts in numeric order (MLX's own writer follows an
+unordered map, so the container is written by hand and read back to verify
+contiguity); `PulsarSlotStore` reads a cold batch on that layout as merged
+ranges (adjacent misses coalesced, each range read in 64 MB chunks through
+the pool, `F_NOCACHE`). Qualified: the frozen fixture in both layouts and
+both residency modes is bit-identical (four passes per case), 9/9 mutants
+killed including two layout mutants; a thread race in the file opener was
+found and fixed on the way. **Measured gain: none on a fast SSD.** MacBook
+NVMe, 93 cold experts: hash-ordered 4.7–6.3 GB/s (eight threads of
+per-tensor reads already saturate the drive), contiguous 6.3 GB/s after the
+chunked-parallel fix (a single 1.3 GB `preadv` on one thread had measured
+3.0). The Promise array is bound by 61 KB transfers however reads are
+issued. Keep `repack_v2` as an option — correct, harmless, likely useful on
+storage with expensive small reads — not as a speed-up.
+
+**The memory policy (root cause of every thrash this session).** With hot
+reads unpinned (`madvise(MADV_DONTNEED)` after each copy) the per-layer
+warm-load trace still shows ~60 GB of *clean* file cache staying resident
+while the compressor grows to 65 GB with the store's own tensors: macOS 26
+compresses inactive anonymous memory before dropping clean file cache. The
+trigger in these benchmarks was my page-cache eviction procedure (reading a
+96 GB build through `cat` to flush the expert files), which manufactures
+exactly that cache; earlier, the Docker VM and other apps did the same job.
+A real server never runs the `cat`, and every runtime read path is now
+`F_NOCACHE` or unpinned, so serving is unaffected — but **cold-prefill
+benchmarks need `purge` (root) between runs**; without it the numbers
+alternate between page-cache luck and compressor thrash and are not worth
+reporting. Rule for the notes: on macOS, keep the page cache small before
+any >60 GB allocation, kill only on compressor/swap-out growth, and
+measure cold reads only after `purge`.
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -411,9 +445,9 @@ agree bit for bit (graph 27), so the paths compare like with like.
    qualified runtime fork; realistic 1.2–1.3×, weeks of work; rank targets
    only by end-to-end decode timings.
 
-1. Rung 3 remainder: re-repack with an expert-contiguous, numerically
-   ordered layout so cold misses coalesce into large sequential reads;
-   then re-measure cold prefill from an evicted cache.
+1. Cold-prefill A/B (hash vs contiguous, LRU vs slot) after `purge`: needs a
+   passwordless-sudo rule for `/usr/sbin/purge` on the Studio and MacBook,
+   an operator decision.
 2. Warm-state load at full SSD rate (now 18 s for 69 GB; ~12 s possible).
 3. Cross-layer prefetch is blocked on routing unknown before the layer;
    the previous token's routes as a predictor is untested.
