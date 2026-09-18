@@ -36,7 +36,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from serve_worker import InferenceWorker, QueueFull  # noqa: E402
+from serve_worker import InferenceWorker, QueueFull, WorkerDead  # noqa: E402
 
 app = FastAPI(title="PulsarMLX GLM-5.3-Flash resident server")
 STATE = {}
@@ -229,6 +229,8 @@ async def chat_completions(request: Request):
         job = STATE["worker"].submit(make_generator, deliver)
     except QueueFull as exc:
         return JSONResponse({"error": {"message": str(exc), "type": "overloaded"}}, status_code=503, headers={"Retry-After": "1"})
+    except WorkerDead as exc:
+        return JSONResponse({"error": {"message": str(exc), "type": "worker_dead"}}, status_code=503)
     STATE["requests"] += 1
 
     async def results():

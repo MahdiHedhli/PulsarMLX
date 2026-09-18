@@ -118,6 +118,20 @@ class WorkerContract(unittest.TestCase):
             list(j.results(timeout=BOUND))
         self.assertEqual(list(self.worker.submit(Gen(1)).results(timeout=BOUND)), [('', 0)])
 
+    def test_system_exit_is_not_swallowed(self):
+        def exiting():
+            yield ('x', 0)
+            raise SystemExit(3)
+        j = self.worker.submit(exiting); got = []
+        with self.assertRaises(SystemExit):
+            for item in j.results(timeout=BOUND):
+                got.append(item)
+        self.assertEqual(got, [('x', 0)]); self.assertTrue(j.finished.wait(BOUND))
+        self.worker._thread.join(BOUND); self.assertFalse(self.worker._thread.is_alive())
+        self.assertIn('SystemExit', self.worker.stats()['dead'])
+        with self.assertRaises(serve_worker.WorkerDead):
+            self.worker.submit(Gen(1))
+
     def test_custom_delivery_receives_terminal_marker(self):
         seen = []
         j = self.worker.submit(Gen(2, label='d'), deliver=seen.append)

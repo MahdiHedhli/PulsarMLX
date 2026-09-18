@@ -14,7 +14,8 @@ the lock) deadlocked, and /health starved with them. Here:
   * job.cancel() sets a flag the worker checks between yields, then the generator is closed (GeneratorExit) and the
     model is free within one token; a job cancelled before it starts is skipped without running its generator;
   * an exception inside a generator is delivered to that job as ('error', exc) and the worker continues with the
-    next job, so a failing request never takes the server down or wedges the queue.
+    next job, so a failing request never takes the server down or wedges the queue; KeyboardInterrupt/SystemExit are
+    not swallowed: the job is told, the thread ends, `dead` records why and submit() raises WorkerDead from then on.
 
 Stdlib only (no mlx, no fastapi): the same module and its tests run in CI.
 """
@@ -28,6 +29,10 @@ from typing import Callable, Optional
 
 class QueueFull(RuntimeError):
     """More than `max_queue` jobs are pending (running + waiting)."""
+
+
+class WorkerDead(RuntimeError):
+    """The worker thread ended (a KeyboardInterrupt/SystemExit escaped a generation); nothing will run any more."""
 
 
 class Job:
@@ -77,6 +82,7 @@ class InferenceWorker:
         self.current: Optional[Job] = None
         self.completed = self.failed = self.cancelled = self.skipped = self.rejected = 0
         self._stop = False
+        self.dead = None               # str: why the thread ended abnormally
         self._thread = threading.Thread(target=self._loop, name=name, daemon=True)
         self._thread.start()
 
@@ -84,6 +90,8 @@ class InferenceWorker:
     def submit(self, make_generator: Callable[[], object], deliver: Optional[Callable[[tuple], None]] = None) -> Job:
         """Enqueue; raises QueueFull when max_queue jobs are already pending. Never blocks."""
         with self._lock:
+            if self.dead is not None:
+                raise WorkerDead(f"WORKER_DEAD {self.dead}")
             if self._pending >= self.max_queue:
                 self.rejected += 1
                 raise QueueFull(f"QUEUE_FULL pending={self._pending} max={self.max_queue}")
@@ -106,7 +114,7 @@ class InferenceWorker:
     def stats(self) -> dict:
         with self._lock:
             return {"max_queue": self.max_queue, "pending": self._pending, "busy": self.busy, "completed": self.completed, "failed": self.failed,
-                    "cancelled": self.cancelled, "skipped": self.skipped, "rejected": self.rejected, "current_job": self.current.id if self.current else None}
+                    "cancelled": self.cancelled, "skipped": self.skipped, "rejected": self.rejected, "current_job": self.current.id if self.current else None, "dead": self.dead}
 
     def close(self, timeout: Optional[float] = 5.0) -> None:
         self._stop = True
@@ -123,6 +131,10 @@ class InferenceWorker:
                 self.busy = True; self.current = job
             try:
                 self._run(job)
+            except BaseException as exc:      # KeyboardInterrupt / SystemExit out of a generation: the thread ends, visibly
+                with self._lock:
+                    self.dead = f"{type(exc).__name__}: {exc}"
+                raise
             finally:
                 with self._lock:
                     self._pending -= 1; self.busy = False; self.current = None
@@ -141,9 +153,12 @@ class InferenceWorker:
                     break
                 job.items += 1
                 job.deliver(("item", item))
-        except BaseException as exc:          # the job gets the failure; the worker survives
+        except Exception as exc:              # the job gets the failure; the worker survives
             job.outcome = "error"; self._bump("failed"); job.deliver(("error", exc))
             return
+        except BaseException as exc:          # KeyboardInterrupt / SystemExit: the job is told, then it propagates (worker dies)
+            job.outcome = "error"; self._bump("failed"); job.deliver(("error", exc))
+            raise
         finally:
             close = getattr(gen, "close", None)
             if close is not None:
