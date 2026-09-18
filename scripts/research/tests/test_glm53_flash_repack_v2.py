@@ -18,7 +18,8 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'scripts/research/glm53_flash/dogfood'))
 import repack_v2  # noqa: E402
 
-faulthandler.dump_traceback_later(60, exit=True)   # the pre-graph-32 copy loop hung forever on a truncated source
+WATCHDOG_S = 60   # the pre-graph-32 copy loop hung forever on a truncated source: every test here is bounded (armed per test,
+                  # never at import: under `unittest discover` a module-level timer would kill the whole run - CI first contact)
 
 
 def tensor_bytes(seed, n):
@@ -81,12 +82,14 @@ def scattered_order(names):
 
 class RepackV2FailSafe(unittest.TestCase):
     def setUp(self):
+        faulthandler.dump_traceback_later(WATCHDOG_S, exit=True)
         self.dir = Path(tempfile.mkdtemp(prefix='repack-v2-', dir=os.environ.get('TMPDIR')))
         self.tensors = expert_tensors(4)
         self.src = self.dir / 'src.safetensors'; self.dst = self.dir / 'dst.safetensors'
         write_st(self.src, self.tensors, metadata={'format': 'mlx'}, order=scattered_order(list(self.tensors)))
 
     def tearDown(self):
+        faulthandler.cancel_dump_traceback_later()
         shutil.rmtree(self.dir, ignore_errors=True)
 
     def assert_no_dst(self):
