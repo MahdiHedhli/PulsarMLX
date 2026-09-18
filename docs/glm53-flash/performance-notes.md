@@ -375,14 +375,24 @@ NVMe, 93 cold experts: hash-ordered 4.7–6.3 GB/s (eight threads of
 per-tensor reads already saturate the drive), contiguous 6.3 GB/s after the
 chunked-parallel fix (a single 1.3 GB `preadv` on one thread had measured
 3.0). The Promise array is bound by 61 KB transfers however reads are
-issued. Keep `repack_v2` as an option — correct, harmless, likely useful on
-storage with expensive small reads — not as a speed-up.
+issued. End-to-end cold prefill on the contiguous layout is **unmeasured**
+(see below), so this is "no gain shown on a fast SSD", not "no gain
+possible". Keep `repack_v2` as an option — correct, harmless, likely useful
+on storage with expensive small reads. Review notes applied: all chunks of
+all merged runs are now dispatched to the pool at once (small disjoint runs
+had serialized), and the two layout mutants kill by rejection
+(`np.frombuffer` length mismatch, `NOT_CONTIGUOUS`) rather than by value —
+the matrix's KILL cells hold, the predicted reason did not.
 
 **The memory policy (root cause of every thrash this session).** With hot
 reads unpinned (`madvise(MADV_DONTNEED)` after each copy) the per-layer
-warm-load trace still shows ~60 GB of *clean* file cache staying resident
-while the compressor grows to 65 GB with the store's own tensors: macOS 26
-compresses inactive anonymous memory before dropping clean file cache. The
+warm-load trace still shows 47–73 GB of file-backed pages staying resident
+while the compressor grows to 65 GB with the store's own tensors. Part of
+that file-backed baseline is the process's own active mappings (the
+resident shards through `mx.load`, upstream `patch_model`'s lazy maps of
+every expert file, touched pages of the hot path) which the kernel cannot
+discard while mapped; the rest is clean cache from earlier I/O. Either
+way, macOS 26 compressed the inactive anonymous tensors first. The
 trigger in these benchmarks was my page-cache eviction procedure (reading a
 96 GB build through `cat` to flush the expert files), which manufactures
 exactly that cache; earlier, the Docker VM and other apps did the same job.

@@ -127,16 +127,17 @@ class _LayerFile:
                 runs.append([lo, hi, [j]])
         return [(lo, hi, js) for lo, hi, js in runs]
 
-    def read_range_np(self, lo: int, hi: int, pool=None, chunk: int = 64 << 20):
-        """One merged range into one buffer; with a pool, in parallel `chunk`-sized pieces (a single 1 GB preadv on one
-        thread measured slower than eight threads of small reads on the MacBook's NVMe: 3.0 vs 4.6 GB/s)."""
+    def read_ranges_np(self, ranges, pool=None, chunk: int = 64 << 20):
+        """Merged ranges [(lo, hi), ...] -> one buffer each; every `chunk`-sized piece of every range is dispatched to the
+        pool at once, so both a single huge range (a 1.3 GB preadv on one thread measured 3.0 vs 4.6 GB/s for eight
+        threads on the MacBook's NVMe) and many small disjoint runs (sparse decode misses) read in parallel."""
         self._open()
-        buf = np.empty(hi - lo, dtype=np.uint8)
-        pieces = [(off, min(off + chunk, hi - lo)) for off in range(0, hi - lo, chunk)]
+        bufs = [np.empty(hi - lo, dtype=np.uint8) for lo, hi in ranges]
+        pieces = [(i, off, min(off + chunk, hi - lo)) for i, (lo, hi) in enumerate(ranges) for off in range(0, hi - lo, chunk)]
 
-        def piece(bounds):
-            a, b = bounds
-            got = os.preadv(self.fd, [memoryview(buf)[a:b]], self.data_start + lo + a)
+        def piece(item):
+            i, a, b = item; lo = ranges[i][0]
+            got = os.preadv(self.fd, [memoryview(bufs[i])[a:b]], self.data_start + lo + a)
             if got != b - a:
                 raise IOError(f"SHORT_READ range {lo + a}-{lo + b}: {got}")
             return got
@@ -145,7 +146,7 @@ class _LayerFile:
         else:
             for pc in pieces:
                 piece(pc)
-        return buf
+        return bufs
 
     def slice_np(self, buf, lo: int, name: str):
         e = self.entries[name]; np_dtype, _ = _SAFETENSORS_DTYPES[e["dtype"]]
@@ -351,7 +352,7 @@ class PulsarSlotStore:
         if cold_names and f.contiguous:
             cold_experts = [j for j, _ in reads if not hot[j]]
             runs = f.merged_ranges(cold_experts, self.coalesce_gap_experts)
-            bufs = [f.read_range_np(lo, hi, pool=self._pool) for lo, hi, _ in runs]   # each run: parallel chunks
+            bufs = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool)   # all runs' chunks in flight at once
             for (lo, hi, js), buf in zip(runs, bufs):
                 for j in js:
                     for p in _PROJS:
