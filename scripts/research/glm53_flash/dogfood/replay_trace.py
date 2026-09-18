@@ -23,11 +23,13 @@ def main():
     ap.add_argument('--trace', required=True); ap.add_argument('--offload', default=None, help='repack directory (default: the trace header)')
     ap.add_argument('--coalesce-gap', type=int, required=True); ap.add_argument('--read-chunk-mib', type=int, default=64); ap.add_argument('--read-chunk-bytes', type=int, default=None, help='overrides --read-chunk-mib (tiny controls)'); ap.add_argument('--read-workers', type=int, default=8)
     ap.add_argument('--expert-cache-bytes', type=int, default=None, help='default: the trace header budget'); ap.add_argument('--force-cold', action='store_true')
-    ap.add_argument('--log', required=True); ap.add_argument('--label', default=None)
+    ap.add_argument('--log', required=True); ap.add_argument('--label', default=None); ap.add_argument('--wire', action='store_true', help='wire the MLX buffers (as the admitted runner does)')
     args = ap.parse_args()
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import mlx.core as mx
     from pulsar_slot_store import PulsarSlotStore
+    if args.wire:
+        mx.set_wired_limit(int(mx.device_info()['max_recommended_working_set_size']))
 
     with open(args.trace) as fh:
         header = json.loads(fh.readline())
@@ -70,7 +72,7 @@ def main():
             checks[name] = {k: (rp['stats'][k], fs[k], rp['stats'][k] == fs[k]) for k in keys if k in fs}
     policy_reproduced = all(v[2] for c in checks.values() for v in c.values()) if checks else None
     final = store.stats()
-    rec = {'label': args.label, 'trace': args.trace, 'header': header, 'coalesce_gap': args.coalesce_gap, 'read_chunk_bytes': chunk, 'read_workers': args.read_workers, 'force_cold': bool(args.force_cold),
+    rec = {'label': args.label, 'trace': args.trace, 'header': header, 'coalesce_gap': args.coalesce_gap, 'read_chunk_bytes': chunk, 'read_workers': args.read_workers, 'force_cold': bool(args.force_cold), 'wired': bool(args.wire),
            'os_cache_state': 'OBSERVED (not controlled); force_cold selects the cold reader only', 'init_seconds': round(t_init, 2), 'phases': phases, 'policy_reproduced': policy_reproduced, 'policy_checks': checks,
            'final_stats': final, 'peak_memory_bytes': int(mx.get_peak_memory()), 'vm_before': vm0, 'vm_after': _vm(),
            'derived': {'requested_over_logical': (final['requested_read_bytes'] / final['logical_admitted_bytes']) if final['logical_admitted_bytes'] else None,
