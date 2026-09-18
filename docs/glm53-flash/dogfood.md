@@ -181,5 +181,10 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    the original checkpoint's layer 45 into a 4.27 GB drafter for the pinned
    runtime; `run_resident.py --mtp <dir> --draft-k 1` and
    `serve_resident.py --mtp <dir>` (greedy requests). Measured +0–13%
-   (22.5 → 22.3–25.4 tok/s); the resident tier is bound by ~28 ms of kernel
-   dispatch per step, see `performance-notes.md` §3.5.
+   (22.5 → 22.3–25.4 tok/s).
+5. **The resident-tier bound, measured (graph 25):** every decode step pays
+   26–28 ms of GPU-side execution of ~2,000 small kernels (1.0 ms per layer,
+   linear in layer count) on top of 17.5 ms per token; `mx.compile`,
+   `async_eval`, batching and speculation cannot remove it. Real gains need
+   fused Metal kernels in a qualified runtime fork — graph 26. Details and
+   the evidence in `performance-notes.md` §3.5.

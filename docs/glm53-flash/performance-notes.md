@@ -209,6 +209,14 @@ are not the cost), `mx.async_eval` pipelining (→ 43.6 ms: CPU-side work is
 batch row costs 21 ms like a second token, so it is GPU-side execution of
 many small kernels. The only way past it is fewer kernels per layer.
 
+**Conclusion (the one to carry forward): the 26–28 ms fixed cost of every
+decode step is GPU-side execution of ~2,000 small kernels (45 layers ×
+40–50), not bandwidth, not CPU overhead, not anything `mx.compile`,
+`async_eval`, batching or speculation can remove. Real gains on the
+resident tier need fused Metal kernels in a qualified fork of the runtime
+(graph 26): fewer launches per layer is the only lever left, and every
+other technique (MTP, prompt lookup, batching) is bounded by it.**
+
 **MTP speculative decoding** (the checkpoint's own next-token layer,
 converted from the original FP8 checkpoint's layer 45 — 4.27 GB at 4/8-bit;
 drafter on the pinned runtime's classes; greedy verify at T=k+1; per-position
@@ -273,10 +281,13 @@ measured acceptance stand in for it, and the deviation is recorded.
 
 ## 6. Open items (ordered)
 
-0. Graph 26: fewer kernels per layer in a qualified runtime fork (fuse the
-   hyper-connection chain, the linear-attention pre/post ops around the
-   delta kernel, the router select) — target 46 → ~30 ms/token (≈30 tok/s),
-   with MTP on top ≈ 35 tok/s.
+0. Graph 26: fused Metal kernels in a qualified runtime fork — fewer
+   launches per layer (the hyper-connection chain: rms_norm + mix matmul +
+   hc kernel + expand; the linear-attention pre/post ops around the delta
+   kernel: conv, silu, split, l2norm casts, gated norm; the router's
+   group-select chain) — target 46 → ~30 ms/token (≈30 tok/s), with MTP on
+   top ≈ 35 tok/s. Qualify each fused kernel like graphs 5–8 did for the
+   linear-attention kernel (oracle, domain, controls, both backends).
 
 1. Rung 3 remainder: re-repack with an expert-contiguous, numerically
    ordered layout so cold misses coalesce into large sequential reads;
