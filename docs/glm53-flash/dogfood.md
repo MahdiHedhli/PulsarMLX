@@ -159,7 +159,11 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    `Retry-After`; a client that disconnects mid-stream releases the model
    within one token; a generation exception answers that request with 500,
    or an in-band `error` chunk when the SSE headers are already out, and the
-   next request runs). The
+   next request runs). With `--mtp`, speculation is decided per request
+   before any response byte (graph 34): greedy sampling and a prompt no
+   longer than `--speculative-max-prompt` tokens (4096, the speculator's
+   one-chunk prefill); other requests take the ordinary path, and
+   `usage.speculative` / `usage.speculative_reason` report which ran. The
    template opens a `<think>` block, so reasoning is returned as
    `reasoning_content` and the answer as `content` (in streaming too, with a
    partial-marker hold-back); `reasoning_effort` low|medium|high maps onto

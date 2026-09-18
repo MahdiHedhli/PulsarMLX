@@ -237,6 +237,15 @@ the server keeps `draft_k=1` because reasoning-heavy text loses 1–3% at
 k=2; the run card's tiny-geometry MTP oracle/operation was not built — the
 strict load, the exact T=2 logit match of the verify wrapper and the
 measured acceptance stand in for it, and the deviation is recorded.
+Boundary (hardening review, 2026-09-18): the similar-magnitude logit
+deviations above are *not* proof of rollback correctness — they show the
+error is the size of a known numerics effect, not that the recurrent /
+conv / KV state after a partial acceptance equals the state a plain decode
+would have. MTP stays opt-in (`--mtp`), `draft_k=1`, greedy only, and its
+prompt limit is preflighted (graph 34). Before its role expands, the
+accepted-prefix state and the subsequent outputs must be compared for every
+acceptance length, every EOS position and early termination against a
+plain decode of the same tokens.
 
 ## 3.6 Graph 26 assessment: what kernel fusion can and cannot buy
 
@@ -448,6 +457,24 @@ measure cold reads only after `purge`.
   `__setitem__` timing) before assuming.
 - Read-path micro-benchmarks per storage state (cold/hot) before choosing
   memmap vs pread vs threads; the answer differs by 50×.
+- Benchmark protocol for any paged-tier claim (hardening review,
+  2026-09-18 — none of it is done yet, so no expert-contiguous or
+  cold-prefill speedup is claimed): freeze the model, runtime and code
+  identities; separate the logical expert-cache state (warm state file),
+  the process state (allocator cache, wired set) and the operating-system
+  cache state (page cache, compressor) and record each; measure time to
+  first token, prefill, sustained decode and total request latency over
+  several prompt lengths and contents, interleaved and repeated; record
+  `mx.get_active_memory` / `mx.get_cache_memory` and the host's memory,
+  compression and swap deltas around each run; count
+  `logical_admitted_bytes`, `requested_read_bytes`, `overread_bytes` and
+  `hot_copy_bytes` separately (graph 33) and use device-level counters
+  whenever actual SSD traffic is claimed — the store's counters are
+  logical; any privileged cache clearing (`purge`) is an operator decision
+  and is not installed by code. Keep the measured distinction between
+  unpruned paged fidelity and pruned resident latency: REAP50 throughput is
+  not unpruned throughput, and the nine-passage slice is not task-level
+  benchmark performance.
 
 ## 6. Open items (ordered)
 
@@ -526,4 +553,16 @@ the cold paths asked of the file, gaps included), `overread_bytes`
 seven new mutants change no value and are killed by the counters alone
 (sort threshold raised, bulk threshold ignored, coalescing gap ignored) —
 the proof that the reachability assertions have teeth. Any claim about
-actual SSD traffic still needs device-level counters (§6).
+actual SSD traffic still needs device-level counters (§5, protocol).
+
+Graph 34 — the server chose speculation for every greedy request, and the
+speculator rejects prompts above its one-chunk prefill limit (4096 tokens by
+default) only once generation starts — after the SSE headers for a stream.
+The prompt is now tokenized in the handler and eligibility
+(`serve_policy.speculative_eligible`: greedy sampling, prompt ≤
+`--speculative-max-prompt`, which is also passed to the speculator as its
+prefill limit) is decided before any response byte; ineligible requests
+take the ordinary `stream_generate` path and `usage.speculative` /
+`usage.speculative_reason` say which ran. Exercised at 4096 / 4097 tokens
+through the real HTTP path with a recording fake speculator, and on the
+Studio with a 5,000-token greedy prompt.

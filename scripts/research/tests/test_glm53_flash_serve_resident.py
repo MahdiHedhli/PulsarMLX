@@ -12,6 +12,7 @@ import socket
 import sys
 import threading
 import time
+import types
 import unittest
 from pathlib import Path
 
@@ -39,7 +40,7 @@ def fake_generate(prompt, max_tokens, temperature, prefill_step_size, **kw):
     """Directive in the last user message: 'slow:N' -> N tokens at TOKEN_S each; 'fail:N' -> raise after N tokens;
     'think:N' -> N reasoning tokens, </think>, then two answer tokens."""
     msgs = json.loads(prompt); text = msgs[-1]['content']
-    kind, n = text.split(':'); n = int(n)
+    kind, n = text.split(':'); n = min(int(n), max_tokens)
     if kind == 'think':
         pieces = ['r%d ' % i for i in range(n)] + ['</think>', 'a0 ', 'a1']
         for i, p in enumerate(pieces):
@@ -62,8 +63,8 @@ class ServeResidentLive(unittest.TestCase):
     def setUpClass(cls):
         cls.port = free_port(); cls.base = f'http://127.0.0.1:{cls.port}'
         serve_resident.install(model='fake', processor=None, config={}, model_id='fake-model', load_seconds=0.0, warmup=None, prefill_step_size=512,
-                               default_max_tokens=64, speculator=None, draft_k=1, max_queue=2,
-                               render=lambda messages, **kw: json.dumps(messages), generate=fake_generate)
+                               default_max_tokens=64, speculator=None, draft_k=1, max_queue=2, speculative_max_prompt=4096,
+                               render=lambda messages, **kw: json.dumps(messages), tokenize=lambda prompt: [1] * 7, generate=fake_generate)
         cls.server = uvicorn.Server(uvicorn.Config(serve_resident.app, host='127.0.0.1', port=cls.port, log_level='warning'))
         cls.thread = threading.Thread(target=cls.server.run, daemon=True); cls.thread.start()
         t0 = time.time()
@@ -181,7 +182,7 @@ class ServeResidentLive(unittest.TestCase):
         r = httpx.post(self.base + '/v1/chat/completions', json=self.chat('think:3'), timeout=BOUND).json()
         msg = r['choices'][0]['message']
         self.assertEqual(msg['reasoning_content'], 'r0 r1 r2'); self.assertEqual(msg['content'], 'a0 a1'); self.assertEqual(r['choices'][0]['finish_reason'], 'stop')
-        self.assertFalse(r['usage']['speculative'])
+        self.assertFalse(r['usage']['speculative']); self.assertIn('no speculator', r['usage']['speculative_reason'])
         chunks = self.stream_lines('think:3')
         reasoning = ''.join(c['choices'][0]['delta'].get('reasoning_content', '') for c in chunks if c != '[DONE]' and c.get('choices'))
         content = ''.join(c['choices'][0]['delta'].get('content', '') for c in chunks if c != '[DONE]' and c.get('choices'))
@@ -190,6 +191,86 @@ class ServeResidentLive(unittest.TestCase):
     def test_bad_requests(self):
         self.assertEqual(httpx.post(self.base + '/v1/chat/completions', json={'messages': []}, timeout=5.0).status_code, 400)
         self.assertEqual(httpx.get(self.base + '/v1/models', timeout=5.0).json()['data'][0]['id'], 'fake-model')
+
+
+class FakeTokenizer:
+    eos_token_ids = [0]
+    eos_token_id = 0
+
+    def encode(self, prompt):
+        n = int(json.loads(prompt)[-1]['content'].split(':')[1]); return list(range(1, n + 1))
+
+    def decode(self, toks):
+        return ' '.join('s%d' % t for t in toks)
+
+
+class FakeSpeculator:
+    """Records every generate() call; yields 5 tokens then eos. Raises like the real one on a too-long prompt."""
+    def __init__(self):
+        self.calls = []; self.stats = {'steps': 0, 'drafted': 0, 'accepted': 0, 'accepted_by_position': [0]}
+
+    def generate(self, ids, max_tokens, eos, prefill_step_size=4096):
+        self.calls.append({'prompt_tokens': len(ids), 'max_tokens': max_tokens, 'prefill_step_size': prefill_step_size})
+        if len(ids) > prefill_step_size:
+            raise ValueError('PROMPT_TOO_LONG_FOR_ONE_CHUNK')
+        for i in range(1, 6):
+            yield 100 + i, 0
+        yield 0, 0
+
+
+@unittest.skipUnless(HAVE_STACK, 'fastapi/uvicorn/httpx not installed')
+class SpeculativePreflightLive(unittest.TestCase):
+    """Graph 34: the prompt length decides speculation before any response byte; the boundary (4096 / 4097) is exercised
+    through the real HTTP path with a fake speculator that records what it was asked."""
+    @classmethod
+    def setUpClass(cls):
+        cls.port = free_port(); cls.base = f'http://127.0.0.1:{cls.port}'; cls.spec = FakeSpeculator(); tok = FakeTokenizer()
+        serve_resident.install(model='fake', processor=types.SimpleNamespace(tokenizer=tok), config={}, model_id='fake-spec', load_seconds=0.0, warmup=None, prefill_step_size=512,
+                               default_max_tokens=64, speculator=cls.spec, draft_k=1, max_queue=2, speculative_max_prompt=4096,
+                               render=lambda messages, **kw: json.dumps(messages), tokenize=tok.encode, generate=fake_generate)
+        cls.server = uvicorn.Server(uvicorn.Config(serve_resident.app, host='127.0.0.1', port=cls.port, log_level='warning'))
+        cls.thread = threading.Thread(target=cls.server.run, daemon=True); cls.thread.start()
+        t0 = time.time()
+        while not cls.server.started and time.time() - t0 < BOUND:
+            time.sleep(0.02)
+        assert cls.server.started
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.should_exit = True; cls.thread.join(BOUND)
+        serve_resident.STATE['worker'].close()
+
+    def post(self, n, stream=False, **extra):
+        body = {'messages': [{'role': 'user', 'content': f'slow:{n}'}], 'stream': stream, 'max_tokens': 8, **extra}
+        return httpx.post(self.base + '/v1/chat/completions', json=body, timeout=BOUND)
+
+    def test_at_and_above_the_limit(self):
+        before = len(self.spec.calls)
+        r = self.post(4096); self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()['usage']['speculative']); self.assertEqual(r.json()['usage']['completion_tokens'], 6)
+        self.assertEqual(self.spec.calls[-1], {'prompt_tokens': 4096, 'max_tokens': 8, 'prefill_step_size': 4096})
+        self.assertEqual(r.json()['choices'][0]['message']['content'], '')          # the fake tokens never close </think>: all reasoning
+        self.assertEqual(r.json()['choices'][0]['message']['reasoning_content'], 's101 s102 s103 s104 s105')
+        r = self.post(4097); self.assertEqual(r.status_code, 200)
+        self.assertFalse(r.json()['usage']['speculative']); self.assertIn('4097 tokens > speculative one-chunk limit 4096', r.json()['usage']['speculative_reason'])
+        self.assertEqual(len(self.spec.calls), before + 1, 'the speculator was called for an ineligible prompt')
+        self.assertEqual(r.json()['usage']['completion_tokens'], 8)                  # fake_generate's 'slow:4097' capped by max_tokens 8
+
+    def test_non_greedy_takes_the_ordinary_path(self):
+        before = len(self.spec.calls)
+        r = self.post(10, temperature=0.7); self.assertFalse(r.json()['usage']['speculative']); self.assertIn('temperature', r.json()['usage']['speculative_reason'])
+        r = self.post(10, top_p=0.9); self.assertFalse(r.json()['usage']['speculative'])
+        self.assertEqual(len(self.spec.calls), before)
+
+    def test_stream_above_the_limit_is_ordinary_and_complete(self):
+        chunks = []
+        with httpx.stream('POST', self.base + '/v1/chat/completions', json={'messages': [{'role': 'user', 'content': 'slow:5000'}], 'stream': True, 'max_tokens': 3}, timeout=BOUND) as r:
+            self.assertEqual(r.status_code, 200)
+            for line in r.iter_lines():
+                if line.startswith('data: '):
+                    chunks.append(line[6:])
+        self.assertEqual(chunks[-1], '[DONE]'); last = json.loads(chunks[-2])
+        self.assertFalse(last['usage']['speculative']); self.assertEqual(last['choices'][0]['finish_reason'], 'length'); self.assertNotIn('error', last)
 
 
 if __name__ == '__main__':

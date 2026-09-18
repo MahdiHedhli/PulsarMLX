@@ -10,6 +10,9 @@ per-process settle, and generation on ONE inference worker thread (serve_worker.
 that thread alone; handlers enqueue a job and await its items on the event loop, so an active stream, a concurrent
 non-streaming request and /health never wait on each other - graph 30: the first version consumed the generator on the
 event loop under a threading lock held across the stream's yields and deadlocked under exactly that interleaving).
+Speculation (--mtp) is decided per request BEFORE any response byte (graph 34): greedy sampling and a tokenized prompt no
+longer than --speculative-max-prompt (the speculator's one-chunk prefill limit, default 4096); otherwise the ordinary
+stream_generate path; usage.speculative / usage.speculative_reason say which ran.
 Queue: at most --max-queue jobs pending (running + waiting), 503 + Retry-After beyond that; a client that disconnects
 mid-stream cancels its job and the model is released within one token; a non-streaming request runs to completion
 (max_tokens bounds it); an exception inside a generation answers that request with 500 and the worker continues.
@@ -36,6 +39,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from serve_policy import speculative_eligible  # noqa: E402
 from serve_worker import InferenceWorker, QueueFull, WorkerDead  # noqa: E402
 
 app = FastAPI(title="PulsarMLX GLM-5.3-Flash resident server")
@@ -65,7 +69,9 @@ def load(args):
         spec = MTPSpeculator(model.language_model, args.mtp, draft_k=args.draft_k)
     install(model=model, processor=processor, config=config, model_id=args.model_id, load_seconds=round(load_s, 1), warmup=warm,
             prefill_step_size=args.prefill_step_size, default_max_tokens=args.max_tokens, speculator=spec, draft_k=args.draft_k, max_queue=args.max_queue,
+            speculative_max_prompt=args.speculative_max_prompt,
             render=lambda messages, **kw: apply_chat_template(processor, config, messages, num_images=0, **kw),
+            tokenize=lambda prompt: processor.tokenizer.encode(prompt),
             generate=lambda prompt, **kw: stream_generate(model, processor, prompt, **kw))
     print(f"loaded in {load_s:.1f}s; warm-up {warm}; serving {args.model_id}", flush=True)
 
@@ -106,14 +112,15 @@ class _SpecResult:
         self.prompt_tps, self.generation_tps, self.finish_reason = prompt_tps, generation_tps, finish_reason
 
 
-def _run_speculative(spec, processor, prompt, max_tokens):
-    """Greedy MTP speculative generation yielding stream_generate-like results (text per token, stats on the last)."""
+def _run_speculative(spec, processor, prompt, max_tokens, ids=None, max_prompt_tokens=4096):
+    """Greedy MTP speculative generation yielding stream_generate-like results (text per token, stats on the last).
+    `ids`: the prompt already tokenized by the preflight (must be <= max_prompt_tokens: the speculator prefills in one chunk)."""
     tok = processor.tokenizer
     _e = getattr(tok, "eos_token_ids", None)
     eos = set(_e if isinstance(_e, (list, set, tuple)) else [_e if _e is not None else tok.eos_token_id])
-    ids = tok.encode(prompt)
+    ids = tok.encode(prompt) if ids is None else ids
     t0 = time.time(); t_first = None; toks = []; emitted = ""
-    for tkn, _ in spec.generate(ids, max_tokens, eos):
+    for tkn, _ in spec.generate(ids, max_tokens, eos, prefill_step_size=max_prompt_tokens):
         if t_first is None:
             t_first = time.time()
         toks.append(tkn)
@@ -211,11 +218,12 @@ async def chat_completions(request: Request):
     stream = bool(body.get("stream", False))
 
     spec = STATE.get("speculator")
-    speculative = spec is not None and kwargs["temperature"] == 0.0 and "top_p" not in kwargs and "repetition_penalty" not in kwargs
+    ids = STATE["tokenize"](prompt)             # preflight: the prompt length decides speculation before any response byte
+    speculative, why = speculative_eligible(spec is not None, kwargs["temperature"], kwargs.get("top_p"), kwargs.get("repetition_penalty"), len(ids), STATE["speculative_max_prompt"])
 
     def make_generator():                       # runs on the worker thread only
         if speculative:
-            return _run_speculative(spec, processor, prompt, kwargs["max_tokens"])
+            return _run_speculative(spec, processor, prompt, kwargs["max_tokens"], ids=ids, max_prompt_tokens=STATE["speculative_max_prompt"])
         return STATE["generate"](prompt, **kwargs)
 
     loop = asyncio.get_running_loop(); items = asyncio.Queue()
@@ -249,7 +257,7 @@ async def chat_completions(request: Request):
 
     def usage_of(final):
         return {"prompt_tokens": final.prompt_tokens, "completion_tokens": final.generation_tokens, "total_tokens": final.prompt_tokens + final.generation_tokens,
-                "prompt_tps": round(final.prompt_tps, 2), "generation_tps": round(final.generation_tps, 2), "speculative": speculative}
+                "prompt_tps": round(final.prompt_tps, 2), "generation_tps": round(final.generation_tps, 2), "speculative": speculative, "speculative_reason": why}
 
     if not stream:
         text, final = "", None
@@ -296,6 +304,7 @@ def main():
     ap.add_argument("--prefill-step-size", type=int, default=512); ap.add_argument("--warmup", type=int, default=8)
     ap.add_argument("--mtp", default=None, help="MTP layer directory (convert_mtp.py output): greedy requests (temperature 0, no top_p/penalty) use speculative decoding")
     ap.add_argument("--draft-k", type=int, default=1)
+    ap.add_argument("--speculative-max-prompt", type=int, default=4096, help="longest prompt (tokens) the speculator prefills in one chunk; longer greedy prompts take the ordinary path")
     ap.add_argument("--no-wire", action="store_true", help="do not wire the Metal buffers (default wires; assumes a dedicated serving host)")
     ap.add_argument("--max-queue", type=int, default=4, help="requests pending on the inference worker (running + waiting) before 503")
     args = ap.parse_args()
