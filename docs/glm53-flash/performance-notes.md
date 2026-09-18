@@ -238,6 +238,24 @@ k=2; the run card's tiny-geometry MTP oracle/operation was not built — the
 strict load, the exact T=2 logit match of the verify wrapper and the
 measured acceptance stand in for it, and the deviation is recorded.
 
+## 3.6 Graph 26 assessment: what kernel fusion can and cannot buy
+
+Measured per whole layer at T=1: 0.95 ms (linear) / 0.91 ms (DSA), against
+~0.27 ms of ideal weight streaming at 800 GB/s (experts 113 MB + shared
+25 MB + attention ~70 MB). The remainder splits between sub-peak M=1
+quantized gemv / `gather_qmm` efficiency (an MLX kernel-quality matter) and
+~50 launches of small ops per layer. Two cautions from the measurement
+itself: per-block "chained" micro-benchmarks are order- and overlap-
+sensitive (the same op read 0.03 and 0.7 ms) and must not be used to rank
+fusion targets; and a kernel-choice that looked 4× faster in isolation
+(sorted `gather_qmm` at T=1: 0.14 vs 0.61 ms) was *slower* end-to-end
+(48–60 vs 46 ms/token). Only end-to-end decode timings count. MLX 0.32.2 is
+the current release (2026-08-25), so there are no newer kernels to adopt.
+Realistic ceiling for fused custom Metal kernels (hyper-connection chain,
+linear-attention pre/post ops, router select): ~1.2–1.3× (46 → 35–38
+ms/token) for weeks of Metal work with per-kernel qualification. Deferred;
+recorded here so the next attempt starts from these numbers.
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -281,13 +299,9 @@ measured acceptance stand in for it, and the deviation is recorded.
 
 ## 6. Open items (ordered)
 
-0. Graph 26: fused Metal kernels in a qualified runtime fork — fewer
-   launches per layer (the hyper-connection chain: rms_norm + mix matmul +
-   hc kernel + expand; the linear-attention pre/post ops around the delta
-   kernel: conv, silu, split, l2norm casts, gated norm; the router's
-   group-select chain) — target 46 → ~30 ms/token (≈30 tok/s), with MTP on
-   top ≈ 35 tok/s. Qualify each fused kernel like graphs 5–8 did for the
-   linear-attention kernel (oracle, domain, controls, both backends).
+0. Graph 26 (assessed, deferred — §3.6): fused Metal kernels in a
+   qualified runtime fork; realistic 1.2–1.3×, weeks of work; rank targets
+   only by end-to-end decode timings.
 
 1. Rung 3 remainder: re-repack with an expert-contiguous, numerically
    ordered layout so cold misses coalesce into large sequential reads;
