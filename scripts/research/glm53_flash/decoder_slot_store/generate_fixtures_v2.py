@@ -83,6 +83,19 @@ def reachability(exp, nbytes):
     return ok
 
 
+def wrap(text, width=4000):
+    """Compact JSON broken into lines of about `width` bytes after commas (whitespace is insignificant in JSON):
+    a review transport that splits at line boundaries can carry the file, and a diff stays line-addressable."""
+    out, line = [], ''
+    for piece in text.split(','):
+        line = piece if not line else line + ',' + piece
+        if len(line) >= width:
+            out.append(line); line = ''
+    if line:
+        out.append(line)
+    return ',\n'.join(out)
+
+
 def main(out_path):
     rng = random.Random(SEED)
     fp32 = {'gate': [mat(rng, I, D, .25) for _ in range(E)], 'up': [mat(rng, I, D, .25) for _ in range(E)], 'down': [mat(rng, D, I, .25) for _ in range(E)]}
@@ -126,7 +139,7 @@ def main(out_path):
               'structural_mutants': STRUCTURAL, 'revision': 1}
     doc = {'schema': 'flash-slot-store-fixtures-v2/1', 'oracle': 'scripts/research/glm53_flash/decoder_slot_store/oracle.py', 'store': 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py',
            'runtime': RUNTIME, 'tolerances': TOL, 'cases': cases, 'expected': expected, 'expected_kill_matrix': matrix}
-    Path(out_path).write_text(json.dumps(doc, sort_keys=True, separators=(',', ':')) + '\n')
+    Path(out_path).write_text(wrap(json.dumps(doc, sort_keys=True, separators=(',', ':'))) + '\n')
     for c in cases:
         e = expected[c['fixture_id']]
         print(' ', c['fixture_id'], 'expert bytes', e['paths']['expert_bytes'], 'capacity', e['capacity'], 'final', e['final_stats'], 'last', e['paths']['per_call'][-1])
