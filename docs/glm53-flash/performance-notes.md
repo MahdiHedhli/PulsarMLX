@@ -508,3 +508,22 @@ existing destinations are refused, and `--resume` keeps verified layers
 (the MacBook contig build: 42 layers kept in 0.4 s). Durability boundary:
 a layer file is absent, `.partial` (never read by the store) or
 complete-and-validated; the layout flag exists only when every layer is.
+
+Graph 33 — the inherited slot fixtures (3 tokens × top-2, capacity 2)
+never reached the sorted-gather branch (≥ 64 indices), the hash-layout bulk
+`mx.load` branch (≥ 4 cold experts) or multi-run / multi-chunk coalesced
+reads. Fixture v2 (12 experts, top-8, calls of 56 / 64 / 72 indices,
+capacity 6, f32 4-bit, f32 8-bit and a bf16-scales/bf16-activations case at
+an explicit 5e-2 tolerance — measured 0.0094 CPU / 0.0046 Metal) runs the
+four layout × residency passes with a 4096-byte read chunk and asserts the
+store's cumulative counters per call against a stdlib prediction: `waves`,
+`sorted_gathers`, `bulk_reads`, `pool_reads`, `coalesced_ranges`,
+`chunks_read`, and the byte accounting now split into
+`logical_admitted_bytes` (misses × expert bytes — `read_bytes` is the same
+number and is *not* a physical-I/O counter), `requested_read_bytes` (what
+the cold paths asked of the file, gaps included), `overread_bytes`
+(coalescing gaps) and `hot_copy_bytes` (page-cache copies). Three of the
+seven new mutants change no value and are killed by the counters alone
+(sort threshold raised, bulk threshold ignored, coalescing gap ignored) —
+the proof that the reachability assertions have teeth. Any claim about
+actual SSD traffic still needs device-level counters (§6).

@@ -49,6 +49,12 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     rate), the merged ranges read through the thread pool, and each tensor sliced out of its buffer. The hash-ordered
     layout keeps the per-tensor paths.
 
+  * graph 33: stats separate logical_admitted_bytes (misses x expert bytes; `read_bytes` is the same number and is NOT a
+    physical I/O counter), requested_read_bytes (what the cold paths asked of the file, gaps included), overread_bytes
+    (the gaps inside merged ranges) and hot_copy_bytes (page-cache copies), and count waves, sorted_gathers, pool_reads,
+    bulk_reads, coalesced_ranges and chunks_read so a qualification can assert that a branch ran, not only that the
+    values matched; read_chunk_bytes is a constructor argument (default 64 MiB).
+
 Quantized experts only (weight/scales/biases per projection, as repack writes them for a quantized build).
 """
 from __future__ import annotations
@@ -156,7 +162,7 @@ class _LayerFile:
         else:
             for pc in pieces:
                 piece(pc)
-        return bufs
+        return bufs, len(pieces)
 
     def slice_np(self, buf, lo: int, name: str):
         e = self.entries[name]; np_dtype, _ = _SAFETENSORS_DTYPES[e["dtype"]]
@@ -240,7 +246,7 @@ class PulsarSlotStore:
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
                  decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
-                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2):
+                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -272,8 +278,14 @@ class PulsarSlotStore:
         self.cache_clear_threshold_bytes = None if cache_clear_threshold_bytes is None else int(cache_clear_threshold_bytes)
         self._cache_clears = 0
         self.coalesce_gap_experts = int(coalesce_gap_experts)
+        self.read_chunk_bytes = int(read_chunk_bytes)   # merged ranges are read in pieces of this size (graph 33: the qualification uses 4096)
         self.layout = idx.get("layout", "hash-ordered")
-        self._coalesced_ranges = 0
+        self._coalesced_ranges = self._chunks_read = self._pool_reads = 0
+        # byte accounting (graph 33): logical = misses x expert bytes (what the model admitted; `read_bytes` is its alias and
+        # NOT a physical I/O counter); requested = bytes asked of the file by the cold paths (merged ranges incl. their
+        # gaps, per-tensor preadv, bulk mx.load); overread = the gap bytes inside merged ranges; hot_copy = page-cache copies
+        self._requested_read_bytes = self._overread_bytes = self._hot_copy_bytes = 0
+        self._waves = self._sorted_gathers = 0
         # force_cold: treat every read as not resident (skip mincore): the qualification runs the cold paths on files that
         # are page-cache resident, and storage whose residency reporting is unreliable can use it too
         self.force_cold = os.environ.get("PULSAR_SLOT_FORCE_COLD", "") == "1"
@@ -330,6 +342,7 @@ class PulsarSlotStore:
         """Policy for one wave (sorted unique experts, len <= capacity): counts, hits/misses, slot assignment with the
         wave pinned. Returns the reads to perform as [(expert, slot)] in wave order; the caller materializes them."""
         self._usable()
+        self._waves += 1
         L = self._layers[lid]
         pinned = set(wave)
         reads = []
@@ -397,7 +410,7 @@ class PulsarSlotStore:
         if cold_names and f.contiguous:
             cold_experts = [j for j, _ in reads if not hot[j]]
             runs = f.merged_ranges(cold_experts, self.coalesce_gap_experts)
-            bufs = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool)   # all runs' chunks in flight at once
+            bufs, pieces = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool, chunk=self.read_chunk_bytes)   # all runs' chunks in flight at once
             for (lo, hi, js), buf in zip(runs, bufs):
                 for j in js:
                     for p in _PROJS:
@@ -405,21 +418,25 @@ class PulsarSlotStore:
                             n = f"e{j}.{p}.{k}"
                             if n in f.entries:
                                 arrays[n] = f.to_mx(n, f.slice_np(buf, lo, n))
-            self._coalesced_ranges += len(runs)
+                self._requested_read_bytes += hi - lo
+                self._overread_bytes += (hi - lo) - sum(f.expert_range(j)[1] - f.expert_range(j)[0] for j in js)
+            self._coalesced_ranges += len(runs); self._chunks_read += pieces
         elif n_cold >= self.bulk_min:
             lazy = mx.load(self._paths[lid])          # one header parse; MLX evaluates the loads together (parallel I/O)
             for n in cold_names:
                 arrays[n] = lazy.pop(n)
             del lazy
-            self._bulk_reads += n_cold
+            self._bulk_reads += n_cold; self._requested_read_bytes += n_cold * self.expert_bytes
         elif cold_names:
             cold = dict(zip(cold_names, self._pool.map(f.read_cold_np, cold_names)))
             for n in cold_names:
                 arrays[n] = f.to_mx(n, cold[n])
+            self._pool_reads += n_cold; self._requested_read_bytes += n_cold * self.expert_bytes
         for j, n in names:
             if n not in arrays:
                 arrays[n] = f.read_hot(n)
-        self._hot_reads += sum(1 for v in hot.values() if v); self._cold_reads += sum(1 for v in hot.values() if not v)
+        n_hot = sum(1 for v in hot.values() if v)
+        self._hot_reads += n_hot; self._cold_reads += n_cold; self._hot_copy_bytes += n_hot * self.expert_bytes
         return arrays
 
     def _write_slots(self, L: _LayerSlots, reads, arrays: dict) -> None:
@@ -465,7 +482,10 @@ class PulsarSlotStore:
         return {"policy": self.policy, "budget_bytes": self._budget, "capacity_per_layer": self.capacity, "expert_bytes": self.expert_bytes,
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
-                "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "coalesced_ranges": self._coalesced_ranges, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned,
+                "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes,
+                "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
+                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
@@ -526,6 +546,7 @@ class PulsarSwitchGLU:
         do_sort = slots.size >= 64
         idx, inv_order = slots, None
         if do_sort:
+            self.store._sorted_gathers += 1
             M = slots.shape[-1]
             flat = slots.flatten()
             order = mx.argsort(flat)

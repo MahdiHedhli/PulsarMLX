@@ -13,7 +13,12 @@ inside fill at read-done (before the first write), projection-written, before-ev
 miss and the first eviction of every case: a read-phase fault must leave the model's post-fault stats and slot map and
 the retry must reproduce the model's outputs, stats and slot map (never a false hit); a write-phase fault must poison
 the store (every later call, and the warm-state save, rejected with STORE_POISONED). Every structural mutant also runs
-the fault schedule: the three residency-commit mutants of matrix revision 4 are killed there.
+the fault schedule: the three residency-commit mutants of matrix revision 4 are killed there. Graph 33: fixture v2
+(twelve experts, top-8 routing, 56/64/72-index calls, capacity 6, bf16 case) runs the same four passes with a 4096-byte
+read chunk and asserts the store's cumulative counters against oracle.predict_paths on every call (waves, sorted
+gathers, bulk / pool / coalesced / chunked reads, logical / requested / over-read / hot-copy bytes), so the sorted
+gather, the bulk mx.load branch and multi-run, multi-chunk coalesced reads are shown to have RUN; seven more mutants,
+three of which change no value and are killed by the counters alone.
 """
 import hashlib
 import json
@@ -22,6 +27,8 @@ import resource
 import unittest
 
 FIXTURE = 'fixtures/research/glm53-flash-decoder-slot-store-v1/fixtures.json'
+FIXTURE_V2 = 'fixtures/research/glm53-flash-decoder-slot-store-v2/fixtures.json'
+_MX_DTYPE = {'float32': 'float32', 'bfloat16': 'bfloat16', 'float16': 'float16'}
 STORE = 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py'
 REPACK = 'scripts/research/glm53_flash/dogfood/repack_v2.py'
 
@@ -63,8 +70,10 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     repack_raw = context.read_verified(root / REPACK); repack = load_repack(repack_raw.decode())
     tol = fixture['tolerances']; matrix = fixture['expected_kill_matrix']
     cases = {c['fixture_id']: c for c in fixture['cases']}; expected = fixture['expected']
+    raw2 = context.read_verified(root / FIXTURE_V2); fixture2 = json.loads(raw2)
+    cases2 = {c['fixture_id']: c for c in fixture2['cases']}; expected2 = fixture2['expected']; matrix2 = fixture2['expected_kill_matrix']; runtime2 = fixture2['runtime']
     work = context.roots['work'] / 'slot'
-    emit('slot_binding', fixture_sha256=digest(raw), store_sha256=digest(store_raw), repack_sha256=digest(repack_raw), backend=backend, actual_default_device=str(mx.default_device()), store_root='work/slot')
+    emit('slot_binding', fixture_sha256=digest(raw), fixture_v2_sha256=digest(raw2), store_sha256=digest(store_raw), repack_sha256=digest(repack_raw), backend=backend, actual_default_device=str(mx.default_device()), store_root='work/slot')
 
     def contiguous_copy(case, directory):
         """repack_v2 of the tiny store into <directory>-contig; must verify contiguous while the source must not."""
@@ -226,7 +235,134 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
         record['pass'] = ok
         return record, ok
 
-    observations, control_rows, fault_rows = [], [], []
+    # --- fixture v2 (graph 33) -------------------------------------------------------------------------------------
+    def write_store_v2(case, directory, mx):
+        """The repack format with the case's scales dtype (float32 or bfloat16); MLX's writer picks the (hash) order."""
+        import os
+        (directory / 'experts').mkdir(parents=True, exist_ok=True)
+        sd = getattr(mx, _MX_DTYPE[case['config'].get('scales_dtype', 'float32')])
+        layer = {}
+        for p in ('gate', 'up', 'down'):
+            for j, pack in enumerate(case['quantized'][p]):
+                layer[f'e{j}.{p}_proj.weight'] = mx.array(pack['words'], dtype=mx.uint32)
+                layer[f'e{j}.{p}_proj.scales'] = mx.array(pack['scales'], dtype=mx.float32).astype(sd)
+                layer[f'e{j}.{p}_proj.biases'] = mx.array(pack['biases'], dtype=mx.float32).astype(sd)
+        mx.eval(list(layer.values()))
+        mx.save_safetensors(str(directory / 'experts' / f"layer_{case['layer_id']:04d}.safetensors"), layer, metadata={'format': 'mlx'})
+        (directory / 'offload_index.json').write_text(json.dumps({'layers': [case['layer_id']], 'num_experts': case['config']['num_experts']}, indent=2))
+        return sorted(str(p.relative_to(directory)) for p in directory.rglob('*') if p.is_file())
+
+    COUNTERS = ('waves', 'sorted_gathers', 'hits', 'misses', 'evictions', 'resident_experts', 'hot_reads', 'cold_reads', 'bulk_reads', 'pool_reads', 'coalesced_ranges', 'chunks_read',
+                'logical_admitted_bytes', 'requested_read_bytes', 'overread_bytes', 'hot_copy_bytes', 'read_chunk_bytes')
+
+    def counter_problems(st, pred, stats_exp, layout, force_cold):
+        """Cumulative counters after a call vs the prediction; returns the list of (counter, got, expected)."""
+        problems = []
+        want = {'waves': pred['waves'], 'sorted_gathers': pred['sorted_gathers'], 'logical_admitted_bytes': pred['logical_admitted_bytes']}
+        if force_cold:
+            want['hot_reads'] = 0; want['hot_copy_bytes'] = 0
+            if layout == 'expert-contiguous/1':
+                want.update(pred['contig_cold']); want['bulk_reads'] = 0; want['pool_reads'] = 0
+            else:
+                want.update(pred['hash_cold']); want['coalesced_ranges'] = 0; want['chunks_read'] = 0; want['overread_bytes'] = 0
+        for k, v in want.items():
+            if st[k] != v:
+                problems.append((k, st[k], v))
+        if st['hot_reads'] + st['cold_reads'] != stats_exp['misses']:
+            problems.append(('hot+cold', st['hot_reads'] + st['cold_reads'], stats_exp['misses']))
+        if st['requested_read_bytes'] - st['overread_bytes'] + st['hot_copy_bytes'] != st['logical_admitted_bytes']:
+            problems.append(('requested-overread+hot_copy', st['requested_read_bytes'] - st['overread_bytes'] + st['hot_copy_bytes'], st['logical_admitted_bytes']))
+        return problems
+
+    def make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=False):
+        cfg = case['config']; q = (cfg['group_size'], cfg['bits'], 'affine')
+        store = StoreClass(str(directory), case['budget_bytes'], 0, decay=case['policy']['decay'], decay_every=case['policy']['decay_every'], warm_start=warm_start, read_chunk_bytes=runtime2['read_chunk_bytes'])
+        store.force_cold = force_cold
+        if store.bulk_min != runtime2['bulk_min'] or store.coalesce_gap_experts != runtime2['coalesce_gap_experts']:
+            raise RuntimeError('RUNTIME_DEFAULTS_DIFFER_FROM_FIXTURE')
+        module = ModuleClass(store, case['layer_id'], q, q, q, activation=activation(cfg['swiglu_limit']))
+        return store, module
+
+    def evaluate_v2_one(StoreClass, ModuleClass, activation, case, directory, force_cold):
+        import os
+        ws = directory / 'pulsar-slot-warm-state.json'
+        if ws.exists():
+            os.remove(ws)
+        store, module = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold)
+        exp = expected2[case['fixture_id']]; xdt = getattr(mx, _MX_DTYPE[case['config'].get('activation_dtype', 'float32')])
+        rows = []; problems = []
+        for ci, (call, e, pred) in enumerate(zip(case['schedule'], exp['calls'], exp['paths']['per_call'])):
+            ts = call['tokens']
+            x = mx.array([[case['x'][t] for t in ts]], dtype=mx.float32).astype(xdt); inds = mx.array([[case['indices'][t] for t in ts]], dtype=mx.int32)
+            y = module(x, inds); mx.eval(y); st = store.stats()
+            row = {'call': ci, 'tokens': len(ts), 'indices': pred['indices'], 'output': y.astype(mx.float32)[0].tolist(), 'stats': {k: st[k] for k in ('hits', 'misses', 'evictions', 'resident_experts', 'resident_bytes')},
+                   'slot_of': {str(k): v for k, v in store.slot_of(case['layer_id']).items()}, 'counters': {k: st[k] for k in COUNTERS}}
+            row['value_error'] = max_error(row['output'], e['outputs'])
+            row['policy_ok'] = row['stats'] == e['stats'] and row['slot_of'] == e['slot_of']
+            row['counter_problems'] = counter_problems(st, pred, e['stats'], st['layout'], force_cold)
+            rows.append(row)
+        final = store.stats()
+        store.save_warm_state()                       # the warm state re-admits the model's assignment (as in v1)
+        fresh, _ = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=True)
+        warm = {str(k): v for k, v in fresh.slot_of(case['layer_id']).items()}
+        final['warm_ok'] = warm == exp['warm_state']['slot_on_restart'] and fresh.stats()['warm_admitted'] == len(warm)
+        final['warm_readmitted'] = warm
+        return rows, final
+
+    def evaluate_v2(StoreClass, ModuleClass, activation, case, directory):
+        """Four passes (hash / contiguous x resident / forced cold), bit-identical outputs across passes, every check per call."""
+        contig, contig_ok, src_contig = contiguous_copy(case, directory)
+        passes = {}
+        for label, d, fc in (('hash-resident', directory, False), ('hash-cold', directory, True), ('contig-resident', contig, False), ('contig-cold', contig, True)):
+            passes[label] = evaluate_v2_one(StoreClass, ModuleClass, activation, case, d, fc)
+        base_rows = passes['hash-resident'][0]
+        cross = max(max_error(p[0][i]['output'], base_rows[i]['output']) for p in passes.values() for i in range(len(base_rows)))
+        tolerance = case['tolerance']
+        value_err = max(r['value_error'] for rows, _ in passes.values() for r in rows)
+        policy_ok = all(r['policy_ok'] for rows, _ in passes.values() for r in rows)
+        counter_ok = all(not r['counter_problems'] for rows, _ in passes.values() for r in rows)
+        warm_ok = all(st['warm_ok'] for _, st in passes.values())
+        layouts_ok = contig_ok and passes['contig-cold'][1]['layout'] == 'expert-contiguous/1' and passes['hash-cold'][1]['layout'] != 'expert-contiguous/1'
+        reach = {'sorted_gathers': passes['hash-cold'][1]['sorted_gathers'], 'bulk_reads_hash_cold': passes['hash-cold'][1]['bulk_reads'], 'pool_reads_hash_cold': passes['hash-cold'][1]['pool_reads'],
+                 'coalesced_ranges_contig_cold': passes['contig-cold'][1]['coalesced_ranges'], 'chunks_read_contig_cold': passes['contig-cold'][1]['chunks_read'], 'overread_bytes_contig_cold': passes['contig-cold'][1]['overread_bytes'],
+                 'waves': passes['hash-cold'][1]['waves'], 'evictions': passes['hash-cold'][1]['evictions'], 'hot_reads_resident': passes['hash-resident'][1]['hot_reads'], 'cold_reads_resident': passes['hash-resident'][1]['cold_reads']}
+        reached = reach['sorted_gathers'] > 0 and reach['bulk_reads_hash_cold'] > 0 and reach['pool_reads_hash_cold'] > 0 and reach['coalesced_ranges_contig_cold'] > 0 and reach['chunks_read_contig_cold'] > reach['coalesced_ranges_contig_cold'] and reach['waves'] > len(case['schedule']) and reach['evictions'] > 0
+        record = {'fixture_id': case['fixture_id'], 'tolerance': tolerance, 'max_value_error': value_err, 'cross_pass_max_diff': cross, 'policy_ok': policy_ok, 'counters_ok': counter_ok, 'warm_ok': warm_ok,
+                  'warm_readmitted': passes['hash-resident'][1]['warm_readmitted'],
+                  'counter_problems': {label: [(r['call'], r['counter_problems']) for r in rows if r['counter_problems']] for label, (rows, _) in passes.items()},
+                  'layouts_ok': layouts_ok, 'source_not_contiguous': not src_contig, 'reachability': reach, 'reached': reached,
+                  'final_counters': {label: {k: st[k] for k in COUNTERS} for label, (_, st) in passes.items()},
+                  'pass': value_err <= tolerance and cross == 0.0 and policy_ok and counter_ok and warm_ok and layouts_ok and reached}
+        return record
+
+    RECIPES_V2 = [('unsort-omitted', '            y = mx.unflatten(y[inv_order], 0, slots.shape)\n', '            y = mx.unflatten(y, 0, slots.shape)\n'),
+                  ('inverse-permutation-wrong', '            inv_order = mx.argsort(order)\n', '            inv_order = order\n'),
+                  ('sort-threshold-raised', '        do_sort = slots.size >= 64\n', '        do_sort = slots.size >= 1000\n'),
+                  ('slot-map-off-by-one', '        slots = self._layers[lid].expert_to_slot[idx_host]\n', '        slots = (self._layers[lid].expert_to_slot[idx_host] + 1) % self.capacity\n'),
+                  ('chunk-boundary-off-by-one', '        pieces = [(i, off, min(off + chunk, hi - lo)) for i, (lo, hi) in enumerate(ranges) for off in range(0, hi - lo, chunk)]\n',
+                   '        pieces = [(i, off, min(off + chunk - 1, hi - lo)) for i, (lo, hi) in enumerate(ranges) for off in range(0, hi - lo, chunk)]\n'),
+                  ('bulk-threshold-ignored', '        elif n_cold >= self.bulk_min:\n', '        elif False:\n'),
+                  ('coalesce-gap-ignored', '            if runs and lo - runs[-1][1] <= gap_experts * (hi - lo):\n', '            if runs:\n')]
+    POLICY_RECIPES = [('decay-disabled', '                self._counts[k] *= self.decay\n', '                self._counts[k] *= 1.0\n'),
+                      ('tie-break-most-recent', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n', '        return (self._counts.get(key, 0.0), -self._touch.get(key, 0))\n'),
+                      ('warm-state-ignored', '            self._warm_admitted = self._admit_warm_state()\n', '            self._warm_admitted = 0\n'),
+                      ('pin-ignored', '                candidates = [k for k in L.slot_of if k not in pinned]\n', '                candidates = list(L.slot_of)\n')]
+
+    def v2_reason(record):
+        if record['max_value_error'] > record['tolerance'] or record['cross_pass_max_diff'] > 0:
+            return 'value'
+        if not record['policy_ok'] or not record['warm_ok']:
+            return 'policy'
+        if not record['counters_ok']:
+            names = sorted({p[0] for probs in record['counter_problems'].values() for _, ps in probs for p in ps})
+            return 'counter:' + ','.join(names)
+        if not record['layouts_ok']:
+            return 'layout-check'
+        if not record['reached']:
+            return 'not-reached'
+        return 'inactive'
+
+    observations, control_rows, fault_rows, coverage_rows, coverage_controls = [], [], [], [], []
 
     class Slot(unittest.TestCase):
         def test_frozen_reference_recomputes(self):
@@ -234,6 +370,40 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
                 got = slot_oracle.run(case)
                 self.assertEqual(got, {k: v for k, v in expected[fid].items() if k in got}, fid)
             emit('frozen_reference', status='RECOMPUTED_EQUAL', cases=len(cases))
+
+        def test_coverage_v2(self):
+            activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)
+            for fid, case in cases2.items():
+                got = slot_oracle.run(case)
+                self.assertEqual(got, {k: v for k, v in expected2[fid].items() if k in got}, fid)
+                self.assertEqual(slot_oracle.predict_paths(case, expected2[fid], runtime2), expected2[fid]['paths'], fid)
+                directory = work / ('v2-' + fid); files = write_store_v2(case, directory, mx)
+                record = evaluate_v2(StoreClass, ModuleClass, activation, case, directory); record['store_files'] = files
+                coverage_rows.append(record); emit('slot_coverage_v2', **record)
+                self.assertTrue(record['pass'], json.dumps(record))
+
+        def test_coverage_controls_v2(self):
+            self.assertEqual(sorted(r[0] for r in RECIPES_V2 + POLICY_RECIPES), sorted(matrix2['matrix']))
+            activation = activation_class()
+            for label, before, after in RECIPES_V2 + POLICY_RECIPES:
+                self.assertEqual(store_text.count(before), 1, label)
+                MutantStore, MutantModule = load_runtime(store_text.replace(before, after, 1))
+                expected_reason = matrix2['structural_mutants'].get(label, {}).get('expected_reason', 'policy')
+                results = []
+                for expected_cell, fid in zip(matrix2['matrix'][label], matrix2['fixtures']):
+                    case = cases2[fid]; directory = work / ('v2-' + fid); write_store_v2(case, directory, mx)
+                    try:
+                        record = evaluate_v2(MutantStore, MutantModule, activation, case, directory)
+                        reason = v2_reason(record); observed = 'INACTIVE' if reason == 'inactive' else 'KILL'
+                    except (RuntimeError, ValueError, TypeError, KeyError, IndexError, OSError) as exc:
+                        observed, reason = 'KILL', 'rejected:' + type(exc).__name__
+                    category = reason.split(':')[0]
+                    results.append({'fixture_id': fid, 'observed': observed, 'expected_cell': expected_cell, 'reason': reason, 'expected_reason': expected_reason,
+                                    'cell_pass': observed == expected_cell and (expected_reason == 'policy' or category == expected_reason)})
+                row = {'label': label, 'results': results, 'all_cells_pass': all(r['cell_pass'] for r in results)}
+                coverage_controls.append(row); emit('slot_coverage_control_v2', **row)
+                for r in results:
+                    self.assertTrue(r['cell_pass'], f"{label}: {r}")
 
         def test_fault_injection(self):
             activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)
@@ -298,8 +468,8 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     ids = [t._testMethodName for t in suite]
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     context.verify()
-    emit('slot_summary', backend=backend, observations=observations, controls=control_rows, fault_injection=fault_rows,
-         scope='PULSAR_SLOT_STORE_AND_SWITCH_OVER_FROZEN_STORE; values vs graph-18 reference incl. wave split; slots and policy vs stdlib model; warm state; both layouts and both residency modes bit-identical; fault injection: read-phase retry reproduces the model, write-phase poisons; no throughput claim')
+    emit('slot_summary', backend=backend, observations=observations, controls=control_rows, fault_injection=fault_rows, coverage_v2=coverage_rows, coverage_controls_v2=coverage_controls,
+         scope='PULSAR_SLOT_STORE_AND_SWITCH_OVER_FROZEN_STORE; values vs graph-18 reference incl. wave split; slots and policy vs stdlib model; warm state; both layouts and both residency modes bit-identical; fault injection: read-phase retry reproduces the model, write-phase poisons; fixture v2: sorted gather, bulk, pool, multi-run multi-chunk coalesced reads reached and counted per call; no throughput claim')
     emit('result', status='PASS' if result.wasSuccessful() and not result.skipped else 'FAIL', test_ids=ids,
          tests_run=result.testsRun, failures=len(result.failures), errors=len(result.errors), skips=len(result.skipped),
          peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)

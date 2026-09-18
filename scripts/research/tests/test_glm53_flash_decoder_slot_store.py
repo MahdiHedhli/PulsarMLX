@@ -13,7 +13,13 @@ sys.path.insert(0, str(ROOT))
 from scripts.research.glm53_flash.decoder_slot_store import oracle as slot_oracle  # noqa: E402
 from scripts.research.glm53_flash.decoder_slot_store import generate_fixtures as generator  # noqa: E402
 
+from scripts.research.glm53_flash.decoder_slot_store import generate_fixtures_v2 as generator_v2  # noqa: E402
+
 FIXTURE = ROOT / 'fixtures/research/glm53-flash-decoder-slot-store-v1/fixtures.json'
+FIXTURE_V2 = ROOT / 'fixtures/research/glm53-flash-decoder-slot-store-v2/fixtures.json'
+NEEDLES_V2 = ('            y = mx.unflatten(y[inv_order], 0, slots.shape)\n', '            inv_order = mx.argsort(order)\n', '        do_sort = slots.size >= 64\n',
+              '        slots = self._layers[lid].expert_to_slot[idx_host]\n', '        pieces = [(i, off, min(off + chunk, hi - lo)) for i, (lo, hi) in enumerate(ranges) for off in range(0, hi - lo, chunk)]\n',
+              '        elif n_cold >= self.bulk_min:\n', '            if runs and lo - runs[-1][1] <= gap_experts * (hi - lo):\n')
 STORE = ROOT / 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py'
 NEEDLES = ('                self._counts[k] *= self.decay\n', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n',
            '            self._warm_admitted = self._admit_warm_state()\n', '                candidates = [k for k in L.slot_of if k not in pinned]\n',
@@ -86,6 +92,49 @@ class SlotStoreOffline(unittest.TestCase):
         self.assertNotIn('mlx_vlm', top_level)   # the store and module depend on mlx only; mlx_vlm appears only inside patch_model_slots
         inside = [n for f in tree.body if isinstance(f, ast.FunctionDef) and f.name == 'patch_model_slots' for n in ast.walk(f) if isinstance(n, ast.ImportFrom) and n.module.startswith('mlx_vlm')]
         self.assertEqual(len(inside), 1)
+
+    def test_fixture_v2_recomputes_and_reaches_every_path(self):
+        """Graph 33: values/policy from the slot model, the read-path predictions from predict_paths, the reachability constraints
+        of the generator (56/64/72-index calls, evictions, two waves, bulk and pool waves, >= 2 coalesced runs, multi-chunk runs),
+        the bf16 case's inputs bf16-representable, the policy cells from the oracle variants, the seven structural mutants and
+        their needles."""
+        fx = json.loads(FIXTURE_V2.read_bytes()); runtime = fx['runtime']
+        self.assertEqual(sorted(c['fixture_id'] for c in fx['cases']), ['slot2-4bit-g32-bf16', 'slot2-4bit-g32-f32', 'slot2-8bit-g32-f32'])
+        for case in fx['cases']:
+            exp = fx['expected'][case['fixture_id']]; got = slot_oracle.run(case)
+            self.assertEqual(got, {k: v for k, v in exp.items() if k in got})
+            self.assertEqual(slot_oracle.predict_paths(case, exp, runtime), exp['paths'])
+            nbytes = slot_oracle.expert_bytes_v2(case['config'])
+            self.assertEqual(exp['capacity'], generator_v2.CAPACITY); self.assertEqual(case['budget_bytes'], generator_v2.CAPACITY * nbytes)
+            reach = generator_v2.reachability(exp, nbytes)
+            self.assertTrue(all(reach.values()), reach); self.assertEqual(reach, exp['reachability'])
+            self.assertEqual(len(case['indices'][0]), 8)
+            last = exp['paths']['per_call'][-1]
+            self.assertGreater(last['sorted_gathers'], 0); self.assertGreater(last['hash_cold']['bulk_reads'], 0); self.assertGreater(last['hash_cold']['pool_reads'], 0)
+            self.assertGreater(last['contig_cold']['chunks_read'], last['contig_cold']['coalesced_ranges']); self.assertGreater(last['contig_cold']['overread_bytes'], 0)
+            self.assertEqual(last['hash_cold']['requested_read_bytes'], last['logical_admitted_bytes'])
+            self.assertEqual(last['contig_cold']['requested_read_bytes'] - last['contig_cold']['overread_bytes'], last['logical_admitted_bytes'])
+            self.assertEqual(case['tolerance'], generator_v2.TOL[case['config']['scales_dtype']])
+            if case['config']['scales_dtype'] == 'bfloat16':
+                for row in case['x']:
+                    self.assertTrue(all(generator_v2.bf16(v) == v for v in row))
+                for p in ('gate', 'up', 'down'):
+                    for pack in case['quantized'][p]:
+                        self.assertTrue(all(generator_v2.bf16(v) == v for row in pack['scales'] + pack['biases'] for v in row))
+        matrix = fx['expected_kill_matrix']
+        text = Path(slot_oracle.__file__).read_text()
+        predicted = generator.predicted_cells(fx['cases'], fx['expected'], {k: (v['before'], v['after']) for k, v in matrix['oracle_variants'].items()}, text)
+        for label in matrix['structural_mutants']:
+            predicted[label] = ['KILL' for _ in fx['cases']]
+        self.assertEqual(predicted, matrix['matrix'])
+        self.assertEqual(sorted(matrix['structural_mutants']), sorted(generator_v2.STRUCTURAL))
+        self.assertEqual({k: v['expected_reason'] for k, v in matrix['structural_mutants'].items() if v['expected_reason'] == 'counter'},
+                         {'sort-threshold-raised': 'counter', 'bulk-threshold-ignored': 'counter', 'coalesce-gap-ignored': 'counter'})
+        store = STORE.read_text()
+        for needle in NEEDLES_V2:
+            self.assertEqual(store.count(needle), 1, needle)
+        for k in ('logical_admitted_bytes', 'requested_read_bytes', 'overread_bytes', 'hot_copy_bytes', 'sorted_gathers', 'chunks_read', 'pool_reads'):
+            self.assertIn(f'"{k}"', store)
 
 
 if __name__ == '__main__':
