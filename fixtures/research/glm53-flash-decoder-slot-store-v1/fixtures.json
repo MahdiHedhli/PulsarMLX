@@ -67416,8 +67416,17 @@
    "slot-8bit-g32"
   ],
   "frozen_before_tests": true,
+  "graph29": "revision 3 adds the two layout mutants (graph 29: expert-contiguous repack + coalesced cold reads); every case now runs in both layouts and both residency modes and must agree bit for bit",
   "matrix": {
+   "coalesce-offset-wrong": [
+    "KILL",
+    "KILL"
+   ],
    "decay-disabled": [
+    "KILL",
+    "KILL"
+   ],
+   "layout-flag-ignored": [
     "KILL",
     "KILL"
    ],
@@ -67471,7 +67480,7 @@
    }
   },
   "prospective_from_oracle_variants": true,
-  "revision": 2,
+  "revision": 3,
   "schedule_search": {
    "attempt": 2714,
    "policy": {
@@ -67481,8 +67490,16 @@
    "schedule_length": 13,
    "seed": "0x20260917e1"
   },
-  "schema": "flash-slot-store-expected-kill-matrix/2",
+  "schema": "flash-slot-store-expected-kill-matrix/3",
   "structural_mutants": {
+   "coalesce-offset-wrong": {
+    "expected_reason": "value",
+    "kills_on": "the first coalesced cold read (contiguous layout, forced cold): tensors sliced one byte off"
+   },
+   "layout-flag-ignored": {
+    "expected_reason": "rejected-or-value",
+    "kills_on": "the hash-ordered layout read as contiguous (forced cold): expert ranges are not contiguous"
+   },
    "map-not-refreshed": {
     "expected_reason": "rejected-or-value",
     "kills_on": "the first miss (the GPU slot map is not rebuilt after reads: the gather sees stale slots)"
