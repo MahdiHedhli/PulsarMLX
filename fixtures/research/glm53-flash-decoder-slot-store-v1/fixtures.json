@@ -62430,6 +62430,12 @@
      "wave_evictions": [
       0
      ],
+     "wave_reads": [
+      [
+       0,
+       2
+      ]
+     ],
      "waves": [
       [
        0,
@@ -62603,6 +62609,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -62783,6 +62792,12 @@
      "wave_evictions": [
       2
      ],
+     "wave_reads": [
+      [
+       1,
+       3
+      ]
+     ],
      "waves": [
       [
        1,
@@ -62962,6 +62977,12 @@
      "wave_evictions": [
       2
      ],
+     "wave_reads": [
+      [
+       0,
+       2
+      ]
+     ],
      "waves": [
       [
        0,
@@ -63139,6 +63160,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       3
+      ]
      ],
      "waves": [
       [
@@ -63318,6 +63344,11 @@
      "wave_evictions": [
       1
      ],
+     "wave_reads": [
+      [
+       1
+      ]
+     ],
      "waves": [
       [
        1,
@@ -63493,6 +63524,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -63672,6 +63706,11 @@
      "wave_evictions": [
       1
      ],
+     "wave_reads": [
+      [
+       2
+      ]
+     ],
      "waves": [
       [
        2,
@@ -63847,6 +63886,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -64026,6 +64068,11 @@
      "wave_evictions": [
       1
      ],
+     "wave_reads": [
+      [
+       1
+      ]
+     ],
      "waves": [
       [
        1,
@@ -64204,6 +64251,12 @@
      ],
      "wave_evictions": [
       2
+     ],
+     "wave_reads": [
+      [
+       0,
+       2
+      ]
      ],
      "waves": [
       [
@@ -64658,6 +64711,15 @@
       1,
       2
      ],
+     "wave_reads": [
+      [
+       1
+      ],
+      [
+       2,
+       3
+      ]
+     ],
      "waves": [
       [
        0,
@@ -64839,6 +64901,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       1
+      ]
      ],
      "waves": [
       [
@@ -65045,6 +65112,12 @@
      "wave_evictions": [
       0
      ],
+     "wave_reads": [
+      [
+       2,
+       3
+      ]
+     ],
      "waves": [
       [
        2,
@@ -65218,6 +65291,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -65396,6 +65472,11 @@
      "wave_evictions": [
       1
      ],
+     "wave_reads": [
+      [
+       0
+      ]
+     ],
      "waves": [
       [
        0,
@@ -65572,6 +65653,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       3
+      ]
      ],
      "waves": [
       [
@@ -65750,6 +65836,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       1
+      ]
      ],
      "waves": [
       [
@@ -65930,6 +66021,12 @@
      "wave_evictions": [
       2
      ],
+     "wave_reads": [
+      [
+       0,
+       2
+      ]
+     ],
      "waves": [
       [
        0,
@@ -66105,6 +66202,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -66285,6 +66385,12 @@
      "wave_evictions": [
       2
      ],
+     "wave_reads": [
+      [
+       1,
+       3
+      ]
+     ],
      "waves": [
       [
        1,
@@ -66460,6 +66566,9 @@
      ],
      "wave_evictions": [
       0
+     ],
+     "wave_reads": [
+      []
      ],
      "waves": [
       [
@@ -66640,6 +66749,12 @@
      "wave_evictions": [
       2
      ],
+     "wave_reads": [
+      [
+       0,
+       2
+      ]
+     ],
      "waves": [
       [
        0,
@@ -66817,6 +66932,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       3
+      ]
      ],
      "waves": [
       [
@@ -67272,6 +67392,16 @@
       2,
       2
      ],
+     "wave_reads": [
+      [
+       0,
+       1
+      ],
+      [
+       2,
+       3
+      ]
+     ],
      "waves": [
       [
        0,
@@ -67453,6 +67583,11 @@
      ],
      "wave_evictions": [
       1
+     ],
+     "wave_reads": [
+      [
+       0
+      ]
      ],
      "waves": [
       [

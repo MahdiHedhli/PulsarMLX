@@ -56,7 +56,7 @@ def producer_pass(stdout, stderr, stop, operation):
         lines = stdout.decode('utf-8').splitlines()
         events = [strict(line) for line in lines if line.startswith('{')]
         results = [event for event in events if event.get('event') == 'result']
-        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 6, 'moe': 5, 'sparse': 4, 'stack': 4, 'sparse-decode': 3, 'stack-decode': 3, 'sanitize': 3, 'quantized': 4, 'topology': 2, 'linear-long': 3, 'offload': 3, 'load-offload': 2, 'quantized-load': 3, 'offload-pulsar': 3, 'slot-store': 4}[operation]
+        expected_tests = {'case': 1, 'matrix': 4, 'discrimination': 4, 'convolution': 6, 'cache': 8, 'recurrent': 6, 'dispatch': 6, 'linear': 5, 'layer': 6, 'moe': 5, 'sparse': 4, 'stack': 4, 'sparse-decode': 3, 'stack-decode': 3, 'sanitize': 3, 'quantized': 4, 'topology': 2, 'linear-long': 3, 'offload': 3, 'load-offload': 2, 'quantized-load': 3, 'offload-pulsar': 3, 'slot-store': 6}[operation]
         if len(results) != 1 or strict(lines[-1]) != results[0]:
             return False
         result = results[0]
@@ -103,7 +103,7 @@ def producer_pass(stdout, stderr, stop, operation):
             return False
         if operation == 'offload-pulsar' and result.get('test_ids') != ['test_frozen_reference_recomputes', 'test_lfu_store', 'test_structural_controls']:
             return False
-        if operation == 'slot-store' and result.get('test_ids') != ['test_fault_injection', 'test_frozen_reference_recomputes', 'test_slot_store', 'test_structural_controls']:
+        if operation == 'slot-store' and result.get('test_ids') != ['test_coverage_controls_v2', 'test_coverage_v2', 'test_fault_injection', 'test_frozen_reference_recomputes', 'test_slot_store', 'test_structural_controls']:
             return False
         if operation == 'convolution' and result.get('test_ids') != [
                 'test_classifier_wrong_type_and_message', 'test_interleaved_and_new_cache',

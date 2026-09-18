@@ -34,7 +34,7 @@ def run(case, fault=None):
     """fault = {'call': c, 'wave': w} models a read-phase fault on wave w of call c (the first attempt raises, the call
     is retried whole); the failing call's record carries 'after_fault' (stats and slot map observed after the raise)
     and 'attempts': 2. Without a fault this is the graph-24 model unchanged."""
-    cfg = case['config']; nbytes = base.expert_bytes(cfg)
+    cfg = case['config']; nbytes = expert_bytes_v2(cfg) if 'scales_dtype' in cfg else base.expert_bytes(cfg)
     values = _values(case)
     decay, decay_every, budget = case['policy']['decay'], case['policy']['decay_every'], case['budget_bytes']
     capacity = budget // nbytes
@@ -75,11 +75,11 @@ def run(case, fault=None):
         tokens = call['tokens']
         uniq = sorted({j for t in tokens for j in case['indices'][t]})
         waves = [uniq[i:i + capacity] for i in range(0, len(uniq), capacity)]
-        reads = []; after_fault = None; attempts = 1; wave_evictions = []
+        reads = []; after_fault = None; attempts = 1; wave_evictions = []; wave_reads = []
         for wi, wave in enumerate(waves):
             ev0 = evictions
             reserved = touch_wave(wave)
-            wave_evictions.append(evictions - ev0)
+            wave_evictions.append(evictions - ev0); wave_reads.append([j for j, _ in reserved])
             if fault is not None and fault['call'] == ci and fault['wave'] == wi:
                 # read-phase fault: reservations dropped, slots back to the front of the free list, the call raises
                 free[0:0] = [s for _, s in reserved]; fill_failures += 1
@@ -90,7 +90,7 @@ def run(case, fault=None):
                 slot_of[j] = s                       # commit after materialization
             reads.extend(j for j, _ in reserved)
         rows = [[values['tokens'][t][k]['output'] for k in range(len(case['indices'][t]))] for t in tokens]
-        record = {'tokens': tokens, 'unique': uniq, 'waves': waves, 'reads': reads, 'wave_evictions': wave_evictions, 'stats': stats(),
+        record = {'tokens': tokens, 'unique': uniq, 'waves': waves, 'reads': reads, 'wave_evictions': wave_evictions, 'wave_reads': wave_reads, 'stats': stats(),
                   'resident_set': sorted(slot_of), 'slot_of': {str(k): v for k, v in sorted(slot_of.items())},
                   'counts': {str(k): round(v, 6) for k, v in sorted(counts.items())}, 'outputs': rows}
         if after_fault is not None:
@@ -116,3 +116,63 @@ def fault_points(expected):
     if len(points) != 2:
         raise ValueError('FAULT_POINTS_MISSING')
     return points
+
+
+# --- graph 33: fixture v2 read-path predictions ------------------------------------------------------------------
+_SCALE_BYTES = {'float32': 4, 'bfloat16': 2, 'float16': 2}
+
+
+def expert_bytes_v2(cfg):
+    """Bytes of one expert's nine tensors as the repack writes them (weights uint32; scales/biases in cfg['scales_dtype'])."""
+    per_word = 32 // cfg['bits']; g = cfg['group_size']; D, I = cfg['hidden'], cfg['intermediate']
+    sb = _SCALE_BYTES[cfg.get('scales_dtype', 'float32')]
+
+    def proj(out, inp):
+        return out * (inp // per_word) * 4 + 2 * out * (inp // g) * sb
+    return proj(I, D) + proj(I, D) + proj(D, I)
+
+
+def merge_runs(experts, gap_experts):
+    """Sorted cold experts -> runs [(first, last, [experts])] merged while the index gap is at most gap_experts
+    (equal-size experts in numeric order: lo_j - hi_prev = (j - prev - 1) x expert bytes <= gap x expert bytes)."""
+    runs = []
+    for j in sorted(experts):
+        if runs and j - runs[-1][1] - 1 <= gap_experts:
+            runs[-1][1] = j; runs[-1][2].append(j)
+        else:
+            runs.append([j, j, [j]])
+    return [(a, b, js) for a, b, js in runs]
+
+
+def predict_paths(case, expected, runtime):
+    """Per call, CUMULATIVE store counters the runtime must report: waves and sorted_gathers on every pass; the cold
+    read paths on the forced-cold passes (hash layout: bulk mx.load when a wave's cold experts >= bulk_min, else the
+    preadv pool; contiguous layout: merged runs, chunks of read_chunk_bytes, requested and over-read bytes)."""
+    cfg = case['config']; nbytes = expert_bytes_v2(cfg); K = len(case['indices'][0])
+    chunk, bulk_min, gap, sort_at = runtime['read_chunk_bytes'], runtime['bulk_min'], runtime['coalesce_gap_experts'], runtime['sort_threshold']
+    waves = sorted_gathers = misses = 0
+    h = {'cold_reads': 0, 'bulk_reads': 0, 'pool_reads': 0, 'requested_read_bytes': 0}
+    c = {'cold_reads': 0, 'coalesced_ranges': 0, 'chunks_read': 0, 'requested_read_bytes': 0, 'overread_bytes': 0}
+    per_call = []
+    for call in expected['calls']:
+        n_idx = len(call['tokens']) * K
+        waves += len(call['waves'])
+        if n_idx >= sort_at:
+            sorted_gathers += len(call['waves'])
+        for wr in call['wave_reads']:
+            n_cold = len(wr); misses += n_cold
+            if not n_cold:
+                continue
+            h['cold_reads'] += n_cold; h['requested_read_bytes'] += n_cold * nbytes
+            if n_cold >= bulk_min:
+                h['bulk_reads'] += n_cold
+            else:
+                h['pool_reads'] += n_cold
+            c['cold_reads'] += n_cold
+            for a, b, js in merge_runs(wr, gap):
+                run_bytes = (b - a + 1) * nbytes
+                c['coalesced_ranges'] += 1; c['chunks_read'] += -(-run_bytes // chunk)
+                c['requested_read_bytes'] += run_bytes; c['overread_bytes'] += run_bytes - len(js) * nbytes
+        per_call.append({'waves': waves, 'sorted_gathers': sorted_gathers, 'sorted_this_call': n_idx >= sort_at, 'indices': n_idx,
+                         'logical_admitted_bytes': misses * nbytes, 'hash_cold': dict(h), 'contig_cold': dict(c)})
+    return {'expert_bytes': nbytes, 'runtime': dict(runtime), 'per_call': per_call}
