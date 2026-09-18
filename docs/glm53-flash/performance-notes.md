@@ -314,6 +314,46 @@ side-by-side sample outputs; neither was delivered — the deviation is
 recorded, and a multi-domain slice with standard errors is the next step
 before any quality claim is made in public).
 
+## 3.9 Nine-domain quality slice with error bars (graph 28)
+
+Teacher-forced NLL per token on nine passages (own text plus public-domain
+excerpts and this repository's code; `fixtures/research/glm53-flash-quality-
+slice-v1/passages.json`, sha `cc1d3e13…`), one forward per passage:
+
+| Passage (tokens) | Unpruned | REAP37 | REAP50 |
+|---|---|---|---|
+| Austen 1813 (335) | 0.070 | 0.422 | 0.717 |
+| US Constitution (267) | 0.137 | 0.185 | 0.209 |
+| Python, this repo (231) | 1.064 | 2.019 | 2.458 |
+| Math explanation (269) | 0.899 | 0.937 | 1.091 |
+| Dialogue (256) | 1.405 | 1.709 | 1.761 |
+| News report (206) | 1.515 | 1.628 | 1.700 |
+| Storage technical (246) | 1.706 | 2.207 | 2.539 |
+| Biology (203) | 1.300 | 1.486 | 1.717 |
+| French (226) | 1.262 | 2.805 | 3.153 |
+| **Token-weighted NLL (ppl)** | **0.977 (2.66)** | **1.411 (4.10)** | **1.628 (5.09)** |
+| Mean of passage means ± SE | 1.040 ± 0.194 | 1.489 ± 0.282 | 1.705 ± 0.311 |
+| Token-weighted top-1 | 74.7% | 66.5% | 63.6% |
+
+Paired per-passage deltas: REAP37 − unpruned **+0.449 ± 0.167** nats/token
+(t = 2.7), REAP50 − unpruned **+0.665 ± 0.205** (t = 3.2), REAP50 − REAP37
+**+0.217 ± 0.049** (t = 4.4); each pruned build is worse on 9 of 9
+passages. The loss is concentrated where the 65k-token calibration set was
+presumably thin: French (+1.5 / +1.9), code (+0.96 / +1.39), technical
+prose (+0.5 / +0.8); legal and mathematical prose lose almost nothing. The
+near-memorized public-domain texts (Austen 0.07, Constitution 0.14 for the
+unpruned model) show pruning even erodes memorized continuations.
+Practical reading: REAP50 is a latency tier with a real, domain-dependent
+fidelity cost — fine for English prose and reasoning, poor for code and
+other languages; the unpruned paged tier is the fidelity tier.
+
+Method notes: the REAP37 pass from the Promise array ran at 66–90 MB/s
+however the reads were issued (61 KB transfers; `mincore` there reports
+non-resident pages as resident, so the memmap path faulted) — the slice
+finished in 6 minutes once its repack was copied to the internal SSD
+(3.2 GB/s). Paged runs used a 50 GB store; REAP50 resident and paged
+agree bit for bit (graph 27), so the paths compare like with like.
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -335,6 +375,8 @@ before any quality claim is made in public).
 | MTP hidden = post-final-norm | pre-norm stream mean (DeepSeek-V3 convention) | acceptance A/B on three prompts favours post-norm on all three (small margin); kept switchable |
 | Kill switch keyed on compressor/swap-out growth, not free pages | free-pages threshold | free pages hit zero from file cache during any large load (false trigger); compression + swap-outs are the true distress signal; killing at true saturation wedged the host |
 | REAP37 declared paged-only after three loading strategies | NOCACHE loader; more daemons killed | eager and lazy loads both compressed/thrashed on an empty host; the margin would be ~2 GB even if loaded |
+| Quality claims only from the nine-domain paired slice, never the single passage | one-passage indicator | paired deltas with SE across domains; ranking stable 9/9 |
+| Repack v2 writes the safetensors container itself | rely on `mx.save_safetensors` order | MLX's writer follows an unordered map (neither insertion nor sorted order, verified) |
 | Kernel fusion (fewer launches per layer) as the next resident-tier track, not more speculation | more draft tokens; tree drafts | acceptance decays 0.8 → 0.65 → 0.53 by position and the fixed step cost caps every speculative variant near 27–31 tok/s |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
 | Quit the Studio's background apps (Docker VM, Hermes, Codex, Claude, Bark, CC, LM Studio, MEGAsync, Parallels); keep RustDesk; leave NotificationCenter/coreaudiod | kill everything; leave everything | operator's list; ~20 GB freed; the two daemons are system-owned and were only flagged |
