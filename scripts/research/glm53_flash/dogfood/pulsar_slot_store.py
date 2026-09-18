@@ -18,7 +18,10 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
   * prefill takes the same path (no bulk bypass): a chunk pays reads for its misses only;
   * warm state (<offload>/pulsar-slot-warm-state.json: counts, resident set, accesses) re-admits most-frequent
     first per layer into slots 0.., materialized at construction;
-  * the allocator cache is not cleared per eviction (graph 22): a slot write reuses the slot's own buffer;
+  * the allocator cache is not cleared per eviction (graph 22): a slot write reuses the slot's own buffer, but it IS
+    cleared when MLX's cache memory exceeds `cache_clear_threshold_bytes` (default 2 GiB) after a fill: a long prefill
+    through the store stacks tens of GB of freed temporaries otherwise (measured: a 331-token teacher-forced pass
+    reached 117 GB wired on the Studio and wedged the host - graph 27 first contact);
   * reads do not go through mx.load per miss: parsing a layer file's 2,592-tensor header costs 4-5 ms (measured on the
     Studio: ~190 ms per token across 42 layers), so each layer's header is parsed once and misses are read by byte
     range. Measured on the Studio's internal SSD per 14.2 MB expert: a page-cache-resident range copies from a memmap
@@ -146,7 +149,7 @@ class PulsarSlotStore:
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
                  decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
-                 bulk_min: int = 4):
+                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -173,6 +176,8 @@ class PulsarSlotStore:
         self._read_bytes = 0
         self._hot_reads = self._cold_reads = self._bulk_reads = 0
         self.bulk_min = int(bulk_min)
+        self.cache_clear_threshold_bytes = None if cache_clear_threshold_bytes is None else int(cache_clear_threshold_bytes)
+        self._cache_clears = 0
         self._pool = ThreadPoolExecutor(max_workers=max(1, int(read_workers)))
         self._warm_admitted = 0
         if warm_start:
@@ -276,6 +281,9 @@ class PulsarSlotStore:
         mx.eval([t for parts in L.tensors.values() for t in parts])
         self._read_bytes += len(reads) * self.expert_bytes
         self._hot_reads += sum(1 for v in hot.values() if v); self._cold_reads += sum(1 for v in hot.values() if not v)
+        if self.cache_clear_threshold_bytes is not None and mx.get_cache_memory() >= self.cache_clear_threshold_bytes:
+            mx.clear_cache()
+            self._cache_clears += 1
 
     def map_array(self, lid: int):
         import mlx.core as mx
@@ -298,7 +306,7 @@ class PulsarSlotStore:
         return {"policy": self.policy, "budget_bytes": self._budget, "capacity_per_layer": self.capacity, "expert_bytes": self.expert_bytes,
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
-                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "warm_admitted": self._warm_admitted,
+                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
