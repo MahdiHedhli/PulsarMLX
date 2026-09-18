@@ -344,8 +344,14 @@ prose (+0.5 / +0.8); legal and mathematical prose lose almost nothing. The
 near-memorized public-domain texts (Austen 0.07, Constitution 0.14 for the
 unpruned model) show pruning even erodes memorized continuations.
 Practical reading: REAP50 is a latency tier with a real, domain-dependent
-fidelity cost — fine for English prose and reasoning, poor for code and
-other languages; the unpruned paged tier is the fidelity tier.
+fidelity cost; on the one Python and the one French passage evaluated the
+degradation was heaviest, on English prose and reasoning smallest — a
+categorical claim about code or multilingual capability needs several
+passages per domain, which this slice does not have. The unpruned paged
+tier is the fidelity tier. The paired deltas are right-skewed by those two
+passages, so the t-statistics overstate parametric confidence; the
+distribution-free result is the one to quote: each pruned build is worse on
+9 of 9 passages, exact sign-test p = 0.5⁹ ≈ 0.002.
 
 Method notes: the REAP37 pass from the Promise array ran at 66–90 MB/s
 however the reads were issued (61 KB transfers; `mincore` there reports
