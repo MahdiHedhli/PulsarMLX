@@ -308,7 +308,11 @@ kernel compresses the store's own slot tensors rather than drop the mmapped
 expert files' page cache — `F_NOCACHE` on the `preadv` descriptor (added)
 is not enough while the memmaps stay open, so the probe ran at a 15 GB
 budget (the NLL does not depend on the budget; the run took 269 s instead
-of 37 s on the internal SSD).
+of 37 s on the internal SSD). Review caveats: one 331-token passage is a
+directional indicator only (the run card asked for ~600 tokens plus three
+side-by-side sample outputs; neither was delivered — the deviation is
+recorded, and a multi-domain slice with standard errors is the next step
+before any quality claim is made in public).
 
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
