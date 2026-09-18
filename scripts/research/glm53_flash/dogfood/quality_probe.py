@@ -28,7 +28,7 @@ import mlx.core as mx, sys
 if args.offload:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from run_offload import load_offloaded
-    t0 = time.time(); model, processor, _cfg, _store, _eager = load_offloaded(args.model, args.expert_cache_gb, store_policy=args.store, warm_start=False, coalesce_gap_experts=args.coalesce_gap); load_s = time.time() - t0
+    t0 = time.time(); model, processor, _cfg, _store, _eager = load_offloaded(args.model, args.expert_cache_gb, store_policy=args.store, warm_start=False, coalesce_gap_experts=args.coalesce_gap, wire=not args.no_wire); load_s = time.time() - t0
 else:
     from glm53_flash_mlx.load import load
     if not args.no_wire:

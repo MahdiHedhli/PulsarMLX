@@ -104,7 +104,7 @@ class _LayerFile:
     mapping when the range is page-cache resident (copied, then madvise(MADV_DONTNEED) so the pages are not pinned in
     this process: pinned file pages rank above the store's own inactive tensors and the kernel compresses the tensors
     instead of dropping the cache - measured on the Studio), else with preadv into a buffer (thread-pool friendly)."""
-    __slots__ = ("path", "entries", "data_start", "mmap", "base", "fd", "contiguous", "_ranges", "_lock")
+    __slots__ = ("path", "entries", "data_start", "mmap", "base", "fd", "contiguous", "_ranges", "_lock", "alignment_extra")
 
     def __init__(self, path):
         import struct
@@ -119,6 +119,7 @@ class _LayerFile:
         self.fd = None
         self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"
         self._ranges = {}
+        self.alignment_extra = 0      # bytes read beyond the requested ranges to keep F_NOCACHE reads page-aligned
         import threading
         self._lock = threading.Lock()
 
@@ -143,25 +144,34 @@ class _LayerFile:
                 runs.append([lo, hi, [j]])
         return [(lo, hi, js) for lo, hi, js in runs]
 
-    def read_ranges_np(self, ranges, pool=None, chunk: int = 64 << 20):
+    def read_ranges_np(self, ranges, pool=None, chunk: int = 64 << 20, alignment: Optional[list] = None):
         """Merged ranges [(lo, hi), ...] -> one buffer each; every `chunk`-sized piece of every range is dispatched to the
         pool at once, so both a single huge range (a 1.3 GB preadv on one thread measured 3.0 vs 4.6 GB/s for eight
-        threads on the MacBook's NVMe) and many small disjoint runs (sparse decode misses) read in parallel."""
+        threads on the MacBook's NVMe) and many small disjoint runs (sparse decode misses) read in parallel.
+        Every piece is read on PAGE boundaries (unpruned-fidelity G38 first contact: F_NOCACHE only bypasses the page cache
+        for page-aligned I/O, and the expert ranges start after an unaligned header, so the cold reads had been filling
+        the file cache - 3.6 GB per 4 GB file - until the OS compressed the store's own tensors); the exact bytes are
+        copied out of the aligned window, and the extra bytes are counted in `alignment` ([0] += bytes) when given."""
         self._open()
         bufs = [np.empty(hi - lo, dtype=np.uint8) for lo, hi in ranges]
         pieces = [(i, off, min(off + chunk, hi - lo)) for i, (lo, hi) in enumerate(ranges) for off in range(0, hi - lo, chunk)]
 
         def piece(item):
             i, a, b = item; lo = ranges[i][0]
-            got = os.preadv(self.fd, [memoryview(bufs[i])[a:b]], self.data_start + lo + a)
-            if got != b - a:
-                raise IOError(f"SHORT_READ range {lo + a}-{lo + b}: {got}")
-            return got
+            a0 = self.data_start + lo + a; b0 = self.data_start + lo + b
+            pa = a0 // _PAGE * _PAGE; pb = -(-b0 // _PAGE) * _PAGE
+            tmp = np.empty(pb - pa, dtype=np.uint8)
+            got = os.preadv(self.fd, [memoryview(tmp)], pa)
+            if got < b0 - pa:
+                raise IOError(f"SHORT_READ range {lo + a}-{lo + b}: {got} of {b0 - pa} from page {pa}")
+            bufs[i][a:b] = tmp[a0 - pa:b0 - pa]
+            return (pb - pa) - (b - a)
         if pool is not None and len(pieces) > 1:
-            list(pool.map(piece, pieces))
+            extra = sum(pool.map(piece, pieces))
         else:
-            for pc in pieces:
-                piece(pc)
+            extra = sum(piece(pc) for pc in pieces)
+        if alignment is not None:
+            alignment[0] += extra
         return bufs, len(pieces)
 
     def slice_np(self, buf, lo: int, name: str):
@@ -211,14 +221,19 @@ class _LayerFile:
         return arr.view(getattr(mx, mx_dtype)) if mx_dtype != np_dtype else arr
 
     def read_cold_np(self, name):
-        """preadv into a numpy buffer (releases the GIL; safe from a thread); the caller converts."""
+        """Page-aligned preadv into a numpy buffer (releases the GIL; safe from a thread); the caller converts. Returns the
+        exact tensor bytes; the alignment over-read is reported through `self.alignment_extra` when the store reads it."""
         self._open()
         e = self.entries[name]; np_dtype, _ = _SAFETENSORS_DTYPES[e["dtype"]]
         a, b = e["data_offsets"]
-        buf = np.empty(b - a, dtype=np.uint8)
-        got = os.preadv(self.fd, [memoryview(buf)], self.data_start + a)
-        if got != b - a:
-            raise IOError(f"SHORT_READ {name}: {got} of {b - a}")
+        a0 = self.data_start + a; b0 = self.data_start + b
+        pa = a0 // _PAGE * _PAGE; pb = -(-b0 // _PAGE) * _PAGE
+        tmp = np.empty(pb - pa, dtype=np.uint8)
+        got = os.preadv(self.fd, [memoryview(tmp)], pa)
+        if got < b0 - pa:
+            raise IOError(f"SHORT_READ {name}: {got} of {b0 - pa} from page {pa}")
+        buf = np.array(tmp[a0 - pa:b0 - pa])          # exact bytes, own buffer
+        self.alignment_extra += (pb - pa) - (b - a)
         return np.frombuffer(buf, dtype=np_dtype).reshape(e["shape"])
 
     def to_mx(self, name, np_arr):
@@ -285,6 +300,7 @@ class PulsarSlotStore:
         # NOT a physical I/O counter); requested = bytes asked of the file by the cold paths (merged ranges incl. their
         # gaps, per-tensor preadv, bulk mx.load); overread = the gap bytes inside merged ranges; hot_copy = page-cache copies
         self._requested_read_bytes = self._overread_bytes = self._hot_copy_bytes = 0
+        self._alignment_overread_bytes = 0   # page-alignment padding of cold reads (not part of requested/overread: those stay logical)
         self._waves = self._sorted_gathers = 0
         # trace capture (unpruned-fidelity G37): when `trace` is a list, every wave is appended as (phase, layer, wave)
         # so a replay can reproduce the exact request sequence and policy without the model; `phase` is set by the runner
@@ -416,7 +432,9 @@ class PulsarSlotStore:
         if cold_names and f.contiguous:
             cold_experts = [j for j, _ in reads if not hot[j]]
             runs = f.merged_ranges(cold_experts, self.coalesce_gap_experts)
-            bufs, pieces = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool, chunk=self.read_chunk_bytes)   # all runs' chunks in flight at once
+            align = [0]
+            bufs, pieces = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool, chunk=self.read_chunk_bytes, alignment=align)   # all runs' chunks in flight at once
+            self._alignment_overread_bytes += align[0]
             for (lo, hi, js), buf in zip(runs, bufs):
                 for j in js:
                     for p in _PROJS:
@@ -434,10 +452,11 @@ class PulsarSlotStore:
             del lazy
             self._bulk_reads += n_cold; self._requested_read_bytes += n_cold * self.expert_bytes
         elif cold_names:
+            before = f.alignment_extra
             cold = dict(zip(cold_names, self._pool.map(f.read_cold_np, cold_names)))
             for n in cold_names:
                 arrays[n] = f.to_mx(n, cold[n])
-            self._pool_reads += n_cold; self._requested_read_bytes += n_cold * self.expert_bytes
+            self._pool_reads += n_cold; self._requested_read_bytes += n_cold * self.expert_bytes; self._alignment_overread_bytes += f.alignment_extra - before
         for j, n in names:
             if n not in arrays:
                 arrays[n] = f.read_hot(n)
@@ -489,7 +508,7 @@ class PulsarSlotStore:
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
                 "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned,
-                "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes,
+                "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes, "alignment_overread_bytes": self._alignment_overread_bytes,
                 "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
                 "waves": self._waves, "sorted_gathers": self._sorted_gathers, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}

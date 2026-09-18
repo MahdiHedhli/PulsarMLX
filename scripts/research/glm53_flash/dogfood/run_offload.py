@@ -53,10 +53,15 @@ def find_store(language_model):
 
 
 def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_policy: str = 'lru', warm_start: bool = True, cache_clear_threshold_gb=2.0, read_workers: int = 8,
-                   coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20):
-    """Pipenetwork's load_model() replayed on a repack output, with patch_model and the eager-FFN remedy."""
+                   coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, wire: bool = False):
+    """Pipenetwork's load_model() replayed on a repack output, with patch_model and the eager-FFN remedy. `wire` raises
+    MLX's wired limit to the recommended working set before anything is allocated (graph 23's resident remedy; unpruned-
+    fidelity G38: unwired, macOS 26 compressed 11 GiB of the paged store's own tensors during a 70 GB fill)."""
     import mlx.core as mx
     import mlx.nn as nn
+
+    if wire:
+        mx.set_wired_limit(int(mx.device_info()['max_recommended_working_set_size']))
     from glm53_flash_mlx.load import make_config
     from glm53_flash_mlx.glm5_next import Model
     from mlx_vlm.moe_offload import patch_model
@@ -126,6 +131,7 @@ def main():
     ap.add_argument('--reasoning-effort', default=None, help='template Reasoning Effort (low|high); default: template default')
     ap.add_argument('--trace', default=None, help='write the expert request trace (JSON lines: header, then {phase, lid, wave}) for replay_trace.py')
     ap.add_argument('--stream', action='store_true', help='per-token timing (first token, first answer token after </think>, decode tok/s over the last half) via stream_generate')
+    ap.add_argument('--wire', action='store_true', help='wire the MLX buffers up to the recommended working set (prevents the OS from compressing the store)')
     args = ap.parse_args()
 
     import mlx.core as mx
@@ -146,7 +152,7 @@ def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     threshold_gb = None if args.cache_clear_threshold_gb < 0 else args.cache_clear_threshold_gb
     model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_gb, store_policy=args.store, warm_start=not args.no_warm, cache_clear_threshold_gb=threshold_gb, read_workers=args.read_workers,
-                                                            coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20)
+                                                            coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire)
     t_load = time.time() - t1
     print(f'loaded in {t_load:.1f}s; patched layers on the eager FFN path: {eager}; store: {store.stats()}', flush=True)
 
@@ -205,7 +211,7 @@ def main():
         trace_fh.write(json.dumps({'footer': True, 'phase_stats': phase_stats}) + '\n'); trace_fh.close(); store.trace = None
     warm_path = store.save_warm_state() if (args.store in ('pulsar', 'slot') and args.save_warm) else None
     record = {'build': args.build, 'offload': args.offload, 'store_policy': args.store, 'cache_clear_threshold_gb': threshold_gb, 'read_workers': args.read_workers, 'warm_state_saved': warm_path, 'expert_cache_gb': args.expert_cache_gb, 'repack_seconds': round(t_repack, 1),
-              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
+              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'wired': args.wire, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
               'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': max_tokens, 'prefill_step_size': args.prefill_step_size,
               'patched_layers_eager_ffn': eager, 'store_stats': store.stats(), 'peak_memory_bytes': int(mx.get_peak_memory()),
               'device_info': {k: v for k, v in mx.device_info().items() if isinstance(v, (int, str))}, 'prompt': args.prompt, 'text': text,
