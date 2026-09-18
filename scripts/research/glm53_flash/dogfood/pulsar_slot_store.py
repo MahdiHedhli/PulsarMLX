@@ -286,6 +286,10 @@ class PulsarSlotStore:
         # gaps, per-tensor preadv, bulk mx.load); overread = the gap bytes inside merged ranges; hot_copy = page-cache copies
         self._requested_read_bytes = self._overread_bytes = self._hot_copy_bytes = 0
         self._waves = self._sorted_gathers = 0
+        # trace capture (unpruned-fidelity G37): when `trace` is a list, every wave is appended as (phase, layer, wave)
+        # so a replay can reproduce the exact request sequence and policy without the model; `phase` is set by the runner
+        self.trace = None
+        self.phase = None
         # force_cold: treat every read as not resident (skip mincore): the qualification runs the cold paths on files that
         # are page-cache resident, and storage whose residency reporting is unreliable can use it too
         self.force_cold = os.environ.get("PULSAR_SLOT_FORCE_COLD", "") == "1"
@@ -343,6 +347,8 @@ class PulsarSlotStore:
         wave pinned. Returns the reads to perform as [(expert, slot)] in wave order; the caller materializes them."""
         self._usable()
         self._waves += 1
+        if self.trace is not None:
+            self.trace.append((self.phase, lid, list(wave)))
         L = self._layers[lid]
         pinned = set(wave)
         reads = []
@@ -581,14 +587,16 @@ class PulsarSwitchGLU:
         return out
 
 
-def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096, read_workers: int = 8):
+def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096, read_workers: int = 8,
+                      coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20):
     """After mlx_vlm.moe_offload.patch_model has swapped every MoE layer's switch_mlp for an OffloadedSwitchGLU (which
     drops the resident expert parameters and computes the byte budget), replace each with a PulsarSwitchGLU over one
     shared PulsarSlotStore, reusing the upstream module's quant triples and activation."""
     from mlx_vlm.moe_offload import patch_model
 
     upstream = patch_model(model, offload_dir, expert_cache_gb=expert_cache_gb)
-    store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start, read_workers=read_workers)
+    store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start, read_workers=read_workers,
+                            coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes)
     patched = 0
     for layer in model.language_model.model.layers:
         switch = getattr(getattr(layer, "mlp", None), "switch_mlp", None)
