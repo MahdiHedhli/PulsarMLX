@@ -175,4 +175,11 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    than the bulk path (1.2–1.3 vs 2.7 tok/s on the Studio) until rung 3.
    Full numbers, mechanisms and the decision log: `performance-notes.md`.
 3. **Prefill served from the store** instead of bulk-loading every expert
-   file per chunk.
+   file per chunk (partially done in graph 24; the expert-contiguous repack
+   is the remaining structural step).
+4. **MTP speculative decoding (graph 25, `--mtp`)**: `convert_mtp.py` turns
+   the original checkpoint's layer 45 into a 4.27 GB drafter for the pinned
+   runtime; `run_resident.py --mtp <dir> --draft-k 1` and
+   `serve_resident.py --mtp <dir>` (greedy requests). Measured +0–13%
+   (22.5 → 22.3–25.4 tok/s); the resident tier is bound by ~28 ms of kernel
+   dispatch per step, see `performance-notes.md` §3.5.

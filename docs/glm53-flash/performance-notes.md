@@ -195,6 +195,35 @@ against per-expert `quantized_matmul` on the same weights. Treat the two
 paths as numerically equivalent, not bit-identical; compare A/B by logits
 and hit statistics, not by text hash.
 
+## 3.5 Resident decode anatomy and MTP speculation (graph 25)
+
+Step cost by token count on the Studio (REAP50, wired): **28 ms fixed +
+17.5 ms per token** (T=1 45.6, T=2 65, T=4 98, T=8 161 ms). Ablation by
+layer count: **1.0 ms per layer, linear, identical for linear-attention and
+DSA layers, ~0.8 ms outside the layers**. Weight traffic is ~250 MB per
+layer per token (0.3 ms at 800 GB/s), so ~0.7 ms/layer is per-kernel
+dispatch (~40–50 kernels per layer, ~12–15 µs each). What does *not* fix it:
+`mx.compile` of a whole linear layer (46.5 → 45.4 ms; elementwise chains
+are not the cost), `mx.async_eval` pipelining (→ 43.6 ms: CPU-side work is
+~3 ms), and the FFN-block compile the runtime already does (3%). A second
+batch row costs 21 ms like a second token, so it is GPU-side execution of
+many small kernels. The only way past it is fewer kernels per layer.
+
+**MTP speculative decoding** (the checkpoint's own next-token layer,
+converted from the original FP8 checkpoint's layer 45 — 4.27 GB at 4/8-bit;
+drafter on the pinned runtime's classes; greedy verify at T=k+1; per-position
+linear-attention states recomputed on partial acceptance from the retained
+delta-rule inputs): first-draft acceptance 0.72–0.87 (post-norm hidden input
+measured slightly better than the pre-norm stream mean: 0.767/0.691/0.916 vs
+0.747/0.674/0.871); 256-token results vs plain 22.5: **k=1 23.8 / 22.3 /
+24.4, k=2 24.4 / 21.7 / 25.4** (short factual / long reasoning / code).
+Verify+rollback equivalence: the wrapper's T=2 logits equal the pinned
+path's exactly; rollback error (1.4 max logit) is the same magnitude as the
+pinned T=2-vs-T=1 shape difference (1.3), i.e. numerics, not state. Ceiling
+at 100% acceptance with k=1 is ~27 tok/s because of the fixed step cost;
+MTP is kept (never worse than −3%, +8–13% on code-like text) but is not the
+lever. Peak memory +4.3 GB (104.7 GB).
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -211,6 +240,10 @@ and hit statistics, not by text hash.
 | Compare paged prefill only from an evicted page cache, and by unique-expert reads, not tokens | compare prompt tok/s across consecutive runs | consecutive runs share the page cache; a 25-token prompt's cost is per unique expert |
 | No cross-layer prefetch yet | predict layer L+1's experts from the previous token | routing is unknown before the layer; predictor untested; recorded as open |
 | Compare paged variants by logits/hits, not text hash | require identical greedy text | sorted vs per-expert kernels differ at bf16 ulp level; text flips at near-ties |
+| Build MTP speculation before kernel work | kernel fusion first | MTP reuses existing weights and a day of runtime work; measured +0–13%, and it stacks with any later per-token gain |
+| Per-position linear states by recomputing the delta rule over the accepted prefix on rollback | stepwise T=1 verification (34 × k extra attention calls ≈ 20 ms); mlx-vlm-style per-position state output (kernel change) | one small kernel per layer only on rejection; verbatim copy of the pinned forward keeps the pinned file untouched and the T=2 logits identical |
+| MTP hidden = post-final-norm | pre-norm stream mean (DeepSeek-V3 convention) | acceptance A/B on three prompts favours post-norm on all three (small margin); kept switchable |
+| Kernel fusion (fewer launches per layer) as the next resident-tier track, not more speculation | more draft tokens; tree drafts | acceptance decays 0.8 → 0.65 → 0.53 by position and the fixed step cost caps every speculative variant near 27–31 tok/s |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
 | Quit the Studio's background apps (Docker VM, Hermes, Codex, Claude, Bark, CC, LM Studio, MEGAsync, Parallels); keep RustDesk; leave NotificationCenter/coreaudiod | kill everything; leave everything | operator's list; ~20 GB freed; the two daemons are system-owned and were only flagged |
 
@@ -233,6 +266,11 @@ and hit statistics, not by text hash.
   memmap vs pread vs threads; the answer differs by 50×.
 
 ## 6. Open items (ordered)
+
+0. Graph 26: fewer kernels per layer in a qualified runtime fork (fuse the
+   hyper-connection chain, the linear-attention pre/post ops around the
+   delta kernel, the router select) — target 46 → ~30 ms/token (≈30 tok/s),
+   with MTP on top ≈ 35 tok/s.
 
 1. Rung 3 remainder: re-repack with an expert-contiguous, numerically
    ordered layout so cold misses coalesce into large sequential reads;

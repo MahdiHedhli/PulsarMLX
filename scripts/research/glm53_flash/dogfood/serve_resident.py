@@ -50,8 +50,14 @@ def load(args):
         tw = time.time()
         w = generate(model, processor, apply_chat_template(processor, config, "Hello.", num_images=0), max_tokens=args.warmup, verbose=False, temperature=0.0)
         warm = {"tokens": args.warmup, "seconds": round(time.time() - tw, 1), "generation_tps": getattr(w, "generation_tps", None)}
+    spec = None
+    if args.mtp:
+        import sys as _sys
+        _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from mtp_speculator import MTPSpeculator
+        spec = MTPSpeculator(model.language_model, args.mtp, draft_k=args.draft_k)
     STATE.update(model=model, processor=processor, config=config, model_id=args.model_id, load_seconds=round(load_s, 1), warmup=warm,
-                 prefill_step_size=args.prefill_step_size, default_max_tokens=args.max_tokens, requests=0)
+                 prefill_step_size=args.prefill_step_size, default_max_tokens=args.max_tokens, requests=0, speculator=spec, draft_k=args.draft_k)
     print(f"loaded in {load_s:.1f}s; warm-up {warm}; serving {args.model_id}", flush=True)
 
 
@@ -76,6 +82,39 @@ def _reasoning_effort(body):
 
 
 THINK_END = "</think>"
+
+
+class _SpecResult:
+    def __init__(self, text, prompt_tokens, generation_tokens, prompt_tps, generation_tps, finish_reason):
+        self.text, self.prompt_tokens, self.generation_tokens = text, prompt_tokens, generation_tokens
+        self.prompt_tps, self.generation_tps, self.finish_reason = prompt_tps, generation_tps, finish_reason
+
+
+def _run_speculative(spec, processor, prompt, max_tokens):
+    """Greedy MTP speculative generation yielding stream_generate-like results (text per token, stats on the last)."""
+    tok = processor.tokenizer
+    _e = getattr(tok, "eos_token_ids", None)
+    eos = set(_e if isinstance(_e, (list, set, tuple)) else [_e if _e is not None else tok.eos_token_id])
+    ids = tok.encode(prompt)
+    t0 = time.time(); t_first = None; toks = []; emitted = ""
+    for tkn, _ in spec.generate(ids, max_tokens, eos):
+        if t_first is None:
+            t_first = time.time()
+        toks.append(tkn)
+        if tkn in eos:
+            break
+        full = tok.decode(toks)
+        piece = full[len(emitted):] if full.startswith(emitted) else ""
+        if piece and not piece.endswith("\ufffd"):
+            emitted = full
+        else:
+            piece = ""
+        n = len(toks); done = n >= max_tokens
+        yield _SpecResult(piece, len(ids), n, round(len(ids) / max(1e-9, t_first - t0), 2), round((n - 1) / max(1e-9, time.time() - t_first), 2), "length" if done else None)
+    n = len(toks)
+    tail = tok.decode(toks if toks and toks[-1] not in eos else toks[:-1])
+    yield _SpecResult(tail[len(emitted):] if tail.startswith(emitted) else "", len(ids), n, round(len(ids) / max(1e-9, (t_first or time.time()) - t0), 2),
+                      round((n - 1) / max(1e-9, time.time() - (t_first or t0)), 2), "length" if n >= max_tokens else "stop")
 
 
 def _split_think(text):
@@ -124,7 +163,9 @@ class _ThinkSplitter:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok" if "model" in STATE else "loading", "model": STATE.get("model_id"), "load_seconds": STATE.get("load_seconds"), "warmup": STATE.get("warmup"), "requests": STATE.get("requests")}
+    spec = STATE.get("speculator")
+    return {"status": "ok" if "model" in STATE else "loading", "model": STATE.get("model_id"), "load_seconds": STATE.get("load_seconds"), "warmup": STATE.get("warmup"), "requests": STATE.get("requests"),
+            "speculative": ({"draft_k": STATE.get("draft_k"), **spec.stats} if spec is not None else None)}
 
 
 @app.get("/v1/models")
@@ -158,6 +199,10 @@ async def chat_completions(request: Request):
     def run():
         with LOCK:
             STATE["requests"] += 1
+            spec = STATE.get("speculator")
+            if spec is not None and kwargs["temperature"] == 0.0 and "top_p" not in kwargs and "repetition_penalty" not in kwargs:
+                yield from _run_speculative(spec, processor, prompt, kwargs["max_tokens"])
+                return
             for r in stream_generate(model, processor, prompt, **kwargs):
                 yield r
 
@@ -198,6 +243,8 @@ def main():
     ap.add_argument("--host", default="127.0.0.1"); ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--max-tokens", type=int, default=1024, help="default when the request omits max_tokens")
     ap.add_argument("--prefill-step-size", type=int, default=512); ap.add_argument("--warmup", type=int, default=8)
+    ap.add_argument("--mtp", default=None, help="MTP layer directory (convert_mtp.py output): greedy requests (temperature 0, no top_p/penalty) use speculative decoding")
+    ap.add_argument("--draft-k", type=int, default=1)
     ap.add_argument("--no-wire", action="store_true", help="do not wire the Metal buffers (default wires; assumes a dedicated serving host)")
     args = ap.parse_args()
     load(args)

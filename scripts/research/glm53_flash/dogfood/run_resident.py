@@ -35,6 +35,8 @@ def main():
     ap.add_argument('--max-tokens', type=int, default=96)
     ap.add_argument('--prefill-step-size', type=int, default=256)
     ap.add_argument('--no-wire', action='store_true', help='do not wire the Metal buffers. The default wires up to max_recommended_working_set_size, which assumes a dedicated serving host: co-located desktop applications get paged out to swap while the process lives')
+    ap.add_argument('--mtp', default=None, help='MTP layer directory (convert_mtp.py output): greedy speculative decoding instead of mlx_vlm.generate')
+    ap.add_argument('--draft-k', type=int, default=1, help='draft tokens per step with --mtp')
     ap.add_argument('--warmup', type=int, default=0, help='tokens of a recorded warm-up generate before the measured run (0 = none)')
     ap.add_argument('--lazy', action='store_true', help='do not materialize the weights before the first token (default: materialize)')
     ap.add_argument('--log', default='dogfood-resident.json')
@@ -66,11 +68,35 @@ def main():
         warm = {'tokens': args.warmup, 'seconds': round(time.time() - tw, 1), 'prompt_tps': getattr(w, 'prompt_tps', None), 'generation_tps': getattr(w, 'generation_tps', None)}
         print(f'warm-up: {warm}', flush=True)
     t1 = time.time()
-    out = generate(model, processor, prompt, max_tokens=args.max_tokens, verbose=True, prefill_step_size=args.prefill_step_size, temperature=0.0)
-    t_gen = time.time() - t1
-    text = out.text if hasattr(out, 'text') else str(out)
+    spec_stats = None
+    if args.mtp:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from mtp_speculator import MTPSpeculator
+        spec = MTPSpeculator(model.language_model, args.mtp, draft_k=args.draft_k)
+        tok = processor.tokenizer; _e = getattr(tok, 'eos_token_ids', None)
+        eos = set(_e if isinstance(_e, (list, set, tuple)) else [_e if _e is not None else tok.eos_token_id])
+        ids = tok.encode(prompt); toks = []; t_first = None
+        for tkn, _ in spec.generate(ids, args.max_tokens, eos):
+            if t_first is None:
+                t_first = time.time()
+            toks.append(tkn)
+        t_gen = time.time() - t1
+        text = tok.decode(toks)
+        st = spec.stats
+        spec_stats = {'draft_k': args.draft_k, 'steps': st['steps'], 'drafted': st['drafted'], 'accepted': st['accepted'], 'accepted_by_position': st['accepted_by_position'],
+                      'accepted_per_draft': round(st['accepted'] / max(1, st['drafted']), 4), 'tokens_per_step': round((len(toks) - 1) / max(1, st['steps']), 3),
+                      'hidden_convention': spec.hidden_convention}
+        class _Out:  # the same fields run_resident records from mlx_vlm.generate
+            prompt_tokens = len(ids); generation_tokens = len(toks); prompt_tps = round(len(ids) / max(1e-9, (t_first or t1) - t1), 3)
+            generation_tps = round((len(toks) - 1) / max(1e-9, time.time() - (t_first or t1)), 3); peak_memory = mx.get_peak_memory() / 1e9
+        out = _Out()
+        print(f'MTP speculative: {out.generation_tokens} tokens, {out.generation_tps} tok/s, {spec_stats}', flush=True)
+    else:
+        out = generate(model, processor, prompt, max_tokens=args.max_tokens, verbose=True, prefill_step_size=args.prefill_step_size, temperature=0.0)
+        t_gen = time.time() - t1
+        text = out.text if hasattr(out, 'text') else str(out)
     record = {'model': args.model, 'download': download, 'reap': config.get('reap'), 'n_routed_experts': config['text_config'].get('n_routed_experts'),
-              'lazy': args.lazy, 'wired_limit_bytes': wired_limit, 'warmup': warm, 'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': args.max_tokens,
+              'lazy': args.lazy, 'wired_limit_bytes': wired_limit, 'warmup': warm, 'mtp': args.mtp, 'speculative': spec_stats, 'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': args.max_tokens,
               'prefill_step_size': args.prefill_step_size, 'parameter_elements': int(n_params), 'peak_memory_bytes': int(mx.get_peak_memory()),
               'device_info': {k: v for k, v in mx.device_info().items() if isinstance(v, (int, str))}, 'prompt': args.prompt, 'text': text,
               'generation_stats': {k: getattr(out, k) for k in ('prompt_tokens', 'generation_tokens', 'prompt_tps', 'generation_tps', 'peak_memory') if hasattr(out, k)},
