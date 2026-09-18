@@ -222,7 +222,13 @@ path's exactly; rollback error (1.4 max logit) is the same magnitude as the
 pinned T=2-vs-T=1 shape difference (1.3), i.e. numerics, not state. Ceiling
 at 100% acceptance with k=1 is ~27 tok/s because of the fixed step cost;
 MTP is kept (never worse than −3%, +8–13% on code-like text) but is not the
-lever. Peak memory +4.3 GB (104.7 GB).
+lever. Peak memory +4.3 GB (104.7 GB). Review caveats: the post-norm choice
+rests on a 2–4 point A/B over three prompts (what would settle it: draft
+log-likelihood over a validation slice, or the training code's convention);
+the server keeps `draft_k=1` because reasoning-heavy text loses 1–3% at
+k=2; the run card's tiny-geometry MTP oracle/operation was not built — the
+strict load, the exact T=2 logit match of the verify wrapper and the
+measured acceptance stand in for it, and the deviation is recorded.
 
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
