@@ -89,6 +89,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--src", required=True, help="existing repack directory (hash-ordered)")
     ap.add_argument("--dst", required=True, help="output directory (expert-contiguous)")
+    ap.add_argument("--link-resident", action="store_true", help="symlink the unchanged resident shards/config from --src instead of copying them (same volume)")
     args = ap.parse_args()
     t0 = time.time()
     os.makedirs(os.path.join(args.dst, "experts"), exist_ok=True)
@@ -96,7 +97,10 @@ def main():
     for name in sorted(os.listdir(args.src)):
         p = os.path.join(args.src, name)
         if os.path.isfile(p) and name != "offload_index.json" and not name.startswith("pulsar-"):
-            shutil.copy2(p, os.path.join(args.dst, name))
+            if args.link_resident:
+                os.symlink(os.path.abspath(p), os.path.join(args.dst, name))
+            else:
+                shutil.copy2(p, os.path.join(args.dst, name))
     for lid in idx["layers"]:
         src = os.path.join(args.src, "experts", f"layer_{lid:04d}.safetensors"); dst = os.path.join(args.dst, "experts", f"layer_{lid:04d}.safetensors")
         t = time.time(); experts, nbytes = write_contiguous(src, dst)

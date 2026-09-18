@@ -63,8 +63,8 @@ _PAGE = os.sysconf("SC_PAGE_SIZE") if hasattr(os, "sysconf") else 16384
 _libc = None
 
 
-def _mincore_resident(mm, offset: int, length: int) -> bool:
-    """True when every page of mm[offset:offset+length] is in the page cache (macOS/BSD mincore); False on any doubt."""
+def _mincore_resident(base: int, offset: int, length: int) -> bool:
+    """True when every page of the mapping range [base+offset, +length) is in the page cache (macOS/BSD mincore); False on any doubt."""
     global _libc
     try:
         import ctypes
@@ -72,7 +72,6 @@ def _mincore_resident(mm, offset: int, length: int) -> bool:
             _libc = ctypes.CDLL(None)
             _libc.mincore.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_char_p]
             _libc.mincore.restype = ctypes.c_int
-        base = mm.ctypes.data
         start = (base + offset) // _PAGE * _PAGE
         end = base + offset + length
         n = (end - start + _PAGE - 1) // _PAGE
@@ -86,8 +85,10 @@ def _mincore_resident(mm, offset: int, length: int) -> bool:
 
 class _LayerFile:
     """One repack layer file: header parsed once (name -> dtype, shape, byte range); data read by byte range, from the
-    memmap when the range is page-cache resident, else with preadv into a buffer (thread-pool friendly)."""
-    __slots__ = ("path", "entries", "data_start", "mmap", "fd", "contiguous", "_ranges", "_lock")
+    mapping when the range is page-cache resident (copied, then madvise(MADV_DONTNEED) so the pages are not pinned in
+    this process: pinned file pages rank above the store's own inactive tensors and the kernel compresses the tensors
+    instead of dropping the cache - measured on the Studio), else with preadv into a buffer (thread-pool friendly)."""
+    __slots__ = ("path", "entries", "data_start", "mmap", "base", "fd", "contiguous", "_ranges", "_lock")
 
     def __init__(self, path):
         import struct
@@ -98,6 +99,7 @@ class _LayerFile:
         self.data_start = 8 + n
         self.entries = {k: v for k, v in header.items() if k != "__metadata__"}
         self.mmap = None
+        self.base = 0
         self.fd = None
         self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"
         self._ranges = {}
@@ -125,12 +127,24 @@ class _LayerFile:
                 runs.append([lo, hi, [j]])
         return [(lo, hi, js) for lo, hi, js in runs]
 
-    def read_range_np(self, lo: int, hi: int):
+    def read_range_np(self, lo: int, hi: int, pool=None, chunk: int = 64 << 20):
+        """One merged range into one buffer; with a pool, in parallel `chunk`-sized pieces (a single 1 GB preadv on one
+        thread measured slower than eight threads of small reads on the MacBook's NVMe: 3.0 vs 4.6 GB/s)."""
         self._open()
         buf = np.empty(hi - lo, dtype=np.uint8)
-        got = os.preadv(self.fd, [memoryview(buf)], self.data_start + lo)
-        if got != hi - lo:
-            raise IOError(f"SHORT_READ range {lo}-{hi}: {got}")
+        pieces = [(off, min(off + chunk, hi - lo)) for off in range(0, hi - lo, chunk)]
+
+        def piece(bounds):
+            a, b = bounds
+            got = os.preadv(self.fd, [memoryview(buf)[a:b]], self.data_start + lo + a)
+            if got != b - a:
+                raise IOError(f"SHORT_READ range {lo + a}-{lo + b}: {got}")
+            return got
+        if pool is not None and len(pieces) > 1:
+            list(pool.map(piece, pieces))
+        else:
+            for pc in pieces:
+                piece(pc)
         return buf
 
     def slice_np(self, buf, lo: int, name: str):
@@ -150,13 +164,15 @@ class _LayerFile:
                 fcntl.fcntl(fd, fcntl.F_NOCACHE, 1)
             except (ImportError, AttributeError, OSError):
                 pass
-            self.mmap = np.memmap(self.path, dtype=np.uint8, mode="r")
+            import mmap as _mmap
+            self.mmap = _mmap.mmap(fd, 0, access=_mmap.ACCESS_READ)
+            self.base = np.frombuffer(self.mmap, dtype=np.uint8, count=1).ctypes.data
             self.fd = fd
 
     def resident(self, name) -> bool:
         self._open()
         a, b = self.entries[name]["data_offsets"]
-        return _mincore_resident(self.mmap, self.data_start + a, b - a)
+        return _mincore_resident(self.base, self.data_start + a, b - a)
 
     def read_hot(self, name):
         """memmap copy (call only when resident): one copy page cache -> MLX buffer."""
@@ -165,8 +181,16 @@ class _LayerFile:
         self._open()
         e = self.entries[name]; np_dtype, mx_dtype = _SAFETENSORS_DTYPES[e["dtype"]]
         a, b = e["data_offsets"]
-        view = np.frombuffer(self.mmap[self.data_start + a:self.data_start + b], dtype=np_dtype).reshape(e["shape"])
-        arr = mx.array(view)
+        off = self.data_start + a
+        view = np.frombuffer(self.mmap, dtype=np_dtype, count=(b - a) // np.dtype(np_dtype).itemsize, offset=off).reshape(e["shape"])
+        arr = mx.array(view)   # copy
+        mx.eval(arr)
+        try:   # unpin the pages from this mapping (they stay in the page cache for the kernel to keep or drop)
+            import mmap as _mmap
+            start = off // _PAGE * _PAGE
+            self.mmap.madvise(_mmap.MADV_DONTNEED, start, (off + (b - a)) - start)
+        except (AttributeError, OSError, ValueError):
+            pass
         return arr.view(getattr(mx, mx_dtype)) if mx_dtype != np_dtype else arr
 
     def read_cold_np(self, name):
@@ -327,7 +351,7 @@ class PulsarSlotStore:
         if cold_names and f.contiguous:
             cold_experts = [j for j, _ in reads if not hot[j]]
             runs = f.merged_ranges(cold_experts, self.coalesce_gap_experts)
-            bufs = list(self._pool.map(lambda r: f.read_range_np(r[0], r[1]), runs))
+            bufs = [f.read_range_np(lo, hi, pool=self._pool) for lo, hi, _ in runs]   # each run: parallel chunks
             for (lo, hi, js), buf in zip(runs, bufs):
                 for j in js:
                     for p in _PROJS:
