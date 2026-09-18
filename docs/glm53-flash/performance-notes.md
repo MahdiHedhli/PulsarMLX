@@ -494,3 +494,17 @@ map is gone — a stale mirror handed `-1` to `gather_qmm` and crashed the CPU
 child (undefined behaviour that had been benign in earlier revisions); slot
 indices are now gathered on the host from the published map at call time and
 a `-1` is rejected before it can reach the kernel.
+
+Graph 32 — `repack_v2`'s copy loop spun forever on a truncated source (an
+empty read left `remaining` unchanged; the reviewer reproduced the hang
+under a watchdog) and `check_contiguous` accepted a destination whose
+payload had been truncated. Now the source container is validated before any
+copy (header length within the file, dtype/shape vs byte length, intervals
+tiling `[0, data_end)` exactly, exact file length, every expert with the
+same parts, no stray tensors), an empty read raises `SHORT_READ_EOF`, output
+goes to `<dst>.partial`, is fsync'd, validated (length included) and renamed
+into place, `offload_index.json` is written last the same way, aliases and
+existing destinations are refused, and `--resume` keeps verified layers
+(the MacBook contig build: 42 layers kept in 0.4 s). Durability boundary:
+a layer file is absent, `.partial` (never read by the store) or
+complete-and-validated; the layout flag exists only when every layer is.
