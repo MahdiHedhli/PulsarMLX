@@ -1,6 +1,6 @@
 """Offline (mlx-free) checks for the slot-store track: the fixture recomputes from the slot model; every case splits a call
 into waves and evicts; the read-phase fault expectations (graph 31) recompute and satisfy the reservation invariants; the
-prospective policy cells reproduce from the recorded variants; the structural mutants are the recorded eight; the runtime
+prospective policy cells reproduce from the recorded variants; the structural mutants are the recorded seven; the runtime
 file's needles exist exactly once; the module imports nothing from mlx-vlm."""
 import ast
 import json
@@ -17,10 +17,13 @@ FIXTURE = ROOT / 'fixtures/research/glm53-flash-decoder-slot-store-v1/fixtures.j
 STORE = ROOT / 'scripts/research/glm53_flash/dogfood/pulsar_slot_store.py'
 NEEDLES = ('                self._counts[k] *= self.decay\n', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n',
            '            self._warm_admitted = self._admit_warm_state()\n', '                candidates = [k for k in L.slot_of if k not in pinned]\n',
-           '        if reads:\n            L.map_array = None\n        return reads\n', '            store.fill(lid, store.touch_wave(lid, waves[0]))\n',
-           '            L.slot_of[j] = s; L.expert_to_slot[j] = s\n            reads.append((j, s))\n',
+           '            store.fill(lid, store.touch_wave(lid, waves[0]))\n',
+           '            reads.append((j, s))\n        return reads',
            '        return np.frombuffer(buf[a - lo:b - lo], dtype=np_dtype).reshape(e["shape"])\n',
-           '        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"\n')
+           '        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"\n',
+           '            L.pending[j] = s                                                  # reserved, published by fill on success\n',
+           '        if self.poisoned is not None:\n            raise RuntimeError(f"STORE_POISONED: {self.poisoned}")\n',
+           '            L.free[0:0] = [s for _, s in reads]                               # a retry takes the same slots back\n')
 
 
 class SlotStoreOffline(unittest.TestCase):
@@ -71,9 +74,10 @@ class SlotStoreOffline(unittest.TestCase):
         for label in matrix['structural_mutants']:
             predicted[label] = ['KILL' for _ in fx['cases']]
         self.assertEqual(predicted, matrix['matrix'])
-        self.assertEqual(sorted(matrix['structural_mutants']), ['coalesce-offset-wrong', 'layout-flag-ignored', 'map-not-refreshed', 'missing-check-removed', 'poison-not-checked',
+        self.assertEqual(sorted(matrix['structural_mutants']), ['coalesce-offset-wrong', 'layout-flag-ignored', 'missing-check-removed', 'poison-not-checked',
                                                                  'publish-before-fill', 'release-slots-omitted', 'victim-slot-wrong'])
-        self.assertEqual(matrix['revision'], 4)
+        self.assertEqual(matrix['revision'], 5)
+        self.assertNotIn('map_array', STORE.read_text())   # no device mirror of the slot map (revision 5)
         store = STORE.read_text()
         for needle in NEEDLES:
             self.assertEqual(store.count(needle), 1, needle)

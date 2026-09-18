@@ -8,7 +8,12 @@ mutate the runtime text: four policy mutants predicted from oracle variants, thr
 construction (value or rejection). Graph 29: every case also runs on an expert-contiguous copy of the store written
 by repack_v2 (own safetensors writer, verified contiguous) and in forced-cold mode on both layouts, so the memmap,
 per-tensor preadv and coalesced-range readers all produce the same values, stats and slot maps; two more structural
-mutants (coalesce-offset-wrong, layout-flag-ignored) are killed on those passes.
+mutants (coalesce-offset-wrong, layout-flag-ignored) are killed on those passes. Graph 31: test_fault_injection raises
+inside fill at read-done (before the first write), projection-written, before-eval and during mx.eval, at the first
+miss and the first eviction of every case: a read-phase fault must leave the model's post-fault stats and slot map and
+the retry must reproduce the model's outputs, stats and slot map (never a false hit); a write-phase fault must poison
+the store (every later call, and the warm-state save, rejected with STORE_POISONED). Every structural mutant also runs
+the fault schedule: the three residency-commit mutants of matrix revision 4 are killed there.
 """
 import hashlib
 import json
@@ -121,7 +126,107 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
         all_ok = all(p[1] <= tol['output'] and p[2] and p[3] and p[5] for p in passes) and cross == 0.0 and layout_ok
         return rows, max(p[1] for p in passes), all(p[2] for p in passes), all(p[3] for p in passes), warm, all(p[5] for p in passes) and all(p[4] == warm for p in passes), {'cross_layout_max_diff': cross, 'contiguous_verified': contig_ok, 'source_not_contiguous': not src_contig, 'reads': reads, 'layout_ok': layout_ok, 'all_ok': all_ok}
 
-    observations, control_rows = [], []
+    class FaultInjected(RuntimeError):
+        pass
+
+    def evaluate_faults(StoreClass, ModuleClass, activation, case, directory):
+        """The fault schedule of the run card for one case on the hash layout, page-cache resident. Returns
+        (record, ok); any deviation from the model (or a missing rejection) is recorded with its reason."""
+        import os
+        fid = case['fixture_id']; exp = expected[fid]; faults = fixture['expected_faults'][fid]; lid = case['layer_id']
+        record = {'fixture_id': fid, 'points': faults['points'], 'runs': []}; ok = True
+
+        def call(module, ci):
+            ts = case['schedule'][ci]['tokens']
+            x = mx.array([[case['x'][t] for t in ts]], dtype=mx.float32); inds = mx.array([[case['indices'][t] for t in ts]], dtype=mx.int32)
+            y = module(x, inds); mx.eval(y)
+            return y[0].tolist()
+
+        def snapshot(store):
+            st = store.stats()
+            return {'stats': {k: st[k] for k in ('hits', 'misses', 'evictions', 'resident_experts', 'resident_bytes')}, 'slot_of': {str(k): v for k, v in store.slot_of(lid).items()},
+                    'fill_failures': st['fill_failures'], 'poisoned': st['poisoned']}
+
+        def fresh():
+            ws = directory / 'pulsar-slot-warm-state.json'
+            if ws.exists():
+                os.remove(ws)
+            return make(StoreClass, ModuleClass, case, directory, activation, warm_start=False)
+
+        for point_name, pt in faults['points'].items():
+            ci, wi = pt['call'], pt['wave']
+            model_call = exp['calls'][ci]
+            # which fill (among the call's waves that read) carries the fault: waves without a miss never reach fill
+            target = sum(1 for w in model_call['waves'][:wi] if any(j in model_call['reads'] for j in w))
+            for stage in ('read-done', 'projection-written', 'before-eval', 'during-eval'):
+                row = {'point': point_name, 'call': ci, 'wave': wi, 'stage': stage, 'problems': []}
+                store, module = fresh()
+                for k in range(ci):
+                    out = call(module, k)
+                    if max_error(out, exp['calls'][k]['outputs']) > tol['output'] or snapshot(store)['stats'] != exp['calls'][k]['stats']:
+                        row['problems'].append(f'pre-fault call {k} deviates')
+                state = {'fills': 0, 'armed': False}
+                hook_stage = 'before-eval' if stage == 'during-eval' else stage
+
+                def hook(st, _state=state, _stage=hook_stage, _target=target):
+                    if st == 'read-done':
+                        _state['fills'] += 1
+                    if st == _stage and _state['fills'] - 1 == _target:
+                        if _stage == 'before-eval' and stage == 'during-eval':
+                            _state['armed'] = True; return
+                        raise FaultInjected(f'{stage} at wave {wi}')
+                orig_eval = mx.eval
+
+                def patched_eval(*a, **kw):
+                    if state['armed']:
+                        state['armed'] = False
+                        raise FaultInjected(f'during-eval at wave {wi}')
+                    return orig_eval(*a, **kw)
+                store.fault_hook = hook
+                if stage == 'during-eval':
+                    mx.eval = patched_eval
+                try:
+                    try:
+                        call(module, ci)
+                        row['problems'].append('fault not raised')
+                    except FaultInjected:
+                        pass
+                finally:
+                    mx.eval = orig_eval
+                    store.fault_hook = None
+                after = snapshot(store); row['after_fault'] = after
+                if stage == 'read-done':
+                    model = faults['read_phase'][point_name]; m_after = model['calls'][ci]['after_fault']
+                    if after['stats'] != m_after['stats'] or after['slot_of'] != m_after['slot_of'] or after['fill_failures'] != 1 or after['poisoned'] is not None:
+                        row['problems'].append('post-fault state deviates from the model')
+                    try:
+                        for k in range(ci, len(case['schedule'])):
+                            out = call(module, k); snap = snapshot(store)
+                            err = max_error(out, exp['calls'][k]['outputs'])      # a fault changes no value
+                            if err > tol['output']:
+                                row['problems'].append(f'call {k} value error {err}')
+                            if snap['stats'] != model['calls'][k]['stats'] or snap['slot_of'] != model['calls'][k]['slot_of']:
+                                row['problems'].append(f'call {k} policy/slot map deviates from the model: {snap["stats"]} vs {model["calls"][k]["stats"]}')
+                        row['retry'] = 'complete reload, model reproduced' if not row['problems'] else 'deviates'
+                    except (RuntimeError, ValueError, TypeError, KeyError, IndexError, OSError) as exc:
+                        row['problems'].append(f'retry rejected: {type(exc).__name__}: {exc}')
+                else:
+                    if after['poisoned'] is None or after['fill_failures'] != 1:
+                        row['problems'].append('store not poisoned after a write-phase fault')
+                    for what, fn in (('retry', lambda: call(module, ci)), ('warm-state save', store.save_warm_state)):
+                        try:
+                            fn(); row['problems'].append(f'{what} served instead of STORE_POISONED')
+                        except RuntimeError as exc:
+                            if 'STORE_POISONED' not in str(exc):
+                                row['problems'].append(f'{what} rejected with {exc!r}, not STORE_POISONED')
+                        except (ValueError, TypeError, KeyError, IndexError, OSError) as exc:
+                            row['problems'].append(f'{what} rejected with {type(exc).__name__}, not STORE_POISONED')
+                row['pass'] = not row['problems']; ok = ok and row['pass']
+                record['runs'].append(row)
+        record['pass'] = ok
+        return record, ok
+
+    observations, control_rows, fault_rows = [], [], []
 
     class Slot(unittest.TestCase):
         def test_frozen_reference_recomputes(self):
@@ -129,6 +234,14 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
                 got = slot_oracle.run(case)
                 self.assertEqual(got, {k: v for k, v in expected[fid].items() if k in got}, fid)
             emit('frozen_reference', status='RECOMPUTED_EQUAL', cases=len(cases))
+
+        def test_fault_injection(self):
+            activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)
+            for fid, case in cases.items():
+                directory = work / ('fault-' + fid); offload_controls.write_store(case, directory, mx)
+                record, ok = evaluate_faults(StoreClass, ModuleClass, activation, case, directory)
+                fault_rows.append(record); emit('slot_fault_injection', **record)
+                self.assertTrue(ok, json.dumps(record))
 
         def test_slot_store(self):
             activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)
@@ -148,11 +261,14 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
                        ('tie-break-most-recent', '        return (self._counts.get(key, 0.0), self._touch.get(key, 0))\n', '        return (self._counts.get(key, 0.0), -self._touch.get(key, 0))\n'),
                        ('warm-state-ignored', '            self._warm_admitted = self._admit_warm_state()\n', '            self._warm_admitted = 0\n'),
                        ('pin-ignored', '                candidates = [k for k in L.slot_of if k not in pinned]\n', '                candidates = list(L.slot_of)\n'),
-                       ('map-not-refreshed', '        if reads:\n            L.map_array = None\n        return reads\n', '        return reads\n'),
                        ('missing-check-removed', '            store.fill(lid, store.touch_wave(lid, waves[0]))\n', '            store.touch_wave(lid, waves[0])\n'),
-                       ('victim-slot-wrong', '            L.slot_of[j] = s; L.expert_to_slot[j] = s\n            reads.append((j, s))\n', '            L.slot_of[j] = s; L.expert_to_slot[j] = s\n            reads.append((j, (s + 1) % self.capacity))\n'),
+                       ('victim-slot-wrong', '            reads.append((j, s))\n        return reads', '            reads.append((j, (s + 1) % self.capacity))\n        return reads'),
                        ('coalesce-offset-wrong', '        return np.frombuffer(buf[a - lo:b - lo], dtype=np_dtype).reshape(e["shape"])\n', '        return np.frombuffer(buf[a - lo + 1:b - lo + 1], dtype=np_dtype).reshape(e["shape"])\n'),
-                       ('layout-flag-ignored', '        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"\n', '        self.contiguous = True\n')]
+                       ('layout-flag-ignored', '        self.contiguous = (header.get("__metadata__") or {}).get("layout") == "expert-contiguous/1"\n', '        self.contiguous = True\n'),
+                       ('publish-before-fill', '            L.pending[j] = s                                                  # reserved, published by fill on success\n',
+                        '            L.pending[j] = s; L.slot_of[j] = s; L.expert_to_slot[j] = s\n'),
+                       ('poison-not-checked', '        if self.poisoned is not None:\n            raise RuntimeError(f"STORE_POISONED: {self.poisoned}")\n', '        if False:\n            raise RuntimeError(f"STORE_POISONED: {self.poisoned}")\n'),
+                       ('release-slots-omitted', '            L.free[0:0] = [s for _, s in reads]                               # a retry takes the same slots back\n', '            pass\n')]
             self.assertEqual(sorted(r[0] for r in recipes), sorted(matrix['matrix']))
             activation = activation_class()
             for label, before, after in recipes:
@@ -165,6 +281,11 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
                         rows, value_err, policy_ok, capacity_ok, warm, warm_ok, layouts = evaluate(MutantStore, MutantModule, activation, case, directory)
                         observed = 'INACTIVE' if (policy_ok and warm_ok and value_err <= tol['output'] and layouts['all_ok']) else 'KILL'
                         reason = 'policy-or-slot-mismatch' if not policy_ok else ('warm-mismatch' if not warm_ok else ('value' if value_err > tol['output'] or layouts['cross_layout_max_diff'] > 0 else 'layout-check'))
+                        if observed == 'INACTIVE':      # the fault schedule is part of the cell (graph 31)
+                            fdir = work / ('fault-' + fid); offload_controls.write_store(case, fdir, mx)
+                            frecord, fok = evaluate_faults(MutantStore, MutantModule, activation, case, fdir)
+                            if not fok:
+                                observed = 'KILL'; reason = 'fault:' + '; '.join(p for r in frecord['runs'] for p in r['problems'])[:300]
                     except (RuntimeError, ValueError, TypeError, KeyError, IndexError, OSError) as exc:
                         observed, reason = 'KILL', 'rejected:' + type(exc).__name__
                     results.append({'fixture_id': fid, 'observed': observed, 'expected_cell': expected_cell, 'reason': reason, 'cell_pass': observed == expected_cell})
@@ -177,8 +298,8 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     ids = [t._testMethodName for t in suite]
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     context.verify()
-    emit('slot_summary', backend=backend, observations=observations, controls=control_rows,
-         scope='PULSAR_SLOT_STORE_AND_SWITCH_OVER_FROZEN_STORE; values vs graph-18 reference incl. wave split; slots and policy vs stdlib model; warm state; both layouts and both residency modes bit-identical; no throughput claim')
+    emit('slot_summary', backend=backend, observations=observations, controls=control_rows, fault_injection=fault_rows,
+         scope='PULSAR_SLOT_STORE_AND_SWITCH_OVER_FROZEN_STORE; values vs graph-18 reference incl. wave split; slots and policy vs stdlib model; warm state; both layouts and both residency modes bit-identical; fault injection: read-phase retry reproduces the model, write-phase poisons; no throughput claim')
     emit('result', status='PASS' if result.wasSuccessful() and not result.skipped else 'FAIL', test_ids=ids,
          tests_run=result.testsRun, failures=len(result.failures), errors=len(result.errors), skips=len(result.skipped),
          peak_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)

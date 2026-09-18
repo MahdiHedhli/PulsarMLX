@@ -7,8 +7,11 @@ mmap loads; prefill bulk-loads every layer's whole expert file per chunk. Here e
 gate/up/down (weight, scales, biases) tensors of shape (C, ...) - an int32 expert_to_slot map (-1 = absent), and the
 graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / layers / bytes per expert):
 
-  * a call touches the sorted unique experts of its tokens; all of them must be resident at once for the gather,
-    so a call is processed in WAVES of at most C experts, the wave's experts pinned against eviction;
+  * a call touches the sorted unique experts of its tokens (the one host read per layer); all of them must be
+    resident at once for the gather, so a call is processed in WAVES of at most C experts, the wave's experts pinned
+    against eviction; the slot indices are gathered on the host from the layer's expert -> slot map after the fill
+    (graph 31: there is no device mirror of the map to refresh, and a -1 - an absent expert - is rejected before it
+    can reach gather_qmm, where it would be an out-of-bounds read);
   * within a wave each expert is counted once; a hit keeps its slot; a miss takes a free slot, else the slot of the
     resident with the smallest (count, touch) outside the wave; the read is a materialized mmap slice written into
     the slot in place (`W[slot] = w`, the KV-cache pattern; batched into one scatter per projection per wave);
@@ -33,6 +36,13 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     page cache, which on slow storage otherwise grows at the expense of the store's own slot tensors) in a small thread pool (decode:
     ~1 miss per layer), else -> one mx.load whose entries are popped as they are consumed (nothing retained). The
     arrays are stacked and scattered into the slots in one go per (projection, part).
+  * graph 31: residency is COMMITTED only after materialization. touch_wave evicts the victim from the published map
+    (its bytes are about to be overwritten) and records the new expert -> slot as a RESERVATION (L.pending); fill reads
+    every part of every reserved expert, scatters, evals, and only then publishes the reservations into slot_of /
+    expert_to_slot. A failure before the first write drops the reservations, puts the slots back
+    at the front of the free list (a retry takes the same slots and misses again) and raises; a failure after the
+    first write leaves the slot tensors in an unknown state, so the store is POISONED: every later call raises
+    STORE_POISONED. A failed fill can never produce a false hit (the pre-graph-31 code published in touch_wave).
   * graph 29: with an expert-contiguous layout (repack_v2.py; offload_index.json layout='expert-contiguous/1', every
     expert one byte range in numeric order) a cold batch is read as MERGED RANGES: cold experts sorted, runs whose gap
     is at most `coalesce_gap_experts` experts merged into one preadv each (the gap is read and discarded at streaming
@@ -214,14 +224,14 @@ class _LayerFile:
 
 
 class _LayerSlots:
-    __slots__ = ("tensors", "expert_to_slot", "slot_of", "free", "map_array", "file")
+    __slots__ = ("tensors", "expert_to_slot", "slot_of", "pending", "free", "file")
 
     def __init__(self, capacity, num_experts):
         self.tensors = None                 # {proj: [W, S, B]} stacked (C, ...)
         self.expert_to_slot = np.full((num_experts,), -1, dtype=np.int32)
-        self.slot_of = {}                   # expert -> slot
+        self.slot_of = {}                   # expert -> slot: PUBLISHED residency (bytes materialized)
+        self.pending = {}                   # expert -> slot: reserved by touch_wave, not yet materialized
         self.free = list(range(capacity))
-        self.map_array = None               # mx.array mirror of expert_to_slot (rebuilt when it changes)
         self.file = None                    # _LayerFile, opened on first use
 
 
@@ -268,6 +278,9 @@ class PulsarSlotStore:
         # are page-cache resident, and storage whose residency reporting is unreliable can use it too
         self.force_cold = os.environ.get("PULSAR_SLOT_FORCE_COLD", "") == "1"
         self._pool = ThreadPoolExecutor(max_workers=max(1, int(read_workers)))
+        self.poisoned = None        # str: why the store must not be used any more (a write-phase fill failure)
+        self._fill_failures = 0
+        self.fault_hook = None      # tests: callable(stage) invoked at 'read-done', 'projection-written', 'before-eval'
         self._warm_admitted = 0
         if warm_start:
             self._warm_admitted = self._admit_warm_state()
@@ -298,6 +311,10 @@ class PulsarSlotStore:
             L.tensors[p] = parts
         mx.eval([t for parts in L.tensors.values() for t in parts])
 
+    def _usable(self) -> None:
+        if self.poisoned is not None:
+            raise RuntimeError(f"STORE_POISONED: {self.poisoned}")
+
     def _count(self, key) -> None:
         self._accesses += 1
         self._counts[key] = self._counts.get(key, 0.0) + 1.0
@@ -312,6 +329,7 @@ class PulsarSlotStore:
     def touch_wave(self, lid: int, wave) -> list:
         """Policy for one wave (sorted unique experts, len <= capacity): counts, hits/misses, slot assignment with the
         wave pinned. Returns the reads to perform as [(expert, slot)] in wave order; the caller materializes them."""
+        self._usable()
         L = self._layers[lid]
         pinned = set(wave)
         reads = []
@@ -326,23 +344,50 @@ class PulsarSlotStore:
             else:
                 candidates = [k for k in L.slot_of if k not in pinned]
                 victim = min(candidates, key=lambda k: self._priority((lid, k)))
-                s = L.slot_of.pop(victim); L.expert_to_slot[victim] = -1
+                s = L.slot_of.pop(victim); L.expert_to_slot[victim] = -1   # evicted now: its bytes are about to go
                 self._evictions += 1
-            L.slot_of[j] = s; L.expert_to_slot[j] = s
+            L.pending[j] = s                                                  # reserved, published by fill on success
             reads.append((j, s))
-        if reads:
-            L.map_array = None
         return reads
 
     def fill(self, lid: int, reads) -> None:
-        """Materialize the missed experts and write them into their slots: one scatter per (projection, part)."""
+        """Materialize the reserved experts, write them into their slots (one scatter per (projection, part)), then
+        commit the reservations. Read-phase failure: reservations released, raise. Write-phase failure: poison, raise."""
         import mlx.core as mx
 
+        self._usable()
         if not reads:
             return
         self._ensure_tensors(lid)
-        L = self._layers[lid]; f = self._file(lid); f._open()
-        slots = mx.array([s for _, s in reads], dtype=mx.int32)
+        L = self._layers[lid]; f = self._file(lid)
+        try:
+            arrays = self._read_arrays(lid, f, reads)
+            if self.fault_hook is not None:
+                self.fault_hook("read-done")
+        except BaseException:
+            self._fill_failures += 1
+            for j, _ in reads:
+                L.pending.pop(j, None)
+            L.free[0:0] = [s for _, s in reads]                               # a retry takes the same slots back
+            raise
+        try:
+            self._write_slots(L, reads, arrays)
+        except BaseException as exc:
+            self._fill_failures += 1
+            self.poisoned = f"write-phase fill failure on layer {lid}: {type(exc).__name__}: {exc}"
+            raise
+        for j, _ in reads:                                                    # commit: residency is published here only
+            s = L.pending.pop(j); L.slot_of[j] = s; L.expert_to_slot[j] = s
+        self._read_bytes += len(reads) * self.expert_bytes
+        if self.cache_clear_threshold_bytes is not None and mx.get_cache_memory() >= self.cache_clear_threshold_bytes:
+            mx.clear_cache()
+            self._cache_clears += 1
+
+    def _read_arrays(self, lid: int, f: _LayerFile, reads) -> dict:
+        """Every part of every reserved expert as an mx.array (nothing written yet)."""
+        import mlx.core as mx
+
+        f._open()
         names = [(j, f"e{j}.{p}.{k}") for j, _ in reads for p in _PROJS for k in _PARTS]
         # the weight range decides hot/cold per expert (scales/biases are small and sit next to it in the file)
         hot = {j: (False if self.force_cold else f.resident(f"e{j}.gate_proj.weight")) for j, _ in reads}
@@ -374,27 +419,40 @@ class PulsarSlotStore:
         for j, n in names:
             if n not in arrays:
                 arrays[n] = f.read_hot(n)
+        self._hot_reads += sum(1 for v in hot.values() if v); self._cold_reads += sum(1 for v in hot.values() if not v)
+        return arrays
+
+    def _write_slots(self, L: _LayerSlots, reads, arrays: dict) -> None:
+        """Scatter every (projection, part) into the reserved slots in place and evaluate."""
+        import mlx.core as mx
+
+        slots = mx.array([s for _, s in reads], dtype=mx.int32)
         for p in _PROJS:
             for ki, k in enumerate(_PARTS):
                 group = [arrays[f"e{j}.{p}.{k}"] for j, _ in reads]
                 stacked = mx.stack(group) if len(reads) > 1 else group[0][None]
                 L.tensors[p][ki][slots] = stacked                 # in place (scatter into the uniquely referenced slot tensor)
+            if self.fault_hook is not None:
+                self.fault_hook("projection-written")
+        if self.fault_hook is not None:
+            self.fault_hook("before-eval")
         mx.eval([t for parts in L.tensors.values() for t in parts])
-        self._read_bytes += len(reads) * self.expert_bytes
-        self._hot_reads += sum(1 for v in hot.values() if v); self._cold_reads += sum(1 for v in hot.values() if not v)
-        if self.cache_clear_threshold_bytes is not None and mx.get_cache_memory() >= self.cache_clear_threshold_bytes:
-            mx.clear_cache()
-            self._cache_clears += 1
 
-    def map_array(self, lid: int):
+    def slots_for(self, lid: int, idx_host, mask=None):
+        """Slot index per (token, k) from the layer's published map, gathered on the host; `mask` (same shape) zeroes
+        the entries outside the current wave. An absent expert (-1) is rejected: it must never reach gather_qmm."""
         import mlx.core as mx
 
-        L = self._layers[lid]
-        if L.map_array is None:
-            L.map_array = mx.array(L.expert_to_slot)
-        return L.map_array
+        self._usable()
+        slots = self._layers[lid].expert_to_slot[idx_host]
+        if mask is not None:
+            slots = np.where(mask, slots, 0)
+        if (slots < 0).any():
+            raise RuntimeError("SLOT_MAP_INCOMPLETE: an expert of this call is not resident after fill")
+        return mx.array(slots)
 
     def tensors(self, lid: int):
+        self._usable()
         self._ensure_tensors(lid)
         return self._layers[lid].tensors
 
@@ -407,11 +465,12 @@ class PulsarSlotStore:
         return {"policy": self.policy, "budget_bytes": self._budget, "capacity_per_layer": self.capacity, "expert_bytes": self.expert_bytes,
                 "resident_experts": resident, "resident_bytes": resident * self.expert_bytes, "num_experts": self.num_experts,
                 "num_layers": len(self._paths), "hits": self._hits, "misses": self._misses, "evictions": self._evictions,
-                "hit_rate": (self._hits / total) if total else None, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "coalesced_ranges": self._coalesced_ranges, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned, "read_bytes": self._read_bytes, "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "coalesced_ranges": self._coalesced_ranges, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
     def save_warm_state(self) -> str:
+        self._usable()
         path = os.path.join(self.offload_dir, WARM_STATE)
         json.dump({"policy": self.policy, "counts": [[l, j, c] for (l, j), c in self._counts.items()],
                    "resident": [[l, j] for l, L in self._layers.items() for j in L.slot_of], "accesses": self._accesses}, open(path, "w"))
@@ -435,9 +494,8 @@ class PulsarSlotStore:
             order = sorted(experts, key=lambda j: -self._counts.get((lid, j), 0.0))[:self.capacity]
             reads = []
             for j in order:
-                s = L.free.pop(0); L.slot_of[j] = s; L.expert_to_slot[j] = s; reads.append((j, s))
-            L.map_array = None
-            self.fill(lid, reads)
+                s = L.free.pop(0); L.pending[j] = s; reads.append((j, s))
+            self.fill(lid, reads)                       # reserve -> fill -> commit, as for a miss
             admitted += len(reads)
         return admitted
 
@@ -491,14 +549,13 @@ class PulsarSwitchGLU:
         waves = [uniq[i:i + C] for i in range(0, len(uniq), C)]
         if len(waves) == 1:
             store.fill(lid, store.touch_wave(lid, waves[0]))
-            slots = store.map_array(lid)[indices]
-            return self._experts(x, slots)
+            return self._experts(x, store.slots_for(lid, idx_host))
         out = None
         for wave in waves:
             store.fill(lid, store.touch_wave(lid, wave))
-            in_wave = mx.array(np.isin(idx_host, np.array(wave, dtype=idx_host.dtype)))
-            slots = mx.where(in_wave, store.map_array(lid)[indices], mx.zeros_like(indices))
-            y = self._experts(x, slots) * in_wave[..., None].astype(x.dtype)
+            in_wave = np.isin(idx_host, np.array(wave, dtype=idx_host.dtype))
+            slots = store.slots_for(lid, idx_host, mask=in_wave)
+            y = self._experts(x, slots) * mx.array(in_wave)[..., None].astype(x.dtype)
             out = y if out is None else out + y
         return out
 

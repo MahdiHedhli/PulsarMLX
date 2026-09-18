@@ -21,8 +21,7 @@ VARIANTS = {
 }
 # value-only structural mutants of the runtime file: the stdlib model has no slot tensors, so their cells follow by
 # construction (a token computed from the wrong slot changes the output) and are recorded before any run
-STRUCTURAL = {'map-not-refreshed': {'expected_reason': 'rejected-or-value', 'kills_on': 'the first miss (the GPU slot map is not rebuilt after reads: the gather sees stale slots)'},
-              'missing-check-removed': {'expected_reason': 'rejected-or-value', 'kills_on': 'the first miss'},
+STRUCTURAL = {'missing-check-removed': {'expected_reason': 'rejected', 'kills_on': 'the first miss: SLOT_MAP_INCOMPLETE (an absent expert, -1, is rejected before gather_qmm)'},
               'victim-slot-wrong': {'expected_reason': 'value', 'kills_on': 'the first eviction'},
               'coalesce-offset-wrong': {'expected_reason': 'value', 'kills_on': 'the first coalesced cold read (contiguous layout, forced cold): tensors sliced one byte off'},
               'layout-flag-ignored': {'expected_reason': 'rejected-or-value', 'kills_on': 'the hash-ordered layout read as contiguous (forced cold): expert ranges are not contiguous'},
@@ -32,7 +31,11 @@ STRUCTURAL = {'map-not-refreshed': {'expected_reason': 'rejected-or-value', 'kil
               'release-slots-omitted': {'expected_reason': 'policy', 'kills_on': 'a read-phase fault then retry: the reserved slots never return to the free list, so the retry evicts other residents and the slot map diverges from the model'}}
 FAULTS = {'model': 'oracle.run(case, fault={call, wave}) for the read phase (retry reproduces the fault-free slot map at the failing call; misses and accesses advance twice for that wave); write/eval-phase faults poison the store (STORE_POISONED on every later call, checked by rejection)',
           'points': 'oracle.fault_points: first-miss and first-eviction (fault-free run)', 'stages': ['read-done (before the first write)', 'projection-written (between projections)', 'before-eval', 'during-eval (mx.eval patched to raise)']}
-REVISION = {'revision': 4, 'graph31': "revision 4 adds the residency-commit mutants (publish-before-fill, poison-not-checked, release-slots-omitted) and the fault-injection expectations (calls carry wave_evictions; test_fault_injection joins the operation)", 'graph29': "revision 3 adds the two layout mutants (graph 29: expert-contiguous repack + coalesced cold reads); every case now runs in both layouts and both residency modes and must agree bit for bit", 'first_contact': "revision 1 recorded 'stale-slot-map' (expert_to_slot[victim] not cleared on eviction) as KILL by construction; the "
+REVISION = {'revision': 5, 'graph31_first_contact': "revision 4's supervised CPU run: the 'map-not-refreshed' mutant (device mirror of the slot map not rebuilt) crashed the child "
+                                                        "(SIGSEGV: a -1 slot index reached gather_qmm on the CPU backend - undefined behaviour that happened to be benign in revisions 1-3). "
+                                                        "The device mirror is gone: the module gathers slot indices on the host from the published map at call time and rejects any -1 "
+                                                        "(SLOT_MAP_INCOMPLETE), so the bug class is eliminated by construction and 'missing-check-removed' now kills by that rejection; "
+                                                        "'map-not-refreshed' is dropped from the matrix (no mirror to refresh).", 'graph31': "revision 4 adds the residency-commit mutants (publish-before-fill, poison-not-checked, release-slots-omitted) and the fault-injection expectations (calls carry wave_evictions; test_fault_injection joins the operation)", 'graph29': "revision 3 adds the two layout mutants (graph 29: expert-contiguous repack + coalesced cold reads); every case now runs in both layouts and both residency modes and must agree bit for bit", 'first_contact': "revision 1 recorded 'stale-slot-map' (expert_to_slot[victim] not cleared on eviction) as KILL by construction; the "
                                             "supervised run observed INACTIVE on both cases: slot_of is the authority for hits, a stale map entry is only read for "
                                             "experts of the current call, which are always just-filled, so the clear is redundant and the mutant equivalent. "
                                             "Replaced before the re-run by 'map-not-refreshed' (L.map_array not invalidated after reads), which the gather depends on."}
@@ -90,7 +93,7 @@ def main(out_path):
                           'calls': [{k: v for k, v in call.items() if k in ('stats', 'slot_of', 'resident_set', 'after_fault', 'attempts', 'reads', 'wave_evictions')} for call in r['calls']]}
         faults[c['fixture_id']] = {'points': points, 'read_phase': runs}
     search = {'seed': hex(0x20260917E1), 'attempt': attempt, 'schedule_length': len(schedule), 'policy': policy}
-    matrix = {'schema': 'flash-slot-store-expected-kill-matrix/4', 'faults': FAULTS, 'frozen_before_tests': True, 'prospective_from_oracle_variants': True, 'schedule_search': search,
+    matrix = {'schema': 'flash-slot-store-expected-kill-matrix/5', 'faults': FAULTS, 'frozen_before_tests': True, 'prospective_from_oracle_variants': True, 'schedule_search': search,
               'fixtures': [c['fixture_id'] for c in cases], 'cell_scope': 'per-call stats and slot map, or the warm-state slot assignment; structural mutants by value',
               'matrix': predicted, 'oracle_variants': {k: {'before': b, 'after': a} for k, (b, a) in VARIANTS.items()}, 'needle_counts': {k: 1 for k in VARIANTS},
               'structural_mutants': STRUCTURAL, **REVISION}

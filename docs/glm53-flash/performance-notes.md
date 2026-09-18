@@ -476,3 +476,21 @@ Fixed by a single inference thread that owns the model and a bounded queue
 (`serve_worker.py`); the same interleaving now completes with `/health`
 answering in under a second while the stream runs. Serving tok/s is
 unaffected by construction (one queue hop per token; not re-measured).
+
+Graph 31 — the slot store published an expert's slot in `touch_wave`,
+before `fill` had read or written its bytes; a failed fill followed by a
+retry on the same store was a false hit over the victim's bytes (the
+reviewer reproduced it in the extracted policy model; no successful run was
+affected). Now `touch_wave` only reserves, `fill` commits after every part
+is materialized and evaluated; a read-phase failure releases the slots to
+the front of the free list (a retry misses again and takes the same slots),
+a write/eval-phase failure poisons the store (`STORE_POISONED` on every later
+call and on the warm-state save). Fault injection at read-done /
+projection-written / before-eval / during `mx.eval`, at the first miss and
+the first eviction of each case, is part of the slot-store qualification;
+the old behaviour is a recorded mutant that is killed by a value error of
+1.2–1.4 (stale slot bytes). First contact: the device mirror of the slot
+map is gone — a stale mirror handed `-1` to `gather_qmm` and crashed the CPU
+child (undefined behaviour that had been benign in earlier revisions); slot
+indices are now gathered on the host from the published map at call time and
+a `-1` is rejected before it can reach the kernel.

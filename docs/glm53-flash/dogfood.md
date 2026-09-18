@@ -178,7 +178,10 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    `PulsarSwitchGLU` — stacked per-layer slots, `gather_qmm` over them, one
    small host read per layer, waves for calls wider than the slot count,
    header-parsed-once reads routed by `mincore` (memmap when resident,
-   threaded `preadv` when not). All-hit cost 0.83 ms/layer (was 4–5).
+   threaded `preadv` when not); residency is published only after a fill
+   has materialized every part (graph 31: a failed fill can never leave a
+   false hit; a write-phase failure poisons the store, `STORE_POISONED`).
+   All-hit cost 0.83 ms/layer (was 4–5).
    Measured: Studio 70 GB slot cold 3.85/3.83, warm **4.69/4.61** vs LRU
    3.49; MacBook internal 32 GB slot 2.00/2.03 vs LRU 1.14. Prefill is worse
    than the bulk path (1.2–1.3 vs 2.7 tok/s on the Studio) until rung 3.

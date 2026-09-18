@@ -68914,6 +68914,7 @@
   "frozen_before_tests": true,
   "graph29": "revision 3 adds the two layout mutants (graph 29: expert-contiguous repack + coalesced cold reads); every case now runs in both layouts and both residency modes and must agree bit for bit",
   "graph31": "revision 4 adds the residency-commit mutants (publish-before-fill, poison-not-checked, release-slots-omitted) and the fault-injection expectations (calls carry wave_evictions; test_fault_injection joins the operation)",
+  "graph31_first_contact": "revision 4's supervised CPU run: the 'map-not-refreshed' mutant (device mirror of the slot map not rebuilt) crashed the child (SIGSEGV: a -1 slot index reached gather_qmm on the CPU backend - undefined behaviour that happened to be benign in revisions 1-3). The device mirror is gone: the module gathers slot indices on the host from the published map at call time and rejects any -1 (SLOT_MAP_INCOMPLETE), so the bug class is eliminated by construction and 'missing-check-removed' now kills by that rejection; 'map-not-refreshed' is dropped from the matrix (no mirror to refresh).",
   "matrix": {
    "coalesce-offset-wrong": [
     "KILL",
@@ -68924,10 +68925,6 @@
     "KILL"
    ],
    "layout-flag-ignored": [
-    "KILL",
-    "KILL"
-   ],
-   "map-not-refreshed": [
     "KILL",
     "KILL"
    ],
@@ -68989,7 +68986,7 @@
    }
   },
   "prospective_from_oracle_variants": true,
-  "revision": 4,
+  "revision": 5,
   "schedule_search": {
    "attempt": 2714,
    "policy": {
@@ -68999,7 +68996,7 @@
    "schedule_length": 13,
    "seed": "0x20260917e1"
   },
-  "schema": "flash-slot-store-expected-kill-matrix/4",
+  "schema": "flash-slot-store-expected-kill-matrix/5",
   "structural_mutants": {
    "coalesce-offset-wrong": {
     "expected_reason": "value",
@@ -69009,13 +69006,9 @@
     "expected_reason": "rejected-or-value",
     "kills_on": "the hash-ordered layout read as contiguous (forced cold): expert ranges are not contiguous"
    },
-   "map-not-refreshed": {
-    "expected_reason": "rejected-or-value",
-    "kills_on": "the first miss (the GPU slot map is not rebuilt after reads: the gather sees stale slots)"
-   },
    "missing-check-removed": {
-    "expected_reason": "rejected-or-value",
-    "kills_on": "the first miss"
+    "expected_reason": "rejected",
+    "kills_on": "the first miss: SLOT_MAP_INCOMPLETE (an absent expert, -1, is rejected before gather_qmm)"
    },
    "poison-not-checked": {
     "expected_reason": "rejection-expected-but-served",
