@@ -140,6 +140,8 @@ jobs:
               > "$RUNNER_TEMP/flash-slot-store-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_mtp_speculator.py \
               > "$RUNNER_TEMP/flash-mtp-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_serve_worker.py \
+              > "$RUNNER_TEMP/flash-serve-worker-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

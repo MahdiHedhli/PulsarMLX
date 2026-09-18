@@ -6,7 +6,13 @@ pipenetwork runtime (custom `glm5_next`), so this serves the same load path as r
 glm53_flash_mlx.load (sanitize -> nn.quantize per config map -> strict load_weights, weights materialized), Metal
 buffers wired up to the max recommended working set (graph 23 finding: unwired, the OS evicts the experts decode
 does not touch and prefill pages them back), one warm-up generate at startup so the first request does not pay the
-per-process settle, and mlx_vlm.stream_generate under a lock (one generation at a time).
+per-process settle, and generation on ONE inference worker thread (serve_worker.InferenceWorker: the model is owned by
+that thread alone; handlers enqueue a job and await its items on the event loop, so an active stream, a concurrent
+non-streaming request and /health never wait on each other - graph 30: the first version consumed the generator on the
+event loop under a threading lock held across the stream's yields and deadlocked under exactly that interleaving).
+Queue: at most --max-queue jobs pending (running + waiting), 503 + Retry-After beyond that; a client that disconnects
+mid-stream cancels its job and the model is released within one token; a non-streaming request runs to completion
+(max_tokens bounds it); an exception inside a generation answers that request with 500 and the worker continues.
 
 Endpoints: GET /v1/models, POST /v1/chat/completions (stream: true|false; messages with system/user/assistant
 roles through the model's chat template; max_tokens, temperature, top_p, repetition_penalty; usage in the
@@ -18,9 +24,10 @@ The chat template opens a <think> block, so the model's reasoning is returned as
 Pins: mlx-vlm 8d79dbcf…, glm5_next a61a7c7d… (PYTHONPATH -> the pinned pipenetwork checkout).
 """
 import argparse
+import asyncio
 import json
 import os
-import threading
+import sys
 import time
 import uuid
 
@@ -28,15 +35,17 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 import uvicorn
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from serve_worker import InferenceWorker, QueueFull  # noqa: E402
+
 app = FastAPI(title="PulsarMLX GLM-5.3-Flash resident server")
 STATE = {}
-LOCK = threading.Lock()
 
 
 def load(args):
     import mlx.core as mx
     from glm53_flash_mlx.load import load as load_pinned
-    from mlx_vlm import generate
+    from mlx_vlm import generate, stream_generate
     from mlx_vlm.prompt_utils import apply_chat_template
 
     if not args.no_wire:
@@ -52,13 +61,20 @@ def load(args):
         warm = {"tokens": args.warmup, "seconds": round(time.time() - tw, 1), "generation_tps": getattr(w, "generation_tps", None)}
     spec = None
     if args.mtp:
-        import sys as _sys
-        _sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from mtp_speculator import MTPSpeculator
         spec = MTPSpeculator(model.language_model, args.mtp, draft_k=args.draft_k)
-    STATE.update(model=model, processor=processor, config=config, model_id=args.model_id, load_seconds=round(load_s, 1), warmup=warm,
-                 prefill_step_size=args.prefill_step_size, default_max_tokens=args.max_tokens, requests=0, speculator=spec, draft_k=args.draft_k)
+    install(model=model, processor=processor, config=config, model_id=args.model_id, load_seconds=round(load_s, 1), warmup=warm,
+            prefill_step_size=args.prefill_step_size, default_max_tokens=args.max_tokens, speculator=spec, draft_k=args.draft_k, max_queue=args.max_queue,
+            render=lambda messages, **kw: apply_chat_template(processor, config, messages, num_images=0, **kw),
+            generate=lambda prompt, **kw: stream_generate(model, processor, prompt, **kw))
     print(f"loaded in {load_s:.1f}s; warm-up {warm}; serving {args.model_id}", flush=True)
+
+
+def install(**state):
+    """Bind the model-side callables and start the worker (tests bind a fake model here and drive the real HTTP path)."""
+    if STATE.get("worker") is not None:
+        STATE["worker"].close()
+    STATE.update(state, requests=0, worker=InferenceWorker(max_queue=int(state.get("max_queue") or 4)))
 
 
 def _messages(body):
@@ -164,8 +180,9 @@ class _ThinkSplitter:
 @app.get("/health")
 async def health():
     spec = STATE.get("speculator")
+    worker = STATE.get("worker")
     return {"status": "ok" if "model" in STATE else "loading", "model": STATE.get("model_id"), "load_seconds": STATE.get("load_seconds"), "warmup": STATE.get("warmup"), "requests": STATE.get("requests"),
-            "speculative": ({"draft_k": STATE.get("draft_k"), **spec.stats} if spec is not None else None)}
+            "speculative": ({"draft_k": STATE.get("draft_k"), **spec.stats} if spec is not None else None), "worker": worker.stats() if worker is not None else None}
 
 
 @app.get("/v1/models")
@@ -175,18 +192,15 @@ async def models():
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
-    from mlx_vlm import stream_generate
-    from mlx_vlm.prompt_utils import apply_chat_template
-
     body = await request.json()
     if "model" not in STATE:
         return JSONResponse({"error": {"message": "model loading"}}, status_code=503)
     messages = _messages(body)
     if not messages:
         return JSONResponse({"error": {"message": "messages required"}}, status_code=400)
-    model, processor, config = STATE["model"], STATE["processor"], STATE["config"]
+    processor = STATE["processor"]
     effort = _reasoning_effort(body)
-    prompt = apply_chat_template(processor, config, messages, num_images=0, **({"reasoning_effort": effort} if effort else {}))
+    prompt = STATE["render"](messages, **({"reasoning_effort": effort} if effort else {}))
     kwargs = {"max_tokens": int(body.get("max_tokens") or STATE["default_max_tokens"]), "temperature": float(body.get("temperature", 0.0)),
               "prefill_step_size": STATE["prefill_step_size"]}
     if body.get("top_p") is not None:
@@ -196,24 +210,54 @@ async def chat_completions(request: Request):
     rid = "chatcmpl-" + uuid.uuid4().hex[:24]; created = int(time.time()); model_id = STATE["model_id"]
     stream = bool(body.get("stream", False))
 
-    def run():
-        with LOCK:
-            STATE["requests"] += 1
-            spec = STATE.get("speculator")
-            if spec is not None and kwargs["temperature"] == 0.0 and "top_p" not in kwargs and "repetition_penalty" not in kwargs:
-                yield from _run_speculative(spec, processor, prompt, kwargs["max_tokens"])
-                return
-            for r in stream_generate(model, processor, prompt, **kwargs):
-                yield r
+    spec = STATE.get("speculator")
+    speculative = spec is not None and kwargs["temperature"] == 0.0 and "top_p" not in kwargs and "repetition_penalty" not in kwargs
+
+    def make_generator():                       # runs on the worker thread only
+        if speculative:
+            return _run_speculative(spec, processor, prompt, kwargs["max_tokens"])
+        return STATE["generate"](prompt, **kwargs)
+
+    loop = asyncio.get_running_loop(); items = asyncio.Queue()
+
+    def deliver(item):                          # worker thread -> event loop; a closed loop (shutdown) just drops the item
+        try:
+            loop.call_soon_threadsafe(items.put_nowait, item)
+        except RuntimeError:
+            pass
+    try:
+        job = STATE["worker"].submit(make_generator, deliver)
+    except QueueFull as exc:
+        return JSONResponse({"error": {"message": str(exc), "type": "overloaded"}}, status_code=503, headers={"Retry-After": "1"})
+    STATE["requests"] += 1
+
+    async def results():
+        """Items until the terminal marker; raises the generation's exception; cancels the job if the consumer stops early."""
+        try:
+            while True:
+                kind, payload = await items.get()
+                if kind == "item":
+                    yield payload
+                elif kind == "error":
+                    raise payload
+                else:
+                    return
+        finally:
+            job.cancel()                        # no-op after completion; releases the model when the client went away
 
     def usage_of(final):
         return {"prompt_tokens": final.prompt_tokens, "completion_tokens": final.generation_tokens, "total_tokens": final.prompt_tokens + final.generation_tokens,
-                "prompt_tps": round(final.prompt_tps, 2), "generation_tps": round(final.generation_tps, 2)}
+                "prompt_tps": round(final.prompt_tps, 2), "generation_tps": round(final.generation_tps, 2), "speculative": speculative}
 
     if not stream:
         text, final = "", None
-        for r in run():
-            text += r.text; final = r
+        try:
+            async for r in results():
+                text += r.text; final = r
+        except Exception as exc:
+            return JSONResponse({"error": {"message": f"generation failed: {type(exc).__name__}: {exc}", "type": "generation_error"}}, status_code=500)
+        if final is None:
+            return JSONResponse({"error": {"message": "generation produced no output", "type": "generation_error"}}, status_code=500)
         reasoning, answer = _split_think(text)
         msg = {"role": "assistant", "content": answer}
         if reasoning:
@@ -221,14 +265,19 @@ async def chat_completions(request: Request):
         return {"id": rid, "object": "chat.completion", "created": created, "model": model_id,
                 "choices": [{"index": 0, "message": msg, "finish_reason": final.finish_reason or "stop"}], "usage": usage_of(final)}
 
-    def sse():
+    async def sse():
         head = {"id": rid, "object": "chat.completion.chunk", "created": created, "model": model_id}
         yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {"role": "assistant", "content": ""}, "finish_reason": None}]}) + "\n\n"
         final = None; splitter = _ThinkSplitter()
-        for r in run():
-            final = r
-            for field, piece in splitter.feed(r.text):
-                yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {field: piece}, "finish_reason": None}]}) + "\n\n"
+        try:
+            async for r in results():
+                final = r
+                for field, piece in splitter.feed(r.text):
+                    yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {field: piece}, "finish_reason": None}]}) + "\n\n"
+        except Exception as exc:                # headers are out: report the failure in-band and end the stream
+            yield "data: " + json.dumps({**head, "error": {"message": f"generation failed: {type(exc).__name__}: {exc}", "type": "generation_error"}}) + "\n\n"
+            yield "data: [DONE]\n\n"
+            return
         for field, piece in splitter.flush():
             yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {field: piece}, "finish_reason": None}]}) + "\n\n"
         usage = usage_of(final) if final else None
@@ -246,6 +295,7 @@ def main():
     ap.add_argument("--mtp", default=None, help="MTP layer directory (convert_mtp.py output): greedy requests (temperature 0, no top_p/penalty) use speculative decoding")
     ap.add_argument("--draft-k", type=int, default=1)
     ap.add_argument("--no-wire", action="store_true", help="do not wire the Metal buffers (default wires; assumes a dedicated serving host)")
+    ap.add_argument("--max-queue", type=int, default=4, help="requests pending on the inference worker (running + waiting) before 503")
     args = ap.parse_args()
     load(args)
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

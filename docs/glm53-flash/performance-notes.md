@@ -465,3 +465,14 @@ measure cold reads only after `purge`.
 5. REAP37 (118 GB) resident on a quiet Studio: quality vs REAP50, fit check.
 6. MacBook 64 GB usable tier: needs a pruned build under ~50 GB or 2–3-bit
    experts; paging alone stays ≤ 2 tok/s.
+
+## 7. Hardening pass (external review of 3c15882f, 2026-09-18)
+
+Graph 30 — the server's generation ran on the event loop under a lock held
+across the stream's yields; a stream plus a concurrent non-streaming
+request deadlocked (reproduced against the old file with a fake model:
+stream stalled at two chunks, non-stream and `/health` timed out at 15 s).
+Fixed by a single inference thread that owns the model and a bounded queue
+(`serve_worker.py`); the same interleaving now completes with `/health`
+answering in under a second while the stream runs. Serving tok/s is
+unaffected by construction (one queue hop per token; not re-measured).

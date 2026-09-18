@@ -150,7 +150,16 @@ stays below 20 tok/s whenever misses per token exceed a handful.
    runtime): `GET /v1/models`, `POST /v1/chat/completions` (streaming and
    non-streaming, usage with prompt/generation tok/s, `max_tokens`,
    `temperature`, `top_p`, `repetition_penalty`), `GET /health`. Buffers
-   wired, one warm-up generate at startup, one generation at a time. The
+   wired, one warm-up generate at startup, one generation at a time on a
+   dedicated inference thread (`serve_worker.InferenceWorker`, graph 30:
+   handlers enqueue and await, so an active stream, a concurrent
+   non-streaming request and `/health` never wait on each other — the first
+   version held a lock across the stream's yields and deadlocked under that
+   interleaving; `--max-queue` bounds pending requests, beyond it 503 +
+   `Retry-After`; a client that disconnects mid-stream releases the model
+   within one token; a generation exception answers that request with 500,
+   or an in-band `error` chunk when the SSE headers are already out, and the
+   next request runs). The
    template opens a `<think>` block, so reasoning is returned as
    `reasoning_content` and the answer as `content` (in streaming too, with a
    partial-marker hold-back); `reasoning_effort` low|medium|high maps onto
