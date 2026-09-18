@@ -285,6 +285,31 @@ state holding 117 GB, graceful restart impossible, hard reboot required);
 kill on the *compressor* signal while free memory still exists, not on
 "free pages" (the file cache makes that read zero during any large load).
 
+## 3.8 Quality across the pruning ladder (graph 27)
+
+Teacher-forced mean NLL per token of one fixed 331-token held-out passage
+(`quality_probe.py`; a comparative indicator, not a benchmark):
+
+| Build | Experts kept | Mean NLL | Perplexity | Top-1 | Path |
+|---|---|---|---|---|---|
+| Unpruned mixed-4/8 | 288 | **1.793** | 6.0 | 57.1% | paged (slot store, internal SSD) |
+| REAP37 | 181 | 2.153 | 8.6 | 48.0% | paged (slot store, Promise array) |
+| REAP50 | 144 | 2.594 | 13.4 | 43.5% | resident |
+
+Pruning costs are large and roughly proportional to the experts removed;
+REAP37 recovers about half of REAP50's loss but is paged-only on the Studio
+(§3.7). The unpruned model is the fidelity tier and runs at 4–5 tok/s
+through the slot store; REAP50 is the latency tier at ~22 tok/s.
+
+Two more lessons from getting these numbers on the Promise array: (a) the
+slot store must clear MLX's allocator cache above a threshold (added; a
+331-token prefill otherwise reached 117 GB wired); (b) on slow storage the
+kernel compresses the store's own slot tensors rather than drop the mmapped
+expert files' page cache — `F_NOCACHE` on the `preadv` descriptor (added)
+is not enough while the memmaps stay open, so the probe ran at a 15 GB
+budget (the NLL does not depend on the budget; the run took 269 s instead
+of 37 s on the internal SSD).
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |

@@ -29,7 +29,8 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     preadv into a buffer reaches 6.3 GB/s cold with 8 threads (7 GB/s hot), and for a large cold batch mx.load's own
     lazy loads evaluated together are fastest (93 cold experts: 233 ms = 5.7 GB/s, vs 676 ms through the pool) but
     cost a 4-5 ms header parse per call. So each miss's range is checked with mincore: resident -> memmap copy on
-    the calling thread; otherwise, fewer than `bulk_min` cold experts -> preadv in a small thread pool (decode:
+    the calling thread; otherwise, fewer than `bulk_min` cold experts -> preadv (F_NOCACHE: the reads bypass the
+    page cache, which on slow storage otherwise grows at the expense of the store's own slot tensors) in a small thread pool (decode:
     ~1 miss per layer), else -> one mx.load whose entries are popped as they are consumed (nothing retained). The
     arrays are stacked and scattered into the slots in one go per (projection, part).
 
@@ -98,6 +99,11 @@ class _LayerFile:
         if self.mmap is None:
             self.mmap = np.memmap(self.path, dtype=np.uint8, mode="r")
             self.fd = os.open(self.path, os.O_RDONLY)
+            try:   # cold reads must not populate the page cache: on a slow array the kernel compresses the store's own
+                import fcntl   # (inactive) slot tensors in favour of the active file pages - measured on the Studio
+                fcntl.fcntl(self.fd, fcntl.F_NOCACHE, 1)
+            except (ImportError, AttributeError, OSError):
+                pass
 
     def resident(self, name) -> bool:
         self._open()
@@ -175,7 +181,9 @@ class PulsarSlotStore:
         self._hits = self._misses = self._evictions = 0
         self._read_bytes = 0
         self._hot_reads = self._cold_reads = self._bulk_reads = 0
-        self.bulk_min = int(bulk_min)
+        # PULSAR_SLOT_BULK_MIN overrides the bulk threshold (e.g. a huge value keeps every read on the preadv pool: better
+        # for storage whose random page-fault reads are slow, such as a SAS array; measured 100 MB/s via faults there)
+        self.bulk_min = int(os.environ.get("PULSAR_SLOT_BULK_MIN", bulk_min))
         self.cache_clear_threshold_bytes = None if cache_clear_threshold_bytes is None else int(cache_clear_threshold_bytes)
         self._cache_clears = 0
         self._pool = ThreadPoolExecutor(max_workers=max(1, int(read_workers)))
