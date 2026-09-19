@@ -90,9 +90,9 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     def activation_class():
         return ffn_source.load(root, mx, nn).namespace['ClampedSwiGLU']
 
-    def make(StoreClass, ModuleClass, case, directory, activation, warm_start, force_cold=False):
+    def make(StoreClass, ModuleClass, case, directory, activation, warm_start, force_cold=False, write_mode='stack'):
         cfg = case['config']; q = (cfg['group_size'], cfg['bits'], 'affine')
-        store = StoreClass(str(directory), case['budget_bytes'], 0, decay=case['policy']['decay'], decay_every=case['policy']['decay_every'], warm_start=warm_start)
+        store = StoreClass(str(directory), case['budget_bytes'], 0, decay=case['policy']['decay'], decay_every=case['policy']['decay_every'], warm_start=warm_start, write_mode=write_mode)
         store.force_cold = force_cold
         module = ModuleClass(store, case['layer_id'], q, q, q, activation=activation(cfg['swiglu_limit']))
         return store, module
@@ -138,12 +138,12 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
     class FaultInjected(RuntimeError):
         pass
 
-    def evaluate_faults(StoreClass, ModuleClass, activation, case, directory):
+    def evaluate_faults(StoreClass, ModuleClass, activation, case, directory, write_mode='stack'):
         """The fault schedule of the run card for one case on the hash layout, page-cache resident. Returns
         (record, ok); any deviation from the model (or a missing rejection) is recorded with its reason."""
         import os
         fid = case['fixture_id']; exp = expected[fid]; faults = fixture['expected_faults'][fid]; lid = case['layer_id']
-        record = {'fixture_id': fid, 'points': faults['points'], 'runs': []}; ok = True
+        record = {'fixture_id': fid, 'write_mode': write_mode, 'points': faults['points'], 'runs': []}; ok = True
 
         def call(module, ci):
             ts = case['schedule'][ci]['tokens']
@@ -160,7 +160,7 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
             ws = directory / 'pulsar-slot-warm-state.json'
             if ws.exists():
                 os.remove(ws)
-            return make(StoreClass, ModuleClass, case, directory, activation, warm_start=False)
+            return make(StoreClass, ModuleClass, case, directory, activation, warm_start=False, write_mode=write_mode)
 
         for point_name, pt in faults['points'].items():
             ci, wi = pt['call'], pt['wave']
@@ -274,21 +274,21 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
             problems.append(('requested-overread+hot_copy', st['requested_read_bytes'] - st['overread_bytes'] + st['hot_copy_bytes'], st['logical_admitted_bytes']))
         return problems
 
-    def make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=False):
+    def make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=False, write_mode='stack'):
         cfg = case['config']; q = (cfg['group_size'], cfg['bits'], 'affine')
-        store = StoreClass(str(directory), case['budget_bytes'], 0, decay=case['policy']['decay'], decay_every=case['policy']['decay_every'], warm_start=warm_start, read_chunk_bytes=runtime2['read_chunk_bytes'])
+        store = StoreClass(str(directory), case['budget_bytes'], 0, decay=case['policy']['decay'], decay_every=case['policy']['decay_every'], warm_start=warm_start, read_chunk_bytes=runtime2['read_chunk_bytes'], write_mode=write_mode)
         store.force_cold = force_cold
         if store.bulk_min != runtime2['bulk_min'] or store.coalesce_gap_experts != runtime2['coalesce_gap_experts']:
             raise RuntimeError('RUNTIME_DEFAULTS_DIFFER_FROM_FIXTURE')
         module = ModuleClass(store, case['layer_id'], q, q, q, activation=activation(cfg['swiglu_limit']))
         return store, module
 
-    def evaluate_v2_one(StoreClass, ModuleClass, activation, case, directory, force_cold):
+    def evaluate_v2_one(StoreClass, ModuleClass, activation, case, directory, force_cold, write_mode='stack'):
         import os
         ws = directory / 'pulsar-slot-warm-state.json'
         if ws.exists():
             os.remove(ws)
-        store, module = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold)
+        store, module = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, write_mode=write_mode)
         exp = expected2[case['fixture_id']]; xdt = getattr(mx, _MX_DTYPE[case['config'].get('activation_dtype', 'float32')])
         rows = []; problems = []
         for ci, (call, e, pred) in enumerate(zip(case['schedule'], exp['calls'], exp['paths']['per_call'])):
@@ -303,7 +303,7 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
             rows.append(row)
         final = store.stats()
         store.save_warm_state()                       # the warm state re-admits the model's assignment (as in v1)
-        fresh, _ = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=True)
+        fresh, _ = make_v2(StoreClass, ModuleClass, case, directory, activation, force_cold, warm_start=True, write_mode=write_mode)
         warm = {str(k): v for k, v in fresh.slot_of(case['layer_id']).items()}
         final['warm_ok'] = warm == exp['warm_state']['slot_on_restart'] and fresh.stats()['warm_admitted'] == len(warm)
         final['warm_readmitted'] = warm
@@ -315,6 +315,9 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
         passes = {}
         for label, d, fc in (('hash-resident', directory, False), ('hash-cold', directory, True), ('contig-resident', contig, False), ('contig-cold', contig, True)):
             passes[label] = evaluate_v2_one(StoreClass, ModuleClass, activation, case, d, fc)
+        # freetoken-followon H1: the per-expert write mode must reproduce every pass bit for bit (same counters, same values)
+        for label, d, fc in (('hash-cold-perexpert', directory, True), ('contig-cold-perexpert', contig, True)):
+            passes[label] = evaluate_v2_one(StoreClass, ModuleClass, activation, case, d, fc, write_mode='per-expert')
         base_rows = passes['hash-resident'][0]
         cross = max(max_error(p[0][i]['output'], base_rows[i]['output']) for p in passes.values() for i in range(len(base_rows)))
         tolerance = case['tolerance']
@@ -409,9 +412,10 @@ def run(context, backend, mx, nn, np, ffn_source, offload_controls, slot_oracle)
             activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)
             for fid, case in cases.items():
                 directory = work / ('fault-' + fid); offload_controls.write_store(case, directory, mx)
-                record, ok = evaluate_faults(StoreClass, ModuleClass, activation, case, directory)
-                fault_rows.append(record); emit('slot_fault_injection', **record)
-                self.assertTrue(ok, json.dumps(record))
+                for write_mode in ('stack', 'per-expert'):       # both write paths must fail closed identically
+                    record, ok = evaluate_faults(StoreClass, ModuleClass, activation, case, directory, write_mode=write_mode)
+                    fault_rows.append(record); emit('slot_fault_injection', **record)
+                    self.assertTrue(ok, json.dumps(record))
 
         def test_slot_store(self):
             activation = activation_class(); StoreClass, ModuleClass = load_runtime(store_text)

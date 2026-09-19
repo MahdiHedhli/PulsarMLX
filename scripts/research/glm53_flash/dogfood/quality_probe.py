@@ -22,13 +22,13 @@ ap.add_argument('--texts', default=None, help='JSON file {"passages": {name: tex
 ap.add_argument('--lazy', action='store_true', help='resident: do not materialize the weights before the first forward (the forward wires them layer by layer)')
 ap.add_argument('--offload', action='store_true', help='paged path (slot store) for builds that do not fit resident'); ap.add_argument('--expert-cache-gb', type=float, default=70.0)
 ap.add_argument('--coalesce-gap', type=int, default=2, help='offload: merged-range gap (unpruned-fidelity G37)'); ap.add_argument('--store', default='slot', choices=('slot', 'lru'), help='offload: slot store or the upstream LRU expert path (correctness comparator)')
-ap.add_argument('--logits-out', default=None, help='save the float32 logits of every position of TEXT (or of each --texts passage, suffixed) as .npy for bit-identity comparison')
+ap.add_argument('--write-mode', default='stack', choices=('stack', 'per-expert')); ap.add_argument('--logits-out', default=None, help='save the float32 logits of every position of TEXT (or of each --texts passage, suffixed) as .npy for bit-identity comparison')
 args = ap.parse_args()
 import mlx.core as mx, sys
 if args.offload:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from run_offload import load_offloaded
-    t0 = time.time(); model, processor, _cfg, _store, _eager = load_offloaded(args.model, args.expert_cache_gb, store_policy=args.store, warm_start=False, coalesce_gap_experts=args.coalesce_gap, wire=not args.no_wire); load_s = time.time() - t0
+    t0 = time.time(); model, processor, _cfg, _store, _eager = load_offloaded(args.model, args.expert_cache_gb, store_policy=args.store, warm_start=False, coalesce_gap_experts=args.coalesce_gap, wire=not args.no_wire, write_mode=args.write_mode); load_s = time.time() - t0
 else:
     from glm53_flash_mlx.load import load
     if not args.no_wire:

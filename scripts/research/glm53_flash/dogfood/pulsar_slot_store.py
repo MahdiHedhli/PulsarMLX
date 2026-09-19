@@ -261,7 +261,8 @@ class PulsarSlotStore:
 
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
                  decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
-                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20):
+                 bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20,
+                 write_mode: str = "stack"):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -294,6 +295,13 @@ class PulsarSlotStore:
         self._cache_clears = 0
         self.coalesce_gap_experts = int(coalesce_gap_experts)
         self.read_chunk_bytes = int(read_chunk_bytes)   # merged ranges are read in pieces of this size (graph 33: the qualification uses 4096)
+        # write_mode (freetoken-followon H1): 'stack' = mx.stack the wave's arrays and issue one in-place scatter per
+        # (projection, part) - the baseline; 'per-expert' = one in-place scatter per expert per part, no stacked temporary
+        # (one fewer pass over every cold byte and no 1.4 GB wave temporaries in prefill). Same reads, same policy, same
+        # slot contents, same kernels: a byte-movement-only change that must stay bit-identical.
+        if write_mode not in ("stack", "per-expert"):
+            raise ValueError(f"WRITE_MODE {write_mode!r}")
+        self.write_mode = write_mode
         self.layout = idx.get("layout", "hash-ordered")
         self._coalesced_ranges = self._chunks_read = self._pool_reads = 0
         # byte accounting (graph 33): logical = misses x expert bytes (what the model admitted; `read_bytes` is its alias and
@@ -468,12 +476,16 @@ class PulsarSlotStore:
         """Scatter every (projection, part) into the reserved slots in place and evaluate."""
         import mlx.core as mx
 
-        slots = mx.array([s for _, s in reads], dtype=mx.int32)
+        slots = mx.array([s for _, s in reads], dtype=mx.int32) if self.write_mode == "stack" else None
         for p in _PROJS:
             for ki, k in enumerate(_PARTS):
-                group = [arrays[f"e{j}.{p}.{k}"] for j, _ in reads]
-                stacked = mx.stack(group) if len(reads) > 1 else group[0][None]
-                L.tensors[p][ki][slots] = stacked                 # in place (scatter into the uniquely referenced slot tensor)
+                if self.write_mode == "stack":
+                    group = [arrays[f"e{j}.{p}.{k}"] for j, _ in reads]
+                    stacked = mx.stack(group) if len(reads) > 1 else group[0][None]
+                    L.tensors[p][ki][slots] = stacked             # in place (scatter into the uniquely referenced slot tensor)
+                else:
+                    for j, s in reads:
+                        L.tensors[p][ki][s] = arrays[f"e{j}.{p}.{k}"]   # in place, one expert at a time (no stacked temporary)
             if self.fault_hook is not None:
                 self.fault_hook("projection-written")
         if self.fault_hook is not None:
@@ -510,7 +522,7 @@ class PulsarSlotStore:
                 "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned,
                 "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes, "alignment_overread_bytes": self._alignment_overread_bytes,
                 "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
-                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
@@ -607,7 +619,7 @@ class PulsarSwitchGLU:
 
 
 def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096, read_workers: int = 8,
-                      coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20):
+                      coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, write_mode: str = "stack"):
     """After mlx_vlm.moe_offload.patch_model has swapped every MoE layer's switch_mlp for an OffloadedSwitchGLU (which
     drops the resident expert parameters and computes the byte budget), replace each with a PulsarSwitchGLU over one
     shared PulsarSlotStore, reusing the upstream module's quant triples and activation."""
@@ -615,7 +627,7 @@ def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start:
 
     upstream = patch_model(model, offload_dir, expert_cache_gb=expert_cache_gb)
     store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start, read_workers=read_workers,
-                            coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes)
+                            coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes, write_mode=write_mode)
     patched = 0
     for layer in model.language_model.model.layers:
         switch = getattr(getattr(layer, "mlp", None), "switch_mlp", None)
