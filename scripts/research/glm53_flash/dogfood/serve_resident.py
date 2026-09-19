@@ -235,7 +235,12 @@ async def chat_completions(request: Request):
     spec = STATE.get("speculator")              # preflight: the prompt length decides speculation before any response byte
     speculative, why = speculative_eligible(spec is not None, kwargs["temperature"], kwargs.get("top_p"), kwargs.get("repetition_penalty"), len(ids), STATE["speculative_max_prompt"])
 
+    trace = {"token_ids": [], "token_times_s": [], "first_answer_s": None, "prompt_tokens": len(ids)} if body.get("pulsar_trace") else None   # measurement seam (opt-in, non-standard field)
+    snapshot = STATE.get("trace_snapshot")      # paged engine: store counters at job start / end
+
     def make_generator():                       # runs on the worker thread only
+        if trace is not None and snapshot is not None:
+            trace["store_before"] = snapshot()  # at job start (after any queue wait), so the delta is this job's own
         if speculative:
             return _run_speculative(spec, processor, prompt, kwargs["max_tokens"], ids=ids, max_prompt_tokens=STATE["speculative_max_prompt"])
         return STATE["generate"](prompt, **kwargs)
@@ -258,10 +263,6 @@ async def chat_completions(request: Request):
     STATE["requests"] += 1
 
     deadline = STATE.get("request_deadline_s")
-    trace = {"token_ids": [], "token_times_s": [], "first_answer_s": None, "prompt_tokens": len(ids)} if body.get("pulsar_trace") else None   # measurement seam (opt-in, non-standard field)
-    snapshot = STATE.get("trace_snapshot")      # paged engine: store counters before/after the job
-    if trace is not None and snapshot is not None:
-        trace["store_before"] = snapshot()
 
     def trace_finish(text):
         if trace is None:
@@ -271,7 +272,7 @@ async def chat_completions(request: Request):
             trace["first_token_s"] = trace["token_times_s"][0]
             n = len(trace["token_times_s"]); span = trace["token_times_s"][-1] - trace["token_times_s"][0]
             trace["decode_tps_after_first"] = round((n - 1) / span, 3) if n > 1 and span > 0 else None
-        if snapshot is not None:
+        if snapshot is not None and "store_before" in trace:
             after = snapshot(); trace["store_delta"] = {k: after[k] - trace["store_before"][k] for k in after if isinstance(after[k], (int, float)) and isinstance(trace["store_before"].get(k), (int, float)) and not isinstance(after[k], bool)}
             trace["store_after"] = after
         return trace
