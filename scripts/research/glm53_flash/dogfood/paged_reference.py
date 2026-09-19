@@ -35,7 +35,7 @@ def main():
     identity = verify_artifact(args.offload, 60_000_000_000, args.expert_cache_bytes)
     req = json.load(open(args.messages))
     t0 = time.time()
-    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_bytes / 1e9, store_policy='slot', warm_start=False, read_workers=args.read_workers, coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode)
+    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_bytes / 1e9, lazy=False, store_policy='slot', warm_start=False, read_workers=args.read_workers, coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode)
     policy = stop_policy.build(args.offload, processor.tokenizer, version=args.stop_policy); installed = stop_policy.apply(processor, policy)
     load_s = time.time() - t0
     effort = req.get('reasoning_effort', 'low'); max_tokens = int(req.get('max_tokens', 256)); temperature = float(req.get('temperature', 0.0))

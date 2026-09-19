@@ -47,7 +47,12 @@ def load(args):
 
     identity = verify_artifact(args.offload, args.max_expert_cache_bytes, args.expert_cache_bytes)
     t0 = time.time()
-    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_bytes / 1e9, store_policy="slot", warm_start=False, cache_clear_threshold_gb=args.cache_clear_threshold_gb,
+    # lazy=False: the resident weights are materialized HERE, on the loading thread. MLX (0.32) binds a lazily mx.load()-ed
+    # array to the loading thread's default stream and refuses to evaluate it on another thread ("There is no Stream(cpu, N)
+    # in current thread"); the generation runs on the inference worker thread (pilot first contact: the first request aborted
+    # the process). Materialized arrays are thread-agnostic; the store's slot tensors are allocated evaluated and its reads
+    # convert on the calling (worker) thread.
+    model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_bytes / 1e9, lazy=False, store_policy="slot", warm_start=False, cache_clear_threshold_gb=args.cache_clear_threshold_gb,
                                                             read_workers=args.read_workers, coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode)
     if store.stats()["budget_bytes"] != args.expert_cache_bytes or store.coalesce_gap_experts != args.coalesce_gap or store.write_mode != args.write_mode or store.read_chunk_bytes != args.read_chunk_mib << 20:
         raise SystemExit("STORE_CONFIG_MISMATCH the store did not take the requested settings")
