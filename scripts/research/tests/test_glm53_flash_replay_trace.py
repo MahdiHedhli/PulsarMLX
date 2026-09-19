@@ -1,5 +1,7 @@
-"""Replay-harness controls on the frozen tiny fixture-v2 store (unpruned-fidelity G37). Needs mlx (the dogfood env);
-skipped in CI's stdlib venv - the slot-store counters themselves are qualified by the supervised operation.
+"""Replay-harness controls on the frozen tiny fixture-v2 store (unpruned-fidelity G37). Needs mlx (the dogfood env) and
+opts in with PULSAR_REPLAY_TEST=1: it imports mlx, which would break the `mlx not imported` assertions of the other
+modules when everything runs in one `unittest discover` process (first contact at closeout). Skipped otherwise; the
+slot-store counters themselves are qualified by the supervised operation.
 
 Controls: (1) a trace captured from PulsarSwitchGLU over the fixture schedule replays with gap 0 / 1 / 2 and the
 replay's counters equal oracle.predict_paths for that gap (counter reconciliation, phase separation, complete workload
@@ -18,11 +20,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 DOGFOOD = ROOT / 'scripts/research/glm53_flash/dogfood'
 sys.path.insert(0, str(ROOT))
-try:
-    import mlx.core as mx
-    HAVE_MLX = True
-except ImportError:      # pragma: no cover
-    HAVE_MLX = False
+import importlib.util
+HAVE_MLX = importlib.util.find_spec('mlx') is not None and os.environ.get('PULSAR_REPLAY_TEST') == '1'
 from scripts.research.glm53_flash.decoder_slot_store import oracle  # noqa: E402
 
 FIXTURE_V2 = ROOT / 'fixtures/research/glm53-flash-decoder-slot-store-v2/fixtures.json'
@@ -46,12 +45,13 @@ def write_store(case, directory):
     return contig
 
 
-@unittest.skipUnless(HAVE_MLX, 'mlx not installed')
+@unittest.skipUnless(HAVE_MLX, 'mlx not installed or PULSAR_REPLAY_TEST != 1')
 class ReplayTrace(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         fx = json.loads(FIXTURE_V2.read_bytes()); cls.runtime = fx['runtime']
         cls.case = next(c for c in fx['cases'] if c['fixture_id'] == 'slot2-4bit-g32-f32'); cls.expected = fx['expected'][cls.case['fixture_id']]
+        import mlx.core as mx
         cls.dir = Path(tempfile.mkdtemp(prefix='replay-')); cls.contig = write_store(cls.case, cls.dir)
         sys.path.insert(0, str(DOGFOOD)); import pulsar_slot_store as pss
         cfg = cls.case['config']; q = (cfg['group_size'], cfg['bits'], 'affine')

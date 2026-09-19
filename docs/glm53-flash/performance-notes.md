@@ -413,6 +413,64 @@ reporting. Rule for the notes: on macOS, keep the page cache small before
 any >60 GB allocation, kill only on compressor/swap-out growth, and
 measure cold reads only after `purge`.
 
+## 3.11 Unpruned paged tier: coalescing gap 0 (2026-09-18 session)
+
+Measured on the M1 Ultra / 128 GB with the unpruned mixed-4/8 checkpoint on
+its expert-contiguous repack (internal NVMe), MTP off, greedy, one fresh
+process and an empty logical expert cache per request, OS cache observed
+only (no `purge`). Reference: the post-hardening slot store, gap 2.
+Candidate: gap 0 (adjacent cold experts still merge; no gap over-read).
+Everything else identical.
+
+Two things had to be fixed before any measurement was admissible:
+
+- **`F_NOCACHE` only bypasses the page cache for page-aligned I/O.** The
+  expert ranges start after an unaligned safetensors header, so every cold
+  read had been filling the file cache (3.6 GB per 4 GB layer file in a
+  model-free probe; 0 when page-aligned) until free memory hit zero and
+  macOS 26 compressed anonymous memory — the store's own tensors included.
+  This is the mechanism behind the earlier "thrash" incidents. Cold reads
+  are now page-aligned (exact bytes copied out of the aligned window;
+  `alignment_overread_bytes` counted separately, ~45 MB per 160 GB).
+- **The paged runner wires its buffers** (`--wire`) and the admitted expert
+  cache is 60e9 bytes on this host: the fill transients (numpy range
+  buffers + MLX temporaries, ~10–14 GB during prefill) do not fit the
+  reserve at 70e9. An independent watchdog (`watchdog.py`: compressor
+  +1 GiB / 60 s, swap +256 MiB / 60 s, pressure signal, graceful SIGTERM
+  only) gated every run; four pilot runs tripped it before the fix, none of
+  the 73 measured runs after it.
+
+Baseline anatomy (178-token prompt, 128 generated): prefill 40 s (4.5
+tok/s), decode 2.6 tok/s — I/O-bound: ~82 cold experts (1.16 GB requested)
+per token across 42 layers, compute ~8%. Decode over-read at gap 2 is only
+2 % of requested bytes; prefill over-read is 19–24 %. So the gap policy can
+only move prefill.
+
+Results (candidate vs reference, paired, fresh process per run):
+
+| Stratum | Blocks | Total latency Δ |
+|---|---|---|
+| Trace replay (read path only), medium prompt | 3 | prefill fill −13 %, decode fill −1.5 %, total −7.9 % |
+| Dev A/B, medium / short prompts (128 tokens) | 2 + 2 complete (1 reference run censored by the watchdog) | −6.6 … −8.7 % |
+| Held-out confirmation: short / medium / sustained 512 | 3 complete blocks, 12 pairs | workload −6.05 / −6.84 / −6.67 %; short −7…−10 %, medium −7.4…−8.4 %, sustained −4.5…−4.7 % |
+
+Fidelity: teacher-forced logits (332 × 154,880 fp32) bit-identical between
+gap 0 and gap 2; greedy token ids identical on every pair (dev, 20 sealed
+held-out tasks, 12 confirmation pairs). Held-out task score 14/14 retained
+(0 losses, 0 gains, 6 shared failures — 4 of them the model emitting the
+right answer and then a `<|user|>` turn marker that is not in the eos set).
+The 95 % retention *certification* is INCONCLUSIVE by construction (14
+reference-success units; the exact one-sided bound needs ≥ 59 with no
+losses) — retention here rests on output identity, not on statistics.
+
+Admission: PROMOTABLE within scope (single host, cold logical cache per
+request, ~6.5 % lower paired latency, no stratum regression). The running
+REAP50 service was not changed; the reversible recommendation is
+`--coalesce-gap 0` for the paged unpruned tier. Not established: repeated-
+request (warm store) behaviour, the M2 Max (blocked by its background
+memory), physical SSD traffic (logical counters only), any cold-OS-cache
+stratum.
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -436,6 +494,8 @@ measure cold reads only after `purge`.
 | REAP37 declared paged-only after three loading strategies | NOCACHE loader; more daemons killed | eager and lazy loads both compressed/thrashed on an empty host; the margin would be ~2 GB even if loaded |
 | Quality claims only from the nine-domain paired slice, never the single passage | one-passage indicator | paired deltas with SE across domains; ranking stable 9/9 |
 | Repack v2 writes the safetensors container itself | rely on `mx.save_safetensors` order | MLX's writer follows an unordered map (neither insertion nor sorted order, verified) |
+| Paged tier: coalescing gap 0 instead of 2 (2026-09-18) | gap 1; keep gap 2 | 24 replays + 4 dev pairs + 12 held-out pairs, every block favours gap 0 (−6.5 % workload latency), outputs bit-identical; decode over-read was only 2 %, so the gain is prefill-only |
+| Page-aligned `F_NOCACHE` cold reads and wired buffers for the paged runner | unaligned reads (the old behaviour) | unaligned `F_NOCACHE` reads fill the page cache (3.6 GB per file, model-free probe) and macOS 26 then compresses the store; 4 watchdog trips before, 0 in 73 runs after |
 | Kernel fusion (fewer launches per layer) as the next resident-tier track, not more speculation | more draft tokens; tree drafts | acceptance decays 0.8 → 0.65 → 0.53 by position and the fixed step cost caps every speculative variant near 27–31 tok/s |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
 | Quit the Studio's background apps (Docker VM, Hermes, Codex, Claude, Bark, CC, LM Studio, MEGAsync, Parallels); keep RustDesk; leave NotificationCenter/coreaudiod | kill everything; leave everything | operator's list; ~20 GB freed; the two daemons are system-owned and were only flagged |
