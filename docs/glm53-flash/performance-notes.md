@@ -471,6 +471,44 @@ request (warm store) behaviour, the M2 Max (blocked by its background
 memory), physical SSD traffic (logical counters only), any cold-OS-cache
 stratum.
 
+## 3.12 Unpruned paged tier: per-expert slot writes (FreeToken-informed follow-on, 2026-09-19)
+
+Cost attribution of the decode-phase fill on the admitted Studio configuration
+(gap 0, replay with stage timers): reading cold experts is 65 % of the fill at
+5.6 GB/s — the drive's measured ceiling — and materialization is 31 %:
+numpy→MLX copy 12.5 %, `mx.stack` 6 %, scatter + eval 12.4 %. The transferable
+principle from FreeToken's fused index copy (`offload_cache.py`,
+`_build_fused_copy_plan`/`copy_missing` at 6410c97e; nothing copied) and its
+"pin-after-fill removes a redundant pass" (`host_banks.py`) is simply: install
+missing experts with as few passes over the bytes as possible. The stack pass
+existed only to issue one scatter per part.
+
+Candidate (`--write-mode per-expert`, default `stack` = baseline): one in-place
+scatter per expert per (projection, part), no stacked temporary. Reads, policy,
+kernels, slot contents, fault stages and poison semantics are unchanged; the
+slot-store operation runs the fixture-v2 forced-cold passes and the fault
+schedule in both modes bit-identically.
+
+| Stratum | Blocks | Δ total latency (per-expert vs stack, both gap 0) |
+|---|---|---|
+| Trace replay fill (read path only) | 2 + 2 | prefill −19…−22 %, decode −7…−9 % |
+| Dev A/B (128 tokens) | 2 + 2 | −5.5 … −6.9 %; decode +5…7 % tok/s; cache clears 0–1 vs 15–27 |
+| Confirmation, fresh prompts (short / medium / sustained-512) | 3 blocks, 12 pairs | workload −6.82 / −6.15 / −6.75 %; every stratum −3.7…−7.8 %; sustained −6.3…−6.5 % |
+
+Fidelity: teacher-forced logits bit-identical; greedy tokens identical on 20
+fresh sealed tasks and all 12 confirmation pairs; task score 13/13 retained;
+95 % certification INCONCLUSIVE by construction (13 units). Peak MLX memory is
+lower with the candidate (73.4–75.5 vs 74.7–76.1 GB); compressor/swap deltas 0.
+
+Admission: PROMOTABLE within scope (single host, cold logical cache per
+request). Screened and not pursued: a static per-layer capacity vector fitted
+on dev traces buys ≤ 4 % of decode misses in simulation (below the gate);
+same-layer next-wave staging has nothing to overlap in decode (one wave per
+layer) and prefill is read-bound; prefix checkpoints and budget splits had no
+supporting workload or reclaimable memory. Combined with §3.11 the paged tier
+is now two paired steps below the hardening baseline (≈ −6.5 % each, measured
+against their immediate baselines; not measured as one pair).
+
 ## 4. Decision log (what was chosen, what was rejected, on what evidence)
 
 | Decision | Alternatives considered | Evidence / reason |
@@ -496,6 +534,7 @@ stratum.
 | Repack v2 writes the safetensors container itself | rely on `mx.save_safetensors` order | MLX's writer follows an unordered map (neither insertion nor sorted order, verified) |
 | Paged tier: coalescing gap 0 instead of 2 (2026-09-18) | gap 1; keep gap 2 | 24 replays + 4 dev pairs + 12 held-out pairs, every block favours gap 0 (−6.5 % workload latency), outputs bit-identical; decode over-read was only 2 %, so the gain is prefill-only |
 | Page-aligned `F_NOCACHE` cold reads and wired buffers for the paged runner | unaligned reads (the old behaviour) | unaligned `F_NOCACHE` reads fill the page cache (3.6 GB per file, model-free probe) and macOS 26 then compresses the store; 4 watchdog trips before, 0 in 73 runs after |
+| Paged tier: per-expert in-place slot writes instead of stack + scatter (2026-09-19) | keep the stack pass | replay, dev and 3-block fresh-prompt confirmation all favour it (−6.6 % workload latency, decode included), bit-identical, lower peak memory |
 | Kernel fusion (fewer launches per layer) as the next resident-tier track, not more speculation | more draft tokens; tree drafts | acceptance decays 0.8 → 0.65 → 0.53 by position and the fixed step cost caps every speculative variant near 27–31 tok/s |
 | Equivalent mutant replaced, revision recorded (graph 24) | keep an INACTIVE cell | `stale-slot-map` could not kill because `slot_of` is authoritative; `map-not-refreshed` is what the gather depends on |
 | Quit the Studio's background apps (Docker VM, Hermes, Codex, Claude, Bark, CC, LM Studio, MEGAsync, Parallels); keep RustDesk; leave NotificationCenter/coreaudiod | kill everything; leave everything | operator's list; ~20 GB freed; the two daemons are system-owned and were only flagged |
