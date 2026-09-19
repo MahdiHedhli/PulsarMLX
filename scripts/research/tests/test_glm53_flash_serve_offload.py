@@ -173,6 +173,20 @@ class ServeOffloadLive(unittest.TestCase):
         so.ENGINE['test_seam'] = False
         self.assertEqual(httpx.post(self.base + '/test/reset-logical-store', timeout=5).status_code, 403); so.ENGINE['test_seam'] = True
 
+    def test_055_pulsar_trace_seam(self):
+        sr.STATE['trace_snapshot'] = self.store.stats
+        try:
+            r = self.chat('slow:3', pulsar_trace=True); self.assertEqual(r.status_code, 200)
+            t = r.json()['pulsar']; seed = sum(ord(c) for c in 'slow:3')
+            self.assertEqual(t['token_ids'], [(seed + i) % 1000 for i in range(3)]); self.assertEqual(len(t['token_times_s']), 3)
+            self.assertGreaterEqual(t['queue_wait_s'], 0.0); self.assertGreater(t['completion_s'], t['first_token_s']); self.assertEqual(t['store_delta']['misses'], 0); self.assertEqual(t['prompt_tokens'], 7)
+            self.assertNotIn('pulsar', self.chat('slow:3').json())
+            with httpx.stream('POST', self.base + '/v1/chat/completions', json={'messages': [{'role': 'user', 'content': 'slow:3'}], 'max_tokens': 10, 'stream': True, 'pulsar_trace': True}, timeout=BOUND) as r:
+                chunks = [json.loads(l[6:]) for l in r.iter_lines() if l.startswith('data: ') and l != 'data: [DONE]']
+            self.assertEqual(chunks[-1]['pulsar']['token_ids'], t['token_ids'])
+        finally:
+            sr.STATE.pop('trace_snapshot', None)
+
     def test_06_poison_makes_engine_not_ready_without_reload(self):
         r = self.chat('poison:2'); self.assertEqual(r.status_code, 500)
         self.assertEqual(httpx.get(self.base + '/readyz', timeout=5).status_code, 503)

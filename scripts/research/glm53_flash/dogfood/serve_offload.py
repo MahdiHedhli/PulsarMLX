@@ -79,6 +79,7 @@ def load(args):
                generate=lambda prompt, **kw: stream_generate(model, processor, prompt, **kw),
                ready=ready, not_ready_reason=None, limits={"max_prompt_tokens": args.max_prompt_tokens, "max_output_tokens": args.max_output_tokens}, request_deadline_s=args.request_deadline_s, after_job=after_job)
     sr.STATE["not_ready_reason"] = None
+    sr.STATE["trace_snapshot"] = lambda: store.stats()      # opt-in per-request store deltas (pulsar_trace); cached counters, no MLX evaluation
     print(f"loaded in {load_s:.1f}s; {model_id}; experts {identity['n_routed_experts']} top-{identity['num_experts_per_tok']}; budget {args.expert_cache_bytes} B; gap {args.coalesce_gap}; write {args.write_mode}; wired {args.wire}; stop {policy['version']} {policy['names']}", flush=True)
 
 

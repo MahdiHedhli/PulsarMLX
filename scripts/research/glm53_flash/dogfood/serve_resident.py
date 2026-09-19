@@ -258,6 +258,23 @@ async def chat_completions(request: Request):
     STATE["requests"] += 1
 
     deadline = STATE.get("request_deadline_s")
+    trace = {"token_ids": [], "token_times_s": [], "first_answer_s": None, "prompt_tokens": len(ids)} if body.get("pulsar_trace") else None   # measurement seam (opt-in, non-standard field)
+    snapshot = STATE.get("trace_snapshot")      # paged engine: store counters before/after the job
+    if trace is not None and snapshot is not None:
+        trace["store_before"] = snapshot()
+
+    def trace_finish(text):
+        if trace is None:
+            return None
+        now = time.time(); trace["queue_wait_s"] = round((job.started_at or now) - job.submitted_at, 4); trace["completion_s"] = round(now - job.submitted_at, 4)
+        if trace["token_times_s"]:
+            trace["first_token_s"] = trace["token_times_s"][0]
+            n = len(trace["token_times_s"]); span = trace["token_times_s"][-1] - trace["token_times_s"][0]
+            trace["decode_tps_after_first"] = round((n - 1) / span, 3) if n > 1 and span > 0 else None
+        if snapshot is not None:
+            after = snapshot(); trace["store_delta"] = {k: after[k] - trace["store_before"][k] for k in after if isinstance(after[k], (int, float)) and isinstance(trace["store_before"].get(k), (int, float)) and not isinstance(after[k], bool)}
+            trace["store_after"] = after
+        return trace
 
     async def results():
         """Items until the terminal marker; raises the generation's exception; cancels the job if the consumer stops early
@@ -273,6 +290,8 @@ async def chat_completions(request: Request):
                 else:
                     kind, payload = await items.get()
                 if kind == "item":
+                    if trace is not None:
+                        trace["token_ids"].append(getattr(payload, "token", None)); trace["token_times_s"].append(round(time.time() - (job.started_at or t_submit), 4))
                     yield payload
                 elif kind == "error":
                     raise payload
@@ -293,6 +312,8 @@ async def chat_completions(request: Request):
         try:
             async for r in results():
                 text += r.text; final = r
+                if trace is not None and trace["first_answer_s"] is None and "</think>" in text and text.split("</think>", 1)[1].strip():
+                    trace["first_answer_s"] = trace["token_times_s"][-1]
         except asyncio.TimeoutError:
             return JSONResponse({"error": {"message": f"request deadline {deadline}s exceeded", "type": "deadline"}}, status_code=504)
         except Exception as exc:
@@ -303,16 +324,21 @@ async def chat_completions(request: Request):
         msg = {"role": "assistant", "content": answer}
         if reasoning:
             msg["reasoning_content"] = reasoning
-        return {"id": rid, "object": "chat.completion", "created": created, "model": model_id,
-                "choices": [{"index": 0, "message": msg, "finish_reason": final.finish_reason or "stop"}], "usage": usage_of(final)}
+        out = {"id": rid, "object": "chat.completion", "created": created, "model": model_id,
+               "choices": [{"index": 0, "message": msg, "finish_reason": final.finish_reason or "stop"}], "usage": usage_of(final)}
+        if trace is not None:
+            out["pulsar"] = trace_finish(text)
+        return out
 
     async def sse():
         head = {"id": rid, "object": "chat.completion.chunk", "created": created, "model": model_id}
         yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {"role": "assistant", "content": ""}, "finish_reason": None}]}) + "\n\n"
-        final = None; splitter = _ThinkSplitter()
+        final = None; splitter = _ThinkSplitter(); text = ""
         try:
             async for r in results():
-                final = r
+                final = r; text += r.text
+                if trace is not None and trace["first_answer_s"] is None and "</think>" in text and text.split("</think>", 1)[1].strip():
+                    trace["first_answer_s"] = trace["token_times_s"][-1]
                 for field, piece in splitter.feed(r.text):
                     yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {field: piece}, "finish_reason": None}]}) + "\n\n"
         except Exception as exc:                # headers are out: report the failure in-band and end the stream
@@ -322,7 +348,7 @@ async def chat_completions(request: Request):
         for field, piece in splitter.flush():
             yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {field: piece}, "finish_reason": None}]}) + "\n\n"
         usage = usage_of(final) if final else None
-        yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {}, "finish_reason": (final.finish_reason if final else None) or "stop"}], "usage": usage}) + "\n\n"
+        yield "data: " + json.dumps({**head, "choices": [{"index": 0, "delta": {}, "finish_reason": (final.finish_reason if final else None) or "stop"}], "usage": usage, **({"pulsar": trace_finish(text)} if trace is not None else {})}) + "\n\n"
         yield "data: [DONE]\n\n"
     return StreamingResponse(sse(), media_type="text/event-stream")
 
