@@ -208,13 +208,22 @@ async def chat_completions(request: Request):
     body = await request.json()
     if "model" not in STATE:
         return JSONResponse({"error": {"message": "model loading"}}, status_code=503)
+    ready = STATE.get("ready")                  # paged engine (serve_offload): a poisoned store / fatal state rejects new work
+    if ready is not None and not ready():
+        return JSONResponse({"error": {"message": STATE.get("not_ready_reason", "engine not ready"), "type": "engine_fatal"}}, status_code=503)
     messages = _messages(body)
     if not messages:
         return JSONResponse({"error": {"message": "messages required"}}, status_code=400)
     processor = STATE["processor"]
     effort = _reasoning_effort(body)
     prompt, ids = await asyncio.to_thread(_prepare, messages, effort)   # template + tokenizer off the event loop (graph 34 review)
-    kwargs = {"max_tokens": int(body.get("max_tokens") or STATE["default_max_tokens"]), "temperature": float(body.get("temperature", 0.0)),
+    limits = STATE.get("limits") or {}          # bounded requests (serve_offload): explicit 400 before any model work
+    max_tokens = int(body.get("max_tokens") or STATE["default_max_tokens"])
+    if limits.get("max_prompt_tokens") and len(ids) > limits["max_prompt_tokens"]:
+        return JSONResponse({"error": {"message": f"prompt {len(ids)} tokens exceeds the admitted limit {limits['max_prompt_tokens']}", "type": "prompt_too_long"}}, status_code=400)
+    if limits.get("max_output_tokens") and max_tokens > limits["max_output_tokens"]:
+        return JSONResponse({"error": {"message": f"max_tokens {max_tokens} exceeds the admitted limit {limits['max_output_tokens']}", "type": "max_tokens_too_large"}}, status_code=400)
+    kwargs = {"max_tokens": max_tokens, "temperature": float(body.get("temperature", 0.0)),
               "prefill_step_size": STATE["prefill_step_size"]}
     if body.get("top_p") is not None:
         kwargs["top_p"] = float(body["top_p"])
@@ -239,6 +248,8 @@ async def chat_completions(request: Request):
         except RuntimeError:
             pass
     try:
+        if STATE.get("worker") is None:
+            return JSONResponse({"error": {"message": "engine stopped", "type": "engine_fatal"}}, status_code=503)
         job = STATE["worker"].submit(make_generator, deliver)
     except QueueFull as exc:
         return JSONResponse({"error": {"message": str(exc), "type": "overloaded"}}, status_code=503, headers={"Retry-After": "1"})
@@ -246,11 +257,21 @@ async def chat_completions(request: Request):
         return JSONResponse({"error": {"message": str(exc), "type": "worker_dead"}}, status_code=503)
     STATE["requests"] += 1
 
+    deadline = STATE.get("request_deadline_s")
+
     async def results():
-        """Items until the terminal marker; raises the generation's exception; cancels the job if the consumer stops early."""
+        """Items until the terminal marker; raises the generation's exception; cancels the job if the consumer stops early
+        or the request deadline passes (a generation deadline: the job is cancelled at its next token)."""
+        t_submit = time.time()
         try:
             while True:
-                kind, payload = await items.get()
+                if deadline:
+                    remaining = deadline - (time.time() - t_submit)
+                    if remaining <= 0:
+                        raise TimeoutError(f"request deadline {deadline}s exceeded")
+                    kind, payload = await asyncio.wait_for(items.get(), timeout=remaining)
+                else:
+                    kind, payload = await items.get()
                 if kind == "item":
                     yield payload
                 elif kind == "error":
@@ -259,6 +280,9 @@ async def chat_completions(request: Request):
                     return
         finally:
             job.cancel()                        # no-op after completion; releases the model when the client went away
+            hook = STATE.get("after_job")       # paged engine: refresh readiness (poison) after every job
+            if hook is not None:
+                hook(job)
 
     def usage_of(final):
         return {"prompt_tokens": final.prompt_tokens, "completion_tokens": final.generation_tokens, "total_tokens": final.prompt_tokens + final.generation_tokens,
@@ -269,6 +293,8 @@ async def chat_completions(request: Request):
         try:
             async for r in results():
                 text += r.text; final = r
+        except asyncio.TimeoutError:
+            return JSONResponse({"error": {"message": f"request deadline {deadline}s exceeded", "type": "deadline"}}, status_code=504)
         except Exception as exc:
             return JSONResponse({"error": {"message": f"generation failed: {type(exc).__name__}: {exc}", "type": "generation_error"}}, status_code=500)
         if final is None:

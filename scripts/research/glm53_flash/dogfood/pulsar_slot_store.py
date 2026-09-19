@@ -492,6 +492,20 @@ class PulsarSlotStore:
             self.fault_hook("before-eval")
         mx.eval([t for parts in L.tensors.values() for t in parts])
 
+    def reset_logical_state(self) -> dict:
+        """Test seam (unpruned-persistent G55/G57): forget every resident expert and every policy count, keeping the slot
+        tensors ALLOCATED (no reallocation, no free) and the lifetime counters untouched - a same-process logical-cold
+        control that isolates process warmth from expert warmth. Never exposed on a public serving API; must be called
+        at idle by the model's single owner. A poisoned store stays poisoned."""
+        self._usable()
+        forgotten = 0
+        for L in self._layers.values():
+            forgotten += len(L.slot_of) + len(L.pending)
+            L.slot_of.clear(); L.pending.clear(); L.expert_to_slot[:] = -1; L.free = list(range(self.capacity))
+        self._counts.clear(); self._touch.clear(); self._accesses = 0
+        self._logical_resets = getattr(self, "_logical_resets", 0) + 1
+        return {"forgotten_experts": forgotten, "reallocated_slot_buffers": False, "logical_resets": self._logical_resets}
+
     def slots_for(self, lid: int, idx_host, mask=None):
         """Slot index per (token, k) from the layer's published map, gathered on the host; `mask` (same shape) zeroes
         the entries outside the current wave. An absent expert (-1) is rejected: it must never reach gather_qmm."""
@@ -522,7 +536,7 @@ class PulsarSlotStore:
                 "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned,
                 "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes, "alignment_overread_bytes": self._alignment_overread_bytes,
                 "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
-                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "logical_resets": getattr(self, "_logical_resets", 0), "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
