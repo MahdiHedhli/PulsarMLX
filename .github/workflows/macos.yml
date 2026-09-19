@@ -146,6 +146,8 @@ jobs:
               > "$RUNNER_TEMP/flash-repack-v2-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_serve_policy.py \
               > "$RUNNER_TEMP/flash-serve-policy-$(echo $flags | tr -d ' -').stdout"
+            .venv/bin/python $flags scripts/research/tests/test_glm53_flash_stop_policy.py \
+              > "$RUNNER_TEMP/flash-stop-policy-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

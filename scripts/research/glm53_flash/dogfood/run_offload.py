@@ -133,6 +133,7 @@ def main():
     ap.add_argument('--stream', action='store_true', help='per-token timing (first token, first answer token after </think>, decode tok/s over the last half) via stream_generate')
     ap.add_argument('--wire', action='store_true', help='wire the MLX buffers up to the recommended working set (prevents the OS from compressing the store)')
     ap.add_argument('--write-mode', choices=('stack', 'per-expert'), default='stack', help="slot: 'stack' (baseline: mx.stack + one scatter per part) or 'per-expert' (one in-place scatter per expert per part; freetoken-followon H1)")
+    ap.add_argument('--stop-policy', choices=('legacy-tokenizer-eos', 'glm5-eos-v1'), default='legacy-tokenizer-eos', help="termination (unpruned-persistent G54): 'legacy-tokenizer-eos' reproduces the pre-G54 streaming behaviour (tokenizer eos only); 'glm5-eos-v1' installs the checkpoint's declared terminal ids (<|endoftext|>, <|user|>, <|observation|>)")
     args = ap.parse_args()
 
     import mlx.core as mx
@@ -157,6 +158,9 @@ def main():
     t_load = time.time() - t1
     print(f'loaded in {t_load:.1f}s; patched layers on the eager FFN path: {eager}; store: {store.stats()}', flush=True)
 
+    import stop_policy
+    policy = stop_policy.build(args.offload, processor.tokenizer, version=args.stop_policy); policy_installed = stop_policy.apply(processor, policy)
+    print(f"stop policy {policy['version']}: {policy['names']}", flush=True)
     prompt_text, prompt_id, max_tokens = args.prompt, None, args.max_tokens
     if args.prompt_file:
         sel = [p for p in json.load(open(args.prompt_file))['prompts'] if p['id'] == args.prompt_id]
@@ -212,7 +216,7 @@ def main():
         trace_fh.write(json.dumps({'footer': True, 'phase_stats': phase_stats}) + '\n'); trace_fh.close(); store.trace = None
     warm_path = store.save_warm_state() if (args.store in ('pulsar', 'slot') and args.save_warm) else None
     record = {'build': args.build, 'offload': args.offload, 'store_policy': args.store, 'cache_clear_threshold_gb': threshold_gb, 'read_workers': args.read_workers, 'warm_state_saved': warm_path, 'expert_cache_gb': args.expert_cache_gb, 'repack_seconds': round(t_repack, 1),
-              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'wired': args.wire, 'write_mode': args.write_mode, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
+              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'wired': args.wire, 'write_mode': args.write_mode, 'stop_policy': {**policy, 'names': {str(k): v for k, v in policy['names'].items()}, **policy_installed}, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
               'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': max_tokens, 'prefill_step_size': args.prefill_step_size,
               'patched_layers_eager_ffn': eager, 'store_stats': store.stats(), 'peak_memory_bytes': int(mx.get_peak_memory()),
               'device_info': {k: v for k, v in mx.device_info().items() if isinstance(v, (int, str))}, 'prompt': args.prompt, 'text': text,
