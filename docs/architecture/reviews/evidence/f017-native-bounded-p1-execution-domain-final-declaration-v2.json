@@ -18,7 +18,7 @@
  },
  "admission_contract": {
   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v3.json",
-  "sha256": "389580fa7ba5ca0f8a8d531aa522431bae9b47db413a02fba69b15e2132356f4",
+  "sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
   "generation": 3,
   "static_validation_m1_ultra": "PASS (validate-contract) 2026-09-20",
   "machine_preflight_m1_ultra": "PASS 2026-09-20 (brand, macOS build, rustc, dylib SHAs, environment)",
@@ -73,5 +73,6 @@
   "attempt_1_retried": false,
   "tolerances_changed": false,
   "generation_2_rules_changed": false
- }
+ },
+ "note_20260920": "contract v3 re-bound after the Cargo.toml bin-name restoration (30ca81dc); executor unchanged"
 }

@@ -2,11 +2,11 @@
   "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
   "authorization_id": "FUTURE_HUMAN_ASSIGNED",
   "branch": "feat/017-rust-native-inference-runtime",
-  "contract_sha256": "389580fa7ba5ca0f8a8d531aa522431bae9b47db413a02fba69b15e2132356f4",
+  "contract_sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
   "decision": "NOT_AUTHORIZED_TEMPLATE",
   "domain_declaration": {
     "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v2.json",
-    "sha256": "0ce825985fb7f616cf565819b4beccef33cfa3f5a508258beb42b0084f6741d6"
+    "sha256": "95211e29b95c026ac4cd637ee0259eb842a90c9eab10dcacc666c960f8d9226b"
   },
   "final_review": {
     "blocking_count": null,
