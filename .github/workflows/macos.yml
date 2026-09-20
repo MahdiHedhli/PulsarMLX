@@ -367,7 +367,15 @@ jobs:
             docs/research/glm52/raw/f016-c01-catalog-0001.json \
             --output "$RUNNER_TEMP/f017-plan-audit.json"
           cargo build -p f017-native --release \
-            --bin quant_native_matvec_probe --bin synthetic_differential
+            --bin quant_native_matvec_probe --bin synthetic_differential \
+            --bin temporal_differential
+          cargo test -p f017-native --release --test temporal
+          .venv/bin/python scripts/research/qualify_f017_native_temporal_v1.py \
+            --native-binary target/release/temporal_differential \
+            --work "$RUNNER_TEMP/f017-temporal" \
+            --output "$RUNNER_TEMP/f017-native-temporal-differential.json"
+          cmp "$RUNNER_TEMP/f017-native-temporal-differential.json" \
+            docs/architecture/reviews/evidence/f017-native-temporal-differential-v1.json
           .venv/bin/python scripts/research/qualify_f017_corrected_oracle_numerical_authority_v3.py \
             --synthetic-binary target/release/synthetic_differential \
             --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v3.json"
