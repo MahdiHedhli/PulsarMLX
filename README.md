@@ -18,6 +18,17 @@ It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisan
 
 > **DON'T PANIC.** The giant model does not need to fit entirely in memory.
 
+## Status at a glance (2026-09-20)
+
+| Track | What runs today | Machine | Runtime | Observed speed | Fidelity evidence | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Qwen3-30B-A3B Q8_0** (frozen research baseline) | full 48-layer execution, greedy token, bounded generation | Apple Silicon (MLX GPU) | Python/NumPy reference + MLX worker | validation timings only (not advertised) | exact numerical boundaries vs the CPU architecture oracle, ≈10⁻⁷–10⁻⁸ at MoE boundaries | tag [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research) |
+| **GLM-5.2 UD-IQ2_XXS** (research ladder + Rust-native runtime track) | committed research ladder C01–C11 (79-layer logits, frozen golden sequence) on the Python/NumPy reference path; the Rust-native shipping runtime (F017) is **in progress** on feature branches and not merged | Mac Studio M1 Ultra, internal SSD | Python/NumPy reference (research); Rust-native runtime not yet complete | not claimed | frozen contract + checkpoint identity, C01–C11 evidence under `docs/research/glm52/` | [`docs/architecture/GLM52_CONTRACT.md`](docs/architecture/GLM52_CONTRACT.md), branch `feat/017-rust-native-inference-runtime` |
+| **GLM-5.3-Flash mixed-4/8, unpruned** (paged / persistent research candidate) | persistent OpenAI-style research server paging 288 experts × 42 layers through a 60 GB wired slot store; corrected termination; 6.03 h soak segment | Mac Studio M1 Ultra 128 GB | Python/MLX (mlx 0.32.2, mlx-vlm 0.7.0 + pipenetwork `glm5_next`) | decode **2.6–3.3 tok/s** (miss-bound); exact-repeat request latency 12–15 % lower, A-B-A 9–13 % lower than a fresh process (prefill) | 120/120 token-identical task pairs vs the fresh-process paged reference; 119/119 relative task retention; 0.9724 exact 95 % lower bound on group retention (scope-limited) | [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md), commit `971db9c1` on `serve/glm53-flash-unpruned-persistent-20260919b` |
+| **Pruned REAP variants** (GLM-5.3-Flash REAP50 etc.) | resident serving experiments on the pruned 144-expert build | Mac Studio M1 Ultra | Python/MLX | recorded in [`docs/glm53-flash/performance-notes.md` on the Flash branch](https://github.com/MahdiHedhli/PulsarMLX/blob/971db9c16f982f367d1759b5ccda03a506cf6672/docs/glm53-flash/performance-notes.md) | **not the fidelity target**; pruned-model numbers are never compared with unpruned results | same branch family |
+
+None of these is a production runtime. The Python/MLX Flash candidate is **not** the Rust-native shipping architecture and does not complete it. The Flash runtime code is on its feature branch (pinned links above), not on the default branch.
+
 ## The idea
 
 A giant MoE may hold hundreds of billions of parameters while **activating only a fraction** on each token. That changes the memory problem: not every expert must stay resident for every step.
@@ -231,7 +242,9 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | Evidence / claims / reviewer indexes | ✅ Verified |
 | Optimized MLX-only generation | 🚧 |
 | KV-cached decode | 🚧 |
-| GLM-5.2 full stack | 🚧 Active bring-up (see below) |
+| GLM-5.2 full stack (research ladder) | ✅ C01–C11 committed (Python/NumPy reference path) |
+| GLM-5.2 Rust-native runtime (F017) | 🚧 In progress on feature branches; not merged, not claimed |
+| GLM-5.3-Flash unpruned paged/persistent serving (research) | ✅ Measured candidate `971db9c1` (Python/MLX); see [results](docs/glm53-flash/persistent-serving-results.md) |
 | OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
@@ -275,6 +288,14 @@ GLM is the model that **forces** SSD-backed expert residency rather than “fit 
 Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
 
 **Not claimed:** GLM product support, generation quality, tok/s, M2 Max, external RAID, or CUDA bit-parity.
+
+### Rust-native runtime track (F017)
+
+The shipping architecture for GLM-5.2 is a Rust-native runtime with no required Python hot path ([strategy](docs/roadmap/PULSARMLX_STRATEGY.md)). Its work lives on `feat/017-rust-native-inference-runtime` and successors and is tracked in the private feature control plane (accepted stages D0–D8 as of 2026-09-20; formal feature closeout requires a human approval that has not been granted). No native full-model GLM-5.2 execution is committed on the default branch. The historical Python/NumPy research ladder above is banked evidence, not the native runtime.
+
+## GLM-5.3-Flash: unpruned paged / persistent serving (research, 2026-09-20)
+
+A separate research track ran the **unpruned** `GLM-5.3-Flash-MLX-mixed-4_8bit` (288 routed experts, top-8, 42 MoE layers, ~170 GB of experts) on a Mac Studio M1 Ultra 128 GB by paging experts through a 60 GB wired slot store, first as a CLI and then as a persistent OpenAI-style research server (Python/MLX; commit `971db9c1`). Headline results, all relative to a fresh-process run of the same paged path with the same corrected stop policy: token-identical outputs on 120/120 sealed tasks, 119/119 relative task retention (exact 95 % lower bound 0.9724 on group retention, scope-limited), exact-repeat request latency 12–15 % lower and A-B-A 9–13 % lower (a prefill effect; decode stays 2.6–3.3 tok/s because the budget holds ~35 % of the experts), and a 6.03 h single-process soak segment with 0 failed requests. The round also root-caused the `<|user|>`-after-answer termination fault (loader without eos ids) and fixed it. Full tables, definitions, the soak usability clarification and limitations: [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md). Deployment authorization was not granted; nothing replaced a default service.
 
 ## Performance: not the point yet
 
