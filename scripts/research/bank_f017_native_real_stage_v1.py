@@ -17,6 +17,26 @@ ROOT = Path(__file__).resolve().parents[2]
 ATTEMPT_2 = ROOT / "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-02-execution-evidence-v1.json"
 
 
+def _first_input_token(diagnostics: dict, host_before: str):
+    """The stage's first input token, read from evidence rather than inferred.
+
+    The runner banks the exact argv it ran; `--raw-tokens` names the inputs
+    outright. A text prompt's ids are not recoverable without the tokenizer,
+    and no banked receipt covers a text prompt anyway, so it returns None.
+    """
+    recorded = diagnostics.get("prompt_token_ids")
+    if recorded:
+        return recorded[0]
+    for line in host_before.splitlines():
+        if not line.startswith("argv="):
+            continue
+        parts = line[len("argv="):].split()
+        if "--raw-tokens" in parts:
+            value = parts[parts.index("--raw-tokens") + 1]
+            return int(value.split(",")[0])
+    return None
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stage", required=True)
@@ -40,8 +60,12 @@ def main(argv=None) -> int:
     generation = diagnostics.get("generation", {})
     positions = generation.get("position_selected_tokens", [])
     digests = generation.get("position_logits_sha256", [])
+    # The attempt-2 receipt is a statement about prompt token 9703 at position
+    # zero and nothing else. Applying it to a stage that starts from a
+    # different token would manufacture a mismatch that means nothing.
+    first_input = _first_input_token(diagnostics, arguments.host_before.read_text())
     binding = None
-    if positions and digests:
+    if positions and digests and first_input == banked["execution"]["prompt_token"]:
         binding = {
             "rule": "position 0 must reproduce the banked attempt-2 one-token result",
             "expected_token": expected_token,
@@ -66,10 +90,15 @@ def main(argv=None) -> int:
         "answer_sha256": hashlib.sha256(answer).hexdigest(),
         "answer_text": answer.decode("utf-8", "replace") if len(answer) < 4096 else None,
         "position_zero_binding": binding,
+        "position_zero_binding_applicability": (
+            "applied: this stage begins from the same prompt token the banked one-shot used"
+            if binding else
+            "not applicable: the banked receipt is a statement about prompt token "
+            f"{banked['execution']['prompt_token']} at position zero, and this stage begins from a different token"),
         "host_before_sha256": hashlib.sha256(arguments.host_before.read_bytes()).hexdigest(),
         "host_after_sha256": hashlib.sha256(arguments.host_after.read_bytes()).hexdigest(),
         "qualified": {
-            "position_zero": "compared against banked evidence" if binding else "not applicable",
+            "position_zero": "compared against banked evidence" if binding else "no banked comparison exists for this prompt",
             "later_positions": "MEASURED_NOT_QUALIFIED: no independent multi-token oracle exists for the real checkpoint, and the rope pairing is still a declared parameter",
         },
         "not_claimed": [

@@ -1,0 +1,107 @@
+{
+ "answer_bytes": 16,
+ "answer_sha256": "10389128d35ea5263c4a854feeeb54688291b12a1018166aa9df72a3433a8230",
+ "answer_text": " 17 times table\n",
+ "diagnostics": {
+  "attention_softmax_scale": 0.0625,
+  "backend": "NATIVE_RUST_MLX_GPU",
+  "decode_tokens_per_second": 0.01155677893488516,
+  "generation": {
+   "decode_seconds": 259.587902209,
+   "finish_reason": "length",
+   "first_token_seconds": 4.2e-08,
+   "generated_token_count": 4,
+   "generated_tokens": [
+    220,
+    99419,
+    3039,
+    1965
+   ],
+   "peak_state_bytes": 1456128,
+   "position_logits_sha256": [
+    "555fc630f7d927462a14e07a399ae0eb18850366e070bdfe35d9b86f6b964d87",
+    "03f4daeab07e52531aab9ef21480939a60b74e9e44a7f6faa040908f5d695ed5",
+    "038f0ceda9dbdbafe25a17ac1e87b1ad219bbb14dca05beea1a5459e69fb3d86",
+    "af169f18f277f92cd539d28b61ed10ea2f7ed14a26495c102d6920e2b4c9e990",
+    "0309cde5028dfbf16fa7eb6d2f9a4e31e3fabeda042f922ed1f1e1bd17b885df",
+    "10aff8940c3b1d9fdaee6e516b302f76429dfd2adfa8c2f9c0fe8bc51165a65a",
+    "f8c3a967e439f5f98ca5e4778e6a9089e352d79d27c83aa64b01b3b095422aac",
+    "0809bcc627badbe683864b83492a8c73698bba30a905468d4d49962cfe20e0f3"
+   ],
+   "position_seconds": [
+    97.085082708,
+    91.035553084,
+    88.200831292,
+    87.398269583,
+    87.798007041,
+    86.473158667,
+    86.719217375,
+    86.388806875
+   ],
+   "position_selected_tokens": [
+    154820,
+    154500,
+    154820,
+    220,
+    220,
+    99419,
+    3039,
+    1965
+   ],
+   "positions_executed": 8,
+   "prefill_seconds": 451.526744625,
+   "prompt_tokens": 5,
+   "stop_token": null
+  },
+  "identity": {
+   "architecture": "glm-dsa",
+   "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+   "indexer_top_k": 2048,
+   "model_directory": "/Users/mhedhli/Models/PulsarMLX/f017-native-root-20260920",
+   "name": "GLM-5.2",
+   "quantization_file_type": null,
+   "shards": 6,
+   "tensors": 1809,
+   "total_bytes": 238458632928,
+   "vocabulary": 154880
+  },
+  "max_output_tokens": 4,
+  "max_positions": 24,
+  "phases_seconds": {
+   "checkpoint_identity_verification": 698.41942775,
+   "cleanup": 0.1900875,
+   "decode_after_first": 259.587902209,
+   "first_token": 4.2e-08,
+   "prefill": 451.526744625,
+   "preflight": 0.13087175
+  },
+  "prompt_mode": "RAW_TEXT_NO_TEMPLATE",
+  "prompt_tokens": 5,
+  "python_inference_process": false,
+  "result": "COMPLETE",
+  "rope_pairing": "NeoxHalfSplit",
+  "schema": "pulsarmlx.f017.native-generate-diagnostics/1.0.0",
+  "stop_token_ids": [],
+  "verified_checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee"
+ },
+ "evidence_status": "SANITIZED_PUBLIC_PROJECTION: token ids, digests, timings and counters only; no weight bytes and no logit vectors",
+ "exit_code": 0,
+ "host_after_sha256": "19853a4652bd9d80cb23b262dd681ee1e6fa0ca13a91ed74735e72da91ef295c",
+ "host_before_sha256": "811f6259fe77e1b608491d1492f68571f99aa93fdc7d084bd67004ca2196ac50",
+ "not_claimed": [
+  "numerical qualification of positions after 0 on the real checkpoint",
+  "the rope pairing of the real checkpoint",
+  "any sustained throughput figure",
+  "answer quality",
+  "readiness for deployment"
+ ],
+ "position_zero_binding": null,
+ "position_zero_binding_applicability": "not applicable: the banked receipt is a statement about prompt token 9703 at position zero, and this stage begins from a different token",
+ "qualified": {
+  "later_positions": "MEASURED_NOT_QUALIFIED: no independent multi-token oracle exists for the real checkpoint, and the rope pairing is still a declared parameter",
+  "position_zero": "no banked comparison exists for this prompt"
+ },
+ "schema": "pulsarmlx.f017.native-real-checkpoint-stage/1.0.0",
+ "stage": "stageB1",
+ "wall_seconds": 1411.0
+}

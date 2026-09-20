@@ -108,6 +108,7 @@
   "token_match": true,
   "what_this_is": "a comparison against existing evidence produced by a different binary with no authorization, no receipt and no ledger entry; it is not a re-execution of the consumed one-shot"
  },
+ "position_zero_binding_applicability": "applied: this stage begins from the same prompt token the banked one-shot used",
  "qualified": {
   "later_positions": "MEASURED_NOT_QUALIFIED: no independent multi-token oracle exists for the real checkpoint, and the rope pairing is still a declared parameter",
   "position_zero": "compared against banked evidence"
