@@ -11,6 +11,7 @@
 use crate::model::{MatvecBackend, TensorSource};
 use crate::temporal::{execute_position, SequenceState, TemporalConfig, TemporalObserver};
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
@@ -66,6 +67,13 @@ pub struct Outcome {
     pub decode_seconds: f64,
     /// One entry per executed position, prompt positions first.
     pub position_seconds: Vec<f64>,
+    /// The argmax at each executed position. Prompt positions are teacher
+    /// forced, so only the last one's entry becomes a generated token; the
+    /// earlier entries are what the model would have continued with.
+    pub position_selected_tokens: Vec<u32>,
+    /// SHA-256 of each position's full f32 logit vector, little-endian, so a
+    /// run can be compared with banked evidence without shipping the vector.
+    pub position_logits_sha256: Vec<String>,
     pub peak_state_bytes: usize,
     pub positions_executed: usize,
 }
@@ -151,6 +159,14 @@ struct PeakState {
 }
 impl TemporalObserver for PeakState {}
 
+fn logits_sha256(logits: &[f32]) -> String {
+    let mut digest = Sha256::new();
+    for value in logits {
+        digest.update(value.to_bits().to_le_bytes());
+    }
+    format!("{:x}", digest.finalize())
+}
+
 /// Run one bounded generation. `sink` receives decoded bytes as they become
 /// safe to show; it is never called for prompt tokens.
 #[allow(clippy::too_many_arguments)]
@@ -182,6 +198,8 @@ pub fn generate<F: FnMut(&[u32]) -> Vec<u8>>(
     }
     let mut observer = PeakState { peak: 0 };
     let mut position_seconds = Vec::new();
+    let mut position_selected_tokens = Vec::new();
+    let mut position_logits_sha256 = Vec::new();
     let mut next = None;
 
     let prefill_start = Instant::now();
@@ -197,13 +215,18 @@ pub fn generate<F: FnMut(&[u32]) -> Vec<u8>>(
                 first_token_seconds: 0.0,
                 decode_seconds: 0.0,
                 position_seconds,
+                position_selected_tokens,
+                position_logits_sha256,
                 peak_state_bytes: state.state_bytes(),
                 positions_executed: state.positions(),
             });
         }
         let step = Instant::now();
-        let (selected, _) = execute_position(source, backend, config, state, *token, &mut observer)?;
+        let (selected, logits) =
+            execute_position(source, backend, config, state, *token, &mut observer)?;
         position_seconds.push(step.elapsed().as_secs_f64());
+        position_selected_tokens.push(selected);
+        position_logits_sha256.push(logits_sha256(&logits));
         observer.peak = observer.peak.max(state.state_bytes());
         next = Some(selected);
     }
@@ -238,8 +261,11 @@ pub fn generate<F: FnMut(&[u32]) -> Vec<u8>>(
             after_first = Instant::now();
         }
         let step = Instant::now();
-        let (selected, _) = execute_position(source, backend, config, state, token, &mut observer)?;
+        let (selected, logits) =
+            execute_position(source, backend, config, state, token, &mut observer)?;
         position_seconds.push(step.elapsed().as_secs_f64());
+        position_selected_tokens.push(selected);
+        position_logits_sha256.push(logits_sha256(&logits));
         observer.peak = observer.peak.max(state.state_bytes());
         next = Some(selected);
     }
@@ -259,6 +285,8 @@ pub fn generate<F: FnMut(&[u32]) -> Vec<u8>>(
         first_token_seconds,
         decode_seconds,
         position_seconds,
+        position_selected_tokens,
+        position_logits_sha256,
         peak_state_bytes: observer.peak,
         positions_executed: state.positions(),
     })

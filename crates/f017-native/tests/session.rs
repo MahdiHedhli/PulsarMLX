@@ -152,6 +152,11 @@ fn a_bounded_run_stops_at_max_output_tokens() {
     // generated token needs no further forward pass.
     assert_eq!(outcome.positions_executed, 5);
     assert_eq!(outcome.position_seconds.len(), 5);
+    assert_eq!(outcome.position_selected_tokens.len(), 5);
+    assert_eq!(outcome.position_logits_sha256.len(), 5);
+    assert!(outcome.position_logits_sha256.iter().all(|sha| sha.len() == 64));
+    // The last prompt position's argmax is the first generated token.
+    assert_eq!(outcome.position_selected_tokens[1], outcome.generated_tokens[0]);
     assert_eq!(text.matches('<').count(), 4);
 }
 
