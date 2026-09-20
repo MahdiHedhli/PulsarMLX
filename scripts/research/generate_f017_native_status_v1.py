@@ -28,6 +28,7 @@ COUNT_CORRECTION = EVIDENCE / "f017-native-checkpoint-free-reconciliation-202609
 MEASUREMENT = EVIDENCE / "f017-v11-result-envelope-implementation-measurement-v9.json"
 CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-temporal-successor-contract-v1.json"
 STAGE_A = EVIDENCE / "f017-native-real-stage-a-position-ladder-v1.json"
+STAGE_B1 = EVIDENCE / "f017-native-real-stage-b1-text-generation-v1.json"
 
 
 def sha256(path: Path) -> str:
@@ -46,6 +47,7 @@ def build() -> dict:
     measurement = json.loads(MEASUREMENT.read_text())
     contract = json.loads(CONTRACT.read_text())
     stage_a = json.loads(STAGE_A.read_text()) if STAGE_A.is_file() else None
+    stage_b1 = json.loads(STAGE_B1.read_text()) if STAGE_B1.is_file() else None
 
     per_seed = int(correction["corrects"]["correct_text"].split()[0].replace(",", ""))
     logit_errors = [step["logits"]["max_abs"] for case in temporal["cases"] for step in case["steps"]]
@@ -108,6 +110,25 @@ def build() -> dict:
             "wall_seconds": stage_a["wall_seconds"],
             "later_positions": "MEASURED_NOT_QUALIFIED",
             "evidence": binding(STAGE_A),
+        },
+        "text_generation_real_checkpoint": None if stage_b1 is None else {
+            "state": "DONE",
+            "stage": stage_b1["stage"],
+            "prompt_mode": stage_b1["diagnostics"]["prompt_mode"],
+            "prompt_tokens": stage_b1["diagnostics"]["prompt_tokens"],
+            "generated_tokens": stage_b1["diagnostics"]["generation"]["generated_tokens"],
+            "generated_token_count": stage_b1["diagnostics"]["generation"]["generated_token_count"],
+            "finish_reason": stage_b1["diagnostics"]["generation"]["finish_reason"],
+            "answer_text": stage_b1["answer_text"],
+            "python_inference_process": stage_b1["diagnostics"]["python_inference_process"],
+            "identity_verification_seconds": stage_b1["diagnostics"]["phases_seconds"]["checkpoint_identity_verification"],
+            "prefill_seconds": stage_b1["diagnostics"]["generation"]["prefill_seconds"],
+            "position_seconds": stage_b1["diagnostics"]["generation"]["position_seconds"],
+            "decode_tokens_per_second": stage_b1["diagnostics"]["decode_tokens_per_second"],
+            "decode_rate_caveat": "three tokens over one interval on a cold, uncached weight path; it is a measurement of this build, not a runtime capability",
+            "quality_claim": "NONE: four tokens of raw-text continuation from a 2-bit quantisation without a chat template is not a task result",
+            "known_defect": "in --no-chat-template mode the stop set is empty, so the run could only end on max-tokens",
+            "evidence": binding(STAGE_B1),
         },
         "native_text_cli": {
             "state": "DONE_SYNTHETIC",

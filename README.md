@@ -233,9 +233,9 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | KV-cached decode | 🚧 |
 | GLM-5.2 full stack | 🚧 Active bring-up (see below) |
 | GLM-5.2 Rust-native one token (real checkpoint) | ✅ Verified — token 154820, [F017 status](docs/architecture/f017-native-runtime-status.md) |
-| GLM-5.2 Rust-native multi-position decode | ✅ Verified on synthetic fixtures against an independent reference; not yet on the real checkpoint |
-| GLM-5.2 Rust-native text CLI (no Python inference) | ✅ Implemented; exercised without a checkpoint |
-| GLM-5.2 Rust-native multi-token generation (real checkpoint) | ❌ Not run — awaiting a human GO |
+| GLM-5.2 Rust-native multi-position decode | ✅ Verified on synthetic fixtures against an independent reference, and on the real checkpoint (position 0 reproduces the banked one-token result bit for bit) |
+| GLM-5.2 Rust-native text generation (real checkpoint, no Python inference) | ✅ `17 times 6 equals` → ` 17 times table` — coherent text from the real 222 GiB checkpoint |
+| GLM-5.2 native answer quality | ❌ Not claimed — four tokens from a 2-bit quantisation is not a task result |
 | GLM-5.2 native tokens/sec | ❌ Not claimed |
 | OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
 | Production readiness | ❌ Not claimed |
@@ -296,10 +296,12 @@ generated from the evidence records and checked in CI).
 | One token on the real 222 GiB checkpoint | ✅ token **154820** == the corrected oracle's expected token; 704.0 s identity rehash + 299.2 s for 79 layers and logits |
 | Decoder differential vs the corrected oracle | ✅ 0 ULP over **107,502** values per seed, 11 formats |
 | Full-graph differential vs the corrected oracle | ✅ 6/6 synthetic seeds |
-| Multi-position attention, RoPE and retained state | ✅ 6/6 seeds vs an independent binary64 reference, logits max abs ≤ 1.5e-7 against a frozen 6.5e-3 threshold — synthetic only |
-| Native text CLI (`f017-native-generate`) | ✅ tokenizer, GLM chat template, prefill, decode, stop semantics, streaming detokenisation — exercised without a checkpoint |
-| Multi-token generation on the real checkpoint | ❌ not run; awaiting a human GO |
-| Native tokens/sec | ❌ not claimed; one cold forward pass is not a throughput figure |
+| Multi-position attention, RoPE and retained state | ✅ 6/6 seeds vs an independent binary64 reference, logits max abs ≤ 1.5e-7 against a frozen 6.5e-3 threshold |
+| Native text CLI (`f017-native-generate`) | ✅ tokenizer, GLM chat template, prefill, decode, stop semantics, streaming detokenisation |
+| Multi-position decode on the **real checkpoint** | ✅ eight positions, one retained state; position 0 reproduced the banked one-token receipt exactly — token **154820** and logits digest `db1456d8…`; retained state exactly 8 × 182,016 B |
+| Text generation on the **real checkpoint** | ✅ `17 times 6 equals` → ` 17 times table`, four tokens, **no Python in the inference path** |
+| Positions after 0 on the real checkpoint | ⚠️ measured, **not** qualified — no independent multi-token oracle exists for this checkpoint |
+| Native tokens/sec | ❌ not claimed; the measured 0.0116 tok/s is this build's cold, uncached weight path, not a runtime capability |
 
 ```sh
 cargo build -p f017-native --release --bin native_generate

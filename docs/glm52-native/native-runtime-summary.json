@@ -133,7 +133,7 @@
  "temporal_multi_position_real_checkpoint": {
   "evidence": {
    "path": "docs/architecture/reviews/evidence/f017-native-real-stage-a-position-ladder-v1.json",
-   "sha256": "d4485f02a35c78f0e9bd621d95a389fcf6b628c47d5bbcd14948f0200e9600ce"
+   "sha256": "9b5664c0dbeff5ce7a0e96c3e2646d61c17fe5e7c132c45a3ace0f0778119195"
   },
   "identity_verification_seconds": 716.595055625,
   "later_positions": "MEASURED_NOT_QUALIFIED",
@@ -161,5 +161,41 @@
   "stage": "stageA",
   "state": "DONE",
   "wall_seconds": 1501.0
+ },
+ "text_generation_real_checkpoint": {
+  "answer_text": " 17 times table\n",
+  "decode_rate_caveat": "three tokens over one interval on a cold, uncached weight path; it is a measurement of this build, not a runtime capability",
+  "decode_tokens_per_second": 0.01155677893488516,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-real-stage-b1-text-generation-v1.json",
+   "sha256": "b21e44e789897bf62a91f262a8900543d42399f66f2513c18f7627747eaa6fb1"
+  },
+  "finish_reason": "length",
+  "generated_token_count": 4,
+  "generated_tokens": [
+   220,
+   99419,
+   3039,
+   1965
+  ],
+  "identity_verification_seconds": 698.41942775,
+  "known_defect": "in --no-chat-template mode the stop set is empty, so the run could only end on max-tokens",
+  "position_seconds": [
+   97.085082708,
+   91.035553084,
+   88.200831292,
+   87.398269583,
+   87.798007041,
+   86.473158667,
+   86.719217375,
+   86.388806875
+  ],
+  "prefill_seconds": 451.526744625,
+  "prompt_mode": "RAW_TEXT_NO_TEMPLATE",
+  "prompt_tokens": 5,
+  "python_inference_process": false,
+  "quality_claim": "NONE: four tokens of raw-text continuation from a 2-bit quantisation without a chat template is not a task result",
+  "stage": "stageB1",
+  "state": "DONE"
  }
 }
