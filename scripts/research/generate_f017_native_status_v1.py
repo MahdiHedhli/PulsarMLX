@@ -27,6 +27,7 @@ RECONCILIATION = EVIDENCE / "f017-native-checkpoint-free-reconciliation-20260920
 COUNT_CORRECTION = EVIDENCE / "f017-native-checkpoint-free-reconciliation-20260920-v1-count-correction-v2.json"
 MEASUREMENT = EVIDENCE / "f017-v11-result-envelope-implementation-measurement-v9.json"
 CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-temporal-successor-contract-v1.json"
+STAGE_A = EVIDENCE / "f017-native-real-stage-a-position-ladder-v1.json"
 
 
 def sha256(path: Path) -> str:
@@ -44,6 +45,7 @@ def build() -> dict:
     correction = json.loads(COUNT_CORRECTION.read_text())
     measurement = json.loads(MEASUREMENT.read_text())
     contract = json.loads(CONTRACT.read_text())
+    stage_a = json.loads(STAGE_A.read_text()) if STAGE_A.is_file() else None
 
     per_seed = int(correction["corrects"]["correct_text"].split()[0].replace(",", ""))
     logit_errors = [step["logits"]["max_abs"] for case in temporal["cases"] for step in case["steps"]]
@@ -86,6 +88,26 @@ def build() -> dict:
             "exactness_rules": temporal["exactness_rules"],
             "result": temporal["result"],
             "evidence": binding(TEMPORAL),
+        },
+        "temporal_multi_position_real_checkpoint": None if stage_a is None else {
+            "state": "DONE",
+            "stage": stage_a["stage"],
+            "positions_executed": stage_a["diagnostics"]["generation"]["positions_executed"],
+            "mode": stage_a["diagnostics"]["prompt_mode"],
+            "position_zero_binding": {
+                "result": stage_a["position_zero_binding"]["result"],
+                "expected_token": stage_a["position_zero_binding"]["expected_token"],
+                "observed_token": stage_a["position_zero_binding"]["observed_token"],
+                "expected_logits_sha256": stage_a["position_zero_binding"]["expected_logits_sha256"],
+                "observed_logits_sha256": stage_a["position_zero_binding"]["observed_logits_sha256"],
+                "meaning": "the stateful successor reproduces the banked one-token result bit for bit on the real checkpoint",
+            },
+            "identity_verification_seconds": stage_a["diagnostics"]["phases_seconds"]["checkpoint_identity_verification"],
+            "position_seconds": stage_a["diagnostics"]["generation"]["position_seconds"],
+            "peak_state_bytes": stage_a["diagnostics"]["generation"]["peak_state_bytes"],
+            "wall_seconds": stage_a["wall_seconds"],
+            "later_positions": "MEASURED_NOT_QUALIFIED",
+            "evidence": binding(STAGE_A),
         },
         "native_text_cli": {
             "state": "DONE_SYNTHETIC",

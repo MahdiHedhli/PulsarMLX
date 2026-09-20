@@ -129,5 +129,37 @@
    "rmse": 0.0035,
    "source": "frozen graph-differential thresholds, reused unchanged"
   }
+ },
+ "temporal_multi_position_real_checkpoint": {
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-real-stage-a-position-ladder-v1.json",
+   "sha256": "d4485f02a35c78f0e9bd621d95a389fcf6b628c47d5bbcd14948f0200e9600ce"
+  },
+  "identity_verification_seconds": 716.595055625,
+  "later_positions": "MEASURED_NOT_QUALIFIED",
+  "mode": "RAW_TOKEN_DIAGNOSTIC",
+  "peak_state_bytes": 1456128,
+  "position_seconds": [
+   131.1669715,
+   96.792784542,
+   95.23179175,
+   93.151901083,
+   91.673462375,
+   91.755202958,
+   92.251265666,
+   92.086356292
+  ],
+  "position_zero_binding": {
+   "expected_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+   "expected_token": 154820,
+   "meaning": "the stateful successor reproduces the banked one-token result bit for bit on the real checkpoint",
+   "observed_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+   "observed_token": 154820,
+   "result": "MATCH"
+  },
+  "positions_executed": 8,
+  "stage": "stageA",
+  "state": "DONE",
+  "wall_seconds": 1501.0
  }
 }
