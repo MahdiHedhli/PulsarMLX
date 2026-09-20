@@ -13,7 +13,7 @@ Status: **PREPARED_HUMAN_GATE_REQUIRED**. Nothing here executed on the real chec
   - domain declaration v2, the final-review request packet, an inert human-approval template and a supporting adversarial review (ACCEPT, 0 blocking) are committed.
 
 ## What remains (in order)
-1. Exact-head CI with native jobs on `feat/017-rust-native-inference-runtime`.
+1. Exact-head CI with native jobs on `feat/017-rust-native-inference-runtime` — currently blocked by a pre-existing drift check: `generate_f017_v11_measurement_v1.py --check` fails because the frozen V11 measurement v8 binds `f017_corrected_oracle_primary_wrapper_v11.py` at f35d3411 while 5b39a21a (2026-09-03, the accepted Event 06 minimum-gate path) changed it; no FULL_NATIVE run has passed since. Repair (planner-owned): an append-only v9 measurement at the accepted head. The workspace baseline job (cargo build/test) passes on the readiness head.
 2. The operator-authorized final review (`claude-opus-5`, fresh session) with `ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1`, 0 blocking, 0 non-blocking-required — committed.
 3. A human approval (`pulsarmlx.f017.native-bounded-p1-human-approval/1.0.0`, decision `AUTHORIZE_EXACTLY_ONE_BOUNDED_M1_ULTRA_P1`), `authorize`, then one `execute-evidenced-v4` on the M1 Ultra with ≥ 16 GiB available (pause the resident service first). Expected ≈ 2–3 minutes.
 
