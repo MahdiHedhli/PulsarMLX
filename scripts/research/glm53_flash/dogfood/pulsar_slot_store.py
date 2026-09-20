@@ -330,6 +330,7 @@ class PulsarSlotStore:
         self.prefill_mode = prefill_mode
         self._stream_waves = self._stream_experts = 0
         self._stream_requested_bytes = self._stream_overread_bytes = 0
+        self._observed_accesses = 0   # experts counted by count_only (observation); NOT hits, misses or admissions
         self._coalesced_ranges = self._chunks_read = self._pool_reads = 0
         # byte accounting (graph 33): logical = misses x expert bytes (what the model admitted; `read_bytes` is its alias and
         # NOT a physical I/O counter); requested = bytes asked of the file by the cold paths (merged ranges incl. their
@@ -421,12 +422,20 @@ class PulsarSlotStore:
         return reads
 
     def count_only(self, lid: int, wave) -> None:
-        """The policy half of touch_wave and nothing else: every expert of the wave is counted once (same `_accesses`
-        ordinal and decay schedule), so an LFU victim chosen during decode still sees what prefill asked for. No
-        residency is read or written - no hit/miss, no slot, no reservation, no eviction, no free-list move."""
+        """OBSERVATION, not admission (correction 1): the policy half of touch_wave and nothing else. Every expert of
+        the wave is counted once, in wave order, through the same `_count` - so the global `_accesses` ordinal advances
+        by one per expert and the decay fires on exactly the same `_accesses % decay_every == 0` boundaries with the
+        same factor as it would have under touch_wave. An LFU victim chosen later during decode therefore still sees
+        what prefill asked for.
+
+        Nothing else is read or written: no slot_of / pending / free / expert_to_slot / slot tensor mutation, no hit,
+        miss, eviction, reservation or read admission. The observation is recorded ONLY in the counters that are
+        distinct from the admission counters: `observed_accesses` here, `stream_waves` / `stream_experts` and the
+        stream byte counters in stream_wave. `_waves` and `trace` belong to the slot path and stay untouched."""
         self._usable()
         for j in wave:
             self._count((lid, j))
+        self._observed_accesses += len(wave)
 
     def stream_wave(self, lid: int, wave) -> dict:
         """One wave of a streaming prefill: read the wave's experts as merged ranges and return TRANSIENT stacked
@@ -607,7 +616,7 @@ class PulsarSlotStore:
                 "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes, "alignment_overread_bytes": self._alignment_overread_bytes,
                 "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
                 "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "prefill_mode": self.prefill_mode,
-                "stream_waves": self._stream_waves, "stream_experts": self._stream_experts, "stream_requested_bytes": self._stream_requested_bytes, "stream_overread_bytes": self._stream_overread_bytes, "logical_resets": getattr(self, "_logical_resets", 0), "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "stream_waves": self._stream_waves, "stream_experts": self._stream_experts, "stream_requested_bytes": self._stream_requested_bytes, "stream_overread_bytes": self._stream_overread_bytes, "observed_accesses": self._observed_accesses, "logical_resets": getattr(self, "_logical_resets", 0), "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
@@ -716,6 +725,18 @@ class PulsarSwitchGLU:
         return out
 
     def __call__(self, x, indices):
+        """DISPATCH RULE (correction 4), stated by token count of THIS call, not by "phase":
+
+          n = int(np.prod(idx_host.shape[:-1]))   # the call's (batch x tokens) count; the last axis is k
+          n > 1 and store.prefill_mode == 'stream'  ->  STREAM path: transient wave tensors, counts observed,
+                                                        slots untouched (nothing is admitted or evicted)
+          otherwise                                 ->  SLOT path: touch_wave + fill, exactly the baseline
+
+        So it is NOT true that "every prefill is streamed". A prefill chunk of exactly ONE token takes the SLOT path
+        and fills slots like any decode step - which is how a prompt of length k * prefill_step_size + 1 behaves: its
+        k full chunks stream, and its one-token remainder fills. A one-token prompt never streams at all. This is also
+        why a streamed prefill still leaves a few hundred experts resident in a real run: the remainder chunk admitted
+        them. With prefill_mode == 'store' (the default) every call takes the slot path, byte-for-byte as before."""
         import mlx.core as mx
 
         lid, store = self.layer_id, self.store
