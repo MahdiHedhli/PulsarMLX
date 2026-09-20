@@ -3,14 +3,21 @@ change. Needs mlx (the dogfood env) and opts in with PULSAR_REPLAY_TEST=1, like 
 imports mlx, which would break the `mlx not imported` assertions of the other modules when everything runs in one
 `unittest discover` process. Skipped otherwise.
 
-Controls: (1) every call of every fixture schedule is BIT-identical between prefill_mode 'store' and 'stream', both
-across the multi-wave schedule and on a hand-built single-wave multi-token call (the branch that skips the mask
-multiply); (2) a multi-token stream call leaves the store's residency completely untouched (slot_of, pending, free,
-expert_to_slot, hits, misses, evictions) while stream_waves / stream_experts / the stream byte counters record what
-actually ran, and a 1-token call in the same store still fills slots as before; (3) the policy counts (_counts,
+Controls: (1) every fixture call that MLX computes consistently is BIT-identical between prefill_mode 'store' and
+'stream', across the multi-wave schedule and on a hand-built single-wave multi-token call (the branch that skips the
+mask multiply); (2) a multi-token stream call leaves the store's residency completely untouched (slot_of, pending,
+free, expert_to_slot, hits, misses, evictions) while stream_waves / stream_experts / the stream byte counters record
+what actually ran, and a 1-token call in the same store still fills slots as before; (3) the policy counts (_counts,
 _touch, _accesses) after the schedule are exactly the store-mode counts, so decode's LFU victims stay informed;
-(4) the stream byte accounting reconciles (requested - overread == experts x expert_bytes); (5) the mode is refused
-for an unknown value and for a non-contiguous (hash-ordered) layout, and 'store' is the default."""
+(4) the stream byte accounting reconciles (requested - overread == experts x expert_bytes); (5) a wave shorter than
+SORTED_GATHER_MIN_EXPERTS asks for the plain gather kernel; (6) the mode is refused for an unknown value and for a
+non-contiguous (hash-ordered) layout, and 'store' is the default.
+
+Why (1) excludes the fixture's calls of 64 or more (token, k) rows: those take mx.gather_qmm's sorted-index kernel,
+which in MLX 0.32.2 does not agree with the plain kernel on a stack of fewer than 64 experts. This fixture's capacity
+is 6, so in those calls the SLOT path is itself on the inconsistent branch while the stream path (correctly) is not,
+and the two cannot agree. The accepted Studio configuration has capacity 100, where the slot path is on the
+consistent branch and the whole real prefill is bit-identical - which is what the campaign measures."""
 import json
 import os
 import shutil
@@ -27,6 +34,7 @@ HAVE_MLX = importlib.util.find_spec('mlx') is not None and os.environ.get('PULSA
 
 FIXTURE_V2 = ROOT / 'fixtures/research/glm53-flash-decoder-slot-store-v2/fixtures.json'
 SINGLE_WAVE_CALL = [[0, 1, 2, 3, 0, 1, 2, 3], [1, 2, 3, 0, 1, 2, 3, 0]]   # 2 tokens over 4 experts: one wave at capacity 6
+SORT_THRESHOLD = 64        # PulsarSwitchGLU._experts sorts at this many (token, k) rows
 
 
 def raw(y):
@@ -96,10 +104,16 @@ class StreamPrefill(unittest.TestCase):
                 _, _, a = self.run_schedule(case, 'store')
                 _, _, b = self.run_schedule(case, 'stream')
                 self.assertEqual(len(a), len(b))
+                compared = multi_token = 0
                 for i, (u, v) in enumerate(zip(a, b)):
+                    rows = len(case['schedule'][i]['tokens']) * len(case['indices'][0])
+                    if rows >= SORT_THRESHOLD:
+                        continue                       # see the module docstring: MLX itself is not consistent here
                     self.assertEqual(u.shape, v.shape, i)
                     self.assertTrue(np.array_equal(u, v), f'call {i} of {case["fixture_id"]} differs')
-                self.assertTrue(any(len(call['tokens']) > 1 for call in case['schedule']), 'no multi-token call')
+                    compared += 1
+                    multi_token += len(case['schedule'][i]['tokens']) > 1
+                self.assertGreater(compared, 0); self.assertGreater(multi_token, 0, 'no multi-token call compared')
 
     def test_single_wave_multi_token_call_is_bit_identical(self):
         """The one-wave branch skips the mask multiply in both modes; the fixture schedule only reaches the two-wave one."""
@@ -109,6 +123,7 @@ class StreamPrefill(unittest.TestCase):
             with self.subTest(case['fixture_id']):
                 store_a, mod_a = self.module(case, 'store')
                 store_b, mod_b = self.module(case, 'stream')
+                self.assertLess(len(SINGLE_WAVE_CALL) * len(SINGLE_WAVE_CALL[0]), SORT_THRESHOLD)
                 a = raw(self.call_indices(mod_a, case, [0, 1], SINGLE_WAVE_CALL))
                 b = raw(self.call_indices(mod_b, case, [0, 1], SINGLE_WAVE_CALL))
                 self.assertTrue(np.array_equal(a, b), case['fixture_id'])
@@ -162,7 +177,40 @@ class StreamPrefill(unittest.TestCase):
         self.assertGreater(st['stream_requested_bytes'], 0)
         self.assertEqual(st['requested_read_bytes'] - st['overread_bytes'] + st['hot_copy_bytes'], st['logical_admitted_bytes'])
 
-    # --- (5) refusals and the default -----------------------------------------------------
+    # --- (5) the sorted-gather floor --------------------------------------------------------
+    def test_short_wave_takes_the_plain_gather_kernel(self):
+        """MLX 0.32's sorted-index gather_qmm does not agree with the plain kernel on a stack of fewer than 64 experts
+        (measured on the Studio: with the wave split at capacity 100, the trailing wave of every multi-wave layer
+        differed on every row it owned). The slot path is always `capacity` rows; a streaming wave is not, so the
+        stream path must ask for the plain kernel below the floor. Recorded by intercepting mx.gather_qmm."""
+        import mlx.core as mx
+        sys.path.insert(0, str(DOGFOOD))
+        import pulsar_slot_store as pss
+
+        self.assertEqual(pss.SORTED_GATHER_MIN_EXPERTS, 64)
+        case = self.cases[0]
+        store, module = self.module(case, 'stream')
+        seen = []
+        real = mx.gather_qmm
+
+        def spy(*a, **kw):
+            seen.append(bool(kw.get('sorted_indices')))
+            return real(*a, **kw)
+
+        tokens = case['schedule'][1]['tokens']                       # 8 tokens -> 64 (token, k) rows: slots.size >= 64
+        uniq = sorted({e for t in tokens for e in case['indices'][t]})
+        self.assertGreaterEqual(len(tokens) * len(case['indices'][0]), 64)
+        self.assertLess(store.capacity, pss.SORTED_GATHER_MIN_EXPERTS)
+        mx.gather_qmm = spy
+        try:
+            self.call(module, case, tokens)
+        finally:
+            mx.gather_qmm = real
+        self.assertGreater(len(seen), 0)
+        self.assertFalse(any(seen), 'a wave under the floor asked for the sorted gather kernel')
+        self.assertEqual(store.stats()['stream_experts'], len(uniq))
+
+    # --- (6) refusals and the default -----------------------------------------------------
     def test_mode_is_validated_and_defaults_to_store(self):
         case = self.cases[0]
         sys.path.insert(0, str(DOGFOOD))

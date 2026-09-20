@@ -58,7 +58,8 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
   * item 1 (streaming prefill): with prefill_mode='stream' a call carrying more than one token does not go through the
     slots at all. Per wave the experts are read as merged ranges (the same F_NOCACHE page-aligned pool reads) into
     TRANSIENT stacked (len(wave), ...) tensors, the same three gather_qmm launches run over them with each (token, k)'s
-    position INSIDE THE WAVE as rhs_indices, the wave is evaluated and its transients dropped, and the allocator cache
+    position INSIDE THE WAVE as rhs_indices (the plain gather kernel below SORTED_GATHER_MIN_EXPERTS - see that
+    constant), the wave is evaluated and its transients dropped, and the allocator cache
     is cleared once per layer call. The slot map, the free list, the reservations and the hit/miss accounting are
     untouched; only the LFU counts advance (count_only), so decode's victim choice stays informed. Decode (1-token
     calls) is unchanged and takes the slots as before, and a stream prefill is bit-identical to a store prefill (the
@@ -77,6 +78,11 @@ from typing import Optional
 
 import numpy as np
 
+# MLX 0.32.2 hazard (measured, item 1): mx.gather_qmm(..., sorted_indices=True) disagrees with the plain kernel -
+# grossly, not by rounding - as soon as the gathered stack has FEWER THAN 64 experts; at 64 and above the two agree
+# bit for bit. The slot path never meets it (its stack is `capacity` rows, 100 in the accepted configuration), but a
+# streaming wave can be short, so the stream path takes the plain kernel below this floor.
+SORTED_GATHER_MIN_EXPERTS = 64
 _PROJS = ("gate_proj", "up_proj", "down_proj")
 _PARTS = ("weight", "scales", "biases")
 WARM_STATE = "pulsar-slot-warm-state.json"
@@ -652,7 +658,7 @@ class PulsarSwitchGLU:
         group_size, bits, mode = quant
         return mx.gather_qmm(x, W, S, B, rhs_indices=slots, transpose=True, group_size=group_size, bits=bits, mode=mode, sorted_indices=sorted_indices)
 
-    def _experts(self, x, slots, tensors=None):
+    def _experts(self, x, slots, tensors=None, allow_sort: bool = True):
         """SwitchGLU's forward over slot indices (or, when `tensors` is given, over a streaming prefill's transient
         stack, where `slots` is the position inside the wave), with its sort/unsort (mlx_vlm.models.switch_layers._gather_sort /
         _scatter_unsort, inlined so the module has no mlx-vlm import: sort the flattened (token, k) pairs by slot,
@@ -661,6 +667,8 @@ class PulsarSwitchGLU:
 
         x = mx.expand_dims(x, (-2, -3))
         do_sort = slots.size >= 64
+        if not allow_sort:                                  # a stack under SORTED_GATHER_MIN_EXPERTS: the plain kernel
+            do_sort = False
         idx, inv_order = slots, None
         if do_sort:
             self.store._sorted_gathers += 1
@@ -682,8 +690,10 @@ class PulsarSwitchGLU:
         launches over them with each (token, k)'s position in the wave as rhs_indices (np.searchsorted on the sorted
         wave; entries outside the wave are masked exactly as the multi-wave slot path masks them), the wave evaluated
         so its transients die before the next one is read, and one mx.clear_cache() per layer call so the allocator
-        does not carry 42 layers' wave temporaries. Bit-identical to the slot path: same bytes, same kernels, and the
-        single-wave case skips the mask multiply just as the slot path does."""
+        does not carry 42 layers' wave temporaries. Bit-identical to the slot path: same bytes, and the single-wave
+        case skips the mask multiply just as the slot path does. A wave shorter than SORTED_GATHER_MIN_EXPERTS takes
+        the plain gather kernel, because MLX's sorted-index kernel does not agree with it on a short stack (measured
+        on the Studio: the trailing wave of every multi-wave layer differed on every one of its rows)."""
         import mlx.core as mx
 
         lid, store = self.layer_id, self.store
@@ -693,11 +703,12 @@ class PulsarSwitchGLU:
             w = np.array(wave, dtype=idx_host.dtype)
             pos = np.searchsorted(w, idx_host).astype(np.int32)   # the expert's row in this wave's stack (as slots_for returns int32)
             tensors = store.stream_wave(lid, wave)
+            allow_sort = len(wave) >= SORTED_GATHER_MIN_EXPERTS
             if single:
-                out = self._experts(x, mx.array(pos), tensors=tensors)
+                out = self._experts(x, mx.array(pos), tensors=tensors, allow_sort=allow_sort)
             else:
                 in_wave = np.isin(idx_host, w)
-                y = self._experts(x, mx.array(np.where(in_wave, pos, 0)), tensors=tensors) * mx.array(in_wave)[..., None].astype(x.dtype)
+                y = self._experts(x, mx.array(np.where(in_wave, pos, 0)), tensors=tensors, allow_sort=allow_sort) * mx.array(in_wave)[..., None].astype(x.dtype)
                 out = y if out is None else out + y
             mx.eval(out)                                    # the gathers must run before the wave's transients are dropped
             del tensors
