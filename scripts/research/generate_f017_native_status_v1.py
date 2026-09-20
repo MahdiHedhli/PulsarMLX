@@ -29,6 +29,7 @@ MEASUREMENT = EVIDENCE / "f017-v11-result-envelope-implementation-measurement-v9
 CONTRACT = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-native-temporal-successor-contract-v1.json"
 STAGE_A = EVIDENCE / "f017-native-real-stage-a-position-ladder-v1.json"
 STAGE_B1 = EVIDENCE / "f017-native-real-stage-b1-text-generation-v1.json"
+STAGE_B2 = EVIDENCE / "f017-native-real-stage-b2-chat-template-v1.json"
 
 
 def sha256(path: Path) -> str:
@@ -48,6 +49,7 @@ def build() -> dict:
     contract = json.loads(CONTRACT.read_text())
     stage_a = json.loads(STAGE_A.read_text()) if STAGE_A.is_file() else None
     stage_b1 = json.loads(STAGE_B1.read_text()) if STAGE_B1.is_file() else None
+    stage_b2 = json.loads(STAGE_B2.read_text()) if STAGE_B2.is_file() else None
 
     per_seed = int(correction["corrects"]["correct_text"].split()[0].replace(",", ""))
     logit_errors = [step["logits"]["max_abs"] for case in temporal["cases"] for step in case["steps"]]
@@ -129,6 +131,25 @@ def build() -> dict:
             "quality_claim": "NONE: four tokens of raw-text continuation from a 2-bit quantisation without a chat template is not a task result",
             "known_defect": "in --no-chat-template mode the stop set is empty, so the run could only end on max-tokens",
             "evidence": binding(STAGE_B1),
+        },
+        "chat_template_generation_real_checkpoint": None if stage_b2 is None else {
+            "state": "DONE",
+            "stage": stage_b2["stage"],
+            "prompt_mode": stage_b2["diagnostics"]["prompt_mode"],
+            "prompt_tokens": stage_b2["diagnostics"]["prompt_tokens"],
+            "stop_token_ids": stage_b2["diagnostics"]["stop_token_ids"],
+            "generated_tokens": stage_b2["diagnostics"]["generation"]["generated_tokens"],
+            "generated_token_count": stage_b2["diagnostics"]["generation"]["generated_token_count"],
+            "finish_reason": stage_b2["diagnostics"]["generation"]["finish_reason"],
+            "stop_token": stage_b2["diagnostics"]["generation"]["stop_token"],
+            "answer_text": stage_b2["answer_text"],
+            "identity_verification_seconds": stage_b2["diagnostics"]["phases_seconds"]["checkpoint_identity_verification"],
+            "positions_executed": stage_b2["diagnostics"]["generation"]["positions_executed"],
+            "position_seconds": stage_b2["diagnostics"]["generation"]["position_seconds"],
+            "peak_state_bytes": stage_b2["diagnostics"]["generation"]["peak_state_bytes"],
+            "decode_tokens_per_second": stage_b2["diagnostics"]["decode_tokens_per_second"],
+            "quality_claim": "NONE: a single short prompt with a four-token budget is not a task result",
+            "evidence": binding(STAGE_B2),
         },
         "native_text_cli": {
             "state": "DONE_SYNTHETIC",

@@ -14,6 +14,7 @@
   "state": "DONE",
   "unchanged_since_predecessor": 29
  },
+ "chat_template_generation_real_checkpoint": null,
  "checkpoint_free_reconciliation": {
   "decoder_differential_max_ulp": 0,
   "decoder_differential_values_per_seed": 107502,
