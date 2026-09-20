@@ -6,6 +6,7 @@
     "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
     "sha256": "7af5cd9da4d8625c8a890d4a67ad913d5166f0218c41ca80f06b34f4d2ac2c34",
     "field": "n1_decoder_differential.result",
+    "expected": "every value bit-identical after rounding the oracle's binary64 to f32 (0 ULP; 117,806 values per seed); harness negative control (two oracle lanes swapped) flagged",
     "published_text": "117,806 values per seed",
     "correct_text": "107,502 values per seed"
   },
