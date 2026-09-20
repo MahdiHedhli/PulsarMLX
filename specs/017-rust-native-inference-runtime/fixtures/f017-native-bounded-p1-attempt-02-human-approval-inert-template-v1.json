@@ -1,0 +1,22 @@
+{
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "authorization_id": "FUTURE_HUMAN_ASSIGNED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "contract_sha256": "389580fa7ba5ca0f8a8d531aa522431bae9b47db413a02fba69b15e2132356f4",
+  "decision": "NOT_AUTHORIZED_TEMPLATE",
+  "domain_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v2.json",
+    "sha256": "0ce825985fb7f616cf565819b4beccef33cfa3f5a508258beb42b0084f6741d6"
+  },
+  "final_review": {
+    "blocking_count": null,
+    "non_blocking_required_count": null,
+    "path": "FUTURE_COMMITTED_PATH (claude-opus-5 fresh-session normalized result for attempt 2)",
+    "reviewer_model": "claude-opus-5",
+    "sha256": "FUTURE_SHA256",
+    "verdict": "FUTURE_ACCEPT_OR_REJECT"
+  },
+  "readiness_head": "FUTURE_ACCEPTED_HEAD (the feat/017-rust-native-inference-runtime head that contains the final review; must equal origin at authorize time)",
+  "schema": "pulsarmlx.f017.native-bounded-p1-human-approval/1.0.0",
+  "statement": "INERT TEMPLATE; DOES NOT AUTHORIZE EXECUTION"
+}

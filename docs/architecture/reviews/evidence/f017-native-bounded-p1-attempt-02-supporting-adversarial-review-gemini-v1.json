@@ -1,0 +1,45 @@
+{
+  "schema": "glm52-weekend-supporting-review/1",
+  "role": "SUPPORTING adversarial review (NOT the operator-authorized final reviewer, which is claude-opus-5 in a fresh CLI session)",
+  "model": "gemini-3.8-flash-high",
+  "request_sha256": "ebc4457d160b45e6ada5f0e5696200f1caf633a09bfbfce11b9a16abdd81304b",
+  "request_bytes": 57531,
+  "nonces_verified": true,
+  "result": {
+    "nonce": "8eefafceb2d99f49ab0ad14dc99bd5bf",
+    "final_nonce": "6baf4e35b16ee716",
+    "readiness_head": "50a66db0d4fb8d80d9491e870dd2d3d8fa8e8ca6",
+    "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+    "blocking_findings": [],
+    "non_blocking_required_findings": [
+      {
+        "id": "NBR-01-HOST-RESIDENT-SERVICE-PAUSE",
+        "body": "The executor enforces a hard machine admission gate requiring >= 17,179,869,184 bytes (16 GiB) available memory measured via vm_stat within a 5-second sampling window. Host resident background services consume unified memory and must be confirmed paused prior to execution to avoid an immediate admission failure.",
+        "evidence": "Admission contract v3 specifies minimum_available_memory_bytes 17179869184; domain declaration v2 notes that the legacy resident service on the host must be paused first.",
+        "remedy": "Include verification of the paused resident service in the operational pre-execution checklist immediately prior to running execute-evidenced-v4."
+      },
+      {
+        "id": "NBR-02-BRANCH-FAST-FORWARD-AND-CI",
+        "body": "The admission contract v3 and validator strictly bind the execution branch name to 'feat/017-rust-native-inference-runtime'. The current readiness commit 50a66db0 resides on fast-forward branch 'work/glm52-weekend-20260920'. Running directly from the work branch will cause static admission failure.",
+        "evidence": "Contract v3 specifies branch 'feat/017-rust-native-inference-runtime'; contract.rs validates contract.branch against the current checkout branch.",
+        "remedy": "Perform the documented non-force fast-forward of feat/017-rust-native-inference-runtime to 50a66db0d4fb8d80d9491e870dd2d3d8fa8e8ca6 and confirm CI pass before minting the authorization token."
+      }
+    ],
+    "defense_in_depth_findings": [
+      {
+        "id": "DID-01-REAL-CHECKPOINT-DIVERGENCE-RISK",
+        "body": "The checkpoint-free reconciliation conclusively demonstrates 0-ULP bit-identical decoder behavior across 11 formats and full-graph numerical agreement within tight thresholds on 6 synthetic cases. However, it does not and cannot verify execution against the 222 GB real checkpoint. The native runtime's attempt-1 observation of token 17351 is not explained by synthetic tests. If real-checkpoint execution still diverges, attempt 2 will fail against expected token 154820.",
+        "evidence": "Checkpoint-free reconciliation explicit limit: 'synthetic; real-checkpoint agreement is exactly what attempt 2 decides'; attempt-1 root cause ledger H01 remains ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN.",
+        "remedy": "Ensure operator awareness that attempt 2 is an empirical single-shot test with mandatory stop, designed to either succeed or capture deep forward evidence via execute-evidenced-v4 and forward evidence contract v4."
+      },
+      {
+        "id": "DID-02-EXECUTION-CODE-HEAD-OFFSET",
+        "body": "The executor binary was compiled from code head 5e32d68f, while the admission contract and domain declaration were committed in subsequent commits fec2f516 and 50a66db0. The code manifest hashes confirm that no runtime crate sources changed between 5e32d68f and 50a66db0, but the two-commit difference is an structural quirk of committing pre-built binaries.",
+        "evidence": "execution_code_head in contract v3 is 5e32d68faa7b10168b9bb7f5d4fce6ebf212b737; git log shows 5e32d68f -> fec2f516 (contract v3 + binary) -> 50a66db0 (declaration v2).",
+        "remedy": "Maintain clear documentation in the human approval receipt acknowledging that execution_code_head reflects the source code build head, and that code manifest hashes are strictly identical at the readiness head."
+      }
+    ],
+    "adversarial_cases_considered": 10,
+    "rationale": "An exhaustive review of the attempt-2 domain declaration v2, admission contract v3, corrected oracle binding, static validation negative controls, and source code diffs confirms the domain is fit for presentation of ONE human GO/no-GO decision. Specifically: (1) Binding expected token 154820 under EXACT_EXPECTED_TOKEN_STABLE is soundly derived from Event 06 / sequence 43 dual-implementation accepted evidence, and attempt 2 is a genuinely distinct attempt under a new ID, fresh state root, new contract schema, and newly minted one-shot authority, while attempt 1 remains permanently banked as terminal failure. (2) Generation 3 validator additions are closed and strictly enforce the bound corrected-oracle document without weakening generation 2 rules, and resolve the pre-existing receipt schema contradiction by correctly binding evidenced v4. (3) The checkpoint-free reconciliation eliminates dequantizer and graph math implementation bugs as failure causes, properly scoping remaining uncertainty to real-checkpoint scale. (4) The executor binary binding chain is intact with exact SHA256 verification and no crate source changes after build head 5e32d68f. (5) Branch binding and memory admission gates are strictly protected against bypass. (6) Zero checkpoint reads or unauthorized mints occurred during preparation. With no blocking findings, the domain satisfies all technical prerequisites for human gate presentation."
+  }
+}
