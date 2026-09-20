@@ -382,11 +382,12 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v4.py
           .venv/bin/python -m pytest -q \
             scripts/research/tests/test_f017_result_envelope_v11.py \
-            scripts/research/tests/test_f017_result_bundle_builder_v11.py
+            scripts/research/tests/test_f017_result_bundle_builder_v11.py \
+            scripts/research/tests/test_f017_v11_measurement_v2.py
           .venv/bin/python scripts/research/validate_f017_result_envelope_design_v11.py
           .venv/bin/python scripts/research/validate_f017_result_authority_v11.py
           .venv/bin/python scripts/research/validate_f017_v11_execution_authority_v1.py
-          .venv/bin/python scripts/research/generate_f017_v11_measurement_v1.py --check
+          .venv/bin/python scripts/research/generate_f017_v11_measurement_v2.py --check
           .venv/bin/python scripts/research/generate_f017_v11_authorities_v1.py --check
           .venv/bin/python scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py --check
           .venv/bin/python scripts/research/validate_f017_event05_readiness_interface_design_v1.py
