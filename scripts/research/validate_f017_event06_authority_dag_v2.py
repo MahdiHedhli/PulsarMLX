@@ -5,8 +5,10 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
+import tempfile
 
 from generate_f017_event06_authority_dag_v2 import (
     AUTHORITY_DISPOSITION,
@@ -19,6 +21,40 @@ ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
 
 
+_HERMETIC_GIT_DIR: str | None = None
+
+
+def _hermetic_git_dir() -> str:
+    """A bare repository whose only content is an alternates link to this
+    checkout's object store.
+
+    Reading an immutable historical blob must not depend on ambient Git
+    configuration. On a GitHub macOS runner the checkout writes an
+    `includeIf.gitdir` entry into the repository's LOCAL config pointing at a
+    temporary credentials file, and reading that file fails with
+    "Operation not permitted", so every `git show` in the checkout exits 128.
+    A clean bare repository has no such config, and alternates give it the
+    same objects, so the read is both hermetic and identical.
+    """
+    global _HERMETIC_GIT_DIR
+    if _HERMETIC_GIT_DIR is not None:
+        return _HERMETIC_GIT_DIR
+    common = subprocess.run(
+        ["git", "rev-parse", "--git-common-dir"], cwd=ROOT, check=True,
+        capture_output=True, text=True,
+    ).stdout.strip()
+    objects = (ROOT / common / "objects").resolve() if not Path(common).is_absolute() \
+        else (Path(common) / "objects").resolve()
+    directory = tempfile.mkdtemp(prefix="f017-historical-objects-")
+    subprocess.run(["git", "init", "--bare", "--quiet", directory], check=True,
+                   capture_output=True)
+    info = Path(directory) / "objects" / "info"
+    info.mkdir(parents=True, exist_ok=True)
+    (info / "alternates").write_text(f"{objects}\n")
+    _HERMETIC_GIT_DIR = directory
+    return directory
+
+
 def _historical_bytes(relative_path: str) -> bytes:
     """Read one exact repository blob from the DAG's historical commit."""
     if (
@@ -29,10 +65,13 @@ def _historical_bytes(relative_path: str) -> bytes:
     ):
         raise ValueError("historical repository path")
     completed = subprocess.run(
-        ["git", "show", f"{HISTORICAL_DAG_COMMIT}:{relative_path}"],
-        cwd=ROOT,
+        ["git", f"--git-dir={_hermetic_git_dir()}", "show",
+         f"{HISTORICAL_DAG_COMMIT}:{relative_path}"],
         check=False,
         capture_output=True,
+        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+             "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+             "GIT_TERMINAL_PROMPT": "0", "HOME": _hermetic_git_dir()},
     )
     if completed.returncode != 0 or completed.stderr:
         # Fail closed, but say why: a bare "historical repository blob" gives
