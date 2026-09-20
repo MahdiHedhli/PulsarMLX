@@ -1,0 +1,82 @@
+{
+ "schema": "pulsarmlx.f017.native-bounded-p1-attempt-02-readiness-closure-note/1.0.0",
+ "status": "APPEND_ONLY_CLOSURE_NOTE",
+ "note_head": "9f757ae247c8abf23b3ebd1659b915e119e5855f",
+ "bound_head_rule": "the human approval binds readiness_head = the feat/017-rust-native-inference-runtime commit that contains the accepting final review (cycle 04) and this note; every commit after 01d8565a adds only files under docs/architecture/reviews/ (review packets, responses, normalized results, this note); the runtime-relevant tree is unchanged since d690a967",
+ "R-01": {
+  "diff_stat_01d8565a_to_note_head": "...final-ratification-cycle-03-exact-response.json |    1 +\n ...al-ratification-cycle-03-normalized-result.json |   18 +\n ...-02-opus-final-ratification-cycle-03-request.md | 1295 ++++++++++++++++++++\n 3 files changed, 1314 insertions(+)",
+  "runtime_relevant_diff_d690a967_to_note_head": "...native-bounded-p1-attempt-02-human-approval-inert-template-v1.json | 4 ++--\n 1 file changed, 2 insertions(+), 2 deletions(-)",
+  "bound_documents_at_note_head": {
+   "declaration_v3": "269babfb21e612a50a543bf92973c8d1ddc0643e5b4268cf91153636c3915a6d",
+   "contract_v3": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
+   "corrected_oracle_binding_v1": "c582e3b4ae924fcaafad67f4e997f5d5e6a8dba1320ef395f6ba6499dd5a3512",
+   "inert_template_v1": "bb70347dd6d44ab1483da08d58bdc968e6f109a946452886058bb40b7e4cb5b2",
+   "executor_v2": "91e50a0bb84a30450f9189da2122b84e1790649c1361ed90cea001ca537f52f0"
+  },
+  "m1_ultra_at_note_head": {
+   "validate_contract": "PASS",
+   "machine_preflight": "PASS",
+   "environment": "pinned keg MLX_C_PREFIX/MLX_PREFIX, PULSAR_REQUIRE_NATIVE_MLX=1, OMP/RAYON/VECLIB threads 1",
+   "record": "private planning root w5/studio-validate-<head>.txt"
+  },
+  "exact_head_ci": {
+   "8456f206": {
+    "run": 35510514172,
+    "conclusion": "success",
+    "classification": "docs/evidence-only (native jobs skipped)"
+   },
+   "d690a967_full_native": {
+    "run": 35509978669,
+    "classify": "success",
+    "apple_silicon_workspace_baseline": "success",
+    "apple_mlx_small_fixture_validation": "failure only at generate_f017_v11_measurement_v1.py --check"
+   },
+   "later_heads": "docs/evidence-only commits, classification skips the native jobs; the runtime-relevant diff back to d690a967 is empty (above)",
+   "at_authorize": "the operator records the CI conclusion of the bound head and re-runs validate-contract and machine-preflight at the bound head on the M1 Ultra before authorize; both outputs are banked in the execution-evidence record"
+  }
+ },
+ "R-02": {
+  "stale_reference_inside_the_corrected_oracle_binding": {
+   "field": "checkpoint_free_reconciliation.sha256",
+   "pinned": "f7193decd52081942a50c267754ce614699638c6773c0e818e3e22bf483d484e",
+   "current_file_sha256": "7af5cd9da4d8625c8a890d4a67ad913d5166f0218c41ca80f06b34f4d2ac2c34",
+   "cause": "30ca81dc edited the reconciliation record in place (synthetic_differential bin-name wording) after the binding was pinned at 5e32d68f"
+  },
+  "template_reference_verified": {
+   "field": "template.sha256",
+   "pinned": "07fc9d55976f6d8dc32f547cb0049ba99403beb81c8a7348095f0f5a80d1475c",
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-template-v1.json",
+   "current_file_sha256": "07fc9d55976f6d8dc32f547cb0049ba99403beb81c8a7348095f0f5a80d1475c",
+   "note": "matches; the cycle-03 finding compared it with the human-approval inert template, a different file"
+  },
+  "effect_on_execution": "none: validate_static generation 3 checks only attempt_id, expected_token, acceptance_mode, live_authorization_created and the primary/secondary selected tokens of the binding; the reconciliation record is informational and not consumed by the executor",
+  "rule_from_now_on": "no in-place edit of any file referenced by a sha-bound document; successors get a new version suffix"
+ },
+ "R-03_procedure": {
+  "after_authorize_before_execute": [
+   "read <state_root>/authorization.json",
+   "assert attempt_id == F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+   "assert expected_token == 154820 and prompt_token == 9703",
+   "assert attempts == 1, retries == 0, resume == false, mandatory_stop == true, real_event_authorized == true",
+   "assert contract_sha256 == 7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
+   "assert executor_sha256 == 91e50a0bb84a30450f9189da2122b84e1790649c1361ed90cea001ca537f52f0",
+   "assert checkpoint_set_sha256 == d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+   "assert git_head == bound head == origin/feat/017-rust-native-inference-runtime",
+   "abort before execute-evidenced-v4 on any mismatch (nothing is spent before durable start)"
+  ],
+  "banked": "the assertion output is part of the execution-evidence record"
+ },
+ "D-02_expected_token_uses_in_executor_rs": {
+  "uses": [
+   "executor.rs:57 field FullNativeP1MathV3.expected_token",
+   "executor.rs:67-74 constructor stores it",
+   "executor.rs:140-156 ObservedExecution::finish(expected_token) copies it into the P1NumericalDiagnosticManifest (evidence labelling only)",
+   "executor.rs:261 execute_one_evidenced returns (token, observer.finish(self.expected_token))"
+  ],
+  "conclusion": "the field never reaches the math (execute_one_token / execute_one_token_observed take only source, backend, config and the prompt token) nor the produced-token path; stream::EXPECTED_TOKEN is not referenced in executor.rs or bounded_p1.rs (0 grep hits)"
+ },
+ "D-03_rehash_placement": "execute_evidenced_bounded_p1_once claims the owned attempt (durable start) BEFORE math.execute_one_evidenced; the checkpoint is opened (six SHARD_OPEN + SHARD_IDENTITY_REHASH over ~238 GB) inside the evidenced attempt, so a hash-time failure after durable start spends the attempt; the run is executed under caffeinate and is not treated as hung before 10 minutes; phase timings are banked from the receipts",
+ "D-04_for_the_human": "a native result other than 154820 does not by itself discriminate a native defect from an oracle-context defect; the discriminator is the evidenced-v4 payload (79-layer fingerprints, full logits) compared against the Event 06 payload hashes pinned in the binding",
+ "D-05_citation_correction": "the evidenced-v4 classification is crates/stream/src/p1_domain.rs lines 1304-1311 (produced_token != Some(authority.expected_token) -> TOKEN_MISMATCH / TERMINAL_FAILURE_NO_RETRY, else EXPECTED_TOKEN_MATCH / COMPLETE_MANDATORY_STOP); line ~1090 is the legacy RECEIPT_SCHEMA path (also authority-bound); stream::EXPECTED_TOKEN (21615) appears only in #[cfg(test)] code from line 1372",
+ "D-06_post_run_rule": "immediately after the run: bank receipt/terminal, commit the approval as evidence; any further authorize under approval 2 is prohibited by record"
+}
