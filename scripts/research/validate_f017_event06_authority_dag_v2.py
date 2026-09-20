@@ -39,12 +39,25 @@ def _hermetic_git_dir() -> str:
     global _HERMETIC_GIT_DIR
     if _HERMETIC_GIT_DIR is not None:
         return _HERMETIC_GIT_DIR
-    common = subprocess.run(
-        ["git", "rev-parse", "--git-common-dir"], cwd=ROOT, check=True,
-        capture_output=True, text=True,
-    ).stdout.strip()
-    objects = (ROOT / common / "objects").resolve() if not Path(common).is_absolute() \
-        else (Path(common) / "objects").resolve()
+    # Resolved without running git: the checkout whose object store we want is
+    # exactly the one whose configuration is unreadable, so asking git where it
+    # lives would fail for the same reason the read did.
+    marker = ROOT / ".git"
+    if marker.is_dir():
+        objects = (marker / "objects").resolve()
+    else:
+        text = marker.read_text().strip()
+        if not text.startswith("gitdir:"):
+            raise ValueError("unrecognised .git marker")
+        worktree = Path(text.split(":", 1)[1].strip())
+        if not worktree.is_absolute():
+            worktree = (ROOT / worktree).resolve()
+        commondir = worktree / "commondir"
+        common = (worktree / commondir.read_text().strip()).resolve() \
+            if commondir.is_file() else worktree.parent.parent
+        objects = (common / "objects").resolve()
+    if not objects.is_dir():
+        raise ValueError(f"object store not found: {objects}")
     directory = tempfile.mkdtemp(prefix="f017-historical-objects-")
     subprocess.run(["git", "init", "--bare", "--quiet", directory], check=True,
                    capture_output=True)
