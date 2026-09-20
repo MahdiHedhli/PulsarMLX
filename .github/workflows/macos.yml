@@ -368,8 +368,13 @@ jobs:
             --output "$RUNNER_TEMP/f017-plan-audit.json"
           cargo build -p f017-native --release \
             --bin quant_native_matvec_probe --bin synthetic_differential \
-            --bin temporal_differential
-          cargo test -p f017-native --release --test temporal
+            --bin temporal_differential --bin native_generate
+          cargo test -p f017-native --release --test temporal --test session
+          .venv/bin/python scripts/research/qualify_f017_native_cli_v1.py \
+            --binary target/release/native_generate \
+            --output "$RUNNER_TEMP/f017-native-cli-qualification.json"
+          cmp "$RUNNER_TEMP/f017-native-cli-qualification.json" \
+            docs/architecture/reviews/evidence/f017-native-cli-qualification-v1.json
           .venv/bin/python scripts/research/qualify_f017_native_temporal_v1.py \
             --native-binary target/release/temporal_differential \
             --work "$RUNNER_TEMP/f017-temporal" \

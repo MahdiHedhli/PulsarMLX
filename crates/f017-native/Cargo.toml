@@ -15,6 +15,7 @@ serde_json = "1"
 sha2 = "0.10"
 libc = "0.2"
 gguf = { path = "../gguf" }
+tokenizer = { path = "../tokenizer" }
 
 [[bin]]
 name = "f017-native-retained-qualification"

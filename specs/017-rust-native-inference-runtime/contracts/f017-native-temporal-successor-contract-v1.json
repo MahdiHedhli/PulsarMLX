@@ -1,0 +1,164 @@
+{
+ "attention_semantics": {
+  "causality": "every key j <= i is visible; the current key is appended before the softmax that reads it",
+  "form": "absorbed MLA",
+  "multi_token_prediction": {
+   "implemented": false,
+   "reason": "out of scope for this component",
+   "tensors": "blk.N.nextn.*"
+  },
+  "rope": {
+   "base": 8000000.0,
+   "note": "which pairing a given GGUF conversion produced is a property of the checkpoint. It is carried in the configuration and exercised both ways by test, never assumed silently. Validating it against the real checkpoint belongs to the first approved multi-token run.",
+   "pairing": "NeoxHalfSplit is the declared default (ggml NEOX pairs i with i + n/2); Interleaved is the declared alternative",
+   "rotated_dimensions": 64,
+   "status": "DECLARED_NOT_YET_VALIDATED_AGAINST_REAL_WEIGHTS"
+  },
+  "score": "(W_kb[h] q_nope) . c_j + rope(q_rope, i) . k_rope_j, scaled by attention_softmax_scale",
+  "softmax_scale_rule": "1 / sqrt(qk_nope + qk_rope) = 1/16 for this checkpoint",
+  "softmax_scale_source": {
+   "authority": "llama.cpp src/models/deepseek2.cpp, kq_scale = mscale*mscale/sqrtf(n_embd_head_k_mla)",
+   "cross_check": "the checkpoint's attention.key_length_mla (256) equals qk_nope + qk_rope and is asserted at startup",
+   "mscale": "1: the checkpoint declares no rope scaling keys, so freq_scale is 1 and the YaRN log term vanishes",
+   "retrieved": "2026-09-20"
+  },
+  "sparse_indexer": {
+   "enforcement": "max_positions may not exceed indexer_top_k; the runtime refuses longer sequences rather than substituting dense attention beyond the bound",
+   "implemented": false,
+   "inertness_argument": "the indexer selects at most top_k causal keys; while the whole sequence is no longer than top_k every causal key is selected, so dense causal attention over the prefix is the same computation",
+   "metadata": {
+    "indexer.head_count": 32,
+    "indexer.key_length": 128,
+    "indexer.top_k": 2048
+   },
+   "present_in_the_checkpoint": "blk.N.indexer.attn_k, indexer.attn_q_b, indexer.k_norm.{weight,bias}, indexer.proj (79 layers each)"
+  },
+  "value_path": "the attention-weighted latent is aggregated first and W_vb[h] is applied once to the aggregate"
+ },
+ "bounds": {
+  "max_output_tokens_default": 8,
+  "max_positions_ceiling": "attention.indexer.top_k read from the checkpoint",
+  "max_positions_default": 2048,
+  "max_prompt_tokens_default": 512,
+  "rule": "max_prompt_tokens + max_output_tokens must fit max_positions"
+ },
+ "component": "F017-NATIVE-TEMPORAL-RUNTIME",
+ "date": "2026-09-20",
+ "development_and_held_out": {
+  "development": "temporal fixture seeds 17030-17035 and the tiny in-test models",
+  "held_out": "real-checkpoint prompts, which are selected and locked before any approved run and are not in this repository",
+  "run_ladder": "2, 4 then 8 positions, then short text prompts; derived from measured native timing, not assumed"
+ },
+ "entrypoint": {
+  "binary": "f017-native-generate (crates/f017-native/src/bin/native_generate.rs)",
+  "python_inference_process_required": false,
+  "python_role": "independent reference and test harness only (scripts/research); never on the generation path"
+ },
+ "generation": {
+  "cancellation": "checked between positions; a cancelled run reports what it produced",
+  "decode_rate_rule": "no decode rate is reported for fewer than two generated tokens; one cold token's reciprocal is not a sustained rate",
+  "exit_codes": {
+   "0": "success",
+   "2": "usage or admission refusal",
+   "3": "identity or verification failure",
+   "4": "runtime failure",
+   "5": "cancelled"
+  },
+  "finish_reasons": [
+   "stop",
+   "length",
+   "cancelled"
+  ],
+  "mode": "greedy only; there is no sampling option",
+  "raw_token_mode": "a labelled diagnostic (RAW_TOKEN_DIAGNOSTIC); it does not satisfy the text-CLI milestone on its own",
+  "stop": "the tokenizer's end-of-generation set; a terminal token is counted in generated_token_count and is never written to the answer stream",
+  "streams": "the answer on stdout, one diagnostics JSON object on stderr",
+  "tie_rule": "LOWEST_TOKEN_ID_ON_EQUAL_F32_LOGIT"
+ },
+ "measured_timing_basis": {
+  "attempt_2_identity_rehash_seconds": 704.0,
+  "attempt_2_single_forward_pass_seconds": 299.2,
+  "note": "one cold position on the real checkpoint. It bounds admission budgets; it is not a throughput claim and no sustained rate has been measured."
+ },
+ "model_identity": {
+  "architecture": "glm-dsa",
+  "checkpoint": "GLM-5.2-UD-IQ2_XXS, 6 shards, 238,458,632,928 bytes, set sha256 d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+  "geometry_authority": {
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json",
+   "sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a"
+  },
+  "identity_check_weakening": "PROHIBITED: there is no flag that skips the rehash, and no path or mtime is accepted as proof",
+  "precision": "f32 production buffers; the independent reference is binary64",
+  "verification_frequency": "once per session, before any generation; never once per token",
+  "verified_at_startup": [
+   "directory is canonical and not a symlink",
+   "manifest/catalog plan census",
+   "GGUF architecture",
+   "block_count, embedding_length, vocab_size, attention.head_count, attention.q_lora_rank, attention.kv_lora_rank, attention.key_length_mla, attention.value_length_mla, rope.dimension_count",
+   "tokenizer vocabulary size equals the model's",
+   "full shard rehash through SecureCheckpoint::open"
+  ]
+ },
+ "not_claimed": [
+  "real-checkpoint multi-token agreement",
+  "any throughput figure",
+  "the rope pairing of the real checkpoint",
+  "indexer behaviour beyond its top-k budget",
+  "production readiness",
+  "general quality"
+ ],
+ "numeric_acceptance": {
+  "exact": [
+   "selected token id",
+   "expert selection and its order",
+   "visible-key count",
+   "position index",
+   "input token id",
+   "retained state growth",
+   "prompt and output token counts",
+   "tensor shapes"
+  ],
+  "logits_and_attention_weights": {
+   "cosine": 0.9999999981,
+   "max_abs": 0.0065,
+   "rmse": 0.0035,
+   "source": "frozen graph-differential thresholds from the checkpoint-free reconciliation, reused unchanged for the temporal extension"
+  },
+  "position_zero": "the temporal path must reproduce execute_one_token bit for bit at position 0 on the same source",
+  "tolerance_rule": "no threshold may be chosen from, or relaxed after, a deciding output"
+ },
+ "relationship_to_the_bounded_p1_contract": {
+  "files_touched_in_the_bound_manifest": {
+   "Cargo.lock": "follows the above",
+   "crates/f017-native/Cargo.toml": "the tokenizer dependency and the new binaries",
+   "crates/f017-native/src/lib.rs": "one `pub mod` declaration per new module; no behaviour of any bound entrypoint changes"
+  },
+  "frozen_files_unchanged_by_this_component": [
+   "crates/f017-native/src/model.rs",
+   "crates/f017-native/src/executor.rs",
+   "crates/f017-native/src/contract.rs",
+   "crates/f017-native/src/loader.rs",
+   "crates/f017-native/src/bin/bounded_p1.rs"
+  ],
+  "predecessor": {
+   "note": "attempt 2 executed under authorization 2 and produced 154820 == expected; retry is not permitted and the authorization can never be reused. Its code_manifest describes readiness head 1fa68a556734c29450f23e88499e19bdc50df75d and is historical from that point on.",
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v3.json",
+   "sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
+   "state": "TERMINAL_CONSUMED"
+  },
+  "rule": "this successor adds a separate surface; it does not widen, reinterpret or re-open the one-shot contract, and it cannot mint authority of any kind"
+ },
+ "schema": "pulsarmlx.f017.native-temporal-successor-contract/1.0.0",
+ "source_head_at_freeze": "1176750052d30ab60e7e09d4d9e69721c3a1239d",
+ "state": {
+  "append_order": "strictly increasing position, every layer before the position is committed",
+  "bytes_per_position": "layer_count * (kv_rank + qk_rope) * 4 = 79 * 576 * 4 = 182,016 bytes; 2048 positions is 372,768,768 bytes",
+  "current_token_visibility": true,
+  "failure": "a step that fails rolls the state back to the last committed position, so a partially written position is never visible",
+  "ownership": "the caller owns the state; weights are owned by the checkpoint session and are never part of state_bytes",
+  "prompt_to_decode_transition": "none: prefill and decode execute the identical per-position path; only the token source differs",
+  "representation": "per layer, per position: the RMS-normalised latent (kv_rank f32) and the rope key rotated at its own position (qk_rope f32)",
+  "reset": "SequenceState::reset releases every retained position; state_bytes returns to 0"
+ },
+ "status": "FROZEN_BEFORE_MEASUREMENT"
+}
