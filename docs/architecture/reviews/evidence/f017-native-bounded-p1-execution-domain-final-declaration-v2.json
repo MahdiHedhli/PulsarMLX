@@ -1,0 +1,77 @@
+{
+ "schema": "pulsarmlx.f017.native-bounded-p1-execution-domain-final-declaration/2.0.0",
+ "declaration": "F017_NATIVE_BOUNDED_P1_ATTEMPT_2_DOMAIN: PREPARED_FOR_ONE_HUMAN_GO_DECISION",
+ "status": "PREPARED_HUMAN_GATE_REQUIRED",
+ "scope": "Presentation of one separate human GO/no-GO decision for exactly one bounded Apple M1 Ultra native P1 (attempt 2, a new attempt under a new authorization; attempt 1 remains a banked terminal failure whose retry is permanently prohibited). This declaration neither issues authorization nor executes anything.",
+ "supersedes_for_attempt_2": {
+  "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v1.json",
+  "sha256": "64af7842c7ba7fccfface96ab59249302cdfb2938847973202c984cdfcdeff99",
+  "v1_attempt_1_artifacts_modified": false
+ },
+ "authoritative_branch": "feat/017-rust-native-inference-runtime",
+ "prepared_on_branch": "work/glm52-weekend-20260920 (fast-forward of feat/017-rust-native-inference-runtime @ c23e58ec87c7e73a23cf37ac64aa4dee6c45896f; the frozen contract binds the feature branch name, so execution requires the feature branch to be fast-forwarded to the readiness head before the approval is committed)",
+ "execution_code_head": "5e32d68faa7b10168b9bb7f5d4fce6ebf212b737",
+ "executor": {
+  "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1-v2",
+  "sha256": "91e50a0bb84a30450f9189da2122b84e1790649c1361ed90cea001ca537f52f0",
+  "built_on": "Apple M1 Ultra, macOS build 25A354, Homebrew rustc 1.97.1, pinned MLX 0.31.2 keg (libmlx ad9b597b08e28b43..., libmlxc 3401e4f91a1d3f9b...), release profile, from 5e32d68f"
+ },
+ "admission_contract": {
+  "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v3.json",
+  "sha256": "389580fa7ba5ca0f8a8d531aa522431bae9b47db413a02fba69b15e2132356f4",
+  "generation": 3,
+  "static_validation_m1_ultra": "PASS (validate-contract) 2026-09-20",
+  "machine_preflight_m1_ultra": "PASS 2026-09-20 (brand, macOS build, rustc, dylib SHAs, environment)",
+  "plan_only_m1_ultra": "PLAN_ONLY_PASS (1809 tensors, 6 shards, 238,458,632,928 bytes, 0 checkpoint reads)",
+  "negative_controls": {
+   "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-contract-v3-static-validation-v1.json",
+   "sha256": "35a4ac82872524c47e7369cae3b409e990d545cdc2950a506d114c0222bc4e70",
+   "all_rejected": true
+  }
+ },
+ "corrected_oracle_binding": {
+  "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-corrected-oracle-binding-v1.json",
+  "sha256": "c582e3b4ae924fcaafad67f4e997f5d5e6a8dba1320ef395f6ba6499dd5a3512",
+  "expected_token": 154820,
+  "acceptance_mode": "EXACT_EXPECTED_TOKEN_STABLE",
+  "event": "Event 06 / sequence 43 (EVENT06_SUCCESS_ACCEPTED), prompt 9703, position 0"
+ },
+ "checkpoint_free_reconciliation": {
+  "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
+  "sha256": "f7193decd52081942a50c267754ce614699638c6773c0e818e3e22bf483d484e",
+  "decoders": "11 formats bit-identical to the corrected oracle's independent decoders (MacBook and M1 Ultra)",
+  "graph": "6/6 synthetic full-graph cases within the frozen thresholds against the corrected oracle binary64 numerics (MacBook and M1 Ultra)",
+  "limit": "synthetic; real-checkpoint agreement is exactly what attempt 2 decides"
+ },
+ "one_shot": {
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "prompt_token": 9703,
+  "expected_token": 154820,
+  "attempts": 1,
+  "retries": 0,
+  "resume": false,
+  "mandatory_stop": true,
+  "receipt_schema": "pulsarmlx.f017.native-bounded-p1-execution-receipt/4.0.0",
+  "command": "execute-evidenced-v4 MANIFEST CATALOG CHECKPOINT_ROOT AUTHORIZATION STATE_ROOT CONTRACT",
+  "forward_evidence_contract": {
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json",
+   "sha256": "41c46f55369a71a632e30669aa848e2b9ffcc24ff69a8e469e7f8f12d66bbf03"
+  },
+  "expected_duration": "~2-3 minutes after durable start (attempt 1: 123.5 s)",
+  "memory": "the executor requires >= 17,179,869,184 bytes available (vm_stat free+inactive+speculative) at admission; the legacy resident service on the host must be paused first"
+ },
+ "remaining_before_go": [
+  "fast-forward feat/017-rust-native-inference-runtime to the readiness head (non-force)",
+  "exact-head CI success for that head",
+  "final independent review by the operator-authorized reviewer (claude-opus-5, fresh session) with verdict ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1 and 0 blocking findings, banked with exact request/response",
+  "a committed human approval (schema pulsarmlx.f017.native-bounded-p1-human-approval/1.0.0, decision AUTHORIZE_EXACTLY_ONE_BOUNDED_M1_ULTRA_P1) binding this declaration, the final review, the readiness head and the contract v3 sha; then scripts/research/f017_native_p1_authorization.py authorize mints the one-shot authority in a fresh private state root"
+ ],
+ "safety": {
+  "live_authorization_created": false,
+  "checkpoint_reads_this_preparation": 0,
+  "event_06_replayed": false,
+  "attempt_1_retried": false,
+  "tolerances_changed": false,
+  "generation_2_rules_changed": false
+ }
+}
