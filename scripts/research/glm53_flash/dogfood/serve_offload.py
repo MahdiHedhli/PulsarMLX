@@ -53,15 +53,15 @@ def load(args):
     # the process). Materialized arrays are thread-agnostic; the store's slot tensors are allocated evaluated and its reads
     # convert on the calling (worker) thread.
     model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_bytes / 1e9, lazy=False, store_policy="slot", warm_start=False, cache_clear_threshold_gb=args.cache_clear_threshold_gb,
-                                                            read_workers=args.read_workers, coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode)
-    if store.stats()["budget_bytes"] != args.expert_cache_bytes or store.coalesce_gap_experts != args.coalesce_gap or store.write_mode != args.write_mode or store.read_chunk_bytes != args.read_chunk_mib << 20:
+                                                            read_workers=args.read_workers, coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode, prefill_mode=args.prefill_mode)
+    if store.stats()["budget_bytes"] != args.expert_cache_bytes or store.coalesce_gap_experts != args.coalesce_gap or store.write_mode != args.write_mode or store.read_chunk_bytes != args.read_chunk_mib << 20 or store.prefill_mode != args.prefill_mode:
         raise SystemExit("STORE_CONFIG_MISMATCH the store did not take the requested settings")
     version = args.stop_policy if args.allow_legacy_stop else stop_policy.POLICY_VERSION
     policy = stop_policy.build(args.offload, processor.tokenizer, version=version); installed = stop_policy.apply(processor, policy)
     load_s = time.time() - t0
     ENGINE.update(store=store, loaded_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), identity=identity,
                   config={"backend": "paged", "offload": os.path.abspath(args.offload), "expert_cache_bytes": args.expert_cache_bytes, "wired": bool(args.wire), "aligned_reads": True, "read_workers": args.read_workers, "read_chunk_mib": args.read_chunk_mib, "bulk_min": store.bulk_min, "prefill_step_size": args.prefill_step_size,
-                          "coalesce_gap": args.coalesce_gap, "write_mode": args.write_mode, "warm_start": False, "prefix_reuse": False, "mtp": False, "sampling": "as requested (greedy by default)", "stop_policy": {"version": policy["version"], "terminal_ids": policy["terminal_ids"], "names": {str(k): v for k, v in policy["names"].items()}, **installed},
+                          "coalesce_gap": args.coalesce_gap, "write_mode": args.write_mode, "prefill_mode": args.prefill_mode, "warm_start": False, "prefix_reuse": False, "mtp": False, "sampling": "as requested (greedy by default)", "stop_policy": {"version": policy["version"], "terminal_ids": policy["terminal_ids"], "names": {str(k): v for k, v in policy["names"].items()}, **installed},
                           "limits": {"max_prompt_tokens": args.max_prompt_tokens, "max_output_tokens": args.max_output_tokens, "max_queue": args.max_queue, "request_deadline_s": args.request_deadline_s}, "eager_ffn_layers": eager, "load_seconds": round(load_s, 1), "capacity_per_layer": store.capacity, "expert_bytes": store.expert_bytes},
                   test_seam=bool(args.test_seam))
     model_id = args.model_id or "glm-5.3-flash-unpruned-mixed-4_8bit-paged"
@@ -121,6 +121,7 @@ def main(argv=None):
     ap.add_argument("--offload", required=True, help="the existing contiguous repack directory (never repacked here)")
     ap.add_argument("--expert-cache-bytes", type=int, required=True); ap.add_argument("--max-expert-cache-bytes", type=int, default=60_000_000_000, help="admitted ceiling; refuse above")
     ap.add_argument("--coalesce-gap", type=int, required=True); ap.add_argument("--write-mode", choices=("stack", "per-expert"), required=True)
+    ap.add_argument("--prefill-mode", choices=("store", "stream"), default="store", help="'store' = a prefill chunk fills slots like any call (the accepted baseline); 'stream' = item 1's transient streaming prefill")
     wire = ap.add_mutually_exclusive_group(required=True); wire.add_argument("--wire", dest="wire", action="store_true"); wire.add_argument("--no-wire", dest="wire", action="store_false")
     ap.add_argument("--read-workers", type=int, default=8); ap.add_argument("--read-chunk-mib", type=int, default=64); ap.add_argument("--prefill-step-size", type=int, default=256); ap.add_argument("--cache-clear-threshold-gb", type=float, default=2.0)
     ap.add_argument("--stop-policy", choices=("glm5-eos-v1", "legacy-tokenizer-eos"), default="glm5-eos-v1"); ap.add_argument("--allow-legacy-stop", action="store_true", help="required to run the legacy policy (diagnostics only)")

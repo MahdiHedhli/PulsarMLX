@@ -53,7 +53,7 @@ def find_store(language_model):
 
 
 def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_policy: str = 'lru', warm_start: bool = True, cache_clear_threshold_gb=2.0, read_workers: int = 8,
-                   coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, wire: bool = False, write_mode: str = 'stack'):
+                   coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, wire: bool = False, write_mode: str = 'stack', prefill_mode: str = 'store'):
     """Pipenetwork's load_model() replayed on a repack output, with patch_model and the eager-FFN remedy. `wire` raises
     MLX's wired limit to the recommended working set before anything is allocated (graph 23's resident remedy; unpruned-
     fidelity G38: unwired, macOS 26 compressed 11 GiB of the paged store's own tensors during a 70 GB fill)."""
@@ -86,7 +86,7 @@ def load_offloaded(offload_dir: str, expert_cache_gb, lazy: bool = True, store_p
         # graph 24: stacked per-layer slots + gather_qmm over them (no per-expert loop, no bulk prefill bypass)
         from pulsar_slot_store import patch_model_slots
         store, patched = patch_model_slots(model, offload_dir, expert_cache_gb=expert_cache_gb, warm_start=warm_start, read_workers=read_workers,
-                                           coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes, write_mode=write_mode)
+                                           coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes, write_mode=write_mode, prefill_mode=prefill_mode)
     else:
         store = patch_model(model, offload_dir, expert_cache_gb=expert_cache_gb)
     if store_policy == 'pulsar':
@@ -133,6 +133,7 @@ def main():
     ap.add_argument('--stream', action='store_true', help='per-token timing (first token, first answer token after </think>, decode tok/s over the last half) via stream_generate')
     ap.add_argument('--wire', action='store_true', help='wire the MLX buffers up to the recommended working set (prevents the OS from compressing the store)')
     ap.add_argument('--write-mode', choices=('stack', 'per-expert'), default='stack', help="slot: 'stack' (baseline: mx.stack + one scatter per part) or 'per-expert' (one in-place scatter per expert per part; freetoken-followon H1)")
+    ap.add_argument('--prefill-mode', choices=('store', 'stream'), default='store', help="slot: 'store' (baseline: a prefill chunk fills slots like any call) or 'stream' (item 1: a multi-token call reads its experts into transient stacked tensors outside the store; decode unchanged, values identical)")
     ap.add_argument('--stop-policy', choices=('legacy-tokenizer-eos', 'glm5-eos-v1'), default='legacy-tokenizer-eos', help="termination (unpruned-persistent G54): 'legacy-tokenizer-eos' reproduces the pre-G54 streaming behaviour (tokenizer eos only); 'glm5-eos-v1' installs the checkpoint's declared terminal ids (<|endoftext|>, <|user|>, <|observation|>)")
     args = ap.parse_args()
 
@@ -154,7 +155,7 @@ def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     threshold_gb = None if args.cache_clear_threshold_gb < 0 else args.cache_clear_threshold_gb
     model, processor, config, store, eager = load_offloaded(args.offload, args.expert_cache_gb, store_policy=args.store, warm_start=not args.no_warm, cache_clear_threshold_gb=threshold_gb, read_workers=args.read_workers,
-                                                            coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode)
+                                                            coalesce_gap_experts=args.coalesce_gap, read_chunk_bytes=args.read_chunk_mib << 20, wire=args.wire, write_mode=args.write_mode, prefill_mode=args.prefill_mode)
     t_load = time.time() - t1
     print(f'loaded in {t_load:.1f}s; patched layers on the eager FFN path: {eager}; store: {store.stats()}', flush=True)
 
@@ -173,7 +174,7 @@ def main():
     if args.trace and hasattr(store, 'trace'):
         trace_fh = open(args.trace, 'w')
         trace_fh.write(json.dumps({'header': True, 'offload': args.offload, 'layout': store.layout, 'capacity_per_layer': store.capacity, 'expert_bytes': store.expert_bytes, 'budget_bytes': store._budget, 'num_experts': store.num_experts,
-                                   'coalesce_gap_experts': store.coalesce_gap_experts, 'read_chunk_bytes': store.read_chunk_bytes, 'bulk_min': store.bulk_min, 'write_mode': store.write_mode, 'read_workers': args.read_workers, 'warm_start': not args.no_warm, 'decay': store.decay, 'decay_every': store.decay_every,
+                                   'coalesce_gap_experts': store.coalesce_gap_experts, 'read_chunk_bytes': store.read_chunk_bytes, 'bulk_min': store.bulk_min, 'write_mode': store.write_mode, 'prefill_mode': getattr(store, 'prefill_mode', 'store'), 'read_workers': args.read_workers, 'warm_start': not args.no_warm, 'decay': store.decay, 'decay_every': store.decay_every,
                                    'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'max_tokens': max_tokens, 'prefill_step_size': args.prefill_step_size}) + '\n')
         store.trace = []
     phase_stats = {}
@@ -216,7 +217,7 @@ def main():
         trace_fh.write(json.dumps({'footer': True, 'phase_stats': phase_stats}) + '\n'); trace_fh.close(); store.trace = None
     warm_path = store.save_warm_state() if (args.store in ('pulsar', 'slot') and args.save_warm) else None
     record = {'build': args.build, 'offload': args.offload, 'store_policy': args.store, 'cache_clear_threshold_gb': threshold_gb, 'read_workers': args.read_workers, 'warm_state_saved': warm_path, 'expert_cache_gb': args.expert_cache_gb, 'repack_seconds': round(t_repack, 1),
-              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'wired': args.wire, 'write_mode': args.write_mode, 'stop_policy': {**policy, 'names': {str(k): v for k, v in policy['names'].items()}, **policy_installed}, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
+              'coalesce_gap': args.coalesce_gap, 'read_chunk_mib': args.read_chunk_mib, 'wired': args.wire, 'write_mode': args.write_mode, 'prefill_mode': args.prefill_mode, 'stop_policy': {**policy, 'names': {str(k): v for k, v in policy['names'].items()}, **policy_installed}, 'prompt_id': prompt_id, 'prompt_tokens': len(prompt_token_ids), 'reasoning_effort': args.reasoning_effort, 'trace': args.trace, 'timeline': timeline if args.stream else None, 'phase_stats': phase_stats,
               'load_seconds': round(t_load, 1), 'generate_seconds': round(t_gen, 1), 'max_tokens': max_tokens, 'prefill_step_size': args.prefill_step_size,
               'patched_layers_eager_ffn': eager, 'store_stats': store.stats(), 'peak_memory_bytes': int(mx.get_peak_memory()),
               'device_info': {k: v for k, v in mx.device_info().items() if isinstance(v, (int, str))}, 'prompt': args.prompt, 'text': text,
