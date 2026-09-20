@@ -242,3 +242,33 @@ def test_real_predecessor_is_bound_byte_for_byte() -> None:
     predecessor = MODULE.load_predecessor(raw)
     assert predecessor["findings"] == []
     assert len(predecessor["paths"]) == MODULE.MEASURED_PATH_COUNT
+
+
+def test_the_event06_bridge_pins_agree_with_the_active_measurement() -> None:
+    """Two places pin the same bytes; they must not be able to disagree."""
+    bridge = importlib.util.spec_from_file_location(
+        "f017_event06_numerical_bridge",
+        ROOT / "scripts/research/qualify_f017_event06_numerical_bridge_v1.py")
+    source = (ROOT / "scripts/research/qualify_f017_event06_numerical_bridge_v1.py").read_text()
+    pinned = {}
+    inside = False
+    for line in source.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("IMMUTABLE = {"):
+            inside = True
+            continue
+        if inside:
+            if stripped.startswith("}"):
+                break
+            if stripped.startswith('"'):
+                path, _, digest = stripped.partition(":")
+                pinned[path.strip().strip('",')] = digest.strip().strip('",')
+    assert pinned, "could not read the bridge's immutable pins"
+    assert bridge is not None
+    measurement = json.loads(
+        (ROOT / "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v9.json").read_text())
+    measured = {item["path"]: item["sha256"] for item in measurement["measured_paths"]}
+    for path, digest in pinned.items():
+        if path in measured:
+            assert measured[path] == digest, f"{path}: the bridge pin and the active measurement disagree"
+        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest, f"{path}: pin does not match the working tree"
