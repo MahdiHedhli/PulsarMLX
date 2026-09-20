@@ -34,7 +34,7 @@ Ratio = persistent request latency (submit → completion, after load) ÷ fresh-
 | confirmation on disjoint prompts (6 blocks): exact repeat S2 / A-B-A / M2-after-S2 | 0.848–0.876 / 0.871–0.897 / 0.890–0.925 | gains reproduced |
 | sustained 512-token request (blocks 4–6) | 0.950 / 0.952 / 0.966 | no gain under the rule |
 
-Mechanism: the gain is **prefill**. First token on S: 15.5–15.7 s on an empty store vs 7.4–8.8 s warm (reference 15.4 s). **Decode stayed at 2.6–3.3 tokens/s in both arms** in every stratum (S ≈ 2.6, M ≈ 3.2, 512-token ≈ 2.95): the 60 GB budget holds ~35 % of the ~170 GB expert corpus, so decode is miss-bound and persistence does not change it. Session cost is reported separately: server load 2.1–2.3 s plus 5–10 s to readiness; reference load ≈ 2.2 s per process (page-cache warm) plus process start. Uncertainty: three-block spreads as shown; no interval beyond the spread is claimed. The 149-token M prompt is not long-context coverage.
+Mechanism: the gain is **prefill**. First token on S: 15.5–15.7 s on an empty store vs 7.4–8.8 s warm (fresh-process reference 15.6–16.1 s). **Decode stayed at 2.6–3.3 tokens/s in both arms** in every stratum (S ≈ 2.6, M ≈ 3.2, 512-token ≈ 2.95): the 60 GB budget holds ~35 % of the ~170 GB expert corpus, so decode is miss-bound and persistence does not change it. Session cost is reported separately: server load 2.1–2.3 s plus 5–10 s to readiness; reference load ≈ 2.2 s per process (page-cache warm) plus process start. Uncertainty: three-block spreads as shown; no interval beyond the spread is claimed. The 149-token M prompt is not long-context coverage.
 
 ## Quality retention (fresh sealed suite, 120 units)
 
@@ -85,3 +85,7 @@ python -u scripts/research/glm53_flash/dogfood/serve_offload.py \
 ```
 
 `GET /readyz` → `{"ready": true}`; `POST /v1/chat/completions` (OpenAI-style; add `"pulsar_trace": true` for token ids, per-token times and store deltas). Fresh-process reference for one request: `paged_reference.py --offload <repack-dir> ... --messages request.json --log out.json` with the same flags. Offline tests: `scripts/research/tests/test_glm53_flash_stop_policy.py`, `test_glm53_flash_serve_offload.py` (fake model; the live HTTP tests need fastapi/uvicorn/httpx).
+
+## Corrections
+
+- 2026-09-20 (independent gpt-6-astra review, finding P2-FLASH-01): the G57 reference first-token times and reference decode rates in `persistent-serving-summary.json` had been copied from the G56 pilot references (15.35/15.35/15.36 s; 2.63/2.63/2.62 and 3.15/3.15/3.15 tok/s) instead of the G57 block references (16.05/15.61/15.64 s; 2.62/2.64/2.64 and 3.09/3.19/3.19 tok/s); corrected, strata now named explicitly. The paired latency ratios and verdicts were computed from the correct values and are unchanged.
