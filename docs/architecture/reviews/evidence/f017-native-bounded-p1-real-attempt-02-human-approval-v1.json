@@ -1,0 +1,22 @@
+{
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "authorization_id": "F017-NATIVE-BOUNDED-P1-AUTHORIZATION-2",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "contract_sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
+  "decision": "AUTHORIZE_EXACTLY_ONE_BOUNDED_M1_ULTRA_P1",
+  "domain_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v3.json",
+    "sha256": "269babfb21e612a50a543bf92973c8d1ddc0643e5b4268cf91153636c3915a6d"
+  },
+  "final_review": {
+    "blocking_count": 0,
+    "non_blocking_required_count": 0,
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-02-opus-final-ratification-cycle-04-normalized-result.json",
+    "reviewer_model": "claude-opus-5",
+    "sha256": "abd37d10b8b7a98f663cfc9c42f64260422f77e1fcb436052945d8bfc3201121",
+    "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1"
+  },
+  "readiness_head": "1fa68a556734c29450f23e88499e19bdc50df75d",
+  "schema": "pulsarmlx.f017.native-bounded-p1-human-approval/1.0.0",
+  "statement": "AUTHORIZE EXACTLY ONE REVIEWED BOUNDED M1 ULTRA P1; NO RETRY; MANDATORY STOP"
+}
