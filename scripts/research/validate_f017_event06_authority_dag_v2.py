@@ -35,7 +35,15 @@ def _historical_bytes(relative_path: str) -> bytes:
         capture_output=True,
     )
     if completed.returncode != 0 or completed.stderr:
-        raise ValueError(f"historical repository blob: {relative_path}")
+        # Fail closed, but say why: a bare "historical repository blob" gives
+        # a reader nothing to act on, and this check treats any stderr byte as
+        # fatal, including a warning from an environment git.
+        detail = completed.stderr.decode("utf-8", "replace").strip()
+        raise ValueError(
+            f"historical repository blob: {relative_path} "
+            f"(git show {HISTORICAL_DAG_COMMIT}:{relative_path} exited "
+            f"{completed.returncode}; stderr: {detail!r})"
+        )
     return completed.stdout
 
 
