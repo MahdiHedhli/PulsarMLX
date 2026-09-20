@@ -22,3 +22,14 @@ Token 154820 → the native one-token boundary agrees with the corrected oracle 
 
 ## Not claimed
 Real-checkpoint agreement; a usable GLM-5.2 CLI; performance; any change to frozen tolerances or ledgers; Event 06 or attempt 1 replay.
+
+## Outcome (2026-09-20, 15:10–15:27 UTC) — EXECUTED
+
+Under a fresh human approval (authorization `F017-NATIVE-BOUNDED-P1-AUTHORIZATION-2`, readiness head `1fa68a55`, final review cycle 04 by a fresh `claude-opus-5` session: ACCEPT, 0 blocking, 0 non-blocking-required), the native bounded P1 attempt 2 ran once on the Mac Studio M1 Ultra through `execute-evidenced-v4`:
+
+- **produced token 154820 == corrected-oracle expected 154820** → `EXPECTED_TOKEN_MATCH`, `COMPLETE_MANDATORY_STOP`; native f32 top-1 margin 3.53099 (oracle: primary 3.530997, secondary 3.5309973); top-2 token 565.
+- 1003.6 s from durable start to completion: 704 s six-shard identity rehash (~238 GB, single-threaded SHA-256 ≈ 345 MB/s), 299 s for the 79-layer forward pass and full-vocabulary logits (12,960 tensor first-uses, 0 reuses), 0.1 s map teardown.
+- 25,950 access events; 0 unexpected accesses, fallbacks or alternate roots; six read-only private maps, six teardowns; MLX accounting reconciled (managed 25,132/25,132, derived 12,566/12,566, owned stream 1/1, context inactive, no in-flight work); historical master ledger 175 → 175.
+- Evidence: `evidence/f017-native-bounded-p1-real-attempt-02-execution-evidence-v1.json` (sanitized), `evidence/f017-native-bounded-p1-real-attempt-02-human-approval-v1.json`; raw receipts retained privately. Retry under this authorization is not permitted.
+
+This establishes the **native one-token boundary** (Rust + MLX bridge, real checkpoint, corrected-oracle agreement). It is not a usable CLI, not multi-token generation, and not a performance claim; the pre-existing V11 measurement-drift CI check remains for the F017 planner.
