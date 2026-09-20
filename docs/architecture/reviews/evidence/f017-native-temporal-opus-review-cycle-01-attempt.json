@@ -1,0 +1,22 @@
+{
+ "claims_submitted": 11,
+ "command": "claude -p --model claude-opus-5 --output-format json --no-session-persistence --tools \"\" < request.md",
+ "date": "2026-09-20",
+ "exact_response": "Not logged in \u00b7 Please run /login",
+ "meaning": "the reviewer CLI must be logged in by the operator; an agent may not authenticate it. No verdict was obtained, and none is claimed.",
+ "mechanism": "fresh claude-opus-5 Claude Code session, no tools, no session persistence \u2014 the approved bounded-review path used for the attempt-2 ratification cycles",
+ "next": "the operator logs the CLI in; the request packet above is ready to submit unchanged, and its sha256 binds what was asked.",
+ "not_done": [
+  "no substitute reviewer was used",
+  "no verdict was written",
+  "no claim in this work order rests on a review that did not happen"
+ ],
+ "outcome": "BLOCKED_REVIEWER_LOGIN",
+ "request": {
+  "bytes": 66955,
+  "path": "docs/architecture/reviews/evidence/f017-native-temporal-opus-review-cycle-01-request.md",
+  "sha256": "502405c6494f04ba88a1fe0a0d0404c35116a0e9c68ec491c4b178a9806bf684"
+ },
+ "schema": "pulsarmlx.f017.independent-review-attempt/1.0.0",
+ "scope": "the native temporal runtime, the generation session, the independent Python temporal reference, and the V11 active-measurement repair"
+}
