@@ -1,0 +1,125 @@
+{
+ "schema": "pulsarmlx.f017.native-bounded-p1-execution-domain-final-declaration/3.0.0",
+ "declaration": "F017_NATIVE_BOUNDED_P1_ATTEMPT_2_DOMAIN: PREPARED_FOR_ONE_HUMAN_GO_DECISION",
+ "status": "PREPARED_HUMAN_GATE_REQUIRED",
+ "supersedes": {
+  "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v2.json",
+  "sha256": "95211e29b95c026ac4cd637ee0259eb842a90c9eab10dcacc666c960f8d9226b",
+  "reason": "cycle-02 final review REJECT findings B-01 (a stated CI precondition is known-failed for a pre-existing reason) and B-02 (v2 was re-bound in place after the cycle-01 packet); v2 is left as committed from here on; v3 is the version a human approval binds"
+ },
+ "scope": "Presentation of one separate human GO/no-GO decision for exactly one bounded Apple M1 Ultra native P1 (attempt 2, a new attempt under a new authorization; attempt 1 remains a banked terminal failure whose retry is permanently prohibited). This declaration neither issues authorization nor executes anything.",
+ "authoritative_branch": "feat/017-rust-native-inference-runtime",
+ "prepared_on_branch": "work/glm52-weekend-20260920 (kept equal to feat/017-rust-native-inference-runtime by non-force fast-forward)",
+ "execution_code_head": "5e32d68faa7b10168b9bb7f5d4fce6ebf212b737",
+ "execution_code_head_semantics": "the source head the committed executor was built from; the admission contract's code manifest binds the same runtime files at the readiness head (the only difference between the two trees under crates/ is a bin declaration in crates/f017-native/Cargo.toml)",
+ "executor": {
+  "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1-v2",
+  "sha256": "91e50a0bb84a30450f9189da2122b84e1790649c1361ed90cea001ca537f52f0",
+  "built_on": "Apple M1 Ultra, macOS 25A354, Homebrew rustc 1.97.1, pinned MLX 0.31.2 keg (libmlx ad9b597b08e28b43c9b9791d2948fea601c76fe0b4a06d08cceeb4ad7b15e20d, libmlxc 3401e4f91a1d3f9b02c9bd1e728a10753f256d90bb1b40aebcaf8225592bee1a), release, OMP/RAYON/VECLIB threads 1",
+  "rebuild_at_readiness_head_8456f206": "byte-identical sha256 91e50a0bb84a30450f9189da2122b84e1790649c1361ed90cea001ca537f52f0 (D-01 closed)"
+ },
+ "admission_contract": {
+  "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v3.json",
+  "sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
+  "generation": 3,
+  "m1_ultra_checks_at_d690a967_and_later": "validate-contract PASS, machine-preflight PASS, plan-only PLAN_ONLY_PASS (0 checkpoint reads)",
+  "negative_controls": {
+   "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-contract-v3-static-validation-v1.json",
+   "sha256": "35a4ac82872524c47e7369cae3b409e990d545cdc2950a506d114c0222bc4e70"
+  }
+ },
+ "corrected_oracle_binding": {
+  "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-corrected-oracle-binding-v1.json",
+  "sha256": "c582e3b4ae924fcaafad67f4e997f5d5e6a8dba1320ef395f6ba6499dd5a3512",
+  "expected_token": 154820,
+  "acceptance_mode": "EXACT_EXPECTED_TOKEN_STABLE"
+ },
+ "checkpoint_free_reconciliation": {
+  "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
+  "sha256": "7af5cd9da4d8625c8a890d4a67ad913d5166f0218c41ca80f06b34f4d2ac2c34",
+  "m1_ultra_reports": [
+   {
+    "path": "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1-m1ultra.json",
+    "sha256": "750e292b642b863c267a1b2e1313954e7fb9dd18656031215266db6d1ac1a2b0"
+   },
+   {
+    "path": "docs/architecture/reviews/evidence/f017-native-graph-vs-corrected-oracle-differential-v1-m1ultra.json",
+    "sha256": "74e7a1593e2ba2f8b76ad8e9e755543f10fb5f303c125c9483a2dd74fccb0224"
+   }
+  ]
+ },
+ "ci_gate": {
+  "rule": "exact-head CI at the readiness head must show classification SUCCESS and the Apple Silicon workspace baseline job (cargo build/test) SUCCESS; the MLX small-fixture job is recorded, not required, while it fails only at the pre-existing V11 measurement-drift check",
+  "observed_at_8456f206_lineage": {
+   "run": 35509978669,
+   "head": "d690a9675ed6ded0f25dfd22adce32a0fc3fa064",
+   "mode": "FULL_NATIVE",
+   "classify": "success",
+   "apple_silicon_workspace_baseline": "success",
+   "apple_mlx_small_fixture_validation": "failure at scripts/research/generate_f017_v11_measurement_v1.py --check: working tree differs from measurement head: scripts/research/f017_corrected_oracle_primary_wrapper_v11.py (every earlier step of the job passed, including the corrected-oracle numerical requalification v3/v4, the native synthetic family and the plan audit)"
+  },
+  "cause": "measurement v8 binds the wrapper at f35d3411; commit 5b39a21a (2026-09-03, 'simplify Event 06 to minimum gate path') changed the wrapper (+53/-9 lines); 5b39a21a is an ancestor of the Event 06 immutable source c3526d68, i.e. Event 06 ran with the changed wrapper; no FULL_NATIVE run has passed on the branch since 2026-09-03",
+  "independence": "the check measures the V11 result-envelope implementation of the corrected-oracle track; the native executor, its contract validation, the crate tests and the checkpoint-free differentials do not depend on it; repair (append-only v9 measurement) belongs to the F017 planner and was not attempted here"
+ },
+ "numerical_delta_since_attempt_1": {
+  "attempt_1_executor_build_head": "4faa404c4205d172251436781b6d54042e8409f6",
+  "runtime_files_changed": [
+   "crates/quant/src/extra_ref.rs: decode_iq4_xs_matrix lane order corrected to ggml split low-then-high (e00811df, 2026-08-22, corrected-oracle cycle-2 finding) - a NUMERICAL change affecting the four IQ4_XS tensors blk.8/75/76/77.ffn_down_exps.weight",
+   "crates/f017-native/src/model.rs: observer plumbing refactor (same operations and order)",
+   "crates/f017-native/src/loader.rs, executor.rs, crates/stream/src/p1_domain.rs: six-shard authority, evidenced v4 lifecycle, receipts, diagnostics",
+   "crates/f017-native/src/contract.rs: generation 3 (this round)"
+  ],
+  "prior_expectation": "attempt 2 is not a deterministic repeat of attempt 1: the IQ4_XS decode differs and the expected token is the corrected 154820; the checkpoint-free evidence removes decoder and graph defects as explanations, so the outcome is genuinely open (154820 = success; anything else = a banked terminal failure whose payoff is the evidenced-v4 diagnostics: 79-layer fingerprints and full logits)"
+ },
+ "verdict_logic_inspection": {
+  "crates/stream/src/p1_domain.rs": "execution compares the produced token with authority.expected_token (line ~1090: 'bounded P1 token mismatch: expected {authority.expected_token}'); the receipt classification uses produced_token != Some(authority.expected_token) -> TOKEN_MISMATCH / TERMINAL_FAILURE_NO_RETRY else EXPECTED_TOKEN_MATCH / COMPLETE_MANDATORY_STOP (line ~1304-1311); the constant stream::EXPECTED_TOKEN (21615) is used only in #[cfg(test)] code (module starts at line 1372)",
+  "crates/f017-native/src/bin/bounded_p1.rs": "execute-evidenced-v4 requires authority.attempt_id == contract.one_shot.attempt_id and validates authority/contract/executor/D0/D1/D2/D3.5/synthetic/ledger/manifest/catalog/set bindings; FullNativeP1MathV3 is constructed with authority.expected_token; the contract's one_shot.expected_token (154820) is enforced by validate_static generation 3; the human approval binds the contract sha, and the authority is minted from that contract's one_shot fields, so authority.expected_token == contract.one_shot.expected_token by construction of f017_native_p1_authorization.py authorize"
+ },
+ "corrected_oracle_provenance": {
+  "event_06_source": "immutable c3526d68 (implementation 4b48167f)",
+  "wrapper_change_5b39a21a_is_ancestor_of_c3526d68": true,
+  "f017_corrected_oracle_primary_numerics_v3.py_sha256": {
+   "at_c3526d68": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+   "at_readiness": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6"
+  },
+  "f017_oracle_primary_decoders.py_sha256": {
+   "at_c3526d68": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+   "at_readiness": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"
+  }
+ },
+ "one_shot": {
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "prompt_token": 9703,
+  "expected_token": 154820,
+  "attempts": 1,
+  "retries": 0,
+  "resume": false,
+  "mandatory_stop": true,
+  "receipt_schema": "pulsarmlx.f017.native-bounded-p1-execution-receipt/4.0.0",
+  "command": "execute-evidenced-v4 MANIFEST CATALOG CHECKPOINT_ROOT AUTHORIZATION STATE_ROOT CONTRACT",
+  "forward_evidence_contract": {
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json",
+   "sha256": "41c46f55369a71a632e30669aa848e2b9ffcc24ff69a8e469e7f8f12d66bbf03"
+  },
+  "consumption_rule": "the one-shot authority is consumed at durable attempt start; a crash, memory kill or interruption after that point spends the attempt (interruption closeout only, no retry, no resume)",
+  "post_failure_scope": "a token other than 154820 is a banked terminal failure under authorization 2; no retry under it; a further attempt would need a new diagnosis, a new contract generation and a new human GO",
+  "shard_identity": "MappedShard::open rehashes every shard (SHARD_IDENTITY_REHASH) against the manifest before use; ~222 GB read from the internal SSD is part of the ~2-3 minute run",
+  "expected_duration": "~2-3 minutes after durable start (attempt 1: 123.5 s)",
+  "memory": ">= 17,179,869,184 bytes available (vm_stat free+inactive+speculative) sampled within 5 s of admission; the legacy resident service is QUIT (SIGTERM, verified exited and memory released), not suspended"
+ },
+ "operator_procedure_assertions": [
+  "checkout of feat/017-rust-native-inference-runtime at the readiness head H* (contains the committed final review), clean, HEAD == origin",
+  "the human approval JSON stays outside the repository during authorize (readiness_head = H*)",
+  "authorize creates the fresh state root; execute-evidenced-v4 runs once from the same checkout with the pinned environment; no branch push between authorize and execution",
+  "after the run: restore the legacy service; bank receipts/terminal and a sanitized public execution-evidence record; commit the approval as evidence"
+ ],
+ "reviewer_provenance": "final review cycles are performed by a fresh claude-opus-5 Claude Code session spawned as an independent agent with no prior context, instructed to read only the request packet file and use no other tools; the spawn prompt, packet sha256 and verbatim response are banked (D-05)",
+ "safety": {
+  "live_authorization_created": false,
+  "checkpoint_reads_this_preparation": 0,
+  "event_06_replayed": false,
+  "attempt_1_retried": false,
+  "tolerances_changed": false,
+  "generation_2_rules_changed": false
+ }
+}

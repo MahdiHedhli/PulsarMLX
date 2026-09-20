@@ -5,8 +5,8 @@
   "contract_sha256": "7f98404333b0661f42c0e44f0a6c6451282513531a978dd442a98dafbfe94af8",
   "decision": "NOT_AUTHORIZED_TEMPLATE",
   "domain_declaration": {
-    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v2.json",
-    "sha256": "95211e29b95c026ac4cd637ee0259eb842a90c9eab10dcacc666c960f8d9226b"
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-execution-domain-final-declaration-v3.json",
+    "sha256": "269babfb21e612a50a543bf92973c8d1ddc0643e5b4268cf91153636c3915a6d"
   },
   "final_review": {
     "blocking_count": null,
