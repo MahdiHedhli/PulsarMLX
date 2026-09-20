@@ -1,0 +1,48 @@
+{
+ "schema": "pulsarmlx.f017.native-checkpoint-free-reconciliation/1.0.0",
+ "date": "2026-09-20",
+ "work_order": "WK26-GLM52-20260920-v1 (W3)",
+ "source_head_before": "c23e58ec87c7e73a23cf37ac64aa4dee6c45896f",
+ "host": "MacBook Pro M2 Max (arm64), macOS, mlx-c 0.6.0_2 + mlx 0.31.2 (Homebrew), rustc 1.95.0",
+ "producer_binaries_sha256": {
+  "f017-native-decoder-differential": "29228130954fd47a585b4af8f27803a8e436d31faa45ca9385dcad093ca5c314",
+  "f017-native-synthetic-differential": "2696d37758c344b02faa5c016ffbecdd145cf18e13af92aeae5e358040bea84f"
+ },
+ "n1_decoder_differential": {
+  "oracle": "scripts/research/f017_oracle_primary_decoders.py (Event 06 corrected oracle, independent scalar binary64 decoders)",
+  "producer": "crates/f017-native loader decode_packed_matrix_for_qualification (exact P1 dispatch: quant::decode_*_matrix, cpu_dot::dequant_q4_k/q5_k)",
+  "formats": [
+   "F32",
+   "Q8_0",
+   "Q5_K",
+   "IQ2_XXS",
+   "Q6_K",
+   "IQ3_XXS",
+   "IQ4_XS",
+   "Q4_K",
+   "IQ2_S",
+   "Q2_K",
+   "Q3_K"
+  ],
+  "cases": "33 per seed (3 geometries per format), seeds 20260920 and 7",
+  "result": "every value bit-identical after rounding the oracle's binary64 to f32 (0 ULP; 117,806 values per seed); harness negative control (two oracle lanes swapped) flagged",
+  "evidence": [
+   "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1.json",
+   "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1-seed7.json"
+  ]
+ },
+ "n3_graph_differential": {
+  "oracle": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py _execute_graph (binary64, fixed order)",
+  "producer": "f017-native-synthetic-differential (production orchestration execute_one_token_observed through the MLX bridge, TENSOR_MATH_ONLY synthetic source)",
+  "fixtures": "qualify_f017_native_synthetic_family_v1.build seeds 17018-17023",
+  "result": "6/6 PASS: argmax equal, per-layer expert selection identical, logits max abs 1.6e-7..1.7e-6 (thresholds: max abs 6.5e-3, rmse 3.5e-3, cosine >= 1-1.9e-9)",
+  "evidence": "docs/architecture/reviews/evidence/f017-native-graph-vs-corrected-oracle-differential-v1.json"
+ },
+ "loader_range_arithmetic": "by inspection identical between crates/f017-native loader encoded_range (row_bytes(columns) x rows, expert x matrix_bytes) and the oracle target source _raw (columns//block_values*block_bytes x dims[1], expert x full_matrix_bytes); per-format row sizes agree (N1 byte-length checks)",
+ "conclusion": "checkpoint-free reconciliation of the native runtime with the corrected oracle PASSES on decoders and graph; the real-checkpoint divergence of native attempt 1 (observed 17351 vs corrected oracle 154820, attempt-1 expected 21615 from the defective F016 family) is NOT explained by decoder or graph defects reproducible without the checkpoint; discrimination requires native bounded P1 attempt 2 on the real checkpoint (human-gated), or a full-geometry synthetic checkpoint (not feasible: validate_plan binds the real 1809-tensor census and 6-shard geometry, ~222 GB)",
+ "not_claimed": [
+  "real-checkpoint agreement",
+  "native P1 readiness beyond the checkpoint-free scope",
+  "any change to frozen contracts or tolerances"
+ ]
+}
