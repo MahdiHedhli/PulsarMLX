@@ -2,6 +2,8 @@
 
 **Status: run on real weights on both target machines (2026-09-17); numbers below.**
 
+**Persistent serving successor (2026-09-19/20, commit `971db9c1`).** The single-prompt runner gained `--stop-policy glm5-eos-v1` (the checkpoint's declared terminal ids; the default `legacy-tokenizer-eos` reproduces the old run-past-`<|user|>` behaviour for diagnostics), and `serve_offload.py` serves the same paged path as a long-lived OpenAI-style research server with explicit settings (`--expert-cache-bytes 60000000000 --coalesce-gap 0 --write-mode per-expert --wire ...`), request limits, cancellation and a fake-model test suite. Results, definitions and limitations: [persistent-serving-results.md](persistent-serving-results.md).
+
 The model is 320B/18B-active; the unpruned mixed-4/8 build is 169.4 GiB:
 ~159.5 GiB of routed experts (42 layers × 288 experts × 14.2 MB at 4-bit/g64
 with bf16 scales) and ~10 GiB of 8-bit resident weights. It does not fit any

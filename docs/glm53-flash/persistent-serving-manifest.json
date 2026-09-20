@@ -1,0 +1,20 @@
+{
+ "schema": "pulsarmlx.claim-source-manifest/1",
+ "document": "docs/glm53-flash/persistent-serving-results.md",
+ "summary": "docs/glm53-flash/persistent-serving-summary.json",
+ "source_commit": "971db9c16f982f367d1759b5ccda03a506cf6672",
+ "source_files": ["scripts/research/glm53_flash/dogfood/serve_offload.py", "scripts/research/glm53_flash/dogfood/paged_reference.py", "scripts/research/glm53_flash/dogfood/stop_policy.py", "scripts/research/glm53_flash/dogfood/paged_identity.py", "scripts/research/glm53_flash/dogfood/serve_resident.py", "scripts/research/glm53_flash/dogfood/pulsar_slot_store.py", "scripts/research/glm53_flash/dogfood/run_offload.py", "scripts/research/tests/test_glm53_flash_stop_policy.py", "scripts/research/tests/test_glm53_flash_serve_offload.py"],
+ "claims": [
+  {"id": "termination-root-cause", "claim": "loader built the processor without eos ids; stream_generate does not reset the stopping set; corrected policy glm5-eos-v1 = config eos ids verified as control tokens", "evidence": "termination-policy.md, g54/regression/summary.json", "status": "retained private evidence"},
+  {"id": "identity", "claim": "persistent == fresh-process greedy ids in every paired request (G57 3 blocks, G60 6 blocks, G58 120/120, mixed-warm 20/20)", "evidence": "warm-store-results.json, g60/confirmation-results.json, quality-results.json"},
+  {"id": "warm-gain", "claim": "exact repeat 12-14 %, A-B-A 9-11 % lower request latency; M repeat and sustained-512 below the 5 % rule; cold first request = reference within ~1-2 %", "evidence": "warm-store-results.json (paired), g60/confirmation-results.json (paired_4_6)"},
+  {"id": "decode-unchanged", "claim": "decode 2.6-3.3 tok/s in both arms (miss-bound at the 60e9 budget)", "evidence": "per-request ledgers g57/runs/*, g60/runs/*"},
+  {"id": "quality-retention", "claim": "119/119 relative retention, 107/107 groups, exact one-sided 95 % lower bound 0.9724 (scope-limited)", "evidence": "quality-results.json (g58/g58_score.py)"},
+  {"id": "soak", "claim": "segment 1: 4.31 h / 240 admitted; segment 2: 6.03 h / 335 admitted; 0 failed; sentinels 36/36 and 51/51; M stratum 0 usable answers at the 128-token cap", "evidence": "soak-summary.json, g59/runs/*/ledger.jsonl, errata note"},
+  {"id": "lifecycle", "claim": "A-B-A, stream parity, cancel 0.5 s, queue 4/2, slow consumer, admission 400s, health <= 2 ms, poison -> not ready", "evidence": "g56/findings.json, g56/pilot/ledger.jsonl"},
+  {"id": "review", "claim": "independent adversarial review ACCEPT, 2 non-blocking findings", "evidence": "g61/review-round1/record.json"}
+ ],
+ "private_evidence": {"branch": "planning/flash-unpruned-persistent-20260919b", "commit": "8cb556c8614c5284d2614dfc753b8a2f6a39dfb7", "root": "Planning/flash-unpruned-persistent-20260919b/", "checksum_manifest": "SHA256SUMS (577 entries)", "errata": "Planning/glm52-weekend-20260920/w1/flash-errata/ERRATA-flash-unpruned-persistent-20260919b.md sha256 daa688541c8fb54854faf57b2d26e45a045f3370e1225ad99af8c4a8421d5a7c"},
+ "sanitization": "public values copied from the private JSON records by hand; no private paths, hostnames or addresses; the private repository is not publicly readable - the summary carries the values needed to interpret every claim",
+ "not_claimed": ["production readiness or deployment", "tokens/s beyond the measured 2.6-3.3 decode in this configuration", "general accuracy of the model or of the mixed-4/8 quantization", "physical SSD bytes", "M2 Max results", "long-context behaviour", "REAP / pruned-model results"]
+}
