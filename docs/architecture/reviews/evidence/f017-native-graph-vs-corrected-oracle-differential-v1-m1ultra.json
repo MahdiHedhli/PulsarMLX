@@ -1,0 +1,222 @@
+{
+ "schema": "pulsarmlx.f017.native-vs-corrected-oracle-differential/1.0.0",
+ "native_bin": "f017-native-synthetic-differential",
+ "oracle": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py (_execute_graph, binary64)",
+ "fixture_family": "qualify_f017_native_synthetic_family_v1.build seeds 17018-17023 (hidden 4, vocab 16, 1-4 layers, 2-4 experts, tie and near-tie routing cases)",
+ "thresholds": {
+  "max_abs": 0.0065169706285814755,
+  "rmse": 0.003463567697419031,
+  "cosine_min": 0.9999999985448085,
+  "rule": "argmax equal AND expert selection identical per layer AND logits within the frozen thresholds"
+ },
+ "rows": [
+  {
+   "seed": 17018,
+   "case": {
+    "case": 0,
+    "layer_count": 1,
+    "expert_count": 2,
+    "top_k": 1,
+    "route_modes": [],
+    "target_token": 5
+   },
+   "native_token": 5,
+   "oracle_token": 5,
+   "fixture_expected_token": 5,
+   "logits": {
+    "max_abs": 9.26982920645969e-07,
+    "rmse": 2.3174573016149225e-07,
+    "cosine": 1.0
+   },
+   "final_hidden": {
+    "max_abs": 1.0653280535510845e-08,
+    "rmse": 7.2236713104935745e-09,
+    "cosine": 1.0
+   },
+   "final_norm": {
+    "max_abs": 9.356229391244142e-08,
+    "rmse": 5.747622726035014e-08,
+    "cosine": 1.0
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 18.00318907301708,
+   "status": "PASS"
+  },
+  {
+   "seed": 17019,
+   "case": {
+    "case": 1,
+    "layer_count": 2,
+    "expert_count": 3,
+    "top_k": 2,
+    "route_modes": [
+     "VARIED_BY_LAYER"
+    ],
+    "target_token": 6
+   },
+   "native_token": 6,
+   "oracle_token": 6,
+   "fixture_expected_token": 6,
+   "logits": {
+    "max_abs": 1.7410366197623262e-06,
+    "rmse": 4.3525915494058154e-07,
+    "cosine": 1.0
+   },
+   "final_hidden": {
+    "max_abs": 2.2226116447310318e-08,
+    "rmse": 1.2936223042584026e-08,
+    "cosine": 0.9999999999999987
+   },
+   "final_norm": {
+    "max_abs": 2.233517515382033e-07,
+    "rmse": 1.1598635919292017e-07,
+    "cosine": 0.9999999999999967
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 16.080461258963382,
+   "status": "PASS"
+  },
+  {
+   "seed": 17020,
+   "case": {
+    "case": 2,
+    "layer_count": 3,
+    "expert_count": 4,
+    "top_k": 2,
+    "route_modes": [
+     "VARIED_BY_LAYER",
+     "VARIED_BY_LAYER"
+    ],
+    "target_token": 7
+   },
+   "native_token": 7,
+   "oracle_token": 7,
+   "fixture_expected_token": 7,
+   "logits": {
+    "max_abs": 2.8743212610038427e-07,
+    "rmse": 7.185803152509607e-08,
+    "cosine": 1.0
+   },
+   "final_hidden": {
+    "max_abs": 1.933986482072214e-08,
+    "rmse": 1.5579360109263682e-08,
+    "cosine": 0.9999999999999982
+   },
+   "final_norm": {
+    "max_abs": 1.130409005289934e-07,
+    "rmse": 7.588020778338905e-08,
+    "cosine": 0.9999999999999971
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 16.184189287432126,
+   "status": "PASS"
+  },
+  {
+   "seed": 17021,
+   "case": {
+    "case": 3,
+    "layer_count": 4,
+    "expert_count": 4,
+    "top_k": 3,
+    "route_modes": [
+     "VARIED_BY_LAYER",
+     "VARIED_BY_LAYER"
+    ],
+    "target_token": 8
+   },
+   "native_token": 8,
+   "oracle_token": 8,
+   "fixture_expected_token": 8,
+   "logits": {
+    "max_abs": 1.3546188508684054e-06,
+    "rmse": 3.3865471271710135e-07,
+    "cosine": 1.0
+   },
+   "final_hidden": {
+    "max_abs": 1.4601578057771292e-08,
+    "rmse": 1.1834190406333722e-08,
+    "cosine": 1.0
+   },
+   "final_norm": {
+    "max_abs": 8.893632452711131e-08,
+    "rmse": 5.207725242566317e-08,
+    "cosine": 0.9999999999999998
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 15.24392464538115,
+   "status": "PASS"
+  },
+  {
+   "seed": 17022,
+   "case": {
+    "case": 4,
+    "layer_count": 3,
+    "expert_count": 4,
+    "top_k": 2,
+    "route_modes": [
+     "EXACT_TIE_LOWER_ID",
+     "EXACT_TIE_LOWER_ID"
+    ],
+    "target_token": 9
+   },
+   "native_token": 9,
+   "oracle_token": 9,
+   "fixture_expected_token": 9,
+   "logits": {
+    "max_abs": 1.6015881953990174e-07,
+    "rmse": 4.0039704884975436e-08,
+    "cosine": 1.0
+   },
+   "final_hidden": {
+    "max_abs": 3.829715383707466e-08,
+    "rmse": 2.3618767691048187e-08,
+    "cosine": 0.9999999999999983
+   },
+   "final_norm": {
+    "max_abs": 7.465195794864599e-08,
+    "rmse": 5.006082120891539e-08,
+    "cosine": 0.9999999999999988
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 15.45846783984118,
+   "status": "PASS"
+  },
+  {
+   "seed": 17023,
+   "case": {
+    "case": 5,
+    "layer_count": 4,
+    "expert_count": 4,
+    "top_k": 2,
+    "route_modes": [
+     "NEAR_TIE_BIAS",
+     "NEAR_TIE_BIAS"
+    ],
+    "target_token": 10
+   },
+   "native_token": 10,
+   "oracle_token": 10,
+   "fixture_expected_token": 10,
+   "logits": {
+    "max_abs": 1.4791017548532182e-06,
+    "rmse": 3.8336149572955444e-07,
+    "cosine": 0.9999999999999983
+   },
+   "final_hidden": {
+    "max_abs": 3.3247584740880853e-08,
+    "rmse": 2.1141221746080865e-08,
+    "cosine": 0.9999999999999998
+   },
+   "final_norm": {
+    "max_abs": 9.056852046107622e-08,
+    "rmse": 5.257518791838448e-08,
+    "cosine": 1.0
+   },
+   "expert_selection_identical": true,
+   "oracle_top1_margin": 0.0009948837183415549,
+   "status": "PASS"
+  }
+ ],
+ "verdict": "PASS",
+ "scope": "synthetic f32 tensors (TENSOR_MATH_ONLY); no checkpoint; establishes graph agreement with the corrected oracle, not real-checkpoint agreement"
+}

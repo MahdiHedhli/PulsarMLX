@@ -1,0 +1,67 @@
+{
+  "acceptance_mode": "EXACT_EXPECTED_TOKEN_STABLE",
+  "attempt_1": {
+    "disposition": "TERMINAL_FAILURE_BANKED (observed 17351 vs the defective expected 21615); retry PERMANENTLY_PROHIBITED; attempt 2 is a new attempt under a new authorization, not a retry"
+  },
+  "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "checkpoint_free_reconciliation": {
+    "m1_ultra_reproduction": [
+      "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1-m1ultra.json",
+      "docs/architecture/reviews/evidence/f017-native-graph-vs-corrected-oracle-differential-v1-m1ultra.json"
+    ],
+    "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
+    "sha256": "f7193decd52081942a50c267754ce614699638c6773c0e818e3e22bf483d484e"
+  },
+  "corrected_oracle_event": {
+    "comparison": {
+      "classification": "EXACT_EXPECTED_TOKEN_STABLE",
+      "cosine": 0.999999999999954,
+      "max_abs": 2.4495741151042694e-06,
+      "rmse": 4.947803155886533e-07
+    },
+    "context": {
+      "kv_state": "EMPTY",
+      "mask": "ONE_VISIBLE_KEY_CAUSAL",
+      "position": 0,
+      "prompt_token": 9703,
+      "sampling": "NONE_GREEDY_ARGMAX"
+    },
+    "payload_sha256": {
+      "primary_final_hidden_f64le_6144": "dfa83c58c0f2f1eb082f8f7e24ebeed439340e77ae9efc9ce3440a3a22968925",
+      "primary_final_normalized_f64le_6144": "d84b16e217acbae8999b995e052d18430547468364db421e4b75e3bb6f2a9868",
+      "primary_full_logits_f64le_154880": "cbdc84332715967761774bcf6788ed60c0a662254a4b2599608ab519b80094c8",
+      "secondary_final_hidden_f32le_6144": "1ba0f332d4a70447912d70e7d00832aa891b5fc665261892f418b931fc47a882",
+      "secondary_final_normalized_f32le_6144": "8ca9a7d33344e124f4e30e79da27301705b430f4ed2833554361cb4af5d5e787",
+      "secondary_full_logits_f32le_154880": "3554c3cbed7221b261a685da5f16ffe227bec4582f28ca1ef5aadcfdf8e8edc2"
+    },
+    "primary_selected_token": 154820,
+    "primary_top_1_margin": 3.530997059031304,
+    "public_evidence": {
+      "commit": "29c55d314a72747b44bd2c1ce93c71ba6ac157b6",
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence43-terminal-success-evidence-v1.json",
+      "sha256": "88cedac341b0cc353d9307820aa61eaf6cc5443396477e3feb7da16d06750498"
+    },
+    "secondary_selected_token": 154820,
+    "secondary_top_1_margin": 3.5309972763061523,
+    "sequence": 43,
+    "source": {
+      "immutable_execution_source": "c3526d68b29535465e6117014234352945cdaacb",
+      "implementation": "4b48167f9fd02b81ed1c5796022ad70b3c2a61b6"
+    },
+    "verdict": "EVENT06_SUCCESS_ACCEPTED (planner result acceptance sha256 ca963328dee51a527caeb4bac667819c693005030915918de27ecedfcfc1b601)"
+  },
+  "expected_token": 154820,
+  "forward_evidence_contract": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json",
+    "sha256": "41c46f55369a71a632e30669aa848e2b9ffcc24ff69a8e469e7f8f12d66bbf03"
+  },
+  "human_go_required": true,
+  "live_authorization_created": false,
+  "note": "the executor binds the authority's expected_token (154820) at execute-evidenced-v4; the contract's one_shot.expected_token carries the same value; this binding is source-only and mints nothing",
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-02-corrected-oracle-binding/1.0.0",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "template": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-template-v1.json",
+    "sha256": "07fc9d55976f6d8dc32f547cb0049ba99403beb81c8a7348095f0f5a80d1475c"
+  }
+}

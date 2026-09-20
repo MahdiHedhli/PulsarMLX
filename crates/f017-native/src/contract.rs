@@ -12,6 +12,16 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub const CONTRACT_SCHEMA: &str = "pulsarmlx.f017.native-bounded-p1-admission-contract/2.0.0";
+/// Generation 3 (attempt 2): identical census, machine, checkpoint and
+/// authority rules as generation 2, with the one-shot bound to the corrected
+/// oracle's expected token and the evidenced v4 receipt. Generation 2 stays
+/// exactly as frozen for attempt 1; a generation-3 contract must additionally
+/// bind the corrected-oracle binding document.
+pub const CONTRACT_SCHEMA_V3: &str = "pulsarmlx.f017.native-bounded-p1-admission-contract/3.0.0";
+pub const ATTEMPT_2_ID: &str = "F017-NATIVE-BOUNDED-P1-ATTEMPT-2";
+/// Event 06 (sequence 43) corrected full-checkpoint oracle result for prompt
+/// 9703 at position 0: primary and secondary both select 154820.
+pub const CORRECTED_EXPECTED_TOKEN: u32 = 154_820;
 pub const MINIMUM_AVAILABLE_MEMORY_BYTES: u64 = 17_179_869_184;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -86,6 +96,9 @@ pub struct OneShotBinding {
 #[serde(deny_unknown_fields)]
 pub struct RealP1Contract {
     pub schema: String,
+    /// Generation 3 only: the corrected-oracle binding document (attempt 2).
+    #[serde(default)]
+    pub corrected_oracle_binding: Option<FileBinding>,
     pub status: String,
     pub branch: String,
     pub execution_code_head: String,
@@ -144,8 +157,18 @@ fn repo_path(root: &Path, binding: &FileBinding) -> Result<PathBuf, String> {
     Ok(path)
 }
 
+/// Contract generation by schema: 2 = attempt 1 (frozen), 3 = attempt 2.
+pub fn contract_generation(schema: &str) -> Option<u8> {
+    match schema {
+        CONTRACT_SCHEMA => Some(2),
+        CONTRACT_SCHEMA_V3 => Some(3),
+        _ => None,
+    }
+}
+
 pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<(), String> {
-    if contract.schema != CONTRACT_SCHEMA
+    let generation = contract_generation(&contract.schema).ok_or("contract root authority mismatch")?;
+    if (generation == 2) != contract.corrected_oracle_binding.is_none()
         || contract.status != "PREPARED_HUMAN_GATE_REQUIRED"
         || contract.branch != "feat/017-rust-native-inference-runtime"
         || contract.execution_code_head.len() != 40
@@ -241,9 +264,41 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
         return Err("checkpoint authority mismatch".into());
     }
     let one = &contract.one_shot;
-    if one.attempt_id != "F017-NATIVE-BOUNDED-P1-ATTEMPT-1"
+    let (attempt_id, expected_token, receipt_schema) = if generation == 2 {
+        ("F017-NATIVE-BOUNDED-P1-ATTEMPT-1", 21615_u32, stream::RECEIPT_SCHEMA)
+    } else {
+        (ATTEMPT_2_ID, CORRECTED_EXPECTED_TOKEN, stream::EVIDENCED_RECEIPT_SCHEMA)
+    };
+    if generation == 3 {
+        let binding = contract
+            .corrected_oracle_binding
+            .as_ref()
+            .ok_or("corrected oracle binding missing")?;
+        let path = repo_path(repo_root, binding)?;
+        let document: serde_json::Value = crate::json::parse_json_no_duplicates(
+            &fs::read(&path).map_err(|e| e.to_string())?,
+        )?;
+        if document.get("attempt_id").and_then(|v| v.as_str()) != Some(ATTEMPT_2_ID)
+            || document.get("expected_token").and_then(|v| v.as_u64())
+                != Some(u64::from(CORRECTED_EXPECTED_TOKEN))
+            || document.get("acceptance_mode").and_then(|v| v.as_str())
+                != Some("EXACT_EXPECTED_TOKEN_STABLE")
+            || document.get("live_authorization_created").and_then(|v| v.as_bool()) != Some(false)
+            || document
+                .pointer("/corrected_oracle_event/primary_selected_token")
+                .and_then(|v| v.as_u64())
+                != Some(u64::from(CORRECTED_EXPECTED_TOKEN))
+            || document
+                .pointer("/corrected_oracle_event/secondary_selected_token")
+                .and_then(|v| v.as_u64())
+                != Some(u64::from(CORRECTED_EXPECTED_TOKEN))
+        {
+            return Err("corrected oracle binding mismatch".into());
+        }
+    }
+    if one.attempt_id != attempt_id
         || one.prompt_token != 9703
-        || one.expected_token != 21615
+        || one.expected_token != expected_token
         || one.attempts != 1
         || one.retries != 0
         || one.resume
@@ -251,7 +306,7 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
         || one.generated_token_limit != 1
         || one.sequence_position != 0
         || one.initial_kv_state != "EMPTY_CLEAN_PROCESS"
-        || one.receipt_schema != stream::RECEIPT_SCHEMA
+        || one.receipt_schema != receipt_schema
     {
         return Err("one-shot authority mismatch".into());
     }
@@ -379,6 +434,32 @@ pub fn validate_machine(contract: &RealP1Contract) -> Result<u64, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn contract_generations_are_closed_and_attempt_2_binds_the_corrected_token() {
+        assert_eq!(contract_generation(CONTRACT_SCHEMA), Some(2));
+        assert_eq!(contract_generation(CONTRACT_SCHEMA_V3), Some(3));
+        assert_eq!(contract_generation("pulsarmlx.f017.native-bounded-p1-admission-contract/4.0.0"), None);
+        assert_eq!(contract_generation(""), None);
+        assert_eq!(CORRECTED_EXPECTED_TOKEN, 154_820);
+        assert_ne!(CORRECTED_EXPECTED_TOKEN, stream::EXPECTED_TOKEN, "attempt 2 must not reuse the defective attempt-1 expected token");
+        assert_eq!(ATTEMPT_2_ID, "F017-NATIVE-BOUNDED-P1-ATTEMPT-2");
+    }
+    #[test]
+    fn generation_2_contract_without_binding_and_generation_3_with_binding_parse() {
+        let base = serde_json::json!({"schema": CONTRACT_SCHEMA, "status": "x", "branch": "b", "execution_code_head": "h", "executor": {"path": "p", "sha256": "s"}, "code_manifest": [],
+            "authorities": {"cross_branch_authority": {"path": "p", "sha256": "s"}, "execution_architecture": {"path": "p", "sha256": "s"}, "runtime_provenance": {"path": "p", "sha256": "s"}, "d0": {"path": "p", "sha256": "s"}, "d1": {"path": "p", "sha256": "s"}, "d2": {"path": "p", "sha256": "s"}, "retention_reuse_grant": {"path": "p", "sha256": "s"}, "comparison_read_grant": {"path": "p", "sha256": "s"}, "d3_5_result": {"path": "p", "sha256": "s"}, "d3_5_acceptance": {"path": "p", "sha256": "s"}, "synthetic_full_graph_result": {"path": "p", "sha256": "s"}, "historical_master_ledger_sha256": "s", "historical_master_terminal_value": 175},
+            "checkpoint": {"root_environment": "E", "manifest": {"path": "p", "sha256": "s"}, "catalog": {"path": "p", "sha256": "s"}, "checkpoint_set_sha256": "s", "fallback": "PROHIBITED", "shards": []},
+            "runtime": {"machine_brand": "m", "architecture": "arm64", "macos_build": "b", "mlx_version": "v", "mlx_c_version": "v", "rustc_version": "r", "build_profile": "release", "minimum_available_memory_bytes": 1, "memory_sample_max_age_seconds": 5, "dylibs": [], "environment": {}},
+            "one_shot": {"attempt_id": "a", "prompt_token": 9703, "expected_token": 1, "attempts": 1, "retries": 0, "resume": false, "mandatory_stop": true, "generated_token_limit": 1, "sequence_position": 0, "initial_kv_state": "k", "receipt_schema": "r"},
+            "state_root": "/x", "live_authorization_present": false, "normal_validation_can_authorize": false});
+        let v2: RealP1Contract = serde_json::from_value(base.clone()).unwrap();
+        assert!(v2.corrected_oracle_binding.is_none());
+        let mut v3 = base;
+        v3["schema"] = serde_json::Value::String(CONTRACT_SCHEMA_V3.into());
+        v3["corrected_oracle_binding"] = serde_json::json!({"path": "p", "sha256": "s"});
+        let v3: RealP1Contract = serde_json::from_value(v3).unwrap();
+        assert_eq!(v3.corrected_oracle_binding.unwrap().path, "p");
+    }
     #[test]
     fn vm_stat_parser_is_strict_and_includes_no_caller_claim() {
         let text="Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free: 500000.\nPages inactive: 500000.\nPages speculative: 100000.\n";
