@@ -4,7 +4,7 @@
 Reuses the checkpoint-free full-graph differential fixture family (seeds
 17018-17023, `qualify_f017_native_synthetic_family_v1.build`), runs the native
 production orchestration on each fixture through the MLX bridge
-(`f017-native-synthetic-differential`, TENSOR_MATH_ONLY synthetic source), and
+(the auto-discovered `synthetic_differential` bin, TENSOR_MATH_ONLY synthetic source), and
 compares its final hidden / final norm / logits / selected token and per-layer
 expert selection against `f017_corrected_oracle_primary_numerics_v3` (the
 Event 06 primary reference) fed the same tensors through its JsonSource. This

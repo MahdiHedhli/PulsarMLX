@@ -6,7 +6,7 @@
  "host": "MacBook Pro M2 Max (arm64), macOS, mlx-c 0.6.0_2 + mlx 0.31.2 (Homebrew), rustc 1.95.0",
  "producer_binaries_sha256": {
   "f017-native-decoder-differential": "29228130954fd47a585b4af8f27803a8e436d31faa45ca9385dcad093ca5c314",
-  "f017-native-synthetic-differential": "2696d37758c344b02faa5c016ffbecdd145cf18e13af92aeae5e358040bea84f"
+  "synthetic_differential (built as f017-native-synthetic-differential during this session; same source)": "2696d37758c344b02faa5c016ffbecdd145cf18e13af92aeae5e358040bea84f"
  },
  "n1_decoder_differential": {
   "oracle": "scripts/research/f017_oracle_primary_decoders.py (Event 06 corrected oracle, independent scalar binary64 decoders)",
@@ -33,7 +33,7 @@
  },
  "n3_graph_differential": {
   "oracle": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py _execute_graph (binary64, fixed order)",
-  "producer": "f017-native-synthetic-differential (production orchestration execute_one_token_observed through the MLX bridge, TENSOR_MATH_ONLY synthetic source)",
+  "producer": "synthetic_differential (auto-discovered bin of crates/f017-native, the same producer CI qualifies) (production orchestration execute_one_token_observed through the MLX bridge, TENSOR_MATH_ONLY synthetic source)",
   "fixtures": "qualify_f017_native_synthetic_family_v1.build seeds 17018-17023",
   "result": "6/6 PASS: argmax equal, per-layer expert selection identical, logits max abs 1.6e-7..1.7e-6 (thresholds: max abs 6.5e-3, rmse 3.5e-3, cosine >= 1-1.9e-9)",
   "evidence": "docs/architecture/reviews/evidence/f017-native-graph-vs-corrected-oracle-differential-v1.json"

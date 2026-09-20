@@ -35,7 +35,3 @@ path = "src/bin/synthetic_p1.rs"
 [[bin]]
 name = "f017-native-decoder-differential"
 path = "src/bin/decoder_differential.rs"
-
-[[bin]]
-name = "f017-native-synthetic-differential"
-path = "src/bin/synthetic_differential.rs"
