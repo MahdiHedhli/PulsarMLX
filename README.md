@@ -232,6 +232,11 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | Optimized MLX-only generation | 🚧 |
 | KV-cached decode | 🚧 |
 | GLM-5.2 full stack | 🚧 Active bring-up (see below) |
+| GLM-5.2 Rust-native one token (real checkpoint) | ✅ Verified — token 154820, [F017 status](docs/architecture/f017-native-runtime-status.md) |
+| GLM-5.2 Rust-native multi-position decode | ✅ Verified on synthetic fixtures against an independent reference; not yet on the real checkpoint |
+| GLM-5.2 Rust-native text CLI (no Python inference) | ✅ Implemented; exercised without a checkpoint |
+| GLM-5.2 Rust-native multi-token generation (real checkpoint) | ❌ Not run — awaiting a human GO |
+| GLM-5.2 native tokens/sec | ❌ Not claimed |
 | OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
@@ -275,6 +280,37 @@ GLM is the model that **forces** SSD-backed expert residency rather than “fit 
 Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
 
 **Not claimed:** GLM product support, generation quality, tok/s, M2 Max, external RAID, or CUDA bit-parity.
+
+### Feature 017: the Rust-native GLM-5.2 runtime
+
+Feature 016 above is the research path: it executes GLM-5.2 through Python
+tooling and an architecture oracle. Feature **017** is the native one — the
+model runs from Rust, on MLX, with no Python process in the inference path.
+
+**Current state — [`docs/architecture/f017-native-runtime-status.md`](docs/architecture/f017-native-runtime-status.md)**
+(machine-readable: [`docs/glm52-native/native-runtime-summary.json`](docs/glm52-native/native-runtime-summary.json),
+generated from the evidence records and checked in CI).
+
+| Native boundary | Status |
+| --- | --- |
+| One token on the real 222 GiB checkpoint | ✅ token **154820** == the corrected oracle's expected token; 704.0 s identity rehash + 299.2 s for 79 layers and logits |
+| Decoder differential vs the corrected oracle | ✅ 0 ULP over **107,502** values per seed, 11 formats |
+| Full-graph differential vs the corrected oracle | ✅ 6/6 synthetic seeds |
+| Multi-position attention, RoPE and retained state | ✅ 6/6 seeds vs an independent binary64 reference, logits max abs ≤ 1.5e-7 against a frozen 6.5e-3 threshold — synthetic only |
+| Native text CLI (`f017-native-generate`) | ✅ tokenizer, GLM chat template, prefill, decode, stop semantics, streaming detokenisation — exercised without a checkpoint |
+| Multi-token generation on the real checkpoint | ❌ not run; awaiting a human GO |
+| Native tokens/sec | ❌ not claimed; one cold forward pass is not a throughput figure |
+
+```sh
+cargo build -p f017-native --release --bin native_generate
+./target/release/native_generate --model /path/to/checkpoint/root \
+  --prompt "What is 17 times 6? Answer with the number only." --max-tokens 8
+```
+
+The answer goes to stdout and one diagnostics object to stderr. The sparse
+`glm-dsa` indexer is not implemented, so the runtime refuses sequences longer
+than the checkpoint's `attention.indexer.top_k` rather than silently
+substituting dense attention.
 
 ## Performance: not the point yet
 

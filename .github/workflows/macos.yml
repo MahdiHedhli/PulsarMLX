@@ -401,6 +401,7 @@ jobs:
           .venv/bin/python scripts/research/validate_f017_result_authority_v11.py
           .venv/bin/python scripts/research/validate_f017_v11_execution_authority_v1.py
           .venv/bin/python scripts/research/generate_f017_v11_measurement_v2.py --check
+          .venv/bin/python scripts/research/generate_f017_native_status_v1.py --check
           .venv/bin/python scripts/research/generate_f017_v11_authorities_v1.py --check
           .venv/bin/python scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py --check
           .venv/bin/python scripts/research/validate_f017_event05_readiness_interface_design_v1.py
