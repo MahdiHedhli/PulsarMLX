@@ -1,6 +1,6 @@
 # GLM-5.3-Flash unpruned persistent paged serving — results (2026-09-20)
 
-Compact results of the persistent-serving research round (private graph G52–G61, 2026-09-19/20). Machine-readable values: [`persistent-serving-summary.json`](persistent-serving-summary.json); claim/source manifest: [`persistent-serving-manifest.json`](persistent-serving-manifest.json). Nothing here is a production claim; see *Scope and limitations*.
+Compact results of the persistent-serving research round (private graph G52–G61, 2026-09-19/20). Machine-readable values: [`persistent-serving-summary.json`](persistent-serving-summary.json); claim/source manifest: [`persistent-serving-manifest.json`](persistent-serving-manifest.json). Nothing here is a production claim; see *Scope and limitations*. The accepted expert budget was raised from 60e9 to 70e9 bytes after these runs: the tables below are the 60e9 record, and [*Expert budget 70e9 (2026-09-20)*](#expert-budget-70e9-2026-09-20) carries the newer measurements and the current recommended launch line.
 
 ## What was tested
 
@@ -84,8 +84,88 @@ python -u scripts/research/glm53_flash/dogfood/serve_offload.py \
   --max-queue 4 --request-deadline-s 900 --host 127.0.0.1 --port 18080
 ```
 
-`GET /readyz` → `{"ready": true}`; `POST /v1/chat/completions` (OpenAI-style; add `"pulsar_trace": true` for token ids, per-token times and store deltas). Fresh-process reference for one request: `paged_reference.py --offload <repack-dir> ... --messages request.json --log out.json` with the same flags. Offline tests: `scripts/research/tests/test_glm53_flash_stop_policy.py`, `test_glm53_flash_serve_offload.py` (fake model; the live HTTP tests need fastapi/uvicorn/httpx).
+The recommended budget is now **70e9** (see *Expert budget 70e9*): the same line with
+
+```sh
+  --expert-cache-bytes 70000000000 --max-expert-cache-bytes 70000000000
+```
+
+and the memory watchdog's ceiling raised from 80 GiB to 90 GiB; every other flag is unchanged. Two caveats belong with that line: the 70e9 soak exposure is 80 requests / 1.33 h against 335 requests / 6.03 h at 60e9, so the longer segment has not landed yet, and 80e9 (134 slots per layer) is **not** admitted on a 128 GB host.
+
+`GET /readyz` → `{"ready": true}`; `POST /v1/chat/completions` (OpenAI-style; add `"pulsar_trace": true` for token ids, per-token times and store deltas). Fresh-process reference for one request: `paged_reference.py --offload <repack-dir> ... --messages request.json --log out.json` with the same flags (at `971db9c1` that script pins its admitted ceiling at 60e9 internally and refuses a 70e9 budget with `EXPERT_CACHE_OVER_BUDGET`; the 70e9 reference runs therefore went through `run_offload.py`, and the ceiling is being made an explicit `--max-expert-cache-bytes` flag in a separate commit). Offline tests: `scripts/research/tests/test_glm53_flash_stop_policy.py`, `test_glm53_flash_serve_offload.py` (fake model; the live HTTP tests need fastapi/uvicorn/httpx).
 
 ## Corrections
 
 - 2026-09-20 (independent gpt-6-astra review, finding P2-FLASH-01): the G57 reference first-token times and reference decode rates in `persistent-serving-summary.json` had been copied from the G56 pilot references (15.35/15.35/15.36 s; 2.63/2.63/2.62 and 3.15/3.15/3.15 tok/s) instead of the G57 block references (16.05/15.61/15.64 s; 2.62/2.64/2.64 and 3.09/3.19/3.19 tok/s); corrected, strata now named explicitly. The paired latency ratios and verdicts were computed from the correct values and are unchanged.
+
+## Expert budget 70e9 (2026-09-20)
+
+A follow-on measurement round on the same host and the same source commit `971db9c1` (no code change) profiled decode at the accepted 60e9 budget, simulated the capacity curve, then ran a paired 60e9 → 70e9 ladder on the CLI and an admission round on the persistent server. Outcome: **70,000,000,000 B (117 slots per MoE layer) replaces 60,000,000,000 B (100 slots) as the recommended expert budget for this configuration on this host.** It is a flag change, reversible, and nothing was deployed.
+
+### Where decode time goes at 60e9
+
+Stage profile, S prompt, 40 decode tokens: 2.60 tok/s uninstrumented (385 ms/token); 2.48 tok/s (404 ms) with stage boundaries forced to evaluate — the instrumented run is diagnostic, not a throughput figure.
+
+| Stage | ms/token | Share |
+|---|---:|---:|
+| cold expert reads | 266.7 | 66 % |
+| host sync of the routing indices (42 ×) | 57.0 | 14 % |
+| materialize (numpy → mx, in-place scatter, eval) | 34.6 | 9 % |
+| `gather_qmm` compute | 35.0 | 9 % |
+| slot policy (touch) | 3.8 | 1 % |
+
+Decode is bound by ~2 serialized small cold reads per layer (3.0 ms per miss; 89.3 misses/token in the instrumented profile) plus the 42 host syncs. Read microbenchmarks with no model loaded put one cold 14.2 MB expert at 2.78 ms with 64 MiB chunks and 2.40 ms with 1 MiB (5.1 → 5.9 GB/s single-stream), two experts at 4.9 → 4.5 ms and four at 9.5 → 8.7 ms: these reads are latency-bound, not bandwidth-bound, so chunk tuning is worth ≤ 10 %. The lever is **fewer misses**, i.e. more slots.
+
+### Simulated capacity curve
+
+Exact LFU-decay replay of 7 retained gap-0 decode traces (the same policy the store runs). Per layer-step the decode miss count is P(0) = 0.22, mean 1.83, max 8; per token mean 77 (p50 75, p90 111), and the steady state equals the cold start (first/second half 72–91 vs 72–86).
+
+| Slots / layer | Budget | Decode misses / token | Hit rate |
+|---:|---:|---:|---:|
+| 100 | 59.5 GB | 75.9 | 0.774 |
+| 117 | 69.6 GB | 63.7 | 0.810 |
+| 125 | 74.3 GB | 58.6 | 0.826 |
+| 140 | 83.2 GB | 50.1 | 0.851 |
+| 160 | 95.1 GB | 40.6 | 0.879 |
+
+60e9 maps to 100 slots, 70e9 to 117 and 80e9 to 134.
+
+### Measured 60e9 → 70e9 on the CLI (3 blocks × 6 prompts, paired, arm order alternated)
+
+18 of 18 pairs complete. Same process shape in both arms; the only difference is the budget flag.
+
+| Metric | Result |
+|---|---|
+| Identity | **18/18 token-identical** (same `tokens` sha in both arms of every pair) |
+| Sustained decode (last half) | **+9.1 % … +17.4 %** per pair, mean **+13.4 %**; block means 1.129 / 1.140 / 1.133; every pair ≥ 1.091 |
+| Decode tok/s, same six prompts | 60e9 **2.75–3.64**, 70e9 **3.06–4.20**; 512-token sustained prompt 2.75–2.80 → 3.10–3.12 |
+| Decode misses / token | **−14.4 % … −18.6 %**, mean **−16.4 %** (simulated prior −16 % — the trace simulator is validated as a predictor) |
+| Total request latency | **× 0.887 … × 0.954**; first token unchanged (× 0.991–1.041) |
+| Peak MLX memory | 73.3–75.5 GB → 83.4–85.6 GB, i.e. **+10,107,224,064 B** — the slot-arena delta and nothing else (per-pair deltas span 10,107,061,398–10,107,226,392 B) |
+| Memory gate | 38/38 runs ended `TARGET_EXITED`, **no watchdog trigger**, compressor growth 0 MiB, swap growth 0 MiB, 0 fill failures, no poisoned store |
+| Worst host free memory | **4.61 GiB** at 70e9 (15.20 GiB at 60e9) — thin, and the reason the server needed its own admission |
+
+80e9 (134 slots, a further +10.107 GB) would drive projected free memory below zero on this host and is **not admitted**.
+
+### Persistent server at 70e9
+
+The server was admitted separately because its own envelope (server RSS and the page cache from reference runs) is not the CLI's.
+
+- **Lifecycle**: all ten pilot sequences pass exactly as at 60e9 (A-B-A isolation, stream/non-stream parity, history append and edit, cancel releasing the worker in 0.52 s, queue bound 4 accepted / 2 × `503 overloaded`, slow consumer, `400` admission refusals, health probes ≤ 2.1 ms during generation, test-seam reset forgetting 4914 = 117 × 42 experts and keeping identity).
+- **Identity**: the pilot A-B-A token hash is `01db42d6f4b2`, the same hash the 60e9 pilot produced; the sentinel ids are the same tuple at both budgets; 12/12 soak sentinels identical.
+- **Reference parity**: a fresh process with an empty store at 70e9 produced token ids identical to the server's for the sentinel, S and M prompts (identical even before the record-count normalization).
+- **Soak**: 80 requests over 4792.8 s (1.33 h) on one process — 62 completed, 6 cancelled by design, **0 failed**, 0 non-200 records; no watchdog trigger; compressor 1.197 → 1.185 GiB (it fell), swap flat at 175.56 MiB; RSS 10.8–16.9 GiB with threads and fds flat; **minimum host free memory 5.65 GiB**; store residency reaches the full 4914 experts (69,561,483,264 B) and stays there, hit rate 74.6 % at the end.
+- **Latency context** (not a gate): 10–13 % lower request latency on every stratum, e.g. S 55.48 → 48.81 s, M 68.66 → 60.85 s, sentinel 8.11 → 7.13 s; store hit rate 69.4 % → 73.8 % on the pilot.
+
+Caveats carried with the admission: (1) the 70e9 soak exposure is 80 requests / 1.33 h against the 60e9 base of 335 requests / 6.03 h — a 6 h segment at 70e9 is the natural follow-up and has not run, so no production-shaped claim is made at 70e9; (2) macOS un-wires the MLX buffers while the server is idle (wired ~83.5 → ~3.1 GiB in idle samples, rising again on the next request) — the pages stay resident and the compressor stays flat; this is accounting, not release, and it is present at 60e9 too; (3) `paged_reference.py` at `971db9c1` hard-codes the 60e9 ceiling in its `verify_artifact` call and refuses a 70e9 budget, so the 70e9 fresh-process reference ran through `run_offload.py` (same loader, same store, same stop policy, byte-identical prompts); making that ceiling an explicit `--max-expert-cache-bytes` flag is a separate public commit.
+
+### Streaming prefill: measured, negative, not a candidate
+
+The hypothesis for a larger budget was to stop the prefill pass from writing into the slot store (`--prefill-mode stream`: read each wave's experts as transients, run the same three `gather_qmm` calls, drop them) and spend the reclaimed memory on slots. Under the frozen gates the result is **no gain**: the memory hypothesis passed (peak transient 3,385,655,296 B against a 4.0e9 B gate, store counters undisturbed), but **identity failed** — 3 of 6 prompts diverge, and the probe shows why: a layer differs exactly when its trailing stream wave holds fewer than 64 experts, because MLX's plain and sorted `gather_qmm` kernels are not bit-equal (max abs ≤ 0.125 in bf16, with argmax flips) and the baseline's `slots.size >= 64` rule selects the sorted kernel where the short wave selects the plain one. Prefill was also **slower**, not 1.5 × faster (block max 0.763 ×; first token 15.6 → 23.8 s on the short code prompt), because the stream path reads the same unique-expert byte set the slot path reads (52.8 vs 54.2 GB) and overlaps nothing; end-to-end it ran 1.07–1.32 × slower, with early decode 0.55–0.82 × over the first 8 tokens because a streamed prefill admits nothing to the decode store. Finally the premise itself was stale: with per-expert slot writes the **baseline's** own prefill transient at 60e9 is ≤ 2.6 GB, worth ≤ 4 slots per layer, so even a perfect stream prefill could not have bought a meaningful budget increase. The work is retained on its branch, default-off, and is **not a candidate**; a correct stream path would have to reproduce the baseline's geometry and kernel selection exactly.
+
+### Two levers that do not reduce I/O
+
+- **Speculative / union batching.** Verifying k consecutive tokens in one forward pass, scored at the full-acceptance upper bound, needs the union of their experts: at k = 2 that union is **13.8–14.1 of 16** per layer, and misses/token move only 80.7 → 79.3 at k = 4. Top-8-of-288 routing gives almost no overlap between adjacent tokens, so there is nothing to amortize.
+- **Request batching.** Two concurrent requests amortize 0.77–0.79 — i.e. they produce *more* total misses than running one at a time.
+
+Both are recorded as measured negatives, not as untested ideas.
