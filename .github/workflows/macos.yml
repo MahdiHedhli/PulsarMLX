@@ -181,6 +181,22 @@ jobs:
           test -f docs/validation/mlx-device-smoke.json
           test -f docs/validation/mlx-tensor-fixtures.json
           test -f docs/validation/synthetic-moe-v1.json
+      # The two research corpora below are qualified under different interpreters
+      # and both passes run; nothing is skipped. The GLM-5.3-Flash modules were
+      # qualified on their branch under a system python3 with no MLX installed,
+      # which is what gives their test_mlx_not_imported purity assertions meaning,
+      # so they run here before `uv sync` and before DYLD_LIBRARY_PATH is set. The
+      # Feature 002 / F017 modules were qualified under the pinned uv virtualenv
+      # with the source-built MLX on DYLD_LIBRARY_PATH, whose exact value
+      # crates/f017-native/src/bin/retained_qualification.rs asserts, so they run
+      # after the sync with the Flash modules excluded by name prefix.
+      - name: Validate GLM-5.3-Flash research methodology (mlx-free interpreter)
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          scripts/research/setup.sh
+          python3 scripts/ci/run_research_tests.py \
+            -s scripts/research/tests -p 'test_glm53_flash*.py' -v
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Build pinned official native MLX dependencies
         run: |
           brew install cmake ninja
@@ -220,7 +236,9 @@ jobs:
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
           scripts/research/setup.sh
-          .venv/bin/python -m unittest discover -s scripts/research/tests -v
+          .venv/bin/python scripts/ci/run_research_tests.py \
+            -s scripts/research/tests -p 'test*.py' \
+            --exclude-module-prefix test_glm53_flash -v
           python3 scripts/research/validate_evidence.py \
             --schema-dir schemas/research/v1 \
             --input fixtures/research/router-v1/evidence
