@@ -209,6 +209,52 @@ def test_ordinary_entry_point_is_isolated_from_interfering_git_configuration(tmp
     ) == old
 
 
+def test_ordinary_entry_point_is_isolated_from_local_config_and_tracing(tmp_path):
+    """Repository-LOCAL configuration and Git tracing must not reach the read.
+
+    Suppressing global and system configuration does not suppress the checkout's
+    own `.git/config`: an `includeIf.gitdir` include or an alias overriding a
+    subcommand still applies when Git runs inside the checkout. `GIT_TRACE_SETUP`
+    is the other half -- it writes to stderr, and this module treats any stderr
+    byte as fatal, so an otherwise good read fails. The ordinary entry point
+    therefore reads through its own isolated bare repository with tracing
+    scrubbed; this asserts local config and tracing change nothing.
+    """
+    repository, historical, old, _current = _make_git_repository(tmp_path)
+    clean = read_historical_blob(repository, historical, "source.py")
+    assert clean == old
+
+    included = tmp_path / "local-include.config"
+    included.write_text("[core]\n\tpager = /bin/false\n", encoding="utf-8")
+    local_config = repository / ".git" / "config"
+    local_config.write_text(
+        local_config.read_text(encoding="utf-8")
+        + "[alias]\n\tshow = !echo TAMPERED\n"
+        + "[core]\n\tpager = /bin/false\n"
+        + f'[includeIf "gitdir:{repository}/.git"]\n\tpath = {included}\n',
+        encoding="utf-8",
+    )
+    hostile = dict(os.environ)
+    hostile.update({"GIT_TRACE_SETUP": "1", "GIT_TRACE": "1", "GIT_TRACE_PERFORMANCE": "1"})
+    hostile.pop("GIT_CONFIG_NOSYSTEM", None)
+    hostile.pop("GIT_CONFIG_GLOBAL", None)
+
+    assert read_historical_blob(
+        repository, historical, "source.py", environment=hostile
+    ) == old
+
+
+def test_object_store_denial_still_fails_closed_against_the_isolated_store(tmp_path):
+    """The fail-closed control must still bite once reads go through the bare copy."""
+    repository, historical, _old, _current = _make_git_repository(tmp_path)
+    empty = tmp_path / "denied-objects"
+    empty.mkdir()
+    diagnostic = tmp_path / "isolated-denial.json"
+    environment = _environment(diagnostic, GIT_OBJECT_DIRECTORY=str(empty))
+    with pytest.raises(HistoricalObjectLookupError):
+        read_historical_blob(repository, historical, "source.py", environment=environment)
+
+
 def test_sandbox_context_ignores_local_credential_include_without_widening_reads():
     if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the sandbox custody regression is macOS /usr/bin/sandbox-exec specific")
@@ -478,17 +524,20 @@ try:
         "PULSARMLX_F017_HISTORY_GIT_WORK_TREE",
     ):
         locator_free_environment.pop(name, None)
-    try:
-        read_historical_blob(
-            repository, commit, source_path, environment=locator_free_environment
-        )
-    except HistoricalObjectLookupError:
-        pass
-    else:
-        raise SystemExit("locator-free historical read unexpectedly succeeded")
-    source_sha256 = hashlib.sha256(
-        read_historical_blob(repository, commit, source_path, environment=os.environ)
-    ).hexdigest()
+    # The ordinary entry point now builds its own isolated bare repository, so a
+    # locator-free read no longer depends on the checkout and must succeed here
+    # and return exactly the same bytes as the read with the private locators.
+    # Before that isolation existed this read failed, because it borrowed the
+    # checkout Git the sandbox denies.
+    locator_free = read_historical_blob(
+        repository, commit, source_path, environment=locator_free_environment
+    )
+    with_locators = read_historical_blob(
+        repository, commit, source_path, environment=os.environ
+    )
+    if locator_free != with_locators:
+        raise SystemExit("locator-free historical read disagreed with the located read")
+    source_sha256 = hashlib.sha256(with_locators).hexdigest()
 except Exception as exc:
     raise SystemExit(f"historical context probe: {type(exc).__name__}: {exc}") from exc
 symbols = (

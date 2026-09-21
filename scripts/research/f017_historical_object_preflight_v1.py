@@ -16,6 +16,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import tempfile
 from typing import Mapping
 
 
@@ -121,12 +122,18 @@ def _git_subprocess_environment(
     # Environment-injected configuration is the same hazard as a config file.
     for name in [key for key in child if key.startswith("GIT_CONFIG_")]:
         child.pop(name, None)
+    # Tracing writes to stderr, which this module treats as fatal.
+    for name in [key for key in child if key.startswith("GIT_TRACE")]:
+        child.pop(name, None)
     child.update({
         "GIT_CONFIG_NOSYSTEM": "1",
         "GIT_CONFIG_GLOBAL": os.devnull,
         "GIT_TERMINAL_PROMPT": "0",
         "GIT_OPTIONAL_LOCKS": "0",
         "GIT_PAGER": "cat",
+        "GIT_TRACE": "0",
+        "GIT_TRACE_SETUP": "0",
+        "GIT_TRACE_PERFORMANCE": "0",
     })
     context = _historical_git_context(root, environment)
     if context is not None:
@@ -136,7 +143,51 @@ def _git_subprocess_environment(
             "GIT_COMMON_DIR": str(common_git),
             "GIT_WORK_TREE": str(work_tree),
         })
+    else:
+        # No caller-supplied context: build our own isolated bare repository.
+        child["GIT_DIR"] = _isolated_store(root)
     return child
+
+
+_ISOLATED_STORES: dict[str, str] = {}
+
+
+def _isolated_store(root: Path) -> str:
+    """A bare repository whose only content is an alternates link to `root`.
+
+    Suppressing global and system configuration does not suppress the
+    *repository-local* `.git/config`: an `includeIf.gitdir` include or an alias
+    that overrides a subcommand still applies when Git runs inside the checkout.
+    The native parent avoided that by reading through a separate bare repository,
+    and that is restored here for the ordinary entry point. Alternates give the
+    bare copy the same objects, so the read is identical while owing nothing to
+    the checkout's configuration.
+
+    Resolved without running Git, because the configuration that would break the
+    read is exactly the configuration `git rev-parse` would consult.
+    """
+    key = str(root)
+    cached = _ISOLATED_STORES.get(key)
+    if cached is not None and Path(cached).is_dir():
+        return cached
+    objects = _checkout_common_git_dir(root) / "objects"
+    if not objects.is_dir():
+        raise HistoricalObjectLookupError("historical Git object store")
+    directory = tempfile.mkdtemp(prefix="f017-historical-store-")
+    try:
+        subprocess.run(["git", "init", "--bare", "--quiet", directory], check=True,
+                       capture_output=True,
+                       env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                            "HOME": directory,
+                            "GIT_CONFIG_NOSYSTEM": "1",
+                            "GIT_CONFIG_GLOBAL": os.devnull})
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise HistoricalObjectLookupError("historical Git object store") from exc
+    info = Path(directory) / "objects" / "info"
+    info.mkdir(parents=True, exist_ok=True)
+    (info / "alternates").write_text(f"{objects.resolve()}\n")
+    _ISOLATED_STORES[key] = directory
+    return directory
 
 
 def _validate_revision(revision: str) -> None:
