@@ -20,13 +20,14 @@ number below comes from that generator, not from transcription.
 | Multi-position temporal graph | ✅ synthetic | RoPE at nonzero positions, causal multi-key attention over the absorbed MLA latent, and a retained per-layer cache. 6/6 seeds against an independent binary64 reference on the MLX GPU backend: logits max abs 2.5e-8 … 1.5e-7 against frozen thresholds of 6.5e-3 / 3.5e-3 / cosine ≥ 1−1.9e-9, with selected token, expert selection and order, visible-key count and state growth exact. Plus 20 temporal tests covering causality, incremental-versus-recomputed prefixes, prefill chunking, A-B-A independence, reset, rollback and the refusal paths. |
 | Multi-position decode, **real checkpoint** | ✅ | Stage A, 2026-09-20: eight teacher-forced positions against the real 222 GiB checkpoint with one retained state. **Position 0 reproduced the banked attempt-2 result bit for bit** — token **154820** and full-logits digest `db1456d8…`, both equal to the consumed one-shot's receipt. Retained state grew to exactly 1,456,128 bytes = 8 × 182,016, the figure the contract predicts. Positions 1-7 are recorded as measured, not qualified: no independent multi-token oracle exists for this checkpoint and the RoPE pairing is still a declared parameter. |
 | Text generation, **real checkpoint** | ✅ | Stage B1, 2026-09-20: prompt `17 times 6 equals` through the checkpoint's own GGUF tokenizer, four generated tokens, answer **` 17 times table`** — coherent English continuing the prompt, produced by the Rust runtime with **no Python in the inference path**. It is not the arithmetic answer; see the limits below. |
+| Chat template, **real checkpoint** | ✅ | Stage B2, 2026-09-21: `What is 17 times 6? Answer with the number only.` rendered to 21 tokens through the checkpoint's own GLM template with the full stop set `[154820, 154827, 154829]` installed. 24 positions, retained state exactly 24 × 182,016 B. Answer `**\n17 times ` — it began a formatted reply and hit the four-token budget. **Not** the arithmetic answer, and no quality claim is made: four tokens is too small a window to tell whether it would have reached one. |
 | Native text CLI | ✅ synthetic | `f017-native-generate` takes text and produces text with **no Python inference process**. 11 session tests and 12 CLI cases against a synthetic glm-dsa metadata shard and the repository's own identity records. |
 
 ## What is not done
 
 | State | Status |
 | --- | --- |
-| Text generation on the real checkpoint | **Executed, not qualified.** Stage A (teacher-forced positions) and Stage B1 (four generated tokens) both ran under the same approval; see the Stage B1 row above. What remains unqualified is the *result*: no independent multi-token oracle exists for this checkpoint, so nothing past position 0 is qualified. Generation beyond B1's four tokens has not run. |
+| Text generation on the real checkpoint | **Executed, not qualified.** Stage A (teacher-forced positions), Stage B1 (four generated tokens) and Stage B2 (the GLM chat template end to end, 2026-09-21) all ran under the same approval; see the rows above. The chat-template stage is therefore complete as an *execution*. What remains unqualified is the *result*: the B2 record classifies later positions `MEASURED_NOT_QUALIFIED` and records that no banked comparison exists for its prompt, so nothing on the real checkpoint past attempt 2's position 0 is qualified. Generation beyond the four-token budget each stage used has not run. |
 | Performance baseline | **First real numbers, not a baseline.** Stage A: 716.6 s of checkpoint identity verification once per session, then 131.2 s for position 0 and 91.7-96.8 s for each of positions 1-7, 1501 s wall for the whole run. These are lower than attempt 2's 299.2 s forward pass because attempt 2 additionally banked 79 per-layer diagnostic records; the arithmetic is the same. No tokens-per-second figure is published: a teacher-forced ladder is not a decode rate. |
 | Answer quality | **Not claimed, and B1 is not evidence of it.** Four tokens of raw-text continuation from a 2-bit quantisation without a chat template is not a task result. The model continued the topic rather than doing the arithmetic. |
 | The checkpoint's RoPE pairing | **Declared, not validated** — though B1 is now weak evidence for it. RoPE is the identity at position 0 and matters from position 1 onward, so a wrong pairing should degrade the continuation into noise; eight positions of coherent English is consistent with `NeoxHalfSplit` being right. Consistent with, not proof of. `NeoxHalfSplit` is the default and `Interleaved` the alternative; which one this GGUF conversion produced is a property of the checkpoint and is settled by the first approved multi-token run, not by assumption. |
@@ -75,9 +76,12 @@ and nothing else, must not be a symlink, and is opened read-only.
 It is a correct, bounded, stateful decoder with an honest interface. On the
 real checkpoint exactly one token is **qualified** — position 0, which
 reproduces the banked attempt-2 receipt bit for bit. It has since *executed*
-more than that: Stage A's eight teacher-forced positions and Stage B1's four
-generated tokens both ran on the real checkpoint, and both are **measured, not
-qualified**. Everything multi-token has been qualified on synthetic fixtures
+more than that: Stage A's eight teacher-forced positions, Stage B1's four
+generated tokens and Stage B2's chat-template run over 24 positions all ran on
+the real checkpoint, and all three are **measured, not qualified** — B2's own
+record states `MEASURED_NOT_QUALIFIED` for later positions and that no banked
+comparison exists for its prompt, and it claims neither answer quality nor any
+sustained throughput figure. Everything multi-token has been qualified on synthetic fixtures
 against an independent implementation, which establishes that the state machinery, causality and
 numerics are right — not that the real model produces good text, and not how
 fast it runs.
