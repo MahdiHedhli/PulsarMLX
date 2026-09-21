@@ -1,5 +1,7 @@
 # PulsarMLX Pre-flight Report
 
+> **Historical — superseded by [`docs/architecture/f017-native-runtime-status.md`](../architecture/f017-native-runtime-status.md) as of 2026-09-20.** This is the 2026-08-05 pre-flight report; its readiness statement describes that date, not the current repository.
+
 ## Executive result
 
 **Ready for bounded implementation after this report is reviewed.**

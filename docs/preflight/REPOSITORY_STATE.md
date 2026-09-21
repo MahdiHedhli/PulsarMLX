@@ -1,5 +1,7 @@
 # Repository-state preflight
 
+> **Historical — superseded by [`docs/architecture/f017-native-runtime-status.md`](../architecture/f017-native-runtime-status.md) as of 2026-09-20.** This is a dated 2026-08-05 repository snapshot; CI has since run remotely many times.
+
 Captured on 2026-08-05 before the documentation/bootstrap edits in this
 session. The initial audit was read-only. Existing work was preserved: no
 reset, clean, stash, checkout, rebase, history rewrite, or file deletion was

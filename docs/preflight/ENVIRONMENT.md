@@ -1,5 +1,7 @@
 # Environment preflight
 
+> **Historical — superseded by [`docs/architecture/f017-native-runtime-status.md`](../architecture/f017-native-runtime-status.md) as of 2026-09-20.** This is a dated 2026-08-05 host snapshot, not current environment state.
+
 Captured on 2026-08-05 at 00:21 EDT, before installing or changing any host
 tooling. The diagnostics in this report were read-only. Hardware serials,
 device identifiers, authentication tokens, credentials, and private keys are
