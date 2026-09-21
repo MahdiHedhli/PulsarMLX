@@ -1,0 +1,9 @@
+# F017 lifecycle V8 whole-domain final review — Opus cycle 02
+
+Use a fresh `claude-opus-5` session at high effort. Review exact committed bytes containing this request in a detached read-only worktree. This is an independent concise rerun because cycle 01's transport truncated its otherwise complete accepted response before exact banking. Keep the complete response under 1,800 words so every byte can be banked. Do not rely on cycle 01's verdict.
+
+Implementation measurement head: `a740687e61e9632ea6a957f52789acfb513de5ae`; tree: `b9fd57f0d82761b8ee7eba2cec75b0fdb0b9daa8`; exact-head FULL_NATIVE run: `32795502069` PASS. Gemini: `ACCEPT`, no material disagreement. Repository evidence outranks this request. Do not modify files, access original checkpoint shards, mint Event-04 authority, execute a real oracle, or execute P1 attempt 2.
+
+Independently reconstruct C7-N1/C7-N2 in production; attack mode type/bounds/check ordering, non-dictionary descriptors, unhashable and malformed lease IDs, exception normalization, independent checker separation, causal creation and transitive SHA closure, all 48 outcomes, exact five inherited descriptors at ordinals 2..6, zero path reopens, descriptor release, failure obligations, accounting, serialization, synthetic qualifications, production-shaped no-access rehearsal, historical V6 exact-Git validation, V8 activation without GO, and FULL_NATIVE/evidence-only CI.
+
+Explicitly state whether any issue prevents requesting the separate Event-04 human GO. List every finding exactly once under `BLOCKING`, `NON_BLOCKING_REQUIRED`, or `DEFENSE_IN_DEPTH`, with stable concise IDs. Both blocking and non-blocking-required prevent acceptance. End with exactly one unconditional verdict: `ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_AUTHORIZATION_PREPARATION` or `REJECT`.

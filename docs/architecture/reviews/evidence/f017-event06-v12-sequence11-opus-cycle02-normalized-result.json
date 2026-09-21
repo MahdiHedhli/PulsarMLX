@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-opus-normalized-result/1.0.0",
+  "reviewer": "OPUS_ARBITER",
+  "transport": "claude-code/2.1.235",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "reviewed_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_LIVE_GO_CALL_PATH",
+  "blocking_findings": [],
+  "required_findings": [],
+  "advisory_findings": [],
+  "unresolved_findings": [],
+  "claim_verdicts": {
+    "CANONICAL_LIVE_GO_FIELD_SET": "ACCEPT",
+    "NONCIRCULAR_AUTHORITY_DAG": "ACCEPT",
+    "LIVE_GO_SEALED_TYPE_COMPATIBILITY": "ACCEPT",
+    "PROMPT_BOUND_IDENTITY_PLAN": "ACCEPT",
+    "REAL_PUBLIC_SIGNATURES_BOUND": "ACCEPT",
+    "END_TO_END_NO_ACCESS_COMPOSITION": "ACCEPT",
+    "SEALED_TYPE_SECURITY": "ACCEPT"
+  },
+  "cycle01_findings_closed": 12,
+  "sequence10_findings_closed": 4,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "authority_issued": false,
+  "identities_instantiated": 0,
+  "result": "PASS"
+}

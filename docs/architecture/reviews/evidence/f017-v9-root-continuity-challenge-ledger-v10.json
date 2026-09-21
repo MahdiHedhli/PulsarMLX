@@ -1,0 +1,94 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 5,
+  "reviewer_model": "claude-opus-5",
+  "reviewed_head": "0b1d0389d2d9c5cb6fdfb3ad1b4af12e431a47f0",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-05-exact-response.json",
+  "exact_response_sha256": "00159feff9d807289e34795f78abc0eb19dbaab9fe6dec40679ef128fa192480",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v9.json",
+  "original_checkpoint_access_observed": 0,
+  "challenges": [
+    {
+      "challenge_id": "O-C05-001",
+      "claim_id": "C-JSON-005",
+      "attack": "String-keyed stdlib resolvers acquired genuine unbounded JSON capabilities.",
+      "mutation_or_trace": "pkgutil.resolve_name(json:loads); pydoc.locate(json.loads); related resolver forms",
+      "expected_behavior": "Any new import root or dynamic resolution capability rejects before acquisition.",
+      "observed_behavior": "Policy PASS with genuine json.loads and raw RecursionError reachable.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "443435f09cc5771828e298872ef8bb1b960e0239"
+    },
+    {
+      "challenge_id": "O-C05-002",
+      "claim_id": "C-IMPL-002",
+      "attack": "The accepted prohibition contract was not implemented against string-keyed resolvers.",
+      "mutation_or_trace": "O-C05-001 end-to-end planted in active closure",
+      "expected_behavior": "Active runtime cannot acquire an unbounded parser outside the canonical bounded parser.",
+      "observed_behavior": "Measured policy admitted two independent resolver families.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "443435f09cc5771828e298872ef8bb1b960e0239"
+    },
+    {
+      "challenge_id": "O-C05-003",
+      "claim_id": "C-REF-003",
+      "attack": "Manifest-bound R2 and R7 receipts named a nonexistent test path, and R2 understated focused tests.",
+      "mutation_or_trace": "git cat-file and pytest collection reconciliation",
+      "expected_behavior": "Append-only successor receipts state exact paths and measured counts.",
+      "observed_behavior": "Wrong tests/research path and focused_tests 99 versus 122.",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "affected_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v9.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r7-receipt-v8.json"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER"
+    },
+    {
+      "challenge_id": "O-C05-004",
+      "claim_id": "C-CI-001",
+      "attack": "FULL_NATIVE evidence understated the parametrized parser-policy regression count.",
+      "mutation_or_trace": "independent AST count of parametrized cases",
+      "expected_behavior": "CI census derives or records the exact committed case count.",
+      "observed_behavior": "Recorded 52; actual cycle-04 count was 74 and current repaired count is 97.",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "affected_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v9.json"
+      ],
+      "status": "REPAIRED_PENDING_ARBITER"
+    },
+    {
+      "challenge_id": "O-C05-005",
+      "claim_id": "C-IMPL-004",
+      "attack": "Measurement auxiliary assurance values remain literal.",
+      "mutation_or_trace": "independent reconstruction of all literal values",
+      "expected_behavior": "Load-bearing Git-byte measurements and current values remain truthful.",
+      "observed_behavior": "All values independently true; forward derivation hardening only.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [
+        "scripts/research/generate_f017_v10_implementation_measurement_v1.py"
+      ],
+      "status": "ANSWERED_BY_EXISTING_EVIDENCE"
+    },
+    {
+      "challenge_id": "O-C05-006",
+      "claim_id": "C-JSON-005",
+      "attack": "Alternative decoders and out-of-process parser launch surfaces.",
+      "mutation_or_trace": "ast.literal_eval, pickle, marshal, subprocess/os command strings",
+      "expected_behavior": "In-process alternate structural decoders reject; external process use remains outside demonstrated active authority parsing.",
+      "observed_behavior": "No current active bypass; defense-in-depth surface.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "status": "PARTIALLY_HARDENED"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-design-arbiter/1.0.0",
+  "cycle": 1,
+  "reviewer": "claude-opus-5",
+  "reviewed_head": "7597730c8aecae8fb283b2352e9ee06639b171d1",
+  "exact_response_sha256": "c3592f21ba2f3233b8d4e0f117b70744c71b7bef6500a0aaf911ff7fabb5f829",
+  "claim_verdicts": {
+    "C-SCHEMA-001": "ACCEPT",
+    "C-SCHEMA-002": "ACCEPT",
+    "C-VALIDATOR-001": "ACCEPT",
+    "C-AUTHORIZER-001": "ACCEPT",
+    "C-INSTANT-001": "UNRESOLVED",
+    "C-INSTANT-002": "REJECT",
+    "C-BIND-001": "REJECT",
+    "C-SAFETY-001": "UNRESOLVED",
+    "C-LEGACY-001": "ACCEPT",
+    "C-CI-001": "UNRESOLVED",
+    "C-REVIEW-001": "REJECT",
+    "C-GO-001": "REJECT"
+  },
+  "findings": [
+    {"finding_id":"F-01","severity":"BLOCKING","claim_id":"C-INSTANT-002","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-02","severity":"BLOCKING","claim_id":"C-INSTANT-002","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-03","severity":"BLOCKING","claim_id":"C-BIND-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-04","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-SAFETY-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-05","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-INSTANT-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-06","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-INSTANT-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-07","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-VALIDATOR-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-08","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-REVIEW-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-09","severity":"NON_BLOCKING_REQUIRED","claim_id":"C-BIND-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-10","severity":"DEFENSE_IN_DEPTH","claim_id":"C-CI-001","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-11","severity":"DEFENSE_IN_DEPTH","claim_id":"C-SCHEMA-002","status":"REPAIR_REQUIRED"},
+    {"finding_id":"F-12","severity":"DEFENSE_IN_DEPTH","claim_id":"C-LEGACY-001","status":"REPAIR_REQUIRED"}
+  ],
+  "blocking_count": 3,
+  "non_blocking_required_count": 6,
+  "defense_in_depth_count": 3,
+  "original_checkpoint_access_observed": 0,
+  "global_verdict": "REJECT"
+}

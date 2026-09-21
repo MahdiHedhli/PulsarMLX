@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence20-review-transport-probe-ledger/1.0.0",
+  "agy": {
+    "requested_model": "gemini-3.1-pro-high",
+    "attempted": 3,
+    "passed": 2,
+    "probes": [
+      {
+        "probe": 1,
+        "classification": "PASS",
+        "payload_sha256": "f4f3038f035b56232826cf4abb3dde5272289240299bcd42fd9f680fd60cb9fd",
+        "schema_sha256": "a02ec649d251dcb5964c68a522bf7451253457778a60f31037fbe2f31a514fe5",
+        "stdout_sha256": "2b83fe06a61c1bc6a56b060ae61341908a65e312a0f20c68aacb460162df5c02",
+        "stderr_sha256": "3a7f855b8cc478ae070b31dc50e6ee231ec77348fef2949e17f02b72a3b5843d",
+        "exit_status": 0,
+        "provider_status": "SUCCESS",
+        "elapsed_seconds": 8.962,
+        "exact_response_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence20-agy-probe-01-exact-response-v1.json",
+        "exact_response_sha256": "5c62db82f53126c105dbcee75d9a9acd55b083c5f1880d0ea5e6d36fe3e07224"
+      },
+      {
+        "probe": 2,
+        "classification": "AUTHENTICATION_FAILED_IN_ISOLATED_HOME",
+        "payload_sha256": "69918ab12ae97e59f469c4e5255ed9553d0d8ca09ec00e28697239cd2a5d16db",
+        "schema_sha256": "a02ec649d251dcb5964c68a522bf7451253457778a60f31037fbe2f31a514fe5",
+        "settings_sha256": "04655f02b9f829c4499208cc7e99f1e2d1c85f777aebd4125dc59df5a9302be0",
+        "stdout_sha256": "7ef5ca2ff1de43676e382c4188308e5295a4139d70470f2e4ccda73e814e5a4d",
+        "stderr_sha256": "118fb2bd26f0cda3636ca27d4fafaf3ae5942c01b7370622c14576de9534924b",
+        "exit_status": 1,
+        "provider_status": "ERROR",
+        "elapsed_seconds": 0.364
+      },
+      {
+        "probe": 3,
+        "classification": "PASS",
+        "payload_sha256": "0ea78cec1f8742646b96951de169944b0f38bb7de9765cb1f983b3550911d576",
+        "schema_sha256": "a02ec649d251dcb5964c68a522bf7451253457778a60f31037fbe2f31a514fe5",
+        "settings_sha256": "1761d10d7921a82180953456e4e0f34cf47f28c82ea21ba3d07fca6ce13e6b7a",
+        "stdout_sha256": "8bd1f1d20e90c32bf6ab1a63ddd01b25d15bb5cfa0860c52960892a08904ab33",
+        "stderr_sha256": "3a7f855b8cc478ae070b31dc50e6ee231ec77348fef2949e17f02b72a3b5843d",
+        "exit_status": 0,
+        "provider_status": "SUCCESS",
+        "elapsed_seconds": 9.106,
+        "exact_response_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence20-agy-probe-03-exact-response-v1.json",
+        "exact_response_sha256": "cf36e2c7d1ac734c627254338d83eff215ec3a904842dd41247bbc6fd4990a88"
+      }
+    ],
+    "filesystem_or_tool_action_outside_probe_root": false
+  },
+  "opus": {
+    "requested_model": "claude-opus-5",
+    "attempted": 0,
+    "passed": 0,
+    "classification": "REVIEW_TRANSPORT_UNAVAILABLE",
+    "reason": "mandatory --restricted invariant absent from target CLI help",
+    "invariant_weakened_or_dropped": false
+  },
+  "result": "PASS"
+}

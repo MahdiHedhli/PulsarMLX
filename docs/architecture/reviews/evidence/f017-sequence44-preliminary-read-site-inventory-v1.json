@@ -1,0 +1,172 @@
+{
+  "complete_coverage_proven": false,
+  "exclusions": [
+    {
+      "path": "scripts/research/glm52_tensor_store.py",
+      "reason": "Imported indirectly for a pure decoder; active V11 descriptor sources do not instantiate store. Its pread method is a mapping slice, not os.pread."
+    },
+    {
+      "path": "scripts/research/f017_descriptor_lease_manager_v10.py::_hash_descriptor",
+      "reason": "Historical/synthetic helper not called by active V12 identity producer."
+    },
+    {
+      "path": "crates/stream Linux io_uring modules",
+      "reason": "cfg target_os linux; inactive on Mac Studio."
+    },
+    {
+      "path": "crates/engine and crates/mlx-backend router read sites",
+      "reason": "Not dependencies of native F017/stream entry closure."
+    },
+    {
+      "path": "control/evidence readbacks",
+      "reason": "Evidence/catalog I/O, not numerical checkpoint payload."
+    }
+  ],
+  "integration_traps": [
+    "Synthetic minimum-gate numerical provider manufactures output buffers and bypasses real descriptor-source numerical reads; helper-only PASS cannot qualify composition.",
+    "Primary factory probes occur before source return; observations must survive factory/core/banking errors.",
+    "Result receipt access_census_sha256 binds identity-stage census, not numerical operations.",
+    "Native successful mmap can precede owner construction and fallible evidence/mincore; record residual/unknown mappings without inventing successful cleanup.",
+    "Drop munmap return is discarded; PASS_MUNMAP_DROP_COMPLETED is not proof of successful OS unmap."
+  ],
+  "method": "Static import/call/trait/FFI analysis from named active entry points; lexical search used only as seed. Dynamic reachability coverage gate not implemented because N0 tooling prerequisite failed.",
+  "qualification_tests_run": 0,
+  "qualified_instrumentation_claim": false,
+  "schema": "pulsarmlx.f017.sequence44.preliminary-read-site-inventory/1.0.0",
+  "site_count": 10,
+  "sites": [
+    {
+      "boundary": "os.pread",
+      "consumer_edge": "_minimum_gate_produce -> identity receipts -> coordinator",
+      "existing_gap": "whole-shard count/byte prefix only",
+      "path": "scripts/research/f017_checkpoint_identity_producer_v12.py",
+      "prospective_test_mapping": "qualify_f017_checkpoint_identity_authority_v12._filesystem_faults",
+      "purpose": "IDENTITY_HASH",
+      "qualified_test": "NOT_RUN",
+      "site_id": "PY-IDENTITY",
+      "source_sha256": "e7b6e499d265fd752ccdf855aa10cb8a5fc286594bd121e72f9743bedeb8d4d3",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "_hash_descriptor"
+    },
+    {
+      "boundary": "os.pread",
+      "consumer_edge": "V11 subclass -> primary wrapper -> bundle -> package terminal",
+      "existing_gap": "transient successful logical tensor reads; no durable actual-call census",
+      "path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
+      "prospective_test_mapping": "f017_synthetic_checkpoint_v10.prepare + real primary source required",
+      "purpose": "NUMERICAL_PAYLOAD or FORMAT_PROBE from validated record",
+      "qualified_test": "NOT_RUN",
+      "site_id": "PY-PRIMARY",
+      "source_sha256": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "PrimaryDescriptorSourceV10._raw"
+    },
+    {
+      "boundary": "os.pread",
+      "consumer_edge": "V11 subclass -> secondary wrapper -> bundle -> package terminal",
+      "existing_gap": "transient counter after independent decode; error prefix absent",
+      "path": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+      "prospective_test_mapping": "f017_synthetic_checkpoint_v10.prepare + real secondary source required",
+      "purpose": "NUMERICAL_PAYLOAD or FORMAT_PROBE from validated record",
+      "qualified_test": "NOT_RUN",
+      "site_id": "PY-SECONDARY",
+      "source_sha256": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "SecondaryDescriptorStoreV10._get"
+    },
+    {
+      "boundary": "reader.read_at",
+      "consumer_edge": "fetch_exact/fetch_batch -> adapter loop; portable API, not current bounded mmap path",
+      "existing_gap": "logical request telemetry is not each lower-level invocation",
+      "path": "crates/stream/src/positional.rs",
+      "prospective_test_mapping": "crates/stream/tests/positional_source.rs",
+      "purpose": "NUMERICAL_PAYLOAD",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-POSITIONAL",
+      "source_sha256": "803ce690ee53b3cd7300bed37590a2b8d9b64fe1ff452aedad9d80855edb5a12",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "PositionalSource::fetch_validated"
+    },
+    {
+      "boundary": "FileExt::read_at",
+      "consumer_edge": "RS-POSITIONAL -> Unix file adapter",
+      "existing_gap": "adapter edge; must not double-count same invocation",
+      "path": "crates/stream/src/positional.rs",
+      "prospective_test_mapping": "crates/stream/tests/positional_source.rs",
+      "purpose": "NUMERICAL_PAYLOAD",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-FILE-ADAPTER",
+      "source_sha256": "803ce690ee53b3cd7300bed37590a2b8d9b64fe1ff452aedad9d80855edb5a12",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "PositionalRead for File"
+    },
+    {
+      "boundary": "File::read",
+      "consumer_edge": "MappedShard::open -> recorder -> access census",
+      "existing_gap": "completed hash only, not loop calls including EOF",
+      "path": "crates/f017-native/src/loader.rs",
+      "prospective_test_mapping": "loader.rs synthetic six-shard test",
+      "purpose": "IDENTITY_HASH",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-IDENTITY",
+      "source_sha256": "7de4127864435ff6b217a9556b5ac4f108cafa995f7b196337e2cc8f773bcbd7",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "sha_open_file"
+    },
+    {
+      "boundary": "libc::mmap",
+      "consumer_edge": "SecureCheckpoint::open_evidenced -> recorder -> census/receipt/terminal",
+      "existing_gap": "success-only map event; pre-owner failure window",
+      "path": "crates/f017-native/src/loader.rs",
+      "prospective_test_mapping": "loader.rs synthetic six-shard test plus missing fault coverage",
+      "purpose": "MAPPING_LIFECYCLE",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-MAP",
+      "source_sha256": "7de4127864435ff6b217a9556b5ac4f108cafa995f7b196337e2cc8f773bcbd7",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "MappedShard::open"
+    },
+    {
+      "boundary": "from_raw_parts",
+      "consumer_edge": "SecureCheckpoint::encoded -> EvidencedTensorSource -> recorder",
+      "existing_gap": "logical tensor use is not qualified mapped view census",
+      "path": "crates/f017-native/src/loader.rs",
+      "prospective_test_mapping": "loader.rs synthetic read + receipt composition required",
+      "purpose": "MAPPED_PAYLOAD_VIEW",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-VIEW",
+      "source_sha256": "7de4127864435ff6b217a9556b5ac4f108cafa995f7b196337e2cc8f773bcbd7",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "MappedShard::read"
+    },
+    {
+      "boundary": "libc::munmap",
+      "consumer_edge": "explicit teardown or Drop -> missing actual outcome -> access census",
+      "existing_gap": "return discarded; fallback Drop/error paths unbanked",
+      "path": "crates/f017-native/src/loader.rs",
+      "prospective_test_mapping": "real unmap success/failure/teardown tests required",
+      "purpose": "MAPPING_LIFECYCLE",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-UNMAP",
+      "source_sha256": "7de4127864435ff6b217a9556b5ac4f108cafa995f7b196337e2cc8f773bcbd7",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "MappedShard::drop"
+    },
+    {
+      "boundary": "mincore and sysconf page-size basis",
+      "consumer_edge": "existing recorder -> access census",
+      "existing_gap": "snapshot only, not per-shard fault events",
+      "path": "crates/f017-native/src/loader.rs",
+      "prospective_test_mapping": "loader.rs existing synthetic observation plus availability mutations required",
+      "purpose": "RESIDENCY_SNAPSHOT",
+      "qualified_test": "NOT_RUN",
+      "site_id": "RS-RESIDENCY",
+      "source_sha256": "7de4127864435ff6b217a9556b5ac4f108cafa995f7b196337e2cc8f773bcbd7",
+      "successor_producer": "NOT_IMPLEMENTED",
+      "symbol": "MappedShard::open"
+    }
+  ],
+  "source_head": "29c55d314a72747b44bd2c1ce93c71ba6ac157b6",
+  "status": "PRELIMINARY_STATIC_AUDIT_NOT_QUALIFIED",
+  "successor_qualified_producers": 0
+}

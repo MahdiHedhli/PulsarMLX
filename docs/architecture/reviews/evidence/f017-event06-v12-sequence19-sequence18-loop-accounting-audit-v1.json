@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-sequence18-loop-accounting-audit/1.0.0",
+  "legacy_ledger_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-repair-loop-final-ledger-v1.json",
+  "legacy_ledger_sha256": "397467e86ccb959c75db22bdd2bf763d2bb23149be85b124171a9daab27f2bb0",
+  "legacy_authorized_loops": 10,
+  "legacy_reported_consumed_loops": 10,
+  "candidate_heads_listed": 8,
+  "completed_candidate_audits_reconstructed": 2,
+  "declined_audits_reconstructed": 1,
+  "duplicate_repair_loop_number": 10,
+  "unfillable_unique_structural_records": true,
+  "nonstructural_event_in_budget_exhaustion": "SEQUENCE18_AGY_CYCLE06_REVIEWER_DECLINED",
+  "sequence18_graph_loop_accounting_defect": true,
+  "implementation_defect": false,
+  "retroactive_ledger_edit": false,
+  "sequence19_structural_budget_reset_by_planner": 10,
+  "sequence19_structural_loops_consumed": 0,
+  "sequence19_nonstructural_loops_consumed": 0,
+  "result": "PASS_WITH_NAMED_GRAPH_ACCOUNTING_DEFECT"
+}

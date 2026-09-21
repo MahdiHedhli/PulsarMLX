@@ -1,0 +1,14 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/f017_accounting_root_continuity_v1.py"],
+  "claims_closed": ["C-ROOT-001", "C-ROOT-002", "C-ROOT-003", "C-ROOT-004", "C-ROOT-005"],
+  "claims_introduced": [], "claims_invalidated": [],
+  "commands_executed": ["constructor cleanup mutation", "non-serializable terminalization mutation", "root attack campaign"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"root_contract": "07be4b4d1dd36ea9ce28d36f021f009b3395f18f4f06ee9bfd620ba6ec60ca89"},
+  "input_head": "1c5356adcd32895e22c14cf1423a1de25c8803ce", "next_eligible_edges": ["R2"], "node_id": "R1",
+  "output_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7", "result": "PASS",
+  "result_counts": {"false_zero_results": 0, "root_attack_cases": 252, "terminal_payload_type_errors_normalized": 2},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["70 root/decode tests", "252 root attacks", "6 root/decode cross-products"]
+}

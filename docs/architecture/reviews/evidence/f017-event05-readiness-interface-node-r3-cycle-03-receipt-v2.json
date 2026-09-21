@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R3",
+  "input_head": "c1ad4c673b1ce03d49f158e044e69f649e717dfa",
+  "output_head": "c1ad4c673b1ce03d49f158e044e69f649e717dfa",
+  "output_tree": "6fd2c8c52bbf8af028bd36e837f5eb77bbea1c46",
+  "input_authority_shas": ["f017-event05-readiness-interface-authority-manifest-v2:28_BINDINGS_ZERO_MISMATCH"],
+  "changed_paths": [],
+  "commands_executed": ["agy --new-project --model gemini-3.1-pro-high --effort high --sandbox --print-timeout 20m"],
+  "tests_executed": ["Gemini design challenge cycle 3"],
+  "result_counts": {"packet_read":true,"binding_count":28,"sha_mismatches":0,"challenge_rows":0},
+  "claims_introduced": [],
+  "claims_closed": ["C-REVIEW-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R5"],
+  "result": "PASS"
+}

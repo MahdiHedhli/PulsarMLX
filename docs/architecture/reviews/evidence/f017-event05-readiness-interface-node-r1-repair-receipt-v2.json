@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R1",
+  "input_head": "7597730c8aecae8fb283b2352e9ee06639b171d1",
+  "output_head": "24e4ee6c66f08d07b3df6e9335850b107e5c2373",
+  "output_tree": "811d6e7483769be106fef264a62446fd43d53409",
+  "input_authority_shas": ["c3592f21ba2f3233b8d4e0f117b70744c71b7bef6500a0aaf911ff7fabb5f829"],
+  "changed_paths": [
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-approval-interface-v1.json"
+  ],
+  "commands_executed": ["python3 -m unittest scripts/research/tests/test_f017_event05_readiness_interface_design_v1.py"],
+  "tests_executed": ["8 design unit tests"],
+  "result_counts": {"tests_passed": 8, "tests_failed": 0, "canonical_fields": 56},
+  "claims_introduced": [],
+  "claims_closed": ["C-SCHEMA-001", "C-SCHEMA-002", "C-VALIDATOR-001", "C-BIND-001", "C-SAFETY-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R2"],
+  "result": "PASS"
+}

@@ -1,0 +1,157 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence40-terminal-failure-evidence/1.0.0",
+  "feature_id": "F017",
+  "sequence": 40,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "generated_at_unix_ns": 1788535332861634000,
+  "sequence40_result": "POST_ONE_SHOT_TERMINAL_FAILURE",
+  "corrected_oracle_verdict": "ORACLE_EXECUTION_FAILURE",
+  "first_failed_stage": "IDENTITY_TERMINAL",
+  "smallest_causal_error": "F017_V12_IDENTITY_SHARD_OPEN_FAILURE: checkpoint root leaf census",
+  "prompt_authority": {
+    "commit": "6b63ad02e2193b2c839bdf5b052f9f1c41912437",
+    "tree": "2b37bafa88c5a24173b2f0b4cbd87f31fe16b082",
+    "support_commit": "74c644e3e6af9caa0e34d181d8de2ccc4be26bc7",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/040__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-one-shot-execution__prompt.md",
+    "sha256": "76aba268bc61ed1fd33d45fd99455ff255c59f3a9b049ba959ba9092fcdbc1af",
+    "basename_sidecar": "PASS",
+    "freeze_transition_table_sha256": "be3b1b0137eccaac4e50e2da0be79444608ca13811dfbc4f6a498dad6efb99b9"
+  },
+  "fresh_human_go": {
+    "declaration_sha256": "8b74bfd6fc0af6434f8388807e6302b22108f9a2a123a2133e950151951d9655",
+    "decision_sha256": "25b1312d26a436e103f26f1645f2d83e3147cbabc6522c91e5fa92d89ee73bdd",
+    "consumed": true,
+    "reusable": false
+  },
+  "sequence39_authority": {
+    "planner_acceptance_commit": "bfacf6fa671736519baef1e0e6e048392f84128b",
+    "planner_acceptance_sha256": "decacb89e7dbff40bf96455c691965bb3b636920363eded5f660e39482f0f0a9",
+    "response_commit": "68a5c3f95c4953b23928cb9615ac612fafebb7c8",
+    "response_sha256": "0bc12306210ad6721bf0101895d5db799b310f161092b1556826cd065cd0de44",
+    "handoff_commit": "72de5dede95f0df2051168107493a3bd11e82c5d",
+    "handoff_sha256": "60dc96b43f35078c8c6a3258d26ac26e65c3f0786356d4eed3af31df0225c71d",
+    "evidence_and_implementation_bindings": "11/11",
+    "required_gates_enforced": "17/17",
+    "implementation_dependencies_remaining": 0,
+    "callable_legacy_or_superseded_bypasses": 0,
+    "full_call_path_dry_run_with_synthetic_authority": "PASS"
+  },
+  "source_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "start_head": "7bda205aed29392fa4e53d522580fc238d50ed5e",
+    "start_tree": "6868300c9473be773fad67e861bfecd1053ecc5d",
+    "remote_parity_before_execution": "PASS",
+    "minimum_gate_contract_sha256": "cdd59f753f11f642801e4488b15d216dfd06ae9b98ef274a8fb314f1fabe562e",
+    "minimum_gate_path_sha256": "49b980ca3290d35d96de50179f02a705b9dc8a6f436f4ee3e7ecba76db103b94",
+    "release_authority_sha256": "4a55183f0bddfbdc0381a8e9447f9293b6e53bb3c04857083b27326e8b7c9e19",
+    "runtime_bytes_drift": 0,
+    "code_contract_schema_or_test_mutation": "NONE"
+  },
+  "collapsed_go": {
+    "created": true,
+    "sha256": "3a4e9c818b25f9b750ede37df226cc9beb75f9c412c74b257debf3976d659646",
+    "field_count": 8,
+    "release_authority_sha256": "4a55183f0bddfbdc0381a8e9447f9293b6e53bb3c04857083b27326e8b7c9e19",
+    "one_shot_nonce_sha256": "5b0810269950dc055d07c9d22a80d7269c2a5e81ba14c5798ca62fd059ca5622",
+    "reused_or_rebuilt": false
+  },
+  "runner_provenance": {
+    "runner_sha256": "df2f7df36eb1824befbafbb060871b4c38f14c0e870d261664e6382aa3cf2536",
+    "invocation_spent_sha256": "ff5b54d56816ff9e5e2c60a753b0bb9b13d5fa4f194c14cb0f3b4040e9308199",
+    "public_result_sha256": "59c6d84d77c3790a49dce384a6a584dfa77c48c9d8d034708d9f941c765de138",
+    "runner_exit_observation_sha256": "ef20d379be6c82ca03a947561b696fbc9fc12366004b61a297ffc100fa35f6f0",
+    "runner_log_sha256": "fdbef3d7a1638b6b4d79bac49282929807906b190d5eba4e589c5cda341a39d6",
+    "runner_outcome": "RAISED",
+    "intended_exit_status": 1
+  },
+  "required_gate_observation": {
+    "bound_gate_set": [
+      "M001",
+      "M002",
+      "M003",
+      "M004",
+      "M005",
+      "M006",
+      "M007",
+      "M008",
+      "M009",
+      "M010",
+      "M011",
+      "M012",
+      "M013",
+      "M014",
+      "M015",
+      "M016",
+      "M017"
+    ],
+    "completed_before_failure": [
+      "M003",
+      "M004",
+      "M006",
+      "M009",
+      "M012",
+      "M001"
+    ],
+    "failed_transition": "M013_CHECKPOINT_IDENTITY_AND_DESCRIPTOR_STABILITY",
+    "result": "TERMINAL_FAILURE"
+  },
+  "package_terminal_evidence": {
+    "package_start_sha256": "d136d99b86464692578c12f847579091f72252f91d376b1657508183739d9214",
+    "emergency_release_report_sha256": "d3ff47ca7fab322dbc7548cb128dd6b5b50f0d5fc29c6fd5d6583eb6ba3b04e2",
+    "failure_accounting_sha256": "e598661a8ccfb04254defe8eac4c10433a36046502cb8e8df47c989cabb87b2d",
+    "package_receipt_sha256": null,
+    "package_receipt_disposition": "ABSENT_NOT_FABRICATED",
+    "package_terminal_sha256": "8bdccdb12922ec0154c48b9db969b1b8ff08ebc6ab5764cbabd0615598a13889",
+    "package_terminal_state": "TERMINAL_FAILURE",
+    "terminal_winners_per_package": 1,
+    "fabricated_successor_receipts": 0
+  },
+  "checkpoint_and_execution_census": {
+    "original_checkpoint_root_resolutions": 1,
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_mmaps_or_tensor_reads": 0,
+    "descriptor_leases_created": 0,
+    "descriptor_release_attempts": 0,
+    "descriptor_successful_releases": 0,
+    "live_descriptor_leases_after_terminal": 0,
+    "event06_identities_instantiated": 4,
+    "event06_package_identities_consumed": 1,
+    "event06_primary_identities_consumed": 0,
+    "event06_secondary_identities_consumed": 0,
+    "package_starts": 1,
+    "primary_real_oracle_event06_executions": 0,
+    "primary_layers_completed": 0,
+    "secondary_real_oracle_event06_executions": 0,
+    "secondary_layers_completed": 0,
+    "comparison_result": "NOT_REACHED"
+  },
+  "accounting": {
+    "authorization_delta": 0,
+    "package_delta": 1,
+    "primary_delta": 0,
+    "secondary_delta": 0,
+    "historical_master_ledger_predecessor": 175,
+    "historical_master_ledger_final": 175
+  },
+  "safety": {
+    "retry_resume_or_second_attempt": "NONE",
+    "event_04_retry": false,
+    "event_05_retry_or_resume": false,
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "external_reviewer_invocations": 0,
+    "full_native_ci": "NOT_RUN_NON_GATING",
+    "macbook_lane_mutation": "NONE",
+    "checkpoint_access_after_terminal": 0
+  },
+  "publication": {
+    "append_only_terminal_evidence_commit": "PENDING_THIS_ARTIFACT",
+    "evidence_only_ci": "BEST_EFFORT_PENDING",
+    "response_publication": "PENDING",
+    "prompt_control_cas_attempts": 0,
+    "ntfy_delivery": "PENDING"
+  },
+  "ready_to_prepare_p1_attempt_2_authorization": "NOT_INFERRED_BY_THIS_GRAPH",
+  "result": "PASS"
+}

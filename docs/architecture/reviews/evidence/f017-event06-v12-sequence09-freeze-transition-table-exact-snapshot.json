@@ -1,0 +1,220 @@
+{
+  "schema": "pulsarmlx.f017.freeze-transition-table/1.0.0",
+  "feature_id": "F017",
+  "phase_id": "F017_MAC_STUDIO_SEQUENCE_09_EVENT06_V12_NO_ACCESS_QUALIFICATION_CI_REVIEW_FINAL_READINESS",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "authority_owner": "F017_PLANNER",
+  "declaration_mode": "PLANNER_PREDECLARED_CONDITIONAL_TRANSITIONS",
+  "policy": {
+    "id": "f017-authority-freezing-policy-v1",
+    "path": "Prompts/F017/AUTHORITY-FREEZING-POLICY-v1.md",
+    "sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204"
+  },
+  "effective_boundary": "SEQUENCE_09_LAUNCH_PROMPT_COMMIT_PIN",
+  "prospective_only": true,
+  "existing_prompt_authority_modified": false,
+  "nodes": [
+    "Q0_AUTHORITY_AND_FREEZE_TABLE_GUARDS",
+    "Q1_PREQUALIFICATION_INSTANTIABILITY_REPAIR",
+    "Q2_PREOBSERVATION_FREEZE",
+    "Q3_IMPLEMENTATION_AND_LOCAL_QUALIFICATION",
+    "Q4_AUTHORITATIVE_NO_ACCESS_QUALIFICATION",
+    "Q5_FULL_NATIVE_CI",
+    "Q6_INDEPENDENT_CHALLENGE",
+    "Q7_OPUS_ARBITRATION",
+    "Q8_LAYERED_READINESS_AUTHORITY_PREPARATION",
+    "Q9_MANIFEST_BOUND_EVIDENCE_ONLY_CI",
+    "Q10_CONDITIONAL_OPERATIONAL_RATIFICATION",
+    "Q11_PUBLICATION_AND_MANUAL_HANDOFF"
+  ],
+  "prelaunch_findings": [
+    {
+      "id": "F017-S9-PREQUAL-001",
+      "title": "QUALIFICATION_AUTHORITY_CROSS_VERSION_INCONSISTENT",
+      "status": "OPEN",
+      "evidence": [
+        "readiness consumer interface v10 and live-installation interface v10 reference qualification-role requirements v7",
+        "qualification-role requirements v8 references live-installation interface v9 and qualification-role requirements v7",
+        "qualification-role requirements v8 retains PENDING_CYCLE11_MECHANICAL_VALIDATION despite final Cycle 11 acceptance",
+        "implementation_measurement role still requires the bridge implementation measurement schema rather than the Sequence 8 readiness-installation implementation"
+      ],
+      "required_disposition": "VERSION_FORWARD_WITH_ACCEPTANCE_PREDICATES_AND_THRESHOLDS_UNCHANGED_BEFORE_Q2"
+    },
+    {
+      "id": "F017-S9-PREQUAL-002",
+      "title": "PRODUCTION_COMMIT_INTERFACE_NOT_INSTANTIABLE",
+      "status": "OPEN",
+      "evidence": [
+        "Sequence 8 _FutureGoCapability has no producer",
+        "Sequence 8 commit_production_installation always terminates with capability_expired",
+        "no success-capable production transaction implementation exists to qualify without invoking it"
+      ],
+      "required_disposition": "VERSION_FORWARD_REAL_PRODUCER_CHECKER_AND_SUCCESS_CAPABLE_CAPABILITY_SEALED_TRANSACTION_PATH_WITH_ZERO_LIVE_INVOCATIONS_BEFORE_Q2"
+    }
+  ],
+  "transitions": [
+    {
+      "artifact": "this freeze transition table",
+      "current_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN"],
+      "intended_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN"],
+      "node": "Q0_AUTHORITY_AND_FREEZE_TABLE_GUARDS",
+      "producer": "F017_PLANNER",
+      "checker": "ADJACENT_SHA256_AND_PROMPT_BINDING",
+      "declarer": "F017_PLANNER",
+      "failure": "BLOCKED"
+    },
+    {
+      "artifact": "Sequence 8 implementation source and local measurement",
+      "current_attributes": ["LIQUID", "BANKED", "PINNED"],
+      "intended_attributes": ["LIQUID", "BANKED", "PINNED", "INSTANTIABLE"],
+      "node": "Q3_IMPLEMENTATION_AND_LOCAL_QUALIFICATION",
+      "producer": "VERSIONED_F017_IMPLEMENTATION",
+      "checker": "LOCAL_AND_AUTHORITATIVE_NO_ACCESS_QUALIFIERS",
+      "declarer": "F017_PLANNER",
+      "operational_ratification": false,
+      "failure": "REPAIR_REQUIRED"
+    },
+    {
+      "artifact": "qualification criteria, stage vocabulary, failure outcomes, accounting units, and acceptance predicates",
+      "current_attributes": ["BANKED", "PINNED"],
+      "intended_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN"],
+      "node": "Q2_PREOBSERVATION_FREEZE",
+      "producer": "VERSION_FORWARD_CONTRACT_GENERATOR",
+      "checker": "INDEPENDENT_VERSION_FORWARD_CONTRACT_VALIDATOR",
+      "declarer": "F017_PLANNER",
+      "constraints": [
+        "preserve all Cycle 11 acceptance predicates and exact types",
+        "preserve the 324 mutation floor",
+        "preserve all 16 installation outcomes and ten race families",
+        "repair only cross-version references, validation state, producer-consumer schemas, and instantiability gaps",
+        "freeze before authoritative qualification observations"
+      ],
+      "label_until_final_ratification": "TEMPORALLY_FROZEN_NOT_OPERATIONALLY_RATIFIED",
+      "failure": "DECLARATION_REQUIRED"
+    },
+    {
+      "artifact": "readiness and live-installation policy and closed schemas",
+      "current_attributes": ["LIQUID", "BANKED", "PINNED"],
+      "intended_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN", "INSTANTIABLE", "OPERATIONALLY_RATIFIED"],
+      "temporal_freeze_node": "Q2_PREOBSERVATION_FREEZE",
+      "operational_ratification_node": "Q10_CONDITIONAL_OPERATIONAL_RATIFICATION",
+      "producer": "VERSION_FORWARD_POLICY_AND_SCHEMA_GENERATOR",
+      "checker": "REAL_READINESS_AND_INSTALLATION_CONSUMERS_PLUS_QUALIFICATION_AND_REVIEWS",
+      "declarer": "F017_PLANNER",
+      "prerequisites": [
+        "both prelaunch findings resolved",
+        "producer-consumer end-to-end instantiability",
+        "Q4 through Q9 pass",
+        "zero forbidden access or execution"
+      ],
+      "failure": "NOT_RATIFIED"
+    },
+    {
+      "artifact": "versioned generators, validators, producers, wrappers, and test harnesses",
+      "current_attributes": ["LIQUID"],
+      "intended_attributes": ["LIQUID", "BANKED", "PINNED", "INSTANTIABLE"],
+      "node": "Q4_AUTHORITATIVE_NO_ACCESS_QUALIFICATION",
+      "producer": "F017_IMPLEMENTER",
+      "checker": "TESTS_MUTATIONS_CI_AND_INDEPENDENT_REVIEW",
+      "declarer": "F017_PLANNER",
+      "operational_ratification": false,
+      "failure": "REPAIR_REQUIRED"
+    },
+    {
+      "artifact": "canonical-readiness, installation-preparation, failure, no-access, and full-corpus qualification outputs",
+      "current_attributes": [],
+      "intended_attributes": ["BANKED", "PINNED"],
+      "node": "Q4_AUTHORITATIVE_NO_ACCESS_QUALIFICATION",
+      "producer": "AUTHORITATIVE_QUALIFICATION_RUNNERS",
+      "checker": "QUALIFICATION_ROLE_VALIDATOR_AND_LATER_REVIEWERS",
+      "declarer": "F017_PLANNER",
+      "operational_ratification": false,
+      "failure": "REPAIR_REQUIRED"
+    },
+    {
+      "artifact": "FULL_NATIVE CI evidence",
+      "current_attributes": [],
+      "intended_attributes": ["BANKED", "PINNED"],
+      "node": "Q5_FULL_NATIVE_CI",
+      "producer": "GITHUB_ACTIONS_FULL_NATIVE",
+      "checker": "AUTHORITATIVE_RUN_AND_JOB_RECORD_VALIDATOR",
+      "declarer": "F017_PLANNER",
+      "operational_ratification": false,
+      "failure": "REPAIR_REQUIRED"
+    },
+    {
+      "artifact": "independent challenge and Opus arbitration artifacts",
+      "current_attributes": [],
+      "intended_attributes": ["BANKED", "PINNED"],
+      "nodes": ["Q6_INDEPENDENT_CHALLENGE", "Q7_OPUS_ARBITRATION"],
+      "producer": "INDEPENDENT_REVIEW_TRANSPORTS",
+      "checker": "PROVENANCE_AND_NORMALIZATION_VALIDATORS",
+      "declarer": "F017_PLANNER",
+      "operational_ratification": false,
+      "failure": "REPAIR_REQUIRED"
+    },
+    {
+      "artifact": "canonical successor readiness declaration and layered authority manifest",
+      "current_attributes": [],
+      "intended_attributes": ["BANKED", "PINNED", "INSTANTIABLE", "OPERATIONALLY_RATIFIED"],
+      "preparation_node": "Q8_LAYERED_READINESS_AUTHORITY_PREPARATION",
+      "operational_ratification_node": "Q10_CONDITIONAL_OPERATIONAL_RATIFICATION",
+      "producer": "CANONICAL_READINESS_AND_MANIFEST_PRODUCERS",
+      "checker": "REAL_CONSUMERS_MANIFEST_VALIDATOR_EVIDENCE_ONLY_AND_FINAL_RECONCILIATION",
+      "declarer": "F017_PLANNER",
+      "prerequisites": [
+        "exact implementation head and tree pinned",
+        "all qualification roles exact",
+        "FULL_NATIVE passes with zero required skips",
+        "independent challenge has zero blocking required or unresolved findings",
+        "Opus accepts every final claim",
+        "manifest-bound EVIDENCE_ONLY passes with zero native jobs",
+        "zero checkpoint access, numerics, live authority, package start, or identities consumed"
+      ],
+      "failure": "NOT_RATIFIED"
+    },
+    {
+      "artifact": "final operational-ratification record",
+      "current_attributes": [],
+      "intended_attributes": ["BANKED", "PINNED", "OPERATIONALLY_RATIFIED"],
+      "node": "Q10_CONDITIONAL_OPERATIONAL_RATIFICATION",
+      "producer": "CONDITIONAL_TRANSITION_RECORDER",
+      "checker": "FINAL_RECONCILIATION_VALIDATOR",
+      "declarer": "F017_PLANNER_VIA_THIS_PREDECLARED_TABLE",
+      "condition": "ALL_DECLARED_Q2_THROUGH_Q9_PREREQUISITES_PASS_EXACTLY",
+      "failure": "DECLARATION_REQUIRED"
+    },
+    {
+      "artifact": "numerical V4 and V11 result authority",
+      "current_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN", "OPERATIONALLY_RATIFIED"],
+      "intended_attributes": ["BANKED", "PINNED", "TEMPORALLY_FROZEN", "OPERATIONALLY_RATIFIED"],
+      "node": "NO_TRANSITION",
+      "producer": "HISTORICAL_ACCEPTED_AUTHORITY",
+      "checker": "ZERO_DRIFT_GUARDS",
+      "declarer": "F017_PLANNER",
+      "failure": "BLOCKED"
+    },
+    {
+      "artifact": "live Event 06 GO, capability, authorization, identities, installation, package, and execution",
+      "current_attributes": [],
+      "intended_attributes": [],
+      "node": "FORBIDDEN_IN_SEQUENCE_09",
+      "producer": "NONE",
+      "checker": "ZERO_SIDE_EFFECT_INTERPOSITION",
+      "declarer": "FRESH_FUTURE_HUMAN_GO_ONLY",
+      "failure": "IMMEDIATE_TERMINAL_FAILURE"
+    }
+  ],
+  "undeclared_transition_rule": {
+    "finding_id": "UNDECLARED_FREEZE_TRANSITION_REQUIRED",
+    "notification": "REQUIRED_VIA_MACHINE_LOCAL_ALIAS",
+    "serialization_of_resolved_topic": false,
+    "worker_self_declaration": false,
+    "terminal": "DECLARATION_REQUIRED"
+  },
+  "terminal_declaration_rule": {
+    "planner_unavailable": "DECLARATION_REQUIRED",
+    "human_gate_unavailable": "HUMAN_REQUIRED",
+    "self_ratification": false
+  }
+}

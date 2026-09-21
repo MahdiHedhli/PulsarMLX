@@ -1,0 +1,109 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 3,
+  "reviewed_head": "0e7c6970e133435f5dc78bb4af74bf05f2cd5194",
+  "reviewer_model": "claude-opus-5",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v6.json",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-03-exact-response.json",
+  "original_checkpoint_access_observed": 0,
+  "verdict_status": "REJECT_23_ACCEPTED_2_REJECTED_0_UNRESOLVED",
+  "challenges": [
+    {
+      "challenge_id": "O-C03-001",
+      "claim_id": "C-JSON-005",
+      "attack": "Required attacks 3 and 5. Planted ten mutations into an active-closure module (f017_lifecycle_artifact_v10.py) in synthetic mirrors of the 32-module import closure under /private/tmp, each reaching the real json module as an attribute of a first-party module and decoding through a member other than load/loads: parser.json.JSONDecoder().decode(raw); the canonical-serializer exporter _s.json.JSONDecoder().decode(raw); parser.json.decoder.JSONDecoder().decode(raw); a hoisted class _D = parser.json.JSONDecoder then _D().decode(raw); parser.json.JSONDecoder().raw_decode(raw)[0]; JSONDecoder(object_pairs_hook=dict).decode; a hoisted _dec = parser.json.decoder; scan_once; and functools.partial(parser.json.JSONDecoder().decode). Policy run before importing the planted runtime module in every case.",
+      "mutation_or_trace": "Required attacks 3 and 5. Planted ten mutations into an active-closure module (f017_lifecycle_artifact_v10.py) in synthetic mirrors of the 32-module import closure under /private/tmp, each reaching the real json module as an attribute of a first-party module and decoding through a member other than load/loads: parser.json.JSONDecoder().decode(raw); the canonical-serializer exporter _s.json.JSONDecoder().decode(raw); parser.json.decoder.JSONDecoder().decode(raw); a hoisted class _D = parser.json.JSONDecoder then _D().decode(raw); parser.json.JSONDecoder().raw_decode(raw)[0]; JSONDecoder(object_pairs_hook=dict).decode; a hoisted _dec = parser.json.decoder; scan_once; and functools.partial(parser.json.JSONDecoder().decode). Policy run before importing the planted runtime module in every case.",
+      "expected_behavior": "Make the gate capability-rooted rather than member-name-rooted. Track any ast.Attribute whose attr is a capability export name (json, sys, builtins, importlib, os) as binding that capability regardless of the receiver, register the resulting expression in semantic_modules, and then apply the existing json member policy to it - so parser.json.<anything> is a violation unless it is dumps in a direct call, or loads in the canonical parser or the documented offline allowance. Add the transported-JSONDecoder, transported-decoder-submodule, raw_decode, scan_once and hoisted-class forms to the committed rejection census in test_direct_parser_policy_rejects_representation_independent_bypasses, and add an assertion that the closure contains no reference to any json-module member outside the two authorized sites.",
+      "observed_behavior": "All ten accepted. check_f017_bounded_artifact_decode_policy_v1.validate() returned result=PASS, violations=[], runtime_import_closure_count=32, and its direct_decode_sites census still listed only the two authorized sites - the planted decoder was not enumerated. Root cause: the repair's two new helpers, _name_agnostic_decode_sites and _name_agnostic_decode_member_escapes, both filter on node.attr in {'load','loads'}, and the attribute name 'json' is absent from DYNAMIC_CAPABILITY_ATTRIBUTES, so an ast.Attribute chain rooted at a first-party module name reaches the genuine json module through a name the policy never tracks. CAPABILITY_REEXPORT_IMPORT closes only the ImportFrom spelling, not the attribute-access spelling. The planted decoders then performed genuinely unbounded decodes: raw RecursionError escaped the canonical boundary at nesting depth 100000, duplicate keys silently collapsed to {'a': 2}, NaN and Infinity were accepted, noncanonical spacing and ordering were accepted, a 5 MB string was accepted, and a non-dict top level was accepted - every one of which the canonical parser rejects as ArtifactDecodeError on the identical bytes. This falsifies the frozen contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER and is the same defect class as cycle-02 O-C02-001, one representation removed. The defect is latent, not active: an independent census found zero such constructs in the committed closure.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "0b9888ca71009f6d99e2de833d8654e9cab6d9b9"
+    },
+    {
+      "challenge_id": "O-C03-002",
+      "claim_id": "C-JSON-005",
+      "attack": "Required attack 4, which names operator.attrgetter explicitly. Planted three operator-module retrievals into an active-closure module in synthetic mirrors: operator.attrgetter('loads')(parser.json)(raw); operator.attrgetter('json.loads')(parser)(raw); and operator.methodcaller('loads', raw)(parser.json).",
+      "mutation_or_trace": "Required attack 4, which names operator.attrgetter explicitly. Planted three operator-module retrievals into an active-closure module in synthetic mirrors: operator.attrgetter('loads')(parser.json)(raw); operator.attrgetter('json.loads')(parser)(raw); and operator.methodcaller('loads', raw)(parser.json).",
+      "expected_behavior": "Reject any call to operator.attrgetter, operator.methodcaller or operator.itemgetter in the active closure whose argument is a non-constant, or is a constant naming a capability member (load, loads, or any dotted path containing json/sys/builtins/modules). Add all three accepted forms to the committed regression census. More durably, land the capability-rooted rewrite in O-C03-001, which removes the receiver parser.json from reach and makes the operator-module route unconstructible.",
+      "observed_behavior": "All three accepted with result=PASS and violations=[]. The policy rejects getattr, setattr, vars, globals, locals, eval, exec, compile, __import__, __dict__, __getattribute__ and sys.modules, and the repair added 'load'/'loads' to the getattr member check, but there is no rule for the operator module, so attrgetter and methodcaller retrieve the identical bound method with the capability name appearing only as a plain string constant the policy never inspects. Verified end-to-end: the attrgetter and methodcaller forms both collapsed duplicate keys to {'a': 2} and accepted NaN, and accepted nesting depth 100000 that the canonical parser rejects. Note that operator.itemgetter('loads')(parser.json.__dict__) IS correctly rejected, but only incidentally, by the pre-existing __dict__ rule - not by any name-agnostic reasoning about the retrieved member.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "0b9888ca71009f6d99e2de833d8654e9cab6d9b9"
+    },
+    {
+      "challenge_id": "O-C03-003",
+      "claim_id": "C-IMPL-002",
+      "attack": "Contract conformance check of the V10 implementation against specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json, combined with the executable results of O-C03-001, O-C03-002 and O-C03-004.",
+      "mutation_or_trace": "Contract conformance check of the V10 implementation against specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json, combined with the executable results of O-C03-001, O-C03-002 and O-C03-004.",
+      "expected_behavior": "Land the O-C03-001, O-C03-002 and O-C03-004 repairs, then re-measure the binding for check_f017_bounded_artifact_decode_policy_v1.py and re-bank the implementation measurement, the root/decode qualification and the exact-head CI evidence at the new head.",
+      "observed_behavior": "check_f017_bounded_artifact_decode_policy_v1.py is measured binding role=bounded_decode_policy (sha256 f3553d55..., git blob 50652980, verified against exact 0c6a26cf bytes) and remains the sole implementation of the contract clause direct_active_runtime_json_load_or_loads=PROHIBITED_OUTSIDE_CANONICAL_PARSER. Twelve accepted mutations across three families show that clause is not enforced, so the implementation does not match the accepted bounded-artifact decode design. The rest of the decode design does conform and was independently reproduced: all seven DEFAULT_LIMITS match the contract field-for-field, the seven declared decode_order stages are implemented in that order, ArtifactDecodeError normalizes every injected exception class with zero raw escapes across 24 patterns, and BOM and nonfinite numbers are rejected.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "0b9888ca71009f6d99e2de833d8654e9cab6d9b9"
+    },
+    {
+      "challenge_id": "O-C03-004",
+      "claim_id": "C-JSON-005",
+      "attack": "Required attack 5 extended to closure construction rather than closure content. Planted a package-shaped first-party module scripts/research/f017_side_pkg/__init__.py containing plain 'import json' and 'json.loads(raw)', and imported it from an active-closure module with 'import f017_side_pkg'.",
+      "mutation_or_trace": "Required attack 5 extended to closure construction rather than closure content. Planted a package-shaped first-party module scripts/research/f017_side_pkg/__init__.py containing plain 'import json' and 'json.loads(raw)', and imported it from an active-closure module with 'import f017_side_pkg'.",
+      "expected_behavior": "Extend _closure() to follow package-shaped dependencies (RESEARCH / module / '__init__.py' and submodule paths) and dotted first-party imports, and fail closed on any first-party import the closure cannot resolve to an inspected file rather than silently skipping it. Add a regression asserting that a package-shaped planted dependency raises the direct-parser policy error, mirroring the existing end-to-end mirror-tree test.",
+      "observed_behavior": "Accepted: result=PASS, violations=[], runtime_import_closure_count=32 - the planted module is not merely unflagged, it is never parsed at all. _closure() extends only when RESEARCH / f'{module}.py' is a file, so any first-party dependency that resolves to a package directory, or to a dotted path whose first segment is not a research .py file, is silently outside the audited set while remaining fully importable at runtime. The planted module then collapsed duplicate keys, accepted NaN, and accepted nesting depth 100000. This is a total enforcement blind spot rather than a missed representation, and it is not covered by any committed regression. Latent: the committed closure contains no package-shaped research dependency today.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [],
+      "status": "REPAIRED_PENDING_ARBITER",
+      "repair_head": "0b9888ca71009f6d99e2de833d8654e9cab6d9b9"
+    },
+    {
+      "challenge_id": "O-C03-005",
+      "claim_id": "C-JSON-004",
+      "attack": "Planted 'import ast' plus 'ast.literal_eval(raw)' into an active-closure module in a synthetic mirror.",
+      "mutation_or_trace": "Planted 'import ast' plus 'ast.literal_eval(raw)' into an active-closure module in a synthetic mirror.",
+      "expected_behavior": "Optional hardening: add literal_eval, and the ast module generally, to the prohibited dynamic-evaluation set alongside eval, exec and compile, so the closure has exactly one structural decoder.",
+      "observed_behavior": "Accepted with result=PASS and violations=[]. ast.literal_eval is not the json parser, so it is arguably outside the letter of the direct_active_runtime_json_load_or_loads clause, but it is an unbounded recursive structural decoder that accepts NaN and Infinity spellings and has no depth, size or duplicate-key discipline, and it would deserialize authority-shaped bytes into the same Python structures the runtime consumes. The controlled-failure boundary asserted by C-JSON-004 would not apply to bytes decoded through it. Latent: the active closure contains zero literal_eval references.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_FORWARD_HARDENING",
+      "repair_head": null
+    },
+    {
+      "challenge_id": "O-C03-006",
+      "claim_id": "C-ROOT-005",
+      "attack": "Required attack 11, deep-artifact case. Banked a terminal artifact whose payload nests 3000 levels deep through bank_terminal_artifact.",
+      "mutation_or_trace": "Required attack 11, deep-artifact case. Banked a terminal artifact whose payload nests 3000 levels deep through bank_terminal_artifact.",
+      "expected_behavior": "Optional hardening: apply the bounded-decode limits to values on the write path in _bank_at, or round-trip the banked bytes through parse_artifact_bytes as part of the existing readback verification.",
+      "observed_behavior": "The write succeeded (result PASS, target BOUND_PRIMARY) because _bank_at validates only canonical serializability and byte readback, not the decode bounds. The resulting artifact exceeds max_depth=64 and is therefore permanently undecodable by the project's own bounded reader. No accounting harm follows - such an artifact observes as AUTHORITY_CORRUPT, which the monotonic rule treats as never being evidence of absence, and I confirmed no false zero arises. This exactly reproduces cycle-02 finding O-C02-008, which was classified DEFENSE_IN_DEPTH and remains undispositioned at this head.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_FORWARD_HARDENING",
+      "repair_head": null
+    },
+    {
+      "challenge_id": "O-C03-007",
+      "claim_id": "C-QUAL-001",
+      "attack": "Re-traced the provenance of the zero-valued assurance fields in the root/decode qualification result dictionary, and re-ran the bind-time symlink case from cycle-02 O-C02-003.",
+      "mutation_or_trace": "Re-traced the provenance of the zero-valued assurance fields in the root/decode qualification result dictionary, and re-ran the bind-time symlink case from cycle-02 O-C02-003.",
+      "expected_behavior": "Accumulate the assurance fields from the executed cases so a nonzero value is representable, and either reject a caller-supplied root pathname that is itself a symlink at bind time or record the resolved canonical spelling in primary_path.",
+      "observed_behavior": "raw_recursion_errors, false_zero_results, unexpected_passes and the three original_checkpoint_* fields remain hardcoded literals at qualify_f017_v10_root_continuity_bounded_decode_v1.py:278-279 and neighbours, not counters accumulated from executed cases; a nonzero value is not representable in a produced artifact. They are sound as assertions-by-construction, since the case functions raise on any unexpected behaviour and abort the run, but they are not measurements. Separately, AccountingRootAuthority.bind_existing with a symlinked primary pathname still succeeds and leaves path_status() reporting IDENTITY_MISMATCH for the package lifetime. Both are unrepaired cycle-02 DEFENSE_IN_DEPTH findings (O-C02-007 and O-C02-003); neither is reachable in production and neither can produce a false zero, which my 22-case battery confirmed.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_FORWARD_HARDENING",
+      "repair_head": null
+    },
+    {
+      "challenge_id": "O-C03-008",
+      "claim_id": "C-QUAL-003",
+      "attack": "Attempted again to reconcile runtime_failure_executions=201 against runtime_failure_outcomes_realized=47 using only the banked artifact.",
+      "mutation_or_trace": "Attempted again to reconcile runtime_failure_executions=201 against runtime_failure_outcomes_realized=47 using only the banked artifact.",
+      "expected_behavior": "Emit the repetition policy into the qualification artifact: high_risk_outcome_count, ordinary_outcome_count and the per-class repetition counts, so 201 is derivable from the banked evidence alone.",
+      "observed_behavior": "The retained runtime qualification v11 artifact still contains no field naming the high-risk set, its cardinality, or the repetition policy; grep for high_risk_outcome_count and ordinary_outcome_count returns zero hits. Reconciliation again required reading qualify_f017_event04_runtime_hardening_v10.py and re-deriving the marker-matched split from the outcome-obligations v8 contract. I did so independently and it reconciles exactly (30 high-risk x 5 + 17 ordinary x 3 = 201, and 47 x 5 = 235), so the claim stands. This is unrepaired cycle-02 finding O-C02-006.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_FORWARD_HARDENING",
+      "repair_head": null
+    }
+  ]
+}

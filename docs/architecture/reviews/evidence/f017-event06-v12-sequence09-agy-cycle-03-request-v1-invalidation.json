@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-review-request-invalidation/1.0.0",
+  "invalidated_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-agy-whole-domain-cycle-03-request.md",
+  "reason": "TRANSCRIBED_REVIEWED_COMMIT_DID_NOT_RESOLVE",
+  "review_started": false,
+  "provider_session_created": false,
+  "authority_consumed": false,
+  "successor_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-agy-whole-domain-cycle-03-request-v2.md",
+  "correct_reviewed_commit": "f9c8229a06159bb0f390eff15df0448867e92195",
+  "correct_reviewed_tree": "53025a4ff72b61288a9bb43c3c38fd15f2a2fc69",
+  "result": "INVALIDATED_BEFORE_REVIEW"
+}

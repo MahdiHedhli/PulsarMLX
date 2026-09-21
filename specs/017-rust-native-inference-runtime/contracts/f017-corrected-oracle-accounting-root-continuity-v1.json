@@ -1,0 +1,23 @@
+{
+  "accounting_sources": ["BOUND_TRANSITION_JOURNAL", "BOUND_DURABLE_ARTIFACTS", "IN_PROCESS_LAST_COMPLETED_TRANSITION", "LIFECYCLE_OUTCOME_AUTHORITY"],
+  "fallback_semantics": "EVIDENCE_SINK_NOT_ACCOUNTING_SOURCE",
+  "journal": {
+    "append_only": true,
+    "canonical_records": true,
+    "fields": ["sequence", "previous_record_sha256", "transition_id", "artifact_sha256", "lifecycle_outcome", "package_attempt_id"],
+    "fsync_each_record": true,
+    "retained_descriptor": true,
+    "schema": "pulsarmlx.f017.accounting-transition-journal-record/1.0.0"
+  },
+  "monotonic_rule": "ONLY_OBSERVED_ABSENT_MAY_CONTRIBUTE_ZERO; UNAVAILABLE_CORRUPT_OR_IDENTITY_MISMATCH_PRESERVES_THE_VERIFIED_LOWER_BOUND",
+  "numerical_authority_changed": false,
+  "root_authority": {
+    "binding_phase": "INSTALLED_AUTHORIZATION_HANDSHAKE",
+    "fields": ["package_attempt_id", "primary_root_identity", "fallback_root_identity", "canonical_parent", "canonical_leaf", "device", "inode", "authorization_sha256", "installation_receipt_sha256", "journal_identity"],
+    "identity_preserving_handle_required": true,
+    "path_reselection_after_package_start": "PROHIBITED"
+  },
+  "schema": "pulsarmlx.f017.accounting-root-continuity-contract/1.0.0",
+  "states": ["OBSERVED_PRESENT", "OBSERVED_ABSENT", "AUTHORITY_UNAVAILABLE", "AUTHORITY_CORRUPT", "IDENTITY_MISMATCH"],
+  "versioning_decision": "SUCCESSOR_GENERATION_REQUIRED_BECAUSE_JOURNAL_AND_ROOT_AUTHORITY_SCHEMAS_ARE_NEW"
+}

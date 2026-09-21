@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-append-only-evidence-correction/1.0.0",
+  "corrected_at_utc": "2026-08-28T21:40:26Z",
+  "affected_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-node-e0-receipt-v1.json",
+    "sha256": "ce3d1bc13581c1b6e83336bbeec4cd39f6c82bcbe73c12cd5d07db3774b35dc6"
+  },
+  "field": "human_go_digest",
+  "incorrect_value": "b6a5cafed69e38d4549073738abe71bd552c28cd0f88257107f7af1a332b57c3",
+  "correct_value": "b6a5caf3f7589552ecf3e5081ecdf08dbe2c32386d9356527fb1133984886236",
+  "derivation": "SHA256_OF_EXACT_UTF8_GO_BYTES_WITHOUT_TRAILING_NEWLINE",
+  "exact_utf8_text": "Go approved",
+  "freeze_transition_table_digest": "db30bdc8f4679f66f0200f6875886203236bdb952e798508488065733640703b",
+  "execution_impact": "NONE_PRE_APPROVAL",
+  "checkpoint_access": 0,
+  "go_disposition_unchanged": "EXPIRED_BEFORE_APPROVAL",
+  "result": "CORRECTED_APPEND_ONLY"
+}

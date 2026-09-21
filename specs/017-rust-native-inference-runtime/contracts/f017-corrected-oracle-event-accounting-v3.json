@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-accounting/3.0.0",
+  "status": "FROZEN_FOR_SUCCESSOR_AUTHORITY",
+  "historical_master": {
+    "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "terminal": 175,
+    "successor_delta": 0
+  },
+  "concepts": [
+    "PACKAGE_AUTHORIZATION",
+    "PACKAGE_OWNED_ATTEMPT",
+    "PRIMARY_CONSUMER_DURABLE_START",
+    "SECONDARY_CONSUMER_DURABLE_START",
+    "CONSUMER_RECEIPT",
+    "CONSUMER_TERMINAL",
+    "PACKAGE_RECEIPT",
+    "PACKAGE_TERMINAL"
+  ],
+  "successor_semantics": {
+    "authorization_mint_delta": 0,
+    "package_attempt_delta_on_durable_start": 1,
+    "primary_event_delta_on_primary_durable_start": 1,
+    "secondary_event_delta_on_secondary_durable_start": 1,
+    "unstarted_consumer_delta": 0,
+    "event_counts_derived_from_durable_start_receipts": true,
+    "reservation_is_not_execution": true
+  },
+  "event_02_disposition": {
+    "recorded_oracle_event_delta": 2,
+    "v2_meaning": "PACKAGE_RESERVATION_OF_TWO_AUTHORIZED_CONSUMER_SLOTS",
+    "v2_value_does_not_prove_consumer_start": true,
+    "primary_consumer_durable_start": false,
+    "secondary_consumer_durable_start": false,
+    "historical_value_reinterpreted": false,
+    "historical_artifact_rewritten": false
+  },
+  "future_receipts": {
+    "package_start_required": true,
+    "primary_start_result_required": true,
+    "secondary_start_result_required": true,
+    "actual_event_deltas_required": true,
+    "unstarted_consumer_disposition_required": true,
+    "historical_ledger_relationship_required": true
+  }
+}

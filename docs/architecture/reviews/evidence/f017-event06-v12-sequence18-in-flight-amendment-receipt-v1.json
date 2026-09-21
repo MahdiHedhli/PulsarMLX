@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-in-flight-amendment-receipt/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "base_prompt": {
+    "commit": "1582afb528acf2b97d823239c671ff0f0b7c5f62",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/018__F017__Mac-Studio-M1-Ultra__Event-06-V12-package-scoped-terminal-uniqueness-and-no-second-attempt-repair__prompt.md",
+    "sha256": "7f6a871af9ec6be65d0c4ebc15bc9ca50a3f85a35a1ec4c1587e76f9884f1489"
+  },
+  "amendment": {
+    "commit": "2f6cf145ef935c130bcef66bfaf010bee71b5f4e",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/018__F017__Mac-Studio-M1-Ultra__Event-06-package-scoped-terminal-uniqueness__reviewer-integrity-and-storage-authority__in-flight-amendment.md",
+    "sha256": "966be24b26e5ebf1b3398e1b1fc8ec7b5c52a2bd921eea6499b1808db8f0943d",
+    "sidecar": "PASS",
+    "ancestry": "PASS",
+    "planner_verdict": "F017_SEQUENCE18_IN_FLIGHT_SECURITY_AMENDMENT: AUTHORIZED_NO_ACCESS"
+  },
+  "source_at_ingestion": {
+    "head": "f68f10be301726d38eb73062fe52763e8295a93d",
+    "tree": "27cd63ca08ccf0c2033a044c658838b1ad256ee7"
+  },
+  "ingested_at_node": "POST_REPAIR_CANDIDATE_FULL_NATIVE_CI_IN_PROGRESS_PRE_TERMINAL_BANKING",
+  "terminal_banking_reached": false,
+  "response_published": false,
+  "repair_loops_consumed": 3,
+  "candidate_heads_counted": [
+    "f39ce66ddec21a6f3f1752b29ba185ce9933a938",
+    "beba791a9ff3c6c87a4c762f5e2c3f6d9e42c90d",
+    "f68f10be301726d38eb73062fe52763e8295a93d"
+  ],
+  "real_candidate_reviewer_invocations_before_amendment": 2,
+  "pre_amendment_reviews_invalidated_for_acceptance": "ALL",
+  "root_cause_classes_observed": [
+    "CALLER_CONTROLLED_PRODUCTION_REGISTRY_AUTHORITY",
+    "LIVE_EDGE_OMISSION",
+    "NAMESPACE_FORK",
+    "CROSS_MODE_SUBSTITUTION",
+    "TERMINAL_AMBIGUITY"
+  ],
+  "side_effect_census": {
+    "new_human_go_documents": 0,
+    "live_event06_authorizations": 0,
+    "live_v12_installations": 0,
+    "event06_packages_started": 0,
+    "event06_executions": 0,
+    "event06_identities_instantiated_or_consumed": [0, 0],
+    "original_checkpoint_access": "NONE",
+    "numerical_operations": 0,
+    "authorization_package_primary_secondary_accounting": [0, 0, 0, 0],
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "historical_master_ledger": 175
+  },
+  "fable5_adversarial_review_reported_by_authenticated_steering": "PASS",
+  "result": "IN_FLIGHT_AMENDMENT_APPLIED"
+}

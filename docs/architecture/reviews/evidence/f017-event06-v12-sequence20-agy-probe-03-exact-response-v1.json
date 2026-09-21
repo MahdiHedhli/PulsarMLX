@@ -1,0 +1,7 @@
+{
+  "nonce_echo": "49bf8e73a41e74936d03921272f303016f34d753bae25b8707c0ad4f66cbf975",
+  "payload_sha256_echo": "0ea78cec1f8742646b96951de169944b0f38bb7de9765cb1f983b3550911d576",
+  "requested_model_echo": "gemini-3.1-pro-high",
+  "terminal_marker": "END_F017_SEQUENCE20_TRANSPORT_PROBE",
+  "transport_probe": "PASS"
+}

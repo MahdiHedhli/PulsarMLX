@@ -1,0 +1,84 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-operator-approval/2.0.0",
+  "approval_id": "F017-CORRECTED-ORACLE-EVENT-02-OPERATOR-GO",
+  "decision": "GO_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_V2",
+  "approval_source": "EXPLICIT_OPERATOR_GO_IN_CURRENT_CODEX_TASK",
+  "approved_at_utc": "2026-08-23T03:32:24Z",
+  "new_go": true,
+  "prior_go_reused": false,
+  "prior_go_disposition": "EXPIRED_BEFORE_MINT_ON_LOAD_BEARING_PREFLIGHT_FAILURE",
+  "authorization_survives_bound_byte_change": false,
+  "branch": "feat/017-rust-native-inference-runtime",
+  "operator_evidence_head": "f51f1b33e8a3340d57421f9a59036f08b97ddc07",
+  "implementation_ci_head": "2fc212ff1ccde542fb70f327f20704f5ec294d5f",
+  "execution_code_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
+  "repair_declaration_sha256": "59cf41669f51e431ead4ed76a794cc606b60765add70c00e29eb102643e1e997",
+  "contract_sha256": "ae39f31c5f1b8df06bfe6893a24de91e7926ae6e05b9a2e8bc8e51eadf519046",
+  "event_coordinator_sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f",
+  "memory_observer_sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477",
+  "memory_parser_contract_sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d",
+  "authorizer_validator_sha256": "f00146a622f890b7d565e7b83f0a229300c69e7935a718820c95851ec5a78520",
+  "numerical_contract_sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4",
+  "primary_oracle_sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+  "secondary_oracle_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+  "primary_decoder_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+  "checkpoint_authority": {
+    "root": "/Users/mhedhli/Models/PulsarMLX/GLM-5.2-UD-IQ2_XXS",
+    "manifest_sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f",
+    "catalog_sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19",
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "shard_count": 6,
+    "graph_payload_shards": 5,
+    "identity_only_shards": 1
+  },
+  "machine": {
+    "brand": "Apple M1 Ultra",
+    "architecture": "arm64"
+  },
+  "authorization_id": "F017-CORRECTED-ORACLE-INERT-FIXTURE-2",
+  "primary_event_id": "F017-CORRECTED-ORACLE-PRIMARY-EVENT-02",
+  "secondary_event_id": "F017-CORRECTED-ORACLE-SECONDARY-EVENT-02",
+  "state_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-02-v2",
+  "output_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/corrected-full-checkpoint-oracle-event-02-v2",
+  "consumers": [
+    {
+      "role": "INDEPENDENT_CPU_REFERENCE",
+      "event_id": "F017-CORRECTED-ORACLE-PRIMARY-EVENT-02",
+      "attempts": 1,
+      "retries": 0,
+      "resume": false
+    },
+    {
+      "role": "INDEPENDENT_ACCELERATED_CROSS_CHECK",
+      "event_id": "F017-CORRECTED-ORACLE-SECONDARY-EVENT-02",
+      "attempts": 1,
+      "retries": 0,
+      "resume": false
+    }
+  ],
+  "context": {
+    "prompt_token": 9703,
+    "position": 0,
+    "kv_state": "EMPTY",
+    "mask": "ONE_VISIBLE_KEY_CAUSAL",
+    "sampling": "NONE_GREEDY_ARGMAX",
+    "top_n": 32
+  },
+  "expected_result_token": null,
+  "historical_target_observations": "QUARANTINED_AND_PROHIBITED_FROM_RUNTIME_INPUTS",
+  "p1_attempt_1_retry": "PROHIBITED",
+  "p1_attempt_2": "PROHIBITED",
+  "native_production_p1": "PROHIBITED",
+  "multi_token_generation": "PROHIBITED",
+  "pre_mint_qualification": {
+    "report_sha256": "e2d3bf66013e945f886a0cee6cd5631b695fa82e48daf824e3487a41620df75c",
+    "page_size_bytes": 16384,
+    "available_memory_bytes": 59813183488,
+    "minimum_memory_bytes": 17179869184,
+    "authorization_created": false,
+    "state_created": false,
+    "checkpoint_shard_opens": 0,
+    "checkpoint_payload_reads": 0,
+    "authorizing": false
+  }
+}

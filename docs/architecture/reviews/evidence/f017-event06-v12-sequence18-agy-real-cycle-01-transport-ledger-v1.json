@@ -1,0 +1,23 @@
+{
+  "candidate_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "candidate_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "distinct_transport_models": [
+    "gemini-3.1-pro-high"
+  ],
+  "exit_status": 0,
+  "finding_ids": [
+    "F017-VULN-ROOT-1",
+    "F017-VULN-DAG-1"
+  ],
+  "nonce_echo": "PASS",
+  "payload_digest_echo": "PASS",
+  "private_raw_receipt_sha256": "15203b4ea6e82c05e1726cdc837dcce467b2ef227f7a85e2616c0e6fa97163da",
+  "request_kind": "REAL_CANDIDATE",
+  "result": "PASS",
+  "review_cycle": 1,
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-transport-ledger/1.0.0",
+  "terminal_marker": "PASS",
+  "transport_model": "gemini-3.1-pro-high",
+  "verdict": "REJECT"
+}

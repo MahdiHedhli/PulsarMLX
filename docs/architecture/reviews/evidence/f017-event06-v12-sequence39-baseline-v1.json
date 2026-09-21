@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence39-baseline/1.0.0",
+  "recorded_at_utc": "2026-09-04T02:53:26Z",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt_authority": {
+    "commit": "781bd71faa9bf546b479a5544d6f69c33440df13",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/039__F017__Mac-Studio-M1-Ultra__Event-06-minimum-gate-path-simplification-and-no-access-composition__prompt.md",
+    "sha256": "3a3a763532223fe7db38dd3f8069d109396a9ca5352a694d625c20bfee765835",
+    "basename_sidecar": "PASS",
+    "acceptance_table_and_sidecar_guards": "PASS",
+    "sequence38_parent_and_audit_guard": "PASS"
+  },
+  "source_start": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729",
+    "tree": "e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+    "remote_parity": "PASS",
+    "isolated_worktree_clean": true
+  },
+  "reproduced_required_mechanism_count": 35,
+  "minimum_required_mechanism_count": 17,
+  "historical_master_ledger": 175,
+  "event_04_retry": false,
+  "event_05_retry_or_resume": false,
+  "prior_event_06_retry_or_resume": false,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_root_resolutions": 0,
+  "original_checkpoint_access": 0,
+  "real_numerical_executions": 0,
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "unrelated_project_access": "NONE",
+  "result": "PASS"
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-design-support-ledger/1.0.0",
+  "cycle": 1,
+  "rows": [
+    {"finding_id":"FINDING-001","claim_id":"C-BRIDGE-LIFE-001","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v2.json","resolution":"Split readiness/install, package gate, identity, and post-identity derivation phases; each preserves only the exact reached prefix."},
+    {"finding_id":"FINDING-002","claim_id":"C-BRIDGE-LIFE-001","disposition":"REPAIRED","evidence":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v2.json","resolution":"Every post-start terminal route releases every acquired descriptor before package failure; post-identity bridge failures release all five."}
+  ],
+  "supported": 0,
+  "repaired": 2,
+  "conceded": 0,
+  "unresolved": 0,
+  "result": "PASS"
+}

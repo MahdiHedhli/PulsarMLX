@@ -1,0 +1,29 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-ROOT-001",
+      "consequence_term": "SECOND_ATTEMPT",
+      "finding_id": "F017-VULN-ROOT-1",
+      "seeded_symbol_or_edge": "bounded_p1",
+      "statement": "The execute-evidenced-v4 arm in bounded_p1.rs accepts the state directory path from an unauthenticated caller-provided contract file. This caller-controlled production registry location allows an attacker to bypass the exclusive directory creation check and launch a SECOND_ATTEMPT."
+    },
+    {
+      "claim_id": "S18-C-DAG-001",
+      "consequence_term": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "F017-VULN-DAG-1",
+      "seeded_symbol_or_edge": "execute_evidenced_bounded_p1_once",
+      "statement": "If recorder.flush() fails during execute_evidenced_bounded_p1_once, the error is propagated immediately, bypassing attempt.terminalize_evidenced(). This live terminal DAG edge omission leaves the package in an unterminated state, leading to AMBIGUOUS_ACCOUNTING."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "26bdc78fafeb0a4b53a47ac5d42037cfe8dbe98f87282262c13461aca06d091d",
+  "payload_sha256_echo": "b3d4dc3e6ef5326ec7240b3d6ae194748082bc71bfd9dc488b2bc90184475ba5",
+  "reviewed_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "reviewed_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "REJECT. Found caller-controlled registry location in bounded_p1 (execute-evidenced-v4) enabling SECOND_ATTEMPT, and terminal DAG edge omission in execute_evidenced_bounded_p1_once causing AMBIGUOUS_ACCOUNTING.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

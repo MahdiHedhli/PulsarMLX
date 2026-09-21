@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-design-claim-ledger/1.0.0",
+  "cycle": 1,
+  "claims": [
+    {"claim_id":"C-BRIDGE-GEN-001","statement":"The bridge records V12 identity, V11 numerical consumers, V4 numerical contract, and V11 result authority without changing historical schemas.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-PROV-001","statement":"Every bridge field is derived from sealed mutually bound V12 installation, identity-stage, execution-plan, and measured authority inputs.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DIGEST-001","statement":"One canonical bridge digest is bound by every consumer and durable transition through package terminal.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LEGACY-001","statement":"Legacy V11 and V12 candidate admission remains closed and unchanged.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CALLPATH-001","statement":"The complete coordinator path is structurally callable end to end through exact consumer signatures.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-LIFE-001","statement":"Ordering, one-shot limits, reconstruction, release, accounting, and terminalization fail closed with phase-specific outcomes.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-CAP-001","statement":"Design and validation-only qualification add no checkpoint, numerical, live-state, installation, or identity-consumption capability.","state":"PROPOSED","readiness_critical":true},
+    {"claim_id":"C-BRIDGE-DRIFT-001","statement":"Numerical V4 and result authority V11 bytes remain unchanged.","state":"PROPOSED","readiness_critical":true}
+  ],
+  "blocking": 0,
+  "required": 0,
+  "unresolved": 0,
+  "result": "PENDING_INDEPENDENT_DESIGN_REVIEW"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-review-repair-disposition/1.0.0",
+  "review_cycle": 2,
+  "reviewer": "gemini-3.1-pro-high-via-agy",
+  "reviewed_commit": "6eab2292e989d590a44d3d2d4d9d6edc274c592a",
+  "review_verdict": "CHALLENGE_REQUIRES_REPAIR",
+  "repair_loop": 3,
+  "smallest_violated_requirements": [
+    "active interposition for numerical_execute, package_start, and tensor_source census keys"
+  ],
+  "findings": [
+    {
+      "id": "F017-S9-CHALLENGE-01",
+      "disposition": "REPAIR_IMPLEMENTED_PENDING_DOWNSTREAM_REPLAY"
+    }
+  ],
+  "source_change": true,
+  "earliest_invalidated_node": "Q4_AUTHORITATIVE_NO_ACCESS_QUALIFICATION",
+  "invalidated_downstream_nodes": ["Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10"],
+  "acceptance_predicates_changed": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "live_authority_created": false,
+  "event_06_executed": false,
+  "production_commit_success_calls": 0,
+  "p1_attempt_2_executed": false,
+  "result": "REPAIR_IMPLEMENTED_DOWNSTREAM_REPLAY_REQUIRED"
+}

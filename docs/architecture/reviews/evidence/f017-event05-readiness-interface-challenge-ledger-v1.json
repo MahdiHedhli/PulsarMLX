@@ -1,0 +1,7 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-challenge-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "challenges": [],
+  "challenge_count": 0,
+  "status": "AWAITING_GEMINI_DESIGN_CHALLENGE"
+}

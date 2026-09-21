@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-graph-state/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-graph-state-v3.json",
+  "event": "EVENT_06",
+  "generation": "V12",
+  "active_node": "E11_OPUS_ARBITRATION_AND_FINAL_EVENT06_DECLARATION",
+  "terminal_execution_node": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_AND_CALL_PATH_PROOF",
+  "nodes": [
+    {"node_id": "E0_PROMPT_BYTES_PARENT_DUPLICATE_GUARD", "status": "PASS"},
+    {"node_id": "E1_SOURCE_AUTHORITY_CI_MANIFEST_RECONCILIATION", "status": "PASS"},
+    {"node_id": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_AND_CALL_PATH_PROOF", "status": "TERMINAL_FAILURE"},
+    {"node_id": "E3_FRESH_APPROVAL_EVENT_PLAN_AND_V12_CANDIDATE", "status": "BLOCKED"},
+    {"node_id": "E4_TRIPLE_VALIDATION_EXACT_INSTALL_AND_RECEIPT", "status": "BLOCKED"},
+    {"node_id": "E5_PACKAGE_START_GATE_CLAIM_AND_V12_SIX_SHARD_IDENTITY", "status": "BLOCKED"},
+    {"node_id": "E6_PRIMARY_BINARY64_ONE_EXECUTION_AND_BUNDLE", "status": "BLOCKED"},
+    {"node_id": "E7_SECONDARY_BINARY32_ONE_EXECUTION_AND_BUNDLE", "status": "BLOCKED"},
+    {"node_id": "E8_INDEPENDENT_COMPARISON_RELEASE_AND_PACKAGE_TERMINAL", "status": "BLOCKED"},
+    {"node_id": "E9_APPEND_ONLY_EVIDENCE_AND_EVIDENCE_ONLY_CI", "status": "PASS"},
+    {"node_id": "E10_GEMINI_CHALLENGE_AND_BOUNDED_EVIDENCE_REPAIR", "status": "PASS"},
+    {"node_id": "E11_OPUS_ARBITRATION_AND_FINAL_EVENT06_DECLARATION", "status": "REPAIR_REQUIRED"},
+    {"node_id": "E12_RESPONSE_CHECKSUM_NOTIFICATION_AND_PRIVATE_HANDOFF", "status": "PENDING"}
+  ],
+  "opus_cycle": 1,
+  "opus_terminal_no_go_evidence_verdict": "ACCEPT_TERMINAL_PRE_MINT_NO_GO_EVIDENCE_AS_TRUTHFUL_AND_COMPLETE",
+  "opus_global_execution_evidence_verdict": "REJECT",
+  "opus_non_blocking_required_findings": 4,
+  "opus_unresolved_claims_before_repair": 2,
+  "append_only_repairs_banked": 4,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_06_executed": false,
+  "original_checkpoint_access": 0,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}

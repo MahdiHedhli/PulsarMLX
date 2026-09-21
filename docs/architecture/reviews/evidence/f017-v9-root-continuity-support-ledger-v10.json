@@ -1,0 +1,66 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-support-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 6,
+  "prior_support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v9.json",
+  "support": [
+    {
+      "support_id": "S-O-C06-001",
+      "challenge_id": "O-C06-001",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28",
+      "evidence": [
+        "Runtime import typing is prohibited and from-typing imports are restricted to the exact annotation vocabulary used by accepted bytes.",
+        "Deferred annotations accept only inert identifier forward references; executable strings and JoinedStr annotations reject.",
+        "A fixed-point value-shape analysis rejects invocation of callable values acquired through Call, Subscript, Attribute, aliases, containers, conditional transport, named expressions, or class storage."
+      ],
+      "tests": [
+        "110 representation-independent parser mutations",
+        "158 focused root/decode tests",
+        "204 decode attacks",
+        "252 root attacks"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C06-002",
+      "challenge_id": "O-C06-002",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "repair_commit": "fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28",
+      "evidence": [
+        "The shape-based bounded-decode policy is rebound in runtime authority, scientific access, inert fixture, and implementation measurement v17.",
+        "Canonical parser remains the only active runtime authority decoder and the documented offline allowance is unchanged."
+      ],
+      "tests": [
+        "203 combined active-authority tests",
+        "runtime qualification v16",
+        "production no-access rehearsal v17"
+      ],
+      "remaining_uncertainty": "NONE"
+    },
+    {
+      "support_id": "S-O-C06-003",
+      "challenge_id": "O-C06-003",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "The exact current 32-module closure contains only the canonical parser and one documented offline decode site.",
+        "No current authority artifact is decoded by an external interpreter, and no in-process bypass was demonstrated."
+      ],
+      "tests": ["independent closure census", "current-byte direct decode census"],
+      "remaining_uncertainty": "External inline-command semantic scanning remains defense in depth."
+    },
+    {
+      "support_id": "S-O-C06-004",
+      "challenge_id": "O-C06-004",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "repair_commit": null,
+      "evidence": [
+        "All 43 Git blob and SHA-256 measurements are derived and exact at implementation head fa3daeaf.",
+        "Numerical byte identity, closure count 32, and original checkpoint access zero independently reconstruct true."
+      ],
+      "tests": ["measurement v17 PASS", "numerical byte regression PASS", "closure validation PASS"],
+      "remaining_uncertainty": "Auxiliary-field derivation remains defense in depth."
+    }
+  ]
+}

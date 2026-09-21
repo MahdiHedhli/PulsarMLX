@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence20-authority-guard-external-binding-correction/1.0.0",
+  "superseded_evidence_artifact": "docs/architecture/reviews/evidence/f017-event06-v12-sequence20-authority-guard-receipt-v1.json",
+  "superseded_evidence_sha256": "97515cfa4d4c25ea12e349542dbff42aa0e39472d98807c87b60a7b025cd7404",
+  "corrected_semantics": "EXTERNAL_PROMPT_CONTROL_GIT_OBJECT_BINDING",
+  "external_prompt_repository_commit": "680c50f9f62b11159de00a8e48dc91e6cead0c6e",
+  "external_prompt_repository_artifact": "Prompts/F017/Mac-Studio-M1-Ultra/020__F017__Mac-Studio-M1-Ultra__Sequence19-review-availability-and-completed-audit-recovery__prompt.md",
+  "external_prompt_repository_artifact_sha256": "f73f259e83d2f8d0d53c1845646edfd6e5979ae3a533f04df101584bf4506b69",
+  "external_prompt_basename_sidecar": "PASS",
+  "source_repository_path_binding": false,
+  "authority_guard_result": "PASS",
+  "source_execution_bytes_changed": false,
+  "result": "PASS"
+}

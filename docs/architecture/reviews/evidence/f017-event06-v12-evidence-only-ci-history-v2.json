@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-evidence-only-ci-history/2.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-evidence-only-ci-history-v1.json",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "runs": [
+    {"run_id": 33112357172, "head": "9a98470898a36eee13e720a2bb3461ecd59b8515", "result": "FAIL", "native_jobs_launched": 0, "failure": "MODIFIED_CHALLENGE_LEDGER_V3", "disposition": "DISCLOSED_IMMUTABLE_HISTORY"},
+    {"run_id": 33112777151, "head": "b26ae20167041ccebaf6d447083de92f47a3e40a", "result": "FAIL", "native_jobs_launched": 0, "failure": "MODIFIED_CHALLENGE_LEDGER_V4", "disposition": "DISCLOSED_IMMUTABLE_HISTORY"},
+    {"run_id": 33115885569, "head": "b7ae502625fd6b4d342dd266a24b3f025cf716fd", "result": "PASS", "evidence_integrity": "PASS", "native_jobs_launched": 0, "disposition": "REPAIR_QUALIFICATION_AUTHORITY"},
+    {"run_id": 33116113841, "head": "e9f6b1323a21a5981e50e549c537a882f10cf9df", "result": "PASS", "evidence_integrity": "PASS", "native_jobs_launched": 0, "disposition": "GEMINI_REQUEST_AUTHORITY"},
+    {"run_id": 33116706553, "head": "0ada3b841a3fbb2aa90da2e403e6f6c0a44be8c6", "result": "FAIL", "native_jobs_launched": 0, "failure": "STALE_LOCAL_INDEX_RECORDED_REQUEST_DELETION", "disposition": "DISCLOSED_IMMUTABLE_HISTORY"},
+    {"run_id": 33116756921, "head": "40506674e7e75f7c36eb1840de105b6b49cca8fe", "result": "PASS", "evidence_integrity": "PASS", "native_jobs_launched": 0, "disposition": "APPEND_ONLY_RESTORATION_AUTHORITY"}
+  ],
+  "failed_runs_preserved": 3,
+  "successful_runs": 3,
+  "latest_successful_run": 33116756921,
+  "latest_successful_head": "40506674e7e75f7c36eb1840de105b6b49cca8fe",
+  "existing_evidence_files_modified_by_latest_successful_run": 0,
+  "result": "PASS_WITH_COMPLETE_DISCLOSED_HISTORY"
+}

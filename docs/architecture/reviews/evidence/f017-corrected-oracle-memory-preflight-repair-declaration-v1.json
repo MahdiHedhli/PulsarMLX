@@ -1,0 +1,120 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-memory-preflight-repair-declaration/1.0.0",
+  "declaration": "F017_CORRECTED_ORACLE_MEMORY_PREFLIGHT_REPAIR: ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "b65ba91d55b28ec5b1505d707495ccbde3c830f4",
+  "execution_code_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
+  "implementation_ci_head": "2fc212ff1ccde542fb70f327f20704f5ec294d5f",
+  "reviewed_evidence_head": "c7f066cf8692695d6db9b1e078fc856c6d3cce33",
+  "declaration_authority": "THE_GIT_COMMIT_CONTAINING_THIS_APPEND_ONLY_ARTIFACT",
+  "failed_boundary": {
+    "evidence_path": "docs/architecture/reviews/evidence/f017-corrected-full-checkpoint-oracle-event-01-preflight-failure-v1.json",
+    "evidence_sha256": "f7443acc057d619ac478f43aafcea51f81b77ab65e3b3141776f30ddcfbb7b24",
+    "classification": "LOAD_BEARING_PREFLIGHT_FAILURE_REQUIRES_REVIEWED_COORDINATOR_REPAIR",
+    "expired_go_disposition": "EXPIRED_BEFORE_MINT_ON_LOAD_BEARING_PREFLIGHT_FAILURE",
+    "old_coordinator_path": "scripts/research/execute_f017_corrected_oracle_event.py",
+    "old_coordinator_historical_sha256": "e76a73150c415f73a6c8fc29429636084ab126c3302036bce39414dede40ce8a",
+    "old_coordinator_current_tombstone_sha256": "9593f18a576f55ba2b9bd607f1a059e50d3080f6f55909a631e5d30bc2660ba9"
+  },
+  "superseding_authority": {
+    "coordinator_path": "scripts/research/execute_f017_corrected_oracle_event_v2.py",
+    "coordinator_sha256": "301d4ed408da1a790b31409645b4251b4432a005a0485b4d3887a801570d702f",
+    "memory_observer_path": "scripts/research/f017_macos_memory_observation_v1.py",
+    "memory_observer_sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477",
+    "parser_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-macos-memory-observation-contract-v1.json",
+    "parser_contract_sha256": "e89a473140d927fdb62aec50443d6fb9864ff8047244301cea91659b4440fd2d",
+    "scientific_access_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v2.json",
+    "scientific_access_contract_sha256": "ae39f31c5f1b8df06bfe6893a24de91e7926ae6e05b9a2e8bc8e51eadf519046",
+    "validator_authorizer_path": "scripts/research/validate_f017_corrected_oracle_access_v2.py",
+    "validator_authorizer_sha256": "f00146a622f890b7d565e7b83f0a229300c69e7935a718820c95851ec5a78520",
+    "inert_authorization_path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v2.json",
+    "inert_authorization_sha256": "8bc2fe4e3a6f2ea8686836da403d61439e4f85d73e4939e3a01a72b7113fa969",
+    "authority_manifest_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-memory-repair-authority-manifest-v1.json",
+    "authority_manifest_sha256": "11710edd1ba904704f4ac230e75e14897f78eb92ddf6d52fb0d9b34656b86710",
+    "supersession_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-coordinator-v1-supersession-v1.json",
+    "supersession_sha256": "39f00c8d196706dbf20f7c7164f78dde7827e905544c6f46a3960391450917ce"
+  },
+  "memory_qualification": {
+    "qualification_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-preflight-qualification-v1.json",
+    "qualification_sha256": "9ce2c7425c9a364ceecb8b8ddd015526d025b2d2d942ba4398d9e81699459da6",
+    "command": "/usr/bin/vm_stat",
+    "parser_version": "F017_MACOS_VM_STAT_V1",
+    "page_size_bytes": 16384,
+    "pages_free": 399927,
+    "pages_inactive": 2857881,
+    "pages_speculative": 122657,
+    "pages_purgeable": 34241,
+    "available_memory_bytes": 55946543104,
+    "minimum_memory_bytes": 17179869184,
+    "result": "PASS",
+    "state_created": false,
+    "authorization_created": false,
+    "checkpoint_shard_opens": 0,
+    "checkpoint_payload_reads": 0
+  },
+  "unchanged_numerical_authority": {
+    "numerical_methodology_sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4",
+    "primary_oracle_sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1",
+    "secondary_oracle_sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29",
+    "primary_decoder_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+    "checkpoint_free_qualification_sha256": "b9c2f7dcd9982120f804594e9e268b7d0d764190625789717d104f4e4829c052"
+  },
+  "ci": {
+    "full_native_run_id": 32611864941,
+    "full_native_head": "2fc212ff1ccde542fb70f327f20704f5ec294d5f",
+    "full_native_mode": "FULL_NATIVE",
+    "full_native_conclusion": "success",
+    "research_tests": 449,
+    "required_native_qualification_skips": 0,
+    "review_packet_run_id": 32612491996,
+    "review_packet_head": "c7f066cf8692695d6db9b1e078fc856c6d3cce33",
+    "review_packet_mode": "EVIDENCE_ONLY",
+    "review_packet_conclusion": "success",
+    "native_jobs_launched_on_review_packet": 0
+  },
+  "reviews": {
+    "gemini": {
+      "model": "gemini-3.1-pro-high",
+      "request_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-gemini-review-request-cycle-01.md",
+      "request_sha256": "89349fc0705788cf4ab04e28cbc4ed92f5cc38e7869594f80f58ab3482dda33e",
+      "response_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-gemini-response-cycle-01.md",
+      "response_sha256": "e3af0d94b3f6b8642508cb8bf4db4a73c019c0b294ee93d3914df4d8bc7bf372",
+      "normalized_result_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-gemini-normalized-result-cycle-01.json",
+      "normalized_result_sha256": "ec32259dbe754fb29cbfdb636258a51e794c024125365d4aa91803a18faa606f",
+      "verdict": "ACCEPT",
+      "material_disagreement": false
+    },
+    "opus": {
+      "model": "claude-opus-5",
+      "request_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-opus-review-request-cycle-01.md",
+      "request_sha256": "998d4e570e315673d663ed0d3f2c2b431001c57389be4ef6568a1b684628f3ed",
+      "response_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-opus-response-cycle-01.md",
+      "response_sha256": "553d5174665a55c55fbd2ba2ce9310da74be14c28e68aff2ab9ef2a2a2c47ef3",
+      "normalized_result_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-opus-normalized-result-cycle-01.json",
+      "normalized_result_sha256": "73ea61407e19932f7545176e8dd8fbe2cf35c655ed708dab043488ecc3efe8a5",
+      "blocking_findings": 0,
+      "non_blocking_required_findings": 0,
+      "defense_in_depth_findings": 4,
+      "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION_PREPARATION"
+    }
+  },
+  "safety_state": {
+    "old_operator_go_reusable": false,
+    "corrected_full_checkpoint_oracle_executed": false,
+    "live_oracle_access_authorization_created": false,
+    "primary_oracle_event_started": false,
+    "secondary_oracle_event_started": false,
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "oracle_event_ledger_delta": 0,
+    "historical_master_ledger": 175,
+    "p1_attempt_2_executed": false,
+    "live_p1_attempt_2_authorization_created": false,
+    "further_real_inference_executed": false
+  },
+  "readiness": {
+    "ready_for_corrected_full_checkpoint_oracle_execution_authorization": true,
+    "ready_to_prepare_p1_attempt_2_authorization": false,
+    "next_action": "NEW_OPERATOR_GO_OR_NO_GO_FOR_THE_REVIEWED_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT"
+  }
+}

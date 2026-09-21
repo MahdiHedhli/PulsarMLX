@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-transport-ledger/1.0.0",
+  "reviewer": "AGY",
+  "requested_model": "gemini-3.1-pro-high",
+  "transport_model": "gemini-3.1-pro-high",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "nonce": "0fb42d1bcf416c1883d29eb8bf9df92e84b140cba9fe4300fd519a5cb3111798",
+  "payload_sha256": "1070d15835cc5f8ab1be08da1d728c5a742e00f93db16fa32a2d982f4f152d5c",
+  "response_sha256": "1e56ba49e2762f5bd48549151bfcdabe982cb097f13a6a93490d49808b544680",
+  "stdout_sha256": "10373c1549089a197e873c076d29c24376a18148e2787af7fc2f530310350d2d",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "exit_status": 0,
+  "nonce_digest_echo": "PASS",
+  "model_identity": "PASS",
+  "schema_validation": "PASS",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "transport": "PASS",
+  "verdict": "REJECT",
+  "blocking_findings": 0,
+  "unresolved_findings": 1,
+  "result": "VALID_TERMINAL_REJECTION"
+}

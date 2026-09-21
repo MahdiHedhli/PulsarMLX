@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-gemini-design-result/1.0.0",
+  "reviewed_design_head": "af7b3674a649bd4289f6f4654998e1b7cb5de0f0",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "cycle": 2,
+  "prior_findings": [
+    {"id":"FINDING-001","severity":"BLOCKING","claim_id":"C-BRIDGE-LIFE-001","status":"CLOSED"},
+    {"id":"FINDING-002","severity":"BLOCKING","claim_id":"C-BRIDGE-LIFE-001","status":"CLOSED"}
+  ],
+  "new_findings": [],
+  "blocking": 0,
+  "required": 0,
+  "advisory": 0,
+  "verdict": "ACCEPT_FOR_OPUS_DESIGN_ARBITRATION"
+}

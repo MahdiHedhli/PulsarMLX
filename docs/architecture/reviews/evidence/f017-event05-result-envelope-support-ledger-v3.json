@@ -1,0 +1,17 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-support-ledger/1.0.0",
+  "cycle":3,
+  "reviewed_head":"2b76fbbad4ad173b9a64fe265e7e8ca09c1cef1b",
+  "responses":[
+    {"challenge_id":"NEW-01","disposition":"REPAIR_IMPLEMENTED","evidence":["bounded 79-layer routing manifests","receipt bindings","comparison payload and routing SHA bindings","package closure membership"]},
+    {"challenge_id":"NEW-02","disposition":"REPAIR_IMPLEMENTED","evidence":["diagnostic selected token and margin fields removed"]},
+    {"challenge_id":"NEW-03","disposition":"REPAIR_IMPLEMENTED","evidence":["directory open helper normalizes OSError","descriptor cleanup guarded"]},
+    {"challenge_id":"NEW-04","disposition":"REPAIR_IMPLEMENTED","evidence":["committed numerical threshold breach regression"]},
+    {"challenge_id":"NEW-05","disposition":"REPAIR_IMPLEMENTED","evidence":["validate_closure_root rederives exact closure"]},
+    {"challenge_id":"NEW-06","disposition":"REPAIR_IMPLEMENTED","evidence":["payload package-attempt and consumer-event bindings","manifest cross-check"]}
+  ],
+  "repairs":6,
+  "conceded_claims":0,
+  "unresolved_claims":0,
+  "original_checkpoint_access":0
+}

@@ -1,0 +1,7 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-arbiter-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "claim_verdicts": [],
+  "global_verdict": "NOT_YET_REVIEWED",
+  "status": "AWAITING_OPUS_DESIGN_ARBITER"
+}

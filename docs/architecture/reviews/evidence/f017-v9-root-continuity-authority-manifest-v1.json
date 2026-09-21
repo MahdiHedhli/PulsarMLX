@@ -1,0 +1,15 @@
+{
+  "artifacts": {
+    "arbiter_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v1.json",
+    "challenge_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v1.json",
+    "claim_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v1.json",
+    "graph_state": "docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v1.json",
+    "node_receipts": ["docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json"],
+    "support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json"
+  },
+  "authoritative_head_at_graph_start": "90338840c94118651a85c695af22de780437663b",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "original_checkpoint_access": 0,
+  "schema": "pulsarmlx.f017.v9-root-continuity-authority-manifest/1.0.0",
+  "status": "GRAPH_ACTIVE"
+}

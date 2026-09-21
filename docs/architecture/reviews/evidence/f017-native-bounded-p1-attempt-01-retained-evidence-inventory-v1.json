@@ -1,0 +1,47 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-01-retained-evidence-inventory/1.0.0",
+  "status": "COMPLETE_NO_NEW_RETAINED_READS",
+  "consumer": "F017_ATTEMPT_1_OFFLINE_FORENSICS",
+  "inventoried_authorities": [
+    {
+      "role": "REPRESENTATIVE_LAYER_3_NATIVE_INPUT_PACKAGE",
+      "grant_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json",
+      "grant_sha256": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28",
+      "artifact_count": 40,
+      "scope": "representative layer-3 S0 through S2",
+      "use_for_attempt_1_diagnosis": "HISTORICAL_RESULT_ONLY; consumer identity does not include this offline phase"
+    },
+    {
+      "role": "REPRESENTATIVE_LAYER_3_COMPARISON_AND_CAPTURE_PACKAGE",
+      "grant_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json",
+      "grant_sha256": "340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f",
+      "allowed_read_count": 89,
+      "result_path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json",
+      "result_sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4",
+      "acceptance_path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json",
+      "acceptance_sha256": "9d4d29870e8aa67d9ca9ed2702bddd4b9248930204e4f03f05c5f05f2727b163",
+      "scope": "representative layer-3 34-stage surface",
+      "use_for_attempt_1_diagnosis": "COMMITTED_RESULT_ONLY; no retained byte read performed"
+    },
+    {
+      "role": "F016_FULL_FORWARD_TOKEN_RECORDS",
+      "paths": [
+        "docs/research/glm52/raw/f016-inference-p1-iq3-0001.json",
+        "docs/research/glm52/raw/f016-inference-p2-iq3-0001.json",
+        "docs/research/glm52/raw/f016-inference-p1-token1.json"
+      ],
+      "scope": "committed result metadata, not retained per-layer tensor bytes",
+      "use_for_attempt_1_diagnosis": "PROVENANCE_AUDIT_ONLY"
+    }
+  ],
+  "search_result": {
+    "additional_full_forward_per_layer_real_checkpoint_capture_found": false,
+    "retained_final_hidden_or_logits_with_consumer_grant_found": false,
+    "additional_real_quantized_tensor_package_needed_for_safe_progress": false,
+    "reason": "Metadata, synthetic full-graph, and independent packed-block qualification establish the checkpoint-free findings. A new real retained read cannot recover the corrected full-checkpoint expected token from artifacts that were never retained."
+  },
+  "new_consumer_scoped_grants_created": 0,
+  "retained_artifact_reads": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_payload_reads": 0
+}

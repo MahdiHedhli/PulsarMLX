@@ -1,0 +1,18 @@
+{
+ "schema": "pulsarmlx.f017.native-bounded-p1-attempt-02-final-review-normalized-result/1.0.0",
+ "cycle": 4,
+ "reviewer_model": "claude-opus-5",
+ "reviewer_session": "fresh Claude Code agent session spawned as an independent subagent (agentId a476d3b39465b8d5f) by the preparing session; read only the request packet file; no prior context",
+ "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-02-opus-final-ratification-cycle-04-request.md",
+ "request_sha256": "501023b7a971fabc73f1ebd42f6cd3826e77a8929bff473ec2596f5990b28122",
+ "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-02-opus-final-ratification-cycle-04-exact-response.json",
+ "response_sha256": "50e0f959f24a4d1c189efd6a13a92cefd3a50a690cbcfa3a3a18b6962221aa6f",
+ "nonce_verified": true,
+ "readiness_head_echoed": "557070643c83b58e57e195fc430f832eb6af9ec0",
+ "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+ "blocking_count": 0,
+ "non_blocking_required_count": 0,
+ "defense_in_depth_count": 6,
+ "adversarial_cases": 29,
+ "disposition": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1 with 0 blocking and 0 non-blocking-required findings: the final review the attempt-2 human approval binds"
+}

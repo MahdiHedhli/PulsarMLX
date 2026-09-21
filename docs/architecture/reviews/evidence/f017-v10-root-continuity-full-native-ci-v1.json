@@ -1,0 +1,37 @@
+{
+  "aggregate_job": {"conclusion": "success", "job_id": 97800448512, "name": "CI aggregate status"},
+  "classification": "FULL_NATIVE",
+  "classifier_job": {"conclusion": "success", "job_id": 97796249212, "name": "Classify committed change"},
+  "evidence_jobs": {"closed_branch_guard": "skipped", "documentation_integrity": "skipped", "evidence_integrity": "skipped"},
+  "head": "5f74e8c461f681d86b3af7068a5a96c4b2dad8c5",
+  "historical_active_authority": {
+    "current_v10_validation": "PASS",
+    "historical_git_object_validation": "PASS",
+    "mixed_authority_detected": false
+  },
+  "jobs": {
+    "native_mlx": {"conclusion": "success", "job_id": 97796282716, "name": "Apple MLX small-fixture validation"},
+    "workspace_baseline": {"conclusion": "success", "job_id": 97796282641, "name": "Apple Silicon workspace baseline"}
+  },
+  "native_required_skips": 0,
+  "original_checkpoint_access": 0,
+  "relevant_test_census": {
+    "active_authority_pytest_a": 65,
+    "active_authority_pytest_b": 33,
+    "active_authority_pytest_c": 88,
+    "bounded_worker_tests": 89,
+    "ci_routing_tests": 23,
+    "feature_002_tests": 428,
+    "f017_oracle_tests": 17,
+    "historical_authority_unittests": 20,
+    "native_mlx_fixture_cases": 7,
+    "native_mlx_smoke_tests": 2,
+    "retained_numerical_tests": 6,
+    "vectorized_iq2_xxs_tests": 5
+  },
+  "result": "PASS",
+  "run_id": 32846168712,
+  "schema": "pulsarmlx.f017.v10-root-continuity-full-native-ci/1.0.0",
+  "tree": "1385f80e7a078a466cb526a30b552a79d6ae5613",
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32846168712"
+}

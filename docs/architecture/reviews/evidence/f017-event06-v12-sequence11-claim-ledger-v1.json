@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-claim-ledger/1.0.0",
+  "reviewed_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "claims": [
+    {"claim_id": "CANONICAL_LIVE_GO_FIELD_SET", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json"},
+    {"claim_id": "NONCIRCULAR_AUTHORITY_DAG", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json"},
+    {"claim_id": "LIVE_GO_SEALED_TYPE_COMPATIBILITY", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json"},
+    {"claim_id": "PROMPT_BOUND_IDENTITY_PLAN", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-prompt-authority-snapshot-provenance-v1.json"},
+    {"claim_id": "REAL_PUBLIC_SIGNATURES_BOUND", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json"},
+    {"claim_id": "END_TO_END_NO_ACCESS_COMPOSITION", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-no-access-rehearsal-v1.json"},
+    {"claim_id": "SEALED_TYPE_SECURITY", "agy": "ACCEPT", "opus": "ACCEPT", "evidence": "f017-event06-v12-sequence11-live-go-call-path-qualification-v1.json"}
+  ],
+  "accepted": 7,
+  "rejected": 0,
+  "unresolved": 0,
+  "result": "PASS"
+}

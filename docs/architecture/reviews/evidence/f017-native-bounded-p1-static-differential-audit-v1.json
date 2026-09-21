@@ -1,0 +1,61 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-static-differential-audit/1.0.0",
+  "status": "COMPLETE_WITH_UNRESOLVED_NUMERICAL_SCOPE_DIFFERENCE",
+  "attempt_1_implementation": {
+    "commit": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+    "path": "crates/f017-native/src/model.rs",
+    "sha256": "d4b62c6f0f995b6955ae00b430ed8157bd7523a3d9eacfccbfb46bfc471d24b3"
+  },
+  "reference_surface": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "source_commit": "99751b9c3d8bf00a6b1af166f8f07adf9e90dd15",
+    "files": [
+      {"path": "scripts/research/glm52_inference.py", "sha256": "f8fca783dde72bc3c0440967aa58d988a4adf85a36e55eb057c0686548a816de"},
+      {"path": "scripts/research/glm52_dense_primitives.py", "sha256": "7cc93aba3c0b70f64746f08f6da31d961f9cbe7ff3eeff3837dd821aba2a79ae"},
+      {"path": "scripts/research/glm52_layer.py", "sha256": "7ead143029da3bc519afc853c40a7ad7e9a64066d46cbb5ed779dcac4825226a"},
+      {"path": "scripts/research/glm52_mla.py", "sha256": "763136b5f0c62406ed3900f5d526b17dafd9b05bf23ad5c39823e860412f7cb5"},
+      {"path": "scripts/research/glm52_router.py", "sha256": "0d625fc62d38e603cc7f822d6996c966b77cfe1aec17e6ead98420118e3de607"}
+    ]
+  },
+  "stage_rows": [
+    {"stage":"token_embedding","native":"model::execute_one_token","reference":"glm52_dense_primitives.embed_token","dtype":"decoded f32","shape":"[6144]","agreement":"STRUCTURAL_AND_ORIENTATION_AGREE","order":"row token_id from [vocab,hidden]","test":"synthetic full graph"},
+    {"stage":"layer_loop","native":"model::execute_one_token","reference":"glm52_inference._run_stack","dtype":"f32 versus Python float control","shape":"79 layers","agreement":"STRUCTURAL_AGREEMENT","order":"0..78","test":"plan audit plus synthetic layer census"},
+    {"stage":"attention_rmsnorm","native":"model::rms_norm","reference":"glm52_dense_primitives.rms_norm","dtype":"native serial f32; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"left fold","test":"D0 plus independent oracle"},
+    {"stage":"q_a_projection","native":"NativeMlxBackend::matvec","reference":"glm52_dense_primitives.matvec_weight","dtype":"MLX f32","shape":"[2048,6144] x [6144]","agreement":"AGREE","order":"MLX implementation-specific","test":"synthetic full graph"},
+    {"stage":"q_rank_rmsnorm","native":"model::rms_norm","reference":"glm52_dense_primitives.rms_norm","dtype":"native f32; reference binary64 scalar","shape":"[2048]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"left fold","test":"D0 plus independent oracle"},
+    {"stage":"q_b_projection","native":"NativeMlxBackend::matvec","reference":"glm52_mla.mla_build_q","dtype":"MLX f32","shape":"[16384,2048] x [2048]","agreement":"AGREE","order":"head-major 64x256","test":"synthetic full graph"},
+    {"stage":"rope","native":"model::execute_one_token","reference":"glm52_mla.rope_tail_inplace","dtype":"f32 versus binary64 control","shape":"64 heads x 64 rope dims","agreement":"POSITION_ZERO_IDENTITY_ONLY","order":"not materialized by native at position zero","test":"position-zero fixture; nonzero position remains outside attempt-1 scope"},
+    {"stage":"kv_a_projection","native":"NativeMlxBackend::matvec","reference":"glm52_mla.mla_build_kv","dtype":"MLX f32","shape":"[576,6144] x [6144]","agreement":"AGREE","order":"512 latent then 64 rope","test":"synthetic full graph"},
+    {"stage":"kv_rank_rmsnorm","native":"model::rms_norm","reference":"glm52_mla.mla_build_kv","dtype":"native f32; reference binary64 scalar","shape":"[512]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"first 512 only","test":"synthetic full graph"},
+    {"stage":"k_b_projection","native":"model::execute_one_token","reference":"glm52_mla.mla_qk_lowrank","dtype":"MLX f32","shape":"64 x ([512,192] x [192])","agreement":"AGREE","order":"head 0..63","test":"shape audit"},
+    {"stage":"attention_score","native":"model::execute_one_token","reference":"glm52_mla.mla_attention_single","dtype":"native serial f32; reference binary64 scalar","shape":"one score per head","agreement":"OUTPUT_IRRELEVANT_FOR_ONE_VISIBLE_KEY","order":"one-key softmax is exactly one","test":"single-key structural fixture"},
+    {"stage":"v_b_projection","native":"model::execute_one_token","reference":"glm52_mla.mla_attention_single","dtype":"MLX f32","shape":"64 x ([256,512] x [512])","agreement":"AGREE","order":"head 0..63","test":"shape audit"},
+    {"stage":"attention_output_projection","native":"NativeMlxBackend::matvec","reference":"glm52_mla.mla_output_proj","dtype":"MLX f32","shape":"[6144,16384] x [16384]","agreement":"AGREE","order":"head-major value concatenation","test":"synthetic full graph"},
+    {"stage":"post_attention_residual","native":"model::residual","reference":"glm52_mla.mla_forward_token","dtype":"native binary32 add; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"coordinate serial","test":"residual edge suite"},
+    {"stage":"ffn_rmsnorm","native":"model::rms_norm","reference":"glm52_dense_primitives.rms_norm","dtype":"native f32; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"left fold","test":"independent oracle"},
+    {"stage":"dense_gate_up","native":"model::swiglu","reference":"glm52_mla.dense_ffn","dtype":"MLX f32","shape":"[12288,6144] x2","agreement":"AGREE","order":"gate then up","test":"synthetic dense layers"},
+    {"stage":"silu","native":"model::silu","reference":"glm52_mla.dense_ffn.silu","dtype":"native f32 exp; reference binary64 math.exp","shape":"[inner]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"coordinate","test":"edge oracle"},
+    {"stage":"dense_down","native":"model::swiglu","reference":"glm52_mla.dense_ffn","dtype":"MLX f32","shape":"[6144,12288] x [12288]","agreement":"AGREE","order":"projection then residual","test":"synthetic dense layers"},
+    {"stage":"router_logits","native":"NativeMlxBackend::matvec","reference":"glm52_layer.moe_ffn","dtype":"MLX f32","shape":"[256,6144] x [6144]","agreement":"AGREE","order":"expert id 0..255","test":"router fixtures"},
+    {"stage":"router_sigmoid_bias_rank","native":"model::route","reference":"glm52_router.glm_route_real","dtype":"native f32 exp/add; reference binary64 math.exp/add","shape":"[256] -> top8","agreement":"STRUCTURAL_EXACT_NUMERICALLY_DISTINCT","order":"descending score; lower expert id tie","test":"exact and near tie fixtures"},
+    {"stage":"route_normalization","native":"model::route","reference":"glm52_router.glm_route_real","dtype":"native f32; reference binary64","shape":"[8]","agreement":"SAME_FORMULA_DIFFERENT_PRECISION","order":"selected slot order; floor 2^-14; scale 2.5","test":"routing oracle"},
+    {"stage":"routed_gate_up_silu","native":"model::swiglu","reference":"glm52_expert.run_expert_swiglu","dtype":"MLX f32 plus native f32 SiLU","shape":"8 experts x [2048]","agreement":"SAME_GRAPH_DIFFERENT_SCALAR_PRECISION","order":"selected slot order","test":"quant and expert fixtures"},
+    {"stage":"route_weight_application","native":"model::swiglu","reference":"glm52_expert.run_expert_swiglu","dtype":"native f32","shape":"[2048] before down versus [6144] after down","agreement":"ALGEBRAICALLY_LINEAR_BUT_ROUNDING_DISTINCT","order":"native scales pre-down; reference scales post-down","test":"dedicated scale-location mutation required"},
+    {"stage":"routed_aggregate","native":"model::execute_one_token","reference":"glm52_layer.moe_ffn","dtype":"native serial f32; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"selected slot order","test":"D3.5 layer-3 retained qualification"},
+    {"stage":"shared_expert","native":"model::swiglu","reference":"glm52_layer.moe_ffn","dtype":"MLX f32 plus scalar surface difference","shape":"[6144]","agreement":"SAME_GRAPH_DIFFERENT_SCALAR_PRECISION","order":"after routed aggregate","test":"D3.5 layer-3 retained qualification"},
+    {"stage":"ffn_composition","native":"model::execute_one_token","reference":"glm52_layer.moe_ffn","dtype":"native serial f32; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"routed then shared","test":"D3.5 layer-3 retained qualification"},
+    {"stage":"layer_residual","native":"model::residual","reference":"glm52_layer.layer_forward_token","dtype":"native binary32 add; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"coordinate serial","test":"residual edge suite"},
+    {"stage":"final_norm","native":"model::rms_norm","reference":"glm52_inference.logits_from_hidden","dtype":"native f32; reference binary64 scalar","shape":"[6144]","agreement":"INTENDED_NUMERICAL_DISTINCTION","order":"left fold","test":"synthetic full graph"},
+    {"stage":"output_projection","native":"NativeMlxBackend::matvec","reference":"glm52_inference.logits_from_hidden","dtype":"MLX f32","shape":"[154880,6144] x [6144]","agreement":"AGREE","order":"token id row order","test":"synthetic full graph"},
+    {"stage":"argmax","native":"model::execute_one_token","reference":"glm52_inference.argmax","dtype":"f32 logits","shape":"[154880] -> scalar","agreement":"AGREE","order":"maximum; lowest token id tie","test":"near/equal logit fixtures"},
+    {"stage":"mandatory_stop","native":"stream::execute_real_bounded_p1_once","reference":"F016 one-token requested_new_tokens=1","dtype":"control","shape":"one generated token","agreement":"AGREE","order":"no continuation","test":"one-shot admission tests"}
+  ],
+  "highest_risk_differences": [
+    "No accepted full-forward oracle proves the reference-hybrid token is invariant under 79 layers of serial-f32 scalar composition.",
+    "Native route weighting is applied before the down projection while the F016 source applies it after; linearity preserves exact real arithmetic but not binary32 rounding.",
+    "RMSNorm, residual, sigmoid, SiLU, routing normalization, routed aggregation, shared composition, and layer residual use different scalar precision surfaces.",
+    "Attempt 1 retained no per-layer fingerprints, so no first divergent stage can be inferred from token 17351."
+  ],
+  "conclusion": "The graph topology, tensor orientations, layer census, one-token context, and argmax policy agree. The accumulated numerical surface does not, and committed attempt-1 evidence cannot distinguish a legitimate frozen-surface distinction from an implementation defect.",
+  "phase_accounting": {"original_checkpoint_shard_opens":0,"original_checkpoint_payload_reads":0,"p1_attempt_2_executed":false}
+}

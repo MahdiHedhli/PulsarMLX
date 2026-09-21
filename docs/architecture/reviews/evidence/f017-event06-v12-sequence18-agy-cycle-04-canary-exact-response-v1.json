@@ -1,0 +1,22 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-DAG-001",
+      "consequence_term": "REPEATED_CONSUMPTION",
+      "finding_id": "F017-FINDING-001",
+      "seeded_symbol_or_edge": "F017-DAG2-039",
+      "statement": "The live terminal bank edge is omitted in build_package_terminal (v2), leading to repeated real consumption since the result is lost after execution."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "b4042e21ac954f91f170db7dd570e7876a65283146588ce865574f5bf17957d0",
+  "payload_sha256_echo": "e89bd1e2e31ce330cca6ba10ec5fe729d39392e8b68da0fe4c783b788777d6ec",
+  "reviewed_head": "f5c2c991fa9d07830cf2678dbfd11166e7cfb27c",
+  "reviewed_tree": "78c3afcbc122cf5b8dc87c085c92081c5d75ff18",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "Review complete. Found seeded defect: omission of live terminal bank edge.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

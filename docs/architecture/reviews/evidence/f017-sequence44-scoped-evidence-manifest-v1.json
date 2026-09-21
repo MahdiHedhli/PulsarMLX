@@ -1,0 +1,44 @@
+{
+  "artifacts": [
+    {
+      "bytes": 7859,
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-historical-reconstructability-v1.json",
+      "purpose": "Append-only no-access static findings and actual tooling stop; not instrumentation qualification.",
+      "sha256": "81747fba3f8df2826757798a1794ce678809d61287f0dff0e00192ade9fcdea9"
+    },
+    {
+      "bytes": 8700,
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-preliminary-read-site-inventory-v1.json",
+      "purpose": "Append-only no-access static findings and actual tooling stop; not instrumentation qualification.",
+      "sha256": "caed3fe75988a44ce1f521e7bd6c11df76144fb9f14b4316d57ee0161f5d054b"
+    },
+    {
+      "bytes": 8687,
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-instrumentation-tooling-outcome-v1.json",
+      "purpose": "Append-only no-access static findings and actual tooling stop; not instrumentation qualification.",
+      "sha256": "6648072e300fbb4433a44cb89eaae52893abb11487642a4c9bd59861df171505"
+    }
+  ],
+  "execution_bytes_changed": false,
+  "publication_class": "EVIDENCE_ONLY",
+  "qualified_instrumentation": false,
+  "result": "HUMAN_REQUIRED_TOOLING",
+  "safety": {
+    "ambient_tool_upgrade_commands": 0,
+    "credential_or_privacy_configuration_access": "NONE",
+    "event06_reexecution_go_reuse_or_new_go": "NONE",
+    "historical_master_ledger": 175,
+    "live_registry_or_ledger_writes": 0,
+    "macbook_lane_mutation": "NONE",
+    "observer_restart": false,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_mmaps": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_root_resolutions": 0,
+    "original_checkpoint_shard_opens": 0,
+    "real_execution_or_p1_authority": "NONE",
+    "retained_event06_package_or_payload_access": "NONE"
+  },
+  "schema": "pulsarmlx.f017.sequence44.scoped-evidence-manifest/1.0.0",
+  "source_base": "29c55d314a72747b44bd2c1ce93c71ba6ac157b6"
+}

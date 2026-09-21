@@ -1,0 +1,12 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-support-ledger/4.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":2,
+  "support":[
+    {"support_id":"SUP-CHAL-02-005","challenge_id":"CHAL-02-005","disposition":"ANSWERED_BY_EXISTING_EVIDENCE","evidence":["output contract prohibits CALLER_SUPPLIED_CAPTURE_CALLBACK","existing Source/Store/RowMatrix protocols are synchronous closed tensor inputs governed by capability policy","no asynchronous callback symbol or trace exists"],"repair_commit":null,"tests":["prohibition mutation","capability-policy binding"],"remaining_uncertainty":"Runtime immutability remains for R7."},
+    {"support_id":"SUP-CHAL-02-007","challenge_id":"CHAL-02-007","disposition":"ANSWERED_BY_EXISTING_EVIDENCE","evidence":["active_v11_calls_legacy_api false","active_v11_serializes_legacy_result false","legacy full logits dictionary rejected by active serializer true"],"repair_commit":null,"tests":["control separation mutations"],"remaining_uncertainty":"Active V11 parser regression remains for R12."}
+  ],
+  "repairs":0,
+  "unresolved":0,
+  "result":"PASS_BUT_GEMINI_PACKET_INVALID"
+}

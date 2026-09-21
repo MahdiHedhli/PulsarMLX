@@ -1,0 +1,7 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-historical-tombstone/1.0.0",
+  "historical_authorizer": {"path":"scripts/research/validate_f017_corrected_oracle_access_v11.py","measurement_head":"025433364b45c8749447271ff1f1806a4231ffeb","git_blob_sha":"d98a2fed0e3887220c584aad7d6ddcbfe59f162f","sha256":"474fd9e3939a9b9b5dd93eea431f4cb73793b4b8e6511adc11fa11f67af8cc39","future_live_minting_permitted":false},
+  "historical_declaration": {"path":"docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json","evidence_head":"660bdc9fd5d1a2ace57a49492077d590e3b7b39d","git_blob_sha":"7d8fe6bb7cc2bd79c87cc8514dc9d32d275e77cf","sha256":"e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6","future_live_minting_permitted":false},
+  "supersession_rule": "EXACT_GIT_OBJECTS_REMAIN_HISTORICAL_EVIDENCE_BUT_CANNOT_AUTHORIZE_OR_MINT_EVENT05",
+  "result": "TOMBSTONED"
+}

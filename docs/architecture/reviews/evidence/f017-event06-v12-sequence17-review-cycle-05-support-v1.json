@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-review-cycle-05-support/1.0.0",
+  "reviewed_head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+  "reviewed_tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce",
+  "agy_verdict": "ACCEPT",
+  "opus_verdict": "REJECT",
+  "blocking_finding_disposition": {
+    "id": "B1",
+    "claim": "PACKAGE_SCOPED_TERMINAL_UNIQUENESS_AND_NO_SECOND_ATTEMPT",
+    "disposition": "CONCEDED",
+    "reason": "The production authority scope is not rejected when a caller supplies qualification_registry_root, so the fixed live package registry can be bypassed before irreversible work.",
+    "repair_disposition": "NOT_ATTEMPTED_STOP_RULE_REACHED"
+  },
+  "unresolved_finding_disposition": {
+    "id": "U1",
+    "claim": "LIVE_TERMINAL_CLAIM_MECHANICAL_COVERAGE",
+    "disposition": "UNRESOLVED",
+    "repair_disposition": "NOT_ATTEMPTED_STOP_RULE_REACHED"
+  },
+  "authorized_repair_loops": 10,
+  "repair_loops_consumed": 7,
+  "same_structural_root_repairs_failed": "3/3",
+  "stop_rule": "STOP_AFTER_THREE_FAILED_REPAIRS_OF_ONE_STRUCTURAL_FINDING",
+  "result": "BLOCKED"
+}

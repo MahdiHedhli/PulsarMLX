@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-prompt-authority-snapshot-provenance/1.0.0",
+  "policy": {
+    "source_repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "source_commit": "e5ff7286047dfaeae5b4d0ecfb96c58bdc5b24f3",
+    "source_path": "Prompts/F017/AUTHORITY-FREEZING-POLICY-v1.md",
+    "source_sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+    "snapshot_path": "docs/architecture/reviews/evidence/f017-authority-freezing-policy-v1-exact-snapshot.md"
+  },
+  "transition_table": {
+    "source_repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "source_commit": "0abe6601570a917c9a645f81d26a86071d779e68",
+    "source_path": "Prompts/F017/Mac-Studio-M1-Ultra/009__F017__Mac-Studio-M1-Ultra__Event-06-V12-no-access-qualification__freeze-transition-table.json",
+    "source_sha256": "9fd9db92c9c6c6c4a1e9f6f290d5bfa43bcbad989b84e6fb0555c17c0e74a754",
+    "snapshot_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-freeze-transition-table-exact-snapshot.json"
+  },
+  "snapshot_bytes_exact": true,
+  "prompt_state_modified": false,
+  "result": "PASS"
+}

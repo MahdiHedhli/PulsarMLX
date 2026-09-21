@@ -1,0 +1,54 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event04-readiness-ci-census/5.0.0",
+  "implementation": {
+    "head": "12d2b91671368af89ca1367bd959b3f142cc58c1",
+    "tree": "a495393c399c7a17416bb08e7e5919a0a1f0a95d",
+    "measurement_manifest_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v3.json",
+    "measurement_manifest_sha256": "88c4d91cc134d39ff2c6fc32d79bbb1da5d17809e7c94a929c28c048a60895ed"
+  },
+  "full_native": {
+    "run_id": 32689603653,
+    "head": "12d2b91671368af89ca1367bd959b3f142cc58c1",
+    "mode": "FULL_NATIVE",
+    "result": "PASS",
+    "apple_silicon_workspace_baseline": "success",
+    "apple_mlx_small_fixture_validation": "success",
+    "required_native_skips": 0
+  },
+  "final_review_banking": {
+    "run_id": 32693477671,
+    "head": "bdcbb1f5c9c5b11a0dd0f37ee356bf5b405f2e14",
+    "mode": "EVIDENCE_ONLY",
+    "result": "PASS",
+    "evidence_integrity": "success",
+    "native_mlx_jobs_launched": 0
+  },
+  "reviews": {
+    "gemini": {
+      "reviewed_head": "2591ffcd93bf74b8494e2046e8c53dd06db1d18a",
+      "request_sha256": "ec7767acfe36c6bb88d7526f416295714a26086361abf6e447e8bf18659ce071",
+      "response_sha256": "361ee31ec433e05631729a1d633b491d94060b194ec8f3e717deb0a8c925fd5a",
+      "verdict": "ACCEPT",
+      "material_disagreement": "none"
+    },
+    "opus": {
+      "reviewed_head": "0c09e8ecc9f4002d5a29b4bc7765441ede87de9b",
+      "request_sha256": "57d6d9b1a6e1b7ea4310446883c308f784824ecb426a41adfa62b831ef192fd9",
+      "response_sha256": "e4e01da29e7fd690a4b8fa04ea4af3f10d02ec034b83008155c007e61a6b4052",
+      "blocking": 0,
+      "non_blocking_required": 0,
+      "defense_in_depth": 3,
+      "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_AUTHORIZATION_PREPARATION"
+    }
+  },
+  "safety": {
+    "event_04_executed": false,
+    "live_event_04_authorization_created": false,
+    "primary_real_oracle_executions": 0,
+    "secondary_real_oracle_executions": 0,
+    "new_original_checkpoint_access": 0,
+    "p1_attempt_2_executed": false,
+    "historical_master_ledger": 175
+  },
+  "result": "PASS"
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-starting-failure-reproduction/1.0.0",
+  "prompt_authority": {
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "commit": "3631aab694b4ec958a6021967541920d6ed11f3b",
+    "repository_relative_path": "Prompts/F017/Mac-Studio-M1-Ultra/003__F017__Mac-Studio-M1-Ultra__Event-06-V12-to-V11-numerical-authority-bridge-repair__prompt.md",
+    "sha256": "5576cfbf345e637fab30ae6559e0036d37d2cf3d2962d7ade1a81227331692ea",
+    "sidecar_match": true
+  },
+  "source_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "9aebdb79c3fa69c3f905ad135429a9b89bc681b1",
+    "tree": "47eecd7c0d5edeb9ad522872749b0411e68348de",
+    "remote_parity": "PASS",
+    "worktree_clean": true,
+    "measured_implementation_head": "5b98e53e6d9c4e2c2a8ae91bd71f55001517f5d0",
+    "measured_implementation_tree": "e27590470ffb6ddf3885e8ae4e1a399e211aa27e"
+  },
+  "reproduction": {
+    "v12_candidate_schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-candidate-authority/12.1.0",
+    "v12_candidate_field_count": 28,
+    "v12_candidate_closed_key_match": true,
+    "v12_generation": "V12",
+    "v11_only_fields_present": [],
+    "primary_v12_alias_is_exact_v11_function": true,
+    "secondary_v12_alias_is_exact_v11_function": true,
+    "exact_primary_failure": "ValueError(\"primary V11 candidate authority\")",
+    "exact_secondary_failure": "ValueError(\"secondary V11 candidate authority\")",
+    "v12_coordinator_has_numerical_graph": false,
+    "unmodified_candidate_call_path_intersection": "EMPTY",
+    "result": "PASS"
+  },
+  "side_effect_census": {
+    "checkpoint_root_resolved": false,
+    "file_opens": 0,
+    "hash_reads": 0,
+    "payload_reads": 0,
+    "mmaps": 0,
+    "tensor_reads": 0,
+    "numerical_operations": 0,
+    "durable_state_created": false,
+    "approval_created": false,
+    "authorization_installed": false,
+    "package_started": false,
+    "event06_ids_consumed": 0
+  },
+  "terminal_parent_failure_path": "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json",
+  "terminal_parent_failure_sha256": "822752fae481657623411568d9ab4c04154af696a2ff176946f5fc68f9a56e46",
+  "failure_classification": "END_TO_END_EXECUTION_CALL_PATH_NOT_INSTANTIABLE",
+  "repair_scope": "EXPLICIT_V12_TO_V11_NUMERICAL_EXECUTION_AUTHORITY_BRIDGE",
+  "result": "PASS"
+}

@@ -1,0 +1,46 @@
+{
+ "schema": "pulsarmlx.f017.native-bounded-p1-contract-v3-static-validation/1.0.0",
+ "date": "2026-09-20",
+ "executor": "f017-native-bounded-p1 built from 5e32d68f (MacBook build for the controls; the committed Studio-built binary is validated on the M1 Ultra separately)",
+ "contract": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v3.json",
+ "v3_accepted": true,
+ "v2_still_accepted": true,
+ "negative_controls": [
+  {
+   "control": "v3 with attempt-1 token 21615",
+   "rejected": true,
+   "reason": "one-shot authority mismatch"
+  },
+  {
+   "control": "v3 with attempt id 1",
+   "rejected": true,
+   "reason": "one-shot authority mismatch"
+  },
+  {
+   "control": "v3 with v2 receipt schema",
+   "rejected": true,
+   "reason": "one-shot authority mismatch"
+  },
+  {
+   "control": "v3 without binding",
+   "rejected": true,
+   "reason": "contract root authority mismatch"
+  },
+  {
+   "control": "v2 schema carrying attempt-2 fields",
+   "rejected": true,
+   "reason": "contract root authority mismatch"
+  },
+  {
+   "control": "v3 with wrong binding sha",
+   "rejected": true,
+   "reason": "repository binding mismatch specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-corrected-oracle-binding-v1.json"
+  },
+  {
+   "control": "v3 claiming live authorization",
+   "rejected": true,
+   "reason": "contract root authority mismatch"
+  }
+ ],
+ "all_rejected": true
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-node-r8-receipt-v1.json",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R8",
+  "input_head": "69824ea29aa354b3cf5c32ac94b2bcd9c7d3d276",
+  "output_head": "69824ea29aa354b3cf5c32ac94b2bcd9c7d3d276",
+  "input_authority_shas": {
+    "implementation_measurement": "5f41efe925cfb0de657596c189aa15a27055ea8403acfaba42fd273ea202f9bc",
+    "scientific_access": "9d2ec6acb4f166934b77eb407f127877de8732308a8148c01ce7ae14d2b8070f"
+  },
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-event05-readiness-interface-full-native-ci-v2.json"],
+  "commands_executed": ["git push origin feat/017-rust-native-inference-runtime", "GitHub Actions run 33038039750"],
+  "tests_executed": ["478 repository research tests", "227 readiness-interface mutations", "FULL_NATIVE pinned Apple MLX suite"],
+  "result_counts": {"run_id": 33038039750, "successful_required_jobs": 4, "required_native_skips": 0, "repository_tests": 478, "mutations": 227, "unexpected_passes": 0},
+  "claims_closed": ["C-CI-001"],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R9"],
+  "result": "PASS"
+}

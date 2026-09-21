@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-graph-state/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence11-graph-state-v1.json",
+  "source_start_head": "41ceba4c6781063dbc6f858a311afaebdfe42979",
+  "source_start_tree": "4ea5625e4b28f27327b135a758fa24c3a11974e6",
+  "implementation_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "implementation_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "active_node": "R10_EVIDENCE_ONLY_CI_AND_CONDITIONAL_READINESS",
+  "nodes": [
+    {"node_id": "R0_PROMPT_PARENT_SOURCE_AND_TERMINAL_GUARDS", "status": "PASS"},
+    {"node_id": "R1_EXACT_FAILURE_REPRODUCTION_AND_REQUIREMENTS", "status": "PASS"},
+    {"node_id": "R2_VERSION_FORWARD_DESIGN_AND_PREOBSERVATION_FREEZE", "status": "PASS"},
+    {"node_id": "R3_BOUNDED_IMPLEMENTATION_REPAIR", "status": "PASS"},
+    {"node_id": "R4_EXACT_TYPE_AND_CALL_PATH_QUALIFICATION", "status": "PASS"},
+    {"node_id": "R5_NO_ACCESS_PRODUCTION_SHAPED_REHEARSAL", "status": "PASS"},
+    {"node_id": "R6_FAILURE_AND_MUTATION_CAMPAIGN", "status": "PASS"},
+    {"node_id": "R7_FULL_NATIVE_CI", "status": "PASS"},
+    {"node_id": "R8_AGY_INDEPENDENT_CHALLENGE", "status": "PASS"},
+    {"node_id": "R9_OPUS_ARBITRATION", "status": "PASS"},
+    {"node_id": "R10_EVIDENCE_ONLY_CI_AND_CONDITIONAL_READINESS", "status": "RUNNING"},
+    {"node_id": "R11_PUBLICATION_NOTIFICATION_AND_MANUAL_HANDOFF", "status": "PENDING"}
+  ],
+  "repair_loops_authorized": 10,
+  "repair_loops_consumed": 1,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false,
+  "result": "IN_PROGRESS"
+}

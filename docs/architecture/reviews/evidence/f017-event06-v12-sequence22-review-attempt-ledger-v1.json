@@ -1,0 +1,64 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-review-attempt-ledger/1.0.0",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "canary_head": "7f38c1cfdc53e879da86b274a5b759241fc029e3",
+  "canary_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "agy_attempts": [
+    {
+      "attempt": 1,
+      "phase": "DAG_FIRST_CANARY",
+      "exit_status": 0,
+      "provider_status": "SUCCESS",
+      "structured_output_present": false,
+      "prohibited_command_tool_attempted": true,
+      "command_execution_count": 0,
+      "side_effects": 0,
+      "raw_stdout_sha256": "62a379a6794f80bd520371a59ff036b1e33a52c87c9469dd06d79df0d5a551d2",
+      "classification": "REVIEW_TRANSPORT_FAILED",
+      "repair_loop_consumed": false
+    },
+    {
+      "attempt": 2,
+      "phase": "POST_TERMINAL_DIAGNOSTIC_INVOCATION",
+      "authorization_status": "OUT_OF_PROTOCOL_AFTER_ATTEMPT_1_CLOSURE_VIOLATION",
+      "completion_status": "COMPLETED",
+      "dag_first_result": "MISSING_EDGE",
+      "reported_producer": "validate_collapsed_installed_triple",
+      "reported_consumer": "bind_identity_stage",
+      "expected_private_edge_detected": false,
+      "raw_stdout_sha256": "15cbe1c570f7cad17435799922ee304516837c26e1e6c6682e2154dee634a441",
+      "authority_disposition": "IGNORED_NON_AUTHORITATIVE",
+      "source_or_safety_side_effects": 0,
+      "repair_loop_consumed": false
+    }
+  ],
+  "agy_canary_attempts": 2,
+  "agy_dag_first_canary": "FAIL",
+  "agy_completion_status": "TRANSPORT_FAILED",
+  "agy_real_candidate_audits_issued": 0,
+  "opus_attempts": [
+    {
+      "attempt": 1,
+      "phase": "DAG_FIRST_CANARY",
+      "completion_status": "COMPLETED",
+      "dag_first_result": "MISSING_EDGE",
+      "expected_private_edge_detected": true,
+      "consequence_term": "SECOND_ATTEMPT",
+      "blocking_findings": 1,
+      "verdict": "REJECT",
+      "raw_stdout_sha256": "d42341372d1e0b16e04d9c0adefa8c90a7f8d552c7bf328c36714ee4ad6ec838",
+      "classification": "CANARY_PASS",
+      "repair_loop_consumed": false
+    }
+  ],
+  "opus_canary_attempts": 1,
+  "opus_dag_first_canary": "PASS",
+  "opus_real_candidate_audits_issued": 0,
+  "independent_review_result": "REVIEW_TRANSPORT_UNAVAILABLE",
+  "mixed_outcome_precedence": "REJECT>REVIEW_TRANSPORT_UNAVAILABLE>REVIEW_UNAVAILABLE>PASS",
+  "repair_loops_consumed_structural": 0,
+  "repair_loops_consumed_nonstructural": 0,
+  "completed_review_cycles": 0,
+  "result": "PASS"
+}

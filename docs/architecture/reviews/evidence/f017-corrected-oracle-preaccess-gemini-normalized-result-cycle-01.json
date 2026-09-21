@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-preaccess-cross-vendor-review-result/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "effort": "high",
+    "cli": "/Users/mhedhli/.local/bin/agy",
+    "cli_version": "1.1.18",
+    "conversation_id": "5a16a76d-24bb-462c-a835-9ce13de954fd",
+    "fresh_session": true
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "b9607b1e7bd2d9b58b849b9df9ecd5d810efcca8",
+  "exact_head_ci_run": 32600160665,
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-gemini-review-request-cycle-01.md",
+    "sha256": "e3ac8c54fbb3e78e0774a9623983995b5d9fc8d1def35d2d597d03dbace15b50"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-gemini-exact-response-cycle-01.md",
+    "sha256": "442b22295ad102292e109da901a0cbcd37b6b6c52247523bb83b6c940b81934a"
+  },
+  "findings": [
+    {"id":"F017-Q-MUTATION-FAKE","severity":"BLOCKING","disposition":"REPAIR_REQUIRED"},
+    {"id":"F017-GRAPH-SIMPLIFIED","severity":"BLOCKING","disposition":"REPAIR_REQUIRED"},
+    {"id":"F017-SECONDARY-CIRCULAR","severity":"BLOCKING","disposition":"DISPUTED_PENDING_STRONGER_INDEPENDENCE_PROOF"},
+    {"id":"F017-ACCOUNTING-COLLISION","severity":"NON_BLOCKING_REQUIRED","disposition":"FACTUAL_MISREAD_SEPARATE_COORDINATOR_DIRECTORIES_EXIST_TEST_TO_BE_ADDED"},
+    {"id":"F017-ACCESS-EVENT-LATE","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIR_REQUIRED"},
+    {"id":"F017-TOP-N-STABILITY","severity":"DEFENSE_IN_DEPTH","disposition":"FUTURE_P1_ACCEPTANCE_TEMPLATE_ALREADY_SUPPORTS_TOP_K_LOGIT_GATE_VALIDATE_EXPLICITLY"}
+  ],
+  "blocking_count": 3,
+  "non_blocking_required_count": 2,
+  "defense_in_depth_count": 1,
+  "verdict": "REJECT",
+  "safety": {
+    "original_checkpoint_reads": 0,
+    "corrected_oracle_executions": 0,
+    "p1_attempt_2_executions": 0,
+    "live_authorizations_created": 0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "candidate_head": "3ce0df77466e4891f095f7cda7f6e74ccfe26500",
+  "candidate_tree": "0bd969e446af72a47427a8806fb5717d286577db",
+  "generated_at_utc": "2026-08-29T22:42:13Z",
+  "generator": "GRAPH_OWNED_CSPRNG_OPENSSL_RAND_256_BITS",
+  "nonce": "662df579511f0ad6f48f30d5933b98c92e10d53fdb2e4062e1274bdbdee6dfd3",
+  "nonce_bits": 256,
+  "reviewer": "AGY",
+  "review_cycle": 2,
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-nonce-event/1.0.0",
+  "status": "BANKED_BEFORE_REQUEST_CONSTRUCTION"
+}

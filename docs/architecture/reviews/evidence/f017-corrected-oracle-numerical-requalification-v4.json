@@ -1,0 +1,598 @@
+{
+  "canonical_seeds": [
+    18101,
+    18102,
+    18103,
+    18104,
+    18105,
+    18106,
+    18107,
+    18108,
+    18109,
+    18110,
+    18111,
+    18112
+  ],
+  "capability_mutation_count": 187,
+  "capability_unexpected_pass_count": 0,
+  "case_index": [
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "ceba446db9837d698b783168998c7949bae234f75776390d36f5bd93e9d6a8ba",
+      "payload_sha256": [
+        "0f55ea3f8c5ba7ab2a189af77931fee5d823eb97df621368ae8cca7773aac492",
+        "68486ed93b657d437a6a78bfc451825d5e8b1dec140450d49553f43ce218be0c",
+        "282f2b78c955ddf19189bc79e1f0f9ed1f53d0579485f58913b07e8e196e5c84"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18101,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "8aac3d3998dcf8b922e3ca80328aebd5923515ad2f8665e993e940f8f0c8d350",
+      "payload_sha256": [
+        "d2aa93b45bd2c3bbb8faa1bb8536dd6522bd256d3bb620e512692149c0d8a9e9",
+        "77772f8feb997ee85b5209449ecfdb3171fcabcc960e3870ed9fe5260597640d",
+        "6131ea348ab1ea00ff89fd3b5ea378f59395b4d6e6bf51a3c665221ca4fd1658"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18101,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "2fc01a0b4abc2345f6ef7b5ff60c07a1314d98e65434b5e3ca969b913ce15218",
+      "payload_sha256": [
+        "c3c180bae0a66d6d37d6cd15f8a02960542c7f278c53e0d9e5bbb1f9793cf772",
+        "91463ee92f942be81f875fb8a7f8fafde91b661c7d42005eb9c90b11748fc75b",
+        "f961084562fcf29738a7ab80c72b87e0a9dc072faab397747c465b24a823dcda"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18102,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "045319959c8521baf6592057bb24039373638ae981d3c4a2a7386dd78cbbca09",
+      "payload_sha256": [
+        "be465deaa358653a2f5d124c7972b78e3474090b3ed61e49e7e1ffe682da3900",
+        "994d8bd3c64c6d4907b1be4140b199a58642419e3659c0488b150456d3298c91",
+        "a676edfbea351503c15e77e072db3bd8233df3a6a769a85ea20aa4f0ea2a10f7"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18102,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "7ec983c8415ddc9c417ca08cc21fa71b005dc939f8c0ef3e44eacd64059d1797",
+      "payload_sha256": [
+        "f6cc58fd6d2c4cb526a3a3bb8eb37dc5b6734d0c707c2fe0a5aeabe512c1141d",
+        "5cfe146b3350934e1e5e83bac78ee38adedd12ec255a04ab02ab194670778c34",
+        "2871eb4544916beef5480a20ac9e03254ec9dddcf180839809131e642bdefab5"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18103,
+      "source_read_count": 58
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "099cd5ac880655c4b2b0ce99f77d4095c70cdca01a24e6121185cabe81a5e402",
+      "payload_sha256": [
+        "cbb83ba02273cde05895a40ae79d8af58569120ab8d5c09e0abca93ff6632c96",
+        "19fc48ad30e4956a0bc03bafa7338561bb9d55750ec4d321ea200984de04efb4",
+        "742a470e5130921d07db400d39fdcd6b2a7ca7f97c2ed856cef474e51d9377cf"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18103,
+      "source_read_count": 58
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "fe683dcf1498e4f402308c9351313eabfb77c64fd2416668c9f2ddd7e382f8c0",
+      "payload_sha256": [
+        "aefe314de0c4f9445e43ed17e23ce79dc6fac06c6a1a42f3659bdcc34cd59797",
+        "c2ed441c093cb122180834984e0aa49b671cce8d94082ef29ae9314db078e612",
+        "00187f41ef536f346a696bb163d6488fc1174fd58416311d6612e2e8a99d6137"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18104,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "b2695e7ba0411713eb486b832782388db7109ca83584d488037345a1dbec5421",
+      "payload_sha256": [
+        "148807fe55377270a92357add35a9b1dffb9025dd118b4ab5728874ba716b9ec",
+        "f19c46173f7075ad2b926cbac4857a34c29cf9cf4706969d162d54ccf82d4e34",
+        "1e0cd51a2c59a35446282e3279e057980f1bda155150626620b2aa19220a7407"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18104,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "2edecfa557c45c73201d39ecdb7f0ee61157dea31f0012d3a6f4a125f03398ca",
+      "payload_sha256": [
+        "75366b46923edb58e39c16a0337886362cd195cd75a52cc89fe8e1b4748e9c7c",
+        "86e14257981e839b5c477af68ba47d3b899dc075c83e6f388fd84a8ded4e29c5",
+        "abe56afb308a66f76ba763b3b2fd1bbce3392b49b01a8fe0162f83cd76f13fcf"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18105,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "9bf2c4b7a1843a5b5db79101bf2f8b6633710557ed0be429787b770a62f7f852",
+      "payload_sha256": [
+        "b267a01440b67b494b2cea927253d8865aa0cfc83066a31cba66974936e0d489",
+        "021e2cee0e84e39a2ea9a96ad90b59416dc270b85e07b9a0f68a3bc1d250217c",
+        "6a2ef52c63a5c542cdfee73f1d847327869fbb5af0376c8130bddf8c5ff3e6f1"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18105,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "922a2d37c6620e131d69731d231e8459643054e5ea20d7fe43372bf1760fc5d1",
+      "payload_sha256": [
+        "70e4c4c369376e9c6d96ed468498e9d5f6912cebf8a80ad897aec7942733fcdb",
+        "8dc6ad3e0b31d8af8e188b5ccd6d1ce63f0a2e0ba1961b7074f6b585830b915a",
+        "98eb1c94c2917aa045094fe8508d239cf87c7c1c359f96b2dc030094729dd7d8"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18106,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "3b270d92f9a3d248921018f443095126dcaff4bf0defefc4e9688b0dd50b008f",
+      "payload_sha256": [
+        "14f2da85ef19727b097b784329693ae890f2f51b121648beeaf3bc0a181e52e8",
+        "1e59a9c305c444ee06415fae9f898d49573983b580dff869836e71ade1d2616e",
+        "85c6fa6fe330b60d46106d31126d31437857e9bb350b9e0efc6a21488b21440d"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18106,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "5a0cf169e4fe8136973a9575e5241e97521a309aba97301807546496c251c517",
+      "payload_sha256": [
+        "afa9ee1f2677ba280fa2c9c737c87fa45b99fce3b4a8b41ece6ec6d6fa48736f",
+        "c3121320bc485f92f0c746551bce7abb84899c2f5ad7158ab38776ca734ef6c7",
+        "4198510f083b144bba2f1a8bf158a5aef3b2c33b6e3536d4c4da435f5fdc4532"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18107,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "d4e99042145bb415880b43ddaff3d31191c409f233b042e7aa24b5175e0f1816",
+      "payload_sha256": [
+        "4b50e90699be47e8485b279ea0c5f91632fd8467dfba7d66042481497b457671",
+        "3ccd017934794cf05c2567e17548fa427ebe77da30d9fcc62c58f2e26f3a7c0d",
+        "ab17c434c3ef78a9b15db86a257d49795124f1455c7dab5f8106d40ed5beaf8a"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18107,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "7883deb61879ddd0fe495075df9e478a8b821cbe7bf2fb5ebb3691a3c9d72586",
+      "payload_sha256": [
+        "ab9cebbd3b80fca92f049a19d7f2457d35c5315d761116912f214f49c73fbf13",
+        "aa3645d1508ab404e07f73a905bce23676f6b78ca6fcc1a42f27ec613ff356a0",
+        "ca1dcde11e2f39b4d7f8fe313617bf9f616041f71577980f64bb3b68bd264788"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18108,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "2bbc5ee007a2b8c647ba727b4cc3df2fba3d29f99089044154378fccc82f1443",
+      "payload_sha256": [
+        "756631399b569eaf5583825f8635b1f6d509bf0c26a5df990791c4f35ec8b069",
+        "6eab77d20e1c06a2ac940edceefdc06dc2afa502bb58d77b9a824a20ce599f1c",
+        "dccf5bf5c08693a212d68ef55575dd0eb2437254cb4a3d9acf9652e40ed52d13"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18108,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "b7e3095775b68ef1be5aa05e5141c903c7c59b997d00669613f24dd27db23fe2",
+      "payload_sha256": [
+        "1e5d727a2954d53a45859489e6b08f668eb76a8d21388387b87338dcfa1cef91",
+        "f88af53f97cb657b67203873b5861da8ae03cc53fc288f8c6bf5a3a5c4343c49",
+        "efc699415ffe1c24ed7c821a45974545d92ef6fcd96c5de2a27ca3c24f154266"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18109,
+      "source_read_count": 58
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "2fd451e4596f6009c83671141eca8690cc51f1b3b8825813610ca18666aae1e2",
+      "payload_sha256": [
+        "3c57a0a98af8f1b49e19685edef2b91c8810af71e9eac2149d8a08c5925e4d13",
+        "8d231f74dcb7001b67efa4a286fc13db8c6e3e6ac82cc666be46c65a27ee4dc4",
+        "3ec005858ed255a10b7e8feffd7611ed8078c66be07e401c21dca6c8b8b2e2fa"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18109,
+      "source_read_count": 58
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "a4b7bf3806afe72e2f8f4ddc7d03442672bd22bf1a9cb7b00e8821cfc8dbf24d",
+      "payload_sha256": [
+        "2d0801a9b203a101e4e1216f563f9bf46be42ac1ba2c61a39ec6854605224abe",
+        "b392610c166050bfa4e8a9dfa90e34c4bab7dfbc5dae35f8555c4d923bace7bc",
+        "47991cdbfbd2360858960deac4fffdca2a170e5b545490704ffa6af1a9cce3e9"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18110,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "2c491d52a14be0de1466016151401d45f99d1bc513ae036f09a2f3fcc259259f",
+      "payload_sha256": [
+        "4082005b3e47e55e2277be270489a7eff441992ee681e2c4339a9ceb1f708541",
+        "097b4c5cd5c91e2ff2ca6547def20ebddeae8d7ecb74447b1fc764f7a5c8734d",
+        "56c382f7ff81389a83a64da7b7358ebeb9ed06124d584cb42b64073c9c442b08"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18110,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "e61cdd87ec7eb5a4137833764fc3fd32615a10d01e2db23d7bcb07af8b7027f7",
+      "payload_sha256": [
+        "8a1815172ef9680889a36b5939d618c1bcb85d2ace11276f700b2d744c9ea81c",
+        "cf992a9b19ce2685bbe3be13a53ee04ce476c500634420f6c3f384ca3f3b3498",
+        "4e7214e66581946bd74f2b0b2f289f4bb52772d37557e9c65598820a4844b9af"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18111,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "578c24b3b032eef97c5dceab1a6e5df99c13161394bbb6b909b8305892be4462",
+      "payload_sha256": [
+        "39fa5fc1ebe47847131fb920378a7fc54f02f08d5eba60592ae47664a10e4e66",
+        "68f65439592427df0982901ee166a91e2e9f78590686861e25a7995ae79dcda7",
+        "dff0ac9b29ff97c1ebb0862896dad4982897df2a2202bc98463e13a6781f5a05"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18111,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "c25bf0d6aa12e97023dbed003781ad7e6038eefd9cd7b509c0ee958bddbade8a",
+      "payload_sha256": [
+        "a41f749889331848699357b12e1a0f9cd9c20ed4430fe6efd188551fdcc4b571",
+        "0ba39ff7999c03c1d8e94c55d2b39e9bcbee9736f91c3414b6ee65003be9de02",
+        "a1cc4080c0921e42db3c04a876540066ee05439159427fcc597592aeee373524"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 18112,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "6716fd5659a7a11d5c3371d06cff7b09c44c6aa95a843d002efa6eaaf230fb40",
+      "payload_sha256": [
+        "a31e87878915600e4db01aee93075d11bd54d63e6e1a15a7b750d30ee4fe1db9",
+        "ed737ea7016d9127dc1cfd5857b84e1129c16ece11fd6fa6fbd6f205fb1e3c5d",
+        "5a303b4bdd5863ae36b9cbe09ce6c2e5c1e39b56507a2df11242fe1683f32f86"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 18112,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "8fb4efc9cb5228968766209ff517be0ac5a85eb2378f7053d3cc2a051cd2788d",
+      "payload_sha256": [
+        "b23cdd890dd668a099efd0a59f27754b8718dc45e932c22390f8f0439f669061",
+        "d416a76b0d28e35a8eeee4382866c1d2261b52aaa0d2d8bbb9d48e84eb6bf5ef",
+        "540a0e34da9459dcf6757632b9dba66f857ef6f95d1e78f9273f93fda1902f18"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17018,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "34ad6acf7e27574095a723d328bcb5630964aaf0320b5cf80dbd59b090c67e75",
+      "payload_sha256": [
+        "4d660be9e84f7a62d69bfd9f62bdd1134f6ee12327095e4e9f3654b32c61de89",
+        "9f818110e3dca6e81714c9a4349a4bc278a24e9bbed649aac4a49af59ce290b6",
+        "b70200f249f574a76ae5550dde21cfa7b94070f8ebd2ffdd52708c9269aadf56"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17018,
+      "source_read_count": 79
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "7bf8cf2d435033cc04896be259621ae8c872dec3e87d8b5c5dfa45a424008829",
+      "payload_sha256": [
+        "b1a744e746964add5eef2a18131f9aab8b3ebe2701070307ff89ab512d581d59",
+        "5b12b7def0c995cb2384b6936a3dcbf81618d91d8fe2d6213a32f748802c0635",
+        "4378fededefe2068ebb1a9bc120e1f5e0742f2d3c8186e15e1df536dee44229d"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17019,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "242e0a8d17d7f3b2310ebd94ec2aabdd2564aabfde7423260107e4cc5a011211",
+      "payload_sha256": [
+        "f58e9a50ed019e0abf66f1b94559a382c1404ddbc95597df2e725f54547a3e9d",
+        "e44092ac9cb1cb63244b285a7902d15c9329f9e8965cd7f0efe47d6fe44c49e1",
+        "e614a5102ada40d985ae93846b623352a52f6c34e2af5b55072c507ad7aceeaf"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17019,
+      "source_read_count": 100
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "178643d7d2c31550b093fc0957ee63f7e050170676828542d5a994caca41d0be",
+      "payload_sha256": [
+        "78988c2681adfe659392649edbc452b982e06361f2a1142bd7299758eb135ecb",
+        "cf0d7035a86ecaa50dcff9a3b48ea3dd4480c5588ec4621b707bf1c7dcba0fc4",
+        "90ee596398ac4e25672a3aadde7efcbb019ff6ab72fa2eb3fab85696eeaad2f2"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17020,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "b511755aefd5448cbd3dc986cf3ae771787a908ebb61a1b67e73048ea9fa4552",
+      "payload_sha256": [
+        "dcc6b11aaa24a64bd2f1a069ed0a8b79ec1f91107743d9efbe855630dfc9f658",
+        "747a43c034ec3da6b7b6586e2eb408187e6507d2267b971c8e1f0421f626c242",
+        "4bc7b48753f394e4288d46703c29ccb82692062905c864508a7fa723582e2084"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17020,
+      "source_read_count": 121
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "5fb89589ddbce3a55e02fc44c80248d9b8b491c9e03bc5bd896001faf51eb3bb",
+      "payload_sha256": [
+        "23b5f976576c699b0701ee53fc1bb5dc6ce72d9ab66ac182451613de8b4d1d06",
+        "6080419ae31542a1fa05582304425ac84675abfcb125e8b42607eb7141f6bf04",
+        "5ba31d20bac455bfb3d0e7b65a2e185ab5de3299c638e16456b3d2d0e137f62b"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17021,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "14c89b5aea388d95bd594bcfb8b86164b13be1693a5410332176d3d448c75680",
+      "payload_sha256": [
+        "901ace4cd070d720e1efde4630de04b029ed6b7373023aaa24311e8cf41c2ead",
+        "db6fd1b775206b2b3ee7020b67a8a1456de01e5a7c4fbf5f34cadb376d986a20",
+        "0d6d5814ff0b955f3d3d28986e1126341f72635db09f3d2efc944c35fa790e58"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17021,
+      "source_read_count": 16
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "cfa4532394008ce7ffa73fcf22573f449a75dd29cea8fdf98434fbabda4b8966",
+      "payload_sha256": [
+        "20510a901b0725f8c99894986e5adff1f73ddffd6923b5ad636ebee783ef3157",
+        "d780506d70d5b2ea09a9c9b6d065035b83ee1b522835287cfafd344c8c6f9a56",
+        "7b6743d1f467c02bfeee5dd97ae36b59ce6e2e78bd59f6a64a9f08e7871d68d6"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17022,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "9cca80db23086a75417cda90ae6c2eef9d85d5e06b1607d5bbfe7f57538b5fc9",
+      "payload_sha256": [
+        "94347092ddb59cf8866782bf6b4eaf5e92ac71eb676897118da6eb3b2410ca2e",
+        "877342ebae3ad7eb07db02fb23fd707a4d27abca8e715ae5e2dd9f4723d9ea9f",
+        "1ae7637a42e57d128d727500dbd21d553f2d240df523885f26e17072a3835a5f"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17022,
+      "source_read_count": 37
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "4914c0d8d1a706cbc176dc1860cccb6541523c799b7b2821030a6ff73eea1549",
+      "payload_sha256": [
+        "22ba67f14b6ee1701b8540664d233923f6ec920d334f0175181a74ebf8f9f437",
+        "0041f4cd620f60505e4471598637a1d41985c9738dd0fc91e5d548f4c5ed4e94",
+        "49091e9164896e5800ddb660d08045646d967a0c885a3b9a76d1d3b9d4eb907f"
+      ],
+      "result": "PASS",
+      "role": "PRIMARY",
+      "seed": 17023,
+      "source_read_count": 58
+    },
+    {
+      "core_execution_count": 1,
+      "legacy_sha256": "890ed1091e6be5ebbc403a70bd4cd65dc8649682adb410b5b37231451169aca1",
+      "payload_sha256": [
+        "831127fd0c1bea70d2dd1d32817a175dfe0764166a87adf57152da7aa12aefda",
+        "4fd96cb52ee31a3a65b19181819bfd7e3aa633dd028ea5e61b0c40d082cbe8b6",
+        "dfc5e74e3acdd18591a6b97b670a37b50fcbeca9e38689c77cb8a1ffd211bf14"
+      ],
+      "result": "PASS",
+      "role": "SECONDARY",
+      "seed": 17023,
+      "source_read_count": 58
+    }
+  ],
+  "decoder_semantics_changed": false,
+  "event_04_resume": false,
+  "event_04_retry": false,
+  "event_05_executed": false,
+  "expanded_seeds": [
+    17018,
+    17019,
+    17020,
+    17021,
+    17022,
+    17023
+  ],
+  "format_count": 11,
+  "fresh_process_identity": {
+    "primary_v2_legacy": {
+      "processes": 20,
+      "result_sha256": "baa17fc05bb07990ef3a0a70e8a74d7182655f173a53bbe6d25c23d4480c2fae",
+      "semantic_result_sha256": "922a2d37c6620e131d69731d231e8459643054e5ea20d7fe43372bf1760fc5d1",
+      "unique_result_count": 1
+    },
+    "primary_v3_legacy": {
+      "processes": 20,
+      "result_sha256": "161502884743f406bf802429792e05655767bc745f86ca4a4cb84d9fc06e0bce",
+      "semantic_result_sha256": "922a2d37c6620e131d69731d231e8459643054e5ea20d7fe43372bf1760fc5d1",
+      "unique_result_count": 1
+    },
+    "primary_v3_outputs": {
+      "processes": 20,
+      "result_sha256": "8d091ee90e9bd54e34575aae1f34bc2af0e242c7ce4ecb8df8eacbc739433eaa",
+      "semantic_result_sha256": "8d091ee90e9bd54e34575aae1f34bc2af0e242c7ce4ecb8df8eacbc739433eaa",
+      "unique_result_count": 1
+    },
+    "secondary_v2_legacy": {
+      "processes": 20,
+      "result_sha256": "61c482c40fe91affddb8665ed86184dac2eb4e72fa08fd6d5c98ab7b958c8e7a",
+      "semantic_result_sha256": "3b270d92f9a3d248921018f443095126dcaff4bf0defefc4e9688b0dd50b008f",
+      "unique_result_count": 1
+    },
+    "secondary_v3_legacy": {
+      "processes": 20,
+      "result_sha256": "6ad5a933a237355610908d9ccea54e483e08a4b28b791dc3cbb340bdc7f481c0",
+      "semantic_result_sha256": "3b270d92f9a3d248921018f443095126dcaff4bf0defefc4e9688b0dd50b008f",
+      "unique_result_count": 1
+    },
+    "secondary_v3_outputs": {
+      "processes": 20,
+      "result_sha256": "96310fb3b42f173567c55668657ba84daf86bff582e4b2ef48ece5cb7db424cc",
+      "semantic_result_sha256": "96310fb3b42f173567c55668657ba84daf86bff582e4b2ef48ece5cb7db424cc",
+      "unique_result_count": 1
+    }
+  },
+  "fresh_process_total": 120,
+  "historical_equivalence_cases": 36,
+  "historical_master_ledger": 175,
+  "implementation_validation": {
+    "capability_analysis": {
+      "primary": {
+        "independent_module_uses": 0,
+        "semantic_module_uses": 0,
+        "semantic_receiver_uses": 41
+      },
+      "secondary": {
+        "independent_module_uses": 83,
+        "semantic_module_uses": 83,
+        "semantic_receiver_uses": 69
+      }
+    },
+    "formula_equivalence": {
+      "changed_numerical_expressions": 0,
+      "graph_prefixes": 2,
+      "helper_symbols": 12
+    },
+    "historical_primary_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+    "historical_secondary_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+    "new_external_capabilities": 0,
+    "original_checkpoint_access": 0,
+    "result": "PASS",
+    "schema": "pulsarmlx.f017.numerical-output-interface-implementation-validation/1.0.0",
+    "successor_primary_sha256": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "successor_secondary_sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3"
+  },
+  "live_event_05_authorization_created": false,
+  "numerical_formulas_changed": false,
+  "numerical_localization_mutation_count": 16,
+  "numerical_operation_order_changed": false,
+  "one_execution_all_outputs": "PASS",
+  "original_checkpoint_identity_hash_reads": 0,
+  "original_checkpoint_mmaps": 0,
+  "original_checkpoint_payload_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_tensor_reads": 0,
+  "output_buffer_hash_binding": "PASS",
+  "ownership_mutations": {
+    "mutations": 60,
+    "rejected": 60,
+    "unexpected_passes": 0
+  },
+  "p1_attempt_2_executed": false,
+  "packed_decoder_case_count": 44,
+  "primary_formula_equivalence": "PASS",
+  "primary_legacy_equivalence": "PASS",
+  "primary_output_interface": "PASS",
+  "result": "PASS",
+  "routing_semantics_changed": false,
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-requalification/4.0.0",
+  "secondary_formula_equivalence": "PASS",
+  "secondary_legacy_equivalence": "PASS",
+  "secondary_output_interface": "PASS",
+  "source_read_equivalence": "PASS",
+  "status": "CORRECTED_ORACLE_NUMERICAL_REQUALIFICATION_V4"
+}

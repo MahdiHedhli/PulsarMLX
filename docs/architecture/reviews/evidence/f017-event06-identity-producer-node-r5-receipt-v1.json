@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","graph_id":"F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01","node":"R5","status":"PASS","cycle":3,"support_ledger":"docs/architecture/reviews/evidence/f017-event06-identity-producer-support-ledger-v4.json","conceded":0,"unresolved":0,"event_06_executed":false,"original_checkpoint_access":0}

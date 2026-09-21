@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-challenge-ledger/3.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-challenge-ledger-v2.json",
+  "cycle_01_challenges": 3,
+  "cycle_01_repaired": 3,
+  "cycle_02_challenges": 0,
+  "open_blocking": 0,
+  "open_non_blocking_required": 0,
+  "unresolved": 0,
+  "status": "DESIGN_CHALLENGE_CLOSED"
+}

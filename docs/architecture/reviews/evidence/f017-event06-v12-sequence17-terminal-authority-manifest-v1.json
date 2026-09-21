@@ -1,0 +1,83 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-terminal-authority-manifest/1.0.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "prompt_authority": {
+    "commit": "be3f85b2f3aa1dc60ce93907e89de2573010fe93",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/017__F017__Mac-Studio-M1-Ultra__Event-06-V12-DAG-derived-composition-and-full-call-path-no-access-repair__prompt.md",
+    "sha256": "420ec84f2354ec45bc7d44c1bc7be31b4a4af828f48451fa4aeccb8cbc6756d7"
+  },
+  "source_implementation": {
+    "head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+    "tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce"
+  },
+  "artifacts": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-implementation-measurement-v5.json",
+      "sha256": "cb26999fca85d19ca28e61ad457ab8df13453b3e12ab37e80bfdc138fddbbd1d"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-dag-composition-qualification-v5.json",
+      "sha256": "5ac0d2107bcba0c2a89463be62542437fc6388e7dd3a2f40e49b9101e2204c16"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-full-native-ci-v5.json",
+      "sha256": "7257d44aef85e3a10a53028595c181a86550872785cdc286cc967fc23a105442"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-sanitized-review-packet-v5.md",
+      "sha256": "8d3ec29f198f37495e142b2e3bdac71f39efd1b754e79392af32e7281ca7b2a6"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-agy-cycle-05-normalized-result-v1.json",
+      "sha256": "301181ca296601ba5a07648e02b24df9e9faf0af43e27935993b0c541aa6d62e"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-opus-cycle-05-normalized-result-v1.json",
+      "sha256": "1b0419ca3fef6556be3a5663c63b10ee70b9cd7e22e3a8be5ed13ff198928371"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-review-cycle-05-support-v1.json",
+      "sha256": "54fe36d8e502fbf115fc13ad47b6dfb28fce4bd1d397b97e0409ae3e1046d35e"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-terminal-blocker-v1.json",
+      "sha256": "8d4f60951486a7e4e770957b1477f22ce8d64eaf9365d322a37aecb2dc14738b"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-final-no-go-declaration-v1.json",
+      "sha256": "f429f0f24ef45ee8def240b3da7ed2fb00b08f88712e00eca03371e7744ad795"
+    }
+  ],
+  "invalidations": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-dag-composition-qualification-v5.json",
+      "claims": [
+        "package_terminal_uniqueness",
+        "execution_derived_terminal_subjects",
+        "complete_live_terminal_claim_coverage"
+      ],
+      "authority": "docs/architecture/reviews/evidence/f017-event06-v12-sequence17-opus-cycle-05-normalized-result-v1.json"
+    }
+  ],
+  "review": {
+    "agy": "ACCEPT",
+    "opus": "REJECT",
+    "blocking_findings": 1,
+    "unresolved_findings": 1
+  },
+  "repair_budget": {
+    "authorized_loops": 10,
+    "consumed_loops": 7,
+    "same_structural_root_failed_repairs": "3/3",
+    "stop_rule_reached": true
+  },
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "real_numerical_executions": 0,
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "historical_master_ledger": 175,
+  "operational_ratification": "WITHHELD",
+  "readiness_for_new_event_06_go": false,
+  "result": "BLOCKED"
+}

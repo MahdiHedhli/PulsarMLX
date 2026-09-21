@@ -1,0 +1,66 @@
+{
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_NUMERICAL_CONTRACT_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "ff29823ff025a712f70b026f4ba91e92133cab86",
+  "reviewed_artifact_hashes": {
+    "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v1.json": "e30b86475b8161a434a91c958829cd66306935076900c489688e0fb116cf9997",
+    "specs/017-rust-native-inference-runtime/f017-native-bounded-p1-numeric-acceptance-v1.md": "dd5b7076380ff44fcf922c4de5216ec0bf5fb6727ad5095d8139edf80df0ab16",
+    "scripts/research/validate_f017_native_bounded_p1_d0_v1.py": "1d7d235641fb78599100ea28a8939ae4a136516d43deaf3c2061618614f34159",
+    "scripts/research/tests/test_f017_native_bounded_p1_d0_v1.py": "b5f76d36801d82fafa343ad517d24566db8a849cd7fd7f1839fd86abf4e155d9",
+    "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90"
+  },
+  "tests_performed": [
+    "Recomputed SHA-256 of all 5 reviewed artifacts at HEAD ff29823f; all match the banked request",
+    "Recomputed SHA-256 of all 10 bound_oracles/bound_oracle_implementation entries via git show at their pinned commits (171fc82b native ancestor of HEAD; f2a7aa38 historical commit present, correctly not an ancestor); all match",
+    "Verified authority root: authority_contract_sha256 matches committed bytes; base_head 8027b4cf is an ancestor of HEAD",
+    "python3 scripts/research/validate_f017_native_bounded_p1_d0_v1.py --root . => PASS, 34 stages, 0 unresolved (contract sha e30b8647...)",
+    "python3 -m unittest scripts.research.tests.test_f017_native_bounded_p1_d0_v1 => 12/12 OK",
+    "python3 scripts/research/validate_f017_oracle_independence.py => PASS",
+    "cargo test NOT executed (read-only review constraint would be violated by build artifacts); instead statically audited crates/engine/tests/f017_independent_oracle.rs at pinned hash 48cfd851..., confirming it freezes oracle bytes/sha, generator identity, 7-boundary census, and executes Q8/residual/router edge assertions against the Python/NumPy fixture",
+    "Cross-checked D0 thresholds against bound sources: R10 v2 intermediate (0.015625/0.0078125/0.9999), R10 v2 final (0.0625/0.03125/0.999), R10 router weight 1e-5, and expert Tier-B per-element bound string all byte-identical to their accepted origins; R9 reduced-geometry thresholds correctly NOT transplanted to full-geometry MLA stages",
+    "Cross-checked D0 stage_rows ordinal-by-ordinal against the bound accepted comparison execution contract (72d4a687...) including its pinned retained expected_sha256 identities; no retained or checkpoint bytes were read"
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "Ordinal 13 (router_normalized) is silently demoted from the accepted numeric grade to reproducibility-only, dropping an existing pinned retained oracle.",
+      "evidence": "The bound ACCEPTED_PROOF_REFERENCE_COMPARISON_VOCABULARY (f2a7aa38:f017-apple-production-serial-f32-comparison-execution-contract-v1.json, sha 72d4a687...) grades ordinal 13 as RETAINED_EXPECTED_ARTIFACT with metric r10_intermediate against pinned bytes sha 687a692a... (NUMERICAL_EQUIVALENCE_REQUIRED). D0 stage_rows ordinal 13 instead classes it IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY / pinned_environment_reproduction with only the synthetic router boundary oracle. No committed justification for the weakening exists; the analogous stage 12 (post_attention_residual) retains its bounded retained-oracle grade. Downstream byte-exact ranking/selected_ids and the 1e-5 routing-weight cap partially compensate, so this is not unsound, but it narrows retained numeric coverage relative to the authority D0 itself binds.",
+      "required_repair": "Append-only D0 revision: either restore NUMERICALLY_BOUNDED_REQUIRED / native_intermediate_tier_b at ordinal 13 against the pinned retained router_normalized artifact, or record an explicit reviewed justification for the demotion in committed bytes."
+    },
+    {
+      "id": "F3",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "Cross-branch bindings do not carry the identity fields required by the bound authority root: schema, schema_version, and semantic_role are absent, and the validator freezes this omission.",
+      "evidence": "f017-native-domain-cross-branch-authority-v1.json cross_branch_consumption_rule.required_identity_fields = [branch, commit, path, sha256, schema, schema_version, semantic_role]. Every bound_oracles / bound_oracle_implementation entry in the D0 contract carries only {branch, commit, path, sha256, role}; validate_f017_native_bounded_p1_d0_v1.py enforces exactly that 5-field census and never checks the parsed source's schema/schema_version. SHA-256 pinning prevents substitution, so this is formal rather than substantive, but the D0 contract does not conform to the consumption rule of its own bound authority, and 'cross-branch source schema' is therefore unresolved in the bindings.",
+      "required_repair": "Append-only D0 revision adding schema, schema_version, and semantic_role to each cross-branch binding, with the validator verifying the parsed source bytes match the declared schema/schema_version."
+    },
+    {
+      "id": "F2",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Stage-row oracle labels are unenforced free text; the validator never resolves them to pinned artifacts.",
+      "evidence": "Labels such as ACCEPTED_ROUTE_AUTHORITY, RETAINED_CANONICAL_S0/S1/SHARED_F32, and RETAINED_PROOF_REFERENCE_* appear only inside the D0 contract at HEAD (git grep confirms no committed definition). Their identities are recoverable via ordinal alignment with the bound comparison vocabulary's pinned expected_sha256 rows (e.g., ordinals 17-19: b2de9d7a..., a0f2e2b5..., ff1a7127...; ordinal 26: 872487d3...), but the validator checks only class/metric/boundary, so a mutated oracle label (including one naming native output) would still PASS. The spec's own rule that D3.5 'may not compare look-alike names' is not machine-enforced for oracle identities.",
+      "required_repair": "Optional hardening: add an explicit oracle-label -> {commit, path, sha256} map to the contract and a validator cross-check of D0 stage rows against the bound comparison-contract rows (this check would also have flagged F1)."
+    },
+    {
+      "id": "F4",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The validator does not pin the misderived_tolerance_repair epistemic string.",
+      "evidence": "validate_f017_native_bounded_p1_d0_v1.py required_epistemics enforces 8 keys but omits misderived_tolerance_repair; a mutation replacing APPEND_ONLY_NEW_D0_REVISION_FROM_FRESH_CORPUS_EXCLUDING_TRIGGERING_D3_5_OUTPUT_AND_NEW_FABLE_REVIEW with an edit-in-place rule passes the validator and all 12 mutation tests. The committed v1 bytes are correct and hash-banked, so exposure requires a new commit, but the repair rule is the contract's central epistemic guard and should be mutation-locked.",
+      "required_repair": "Optional hardening: add misderived_tolerance_repair (exact string) to required_epistemics plus a mutation test."
+    },
+    {
+      "id": "F5",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Byte-identical repeat requirement for MLX/Metal GPU matvec stages is an unevidenced (though correctly falsifiable and conservative) determinism claim.",
+      "evidence": "pinned_environment_reproduction requires all captured stage bytes exact across 10 same-process and 10 fresh-process runs, including GPU matvec stages with backend-defined contraction (fma_or_contraction: MLX_METAL_BACKEND_DEFINED_FOR_MATVEC_ONLY). No committed evidence establishes fresh-process kernel-selection stability on the pinned MLX 0.31.2 / Metal stack. The failure direction is safe (repeat divergence is FAILED_CONTRACT, tolerance may not hide it, earliest divergent stage banked, cross-device portability unclaimed), so this is not hidden nondeterminism.",
+      "required_repair": "Optional hardening: bank kernel/dispatch identity alongside the earliest-divergence record at D3.5 so a determinism failure is attributable."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_required_findings": ["F1", "F3"],
+  "defense_in_depth_findings": ["F2", "F4", "F5"],
+  "verdict": "REJECT",
+  "statement": "All banked hashes recompute exactly; the validator (PASS, 34 stages, 0 unresolved), 12/12 mutation tests, and the oracle-independence policy reproduce at HEAD from committed bytes only. The contract survives most required attacks: every numeric threshold traces byte-identically to accepted contracts frozen before target results (no post-hoc leakage); R9's reduced-geometry thresholds are correctly not transplanted; the operand-conditioned matvec bound is parametric-analytical and validly reused; routing keeps membership/order/tie exactness ahead of numeric bounds; the 34-stage vocabulary is byte-bound to the accepted manifest; proof/reference surfaces stay INTENTIONALLY_DISTINCT; D3.5 scope is limited to representative layer-3 S0-S2 with full-forward explicitly unqualified; no observed result is claimed pre-execution; the D3.5 falsify-but-never-tune rule with quarantined-trigger append-only repair is present. REJECT is driven by two required (non-blocking) repairs: the silent demotion of ordinal 13 router_normalized from its accepted retained numeric grade to reproducibility-only (F1), and cross-branch bindings that omit the schema/schema_version/semantic_role identity fields mandated by the bound authority root's own consumption rule (F3). Both are repairable by an append-only D0 revision and re-review; no unsound tolerance, self-oracle, or scope overclaim was found. Cargo test was not executed under the read-only constraint; the pinned Rust test source was audited statically instead."
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/2.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R18",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r18-receipt-v1.json",
+  "input_head": "32a4a3ac14de3931feb6a4b09b95fb300b479dcc",
+  "output_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "input_authorities": {
+    "claim_ledger": "docs/architecture/reviews/evidence/f017-numerical-output-interface-claim-ledger-v8.json",
+    "full_native_ci": "docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json"
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-whole-domain-cycle-03-request.md",
+    "docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-whole-domain-cycle-03-normalized-result.json",
+    "docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v9.json"
+  ],
+  "commands_executed": ["gemini-3.1-pro-high whole-domain CHALLENGE cycle 3"],
+  "tests_executed": {"attacked_claims": 15, "opus_repair_attack": "PASS", "historical_split_attack": "PASS"},
+  "result_counts": {"challenge_rows": 0, "closed": 0, "open": 0, "unresolved": 0},
+  "claims_introduced": [], "claims_closed": [], "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R19"],
+  "result": "PASS"
+}

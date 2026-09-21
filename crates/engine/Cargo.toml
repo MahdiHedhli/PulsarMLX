@@ -6,11 +6,17 @@ license.workspace = true
 description = "hy-v3 forward graph and decode loop over the pulsar CUDA kernels."
 
 [dependencies]
+backend = { path = "../backend" }
 gguf = { path = "../gguf" }
 kernels = { path = "../kernels" }
+libc = "0.2"
 quant = { path = "../quant" }
+sha2 = "0.10"
 stream = { path = "../stream" }
 tokenizer = { path = "../tokenizer" }
+
+[dev-dependencies]
+serde_json = "1"
 
 [[bin]]
 name = "pulsar-cli"

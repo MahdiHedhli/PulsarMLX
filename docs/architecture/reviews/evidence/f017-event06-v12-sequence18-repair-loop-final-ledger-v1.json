@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-repair-loop-ledger/1.0.0",
+  "authorized_repair_loops": 10,
+  "repair_loops_consumed": 10,
+  "repair_budget_exhausted": true,
+  "candidate_heads": [
+    "f39ce66ddec21a6f3f1752b29ba185ce9933a938",
+    "beba791a9ff3c6c87a4c762f5e2c3f6d9e42c90d",
+    "f68f10be301726d38eb73062fe52763e8295a93d",
+    "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+    "324914abb7fd9d90198c5ff2025c20afdbf14337",
+    "105c76f93e1342aed8abdc3868c9e3f8523a30c1",
+    "d71ab4fa9b6b15403f1d0d13185c08e476d07735",
+    "9bfe3c0af88d774df15d595389f7f2778cea7806"
+  ],
+  "terminal_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "terminal_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "same_new_structural_root_failed_repairs": 0,
+  "consecutive_no_progress_cycles": 1,
+  "root_cause_classes_observed": [
+    "CALLER_CONTROLLED_PRODUCTION_REGISTRY_AUTHORITY",
+    "LIVE_EDGE_OMISSION",
+    "NAMESPACE_FORK",
+    "CROSS_MODE_SUBSTITUTION",
+    "TERMINAL_AMBIGUITY",
+    "INCOMPLETE_NO_ACCESS_ASSURANCE",
+    "REVIEW_TRANSPORT_INTEGRITY"
+  ],
+  "final_review_invocation": {
+    "reviewer": "AGY",
+    "payload_sha256": "1070d15835cc5f8ab1be08da1d728c5a742e00f93db16fa32a2d982f4f152d5c",
+    "verdict": "REJECT",
+    "unresolved_findings": 1
+  },
+  "result": "BUDGET_EXHAUSTED_TERMINAL_REVIEW_REJECTION"
+}

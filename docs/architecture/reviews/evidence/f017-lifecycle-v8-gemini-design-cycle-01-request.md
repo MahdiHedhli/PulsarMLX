@@ -1,0 +1,5 @@
+# F017 lifecycle V8 causal design — Gemini review cycle 01
+
+Use a fresh `gemini-3.1-pro-high` session at high effort. Review exact committed bytes at `b56acbe4` in a detached read-only worktree. Repository evidence outranks this request. Do not modify files, open/hash/mmap/pread original checkpoint shards, mint Event-04 authority, execute a real oracle, or execute P1 attempt 2.
+
+Reconstruct all 16 terminal V7 findings. Attack the V8 causal artifact order, creation ranks, SHA dependency graph, self/future references, symbolic constructibility of all 15 outcomes, recursive terminal closure, exact five-descriptor continuity, pre-start prohibitions, durable-prefix accounting, all 25 safety invariants, 100-percent path timing, descriptor release, derived six-shard byte census, 128 mutation cases, generator/validator independence, and active generation `NONE`. Attempt cross-package splicing and coordinated authority drift. Report material findings and return exactly `ACCEPT` or `REJECT`; identify any material disagreement.

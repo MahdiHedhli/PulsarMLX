@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.v12-checkpoint-identity-candidate-install-instantiability/1.0.3",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v12-checkpoint-identity-candidate-install-instantiability-v3.json",
+  "implementation_head": "45647e1aadbe646e8d274ed2af8bc08ee2c2ed8b",
+  "implementation_tree": "3229479cfe76d1343dd526fe9f099ab47fb94d16",
+  "candidate_repetitions": 20,
+  "installed_repetitions": 20,
+  "candidate_triple": "PASS",
+  "installed_triple": "PASS",
+  "candidate_install_shared_fields_exact": true,
+  "candidate_install_substitution_mutations": 20,
+  "candidate_install_substitution_rejections": 20,
+  "package_start_eligible": true,
+  "state_created": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "result": "PASS"
+}

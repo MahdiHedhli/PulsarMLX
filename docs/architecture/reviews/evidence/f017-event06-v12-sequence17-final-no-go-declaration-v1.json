@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-final-no-go-declaration/1.0.0",
+  "declaration": "F017_EVENT06_V12_DAG_DERIVED_COMPOSITION: BLOCKED",
+  "reason": "FINAL_OPUS_REJECTED_PACKAGE_SCOPED_TERMINAL_UNIQUENESS_AFTER_THIRD_FAILED_REPAIR_OF_THE_SAME_STRUCTURAL_ROOT",
+  "source_implementation_head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+  "source_implementation_tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce",
+  "operationally_ratified": false,
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "real_numerical_executions": 0,
+  "p1_attempt_2_authority_or_execution": "NONE",
+  "historical_master_ledger": 175,
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "exact_next_safe_action": "RETURN_TO_F017_PLANNER_WITH_THE_REJECTED_PACKAGE_TERMINAL_UNIQUENESS_CLAIM_FOR_A_NEW_DECLARATION",
+  "result": "BLOCKED"
+}

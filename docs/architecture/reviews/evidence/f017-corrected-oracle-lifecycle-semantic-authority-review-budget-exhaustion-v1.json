@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-semantic-authority-review-budget-exhaustion/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "design_head": "0bfbe244461cb4b36725269246394f36dc7d9d4f",
+  "interface_review_cycles_used": 3,
+  "interface_review_cycles_maximum": 3,
+  "terminal_review_verdict": "REJECT",
+  "terminal_blocker": "CURRENT_TREE_V1_V2_NUMERICAL_TARGET_ENTRY_POINTS_REMAIN_DIRECTLY_REACHABLE_AND_TRUTHFUL_RETIREMENT_REQUIRES_NUMERICAL_SOURCE_CHANGE_OR_AUTHORITY_REPIN",
+  "stop_reasons": [
+    "INTERFACE_REVIEW_BUDGET_EXHAUSTED",
+    "REQUIRED_NUMERICAL_SOURCE_AUTHORITY_CHANGE"
+  ],
+  "required_expanded_scope": {
+    "classification": "NUMERICAL_AUTHORITY_SUPERSESSION_AND_REQUALIFICATION_REQUIRED",
+    "minimum_work": [
+      "RETIRE_OR_RELOCATE_DIRECT_V1_V2_NUMERICAL_TARGET_ENTRY_POINTS",
+      "REPRESENT_THE_NEW_NUMERICAL_AUTHORITY_PATH_AND_SHA_TRUTHFULLY",
+      "RERUN_COMPLETE_CHECKPOINT_FREE_NUMERICAL_QUALIFICATION",
+      "OBTAIN_NEW_NUMERICAL_AND_LIFECYCLE_INDEPENDENT_REVIEW",
+      "RESTART_EVENT_04_READINESS_REVIEW_WITH_A_NEW_BUDGET"
+    ]
+  },
+  "event_02_retry": false,
+  "event_03_retry": false,
+  "event_04_executed": false,
+  "live_event_04_authorization_created": false,
+  "primary_real_oracle_executions": 0,
+  "secondary_real_oracle_executions": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "ready_for_corrected_full_checkpoint_oracle_event_04_go": false
+}

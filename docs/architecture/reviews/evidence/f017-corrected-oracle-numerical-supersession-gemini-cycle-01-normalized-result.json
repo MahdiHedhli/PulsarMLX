@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-review/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "effort": "high",
+    "mechanism": "/Users/mhedhli/.local/bin/agy",
+    "session": "a06b3e53-ec16-4cd8-b1f8-6267820d2ca8"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "b69117800eb3123cc61ef7d2a5537cea750184a9",
+  "request_sha256": "289dfd2d877a2295c9a58074db9b7bceb39c08112fb2a52dff0b75818f65a8cb",
+  "exact_response_sha256": "ec2f955baa2b226f4fdb5fa82901585ccc6fce51cf24cb444069a969c7b3958a",
+  "material_findings": [],
+  "non_material_required_findings": [],
+  "defense_in_depth_observations": 10,
+  "numerical_formula_change_required": false,
+  "original_checkpoint_access_required": false,
+  "material_disagreement": "NONE",
+  "verdict": "ACCEPT",
+  "safety": {
+    "event_04_authorization_created": false,
+    "event_04_executed": false,
+    "historical_master_ledger": 175,
+    "original_checkpoint_access": 0,
+    "p1_attempt_2_executed": false,
+    "primary_real_oracle_executions": 0,
+    "secondary_real_oracle_executions": 0
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-terminal-pre-mint-authority-manifest/5.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v4.json",
+  "bindings": {
+    "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v4.json": "f7882d5ca5804b87071f9515743f3e33bb043eb7e67a176cec802c7790b390e7",
+    "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v4.json": "5d886eb35a18d694b3c87aae7c76c69ef0800b4cf2f085cb573a0de5055a1ca4"
+  },
+  "binding_count": 2,
+  "evidence_only_run": 33131720120,
+  "evidence_only_native_jobs": 0,
+  "opus_cycle_01_findings_repaired": 4,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "event_06_executed": false,
+  "event_06_package_started": false,
+  "live_event_06_authorization_created": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}

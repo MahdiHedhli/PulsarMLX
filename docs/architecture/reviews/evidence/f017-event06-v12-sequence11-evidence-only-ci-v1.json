@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-evidence-only-ci/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "head_sha": "986af742b2d4022a486842ddeafc48e65b395b8e",
+  "head_tree": "de1c254b4f8321dc0c699e62623361a1c9948587",
+  "run_id": 33219815156,
+  "run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/33219815156",
+  "classification": "EVIDENCE_ONLY",
+  "classifier_job_id": 99011301858,
+  "evidence_integrity_job_id": 99011325916,
+  "aggregate_job_id": 99011357604,
+  "evidence_integrity_result": "PASS",
+  "native_jobs_launched": 0,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false,
+  "live_authority_created": false,
+  "result": "PASS"
+}

@@ -1,0 +1,162 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-execution-domain-final-declaration/1.0.0",
+  "declaration": "F017_NATIVE_BOUNDED_P1_EXECUTION_DOMAIN: ACCEPTED",
+  "scope": "The committed native domain is accepted for presentation of one separate human GO/no-GO decision for exactly one bounded Apple M1 Ultra P1. This declaration neither issues authorization nor executes P1.",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "declaration_base_head": "caa77f9b3f60d363bb7cc0cde77d793e5184223a",
+  "accepted_implementation_head": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+  "execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
+  "reviewer_policy": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-policy-transition-v1.json",
+    "sha256": "c2608b669c3bebf986d2735a156431ee4f3babb1fa648006f257dffec73c187c",
+    "operator_authorized_final_reviewer": "claude-opus-5",
+    "previous_fable_specific_requirement_superseded": true,
+    "historical_fable_pending_artifacts_modified": false,
+    "technical_acceptance_standards_changed": false
+  },
+  "final_independent_review": {
+    "reviewer_model": "claude-opus-5",
+    "effort": "high",
+    "fresh_session_id": "1c57e748-5e4e-4407-a82e-f42bbaaa7f8d",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235 (Claude Code)",
+    "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-request.md",
+    "request_sha256": "9f983e9fa54f9717961d6dbce666307cbf8a59896a6d47e514938dcd68fdf119",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-exact-cli-response.json",
+    "response_sha256": "86e4dac2cb18d86af194a78347f294307eae90eda7a511065055c494afe3d2e1",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-normalized-result.json",
+    "normalized_result_sha256": "0c2e1a5eae66d6a1cd28ea1ef2dedb33f6e55caf58d5d86ffabef5de10f3761c",
+    "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 10,
+    "adversarial_cases": 172
+  },
+  "exact_head_ci": {
+    "run_id": 32578854836,
+    "implementation_head": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+    "conclusion": "success",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-ci-32578854836.json",
+    "evidence_sha256": "b5450e92f641413a93d8c9be41c4bf87089911dd9c0fddc4a9623ffbc4038fb2",
+    "native_required": true,
+    "native_qualification_skips": 0
+  },
+  "load_bearing_authority": {
+    "cross_branch_authority": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json",
+      "sha256": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90"
+    },
+    "historical_master_ledger": {
+      "branch": "feat/017-real-checkpoint-runner",
+      "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+      "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+      "terminal_value": 175,
+      "native_competing_master_created": false
+    },
+    "d0_numeric_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
+      "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"
+    },
+    "d1_counter_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-counter-semantics-v1.json",
+      "sha256": "f3aab3b065628f96bfe1fab1a045a9af3d2261e2b5d7ef69c1528fb0a7d88246",
+      "mechanical_counter_count": 22
+    },
+    "d2_accounting_residency_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-accounting-residency-v1.json",
+      "sha256": "d2312004f05cafbfd1f1779ccfbbb9e1a0c8c5b4e916aa0601abb04dbefe9c84"
+    },
+    "retention_reuse_grant": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json",
+      "sha256": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28"
+    },
+    "comparison_read_grant": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json",
+      "sha256": "340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f",
+      "authorized_read_receipts": 89
+    },
+    "d3_5_result": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json",
+      "sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4",
+      "classification": "MIXED_D0_V2_CLASS/PASS",
+      "scope": "REPRESENTATIVE_LAYER_3_S0_TO_S2_ONLY"
+    },
+    "d3_5_acceptance": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json",
+      "sha256": "9d4d29870e8aa67d9ca9ed2702bddd4b9248930204e4f03f05c5f05f2727b163"
+    },
+    "bounded_executor": {
+      "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
+      "sha256": "21f405cae64469ab1aed89e571464f6b2278681578d714718cb7183ba01fb062",
+      "source_reproduction": "BIT_IDENTICAL"
+    },
+    "synthetic_executor": {
+      "path": "specs/017-rust-native-inference-runtime/bin/f017-native-synthetic-p1-v3",
+      "sha256": "3bf2db898e574f00e7b312ac1ab140c8d707183e402367958f863f8cef879be8",
+      "source_reproduction": "BIT_IDENTICAL"
+    },
+    "synthetic_full_model_qualification": {
+      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v3.json",
+      "sha256": "c1b012a40a8ffecdb3912d343b193e30d7c47b130fc255496eb00a114af32360",
+      "fresh_processes": 10,
+      "byte_identity": "EXACT_10_OF_10",
+      "original_checkpoint_reads": 0
+    },
+    "exact_p1_admission_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+      "sha256": "91248295cac2f078e47576e5f22b4f7d0457bf9b3b11645c8e46406b8b1a2e03",
+      "prompt_token": 9703,
+      "expected_token": 21615,
+      "attempts": 1,
+      "retries": 0,
+      "resume": false,
+      "mandatory_stop": true
+    }
+  },
+  "cross_vendor_history": {
+    "reviewer": "gemini-3.1-pro-high via AGY CLI",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-exact-agy-response.json",
+    "response_sha256": "a6ab062b3d1c69007fd156c5a859372f77be4063612689660074add4bfb2026f",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-03-normalized-result.json",
+    "normalized_result_sha256": "a2d7f60ea9760405cab384e6f82bf38de0019c36d3c93f0cf5fa2aad3bb32e35",
+    "material_disagreement": false
+  },
+  "accepted_status": {
+    "retained_qualification": "MIXED_D0_V2_CLASS/PASS",
+    "full_native_bounded_p1_producer": "ACCEPTED",
+    "ready_for_single_bounded_m1_ultra_p1_authorization": true
+  },
+  "scope_limitations": [
+    "D3.5 qualifies the representative layer-3 S0-to-S2 surface, not the entire 79-layer forward.",
+    "The remaining bounded forward is admitted through pinned F016 structure, generalized per-stage semantics, synthetic full-graph qualification, exact runtime/checkpoint bindings, and the single-use real P1 gate.",
+    "This declaration is not a full-model correctness claim, a multi-token inference authorization, or production deployment readiness."
+  ],
+  "defense_in_depth": {
+    "count": 10,
+    "source": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-normalized-result.json",
+    "acceptance_boundary_weakened": false,
+    "must_be_carried_forward": true
+  },
+  "human_authorization_boundary": {
+    "next_decision": "AUTHORIZE_OR_DECLINE_EXACTLY_ONE_BOUNDED_M1_ULTRA_P1",
+    "live_authorization_exists": false,
+    "automatic_authorization_prohibited": true,
+    "automatic_execution_prohibited": true
+  },
+  "hard_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "real_p1_authorization_consumed": false,
+    "historical_master_ledger": 175
+  },
+  "required_status_lines": {
+    "RETAINED_QUALIFICATION": "MIXED_D0_V2_CLASS/PASS",
+    "FULL_NATIVE_BOUNDED_P1_PRODUCER": "ACCEPTED",
+    "REAL_M1_ULTRA_P1_EXECUTED": "NO",
+    "ORIGINAL_CHECKPOINT_READS": 0,
+    "LIVE_P1_AUTHORIZATION_CREATED": "NO",
+    "READY_FOR_SINGLE_BOUNDED_M1_ULTRA_P1_AUTHORIZATION": "YES"
+  }
+}

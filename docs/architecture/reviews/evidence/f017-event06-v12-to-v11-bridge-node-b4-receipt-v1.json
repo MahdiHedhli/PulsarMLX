@@ -1,0 +1,12 @@
+{
+  "applicable_regression_subtests_passed": 31,
+  "applicable_regression_tests_passed": 60,
+  "bridge_digest": "83712e17780debafc7981b17b996ac944bda9883a35b98f682a0f0163474e88b",
+  "failure_mutations_rejected": 384,
+  "fresh_process_repetitions": 20,
+  "node": "B4_SYNTHETIC_QUALIFICATION",
+  "original_checkpoint_access": 0,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-node-receipt/1.0.0",
+  "unexpected_passes": 0
+}

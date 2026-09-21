@@ -1,0 +1,4740 @@
+{
+  "accepted_current_sources": {
+    "primary": {
+      "approved_module_uses": [],
+      "approved_receiver_uses": [
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 32,
+          "method": "update",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_f64"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 33,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_f64"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 37,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "_hash_json"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "SAFE_BYTES",
+          "line": 37,
+          "method": "encode",
+          "node_class": "Call",
+          "receiver_role": "SAFE_STRING",
+          "scope": "_hash_json"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 63,
+          "method": "issubset",
+          "node_class": "Call",
+          "receiver_role": "SAFE_SET",
+          "scope": "Geometry.from_json"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 83,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "SAFE_DICT",
+          "scope": "JsonSource._get"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 92,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.vector"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 95,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.matrix"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 98,
+          "method": "_get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "JsonSource.expert"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 118,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "_matvec"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 124,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "_matvec"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 133,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "_matvec"
+        },
+        {
+          "column": 44,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "_transpose_matvec"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 182,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "_projection"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 184,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "_projection"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 205,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 210,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 211,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 212,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 20,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 214,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 215,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 42,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 216,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 238,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 240,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 250,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 250,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 253,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 254,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 257,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 29,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 262,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 47,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 263,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 271,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 40,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 277,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 30,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 282,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 21,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 283,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:SOURCE",
+          "scope": "execute"
+        },
+        {
+          "column": 50,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 292,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        }
+      ],
+      "bytecode_names": [
+        "Geometry",
+        "JsonSource",
+        "ORACLE_ID",
+        "Protocol",
+        "RowMatrix",
+        "Source",
+        "TOP_N",
+        "ValueError",
+        "__annotations__",
+        "__doc__",
+        "__firstlineno__",
+        "__future__",
+        "__init__",
+        "__module__",
+        "__name__",
+        "__qualname__",
+        "__static_attributes__",
+        "_get",
+        "_hash_f64",
+        "_hash_json",
+        "_matvec",
+        "_pairs",
+        "_projection",
+        "_residual",
+        "_rms",
+        "_route",
+        "_silu",
+        "_swiglu",
+        "_transpose_matvec",
+        "all",
+        "annotations",
+        "append",
+        "classmethod",
+        "columns",
+        "cos",
+        "dataclass",
+        "dataclasses",
+        "dense_ffn",
+        "dense_layers",
+        "dumps",
+        "encode",
+        "enumerate",
+        "execute",
+        "exp",
+        "expert",
+        "expert_ffn",
+        "experts",
+        "extend",
+        "float",
+        "from_json",
+        "get",
+        "hashlib",
+        "heads",
+        "hex",
+        "hexdigest",
+        "hidden",
+        "isfinite",
+        "isinstance",
+        "issubset",
+        "json",
+        "kv_rank",
+        "layers",
+        "len",
+        "list",
+        "math",
+        "matrix",
+        "max",
+        "pack",
+        "q_rank",
+        "qk_nope",
+        "qk_rope",
+        "range",
+        "rms_epsilon",
+        "rope_base",
+        "route_scale",
+        "row",
+        "rows",
+        "runtime_checkable",
+        "set",
+        "sha256",
+        "sin",
+        "sorted",
+        "sqrt",
+        "struct",
+        "sum",
+        "tensors",
+        "top_k",
+        "typing",
+        "update",
+        "value_dim",
+        "vector",
+        "vocab",
+        "zip"
+      ],
+      "module_aliases": {},
+      "path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py"
+    },
+    "secondary": {
+      "approved_module_uses": [
+        {
+          "column": 19,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 27,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "digest",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 28,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "digest",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 56,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 34,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 16,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 35,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 53,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 35,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 36,
+          "member": "isfinite",
+          "node_class": "Attribute",
+          "scope": "Store.get",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 33,
+          "context_class": "DIRECT_TYPE_ANNOTATION",
+          "direct": true,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 51,
+          "member": "ndarray",
+          "node_class": "Attribute",
+          "scope": "RowMatrix.row",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 35,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "member": "sqrt",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "mean",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 60,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 105,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 125,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 57,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "rms",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 66,
+          "member": "stack",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 22,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 37,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 83,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 67,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 106,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 68,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 68,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 27,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 55,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 81,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 129,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 69,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 17,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 72,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 36,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 72,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 8,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 73,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 74,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 40,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 74,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 74,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 75,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 17,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 82,
+          "member": "zeros",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 82,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 84,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 85,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 16,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "transpose",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 88,
+          "member": "array",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 8,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 89,
+          "member": "eval",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_MLX_CORE"
+        },
+        {
+          "column": 15,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 90,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 90,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 26,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 56,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 76,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 91,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "transpose_mv",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 102,
+          "member": "exp",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 49,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 69,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 96,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 102,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "swiglu",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 23,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 126,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 52,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 126,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 132,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 48,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 132,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 63,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 92,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 141,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 23,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "dot",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 72,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 101,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 142,
+          "member": "float64",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 19,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 143,
+          "member": "isfinite",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 54,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 145,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 146,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 29,
+          "context_class": "DIRECT_TYPE_OR_DTYPE_CALL",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 147,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 58,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 148,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 104,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 149,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 129,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 149,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 45,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 150,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 25,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 46,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 154,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 59,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 154,
+          "member": "asarray",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 80,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 154,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 42,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 159,
+          "member": "exp",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 64,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 159,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 85,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 159,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 21,
+          "context_class": "DIRECT_CALLABLE",
+          "direct": true,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 164,
+          "member": "zeros",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 164,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 140,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 166,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 43,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 168,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        },
+        {
+          "column": 39,
+          "context_class": "DIRECT_DTYPE_ARGUMENT",
+          "direct": true,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 169,
+          "member": "float32",
+          "node_class": "Attribute",
+          "scope": "execute",
+          "semantic_module": "PYTHON_MODULE_NUMPY"
+        }
+      ],
+      "approved_receiver_uses": [
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 28,
+          "method": "hexdigest",
+          "node_class": "Call",
+          "receiver_role": "HASH_OBJECT",
+          "scope": "digest"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "SAFE_BYTES",
+          "line": 28,
+          "method": "tobytes",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "digest"
+        },
+        {
+          "column": 49,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 36,
+          "method": "all",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "Store.get"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 38,
+          "method": "reshape",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "Store.get"
+        },
+        {
+          "column": 38,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 39,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.vector"
+        },
+        {
+          "column": 47,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 40,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.matrix"
+        },
+        {
+          "column": 55,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 41,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "Store.expert"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 51,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 91,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 57,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "rms"
+        },
+        {
+          "column": 31,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 66,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 69,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 67,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "mv"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 34,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 67,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 69,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "mv"
+        },
+        {
+          "column": 40,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 75,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "mv"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 84,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 84,
+          "method": "row",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 85,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 11,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 42,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 91,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "transpose_mv"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 97,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "swiglu.projection"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 99,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "swiglu.projection"
+        },
+        {
+          "column": 14,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 102,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "swiglu"
+        },
+        {
+          "column": 50,
+          "direct": false,
+          "expected_return_provenance": "UNKNOWN",
+          "line": 109,
+          "method": "get",
+          "node_class": "Call",
+          "receiver_role": "SAFE_DICT",
+          "scope": "execute"
+        },
+        {
+          "column": 13,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 111,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 13,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 111,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 114,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 115,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 116,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 22,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 117,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 15,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 119,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 120,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 37,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 121,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 122,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 138,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 139,
+          "method": "expert",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 141,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 76,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 141,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 30,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 142,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 85,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 142,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 145,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 36,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 145,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 12,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 148,
+          "method": "extend",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 26,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 148,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 23,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 149,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 17,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 150,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 151,
+          "method": "copy",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 152,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 24,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 158,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 28,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 159,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 19,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 160,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 25,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 166,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 18,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 168,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 17,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 169,
+          "method": "astype",
+          "node_class": "Call",
+          "receiver_role": "ARRAY_VALUE",
+          "scope": "execute"
+        },
+        {
+          "column": 8,
+          "direct": false,
+          "expected_return_provenance": "SAFE_SCALAR",
+          "line": 170,
+          "method": "append",
+          "node_class": "Call",
+          "receiver_role": "SAFE_LIST",
+          "scope": "execute"
+        },
+        {
+          "column": 51,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 174,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        },
+        {
+          "column": 29,
+          "direct": false,
+          "expected_return_provenance": "ARRAY_VALUE",
+          "line": 178,
+          "method": "vector",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 16,
+          "direct": false,
+          "expected_return_provenance": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+          "line": 179,
+          "method": "matrix",
+          "node_class": "Call",
+          "receiver_role": "PROTOCOL_OBJECT:STORE",
+          "scope": "execute"
+        },
+        {
+          "column": 65,
+          "direct": false,
+          "expected_return_provenance": "SAFE_STRING",
+          "line": 185,
+          "method": "hex",
+          "node_class": "Call",
+          "receiver_role": "SAFE_BYTES",
+          "scope": "execute"
+        }
+      ],
+      "bytecode_names": [
+        "ORACLE_ID",
+        "Protocol",
+        "RowMatrix",
+        "Store",
+        "T",
+        "TOP_N",
+        "ValueError",
+        "__annotations__",
+        "__doc__",
+        "__firstlineno__",
+        "__future__",
+        "__init__",
+        "__module__",
+        "__name__",
+        "__qualname__",
+        "__static_attributes__",
+        "_pairs",
+        "all",
+        "annotations",
+        "append",
+        "array",
+        "asarray",
+        "astype",
+        "cols",
+        "copy",
+        "core",
+        "cos",
+        "digest",
+        "dot",
+        "eval",
+        "execute",
+        "exp",
+        "expert",
+        "extend",
+        "float",
+        "float32",
+        "float64",
+        "get",
+        "hashlib",
+        "hex",
+        "hexdigest",
+        "int",
+        "isfinite",
+        "isinstance",
+        "len",
+        "math",
+        "matrix",
+        "max",
+        "mean",
+        "min",
+        "mlx.core",
+        "mv",
+        "np",
+        "numpy",
+        "pack",
+        "prod",
+        "range",
+        "reshape",
+        "rms",
+        "row",
+        "rows",
+        "runtime_checkable",
+        "sha256",
+        "sin",
+        "size",
+        "sorted",
+        "sqrt",
+        "stack",
+        "struct",
+        "sum",
+        "swiglu",
+        "tensors",
+        "tobytes",
+        "transpose",
+        "transpose_mv",
+        "typing",
+        "vector",
+        "zeros",
+        "zip"
+      ],
+      "module_aliases": {
+        "mx": "PYTHON_MODULE_MLX_CORE",
+        "np": "PYTHON_MODULE_NUMPY"
+      },
+      "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
+    }
+  },
+  "analyzer_sha256": "8c95d8f4d0f40a7889f3079f97756f109f30e0d34c0541657e07f4a900e8b3b6",
+  "category_census": {
+    "ANCESTOR_IDENTITY": 6,
+    "CONTAINER_RECEIVER": 10,
+    "DECLARED_BINDING_FORM": 4,
+    "DYNAMIC_ACCESS": 20,
+    "F5_R4": 1,
+    "IMPORT_REPRESENTATION": 10,
+    "MEMBER_ESCAPE": 60,
+    "MODULE_ESCAPE": 40,
+    "RECEIVER_SHADOWING": 3,
+    "SUBMODULE_IDENTITY": 4,
+    "UNKNOWN_RECEIVER": 29
+  },
+  "exact_f5_r4_rejected": true,
+  "independent_checker": {
+    "primary": {
+      "approved_use_count": 0,
+      "path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "result": "PASS",
+      "semantic_aliases": {}
+    },
+    "secondary": {
+      "approved_use_count": 81,
+      "path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "result": "PASS",
+      "semantic_aliases": {
+        "mx": "PYTHON_MODULE_MLX_CORE",
+        "np": "PYTHON_MODULE_NUMPY"
+      }
+    }
+  },
+  "independent_checker_sha256": "962591b51656bf3660c82c320c49d85f85410a6cabeb49c4636feb0a1b414783",
+  "mutation_count": 187,
+  "mutations": [
+    {
+      "category": "F5_R4",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE"
+      ],
+      "id": "CAP-001",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-002",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-003",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-004",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-005",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-006",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-007",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-008",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-009",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-010",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-011",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-012",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-013",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-014",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-015",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-016",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-017",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-018",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-019",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-020",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-021",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-022",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-023",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-024",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-025",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-026",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-027",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-028",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-029",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-030",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-031",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-032",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-033",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-034",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-035",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-036",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-037",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-038",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-039",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-040",
+      "rejection": "MODULE_CAPABILITY_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MODULE_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "MODULE_CAPABILITY_ESCAPE"
+      ],
+      "id": "CAP-041",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-042",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-043",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-044",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-045",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-046",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-047",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-048",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-049",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-050",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-051",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-052",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-053",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-054",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-055",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-056",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-057",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-058",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-059",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-060",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-061",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-062",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-063",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-064",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-065",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-066",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-067",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-068",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-069",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-070",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-071",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-072",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-073",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-074",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-075",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-076",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-077",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-078",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-079",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-080",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-081",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-082",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-083",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-084",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-085",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-086",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-087",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-088",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-089",
+      "rejection": "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-090",
+      "rejection": "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-091",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-092",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-093",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-094",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-095",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-096",
+      "rejection": "CAPABILITY_DEFAULT_CAPTURE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-097",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-098",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-099",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-100",
+      "rejection": "CAPABILITY_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "MEMBER_ESCAPE",
+      "expected_rejection_classes": [
+        "CAPABILITY_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE",
+        "CAPABILITY_NAMED_EXPRESSION_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_DEFAULT_CAPTURE",
+        "CAPABILITY_ARGUMENT_ESCAPE"
+      ],
+      "id": "CAP-101",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-102",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-103",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-104",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-105",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-106",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-107",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-108",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-109",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-110",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-111",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-112",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-113",
+      "rejection": "CAPABILITY_ATTRIBUTE_CHAIN",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-114",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-115",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-116",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-117",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-118",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-119",
+      "rejection": "DYNAMIC_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-120",
+      "rejection": "CAPABILITY_ARGUMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DYNAMIC_ACCESS",
+      "expected_rejection_classes": [
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE",
+        "CAPABILITY_ARGUMENT_ESCAPE",
+        "CAPABILITY_RETURN_ESCAPE",
+        "CAPABILITY_ATTRIBUTE_CHAIN"
+      ],
+      "id": "CAP-121",
+      "rejection": "CAPABILITY_RETURN_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-122",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-123",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-124",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-125",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-126",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-127",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-128",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-129",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-130",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-131",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-132",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-133",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-134",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-135",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-136",
+      "rejection": "META_CAPABILITY_SURFACE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-137",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-138",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-139",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-140",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-141",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-142",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-143",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-144",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-145",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-146",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-147",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-148",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-149",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "UNKNOWN_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE",
+        "META_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-150",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-151",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-152",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-153",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-154",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-155",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-156",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-157",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-158",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-159",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "CONTAINER_RECEIVER",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD",
+        "DYNAMIC_CAPABILITY_SURFACE"
+      ],
+      "id": "CAP-160",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-161",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-162",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-163",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-164",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-165",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-166",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-167",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-168",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-169",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "IMPORT_REPRESENTATION",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED",
+        "CAPABILITY_STAR_IMPORT_PROHIBITED",
+        "CAPABILITY_RETURN_ESCAPE"
+      ],
+      "id": "CAP-170",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-171",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-172",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-173",
+      "rejection": "CAPABILITY_IMPORT_FROM_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "SUBMODULE_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_IMPORT_FROM_PROHIBITED"
+      ],
+      "id": "CAP-174",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-175",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-176",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-177",
+      "rejection": "CAPABILITY_IMPORT_CENSUS",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-178",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-179",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "ANCESTOR_IDENTITY",
+      "expected_rejection_classes": [
+        "CAPABILITY_IMPORT_CENSUS",
+        "CAPABILITY_RELATIVE_IMPORT_PROHIBITED"
+      ],
+      "id": "CAP-180",
+      "rejection": "CAPABILITY_RELATIVE_IMPORT_PROHIBITED",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-181",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-182",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "RECEIVER_SHADOWING",
+      "expected_rejection_classes": [
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-183",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-184",
+      "rejection": "CAPABILITY_DECORATOR_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-185",
+      "rejection": "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-186",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    },
+    {
+      "category": "DECLARED_BINDING_FORM",
+      "expected_rejection_classes": [
+        "CAPABILITY_DECORATOR_ESCAPE",
+        "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE",
+        "UNAPPROVED_RECEIVER_METHOD"
+      ],
+      "id": "CAP-187",
+      "rejection": "UNAPPROVED_RECEIVER_METHOD",
+      "result": "REJECTED",
+      "validator": "scripts/research/f017_numerical_capability_analysis_v1.py"
+    }
+  ],
+  "original_checkpoint_payload_reads": 0,
+  "original_checkpoint_shard_opens": 0,
+  "policy_sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13",
+  "primary_pure_core_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+  "rejection_control_census": {
+    "CAPABILITY_ANNOTATED_ASSIGNMENT_ESCAPE": 6,
+    "CAPABILITY_ARGUMENT_ESCAPE": 12,
+    "CAPABILITY_ASSIGNMENT_ESCAPE": 51,
+    "CAPABILITY_ATTRIBUTE_CHAIN": 1,
+    "CAPABILITY_AUGMENTED_ASSIGNMENT_ESCAPE": 1,
+    "CAPABILITY_DECORATOR_ESCAPE": 1,
+    "CAPABILITY_DEFAULT_CAPTURE": 12,
+    "CAPABILITY_IMPORT_CENSUS": 12,
+    "CAPABILITY_IMPORT_FROM_PROHIBITED": 5,
+    "CAPABILITY_NAMED_EXPRESSION_ESCAPE": 6,
+    "CAPABILITY_RELATIVE_IMPORT_PROHIBITED": 3,
+    "CAPABILITY_RETURN_ESCAPE": 24,
+    "DYNAMIC_CAPABILITY_SURFACE": 5,
+    "META_CAPABILITY_SURFACE": 5,
+    "MODULE_CAPABILITY_ESCAPE": 2,
+    "UNAPPROVED_RECEIVER_METHOD": 41
+  },
+  "result": "PASS",
+  "runtime_proxy": {
+    "mlx_members_observed": [
+      "array",
+      "eval",
+      "transpose"
+    ],
+    "mlx_subset_of_contract": true,
+    "numpy_members_observed": [
+      "asarray",
+      "dot",
+      "exp",
+      "float32",
+      "float64",
+      "isfinite",
+      "mean",
+      "sqrt",
+      "zeros"
+    ],
+    "numpy_subset_of_contract": true,
+    "result": "PASS",
+    "subset_of_contract": true
+  },
+  "schema": "pulsarmlx.f017.numerical-capability-qualification/1.0.0",
+  "secondary_pure_core_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+  "transport_rejection_count": 122,
+  "unexpected_pass_count": 0
+}

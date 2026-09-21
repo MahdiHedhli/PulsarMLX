@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-lifecycle-design/12.1.0",
+  "status": "DESIGN_REPAIRED_NOT_LIVE",
+  "supersedes": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-lifecycle-design-v12.json",
+  "ordered_transitions": [
+    "IDENTITY_CANDIDATE_AUTHORITY_VALIDATE_PRIMARY",
+    "IDENTITY_CANDIDATE_AUTHORITY_VALIDATE_SECONDARY",
+    "IDENTITY_CANDIDATE_AUTHORITY_VALIDATE_PRODUCER",
+    "IDENTITY_INSTALLED_AUTHORITY_VALIDATE_PRIMARY",
+    "IDENTITY_INSTALLED_AUTHORITY_VALIDATE_SECONDARY",
+    "IDENTITY_INSTALLED_AUTHORITY_VALIDATE_PRODUCER",
+    "PACKAGE_CLAIM",
+    "PACKAGE_DURABLE_START",
+    "IDENTITY_RUNTIME_AUTHORITY_REVALIDATE",
+    "CHECKPOINT_IDENTITY_START",
+    "CHECKPOINT_SHARD_OPEN"
+  ],
+  "ordering_invariants": {
+    "candidate_and_installed_triples_before_package_claim": true,
+    "runtime_revalidation_after_package_durable_start": true,
+    "runtime_revalidation_before_checkpoint_identity_start": true,
+    "runtime_revalidation_before_any_checkpoint_shard_open": true,
+    "checkpoint_shard_open_transition_explicit": true
+  },
+  "outcome_field_census": ["phase","package_delta","consumer_delta","checkpoint_access","generic_fallback"],
+  "outcomes": {
+    "F017_V12_IDENTITY_CANDIDATE_AUTHORITY_MISMATCH": {"phase":"PRE_CANDIDATE","package_delta":0,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_INSTALLED_AUTHORITY_MISMATCH": {"phase":"POST_INSTALL_PRE_PACKAGE","package_delta":0,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_CAPABILITY_DRIFT": {"phase":"POST_INSTALL_PRE_PACKAGE","package_delta":0,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_PRODUCER_MEASUREMENT_DRIFT": {"phase":"POST_INSTALL_PRE_PACKAGE","package_delta":0,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_RUNTIME_AUTHORITY_DRIFT": {"phase":"POST_PACKAGE_PRE_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_PACKAGE_ATTEMPT_MISMATCH": {"phase":"POST_PACKAGE_PRE_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_CONTRACT_DRIFT": {"phase":"POST_PACKAGE_PRE_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":0,"generic_fallback":false},
+    "F017_V12_IDENTITY_SHARD_OPEN_FAILURE": {"phase":"POST_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":"OBSERVED_PREFIX","generic_fallback":false},
+    "F017_V12_IDENTITY_SHARD_SIZE_MISMATCH": {"phase":"POST_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":"OBSERVED_PREFIX","generic_fallback":false},
+    "F017_V12_IDENTITY_SHARD_READ_FAILURE": {"phase":"POST_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":"OBSERVED_PREFIX","generic_fallback":false},
+    "F017_V12_IDENTITY_SHARD_HASH_MISMATCH": {"phase":"POST_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":"OBSERVED_PREFIX","generic_fallback":false},
+    "F017_V12_IDENTITY_DESCRIPTOR_CHANGED": {"phase":"POST_OPEN","package_delta":1,"consumer_delta":0,"checkpoint_access":"OBSERVED_PREFIX","generic_fallback":false}
+  },
+  "generic_fallback_policy": "UNCLASSIFIED_INTERNAL_ERRORS_ONLY",
+  "result": "PASS"
+}

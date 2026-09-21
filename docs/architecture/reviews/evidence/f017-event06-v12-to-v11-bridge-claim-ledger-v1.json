@@ -1,0 +1,18 @@
+{
+  "claims": [
+    {"claim_id": "C-BRIDGE-GEN-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "The bridge preserves explicit V12 identity, V11 numerical-consumer, V4 numerical-contract, and V11 result-authority generations without widening historical schemas."},
+    {"claim_id": "C-BRIDGE-PROV-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "The bridge is derived from validated installed identity authority, identity-terminal evidence, a sealed execution plan, and exact measured authorities."},
+    {"claim_id": "C-BRIDGE-DIGEST-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "One canonical bridge digest binds every consumer view, transition, result bundle, comparison, release, accounting closure, and package terminal."},
+    {"claim_id": "C-BRIDGE-LEGACY-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "Historical V11 and V12 candidate admission remains closed and unchanged."},
+    {"claim_id": "C-BRIDGE-CALLPATH-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "The complete V12 package-gate through V11 terminalization call path is signature-compatible with exactly one primary and one secondary invocation."},
+    {"claim_id": "C-BRIDGE-LIFE-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "All modeled failure prefixes have exact phase-specific outcomes, no generic fallback, no retry, and descriptor release where acquired."},
+    {"claim_id": "C-BRIDGE-CAP-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "The pure bridge and execution-plan authorities add no file, checkpoint, callback, reflection, subprocess, or ambient-policy capability."},
+    {"claim_id": "C-BRIDGE-DRIFT-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "Numerical V4 and result-authority V11 bytes have zero drift."},
+    {"claim_id": "C-BRIDGE-QUAL-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "Synthetic qualification, applicable regression tests, reconstruction, mutations, capability checks, failure outcomes, and no-access rehearsal pass."},
+    {"claim_id": "C-BRIDGE-CI-001", "readiness_critical": true, "state": "PENDING", "statement": "Exact-head FULL_NATIVE and final manifest-bound EVIDENCE_ONLY CI pass with zero required skips and zero native jobs on evidence-only pushes."},
+    {"claim_id": "C-BRIDGE-SAFETY-001", "readiness_critical": true, "state": "SUPPORTED", "statement": "No checkpoint root is resolved; no checkpoint access, Event 06 action, live authority, package start, numerical operation, ID consumption, or P1 action occurs."}
+  ],
+  "readiness_critical_claims": 11,
+  "result": "REVIEW_PENDING",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-claim-ledger/1.0.0"
+}

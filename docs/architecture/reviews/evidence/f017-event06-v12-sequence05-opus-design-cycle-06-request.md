@@ -1,0 +1,5 @@
+Act as fresh detached read-only Opus arbiter for F017 Event 06 Sequence 5 design cycle 6. Review only commit 9ac074e595be354618af9524b436f3cecf9474d9. No edits, checkpoint access, numerical execution, authority installation, or package state.
+
+Independently reproduce cycle-5 B1-B4, R1-R7, A1-A3, U1-U2 and verify cycle-6 successors: closed 86-field readiness cross-bindings; mechanically derived 16-finding closure; exactly 12 current SHA-validated bindings plus 9 UNBOUND_FUTURE sentinels; enforceable prepared-manifest shape; current successor bindings; retained raw provider envelopes; specific 16-outcome transition mapping; enumerated 10 race families and 3 alias variants; and six advisory dispositions. Attack circular validation, literal PASS values, future-role posture substitution, self/future cycles, dry writes, and premature acceptance.
+
+Return the eight standard claim verdicts and exactly ACCEPT_F017_EVENT06_SEQUENCE05_DESIGN_FOR_IMPLEMENTATION or REJECT. Acceptance requires zero blocking, required, or unresolved findings. No conditional acceptance.

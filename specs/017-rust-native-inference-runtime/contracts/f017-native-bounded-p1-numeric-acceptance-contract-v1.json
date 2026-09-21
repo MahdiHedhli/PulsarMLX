@@ -1,0 +1,271 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-numeric-acceptance-contract",
+  "schema_version": "1.0.0",
+  "contract_id": "f017-native-bounded-p1-numeric-acceptance-contract-v1",
+  "status": "FROZEN_BEFORE_NATIVE_RETAINED_REPRESENTATIVE_QUALIFICATION",
+  "authority": {
+    "native_branch": "feat/017-rust-native-inference-runtime",
+    "authority_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json",
+    "authority_contract_sha256": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90",
+    "historical_branch": "feat/017-real-checkpoint-runner",
+    "historical_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222"
+  },
+  "bound_oracles": [
+    {
+      "branch": "feat/017-rust-native-inference-runtime",
+      "commit": "171fc82b4a58db889114c53e75341cbefd09c690",
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json",
+      "sha256": "16ca1e412dbf98d59e19b685b86549567de043ea7e728b254a952540aa783960",
+      "role": "INDEPENDENT_SYNTHETIC_SEVEN_BOUNDARY_ORACLE"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-r9-tier-b-v2.json",
+      "sha256": "56dd1e9a51752045d2f01e7c964b2d13ffbee0303bd459e734d2f7d7ae7797a1",
+      "role": "ACCEPTED_REDUCED_GEOMETRY_MLA_NUMERIC_CONTRACT"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-expert-tier-b-v1.json",
+      "sha256": "1953adbf822a21f7fa4f8d569432e747c8c43c9fd273589bec8849b57475cee2",
+      "role": "ACCEPTED_OPERAND_CONDITIONED_QUANTIZED_MATVEC_BOUND"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "specs/017-rust-native-inference-runtime/contracts/production-r10-tier-b-v2.json",
+      "sha256": "07f6c8556373e7eec5bf326c9aa613680567cbef1d8f3956da7955e7fef3ce75",
+      "role": "ACCEPTED_COMPLETE_LAYER_PRODUCT_NUMERIC_CONTRACT"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-stage-manifest-v1.json",
+      "sha256": "aeabfcbf2d889a6dcd04db7cef2b249cdcca8e2032f07d14b6d6f8be33e7b0a4",
+      "role": "ACCEPTED_CANONICAL_34_STAGE_VOCABULARY"
+    },
+    {
+      "branch": "feat/017-real-checkpoint-runner",
+      "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-apple-production-serial-f32-comparison-execution-contract-v1.json",
+      "sha256": "72d4a68702845b69c5d65759bb615180da0eead02355b78804d4a06b76424ecf",
+      "role": "ACCEPTED_PROOF_REFERENCE_COMPARISON_VOCABULARY"
+    }
+  ],
+  "bound_oracle_implementation": [
+    {
+      "branch": "feat/017-rust-native-inference-runtime",
+      "commit": "171fc82b4a58db889114c53e75341cbefd09c690",
+      "path": "scripts/research/generate_f017_independent_oracle.py",
+      "sha256": "cf6a90f310bf048d2752156ba71cddb6d8a179ce1fed17b4a5831de8412e297e",
+      "role": "INDEPENDENT_ORACLE_GENERATOR"
+    },
+    {
+      "branch": "feat/017-rust-native-inference-runtime",
+      "commit": "171fc82b4a58db889114c53e75341cbefd09c690",
+      "path": "scripts/research/validate_f017_oracle_independence.py",
+      "sha256": "1640fa3704a93cf8499faaf649c4bc7b428a224def935f013d231918586f7d80",
+      "role": "INDEPENDENCE_POLICY_VALIDATOR"
+    },
+    {
+      "branch": "feat/017-rust-native-inference-runtime",
+      "commit": "171fc82b4a58db889114c53e75341cbefd09c690",
+      "path": "crates/engine/tests/f017_independent_oracle.rs",
+      "sha256": "48cfd8518166d44881216360e92a03a47e6dfe05ad75bb17b176c9ed78255221",
+      "role": "SEVEN_BOUNDARY_AND_EDGE_EXECUTABLE_ASSERTIONS"
+    },
+    {
+      "branch": "feat/017-rust-native-inference-runtime",
+      "commit": "171fc82b4a58db889114c53e75341cbefd09c690",
+      "path": "crates/engine/src/f017_parity.rs",
+      "sha256": "b904feef2091cd9bef025c995e9e13225caf1f76d1a9aba20d585fc743543881",
+      "role": "CANDIDATE_BOUNDARY_IMPLEMENTATION"
+    }
+  ],
+  "execution_policy": {
+    "native_backend": "MIXED_PINNED_MLX_METAL_GPU_MATVEC_AND_RUST_SERIAL_F32",
+    "mlx_version": "0.31.2",
+    "mlx_c_version": "0.6.0",
+    "device_brand": "Apple M1 Ultra",
+    "architecture": "arm64",
+    "matvec_device": "GPU",
+    "host_scalar_device": "CPU",
+    "mixed_backend_permitted": true,
+    "stage_capture_synchronization": "SYNCHRONIZE_AND_CANONICAL_READBACK_AFTER_EACH_CAPTURED_STAGE",
+    "hidden_gpu_dispatch_prohibited": true,
+    "fma_or_contraction": "MLX_METAL_BACKEND_DEFINED_FOR_MATVEC_ONLY",
+    "host_scalar_fma": "PROHIBITED",
+    "cross_device_portability_claimed": false
+  },
+  "classes": [
+    "BYTE_EXACT_REQUIRED",
+    "NUMERICALLY_BOUNDED_REQUIRED",
+    "STRUCTURAL_EXACT_NUMERIC_BOUNDED",
+    "INTENTIONALLY_DISTINCT",
+    "IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY",
+    "UNRESOLVED_NUMERIC_SEMANTICS"
+  ],
+  "observed_results": [
+    "BYTE_EQUIVALENT",
+    "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE",
+    "INTENTIONALLY_DISTINCT",
+    "FAILED_CONTRACT"
+  ],
+  "metric_profiles": {
+    "exact_bytes": {
+      "max_absolute_error": 0.0,
+      "rmse": 0.0,
+      "cosine_similarity": "DIAGNOSTIC_ONLY",
+      "relative_error": "DISABLED_EXACT_BYTES_SUPERSEDE",
+      "per_coordinate_cap": 0.0,
+      "shape_dtype_endianness_exact": true,
+      "signed_zero": "EXACT_BITS",
+      "pass": "CANONICAL_BYTES_AND_GEOMETRY_EXACT"
+    },
+    "native_intermediate_tier_b": {
+      "max_absolute_error": 0.015625,
+      "rmse": 0.0078125,
+      "cosine_similarity_minimum": 0.9999,
+      "relative_error": "DISABLED_UNSTABLE_NEAR_ZERO",
+      "per_coordinate_cap": 0.015625,
+      "shape_dtype_endianness_exact": true,
+      "signed_zero": "EXACT_WHEN_BOTH_VALUES_ARE_ZERO",
+      "pass": "ALL_METRICS_AND_STRUCTURAL_GATES",
+      "methodology": "REUSED_ACCEPTED_F017_PRODUCT_LEVEL_R10_INTERMEDIATE_CONTRACT",
+      "source_role": "ACCEPTED_COMPLETE_LAYER_PRODUCT_NUMERIC_CONTRACT",
+      "applicability": "REPRESENTATIVE_LAYER_INTERMEDIATE_SURFACES_ONLY"
+    },
+    "native_final_tier_b": {
+      "max_absolute_error": 0.0625,
+      "rmse": 0.03125,
+      "cosine_similarity_minimum": 0.999,
+      "relative_error": "DISABLED_UNSTABLE_NEAR_ZERO",
+      "per_coordinate_cap": 0.0625,
+      "shape_dtype_endianness_exact": true,
+      "signed_zero": "EXACT_WHEN_BOTH_VALUES_ARE_ZERO",
+      "pass": "ALL_METRICS_AND_STRUCTURAL_GATES",
+      "methodology": "REUSED_ACCEPTED_F017_PRODUCT_LEVEL_R10_FINAL_CONTRACT",
+      "source_role": "ACCEPTED_COMPLETE_LAYER_PRODUCT_NUMERIC_CONTRACT",
+      "applicability": "REPRESENTATIVE_LAYER_FINAL_SURFACE_ONLY"
+    },
+    "routing_weight": {
+      "membership_exact": true,
+      "order_exact": true,
+      "tie_behavior": "LOWER_EXPERT_ID",
+      "mathematical_interval_required": true,
+      "max_absolute_error": 0.00001,
+      "relative_error": "DISABLED_UNSTABLE_NEAR_ZERO",
+      "pass": "MEMBERSHIP_THEN_ORDER_THEN_TIE_THEN_INTERVAL_THEN_MAX_ABS"
+    },
+    "operand_conditioned_matvec": {
+      "per_coordinate_cap": "2*gamma(2*n)*sum(abs(f64(weight)*f64(input))) + 4*n*2^-149",
+      "rmse_cap": "sqrt(mean(per_coordinate_cap^2))",
+      "cosine_minimum": "(||expected||2-||caps||2)/(||expected||2+||caps||2) when defined",
+      "relative_error": "cap/abs(expected) when expected_nonzero; diagnostic_only",
+      "signed_zero": "EXACT_BITS",
+      "methodology": "REUSED_ACCEPTED_OPERAND_CONDITIONED_ANALYTICAL_BOUND",
+      "source_role": "ACCEPTED_OPERAND_CONDITIONED_QUANTIZED_MATVEC_BOUND",
+      "pass": "EVERY_COORDINATE_AND_RMSE_AND_COSINE_WHEN_DEFINED"
+    },
+    "pinned_environment_reproduction": {
+      "same_process_repetitions": 10,
+      "fresh_process_repetitions": 10,
+      "same_device_toolchain_bytes": "ALL_CAPTURED_STAGE_BYTES_EXACT",
+      "numeric_tolerance_may_hide_repeat_failure": false,
+      "earliest_divergence_required": true,
+      "cross_device_result": "NOT_CLAIMED"
+    }
+  },
+  "tolerance_epistemics": {
+    "post_hoc_selection": false,
+    "new_empirical_derivation_in_v1": false,
+    "reused_contracts_were_frozen_before_target_results": true,
+    "future_empirical_corpora": "SYNTHETIC_OR_PINNED_PUBLIC_SAFE_FIXTURE_ONLY",
+    "retained_representative_bytes_may_set_thresholds": false,
+    "d3_5_may_falsify_derivation": true,
+    "d3_5_may_set_or_tune_value": false,
+    "misderived_tolerance_repair": "APPEND_ONLY_NEW_D0_REVISION_FROM_FRESH_CORPUS_EXCLUDING_TRIGGERING_D3_5_OUTPUT_AND_NEW_FABLE_REVIEW",
+    "triggering_d3_5_output_quarantined_from_threshold_selection": true
+  },
+  "route_gate_order": [
+    "SELECTED_EXPERT_MEMBERSHIP_EXACT",
+    "SELECTED_EXPERT_ORDER_EXACT",
+    "TIE_BEHAVIOR_EXACT",
+    "ROUTING_WEIGHT_NUMERIC_BOUNDS",
+    "ROUTED_EXPERT_OUTPUT_GRADING",
+    "ROUTED_AGGREGATE_GRADING"
+  ],
+  "stage_rows": [
+    {"ordinal":0,"id":"input_hidden","backend":"RUST_HOST","class":"BYTE_EXACT_REQUIRED","oracle":"RETAINED_CANONICAL_S0","metric":"exact_bytes","boundary":"complete_layer"},
+    {"ordinal":1,"id":"attention_normalized","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":2,"id":"query_rank","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":3,"id":"query_rank_normalized","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":4,"id":"query_heads","backend":"MLX_METAL_PLUS_RUST_ROPE","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":5,"id":"kv_raw","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":6,"id":"kv_normalized","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":7,"id":"key_nope","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":8,"id":"attention_scores","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":9,"id":"attention_weights","backend":"RUST_SERIAL_F32_LIBM","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":10,"id":"value_heads","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":11,"id":"attention_output","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_MLA_DENSE_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"mla_dense"},
+    {"ordinal":12,"id":"post_attention_residual","backend":"RUST_SERIAL_F32","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"RETAINED_CANONICAL_S1","metric":"native_intermediate_tier_b","boundary":"complete_layer"},
+    {"ordinal":13,"id":"router_normalized","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_ROUTER_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"router"},
+    {"ordinal":14,"id":"router_logits","backend":"MLX_METAL_MATVEC","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_ROUTER_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"router"},
+    {"ordinal":15,"id":"router_probabilities","backend":"RUST_SERIAL_F32_LIBM","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_ROUTER_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"router"},
+    {"ordinal":16,"id":"router_scores","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_ROUTER_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"router"},
+    {"ordinal":17,"id":"ranking","backend":"RUST_TOTAL_ORDER","class":"BYTE_EXACT_REQUIRED","oracle":"ACCEPTED_ROUTE_AUTHORITY","metric":"exact_bytes","boundary":"router"},
+    {"ordinal":18,"id":"selected_ids","backend":"RUST","class":"BYTE_EXACT_REQUIRED","oracle":"ACCEPTED_ROUTE_AUTHORITY","metric":"exact_bytes","boundary":"router"},
+    {"ordinal":19,"id":"routing_weights","backend":"RUST_SERIAL_F32","class":"STRUCTURAL_EXACT_NUMERIC_BOUNDED","oracle":"ACCEPTED_ROUTE_AUTHORITY","metric":"routing_weight","boundary":"router"},
+    {"ordinal":20,"id":"routed_gate","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"INDEPENDENT_COMPLETE_EXPERT","metric":"operand_conditioned_matvec","boundary":"complete_expert"},
+    {"ordinal":21,"id":"routed_up","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"INDEPENDENT_COMPLETE_EXPERT","metric":"operand_conditioned_matvec","boundary":"complete_expert"},
+    {"ordinal":22,"id":"routed_silu","backend":"RUST_SERIAL_F32_LIBM","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_COMPLETE_EXPERT_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"complete_expert"},
+    {"ordinal":23,"id":"routed_gate_up_product","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_COMPLETE_EXPERT_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"complete_expert"},
+    {"ordinal":24,"id":"routed_weighted_hidden","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_TOP8_SHARED_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"top8_shared"},
+    {"ordinal":25,"id":"routed_down_outputs","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"INDEPENDENT_COMPLETE_EXPERT","metric":"operand_conditioned_matvec","boundary":"complete_expert"},
+    {"ordinal":26,"id":"routed_aggregate","backend":"RUST_SERIAL_F32","class":"INTENTIONALLY_DISTINCT","oracle":"RETAINED_PROOF_REFERENCE_ROUTED_F64","metric":"native_intermediate_tier_b","boundary":"top8_shared"},
+    {"ordinal":27,"id":"shared_gate","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"INDEPENDENT_COMPLETE_EXPERT","metric":"operand_conditioned_matvec","boundary":"complete_expert"},
+    {"ordinal":28,"id":"shared_up","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"INDEPENDENT_COMPLETE_EXPERT","metric":"operand_conditioned_matvec","boundary":"complete_expert"},
+    {"ordinal":29,"id":"shared_silu","backend":"RUST_SERIAL_F32_LIBM","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_COMPLETE_EXPERT_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"complete_expert"},
+    {"ordinal":30,"id":"shared_gate_up_product","backend":"RUST_SERIAL_F32","class":"IMPLEMENTATION_SPECIFIC_REPRODUCIBILITY","oracle":"INDEPENDENT_COMPLETE_EXPERT_BOUNDARY_CORRECTNESS","metric":"pinned_environment_reproduction","boundary":"complete_expert"},
+    {"ordinal":31,"id":"shared_expert_output","backend":"MLX_METAL_MATVEC","class":"NUMERICALLY_BOUNDED_REQUIRED","oracle":"RETAINED_CANONICAL_SHARED_F32","metric":"native_intermediate_tier_b","boundary":"top8_shared"},
+    {"ordinal":32,"id":"production_ffn","backend":"RUST_SERIAL_F32","class":"INTENTIONALLY_DISTINCT","oracle":"RETAINED_PROOF_REFERENCE_FFN_F64","metric":"native_intermediate_tier_b","boundary":"top8_shared"},
+    {"ordinal":33,"id":"production_s2","backend":"RUST_SERIAL_F32","class":"INTENTIONALLY_DISTINCT","oracle":"RETAINED_PROOF_REFERENCE_DERIVED_S2","metric":"native_final_tier_b","boundary":"complete_layer"}
+  ],
+  "common_acceptance": {
+    "stage_count": 34,
+    "shape_dtype_endianness_exact": true,
+    "finite_required": true,
+    "nan_or_infinity": "IMMEDIATE_FAILED_CONTRACT",
+    "structural_gates_precede_numeric_metrics": true,
+    "all_applicable_metrics_form_conjunction": true,
+    "unresolved_stage_count": 0,
+    "unexecuted_observed_results": null
+  },
+  "retained_qualification": {
+    "execution_status": "NOT_AUTHORIZED_UNTIL_CONSUMER_SCOPED_GRANT_ACCEPTED",
+    "checkpoint_fallback": false,
+    "original_checkpoint_reads": 0,
+    "historical_payload_ledger_delta": 0,
+    "expected_result_vocabulary": [
+      "BYTE_EQUIVALENT",
+      "NUMERICALLY_EQUIVALENT_WITHIN_FROZEN_TOLERANCE",
+      "INTENTIONALLY_DISTINCT",
+      "FAILED_CONTRACT"
+    ]
+  },
+  "scope_limitations": {
+    "qualified_by_d3_5_if_passed": "REPRESENTATIVE_LAYER_3_S0_TO_S2_ONLY",
+    "full_forward_qualified_by_d3_5": false,
+    "remaining_forward_basis": "F016_STRUCTURAL_LINEAGE_PLUS_GENERALIZED_PER_STAGE_SEMANTICS_REQUIRES_SEPARATE_REAL_P1_EVIDENCE",
+    "production_serial_f32_equivalence_claimed_before_d3_5": false,
+    "synthetic_oracle_proves_all_real_checkpoint_distribution_tails": false
+  },
+  "phase_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "full_model_real_checkpoint_inference_executions": 0,
+    "checkpoint_reads": 0,
+    "live_p1_authorizations": 0
+  }
+}

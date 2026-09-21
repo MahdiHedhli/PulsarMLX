@@ -1,0 +1,10 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-gemini-numerical-review/1.0.0",
+  "cycle": 2,
+  "conversation_id": "aa8b1c08-aca7-48a0-ae75-6175c1df9e3a",
+  "requested_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "protocol": "INVALID",
+  "protocol_failure": "SANDBOX_COULD_NOT_RESOLVE_PARENT_GIT_WORKTREE_METADATA",
+  "substantive_findings_admissible": false,
+  "verdict": "REVIEW_PROTOCOL_INVALID"
+}

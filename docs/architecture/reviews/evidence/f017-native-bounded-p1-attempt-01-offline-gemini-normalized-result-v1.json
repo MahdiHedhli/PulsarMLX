@@ -1,0 +1,88 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-01-offline-cross-vendor-review-result",
+  "schema_version": "1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "provider_family": "google-gemini",
+    "mechanism": "/Users/mhedhli/.local/bin/agy",
+    "effort": "high",
+    "invocation": "agy --model gemini-3.1-pro-high --effort high --mode plan --dangerously-skip-permissions --disable-slash-commands --output-format json --print-timeout 45m --print <exact-request-bytes>",
+    "fresh_session": true,
+    "conversation_id": "70fe448d-4a17-4455-8a67-10460fc5bf48",
+    "preliminary_sandbox_invocation": {
+      "conversation_id": "f1a7576e-3d94-4540-bca2-753e52d4062f",
+      "substantive_review_completed": false,
+      "failure": "permission check failed while traversing detached Git metadata"
+    },
+    "cli_terminal_status": "ERROR_CONTEXT_CANCELED_AFTER_COMPLETE_RESPONSE",
+    "duration_seconds": 194.307795
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "review_evidence_head": "f521f1e781c416387570cbbba2e20698f181b4ea",
+  "reviewed_implementation_head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+  "detached_clean_worktree": true,
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-gemini-review-request-v1.md",
+    "sha256": "57d55ebab972157b0f70a77c6a4acb5ee44771ed7697fd5d26ca760465fae479"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-gemini-exact-cli-response-v1.json",
+    "sha256": "eb2bf610d3ec4ee18b8f08705edd4e77e3b94d20f12849eb8bc581003077cd7e"
+  },
+  "report": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-gemini-report-v1.md",
+    "sha256": "bc9fa5096275eb520c955536eb7077cb56ad9ff8457410aa651775b6fee20caa"
+  },
+  "exact_head_ci": {
+    "run_id": 32590049780,
+    "head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+    "conclusion": "success"
+  },
+  "tests_reported_by_reviewer": {
+    "research_and_forensics": 453,
+    "result": "PASS",
+    "checkpoint_payload_access": 0
+  },
+  "principal_claims": {
+    "attempt_1_immutability": "CONCUR",
+    "forward_v3_evidence": "CONCUR",
+    "expected_token_authority": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+    "root_cause": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+    "tensor_plan": "PASS_1809_TENSORS_METADATA_ONLY",
+    "quantization": "PASS_11_FORMATS_44_CASES",
+    "synthetic_full_graph": "PASS",
+    "attempt_2_readiness": "NO"
+  },
+  "findings": [
+    {
+      "id": "GEMINI-OFFLINE-001",
+      "reported_severity": "BLOCKING",
+      "scope": "FUTURE_ATTEMPT_2",
+      "summary": "Expected token 21615 is defective",
+      "disposition": "AGREED;THIS_IS_THE_PHASE_RESULT_AND_BLOCKS_ATTEMPT_2_NOT_ACCEPTANCE_OF_THE_OFFLINE_FORENSICS_PACKAGE"
+    },
+    {
+      "id": "GEMINI-OFFLINE-002",
+      "reported_severity": "BLOCKING",
+      "scope": "FUTURE_ATTEMPT_2",
+      "summary": "Attempt 1 is terminal and attempt 2 remains unauthorized",
+      "disposition": "AGREED;HARD_SAFETY_INVARIANT_NOT_A_DEFECT_IN_THIS PHASE"
+    },
+    {
+      "id": "GEMINI-OFFLINE-003",
+      "reported_severity": "NON_BLOCKING_REQUIRED",
+      "scope": "FUTURE_ATTEMPT_2",
+      "summary": "Exact causation is not proven",
+      "disposition": "AGREED;ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN_AND_READINESS_NO"
+    },
+    {
+      "id": "GEMINI-OFFLINE-004",
+      "reported_severity": "DEFENSE_IN_DEPTH",
+      "scope": "FORWARD_EXECUTOR",
+      "summary": "Forward v3 evidence logging is robust",
+      "disposition": "ACCEPTED_POSITIVE_ASSESSMENT"
+    }
+  ],
+  "material_disagreement": false,
+  "verdict": "ADVISORY_CONCUR"
+}

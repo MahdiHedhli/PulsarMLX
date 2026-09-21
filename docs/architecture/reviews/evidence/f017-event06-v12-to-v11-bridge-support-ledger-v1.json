@@ -1,0 +1,10 @@
+{
+  "challenge_cycle": 1,
+  "conceded": 0,
+  "material_challenges": 0,
+  "repaired": 0,
+  "result": "NO_MATERIAL_CHALLENGE_REQUIRING_REPAIR",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-support-ledger/1.0.0",
+  "supported": 11,
+  "unresolved": 0
+}

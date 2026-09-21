@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-repair-disposition/1.0.0",
+  "cycle": 2,
+  "reviewed_head": "7fff686ab2a576230dcf23c8e43ca8e4d74c35fa",
+  "findings": {
+    "F5-R1": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "ROLE_SPECIFIC_EXACT_IMPORT_ALLOWLIST_PLUS_DYNAMIC_BUILTINS_ESCAPE_REJECTION",
+      "regression": "NETWORK_NATIVE_FILE_ARCHIVE_DYNAMIC_AND_RELATIVE_IMPORTS_REJECTED"
+    },
+    "F1-R3": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "TARGET_SOURCE_FUNCTION_AND_METHOD_CENSUS_IS_EXACT_PER_ROLE"
+    },
+    "F6-R2": {
+      "classification": "STRUCTURALLY_CONTAINED",
+      "repair": "QUALIFICATION_ROOT_IS_EPHEMERAL_SYNTHETIC_AND_ACTIVE_LIVE_GENERATION_REMAINS_NONE"
+    }
+  },
+  "numerical_methodology_changed": false,
+  "thresholds_changed": false,
+  "original_checkpoint_access": 0,
+  "requires_cycle_3_review": true
+}

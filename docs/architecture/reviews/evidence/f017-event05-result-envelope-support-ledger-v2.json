@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event05-result-envelope-support-ledger/1.0.0",
+  "cycle": 2,
+  "reviewed_head": "ad314922baeafb3464b33725264b9d9dcea89bf4",
+  "responses": [
+    {"challenge_id":"F-01","disposition":"REPAIR_IMPLEMENTED","evidence":["Frozen V6-compatible route, bound, margin, exact-top32 classification","four classification branches tested"]},
+    {"challenge_id":"F-02","disposition":"REPAIR_IMPLEMENTED","evidence":["DIAGNOSTIC_EVENT04 role","non-authoritative kind and producer","manifest rejection test"]},
+    {"challenge_id":"F-03","disposition":"REPAIR_IMPLEMENTED","evidence":["Exact release start/report/receipt/terminal order","complete derived closure node census"]},
+    {"challenge_id":"F-04","disposition":"REPAIR_IMPLEMENTED","evidence":["bounded validators for summary receipt result terminal consumer terminal closure","top32 derived from binary payload"]},
+    {"challenge_id":"F-05","disposition":"REPAIR_IMPLEMENTED","evidence":["comparison summary binds both exact logits payload SHAs"]},
+    {"challenge_id":"F-06","disposition":"REPAIR_IMPLEMENTED","evidence":["historical observation literals removed from active summary implementation"]},
+    {"challenge_id":"F-07","disposition":"REPAIR_IMPLEMENTED","evidence":["single descriptor-relative stream pass hashes exact yielded bytes before comparator returns"]},
+    {"challenge_id":"F-08","disposition":"REPAIR_IMPLEMENTED","evidence":["edges and Kahn acyclicity derived mechanically"]},
+    {"challenge_id":"F-09","disposition":"REPAIR_IMPLEMENTED","evidence":["result-terminal receipt and manifest bindings mandatory"]},
+    {"challenge_id":"F-10","disposition":"REPAIR_IMPLEMENTED","evidence":["temporary output root must be outside repository and immutable Event04 tree"]},
+    {"challenge_id":"F-11","disposition":"REPAIR_IMPLEMENTED","evidence":["exact producer identity enforced","parent directory opened no-follow"]},
+    {"challenge_id":"F-12","disposition":"REPAIR_IMPLEMENTED","evidence":["converter nonpromotion test","frozen comparator branch tests"]}
+  ],
+  "answered_by_existing_evidence":0,
+  "repairs":12,
+  "conceded_claims":0,
+  "unresolved_claims":0,
+  "original_checkpoint_access":0
+}

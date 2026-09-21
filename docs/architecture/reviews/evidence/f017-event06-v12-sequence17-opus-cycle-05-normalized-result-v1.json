@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-opus-cycle-05-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "transport": "authenticated Claude CLI",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+  "reviewed_tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce",
+  "implementation_head": "7369ecdc9ad79ff4a9830716ecd04d693dcc84ae",
+  "implementation_tree": "fe68ea4bca44fffd30fe5b3dbe0d710fa00b51ce",
+  "full_native_run": 33269261443,
+  "blocking_findings": [
+    {
+      "id": "B1",
+      "summary": "A caller-declared qualification_registry_root can downgrade a PRODUCTION authority, move the one-shot reservation and terminal sinks to caller-selected roots, and permit repeated real checkpoint and numerical consumption for one package identity."
+    }
+  ],
+  "unresolved_findings": [
+    {
+      "id": "U1",
+      "summary": "The live claim_terminal_sinks boundary that carries the loop 7 repair has no direct generated DAG edge or mechanical test."
+    }
+  ],
+  "advisory_findings": [
+    "ValidatedBridgeExecutionResult is shallow-frozen and permits nested mutation outside the supported producer path.",
+    "bank_terminal does not independently revalidate its payload against the sealed sink.",
+    "the qualification-root overlap guard rejects equality and descendants but not ancestor roots.",
+    "authority_mode threading into V11 wrappers is inert on the V1 production path."
+  ],
+  "claim_dispositions": {
+    "terminal_uniqueness": "REJECT",
+    "execution_derived_subjects": "UNRESOLVED",
+    "no_access": "ACCEPT_FOR_QUALIFICATION_POSTURE_ONLY",
+    "no_retry": "REJECT",
+    "accounting": "REJECT",
+    "dag_coverage": "UNRESOLVED",
+    "frozen_authority_drift": "ACCEPT"
+  },
+  "root_cause_disposition": "THIRD_FAILED_REPAIR_OF_PACKAGE_TERMINAL_UNIQUENESS_ROOT_CAUSE",
+  "global_verdict": "REJECT",
+  "result": "FAIL",
+  "disposition": "TERMINAL_BLOCKED_BY_SEQUENCE17_STOP_RULE"
+}

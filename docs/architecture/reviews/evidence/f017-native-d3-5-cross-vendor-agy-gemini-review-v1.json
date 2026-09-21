@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-cross-vendor-review",
+  "schema_version": "1.0.0",
+  "reviewer_provider": "Google",
+  "reviewer_model": "gemini-3.1-pro-high",
+  "reviewer_cli": "/Users/mhedhli/.local/bin/agy",
+  "reviewer_effort": "high",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "4e1f92689fc7277affadc01ceb652476d6fb56cf",
+  "conversation_id": "f55b2d44-360b-40c6-847b-6989c02d5ea7",
+  "invocation_notes": [
+    "The first sandboxed invocation stopped before review because AGY denied repository discovery outside its initial sandbox.",
+    "The successful invocation explicitly mounted the repository, retained a no-edit/no-numerical-execution prompt, and used AGY permission bypass only for read-only repository inspection.",
+    "The reviewer response was requested inline in a continuation turn so its exact bytes could be banked."
+  ],
+  "request": "Review committed bytes at exact head 4e1f92689fc7277affadc01ceb652476d6fb56cf. Decide whether D3.5 may grade from hashes and accepted authorities when expected output bytes are not enumerated in the native consumer grant, and whether independent synthetic boundary qualification can substitute for representative bounded-stage grading. Return stable severities and CONTINUE, PARK_FOR_AUTHORITY_REPAIR, or REJECT_DOMAIN. Do not edit or execute payloads.",
+  "exact_response": "**F017 Cross-Vendor Adversarial Review**\n\n**Finding ID:** F017-D3.5-AR-01\n**Severity:** NON_BLOCKING_REQUIRED\n**Exact Evidence Paths:**\n* `specs/017-rust-native-inference-runtime/contracts/f017-native-representative-retention-reuse-grant-v1.json`\n* `specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json`\n* `crates/f017-native/src/bin/retained_qualification.rs`\n* `specs/017-rust-native-inference-runtime/spec.md`\n**Reasoning:** The native runner inherently does not read the expected comparison artifacts (e.g., S1, router-normalized, FFN, S2) from disk during execution. Instead, the runner executes the graph using only the 40 authorized tensor inputs, producing exact 34-stage bytes and committing their SHAs to the output `capture-manifest.json`. D3.5 doctrine is structured to grade the runner by comparing its generated hashes against the bound comparison vocabulary located in the D0 `oracle_registry` (`ACCEPTED_PROOF_REFERENCE_COMPARISON_VOCABULARY`). Therefore, repository doctrine explicitly permits a D3.5 PASS solely from hashes and already-accepted reuse authorities. \n**Required Action:** No action required. An explicit native consumer-scoped comparison-read grant for expected artifacts is unnecessary and correctly omitted, as the runner has no legitimate need to read expected payloads during qualification.\n\n**Finding ID:** F017-D3.5-AR-02\n**Severity:** DEFENSE_IN_DEPTH\n**Exact Evidence Paths:**\n* `specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v1.json`\n* `specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json`\n* `specs/017-rust-native-inference-runtime/f017-native-bounded-p1-numeric-acceptance-v1.md`\n**Reasoning:** Stages lacking retained representative expected bytes (such as `routed_gate`, `routed_up`, `shared_up`, etc.) are assigned the `operand_conditioned_matvec` metric under D0 v1. Because they do not evaluate against the end-to-end `native_intermediate_tier_b` metric, doctrine expressly permits `NUMERICALLY_BOUNDED_REQUIRED` grading at these localized boundaries via the `INDEPENDENT_SYNTHETIC_SEVEN_BOUNDARY_ORACLE`. Doctrine correctly asserts that while synthetic fixtures cannot prove all real-checkpoint distribution tails, they are sufficient and authorized for operand-conditioned component bounds.\n**Required Action:** No action required.\n\n**Verdict:** CONTINUE",
+  "findings": [
+    {
+      "id": "F017-D3.5-AR-01",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "disposition": "MATERIAL_INTERNAL_INCONSISTENCY_REQUIRES_FABLE_ADJUDICATION",
+      "reason": "The finding is acceptance-blocking by policy while its required action says no action, and hash identity alone cannot instantiate non-byte numerical metrics when produced and expected hashes differ."
+    },
+    {
+      "id": "F017-D3.5-AR-02",
+      "severity": "DEFENSE_IN_DEPTH",
+      "disposition": "REQUIRES_FABLE_ADJUDICATION",
+      "reason": "Synthetic component qualification and representative retained-value grading are distinct evidentiary claims."
+    }
+  ],
+  "reviewer_verdict": "CONTINUE",
+  "builder_disagreement": "MATERIAL_AUTHORITY_AND_NUMERICAL_INSTANTIABILITY_DISAGREEMENT",
+  "required_escalation": "CLAUDE_FABLE_5_REVIEW_OF_COMMITTED_D3_5_EXECUTION_EVIDENCE_AND_D0_GRADING_BOUNDARY"
+}

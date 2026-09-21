@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-preaccess-ci-evidence/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "0f0fc80876ba6f9e11615b3c8dd29c72b4b90451",
+  "review_package_head": "f107fff93d39dba80a80e30bbad055e9b405b843",
+  "run_id": 32601851854,
+  "workflow": "macOS baseline",
+  "selected_mode": "FULL_NATIVE",
+  "conclusion": "success",
+  "jobs": [
+    {"name":"Classify committed change","conclusion":"success"},
+    {"name":"Apple MLX small-fixture validation","conclusion":"success"},
+    {"name":"Apple Silicon workspace baseline","conclusion":"success"},
+    {"name":"Evidence integrity","conclusion":"skipped"},
+    {"name":"Closed F017 branch guard","conclusion":"skipped"},
+    {"name":"Documentation integrity","conclusion":"skipped"},
+    {"name":"CI aggregate status","conclusion":"success"}
+  ],
+  "corrected_oracle_step": "PASS",
+  "geometry_executable_bindings": 17,
+  "synthetic_seed_count": 12,
+  "fresh_processes_per_seed": 3,
+  "packed_decoder_cases": 44,
+  "mutation_count": 16,
+  "original_checkpoint_shard_opens": 0,
+  "original_checkpoint_payload_reads": 0,
+  "corrected_oracle_executed": false,
+  "p1_attempt_2_executed": false
+}

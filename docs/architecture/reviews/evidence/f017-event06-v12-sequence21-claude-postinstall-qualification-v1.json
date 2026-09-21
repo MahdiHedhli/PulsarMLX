@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence21-claude-postinstall-qualification/1.0.0",
+  "final_version": "2.1.250",
+  "binary_identity": "OFFICIAL_NATIVE_VERSION_STORE_ARM64_MACH_O",
+  "binary_sha256": "506d7362a9c625306044879a9d91d8f33bd2eef963681b56be3295db5fe3e34b",
+  "authenticated": true,
+  "sanitized_help_sha256": "0b78452503a81f1c60060061295c065fdb9df7aecf9dd26c1671836bf6522f14",
+  "required_capabilities": {
+    "restricted": true,
+    "safe_mode": true,
+    "no_session_persistence": true,
+    "permission_mode_plan": true,
+    "output_format_json": true,
+    "json_schema": true,
+    "model": true,
+    "tools": true,
+    "effort": true,
+    "max_budget_usd": true
+  },
+  "codesign_detail_sha256": "cc2c53dba14580bf3707c0df3f16afdd68c52b414cc1054eb4a6ea6e601f9c27",
+  "codesign_verify": "PASS",
+  "platform_assessment_sha256": "484445e646813e157c1b58491db57c19ecd6f9f8e772f8919b79ecc784e1331f",
+  "platform_assessment": "CODE_VALID_STANDALONE_CLI_NOT_AN_APP_BUNDLE",
+  "shell_path_configuration_before_sha256": "badf2cc584d20c16a73928286f5cdcb3b79363a8fdf94247748d37ac3ffaa6c7",
+  "shell_path_configuration_after_sha256": "badf2cc584d20c16a73928286f5cdcb3b79363a8fdf94247748d37ac3ffaa6c7",
+  "unexpected_configuration_changes": 0,
+  "identity_auth_and_signature": "PASS",
+  "result": "PASS"
+}

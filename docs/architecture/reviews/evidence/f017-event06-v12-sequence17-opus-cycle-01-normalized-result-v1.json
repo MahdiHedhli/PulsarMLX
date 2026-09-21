@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-opus-cycle-01-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "transport": "authenticated Claude CLI",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "ff0f1d6f04a469a10c7390459a917c4abb546845",
+  "reviewed_tree": "85b3eac7acd369c696a9ec4c9443c4cbf237c64a",
+  "full_native_run": 33259507825,
+  "blocking_findings": [
+    {
+      "id": "F1",
+      "category": "AMBIGUOUS_AUTHORIZATION_PACKAGE_PRIMARY_SECONDARY_ACCOUNTING",
+      "summary": "Comparison, release, accounting, and package-terminal consumers accepted bare 64-hex digests instead of exact sealed producer outputs, permitting primary/secondary substitution, self-comparison, or unrelated digest closure."
+    }
+  ],
+  "advisory_findings": 7,
+  "unresolved_findings": 1,
+  "unresolved_summary": "The detached reviewer environment lacked pytest and therefore did not independently rerun the complete local test corpus.",
+  "global_verdict": "REJECT",
+  "result": "FAIL",
+  "disposition": "REPAIRED_BY_77B5C0831F2EE199FC5C5B3F36190116BDC48466"
+}

@@ -1,0 +1,456 @@
+{
+ "schema": "pulsarmlx.f017.decoder-differential-report/1.0.0",
+ "oracle": "scripts/research/f017_oracle_primary_decoders.py (corrected oracle independent scalar decoders, binary64)",
+ "producer": "f017-native decode_packed_matrix_for_qualification (secure loader dispatch)",
+ "rule": "MATCH = every value within 1 ULP of the oracle value rounded to f32; DIVERGENT otherwise; permutation_signature = divergent with identical multiset",
+ "per_format": {
+  "F32": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 46,
+   "n": 46
+  },
+  "Q8_0": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 1472,
+   "n": 1472
+  },
+  "Q5_K": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "IQ2_XXS": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "Q6_K": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "IQ3_XXS": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "IQ4_XS": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "Q4_K": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "IQ2_S": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "Q2_K": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  },
+  "Q3_K": {
+   "max_ulp": 0,
+   "cases": 3,
+   "divergent": 0,
+   "exact_f32": 11776,
+   "n": 11776
+  }
+ },
+ "cases": [
+  {
+   "id": "F32-r1-c2-0",
+   "format": "F32",
+   "n": 2,
+   "status": "MATCH",
+   "exact_f32": 2,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "F32-r3-c4-1",
+   "format": "F32",
+   "n": 12,
+   "status": "MATCH",
+   "exact_f32": 12,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "F32-r4-c8-2",
+   "format": "F32",
+   "n": 32,
+   "status": "MATCH",
+   "exact_f32": 32,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q8_0-r1-c64-0",
+   "format": "Q8_0",
+   "n": 64,
+   "status": "MATCH",
+   "exact_f32": 64,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q8_0-r3-c128-1",
+   "format": "Q8_0",
+   "n": 384,
+   "status": "MATCH",
+   "exact_f32": 384,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q8_0-r4-c256-2",
+   "format": "Q8_0",
+   "n": 1024,
+   "status": "MATCH",
+   "exact_f32": 1024,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q5_K-r1-c512-0",
+   "format": "Q5_K",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q5_K-r3-c1024-1",
+   "format": "Q5_K",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.00023651123046875,
+   "max_rel": 5.842194042983475e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q5_K-r4-c2048-2",
+   "format": "Q5_K",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.00017309188842773438,
+   "max_rel": 5.95814581310667e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_XXS-r1-c512-0",
+   "format": "IQ2_XXS",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_XXS-r3-c1024-1",
+   "format": "IQ2_XXS",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_XXS-r4-c2048-2",
+   "format": "IQ2_XXS",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q6_K-r1-c512-0",
+   "format": "Q6_K",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q6_K-r3-c1024-1",
+   "format": "Q6_K",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q6_K-r4-c2048-2",
+   "format": "Q6_K",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ3_XXS-r1-c512-0",
+   "format": "IQ3_XXS",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ3_XXS-r3-c1024-1",
+   "format": "IQ3_XXS",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ3_XXS-r4-c2048-2",
+   "format": "IQ3_XXS",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ4_XS-r1-c512-0",
+   "format": "IQ4_XS",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ4_XS-r3-c1024-1",
+   "format": "IQ4_XS",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ4_XS-r4-c2048-2",
+   "format": "IQ4_XS",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q4_K-r1-c512-0",
+   "format": "Q4_K",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 3.0517578125e-05,
+   "max_rel": 5.7604798249274974e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q4_K-r3-c1024-1",
+   "format": "Q4_K",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0002384185791015625,
+   "max_rel": 5.956351498835444e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q4_K-r4-c2048-2",
+   "format": "Q4_K",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.00023794174194335938,
+   "max_rel": 5.9602175741664146e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_S-r1-c512-0",
+   "format": "IQ2_S",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_S-r3-c1024-1",
+   "format": "IQ2_S",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "IQ2_S-r4-c2048-2",
+   "format": "IQ2_S",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q2_K-r1-c512-0",
+   "format": "Q2_K",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 1.9073486328125e-06,
+   "max_rel": 5.6230929631658736e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q2_K-r3-c1024-1",
+   "format": "Q2_K",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 1.2874603271484375e-05,
+   "max_rel": 5.343014305333071e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q2_K-r4-c2048-2",
+   "format": "Q2_K",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0002384185791015625,
+   "max_rel": 5.9027545971685785e-08,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q3_K-r1-c512-0",
+   "format": "Q3_K",
+   "n": 512,
+   "status": "MATCH",
+   "exact_f32": 512,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q3_K-r3-c1024-1",
+   "format": "Q3_K",
+   "n": 3072,
+   "status": "MATCH",
+   "exact_f32": 3072,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  },
+  {
+   "id": "Q3_K-r4-c2048-2",
+   "format": "Q3_K",
+   "n": 8192,
+   "status": "MATCH",
+   "exact_f32": 8192,
+   "max_ulp": 0,
+   "max_abs": 0.0,
+   "max_rel": 0.0,
+   "permutation_signature": false
+  }
+ ],
+ "negative_control": {
+  "case": "IQ3_XXS-r1-c512-0",
+  "mutation": "oracle lanes 0 and 1 swapped in the comparison",
+  "flagged": true
+ },
+ "verdict": "PASS"
+}

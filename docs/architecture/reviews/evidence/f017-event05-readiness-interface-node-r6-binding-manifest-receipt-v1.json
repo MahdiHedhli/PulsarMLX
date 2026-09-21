@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R6_BINDING_MANIFEST",
+  "input_head": "d998887064009b6c6ca51f030b0ff73d4468c704",
+  "output_head": "a974af3872721cbfa47dd5678ef6a00ae709ea2e",
+  "output_tree": "c6237f50bf0820d9fd5d3e4b0381ff21723ed4b4",
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-authority-manifest-v3.json",
+    "scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py"
+  ],
+  "commands_executed": [
+    "python3 scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py --check",
+    "python3 scripts/research/validate_f017_event05_readiness_interface_design_v1.py"
+  ],
+  "tests_executed": [
+    "31-binding manifest recomputation",
+    "13 design unit tests"
+  ],
+  "result_counts": {
+    "bindings": 31,
+    "sha_mismatches": 0,
+    "tests_passed": 13,
+    "tests_failed": 0
+  },
+  "claims_closed": [
+    "C-BIND-001"
+  ],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": [
+    "R7"
+  ],
+  "result": "PASS"
+}

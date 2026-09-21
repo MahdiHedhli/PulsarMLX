@@ -1,0 +1,196 @@
+{
+  "candidate_head": "44e0a8e5bb8288c3e3ff4c246e513f4ba696baee",
+  "candidate_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "claim_ledger": {
+    "attacks": [
+      "caller-controlled production registry location",
+      "live terminal DAG edge omission",
+      "qualification and production namespace fork",
+      "cross-mode authority substitution",
+      "second package attempt or competing terminal",
+      "ambiguous authorization/package/primary/secondary accounting",
+      "crash or restart race around exclusive create and fsync",
+      "legacy writer reachability",
+      "reservation reclaim, expiry, unlock, force, or overwrite",
+      "package identity fork across reinstallation",
+      "checkpoint or numerical access during qualification",
+      "incomplete independent sandbox assurance"
+    ],
+    "claims": [
+      {
+        "claim_id": "S18-C-ROOT-001",
+        "statement": "No public or indirect production input selects a safety-authoritative storage location."
+      },
+      {
+        "claim_id": "S18-C-WRITER-001",
+        "statement": "Every legacy production writer is removed or fails closed before safety-state mutation."
+      },
+      {
+        "claim_id": "S18-C-KEY-001",
+        "statement": "One immutable package identity yields exactly one exclusive registry key across reinstallations."
+      },
+      {
+        "claim_id": "S18-C-DAG-001",
+        "statement": "Every production reservation, live start, terminal claim, and terminal bank boundary is source-derived and composition-tested."
+      },
+      {
+        "claim_id": "S18-C-ONESHOT-001",
+        "statement": "Concurrent or restarted contenders admit one package attempt and one terminal decision, with every loser aborting before package start."
+      },
+      {
+        "claim_id": "S18-C-MODE-001",
+        "statement": "Qualification and production authorities, reservations, claims, and sinks cannot cross modes."
+      },
+      {
+        "claim_id": "S18-C-DURABILITY-001",
+        "statement": "Live safety state uses exclusive create, exact write, file fsync, parent-directory fsync, and readback."
+      },
+      {
+        "claim_id": "S18-C-NOACCESS-001",
+        "statement": "Strict-abort, virtual composition, and independent default-deny sandbox evidence establish zero live-registry writes and no checkpoint access."
+      },
+      {
+        "claim_id": "S18-C-FREEZE-001",
+        "statement": "Numerical V4, result V11, collapsed-GO, checkpoint identity V12, and freezing-policy bytes do not drift."
+      }
+    ],
+    "consequence_vocabulary": [
+      "RETRY",
+      "RESUME",
+      "SECOND_ATTEMPT",
+      "REPEATED_CONSUMPTION",
+      "AMBIGUOUS_ACCOUNTING"
+    ],
+    "schema": "pulsarmlx.f017.event06-v12-sequence18-review-claim-ledger/1.0.0"
+  },
+  "instructions": [
+    "Inspect the current detached repository at the exact candidate head and tree; verify them with Git.",
+    "Run read-only tests or inspections needed to attack every in-scope claim. Do not modify the worktree.",
+    "Use only the closed blocking scope within the explicit Event 06 review scope: irreversible read misuse; ambiguous authorization/package/primary/secondary accounting; retry, resume, second attempt, competing terminal, or repeated real consumption.",
+    "Do not map findings in excluded P1 or historical domains to Sequence 18 claim IDs or the verdict.",
+    "Return REJECT for any in-scope blocking or unresolved safety finding. Cite the exact Event 06 producer symbol or DAG edge and a closed consequence term.",
+    "Echo the nonce and payload digest from the transport envelope exactly and end with the required terminal marker."
+  ],
+  "nonce": "f75813434c64d955bc995a4bbdd4dbb5d0ae0730a8b048203f3fa2102f8e4bbe",
+  "output_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "additionalProperties": false,
+    "properties": {
+      "blocking_findings": {
+        "items": {
+          "additionalProperties": false,
+          "properties": {
+            "claim_id": {
+              "type": "string"
+            },
+            "consequence_term": {
+              "enum": [
+                "RETRY",
+                "RESUME",
+                "SECOND_ATTEMPT",
+                "REPEATED_CONSUMPTION",
+                "AMBIGUOUS_ACCOUNTING"
+              ]
+            },
+            "finding_id": {
+              "type": "string"
+            },
+            "seeded_symbol_or_edge": {
+              "type": "string"
+            },
+            "statement": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "finding_id",
+            "claim_id",
+            "seeded_symbol_or_edge",
+            "consequence_term",
+            "statement"
+          ],
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "model": {
+        "const": "gemini-3.1-pro-high"
+      },
+      "nonce_echo": {
+        "const": "f75813434c64d955bc995a4bbdd4dbb5d0ae0730a8b048203f3fa2102f8e4bbe"
+      },
+      "payload_sha256_echo": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "reviewed_head": {
+        "const": "44e0a8e5bb8288c3e3ff4c246e513f4ba696baee"
+      },
+      "reviewed_tree": {
+        "const": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883"
+      },
+      "reviewer": {
+        "const": "AGY"
+      },
+      "schema": {
+        "const": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0"
+      },
+      "summary": {
+        "type": "string"
+      },
+      "terminal_marker": {
+        "const": "END_F017_SEQUENCE18_REVIEW"
+      },
+      "unresolved_findings": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "verdict": {
+        "enum": [
+          "ACCEPT",
+          "REJECT"
+        ]
+      }
+    },
+    "required": [
+      "schema",
+      "nonce_echo",
+      "payload_sha256_echo",
+      "reviewer",
+      "model",
+      "reviewed_head",
+      "reviewed_tree",
+      "verdict",
+      "blocking_findings",
+      "unresolved_findings",
+      "summary",
+      "terminal_marker"
+    ],
+    "type": "object"
+  },
+  "required_attacks": [
+    "caller-controlled production registry location",
+    "live terminal DAG edge omission",
+    "qualification and production namespace fork",
+    "cross-mode authority substitution",
+    "second package attempt or competing terminal",
+    "ambiguous authorization/package/primary/secondary accounting",
+    "crash or restart race around exclusive create and fsync",
+    "legacy writer reachability",
+    "reservation reclaim, expiry, unlock, force, or overwrite",
+    "package identity fork across reinstallation",
+    "checkpoint or numerical access during qualification",
+    "incomplete independent sandbox assurance"
+  ],
+  "review_scope": {
+    "excluded": "P1 executors and authorities, Event 04, Event 05, and other historical F017 domains are outside this review and cannot support a Sequence 18 verdict.",
+    "included": "Only the Event 06 V12 package reservation, package-start, terminal-claim, terminal-bank, storage-authority, V12-to-V11 bridge, generated authority DAG v2, and their Sequence 18 qualification closure.",
+    "included_dag_path": "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json",
+    "included_source_census_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence18-storage-authority-census-v1.json"
+  },
+  "reviewer_role": "INDEPENDENT_EVENT06_SAFETY_CHALLENGER",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-payload/1.1.0",
+  "target_model": "gemini-3.1-pro-high"
+}

@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-claim-ledger/1.0.0",
+  "graph_id":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-02",
+  "head":"1810ec2ed4404477df49ec367f08d0cf6d4a26c9",
+  "design_claims_accepted":["C-BIN-002","C-CLOSURE-001","C-COMP-001","C-ROUTE-001","C-AUTH-001","C-TOP32-001","C-LEAF-001","C-BUNDLE-001"],
+  "claims":[
+    {"claim_id":"C-IMPL-001","statement":"The unchanged pure numerical cores expose every array required by the accepted six-payload V11 result envelope.","introduced_by_node":"R11","readiness_critical":true,"status":"REJECTED","proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-v11-implementation-instantiability-blocker-v1.json"],"invalidates_nodes":["R11","R12","R13","R14","R15","R16","R17","R18","R19","R20"]},
+    {"claim_id":"C-QUAL-001","statement":"Full primary and secondary result bundles are implementable with unchanged pure-core bytes.","introduced_by_node":"R13","readiness_critical":true,"status":"UNRESOLVED","depends_on":["C-IMPL-001"]},
+    {"claim_id":"C-CI-001","statement":"Exact-head FULL_NATIVE accepts a measured V11 implementation.","introduced_by_node":"R16","readiness_critical":true,"status":"UNRESOLVED","depends_on":["C-IMPL-001","C-QUAL-001"]}
+  ],
+  "accepted":8,
+  "rejected":1,
+  "unresolved":2,
+  "readiness":"NO"
+}

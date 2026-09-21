@@ -1,0 +1,33 @@
+{
+  "authority_binding_count": 5,
+  "authority_bindings": {
+    "scripts/research/f017_corrected_oracle_primary_numerics_v3.py": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v12.json": "fee13b771363cd29123c3e945c856560e11ca9752a0501139dd518c8aafb20f2",
+    "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101"
+  },
+  "capability": "PASS",
+  "checkpoint_identity_hash_reads": 0,
+  "checkpoint_mmaps": 0,
+  "checkpoint_opens": 0,
+  "checkpoint_payload_reads": 0,
+  "checkpoint_root_resolved": false,
+  "complete_call_path": "PASS",
+  "event06_executed": false,
+  "event06_ids_consumed": 0,
+  "full_result_geometry": {
+    "primary": [49152, 49152, 1239040],
+    "secondary": [24576, 24576, 619520]
+  },
+  "historical_master_ledger": 175,
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "live_authority_created": false,
+  "numerical_operations": 0,
+  "p1_attempt_2_executed": false,
+  "package_started": false,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-no-access-rehearsal/1.0.0",
+  "state_created": false,
+  "tensor_reads": 0
+}

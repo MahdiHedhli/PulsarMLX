@@ -1,0 +1,30 @@
+At HEAD (`6c92a9ce876b39537ca1eb8f0c6161018180ba45`), I have completed the final scope-repair confirmation within cycle 03 in the detached checkout using committed bytes only.
+
+All 11 SHAs listed in `docs/architecture/reviews/evidence/f017-event05-readiness-interface-scope-repair-confirmation-packet-v2.json` were verified to perfectly match the committed bytes on disk.
+
+### Repair Confirmation
+
+**F-D (Scope Rupture):** Successfully repaired. The `f017_event05_readiness_authority_v1.py` validator now abandons the unbounded JSON parse in favor of `read_artifact(CONTRACT)` and enforces strictly separated `VALIDATION_ONLY_PREPARED` and `FINAL_EVENT05_EXECUTION_READINESS` predicate sets. At the shared candidate builder boundary, `build_operator_go_candidate` explicitly raises a `ValueError` if a `LIVE_OPERATOR_GO` approval is provided without `FINAL_EVENT05_EXECUTION_READINESS`. The live authorizer `validate_f017_corrected_oracle_access_v11.py` correctly demands the `FINAL` scope before yielding authority. 
+
+**F-E (Missing Evidence Generation and Gating):** Successfully repaired. The `qualify_f017_event05_readiness_interface_v1.py` qualifier dynamically generates all 231 cases. The repository test `test_repository_bound_artifacts_are_canonical_and_tree_exact` now reads the actually bound `full-native-ci-v6.json` and `measurement-v7.json`, verifying the exact measurement SHA, and explicitly enforces exact tree equivalence via `git rev-parse <implementation_head>^{tree} == implementation_tree`. Fresh exact-head FULL_NATIVE run `33046311031` (v7) at head `6c92a9ce876b39537ca1eb8f0c6161018180ba45` is verified with zero required native skips, zero numerical/result drift, zero unexpected passes, zero checkpoint access, 480 repository tests, and 231 generated mutations.
+
+### Readiness-Critical Claims
+
+| Challenge ID | Claim ID | Severity | Attack | Observed Evidence | Status | Required Repair |
+|---|---|---|---|---|---|---|
+| - | C-SCHEMA-001 | - | Exact schema verification | All 56 fields exist, unique, lowercase. | ACCEPT | - |
+| - | C-SCHEMA-002 | - | Predicate separation check | 35 predicates and 21 free-value fields partitioned exactly without overlap. | ACCEPT | - |
+| - | C-VALIDATOR-001 | - | Bound decode and frozen contract enforcement (F-D repair) | Validator uses `read_artifact(CONTRACT)` and enforces separated `VALIDATION_ONLY_PREPARED` and `FINAL_EVENT05_EXECUTION_READINESS` predicate sets exactly. | ACCEPT | - |
+| - | C-AUTHORIZER-001 | - | V11 logic enforcement | Authorizer properly enforces `FINAL_EVENT05_EXECUTION_READINESS` on `LIVE_OPERATOR_GO`. | ACCEPT | - |
+| - | C-INSTANT-001 | - | Shared candidate builder side-effects | Side-effects zero, identical construction logic confirmed. | ACCEPT | - |
+| - | C-INSTANT-002 | - | F-A repair confirmation | Canonical closure complete, noncanonical predecessors rejected. | ACCEPT | - |
+| **CHAL-03-BIND** | C-BIND-001 | **BLOCKING** | Verified closure bindings across all readiness artifacts | Prepared declaration v5 and manifest v5 strictly bind `full-native-ci-v6.json` (run `33044253965`). Prepared production instantiability v5 passes both consumer validators with exactly zero side effects. The final-readiness path remains structurally separate and cannot consume prepared authority under a live approval. | **ACCEPT** | - |
+| - | C-SAFETY-001 | - | Safety predicate enforcement | Alias and unknown keys rejected, inert GO template. | ACCEPT | - |
+| - | C-LEGACY-001 | - | Historical equivalence | E0 reproducible from committed bytes. | ACCEPT | - |
+| **CHAL-03-CI** | C-CI-001 | **NON_BLOCKING_REQUIRED** | Verifying F-E repair (qualifier CI and bound artifact tests) | Repository tests now correctly read FULL_NATIVE v6 and measurement v7, and assert tree↔head exactness directly. Fresh exact-head FULL_NATIVE run `33046311031` confirms 480 repository tests and 231 mutations with zero drift and zero skips. | **ACCEPT** | - |
+| - | C-REVIEW-001 | - | F-C and F-D independent review repairs | F-C retraction is correct and F-D is successfully repaired (now enforced prior to GO). | ACCEPT | - |
+| - | C-GO-001 | - | Cross-posture scope assertion (F-D repair) | `build_operator_go_candidate` explicit rejection confirmed for `LIVE_OPERATOR_GO` lacking final readiness. | ACCEPT | - |
+
+**Counts** — open blocking: 0; open non-blocking-required: 0; defense-in-depth: 2; unresolved: 0.
+
+NO_UNRESOLVED_MATERIAL_CHALLENGE

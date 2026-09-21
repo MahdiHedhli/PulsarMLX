@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-gemini-whole-domain-result/1.1.0",
+  "cycle": 2,
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_evidence_head": "02ed1c536e632cf07d624db47f871788eb5c31c6",
+  "measured_implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "measured_implementation_tree": "4ea92265360b7130948e52b8497f2802a7526702",
+  "request_sha256": "fb7f1d38dede3389f5513013462c5e1976c80d351943a815a095beaf1f61ffcf",
+  "response_sha256": "010adfa2c02a93de1dfb52eb9c81e7332559d8bb5d9f20587897259c17a4ab42",
+  "claim_verdicts": {
+    "C-BRIDGE-GEN-001": "SUPPORTED",
+    "C-BRIDGE-PROV-001": "SUPPORTED",
+    "C-BRIDGE-DIGEST-001": "SUPPORTED",
+    "C-BRIDGE-LEGACY-001": "SUPPORTED",
+    "C-BRIDGE-CALLPATH-001": "SUPPORTED",
+    "C-BRIDGE-LIFE-001": "SUPPORTED",
+    "C-BRIDGE-CAP-001": "SUPPORTED",
+    "C-BRIDGE-DRIFT-001": "SUPPORTED",
+    "C-BRIDGE-QUAL-001": "SUPPORTED",
+    "C-BRIDGE-CI-001": "SUPPORTED",
+    "C-BRIDGE-SAFETY-001": "SUPPORTED"
+  },
+  "supported_claims": 11,
+  "challenged_claims": 0,
+  "unresolved_claims": 0,
+  "blocking_findings": 0,
+  "required_findings": 0,
+  "reviewer_worktree_changes": 0,
+  "verdict": "ACCEPT_FOR_OPUS_WHOLE_DOMAIN_ARBITRATION"
+}

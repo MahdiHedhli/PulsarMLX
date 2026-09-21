@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-challenge-ledger/5.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v4.json",
+  "review_stage": "NUMERICAL_IMPLEMENTATION",
+  "cycles": 3,
+  "protocol_invalid_cycles": [1, 2],
+  "valid_cycle": 3,
+  "blocking": 0,
+  "non_blocking_required": 0,
+  "defense_in_depth": 1,
+  "material_challenges": [],
+  "defense_in_depth_challenges": [
+    {
+      "challenge_id": "CC-JSON-LEAK-001",
+      "claim_id": "C-BITS-001",
+      "status": "ANSWERED_BY_EXISTING_EVIDENCE"
+    }
+  ],
+  "unresolved": 0,
+  "result": "NO_MATERIAL_CHALLENGES"
+}

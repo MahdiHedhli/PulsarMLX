@@ -1,0 +1,18 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-arbiter-ledger/1.1.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-arbiter-ledger-v1.json",
+  "design_cycles": 2,
+  "claim_verdicts": {
+    "C-SCHEMA-001":"ACCEPT", "C-SCHEMA-002":"ACCEPT", "C-VALIDATOR-001":"ACCEPT",
+    "C-AUTHORIZER-001":"ACCEPT", "C-INSTANT-001":"ACCEPT", "C-INSTANT-002":"ACCEPT",
+    "C-BIND-001":"ACCEPT", "C-SAFETY-001":"ACCEPT", "C-LEGACY-001":"ACCEPT",
+    "C-CI-001":"ACCEPT", "C-REVIEW-001":"ACCEPT", "C-GO-001":"ACCEPT"
+  },
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 7,
+  "global_verdict": "ACCEPT_F017_EVENT05_READINESS_INTERFACE_FOR_IMPLEMENTATION",
+  "next_edge": "R6",
+  "result": "PASS"
+}

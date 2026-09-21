@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-arbiter-ledger/1.0.0",
+  "reviewer": "claude-opus-5",
+  "reviewed_head": "0b518e33520a4840ba91c497353330ea2b9e1480",
+  "reviewed_tree": "97f1964cf4bdd602ce86cb3893ccfd8099be6297",
+  "claim_verdicts": [
+    {"claim_id": "C-COLLAPSE-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-COMPOSE-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-ONESHOT-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-NOACCESS-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-FROZEN-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-CI-001", "verdict": "ACCEPT"},
+    {"claim_id": "C-REVIEW-001", "verdict": "ACCEPT"}
+  ],
+  "blocking_findings": 0,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_GO_PATH_OPERATIONAL_RATIFICATION",
+  "result": "PASS"
+}

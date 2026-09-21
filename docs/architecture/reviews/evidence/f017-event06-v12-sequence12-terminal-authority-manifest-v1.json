@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-terminal-authority-manifest/1.0.0",
+  "source_start_head": "3be5b731ef37d1817ca0569c8a4cbf53a2846654",
+  "measured_implementation_head": "a2dc1ecc3d44b4a19e13db5b7b5364800649a221",
+  "reviewed_evidence_head": "b4de45d40b8ffdb568ecdfda0d4ecdbbd4c60536",
+  "reviewed_evidence_tree": "f0a557c4617953fb1dc23ef08364362f1a1b403c",
+  "artifacts": [
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-prompt-authority-provenance-v1.json", "sha256": "3faca774d32d774f9724eae1891b0400804b16561788fac300606816d36708b9"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-identity-bridge-failure-reproduction-v1.json", "sha256": "9ef0ec84d4189e716ce1fa08654b7bae9e2e3ef2b5125ef904730705b72c719b"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-failure-to-repair-traceability-v1.json", "sha256": "1ed1df154d962491cd377c9a0fc01d735000cea97d2932575c368ea96d8bddf9"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-preobservation-freeze-v1.json", "sha256": "4e9352a860ad828213a85dbe1b0cb95db05784d3190d9593a0cd9087ef858afe"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-versioning-adjudication-v1.json", "sha256": "a3a3d8f2fcc22c065c9ff2f01e9f49bbc450d48f7381c237b51defabaac34dfd"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-implementation-measurement-v1.json", "sha256": "a08027bb481273651bedffc8413ae0d706e9a95d5e1f7e5a609654e8ae6ecaf1"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-identity-bridge-qualification-v1.json", "sha256": "951bc991953716c073d3be60c80ceb4218585674eed88c5408e5c0c7000fd0f8"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-no-access-rehearsal-v1.json", "sha256": "1aa40c17bc64804980caa9081145cd6908d274d818a83cf1c2b08e9a9ce3550a"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-full-native-ci-v1.json", "sha256": "7ca68e58a1d4d1172c85925715ff4ac23656a3c90e483f92cd285304b6d3580d"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-agy-challenge-v1.json", "sha256": "29bd504a052338c2903e27df716116e65c00bb298ae229b1de332209526d82b2"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-opus-arbitration-v1.json", "sha256": "b263be4d5fe81edd61e8914d11caf537d4bc3f3f364eec9b0c857db9f53c027e"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence12-review-support-disposition-v1.json", "sha256": "15734783c5288da8d11737778aaf71be9fdda549dc28b35b8cbe132e9f2e0662"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-requirements-v1.json", "sha256": "1e7f3a1269127bf2c40cdd2eae69133f806dd094bc1fb777ad7beff4154aa5fd"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-v2.json", "sha256": "fdf3485232a763da602bf15afe0514e4b39b012e28d88194aeb207dd1132fb0b"}
+  ],
+  "artifact_count": 14,
+  "freeze_failure": "DECLARATION_REQUIRED",
+  "event_06_executed": false,
+  "result": "COMPLETE_TERMINAL_REJECTION_AUTHORITY"
+}

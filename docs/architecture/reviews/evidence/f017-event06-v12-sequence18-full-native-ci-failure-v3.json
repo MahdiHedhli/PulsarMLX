@@ -1,0 +1,14 @@
+{
+  "candidate_head": "105c76f93e1342aed8abdc3868c9e3f8523a30c1",
+  "candidate_tree": "9647eadb5bc6a49003abd79c6059d1bd39d577ff",
+  "event06_executed": false,
+  "failed_job": "Apple MLX small-fixture validation",
+  "failure": "INDEPENDENT_SANDBOX_EVIDENCE_OMITS_TOP_LEVEL_EVENT06_EXECUTED_FALSE_FIELD_REQUIRED_BY_CI",
+  "full_native_run": 33281338219,
+  "historical_master_ledger": 175,
+  "native_required_skips": 0,
+  "original_checkpoint_access": "NONE",
+  "repair": "EMIT_THE_ALREADY_PROVEN_FALSE_EVENT06_EXECUTED_SAFETY_CENSUS_AT_THE_SANDBOX_EVIDENCE_TOP_LEVEL",
+  "result": "FAIL_REPAIRABLE_EVIDENCE_INTERFACE",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-full-native-ci-failure/1.0.2"
+}

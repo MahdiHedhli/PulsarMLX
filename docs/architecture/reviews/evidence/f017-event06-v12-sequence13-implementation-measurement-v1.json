@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-implementation-measurement/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "0b518e33520a4840ba91c497353330ea2b9e1480",
+  "implementation_tree": "97f1964cf4bdd602ce86cb3893ccfd8099be6297",
+  "paths": [
+    {"path": "scripts/research/f017_event06_collapsed_go_path_v1.py", "sha256": "44576569769697cd8f9bfb7bbc4d274637ff47ff51d9c4f05f3f0173f92fd27b"},
+    {"path": "scripts/research/execute_f017_corrected_oracle_event_v12.py", "sha256": "44dd45a6d52d522829cd20345030ab1c27e498fe7b46185111dae06fdfa5992c"},
+    {"path": "scripts/research/f017_event06_sequence09_fixture_v1.py", "sha256": "1ec32b2d6c889fb984b58c0410bf869bf393e935a917af90c730f8121f7abf31"},
+    {"path": "scripts/research/qualify_f017_event06_collapsed_go_path_v1.py", "sha256": "6290ca4f0d09caf4ba9038e97cefa02047728ca781d7c7980d34fae85272c01c"},
+    {"path": "scripts/research/tests/test_f017_event06_collapsed_go_path_v1.py", "sha256": "af1fedb23d7741fff90f313f5e8b952355d39be59bb69f3b15adbeac4946ca2b"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-collapsed-go-path-v1.json", "sha256": "c7ea10d9ab9c09ff1e6fa5d5c0b847ec0318cc1863f44b63c6d67bec00ba1778"}
+  ],
+  "path_count": 6,
+  "numerical_contract_v4_sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+  "result_authority_v11_sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+  "numerical_result_checkpoint_accounting_stage_stop_drift": 0,
+  "implementation_attribute": "BANKED_PINNED_QUALIFIED",
+  "result": "PASS"
+}

@@ -1,0 +1,14 @@
+{
+  "candidate_head": "324914abb7fd9d90198c5ff2025c20afdbf14337",
+  "candidate_tree": "996d84c59b1fab882428b15ef5716d13f8802077",
+  "event06_executed": false,
+  "failed_job": "Apple MLX small-fixture validation",
+  "failure": "SHALLOW_CLONE_OMITS_HISTORICAL_COMMIT_OBJECT_USED_ONLY_TO_RECOMPUTE_FROZEN_SHA_CENSUS",
+  "full_native_run": 33280358273,
+  "historical_master_ledger": 175,
+  "native_required_skips": 0,
+  "original_checkpoint_access": "NONE",
+  "repair": "REPLACE_GIT_SHOW_HISTORY_DEPENDENCY_WITH_THE_ALREADY_FROZEN_EXACT_PER_PATH_SHA256_CENSUS_AND_COMPARE_CURRENT_BYTES_DIRECTLY",
+  "result": "FAIL_REPAIRABLE_CI_PORTABILITY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-full-native-ci-failure/1.0.1"
+}

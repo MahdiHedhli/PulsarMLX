@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-opus-whole-domain-result/1.1.0",
+  "cycle": 2,
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_evidence_head": "02b8668c7be99a78b3dc3ee151f15b230437e0e5",
+  "measured_implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "measured_implementation_tree": "4ea92265360b7130948e52b8497f2802a7526702",
+  "request_sha256": "e269794f86fd49418e3b9dbb8b926f67db49ac6e932021c8b94b695b3ff76362",
+  "response_sha256": "311d5190b1fd4f0d13308c565b7470fe61c8c06ca9317412037e30b77f44cb59",
+  "claim_verdicts": {
+    "C-BRIDGE-GEN-001": "ACCEPT",
+    "C-BRIDGE-PROV-001": "ACCEPT",
+    "C-BRIDGE-DIGEST-001": "ACCEPT",
+    "C-BRIDGE-LEGACY-001": "ACCEPT",
+    "C-BRIDGE-CALLPATH-001": "ACCEPT",
+    "C-BRIDGE-LIFE-001": "ACCEPT",
+    "C-BRIDGE-CAP-001": "ACCEPT",
+    "C-BRIDGE-DRIFT-001": "ACCEPT",
+    "C-BRIDGE-QUAL-001": "ACCEPT",
+    "C-BRIDGE-CI-001": "UNRESOLVED",
+    "C-BRIDGE-SAFETY-001": "ACCEPT"
+  },
+  "accepted_claims": 10,
+  "rejected_claims": 0,
+  "unresolved_claims": 1,
+  "blocking_findings": 0,
+  "required_findings": 1,
+  "smallest_unresolved_claim": "C-BRIDGE-CI-001",
+  "verdict": "REJECT"
+}

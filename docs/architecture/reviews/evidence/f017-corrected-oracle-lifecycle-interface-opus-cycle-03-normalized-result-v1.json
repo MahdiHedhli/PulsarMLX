@@ -1,0 +1,52 @@
+{
+  "reviewed_head": "5be2917007de6800337965e22621a2ded6c82b37",
+  "cycle": 3,
+  "review": "f017-lifecycle-interface-design-review",
+  "verdict": "REJECT",
+  "blocking": [
+    {"id": "C3-B-1", "title": "Event-accounting v4 authority is entirely outside the validated surface; accounting deltas and reservation-vs-execution flags are unpinned"},
+    {"id": "C3-B-2", "title": "Terminal-outcome to conditional-binding correspondence is unvalidated; fabricated unstarted-consumer terminal hash passes validation"},
+    {"id": "C3-B-3", "title": "ABSOLUTE_PATH strict resolution is unsatisfiable at mint time for canonical_install_path and conflicts with unused_roots / state_roots_created:0"},
+    {"id": "C3-B-4", "title": "No declared measurement head; producer/decoder/capability SHAs and path-to-SHA bindings are not mechanically pinned"},
+    {"id": "C3-B-5", "title": "Readback SHA input is undefined and structurally undeclarable under enforced derivation_permitted:false"},
+    {"id": "C3-B-6", "title": "V3 supersession is self-defeating (required behaviors unimplemented at pinned SHAs) and v2 authorize-live is unretired"}
+  ],
+  "non_blocking_required": [
+    {"id": "C3-N-1", "title": "Payload and binding are dual channels for the same values with no declared equality rule"},
+    {"id": "C3-N-2", "title": "Artifact schema IDs unpinned in both directions; generic IDs collidable and SCHEMA_ID identities sourced from a nonexistent contract v4"},
+    {"id": "C3-N-3", "title": "JSON paths and top-level censuses are not frozen by the independent validator"},
+    {"id": "C3-N-4", "title": "Payload key censuses are not frozen; dropping package_receipt outcome passes"},
+    {"id": "C3-N-5", "title": "event_accounting and shards subtrees declared with zero typed identity binding"},
+    {"id": "C3-N-6", "title": "historical_ledger_delta pinned 0 through final_declaration conflicts with master ledger future_banking_invariant; ledger delta untyped with undeclared target counter"},
+    {"id": "C3-N-7", "title": "Supersession authority_head is falsified by its own bytes versus the pinned supersession SHA"}
+  ],
+  "defense_in_depth": [
+    {"id": "C3-D-1", "title": "AUTHORIZATION_STATE value CANDIDATE unreachable; candidate and installed indistinguishable by content"},
+    {"id": "C3-D-2", "title": "300s memory freshness window spans human operator approval; comparand timestamp untyped and unbound"},
+    {"id": "C3-D-3", "title": "root_relations all_other_pairs disjunction governs path pairs ambiguously"}
+  ],
+  "mechanical_checks": {
+    "regeneration_byte_identical": true,
+    "regenerated_documents": 4,
+    "validator_executed": true,
+    "validator_result": "PASS",
+    "identity_count": 129,
+    "artifact_column_count": 21,
+    "required_cell_count": 2296,
+    "declared_drift_mutations_rejected": 10,
+    "candidate_installed_identity_sets_equal": true,
+    "candidate_installed_identity_count": 96,
+    "candidate_sha_and_report_shas_excluded_from_installed_bytes": true,
+    "nested_leaf_representability_all_129": true,
+    "historical_ledger_sha256_verified": true,
+    "historical_ledger_terminal_verified": 175,
+    "retired_authority_sha256_verified": true,
+    "retired_authorities_sha_verified": 4,
+    "generator_consistent_drifts_passing_validator": 7,
+    "worktree_modified": false
+  },
+  "smallest_true_blocker": {
+    "id": "C3-B-1",
+    "statement": "validate_f017_corrected_oracle_lifecycle_v4.py loads only the registry, matrix, and interface; f017-corrected-oracle-event-accounting-v4.json is never loaded, so material accounting mutations still return PASS."
+  }
+}

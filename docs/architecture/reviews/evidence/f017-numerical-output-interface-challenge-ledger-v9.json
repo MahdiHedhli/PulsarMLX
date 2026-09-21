@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-challenge-ledger/9.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v8.json",
+  "review_stage": "GEMINI_WHOLE_DOMAIN_CYCLE_03",
+  "reviewed_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "claims_attacked": 15,
+  "challenge_rows": [],
+  "open_blocking": 0,
+  "open_non_blocking_required": 0,
+  "open_gemini_challenges": 0,
+  "opus_cycle_01_findings_pending_arbiter_reverification": 4,
+  "original_checkpoint_access": 0,
+  "result": "PASS_TO_R19"
+}

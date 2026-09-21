@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-d0-independent-review-result",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_NUMERICAL_CONTRACT_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "ff29823ff025a712f70b026f4ba91e92133cab86",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-d0-cycle-01-review-request-v1.json",
+    "sha256": "8aeaabc50635eeff6a9f5ec8d2a963ddac7ff7ed5b5cb9dc46df5bed12c735aa"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-d0-cycle-01-independent-review-v1.json",
+    "sha256": "0b1e8d53d1dc58722cad163da17b5f8665f8be1e25135678b7b19af8599f7e78"
+  },
+  "findings": [
+    {"id":"F1","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIR_IN_D0_V2","fix":"restore router_normalized retained R10-intermediate numeric grade"},
+    {"id":"F3","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIR_IN_D0_V2","fix":"bind and resolve source schema/version/semantic role"},
+    {"id":"F2","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIR_IN_D0_V2","fix":"closed oracle registry resolved to pinned JSON paths or comparison ordinals"},
+    {"id":"F4","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIR_IN_D0_V2","fix":"exact misderived-tolerance rule mutation lock"},
+    {"id":"F5","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIR_IN_D0_V2","fix":"D3.5 runtime and per-stage dispatch identity evidence requirement"}
+  ],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 2,
+  "defense_in_depth_findings": 3,
+  "verdict": "REJECT",
+  "next_review_target": "APPEND_ONLY_D0_V2"
+}

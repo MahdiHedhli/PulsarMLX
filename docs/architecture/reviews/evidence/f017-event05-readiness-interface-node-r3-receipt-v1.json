@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R3",
+  "input_head": "439837bf3e29957a78aa1ba7a99a54754a3caf96",
+  "output_head": "7597730c8aecae8fb283b2352e9ee06639b171d1",
+  "output_tree": "406503a50e01decee19d927b71f427c4136e7a77",
+  "input_authority_shas": ["3bbdd8cf9e78cad7d2120abfbbeb1547b3518e4ba76b543dc99622c15d862dab"],
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-design-cycle-02-exact-response.md",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-gemini-design-cycle-02-normalized-result.json"
+  ],
+  "commands_executed": ["agy --model gemini-3.1-pro-high --effort high --sandbox --dangerously-skip-permissions --disable-slash-commands --output-format text"],
+  "tests_executed": ["Gemini design challenge cycle 2"],
+  "result_counts": {"challenge_rows": 0, "material_challenges": 0},
+  "claims_introduced": [],
+  "claims_closed": [],
+  "claims_invalidated": ["C-REVIEW-001"],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R4"],
+  "result": "INVALIDATED_BY_OPUS_F08"
+}

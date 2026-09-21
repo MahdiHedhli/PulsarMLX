@@ -1,0 +1,13 @@
+{
+  "ambient_policy_capability": 0,
+  "callback_capability": 0,
+  "checkpoint_capability": 0,
+  "file_io_capability": 0,
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "pure_modules": 2,
+  "reflection_capability": 0,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-capability-qualification/1.0.0",
+  "subprocess_capability": 0,
+  "violations": 0
+}

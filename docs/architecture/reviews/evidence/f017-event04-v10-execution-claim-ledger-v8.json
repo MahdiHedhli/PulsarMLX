@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-claim-ledger/10.0.2",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "predecessor": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-claim-ledger-v7.json","sha256":"d87236ec082913781b14d85114794650cdfd536523225bcdcbbf806604debb86"},
+  "claim_count": 28,
+  "accepted_count": 20,
+  "rejected_count": 7,
+  "unresolved_count": 1,
+  "pending_arbiter_count": 0,
+  "claims": [
+    {"claim_id":"E-REF-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-REF-002","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-REF-003","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},
+    {"claim_id":"E-APPROVAL-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-ACTIVATION-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},
+    {"claim_id":"E-PREFLIGHT-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-PREFLIGHT-002","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-PREFLIGHT-003","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},
+    {"claim_id":"E-CANDIDATE-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-CANDIDATE-002","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-INSTALL-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-ROOT-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-HANDSHAKE-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-PACKAGE-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-IDENTITY-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},
+    {"claim_id":"E-LEASE-001","statement":"Exactly five graph-payload leases were active at E5; exactly zero remained live after E8 release.","status":"ACCEPTED","arbiter_verdict":"ACCEPT","challenge_status":"ANSWERED","support_status":"SUPPORTED"},
+    {"claim_id":"E-ACCOUNTING-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-PRIMARY-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-PRIMARY-002","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},
+    {"claim_id":"E-PRIMARY-003","status":"REJECTED","arbiter_verdict":"REJECT"},{"claim_id":"E-SECONDARY-001","status":"REJECTED","arbiter_verdict":"REJECT"},{"claim_id":"E-SECONDARY-002","status":"REJECTED","arbiter_verdict":"REJECT"},{"claim_id":"E-SECONDARY-003","status":"REJECTED","arbiter_verdict":"REJECT"},{"claim_id":"E-COMPARE-001","status":"REJECTED","arbiter_verdict":"REJECT"},
+    {"claim_id":"E-RELEASE-001","status":"ACCEPTED","arbiter_verdict":"ACCEPT"},{"claim_id":"E-TERMINAL-001","status":"REJECTED","arbiter_verdict":"REJECT"},{"claim_id":"E-EVIDENCE-001","status":"REJECTED","arbiter_verdict":"REJECT"},
+    {"claim_id":"E-CI-001","statement":"Execution evidence through covered head f659a31d6820bbd646395f475fd3b83564042031 passed EVIDENCE_ONLY run 32918434857 with zero native jobs.","status":"UNRESOLVED","arbiter_verdict":"UNRESOLVED","proof_artifacts":["docs/architecture/reviews/evidence/f017-event04-v10-evidence-only-ci-v2.json"]}
+  ],
+  "census_invariant": "accepted_count + rejected_count + unresolved_count + pending_arbiter_count == claim_count",
+  "census_result": "PASS",
+  "corrected_classification": "ORACLE_EXECUTION_FAILURE",
+  "ready_to_prepare_p1_attempt_2_authorization": false
+}

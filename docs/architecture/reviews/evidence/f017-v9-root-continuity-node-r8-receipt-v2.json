@@ -1,0 +1,13 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-02-exact-response.json", "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v1.json"],
+  "claims_closed": ["23 claims accepted by arbiter cycle 2"], "claims_introduced": [], "claims_invalidated": ["C-JSON-005", "C-IMPL-002"],
+  "commands_executed": ["fresh Opus 5 high-effort executable arbitration in detached read-only worktree"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"authority_manifest_v7":"pending bound packet","request_sha256":"9733c5ce54773fcb7764791e508e1f113a4b0ecd70bcb08fdfa97094ce2a0821","response_sha256":"067ba6d1cee6629f1479ca034f8c7b842f68d2e150614a1cf714081f1d73449d"},
+  "input_head": "09a1122e93f38de9b8cdc6bcebe6a60ab5b71f6f", "next_eligible_edges": ["R2", "R3", "R4", "R5", "R7", "R8_CYCLE_03"], "node_id": "R8_CYCLE_02",
+  "output_head": "e093f2518915c47588a9a5de3709a99345787324", "result": "REPAIR_REQUIRED",
+  "result_counts": {"accepted_claims":23,"blocking_findings":2,"defense_in_depth_findings":6,"rejected_claims":2,"unresolved_claims":0},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["root replacement attacks", "journal corruption attacks", "deep JSON attacks", "first-party re-export attacks", "47-outcome reconciliation", "exact-head CI inspection"]
+}

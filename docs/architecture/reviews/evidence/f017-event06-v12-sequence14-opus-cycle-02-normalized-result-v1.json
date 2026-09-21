@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-opus-cycle-02-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "fccadecc0a439deedf4b225d4c2842e7c9ad8332",
+  "reviewed_tree": "f0a16e7ef7aed284e2c5816b9dcf64091a279df0",
+  "full_native_run": 33238262841,
+  "blocking_findings": [
+    {
+      "id": "F1",
+      "summary": "Checkpoint-bound bundle production selected the expected root authority only from caller-supplied state mode and did not bind that mode to the originating decision chain."
+    },
+    {
+      "id": "F2",
+      "summary": "Bound sanitized human decisions did not carry their producer state mode, permitting a qualification decision to be paired with a separately obtained live state."
+    },
+    {
+      "id": "F3",
+      "summary": "Qualification-only decisions, GOs, and preparations could cross into production preparation and live installation boundaries without a transitive authority-mode proof."
+    }
+  ],
+  "advisory_findings": 7,
+  "unresolved_findings": 0,
+  "global_verdict": "REJECT",
+  "result": "FAIL",
+  "disposition": "REPAIRED_BY_48087B3CD62CBDD427F9DA71FD3D6FED9F55E7C7"
+}

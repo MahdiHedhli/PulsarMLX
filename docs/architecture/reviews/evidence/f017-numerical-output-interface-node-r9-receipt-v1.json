@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R9",
+  "input_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "output_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "input_authority_shas": {
+    "implementation_measurement": "0af5ff882c6be85737b3b839dd86b476bedc76b76b2385ee9dd817f0689e0526",
+    "full_native_ci": "afaee9dc832961f79b3e42be80061db0bfb2931d3c3c9296cef55f480a5e32e0"
+  },
+  "changed_paths": [],
+  "commands_executed": ["gemini-3.1-pro-high numerical CHALLENGE cycles 1 through 3"],
+  "tests_executed": {"committed_bytes_only": true, "valid_review_cycles": 1},
+  "result_counts": {"blocking": 0, "non_blocking_required": 0, "defense_in_depth": 1},
+  "claims_introduced": [],
+  "claims_closed": [],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access": 0},
+  "next_eligible_edges": ["R10"],
+  "result": "PASS"
+}

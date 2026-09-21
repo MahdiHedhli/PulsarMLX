@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-prompt-authority-snapshot-provenance/1.0.0",
+  "prompt_repository": "MahdiHedhli/PulsarMLX-Prompts",
+  "prompt_repository_commit": "26998b7f0e840bbcdda5c792999b7eadd1ddd164",
+  "prompt_repository_path": "Prompts/F017/Mac-Studio-M1-Ultra/011__F017__Mac-Studio-M1-Ultra__Event-06-V12-live-GO-call-path-contract-repair-and-no-access-requalification__prompt.md",
+  "prompt_sha256": "3e0809171a44691f934b10ef75bdd609674e476645e2110d153f7ed13e96c624",
+  "adjacent_sidecar_value": "3e0809171a44691f934b10ef75bdd609674e476645e2110d153f7ed13e96c624",
+  "prompt_commit_is_ancestor_of_observed_main": true,
+  "observed_prompt_main": "39ffe083b451bd27187b3504c53ff72db3bd60bb",
+  "parent_response_commit": "e28116a9712ed41a56b4f7c4858b1bdcca86dd8c",
+  "parent_response_sha256": "89131db66f374018122f9a42591a0d34b359376ad9ea67e43abeb35248658ff6",
+  "freeze_policy_commit": "e5ff7286047dfaeae5b4d0ecfb96c58bdc5b24f3",
+  "freeze_policy_sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+  "transition_table_commit": "244452247fb4730f3b94287220e9b58b73b11065",
+  "transition_table_sha256": "53377426e8018af710fb896b77655bd44bf4536cd92987d7829982a65d8c780b",
+  "verification": {
+    "commit_pinned_prompt_bytes": "PASS",
+    "basename_only_sidecar": "PASS",
+    "prompt_main_ancestry": "PASS",
+    "parent_response": "PASS",
+    "freeze_policy": "PASS",
+    "transition_table": "PASS"
+  },
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "PASS"
+}

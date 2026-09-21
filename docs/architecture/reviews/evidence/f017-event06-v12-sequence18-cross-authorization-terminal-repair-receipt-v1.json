@@ -1,0 +1,11 @@
+{
+  "event06_executed": false,
+  "finding_source": "AGY_DISCARDED_CANARY_ATTEMPT",
+  "historical_master_ledger": 175,
+  "original_checkpoint_access": "NONE",
+  "repair_class": "TERMINAL_AMBIGUITY",
+  "repair_loop": 9,
+  "reservation_to_bridge_authorization_continuity": "ENFORCED",
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-cross-authorization-terminal-repair-receipt/1.0.0"
+}

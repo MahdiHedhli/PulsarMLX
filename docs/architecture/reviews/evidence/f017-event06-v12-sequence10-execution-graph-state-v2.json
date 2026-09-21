@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-execution-graph-state/2.0.0",
+  "supersedes": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-execution-graph-state-v1.json",
+    "sha256": "56954de952251b0a759a996c86b44f41d8adf81134e1465cc00c6f2d83369b15"
+  },
+  "event": "EVENT_06",
+  "generation": "V12",
+  "source_head_at_terminal_evidence": "844c7140abdee0c350dc6724061525a376ec622b",
+  "terminal_execution_node": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_CALL_PATH_PROOF",
+  "active_node": "E12_RESPONSE_CHECKSUM_NOTIFICATION_AND_PRIVATE_HANDOFF",
+  "nodes": [
+    {"node_id": "E0_PROMPT_BYTES_PARENT_DUPLICATE_AND_CONCURRENT_LANE_GUARD", "status": "PASS"},
+    {"node_id": "E1_SOURCE_AUTHORITY_CI_MANIFEST_RECONCILIATION", "status": "PASS"},
+    {"node_id": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_CALL_PATH_PROOF", "status": "TERMINAL_FAILURE"},
+    {"node_id": "E3_FRESH_APPROVAL_EVENT_PLAN_AND_V12_CANDIDATE", "status": "BLOCKED"},
+    {"node_id": "E4_TRIPLE_VALIDATION_EXACT_INSTALL_AND_RECEIPT", "status": "BLOCKED"},
+    {"node_id": "E5_PACKAGE_START_GATE_CLAIM_AND_V12_SIX_SHARD_IDENTITY", "status": "BLOCKED"},
+    {"node_id": "E6_PRIMARY_BINARY64_ONE_EXECUTION_AND_BUNDLE", "status": "BLOCKED"},
+    {"node_id": "E7_SECONDARY_BINARY32_ONE_EXECUTION_AND_BUNDLE", "status": "BLOCKED"},
+    {"node_id": "E8_INDEPENDENT_COMPARISON_RELEASE_AND_PACKAGE_TERMINAL", "status": "BLOCKED"},
+    {"node_id": "E9_APPEND_ONLY_EVIDENCE_AND_EVIDENCE_ONLY_CI", "status": "PASS"},
+    {"node_id": "E10_AGY_CHALLENGE_AND_BOUNDED_EVIDENCE_REPAIR", "status": "BLOCKED"},
+    {"node_id": "E11_OPUS_ARBITRATION_AND_FINAL_EVENT06_DECLARATION", "status": "BLOCKED"},
+    {"node_id": "E12_RESPONSE_CHECKSUM_NOTIFICATION_AND_PRIVATE_HANDOFF", "status": "RUNNING"}
+  ],
+  "failure_classification": "END_TO_END_EXECUTION_CALL_PATH_NOT_INSTANTIABLE",
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "final_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-final-event06-declaration-v1.json",
+    "sha256": "981c0aa0db851d276ad030022a758cf75edd26689d9e6d3e1aa70a7d637cd746"
+  },
+  "transition_reconciliation": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-transition-reconciliation-v1.json",
+    "sha256": "56bad5738b25818cc667439b52194a1d4006e22a2a0c2da47cf831304dcc9171"
+  },
+  "evidence_only_run": 33213515642,
+  "evidence_only_native_jobs": 0,
+  "agy_challenge": "NOT_RUN_NO_PACKAGE_TERMINAL",
+  "opus_arbitration": "NOT_RUN_NO_PACKAGE_TERMINAL",
+  "post_terminal_repair_loops": "1/10",
+  "event06_executed": false,
+  "event06_package_started": false,
+  "original_checkpoint_access": 0,
+  "result": "TERMINAL_PRE_MINT_FAILURE"
+}

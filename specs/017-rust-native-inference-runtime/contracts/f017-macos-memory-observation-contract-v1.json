@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.macos-memory-observation-contract/1.0.0",
+  "parser_version": "F017_MACOS_VM_STAT_V1",
+  "command": [
+    "/usr/bin/vm_stat"
+  ],
+  "shell": false,
+  "timeout_seconds": 5,
+  "maximum_stdout_bytes": 65536,
+  "stderr_policy": "REQUIRE_EMPTY",
+  "header_grammar": "^Mach Virtual Memory Statistics:[ \\t]+\\(page size of ([1-9][0-9]*) bytes\\)[ \\t]*$",
+  "ascii_decimal_only": true,
+  "required_rows": [
+    "Pages free",
+    "Pages inactive",
+    "Pages speculative",
+    "Pages purgeable"
+  ],
+  "required_row_cardinality": "EXACTLY_ONCE_EACH",
+  "row_value_grammar": "NONNEGATIVE_ASCII_DECIMAL_WITH_OPTIONAL_FINAL_PERIOD",
+  "available_memory_formula": "page_size_bytes*(pages_free+pages_inactive+pages_speculative+pages_purgeable)",
+  "minimum_free_bytes": 17179869184,
+  "sample_freshness_seconds": 5,
+  "caller_override_permitted": false,
+  "fallback_permitted": false,
+  "failure_policy": "FAIL_BEFORE_AUTHORIZATION_STATE_CHECKPOINT_OR_MATH",
+  "implementation": {
+    "path": "scripts/research/f017_macos_memory_observation_v1.py",
+    "sha256": "f020302394bd9aaf94035e42e39b183ea4c04eafc19660a8fc9fed24c0bae477"
+  }
+}

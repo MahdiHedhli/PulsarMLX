@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-interface-repair-disposition/1.0.0",
+  "cycle": 2,
+  "reviewed_head": "af77aace06f591770c07f85b29f369db9feb33b3",
+  "status": "REPAIRED_FOR_CYCLE_03_REVIEW",
+  "repairs": {
+    "C2-B-1": "The independent validator now pins fixed SHA-256 digests for the complete authorization document, every transition semantic field, outcome branches, accounting, activation, supersession, paths, serialization, measurement, and artifact authority. Coordinated model regeneration cannot preserve PASS.",
+    "C2-B-2": "Candidate and installed authorization artifacts now carry exactly the canonical authorization-document identity set and no generic bindings channel.",
+    "C2-B-3": "Candidate and installed authorization identity paths are exact-equal. Candidate-validation report SHAs are introduced only after candidate serialization and are bound by the installation receipt, not authorization bytes.",
+    "C2-B-4": "Every artifact has an explicit self-SHA identity. Candidate SHA is excluded from candidate and installed authorization bytes and first binds in validation and installation evidence.",
+    "C2-B-5": "Outcome authority is variant-based: exact terminal branches and one distinct failure variant for every transition preserve the exact durable prefix, path state, ledger deltas, and forbidden remainder.",
+    "C2-N-1": "The full artifact schema, payload census, self-SHA mapping, path descriptor census, and payload-to-binding equality surface is independently hash-anchored.",
+    "C2-N-2": "Forbidden artifacts are now the complete artifact-class complement for every terminal and transition-failure variant.",
+    "C2-N-3": "The entire path authority including exact roles, relation values, and all 36 root pairs is independently hash-anchored.",
+    "C2-N-4": "The complete readback sequence and implementation-measurement semantics are independently hash-anchored.",
+    "C2-D-1": "One exact artifact-file validation authority applies to all 29 artifact descriptors.",
+    "C2-D-2": "Candidate and installed authorization descriptors are explicitly exposed by the interface; canonical install path must equal the installed descriptor.",
+    "C2-D-3": "Registry grammars, identity record key census, type, grammar, source, and mismatch semantics are independently validated.",
+    "C2-D-4": "Start-transition semantics are independently anchored and the unreachable evidence-banking terminal state was removed.",
+    "C2-D-5": "Permanent mutations now exercise independent fixed anchors rather than relying on no-op mutation tautologies."
+  },
+  "authorization_installed": false,
+  "event_04_executed": false,
+  "original_checkpoint_access": 0,
+  "historical_master_ledger": 175
+}

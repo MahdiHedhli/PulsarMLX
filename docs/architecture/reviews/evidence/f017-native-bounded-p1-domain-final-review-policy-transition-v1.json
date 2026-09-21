@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-review-policy-transition/1.0.0",
+  "artifact_id": "F017-NATIVE-BOUNDED-P1-DOMAIN-FINAL-REVIEW-POLICY-TRANSITION-1",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "declaration_base_head": "3b0f38b3e6a60e496c9ed51040cb6171f50fe437",
+  "frozen_implementation_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+  "exact_head_ci_run": 32574711605,
+  "previous_final_reviewer_requirement": "claude-fable-5",
+  "previous_reviewer_unavailability_reason": "reviewer quota exhaustion",
+  "operator_authorized_final_reviewer": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "fresh_session_required": true
+  },
+  "policy_transition": {
+    "operator_explicitly_authorizes_claude_opus_5_as_final_reviewer": true,
+    "numerical_acceptance_standards_unchanged": true,
+    "implementation_acceptance_standards_unchanged": true,
+    "accounting_acceptance_standards_unchanged": true,
+    "execution_safety_standards_unchanged": true,
+    "prior_opus_interim_accept_does_not_become_final": true,
+    "fresh_independent_opus_ratification_required": true,
+    "fable_ratification_no_longer_blocks_p1_readiness": true,
+    "historical_fable_pending_artifacts_remain_immutable_and_truthful": true
+  },
+  "prior_interim_evidence": {
+    "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-request.md",
+    "request_actual_sha256": "0d3a7b35aec30e29b299d6ab5cdf1247a44f3242f85c336486692759a1c230be",
+    "request_prose_reported_sha256": "7417d345c12422784fabd8b6c8133a9d05b58846ab7275a99472b413df255aba",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-exact-cli-response.json",
+    "response_sha256": "433df44cbe2c8ebc05963f18cc534da7ac967e6ae0fd0667f182276c63b4f2a5",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-normalized-result.json",
+    "normalized_result_sha256": "7e31e423b254add48759a60f83fbdf80880e3520087ab145cea48014a32b072c",
+    "verdict": "OPUS_INTERIM_ACCEPT_FOR_F017_NATIVE_BOUNDED_P1_DOMAIN",
+    "authority_for_final_verdict": false
+  },
+  "safety_state": {
+    "real_m1_ultra_p1_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "real_p1_authorization_consumed": false,
+    "historical_master_ledger": 175
+  },
+  "effect": "This append-only operator policy replaces only the identity of the required final independent reviewer for the current gate. It creates no numerical, implementation, accounting, execution, approval, token, or checkpoint authority."
+}

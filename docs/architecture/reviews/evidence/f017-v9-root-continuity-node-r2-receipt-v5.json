@@ -1,0 +1,14 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"],
+  "claims_closed": ["C-JSON-001", "C-JSON-002", "C-JSON-003", "C-JSON-004", "C-JSON-005"],
+  "claims_introduced": [], "claims_invalidated": [],
+  "commands_executed": ["dynamic-execution mutations", "relative-import mutation", "bounded decode campaign"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"decode_contract": "d15febf668c6e6b42e665860560f6de2aca368f98f7483660ac8911882f09845"},
+  "input_head": "1c5356adcd32895e22c14cf1423a1de25c8803ce", "next_eligible_edges": ["R3"], "node_id": "R2",
+  "output_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7", "result": "PASS",
+  "result_counts": {"decode_attack_cases": 204, "raw_recursion_errors": 0, "runtime_import_closure_count": 32},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["70 root/decode tests", "204 decode attacks", "direct parser source policy"]
+}

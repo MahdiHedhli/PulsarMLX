@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-opus-interim-declaration/1.0.0",
+  "declaration": "F017_NATIVE_BOUNDED_P1_DOMAIN_OPUS_INTERIM_REVIEW: ACCEPTED",
+  "scope": "Retained-only, synthetic, CI, packaging, documentation, and pre-authorization engineering may continue. This declaration does not authorize real P1.",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+  "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+  "exact_head_ci": {
+    "run_id": 32574711605,
+    "conclusion": "success",
+    "evidence_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-ci-32574711605.json",
+    "evidence_sha256": "5591b0a135ebccbe1305afabf0d8123d4eb054937e64d6a20c074bcf08fde10e"
+  },
+  "review": {
+    "reviewer_model": "claude-opus-5",
+    "cli_version": "2.1.235 (Claude Code)",
+    "request_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-request.md",
+    "request_sha256": "0d3a7b35aec30e29b299d6ab5cdf1247a44f3242f85c336486692759a1c230be",
+    "response_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-exact-cli-response.json",
+    "response_sha256": "433df44cbe2c8ebc05963f18cc534da7ac967e6ae0fd0667f182276c63b4f2a5",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-03-normalized-result.json",
+    "normalized_result_sha256": "7e31e423b254add48759a60f83fbdf80880e3520087ab145cea48014a32b072c",
+    "verdict": "OPUS_INTERIM_ACCEPT_FOR_F017_NATIVE_BOUNDED_P1_DOMAIN",
+    "blocking": 0,
+    "non_blocking_required": 0,
+    "defense_in_depth": 7
+  },
+  "load_bearing_authority": {
+    "admission_contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+    "admission_contract_sha256": "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb",
+    "executor_path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
+    "executor_sha256": "6f0ad9370caf2582934a917029476f505e1a3792b46cbdfe046c7cda85cf31dc",
+    "d3_5_classification": "MIXED_D0_V2_CLASS/PASS",
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_terminal_value": 175
+  },
+  "temporary_reviewer_policy": {
+    "fable_unavailable_due_to_quota": true,
+    "opus_interim_only": true,
+    "fable_ratification_pending": true,
+    "required_fable_verdict_before_real_p1": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1"
+  },
+  "hard_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "real_p1_authorization_consumed": false
+  }
+}

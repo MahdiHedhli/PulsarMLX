@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-opus-repair-disposition/1.0.0",
+  "cycle": 2,
+  "reviewed_head": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+  "review_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-exact-cli-response.json",
+    "sha256": "b89eb63d7ae372ae4f226ec0a60db3640b8740d01b130de33b058e4cfbaa4251"
+  },
+  "finding": {
+    "id": "F017-OPUS-C2-F1",
+    "severity": "NON_BLOCKING_REQUIRED",
+    "status": "REPAIRED",
+    "failure": "attempt_id traversal or an absolute attempt_id relocated durable receipt and terminal evidence outside the contract-bound state root",
+    "implementation_commit": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+    "authority_rebind_commit": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+    "fixes": [
+      "authority_id and attempt_id accept only 1-128 ASCII alphanumeric, hyphen, or underscore bytes",
+      "real authority validation runs before checkpoint planning or opening",
+      "executor requires authority.attempt_id to equal contract.one_shot.attempt_id",
+      "operator authorizer applies the same identifier grammar before state-root creation",
+      "contract freezes F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+      "relative traversal, absolute path, separator, and NUL mutations create no state and invoke no math"
+    ],
+    "load_bearing_outputs": {
+      "execution_code_head": "038cdbfdf707dc80d2a548650885922cfa5aeb9e",
+      "review_target_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+      "executor_sha256": "6f0ad9370caf2582934a917029476f505e1a3792b46cbdfe046c7cda85cf31dc",
+      "contract_sha256": "cf07ccfdd1a85413268b530368c93ba07695c235dcc69afa096133d17e68b2fb",
+      "ci_run": 32574711605,
+      "ci_conclusion": "success"
+    }
+  },
+  "deferred_defense_in_depth": [
+    "F017-OPUS-C2-F2",
+    "F017-OPUS-C2-F3",
+    "F017-OPUS-C2-F4",
+    "F017-OPUS-C2-F5",
+    "F017-OPUS-C2-F6"
+  ],
+  "hard_invariants": {
+    "real_m1_ultra_p1_executions": 0,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorizations": 0
+  }
+}

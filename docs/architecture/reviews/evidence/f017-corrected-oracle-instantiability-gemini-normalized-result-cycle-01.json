@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-instantiability-independent-review-result/1.0.0",
+  "cycle": 1,
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "effort": "high",
+    "cli": "AGY 1.1.19",
+    "conversation_id": "21d6379d-d6cd-4631-ac37-6b19fb20a033",
+    "fresh_session": true
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+  "exact_head_ci": {
+    "run_id": 32624610787,
+    "conclusion": "success",
+    "mode": "FULL_NATIVE"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-review-request-cycle-01.md",
+    "sha256": "1e8c757089871a534c794cb9a65d3d19c15c71f5d9c945ac14ac3e3badbf2ff3"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-response-cycle-01.md",
+    "sha256": "e58debac82cac9bfdaf45e23a74e6616060fe519dec75a3d3631219796f63c21"
+  },
+  "independent_test_result": "40 target tests PASS",
+  "stable_finding_count": 14,
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 0,
+  "material_disagreement": false,
+  "verdict": "ACCEPT"
+}

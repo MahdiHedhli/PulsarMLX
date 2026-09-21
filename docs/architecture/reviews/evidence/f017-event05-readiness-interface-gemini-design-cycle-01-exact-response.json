@@ -1,0 +1,35 @@
+{
+  "reviewer_model": "Gemini 3.1 Pro (High)",
+  "effort": "high",
+  "reviewed_head": "24fb625a3419b92c7971ee1a91bf88c70164aae0",
+  "challenges": [
+    {
+      "challenge_id": "CHG-READINESS-001",
+      "claim_id": "C-LEGACY-001",
+      "attack": "The versioning decision sets 'historical_authorizer_disposition' to 'EXACT_GIT_OBJECT_RETAINED_HISTORICAL_ONLY_FOR_EVENT05_LIVE_MINTING'. However, the historical authorizer requires uppercase fields (e.g., F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS) while the new readiness interface consumer strictly mandates LOWERCASE_SNAKE_CASE_ONLY. This unresolved schema mismatch guarantees that live minting will fail during instantiation.",
+      "expected_behavior": "The historical authorizer must be updated to integrate the new canonical validator and accept lowercase fields, or the schema must provide a backwards-compatible alias translation.",
+      "severity": "BLOCKING",
+      "status": "OPEN"
+    },
+    {
+      "challenge_id": "CHG-READINESS-002",
+      "claim_id": "C-AUTHORIZER-001",
+      "attack": "The design authority specifies the authorizer will use 'CALL_CANONICAL_VALIDATOR_ONLY' with 'uppercase_field_checks: 0'. This directly contradicts the versioning decision to retain the exact historical authorizer git object, which contains duplicate, ad-hoc uppercase field checks and does not call the canonical validator.",
+      "expected_behavior": "Resolve the contradiction by replacing the historical authorizer with an updated version that exclusively delegates to the canonical validator and removes duplicate uppercase checks.",
+      "severity": "BLOCKING",
+      "status": "OPEN"
+    },
+    {
+      "challenge_id": "CHG-READINESS-003",
+      "claim_id": "C-SAFETY-001",
+      "attack": "The 'exact_next_safe_action' field is listed in 'required_fields' but is entirely omitted from both the 'exact_types' type census AND the 'exact_final_predicates' block. An attacker could supply an arbitrary, unconstrained value for this action, potentially bypassing readiness guards or injecting a malicious execution path.",
+      "expected_behavior": "Define the exact type for 'exact_next_safe_action' in 'exact_types' and add a strict 'exact_final_predicate' ensuring it matches the exact permitted Event 05 execution go command.",
+      "severity": "BLOCKING",
+      "status": "OPEN"
+    }
+  ],
+  "blocking_count": 3,
+  "non_blocking_required_count": 0,
+  "defense_in_depth_count": 0,
+  "verdict": "CHALLENGE"
+}

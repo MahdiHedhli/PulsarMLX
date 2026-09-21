@@ -1,0 +1,14 @@
+{
+  "candidate_head": "f5c2c991fa9d07830cf2678dbfd11166e7cfb27c",
+  "candidate_tree": "78c3afcbc122cf5b8dc87c085c92081c5d75ff18",
+  "consequence_term": "REPEATED_CONSUMPTION",
+  "model": "gemini-3.1-pro-high",
+  "nonce_digest_echo": "PASS",
+  "payload_sha256": "e89bd1e2e31ce330cca6ba10ec5fe729d39392e8b68da0fe4c783b788777d6ec",
+  "response_sha256": "7a884fb20be828f13b2066db2c71560cb3d90d78e607a00b1a15db1b15b1c3f4",
+  "result": "REJECTED_FOR_SEEDED_SAFETY_CAUSE",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-canary-terminal/1.0.0",
+  "seeded_edge": "F017-DAG2-039",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "transport": "PASS"
+}

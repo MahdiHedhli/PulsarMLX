@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-gemini-design-result/1.0.0",
+  "reviewed_design_head": "8bc069c7805bfcfdd771bd6f1d7887ae619bc3a2",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "cycle": 1,
+  "findings": [
+    {"id":"FINDING-001","severity":"BLOCKING","claim_id":"C-BRIDGE-LIFE-001","status":"OPEN","summary":"Early bridge-construction failures overclaim THROUGH_IDENTITY_TERMINAL durable prefix."},
+    {"id":"FINDING-002","severity":"BLOCKING","claim_id":"C-BRIDGE-LIFE-001","status":"OPEN","summary":"Post-identity bridge-construction failure can bypass deterministic descriptor release."}
+  ],
+  "blocking": 2,
+  "required": 0,
+  "advisory": 0,
+  "verdict": "REPAIR_REQUIRED"
+}

@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-repair-disposition/1.0.0",
+  "cycle": 1,
+  "reviewed_head": "b69117800eb3123cc61ef7d2a5537cea750184a9",
+  "findings": {
+    "F1": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "TARGET_GUARD_ENUMERATES_ALL_FUNCTION_AND_CLASS_METHOD_NAMES_AND_REJECTS_MATVEC_TRANSPOSE_ROUTE_NORMALIZATION_ATTENTION_AND_GRAPH_ENTRY_POINTS",
+      "regression": "CLASS_METHOD_MATVEC_IS_MECHANICALLY_OBSERVED"
+    },
+    "F2": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "VALIDATOR_BINDS_BOTH_CORES_BOTH_TARGET_SOURCES_BOTH_DECODERS_ALL_AUTHORITY_BINDINGS_AND_ALL_REQUALIFICATION_SOURCE_SHAS",
+      "regression": "PATH_SHA_AND_EXTRA_KEY_MUTATIONS_FAIL"
+    },
+    "F3": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "STALE_ONE_SHOT_EXTRACTORS_REPLACED_BY_READ_ONLY_HISTORICAL_PROVENANCE_AUDITS"
+    },
+    "F4": {
+      "classification": "DOCUMENTED_NON_NUMERICAL_HELPER",
+      "repair": "PURE_CORE_POLICY_REMAINS_AST_ENFORCED"
+    },
+    "F5": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "PURE_CORE_IMPORT_AND_DYNAMIC_IMPORT_DENYLIST_EXPANDED"
+    },
+    "F6": {
+      "classification": "STRUCTURALLY_CONTAINED",
+      "repair": "SYNTHETIC_HARNESS_CONSTRUCTS_TEMPORARY_SIX_SHARD_ROOT_AND_ACTIVE_LIVE_GENERATION_REMAINS_NONE"
+    },
+    "F7": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "FULL_EQUIVALENCE_AND_TARGET_ADAPTER_QUALIFIER_NOW_RUN_IN_FULL_NATIVE_AND_CMP_EXACT_BANKED_BYTES"
+    },
+    "F8": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "SECONDARY_TARGET_MATRIX_VALIDATES_CATALOG_GEOMETRY_AND_ROW_BOUNDS"
+    }
+  },
+  "numerical_methodology_changed": false,
+  "thresholds_changed": false,
+  "original_checkpoint_access": 0,
+  "requires_cycle_2_review": true
+}

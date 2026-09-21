@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-authoritative-qualification-reproduction/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-reproduction-v1.json",
+  "qualification_head": "ef11571527b7d89f1d406c4d1866502913a66a48",
+  "qualification_tree": "fb6edcd88f46747a65f43ec5fae4433c35a15efd",
+  "clean_detached_processes": 2,
+  "raw_result_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-raw-v2.json",
+  "raw_result_sha256": "3068bf1655ac473062665ccece353951d30e625d58ef37578e5aaea563545545",
+  "unique_raw_result_sha_count": 1,
+  "full_corpus_reproduction_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-full-corpus-reproduction-v1.json",
+  "full_corpus_reproduction_sha256": "0428501d7582754e809986a7d08e8111b0d8d5ca791d0212c8d78d788855b079",
+  "authority_validation_sha256": "5cfe8d57307b36cb9f65c8d09b8bfe0c13d6082ccc97d3406d68093569561bdf",
+  "interposition_installed_before_execution_facing_imports": true,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "live_authority_created": false,
+  "event_06_executed": false,
+  "production_commit_success_calls": 0,
+  "p1_attempt_2_executed": false,
+  "result": "PASS"
+}

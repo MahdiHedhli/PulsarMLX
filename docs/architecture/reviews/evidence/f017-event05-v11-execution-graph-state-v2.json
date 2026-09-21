@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-graph-state/2.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-v11-execution-graph-state-v1.json",
+  "active_frontier": "FINAL_NO_GO_CLOSEOUT",
+  "nodes": {
+    "E0":"TERMINAL_FAILURE","E1":"INVALIDATED","E2":"INVALIDATED","E3":"INVALIDATED","E4":"INVALIDATED","E5":"INVALIDATED","E6":"INVALIDATED","E7":"INVALIDATED","E8":"INVALIDATED","E9":"INVALIDATED","E10":"INVALIDATED","E11":"INVALIDATED","E12":"INVALIDATED","E13":"INVALIDATED"
+  },
+  "terminal_failure_manifest": {"path":"docs/architecture/reviews/evidence/f017-event05-v11-terminal-failure-authority-manifest-v1.json","sha256":"48b0b10bc992dcc3e5da63a9f2403f295110a2d9ed58f755eb5cba59fbf72e06"},
+  "e0_receipt": "docs/architecture/reviews/evidence/f017-event05-v11-execution-node-e0-receipt-v2.json",
+  "terminal_failure": "READINESS_DECLARATION_INTERFACE_MISMATCH",
+  "operator_go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "operator_approval_created": false,
+  "candidate_created": false,
+  "live_event_05_authorization_created": false,
+  "event_05_package_executed": false,
+  "primary_real_oracle_event05_executed": false,
+  "secondary_real_oracle_event05_executed": false,
+  "event_04_retry": false,
+  "event_04_resume": false,
+  "event_05_retry": false,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "live_p1_attempt_2_authorization_created": false,
+  "historical_master_ledger": 175,
+  "corrected_oracle_verdict": "ORACLE_EXECUTION_FAILURE",
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "result": "TERMINAL_PRE_MINT_FAILURE_NO_RETRY"
+}

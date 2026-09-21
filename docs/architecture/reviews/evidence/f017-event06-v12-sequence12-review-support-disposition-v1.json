@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-review-support-disposition/1.0.0",
+  "reviewed_head": "b4de45d40b8ffdb568ecdfda0d4ecdbbd4c60536",
+  "agy_verdict": "ACCEPT",
+  "opus_verdict": "REJECT",
+  "material_disagreement": true,
+  "earliest_invalidated_node": "R2_VERSION_FORWARD_CONTRACT_AND_PREOBSERVATION_FREEZE",
+  "root_cause": "FROZEN_AUTHORITY_DAG_AND_SCHEMA_REQUIRE_A_LEGACY_BRIDGE_DIGEST_BEFORE_THE_IDENTITY_STAGE_THAT_PRODUCES_ITS_REQUIRED_INPUTS",
+  "historical_authority_conflict": "THE_FROZEN_SUCCESSOR_REQUIRES_EITHER_PRIVATE_HISTORICAL_RESEALING_OR_A_FORBIDDEN_FIVE_FIELD_PROJECTION",
+  "freeze_table_transition": {
+    "artifact": "identity-to-bridge field semantics digest continuity exact types failure outcomes stage vocabulary and accounting units",
+    "node": "R2_VERSION_FORWARD_CONTRACT_AND_PREOBSERVATION_FREEZE",
+    "failure": "DECLARATION_REQUIRED"
+  },
+  "repair_permitted_in_this_revision": false,
+  "reason": "Sequence 12 section 4 forbids selecting a replacement after qualification falsifies the R2 frozen derivation",
+  "source_repair_loops_consumed": 0,
+  "review_transport_retries": 1,
+  "scope_expansions": 0,
+  "next_required_authority": "F017_PLANNER_VERSION_FORWARD_REFREEZE",
+  "result": "DECLARATION_REQUIRED"
+}

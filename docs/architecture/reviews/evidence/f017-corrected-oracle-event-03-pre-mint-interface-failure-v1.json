@@ -1,0 +1,86 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-03-pre-mint-failure/1.0.0",
+  "event": "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_03",
+  "classification": "LOAD_BEARING_PRE_MINT_AUTHORIZATION_INTERFACE_FAILURE",
+  "failure_id": "F017-E03-PREMINT-001",
+  "failed_at_utc": "2026-08-23T11:06:16Z",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "authority_head": "1e871593895e8d72ad70e298fe8c4af2c8486e28",
+  "operator_approval": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-03-operator-approval-v1.json",
+    "sha256": "eba1982bfce4be9902a1a20d5f56c013f91087fd74361b34f0a37b159e67bde3",
+    "approval_id": "F017-CORRECTED-ORACLE-EVENT-03-OPERATOR-GO"
+  },
+  "accepted_interface": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-authorization-consumer-interface-v1.json",
+    "sha256": "7fe819de2e139ffdff36568b9805e83b75f8c1c400afee6061377e5e14d36d64",
+    "authorization_schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/3.0.0",
+    "top_level_key_count": 43
+  },
+  "operator_approved_identities": {
+    "live_authorization_id": "F017-CORRECTED-ORACLE-LIVE-AUTHORIZATION-03",
+    "package_attempt_id": "F017-CORRECTED-ORACLE-PACKAGE-ATTEMPT-03",
+    "primary_event_id": "F017-CORRECTED-ORACLE-PRIMARY-EVENT-03",
+    "secondary_event_id": "F017-CORRECTED-ORACLE-SECONDARY-EVENT-03"
+  },
+  "mechanical_result": {
+    "authorization_id_representable": true,
+    "primary_event_id_representable": true,
+    "secondary_event_id_representable": true,
+    "package_attempt_id_representable": false,
+    "package_attempt_id_top_level_key_present": false,
+    "package_attempt_id_nested_key_present": false,
+    "candidate_can_bind_all_operator_approved_identities": false,
+    "package_state_root_is_not_an_identity_field": true,
+    "derivation_from_mutable_filename_permitted": false
+  },
+  "authorizer_result": {
+    "candidate_constructed": false,
+    "candidate_sha256": null,
+    "primary_candidate_validation_invoked": false,
+    "secondary_candidate_validation_invoked": false,
+    "live_authorization_installed": false,
+    "state_created": false
+  },
+  "reason": "The accepted v3 authorization census has explicit authorization, primary-event, and secondary-event identities but no package_attempt_id field. The operator required the exact package attempt identity to be represented and bound, and explicitly prohibited minting if v3 could not do so. Encoding the value only in a state-root filename would not satisfy the reviewed typed interface or the operator's no-mutable-filename identity rule.",
+  "required_repair_scope": {
+    "authorization_interface_versioning": true,
+    "authorizer_binding": true,
+    "consumer_validation_binding": true,
+    "coordinator_package_start_binding": true,
+    "receipt_terminal_accounting_binding": true,
+    "full_native_ci": true,
+    "fresh_independent_reviews": true,
+    "new_operator_go": true,
+    "numerical_methodology_change": false,
+    "oracle_algorithm_change": false
+  },
+  "preflight_observations": {
+    "fresh_fetch": "PASS",
+    "local_remote_parity": "PASS",
+    "worktree_clean_before_banking": true,
+    "machine_brand": "Apple M1 Ultra",
+    "architecture": "arm64",
+    "all_load_bearing_hashes_recomputed": "PASS",
+    "all_event_03_identities_unused": true,
+    "event_03_state_roots_absent": true,
+    "memory_observation_executed": false,
+    "checkpoint_metadata_inspection_executed": false
+  },
+  "safety": {
+    "EVENT_02_AUTHORITY_REUSED": "NO",
+    "EVENT_02_RETRY": "NO",
+    "EVENT_03_GO_DISPOSITION": "EXPIRED_BEFORE_CANDIDATE_CONSTRUCTION_ON_LOAD_BEARING_INTERFACE_FAILURE",
+    "EVENT_03_PACKAGE_EXECUTED": "NO",
+    "LIVE_EVENT_03_AUTHORIZATION_CREATED": "NO",
+    "PRIMARY_REAL_ORACLE_EXECUTED": "NO",
+    "SECONDARY_REAL_ORACLE_EXECUTED": "NO",
+    "NEW_ORIGINAL_CHECKPOINT_SHARD_OPENS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_IDENTITY_HASH_READS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_MMAPS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_PAYLOAD_READS": 0,
+    "P1_ATTEMPT_2_EXECUTED": "NO",
+    "HISTORICAL_MASTER_LEDGER": 175
+  },
+  "result": "FAIL_CLOSED_NO_AUTHORIZATION_NO_STATE_NO_CHECKPOINT_ACCESS"
+}

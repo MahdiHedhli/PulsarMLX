@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event05-result-envelope-gemini-design-review/1.0.0",
+  "reviewed_head": "035ffdda3bcb5d4a61ea261d5bc581f209191bb1",
+  "reviewer": "gemini-3.1-pro-high",
+  "effort": "high",
+  "role": "CHALLENGE",
+  "verdict": "CHALLENGE",
+  "findings": [
+    {"id":"ITER_PAYLOAD_TOCTOU_VULNERABILITY","severity":"BLOCKING","disposition":"REPAIR_IMPLEMENTED","repair":"Hash and geometry are revalidated on the same retained descriptor before any streamed value is yielded."},
+    {"id":"MISSING_PACKAGE_RECEIPT_CLOSURE","severity":"BLOCKING","disposition":"REPAIR_IMPLEMENTED","repair":"The package closure now requires and binds package_receipt_sha256."},
+    {"id":"CONTRACT_VALIDATION_BLIND_SPOTS","severity":"BLOCKING","disposition":"REPAIR_IMPLEMENTED","repair":"The design validator now exact-validates read protocol, write protocol, numerical contract, and full Event 04 source disposition."},
+    {"id":"DAG_CLOSURE_VALIDATION_WEAKNESS","severity":"BLOCKING","disposition":"REPAIR_IMPLEMENTED","repair":"The validator now exact-validates the complete 21-artifact package closure and rejects every single-item omission."}
+  ],
+  "counters": {"blocking":4,"non_blocking_required":0,"defense_in_depth":0},
+  "checkpoint_access": {"original_checkpoint_shard_opens":0,"original_checkpoint_payload_reads":0}
+}

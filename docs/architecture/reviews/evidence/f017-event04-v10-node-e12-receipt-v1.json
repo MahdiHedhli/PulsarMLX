@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-node-receipt/10.0.0",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "node_id": "E12",
+  "input_head": "b24957fb3f96755ddb586ee0812183210e82425a",
+  "output_head": "PENDING_EVIDENCE_REPAIR_COMMIT",
+  "reviewer_model": "claude-opus-5",
+  "review_cycle": 1,
+  "reviewed_head": "b24957fb3f96755ddb586ee0812183210e82425a",
+  "explicit_claim_verdicts": 27,
+  "expected_claim_verdicts": 28,
+  "claims_accepted": 20,
+  "claims_rejected": 7,
+  "claims_unresolved": 0,
+  "claims_without_explicit_verdict": ["E-RELEASE-001"],
+  "reported_global_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE",
+  "node_result": "REPAIR_REQUIRED",
+  "checkpoint_access_census": {"new_access_during_review":0},
+  "event_04_retry": false,
+  "next_eligible_edges": ["E9","E12"],
+  "reason": "CLAIM_COMPLETE_ARBITRATION_REQUIRED"
+}

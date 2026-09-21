@@ -1,0 +1,42 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence09-freeze-transition-receipt/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-freeze-transition-receipt-v1.json",
+  "node": "Q2_PREOBSERVATION_REFREEZE_AFTER_OPUS_CYCLE_01_REPAIR",
+  "label": "TEMPORALLY_FROZEN_NOT_OPERATIONALLY_RATIFIED",
+  "operationally_ratified": false,
+  "implementation_head": "32dadd98ac0659b8b5dba61fcc759fd5c402d116",
+  "implementation_tree": "83cb6adb84a9da65029e407b1dd82bacfc6ae5ea",
+  "authority_bundle_head": "080d3216fff120c5da2076279bca783af8458a83",
+  "authority_bundle_tree": "deda1aefe043e8fcfeee0344c0ea0b86a1cb31f0",
+  "external_validation": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-refreeze-external-validation-v1.json",
+    "sha256": "1c27195796bd09a74bad9fe049ff7fea138643f1fb293a09140a9df6a4ddbf07",
+    "result": "PASS"
+  },
+  "repair_disposition": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-opus-cycle-01-repair-disposition-v1.json",
+  "repair_loop": 2,
+  "acceptance_predicates_changed": false,
+  "readiness_field_count": 86,
+  "mutation_floor": 324,
+  "installation_outcomes": 16,
+  "race_families": 10,
+  "policy": {
+    "commit": "e5ff7286047dfaeae5b4d0ecfb96c58bdc5b24f3",
+    "sha256": "f442d2f2129bdb7fe8739244bd0745b1d843e83ec7f202e8d5822b24da8ff204",
+    "snapshot_path": "docs/architecture/reviews/evidence/f017-authority-freezing-policy-v1-exact-snapshot.md"
+  },
+  "transition_table": {
+    "commit": "0abe6601570a917c9a645f81d26a86071d779e68",
+    "sha256": "9fd9db92c9c6c6c4a1e9f6f290d5bfa43bcbad989b84e6fb0555c17c0e74a754",
+    "snapshot_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-freeze-transition-table-exact-snapshot.json"
+  },
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "production_capability_instances": 0,
+  "production_commit_success_calls": 0,
+  "live_authority_created": false,
+  "event_06_executed": false,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

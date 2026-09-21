@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-post-review-result/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "effort": "high",
+    "cli": "AGY 1.1.19",
+    "conversation_id": "9c9f78cd-dd23-4c01-a4ff-ee01415c7f08",
+    "fresh_session": true
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "f69b7e3680d6a35bf5b43a596ee788417c2f2bfc",
+  "request_head": "fc590841a99fddfe71416b361924b54ca5877a58",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-gemini-post-review-request-v1.md",
+    "sha256": "b141a04655c29e6e774aef9cf5591c4e90b351c200603524e4cb249b976bb19b"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-gemini-post-review-response-v1.md",
+    "sha256": "61164e4570e18a9dd311a91e9d09db84f5f556c753a9aa35b60e2031bb0067db"
+  },
+  "evidence_only_ci": {
+    "run_id": 32616025531,
+    "conclusion": "success",
+    "native_jobs_launched": 0
+  },
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "material_disagreement": false,
+  "scope": "TERMINAL_FAILURE_EVIDENCE_ONLY",
+  "corrected_oracle_classification": "ORACLE_EXECUTION_FAILURE",
+  "verdict": "ACCEPT"
+}

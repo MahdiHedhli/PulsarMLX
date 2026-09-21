@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "node": "R13",
+  "status": "PASS",
+  "reviewer": "gemini-3.1-pro-high",
+  "cycles": 2,
+  "reviewed_head": "9a98470898a36eee13e720a2bb3461ecd59b8515",
+  "material_challenges": 0,
+  "blocking_findings": 0,
+  "unresolved_findings": 0,
+  "result": "PASS"
+}

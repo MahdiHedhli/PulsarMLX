@@ -1,0 +1,14 @@
+{
+  "schema":"pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id":"F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id":"R10",
+  "input_head":"43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5",
+  "output_head":"43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5",
+  "commands_executed":["normalize Gemini cycle 03","close challenge and support ledgers"],
+  "tests_executed":["all challenge rows have required repair None","all cycle-02 challenges freshly defended"],
+  "result_counts":{"repaired":1,"answered_by_existing_evidence":1,"conceded":0,"unresolved":0},
+  "claims_closed":["C-AUTHORIZER-001","C-GO-001"],
+  "checkpoint_access_census":0,
+  "next_eligible_edges":["R11"],
+  "result":"PASS"
+}

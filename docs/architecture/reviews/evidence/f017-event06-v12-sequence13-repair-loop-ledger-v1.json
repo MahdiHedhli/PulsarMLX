@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-repair-loop-ledger/1.0.0",
+  "budget": 10,
+  "amendment_application_consumed_loop": false,
+  "loops": [
+    {
+      "loop": 1,
+      "root_cause": "QUALIFICATION_CANDIDATE_INCLUDED_PROCESS_LOCAL_TEMPORARY_PATH",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "USE_FIXED_NONEXISTENT_CANONICAL_QUALIFICATION_PATH",
+      "result": "PASS"
+    },
+    {
+      "loop": 2,
+      "root_cause": "DURABLE_RECONSTRUCTION_DID_NOT_BIND_ORIGINAL_AUTHORITY_WINDOW",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "REQUIRE_EXACT_EXPECTED_ISSUED_AND_EXPIRY_VALUES",
+      "result": "PASS"
+    },
+    {
+      "loop": 3,
+      "root_cause": "NO_ACCESS_OBSERVER_CENSUS_OMITTED_CAPABILITY_AND_ACCOUNTING_COUNTERS",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "OBSERVE_CAPABILITY_INSTALL_PACKAGE_ID_ACCOUNTING_RETRY_INFERENCE_AND_P1_COUNTERS",
+      "result": "PASS"
+    },
+    {
+      "loop": 4,
+      "root_cause": "ONE_SHOT_ENFORCEMENT_WAS_PROCESS_LOCAL_AND_REPLAYABLE_ACROSS_FRESH_STATES",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "BIND_HUMAN_DECISION_TO_DESCRIPTOR_RELATIVE_DURABLE_NO_REPLACE_RESERVATION_AND_REJECT_RECONSTRUCTED_GO_AUTHORITY",
+      "result": "PASS"
+    },
+    {
+      "loop": 5,
+      "root_cause": "SEALED_ARTIFACT_BASE_ACCEPTED_ANY_SIBLING_ARTIFACT_SEAL",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "BIND_EACH_EXACT_ARTIFACT_CLASS_TO_ONE_DISTINCT_SEAL_AND_ADD_FULL_CROSS_SEAL_MUTATION_MATRIX",
+      "result": "PASS"
+    },
+    {
+      "loop": 6,
+      "root_cause": "SEALED_ARTIFACT_INITIALIZER_COULD_REENTER_AN_ALREADY_LOCKED_INSTANCE",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "REJECT_REINITIALIZATION_AND_REVALIDATE_THE_EXACT_CLASS_SEAL_IN_INITIALIZER_WITH_SIX_PERMANENT_MUTATIONS",
+      "result": "PASS"
+    },
+    {
+      "loop": 7,
+      "root_cause": "DURABLE_RESERVATION_KEYED_DECISION_AND_READINESS_PAIR_INSTEAD_OF_DIRECT_HUMAN_DECISION",
+      "failed_repairs_for_root_cause": 1,
+      "repair": "KEY_EXCLUSIVE_DURABLE_RESERVATION_BY_HUMAN_DECISION_DIGEST_AND_ADD_CROSS_READINESS_FRESH_PROCESS_REPLAY_CAMPAIGN",
+      "result": "PASS"
+    }
+  ],
+  "loops_consumed": 7,
+  "loops_remaining": 3,
+  "same_root_cause_failed_repair_cap": 2,
+  "cap_exceeded": false
+}

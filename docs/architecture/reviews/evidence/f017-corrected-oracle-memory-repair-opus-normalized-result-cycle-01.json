@@ -1,0 +1,63 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-memory-repair-final-review-result/1.0.0",
+  "cycle": 1,
+  "reviewer": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "cli": "Claude Code 2.1.235",
+    "session_id": "59918c91-4ff8-4680-860d-c808ffe534d6",
+    "fresh_session": true
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "c7f066cf8692695d6db9b1e078fc856c6d3cce33",
+  "implementation_head": "2fc212ff1ccde542fb70f327f20704f5ec294d5f",
+  "execution_code_head": "b92ba90a5b401fe44aa4c7dbe3c62cc6e23c3ddd",
+  "exact_head_ci": {
+    "run_id": 32611864941,
+    "conclusion": "success"
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-opus-review-request-cycle-01.md",
+    "sha256": "998d4e570e315673d663ed0d3f2c2b431001c57389be4ef6568a1b684628f3ed"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-memory-repair-opus-response-cycle-01.md",
+    "sha256": "553d5174665a55c55fbd2ba2ce9310da74be14c28e68aff2ab9ef2a2a2c47ef3"
+  },
+  "independent_attack_count": 130,
+  "committed_test_result": "20/20 PASS",
+  "findings": [
+    {
+      "id": "F017-MEM-DID-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "subject": "observer source identity",
+      "disposition": "ACCEPTED_NON_WEAKENING_FUTURE_HARDENING",
+      "rationale": "Content SHA, exact contract, clean worktree, branch, and remote parity prevent a runtime substitution under the reviewed authority. A future generation may additionally bind inspect.getfile(observe_vm_stat); this does not weaken the current gate."
+    },
+    {
+      "id": "F017-MEM-DID-002",
+      "severity": "DEFENSE_IN_DEPTH",
+      "subject": "committed checkpoint descriptor hashing before memory PASS",
+      "disposition": "ACCEPTED_NON_PAYLOAD_METADATA_ONLY",
+      "rationale": "The early reads are Git-bound catalog and manifest descriptors, not original checkpoint shards or payload bytes. No original checkpoint open, hash, mmap, or pread occurs before PASS. Moving these descriptor checks is optional hardening."
+    },
+    {
+      "id": "F017-MEM-DID-003",
+      "severity": "DEFENSE_IN_DEPTH",
+      "subject": "hosted CI cannot exercise the M1 Ultra floor branch",
+      "disposition": "ACCEPTED_WITH_EXACT_HOST_QUALIFICATION",
+      "rationale": "Hosted CI executes the real parser without falsifying machine identity. The exact M1 Ultra host independently executed the complete preflight and floor check with zero side effects."
+    },
+    {
+      "id": "F017-MEM-DID-004",
+      "severity": "DEFENSE_IN_DEPTH",
+      "subject": "purgeable-page formula semantics",
+      "disposition": "ACCEPTED_INHERITED_FROZEN_CONTRACT",
+      "rationale": "The formula is explicitly frozen and unchanged from v1, as required by this focused repair. Its contribution leaves the observed host far above the unchanged floor; changing it requires a separate admission-contract review."
+    }
+  ],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 4,
+  "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION_PREPARATION"
+}

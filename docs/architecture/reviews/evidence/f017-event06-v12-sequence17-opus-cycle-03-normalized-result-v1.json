@@ -1,0 +1,50 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-opus-cycle-03-normalized-result/1.0.0",
+  "reviewer": "Opus ARBITER",
+  "transport": "authenticated Claude CLI",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "ad702e32ba6d32b96e217f077aec0ac26b20f947",
+  "reviewed_tree": "6b8a85461715cc523a37452013db9d1f6f33924b",
+  "implementation_head": "0dcd07185d794b464ffef5e57a4c2f8e5828fe74",
+  "implementation_tree": "1ba69ff2f8d4b0bc110930413aa35e7f5f4dcc26",
+  "tests_passed": 545,
+  "subtests_passed": 147,
+  "blocking_findings": [
+    {
+      "id": "BF1",
+      "summary": "The successor bridge did not bind the installed checkpoint-set digest to the validated identity-stage digest."
+    },
+    {
+      "id": "BF2",
+      "summary": "Bundle binding admitted a result-bundle view in the numerical-producer slot, bypassing required producer order and provenance."
+    },
+    {
+      "id": "BF3",
+      "summary": "Package-terminal construction lacked a one-shot no-replace gate and could emit multiple terminals for one package identity."
+    },
+    {
+      "id": "BF4",
+      "summary": "The successor consumer coordinator omitted the required sealed V11-closure binding, causing the production path to fail after irreversible numerical execution."
+    },
+    {
+      "id": "BF5",
+      "summary": "The prompt-bound consumer wrapper did not bind its outer role to the exact role and producer kind of the wrapped historical consumer view."
+    }
+  ],
+  "unresolved_findings": [
+    "qualification-only result-bundle indices were not structurally excluded from live authority",
+    "the blast radius of the missing checkpoint-set continuity check was not mechanically bounded",
+    "the missing V11-closure production field had not been exercised as a production-path regression"
+  ],
+  "advisory_findings": [
+    "some structural mutations were self-referential rather than downstream consumer attacks",
+    "the deterministic aggregate did not bind all stable preinstallation authority digests",
+    "Python object.__new__ can bypass constructor seals outside the supported API",
+    "the raw identity validator remains a public compatibility surface",
+    "the production successor coordinator entry point lacked a direct no-access qualification"
+  ],
+  "global_verdict": "REJECT",
+  "result": "FAIL",
+  "disposition": "REPAIRED_BY_EDA06FAE6797E410BE15C256913A0BE4EBFC5A15"
+}

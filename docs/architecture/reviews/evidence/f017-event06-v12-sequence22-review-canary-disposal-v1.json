@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-review-canary-disposal/1.0.0",
+  "canary_head": "7f38c1cfdc53e879da86b274a5b759241fc029e3",
+  "canary_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "declared_canary_patch_sha256": "1a94287f794ca53afc159ac33bbb60fc53fcaa22f8dbbb044ed7649d54c60c08",
+  "mechanical_git_patch_sha256": "1a94287f85b980f6b9349fdba96af33f5b61bf32caa0e13c8ba5cab3cb11979a",
+  "agy_canary_outcome": "CANARY_FAILED",
+  "opus_canary_outcome": "PASS",
+  "canary_merged": false,
+  "review_clones_disposed": 2,
+  "remaining_review_clones": 0,
+  "candidate_mutated": false,
+  "result": "PASS"
+}

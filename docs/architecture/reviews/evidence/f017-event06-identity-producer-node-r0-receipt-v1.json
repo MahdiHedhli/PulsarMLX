@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0","node":"R0","starting_head":"34ca47fddf28cb202f44bb6961a45e77a1e86abb","event05_root_cause_reconstructed":true,"checkpoint_access":0,"event06_state_absent":true,"event06_ids_absent":true,"historical_master_ledger":175,"result":"PASS"}

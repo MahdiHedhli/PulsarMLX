@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-review-budget-exhaustion/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "starting_head": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "terminal_reviewed_head": "efe2ae4908dd5e04c948ded37326bc95c40b119c",
+  "numerical_opus_cycles_used": 5,
+  "numerical_opus_cycles_maximum": 5,
+  "terminal_verdict": "REJECT",
+  "terminal_required_finding": {
+    "id": "F5-R4",
+    "classification": "NON_BLOCKING_REQUIRED",
+    "summary": "NUMERICAL_MODULE_CAPABILITY_POLICY_IS_NAME_BOUND_NOT_VALUE_BOUND",
+    "smallest_repair": "PROPAGATE_NP_MX_MODULE_VALUE_TAINT_OR_REJECT_BARE_NUMERICAL_MODULE_NAMES_OUTSIDE_ATTRIBUTE_ROOTS"
+  },
+  "stop_reason": "NUMERICAL_OPUS_REVIEW_BUDGET_EXHAUSTED",
+  "numerical_methodology_changed": false,
+  "numerical_thresholds_changed": false,
+  "complete_requalification_result": "PASS",
+  "lifecycle_v6_design_started": false,
+  "active_corrected_oracle_generation": "NONE",
+  "event_02_retry": false,
+  "event_03_retry": false,
+  "event_04_executed": false,
+  "live_event_04_authorization_created": false,
+  "primary_real_oracle_executions": 0,
+  "secondary_real_oracle_executions": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "ready_for_corrected_full_checkpoint_oracle_event_04_go": false
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-agy-cycle-02-normalized-result/1.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "b02992a9405cb48e4c9757676a6316523e5b3a6c",
+  "reviewed_tree": "94c03a589881866aab96d8519c210c7474fb9ee1",
+  "full_native_run": 33262291399,
+  "tests_passed": 545,
+  "subtests_passed": 147,
+  "dag_edges_reviewed": 37,
+  "blocking_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT",
+  "result": "PASS",
+  "disposition": "SUPERSEDED_BY_OPUS_CYCLE_02_TERMINAL_PROVENANCE_FINDINGS"
+}

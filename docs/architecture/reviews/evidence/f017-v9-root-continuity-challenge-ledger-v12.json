@@ -1,0 +1,112 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-challenge-ledger/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "cycle": 7,
+  "reviewer_model": "claude-opus-5",
+  "reviewed_head": "3100714e9b89593add5f0d54dfd340900614ee66",
+  "exact_response_path": "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+  "exact_response_sha256": "5283026914a9374d73dfa5920a7fd1f7d939684a70780a54218fb0b1de272f52",
+  "prior_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v11.json",
+  "original_checkpoint_access_observed": 0,
+  "challenges": [
+    {
+      "challenge_id": "O-C07-001",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005",
+        "C-IMPL-002"
+      ],
+      "attack": "Shape-based acquired-callable analysis has propagation and call-site gaps",
+      "mutation_or_trace": "Two distinct mechanisms are incomplete. Propagation: a container literal whose element is a fresh Call/Subscript/Attribute does not taint the container ((a(),1), [a()], {'k':a()}, {a()}), and destructuring (d, n = a(), 1), for/comprehension targets, function parameter defaults, decorator-rebound function names, with-as targets and except-as targets are not assignment forms _complex_callable_bindings considers. Call-site: even a correctly tainted name escapes when invoked through a container subscript ((d,)[0](x), [d][0](x), {'k':d}['k'](x)) or through d.__call__(x), because node.func is then a Subscript or an unlisted Attribute. Immediately-invoked expressions a()(s) and reg['k'](s) are likewise unreachable by the analysis.",
+      "expected_behavior": "Taint containers whose elements are capability-shaped; treat For/comprehension/with/except targets and function parameter defaults as assignments; flag Call nodes whose func is a Subscript or Call, and add __call__ to the attribute check.",
+      "observed_behavior": "No accepted shape can be supplied a genuine JSON decoder. All 22 producer compositions tested — json.loads reference, container of json.loads, functools.partial, lambda, default arg, class attribute, decorator, JSONDecoder().decode, numpy.load, mlx.core.load, bare o.loads — reject at the name-agnostic and json-capability layers. The gap weakens a forward-looking review aid, not the prohibition on the measured bytes.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-002",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005"
+      ],
+      "attack": "Support ledger v10 overstates shape-analysis coverage",
+      "mutation_or_trace": "S-O-C06-001 evidence item 3 states the fixed-point analysis rejects invocation of callables acquired through 'Call, Subscript, Attribute, aliases, containers, conditional transport, named expressions, or class storage'. Containers are covered only for transport of an already-tainted Name; a container literal built directly from a Call is not tainted, and extraction from a tainted container is not enforced at the call site (see F-C07-001).",
+      "expected_behavior": "Amend the S-O-C06-001 wording to state exactly which container forms propagate and which do not, so a future cycle does not rely on the broader reading.",
+      "observed_behavior": "The overstatement is in evidence narrative, not in a claim. Every claim verdict here was re-derived independently from executed bytes rather than from the ledger text.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-003",
+      "claim_id": "C-CI-001",
+      "related_claim_ids": [
+        "C-CI-001"
+      ],
+      "attack": "R5 receipt v11 carries a stale commands_executed provenance line",
+      "mutation_or_trace": "f017-v9-root-continuity-node-r5-receipt-v11.json records commands_executed ['gh run view 32882085157', ...] while result_counts.full_native_run_id is 32886210156. Run 32882085157 is the cycle-05 CI run at head 79367b50, copied forward from receipt v10; receipts v8, v9 and v10 each had matching pairs, so v11 is a one-field copy-forward regression.",
+      "expected_behavior": "Correct commands_executed to reference 32886210156 in the next receipt bank.",
+      "observed_behavior": "The substantive counts are correct and independently confirmed against the live GitHub API: run 32886210156 exists at 07ebd970, succeeded, with 4 required jobs passed and 0 native skips.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-004",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005"
+      ],
+      "attack": "from typing.<submodule> import bypasses the typing member vocabulary check",
+      "mutation_or_trace": "The UNAUTHORIZED_TYPING_MEMBER_IMPORT gate keys on node.module == 'typing' exactly, so from typing.io import TextIO passes the vocabulary check while its import_root 'typing' is still approved.",
+      "expected_behavior": "Key the vocabulary check on the import root rather than the exact module string.",
+      "observed_behavior": "Not executable on the pinned runtime: CPython 3.13.13 reports 'typing is not a package', so any such import fails closed at import time. The dangerous typing members (get_type_hints, ForwardRef, evaluate_forward_ref, _evaluate) are also caught path-independently by CAPABILITY_REEXPORT_IMPORT.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-005",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005"
+      ],
+      "attack": "breakpoint() is an environment-gated in-process decoder not covered by DYNAMIC_BUILTIN_NAMES",
+      "mutation_or_trace": "breakpoint is absent from DYNAMIC_BUILTIN_NAMES, so breakpoint(text) passes the policy. Verified on pinned CPython 3.13.13: PYTHONBREAKPOINT=json.loads python3.13 -c \"print(repr(breakpoint('{\\\"a\\\": 1}')))\" prints {'a': 1} — a genuine unbounded in-process JSON decode with no json token in the source.",
+      "expected_behavior": "Add breakpoint (and help) to DYNAMIC_BUILTIN_NAMES.",
+      "observed_behavior": "Requires operator-controlled environment rather than current bytes, and the independent closure census confirms no breakpoint/eval/exec/compile/__import__ name occurs in any of the 32 modules. Same family as the out-of-process inline decoders that item 11 directs be assessed separately.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-006",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005"
+      ],
+      "attack": "Out-of-process inline decoder commands remain unscanned",
+      "mutation_or_trace": "subprocess.run([sys.executable, '-c', '...json.loads...']) and os.popen('python3 -c ...') both pass the policy; subprocess, os and sys.executable are all approved surfaces. Carried forward from O-C06-003.",
+      "expected_behavior": "Semantic scanning of inline -c command strings, if this class is ever to be closed.",
+      "observed_behavior": "Assessed separately per required attack 11. No current authority artifact is decoded through an external interpreter; the only subprocess decode in the closure is the offline qualify_f017_quantization_matrix_v1.invoke probe, unreachable from the active runtime.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    },
+    {
+      "challenge_id": "O-C07-007",
+      "claim_id": "C-JSON-005",
+      "related_claim_ids": [
+        "C-JSON-005"
+      ],
+      "attack": "Hand-rolled structural decoding over approved ast.parse is undetectable by an AST policy",
+      "mutation_or_trace": "ast is an approved root and ast.parse is not a capability attribute; a hand-written walker over the resulting tree could decode JSON-shaped text without eval, literal_eval or any json token.",
+      "expected_behavior": "None available at the policy layer; note as a permanent limit of the approach in the bounded-decode contract.",
+      "observed_behavior": "Requires authoring a parser, is absent from current bytes, and is not decidable by any AST-shape policy by construction. Structural, not a current-byte path.",
+      "severity": "DEFENSE_IN_DEPTH",
+      "affected_artifacts": [],
+      "status": "ACCEPTED_DEFENSE_IN_DEPTH_FORWARD_ITEM"
+    }
+  ]
+}

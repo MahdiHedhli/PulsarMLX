@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-transition-reconciliation/1.0.0",
+  "prompt_repository_commit": "ba3312668ffdea22f1dd292097001595456e7574",
+  "transition_table_locator": "Prompts/F017/Mac-Studio-M1-Ultra/010__F017__Mac-Studio-M1-Ultra__Event-06-V12-one-shot-execution__freeze-transition-table.json",
+  "transition_table_digest": "db30bdc8f4679f66f0200f6875886203236bdb952e798508488065733640703b",
+  "declared_transition_count": 11,
+  "transitions": [
+    {"ordinal": 1, "artifact": "fresh human GO bytes and one-shot scope", "status": "NOT_CONSUMED_GO_EXPIRED_BEFORE_APPROVAL"},
+    {"ordinal": 2, "artifact": "ratified V12 authority", "status": "HONORED_NO_TRANSITION"},
+    {"ordinal": 3, "artifact": "fresh execution and identity plans", "status": "NOT_REACHED"},
+    {"ordinal": 4, "artifact": "capability approval candidate installation and receipt", "status": "NOT_REACHED"},
+    {"ordinal": 5, "artifact": "package attempt and execution identities", "status": "NOT_REACHED"},
+    {"ordinal": 6, "artifact": "checkpoint identities and leases", "status": "NOT_REACHED"},
+    {"ordinal": 7, "artifact": "primary and secondary payloads", "status": "NOT_REACHED"},
+    {"ordinal": 8, "artifact": "comparison release accounting and package terminal", "status": "NOT_REACHED"},
+    {"ordinal": 9, "artifact": "execution result and final declaration", "status": "BANKED_NOT_OPERATIONALLY_RATIFIED"},
+    {"ordinal": 10, "artifact": "P1 attempt 2 readiness decision", "status": "HONORED_READY_NO"},
+    {"ordinal": 11, "artifact": "MacBook frontier and D7 result", "status": "HONORED_NO_TRANSITION"}
+  ],
+  "declared_transitions_honored": "3/11",
+  "undeclared_transitions": 0,
+  "failure_rule_honored": "EXPIRE_GO_WITH_ZERO_CHECKPOINT_ACCESS",
+  "post_terminal_repair_loops": "1/10",
+  "macbook_frontier_mutation": "NONE",
+  "shared_feature_state_mutation": "NONE",
+  "result": "PASS"
+}

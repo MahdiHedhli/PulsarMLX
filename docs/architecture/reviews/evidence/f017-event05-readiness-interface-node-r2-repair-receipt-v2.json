@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R2",
+  "input_head": "7597730c8aecae8fb283b2352e9ee06639b171d1",
+  "output_head": "24e4ee6c66f08d07b3df6e9335850b107e5c2373",
+  "output_tree": "811d6e7483769be106fef264a62446fd43d53409",
+  "input_authority_shas": ["a75356d682ade19e2ba9dc0cd5ed628ed663670ab20af9b3638a7ee377108146"],
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v1.json",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-review-protocol-v1.json",
+    "docs/architecture/reviews/evidence/f017-event05-readiness-interface-historical-tombstone-v1.json"
+  ],
+  "commands_executed": ["python3 scripts/research/validate_f017_event05_readiness_interface_design_v1.py"],
+  "tests_executed": ["mechanical design validation"],
+  "result_counts": {"planned_mutations": 226, "uppercase_aliases": 0},
+  "claims_introduced": [],
+  "claims_closed": ["C-AUTHORIZER-001", "C-INSTANT-001", "C-INSTANT-002", "C-LEGACY-001", "C-GO-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R3"],
+  "result": "PASS"
+}

@@ -1,0 +1,86 @@
+{
+  "schema": "pulsarmlx.f017.evidence-aware-ci-routing-acceptance",
+  "schema_version": "1.0.0",
+  "status": "F017_EVIDENCE_AWARE_CI_ROUTING: ACCEPTED",
+  "active_branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+  "classifier": {
+    "path": "scripts/ci/classify_ci_change.py",
+    "sha256": "7aa2b4effb42ffc7db5c88c9cfbe465296a73417fb92a3156c32831f7e05b325",
+    "unknown_default": "FULL_NATIVE",
+    "mixed_default": "FULL_NATIVE",
+    "tests": 18
+  },
+  "active_workflow": {
+    "path": ".github/workflows/macos.yml",
+    "sha256": "9b740464f1308fae6e9ba665a6f55ae41dd90ddf13802692f4887cafb286f283",
+    "concurrency_group_per_workflow_ref": true,
+    "cancel_in_progress": true,
+    "aggregate_always_runs": true
+  },
+  "evidence_validator": {
+    "path": "scripts/ci/validate_evidence_change.py",
+    "sha256": "db886bf483fe5132b7d1fbf3b0946372c6ee240d29b573406a3ab3089595190c",
+    "attempt_1_validator_path": "scripts/ci/validate_f017_attempt1_evidence.py",
+    "attempt_1_validator_sha256": "a58c4a715f1befb6824200dd18c8f788871c01bd71d6f896b31982082dc1c60d",
+    "native_builds": 0
+  },
+  "verification_runs": [
+    {
+      "id": 32586197701,
+      "branch": "feat/017-rust-native-inference-runtime",
+      "mode": "FULL_NATIVE",
+      "conclusion": "success",
+      "purpose": "workflow-change full qualification"
+    },
+    {
+      "id": 32586691805,
+      "branch": "feat/017-rust-native-inference-runtime",
+      "mode": "EVIDENCE_ONLY",
+      "conclusion": "success",
+      "apple_native_jobs_started": 0,
+      "mlx_builds": 0,
+      "full_research_corpus_runs": 0
+    },
+    {
+      "id": 32586291587,
+      "branch": "feat/017-real-checkpoint-runner",
+      "mode": "CLOSED_BRANCH_GUARD",
+      "conclusion": "failure",
+      "expected_guard_rejection": true,
+      "apple_native_jobs_started": 0
+    },
+    {
+      "id": 32586543464,
+      "branch": "feat/017-real-checkpoint-runner",
+      "mode": "EVIDENCE_ONLY",
+      "conclusion": "success",
+      "apple_native_jobs_started": 0,
+      "mlx_builds": 0
+    },
+    {
+      "id": 32590049780,
+      "branch": "feat/017-rust-native-inference-runtime",
+      "head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+      "mode": "FULL_NATIVE",
+      "conclusion": "success",
+      "workspace_baseline": "success",
+      "pinned_native_mlx": "success",
+      "offline_diagnostics_and_forward_evidence": "success",
+      "aggregate": "success"
+    }
+  ],
+  "incident_run": 32448819034,
+  "incident_disposition": "DOCS_ONLY_PUSH_WAS_MISROUTED_TO_BROAD_NATIVE_AND_RESEARCH_QUALIFICATION;CLASSIFICATION_FIXED_WITHOUT_ERASING_THE_TEST_FAILURE",
+  "closed_historical_branch": {
+    "policy_commit": "8aedee7b0cd0bcaf123d2359a1b287c75f227664",
+    "evidence_probe_commit": "90ca0c7c0624351be6975517be99f27def663c99",
+    "workflow_sha256": "d52ed257374e9e90a82144e36f155fb9d0f542bf48012bb98e6367008d402efa",
+    "ordinary_implementation_change": "CLOSED_BRANCH_GUARD",
+    "manual_full_dispatch_available": true,
+    "proof_reference_program_reopened": false
+  },
+  "full_ci_preserved_for_implementation_changes": true,
+  "evidence_only_native_mlx_suppressed": true,
+  "docs_only_native_mlx_suppressed": true
+}

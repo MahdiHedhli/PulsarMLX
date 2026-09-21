@@ -1,0 +1,23 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-authority-manifest/5.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "measured_content_head":"40cff06bd612b0487b394929e2c7b4a66839f640",
+  "measured_content_tree":"c6e77814aaff284e03e14cd496333737d3d7e941",
+  "self_exclusion":"THIS_MANIFEST_DOES_NOT_BIND_ITS_OWN_BYTES_OR_PACKAGING_COMMIT",
+  "supersedes":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v4.json",
+  "entries":[
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-authority-manifest-v4.json","sha256":"57df180e79d4a72cca26bb483d917d771e272093891182c7a4f2ee95bb39f249","role":"PREVIOUS_AUTHORITY"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-design-cycle-03-request.md","sha256":"ce9cb102d6ed34b67c2753e4961cff2c9ff60cc3d3575c060c1c979c92e49d2a","role":"FINAL_GEMINI_DESIGN_REQUEST"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-gemini-design-cycle-03-normalized-result.json","sha256":"9dc39589a5f3f9b78af91cf81ef7d3718094a812d3bd67d44eb64b21e2bfaf3d","role":"FINAL_GEMINI_DESIGN_RESULT"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-challenge-ledger-v4.json","sha256":"314ac659fa676521746d79de3430aa8f8c98e43d907744b283781d0670d6fe3d","role":"FINAL_DESIGN_CHALLENGE_LEDGER"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-graph-state-v5.json","sha256":"75c1dd92b3929ea8b202590645ba89d87b8ce4b6d2b62fad00787828a146afa4","role":"GRAPH_STATE"},
+    {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-node-r3-receipt-v3.json","sha256":"5f6cfb63616692039bd041d6b737084dcfa10c23c0d18087688f81ea665479ba","role":"FINAL_GEMINI_NODE_RECEIPT"}
+  ],
+  "entry_count":6,
+  "gemini_design_cycles_used":3,
+  "blocking_challenges":0,
+  "non_blocking_required_challenges":0,
+  "defense_in_depth_challenges":0,
+  "event_04_retry":false,"event_04_resume":false,"event_05_executed":false,"live_event_05_authorization_created":false,"original_checkpoint_access":0,"p1_attempt_2_executed":false,"historical_master_ledger":175,
+  "result":"PASS_READY_FOR_OPUS_DESIGN_CYCLE_02"
+}

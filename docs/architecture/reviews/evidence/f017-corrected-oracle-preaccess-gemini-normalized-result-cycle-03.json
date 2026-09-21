@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-cross-vendor-review-result/1.0.0",
+  "cycle": 3,
+  "reviewer": {"model":"gemini-3.1-pro-high","effort":"high","cli":"AGY","conversation_id":"2b0e3fb1-ba30-4993-8f89-f932321c0688"},
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "34029f179a107c02a1cd28cbb0085c22f12190d9",
+  "implementation_head": "e00811df76c480b53b1bcab35fcb01ea8475b089",
+  "package_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "exact_head_ci": 32604077031,
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "non_blocking_required_findings": [],
+  "defense_in_depth_findings": [],
+  "advisory_disposition": "The response's merge-clearance phrase is outside this review's authority and is not adopted; only pre-access readiness is adjudicated.",
+  "material_disagreement_with_final_reviewer": false,
+  "original_checkpoint_reads": 0,
+  "corrected_full_checkpoint_oracle_executed": false,
+  "p1_attempt_2_executed": false
+}

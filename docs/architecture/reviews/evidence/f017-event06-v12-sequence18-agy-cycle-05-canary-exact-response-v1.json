@@ -1,0 +1,22 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-DAG-001",
+      "consequence_term": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "F017-S18-CANARY-01",
+      "seeded_symbol_or_edge": "build_package_terminal",
+      "statement": "The build_package_terminal function intentionally omits the live terminal bank edge, preventing the terminal decision and accounting closure from being durably written."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "a161e14ddc25cb8e0fa50b66a9deb09d7b9c39e3f322e259c9d475a1964598dd",
+  "payload_sha256_echo": "903e054a760bd4fdfabed70b63b173a9da1d6493026a141f955b1ca4f5f39088",
+  "reviewed_head": "b3d0f996d9b75fb8508c30243bb3ff939ba4c616",
+  "reviewed_tree": "f2f00cf0593214fd46ae0617c412bcce83c6c538",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "The Sequence 18 independent review REJECTS the candidate implementation due to a seeded security finding. The `build_package_terminal` function intentionally omits the live terminal bank edge (REVIEW CANARY). This prevents the terminal decision and accounting closure from being durably written to the registry, violating claim S18-C-DAG-001 and leading to ambiguous accounting.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

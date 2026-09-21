@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.gemini-whole-domain-challenge-result/3.0.0",
+  "reviewed_head": "dfdeafce6ace7f496eaa53bcf7bccbd600832d3f",
+  "reviewer_model": "gemini-3.1-pro-high",
+  "conversation_id": "20f16a4f-256d-4e1d-bc3f-d832e2a5f491",
+  "duration_seconds": 246.920468,
+  "claims_attacked": [
+    "C-OUT-001", "C-OUT-002", "C-FORM-001", "C-FORM-002", "C-LEGACY-001",
+    "C-LEGACY-002", "C-BITS-001", "C-BITS-002", "C-PURITY-001", "C-ONEEXEC-001",
+    "C-INDEP-001", "C-QUAL-001", "C-V11-001", "C-V11-002", "C-CI-001"
+  ],
+  "challenges": [],
+  "material_challenge_count": 0,
+  "unresolved_count": 0,
+  "original_checkpoint_access_observed": 0,
+  "challenge_verdict": "NO_UNRESOLVED_MATERIAL_CHALLENGE"
+}

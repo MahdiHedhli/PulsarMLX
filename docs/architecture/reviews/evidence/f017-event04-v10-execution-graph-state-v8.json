@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-graph-state/10.0.2",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "starting_head": "3256b31d5b09bf2c71ea4e170172da6a75c89c1b",
+  "predecessor": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-graph-state-v7.json","sha256":"6ab44bcfbaec33b0e00149074c6b96244b540f7da84ab658f99bede10e15ed32"},
+  "claim_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-claim-ledger-v8.json","sha256":"1054daf822accc6c2f74b63ee12d6154b941a81e008555b0acb77a6e07faaa95"},
+  "arbiter_ledger": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-arbiter-ledger-v3.json","sha256":"d5a771a52cd1be67f5feb45b6f9e14c7679bb97eb5997b5f2d9e343b9acbeef0"},
+  "covered_head_ci": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-evidence-only-ci-v2.json","sha256":"14c6c30350943138693b71d6212ca63a5ed5f435b526fc4ca85d56b32743af5b"},
+  "active_node": "E12",
+  "execution_nodes_completed": ["E0","E1","E2","E3","E4","E5"],
+  "post_execution_nodes_completed": ["E9","E10","E11"],
+  "nodes": [
+    {"node_id":"E0","status":"PASS"},{"node_id":"E1","status":"PASS"},{"node_id":"E2","status":"PASS"},{"node_id":"E3","status":"PASS"},{"node_id":"E4","status":"PASS"},{"node_id":"E5","status":"PASS"},
+    {"node_id":"E6","status":"TERMINAL_FAILURE"},{"node_id":"E7","status":"INVALIDATED"},{"node_id":"E8","status":"TERMINAL_FAILURE"},
+    {"node_id":"E9","status":"PASS"},{"node_id":"E10","status":"PASS"},{"node_id":"E11","status":"PASS"},{"node_id":"E12","status":"REPAIR_REQUIRED"},{"node_id":"E13","status":"INVALIDATED"}
+  ],
+  "terminal_failure": {
+    "classification": "ORACLE_EXECUTION_FAILURE",
+    "failed_node": "E6",
+    "no_execution_replay": true,
+    "runtime_terminal_result_sha256": "3c7b8561414ce6aeeb5e9597debd5147981af608e8bf878a4383e58360258a77",
+    "banked_terminal_result": {"path":"docs/architecture/reviews/evidence/f017-event04-v10-terminal-execution-result-v1.json","sha256":"9ea346b6d0fa7f144799b6a9bd13dbeffba4fb816163a7e39d811d141543907d"}
+  },
+  "lease_census": {"active_at_e5":5,"live_after_e8_release":0},
+  "claim_census": {"accepted":20,"rejected":7,"unresolved":1,"pending_arbiter":0,"total":28,"result":"PASS"},
+  "measured_execution_bytes_changed_after_go": false,
+  "no_execution_replay": true,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "next_edge": "FRESH_E12_ARBITER_FOR_E_CI_001"
+}

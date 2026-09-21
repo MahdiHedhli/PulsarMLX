@@ -1,0 +1,62 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-instantiability-postmortem/1.0.0",
+  "event": "F017_CORRECTED_ORACLE_EVENT_02",
+  "classification": "AUTHORIZATION_TO_CONSUMER_SCHEMA_INSTANTIABILITY_DEFECT",
+  "authority": {
+    "starting_head": "d40af431511fca1a3f213db57085071d45cb9d13",
+    "approval_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-operator-approval-v1.json",
+    "approval_sha256": "aa02ee1c217807e4f758ae95a9b13bb5913cdedaff609e2b795d2da2a246b64d",
+    "authorization_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-live-authorization-v1.json",
+    "authorization_sha256": "553a4f315a0d177b9a7997a62abe7f447ba0861a3b62a0b97c713153d50a8e04",
+    "receipt_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02/receipt.json",
+    "receipt_sha256": "63cf8bf4f018426751796c1bef48c5ab9df0dcdebcb6c1e1a58eb99e2f482e7d",
+    "terminal_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02/terminal.json",
+    "terminal_sha256": "11a8cde63f5ddae42cbf020691c04d240ce89d210b744127525b0ab82ab3c69a",
+    "failure_summary_path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-execution-failure-summary-v1.json",
+    "failure_summary_sha256": "617cb92605eb93cba3f24e7395a1a12ba0797ac2130213e2a72b5e83b87381eb"
+  },
+  "producer_consumer_mismatch": {
+    "authorizer_emitted": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/2.0.0",
+    "primary_required": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0",
+    "secondary_required": "pulsarmlx.f017.corrected-full-checkpoint-oracle-access-authorization/1.0.0",
+    "prior_validation_gap": "AUTHORIZER_ONLY_V2_VALIDATION_AND_HAND_AUTHORED_V1_CONSUMER_FIXTURES_WITH_NO_EXACT_CANDIDATE_TO_BOTH_REAL_CONSUMER_BOUNDARIES"
+  },
+  "immutable_facts": {
+    "package_authorization_minted": true,
+    "package_authorization_consumed": true,
+    "package_durable_start_banked": true,
+    "checkpoint_identity_event_count": 30,
+    "checkpoint_shards_opened_and_identity_hashed": 6,
+    "graph_mmaps": 0,
+    "logical_tensors_resolved": 0,
+    "logical_tensors_read": 0,
+    "primary_numerical_layers_executed": 0,
+    "secondary_process_invoked": false,
+    "primary_receipt_exists": false,
+    "secondary_receipt_exists": false,
+    "package_failure_receipt_exists": true,
+    "package_receipt_bound_terminal_exists": true,
+    "numerical_output_exists": false,
+    "corrected_token_conclusion_exists": false,
+    "historical_master_ledger_terminal": 175,
+    "historical_master_ledger_delta": 0,
+    "recorded_oracle_event_delta": 2
+  },
+  "disposition": {
+    "terminal": "ORACLE_EXECUTION_FAILURE",
+    "retry": false,
+    "resume": false,
+    "continuation": false,
+    "retrospective_consumer_receipts_created": false,
+    "retrospective_numerical_event_created": false,
+    "retrospective_accounting_changed": false,
+    "superseded_as_future_execution_authority": true
+  },
+  "prohibited_misclassifications": [
+    "ORACLE_DISAGREEMENT",
+    "NUMERICAL_FAILURE",
+    "CHECKPOINT_CORRUPTION",
+    "DECODER_FAILURE",
+    "MODEL_FAILURE"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.evidence-count-correction/1.0.0",
+  "date": "2026-09-20",
+  "kind": "append-only correction; the corrected record is sha-bound by the attempt-2 declaration v3 and the corrected-oracle binding v1 and is NOT modified",
+  "corrects": {
+    "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
+    "sha256": "7af5cd9da4d8625c8a890d4a67ad913d5166f0218c41ca80f06b34f4d2ac2c34",
+    "field": "n1_decoder_differential.result",
+    "published_text": "117,806 values per seed",
+    "correct_text": "107,502 values per seed"
+  },
+  "derivation": "sum of the per-case value count n over the 33 cases of each per-seed evidence file (3 geometries per format: 1x2v, 3x4v, 4x8v block widths, 11 formats, 46 blocks per format; 1 + 32 + 9 x 256 values per block across the formats)",
+  "evidence_recount": {
+    "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1.json": {
+      "cases": 33,
+      "values": 107502,
+      "exact_f32": 107502,
+      "verdict": "PASS",
+      "sha256": "750e292b642b863c267a1b2e1313954e7fb9dd18656031215266db6d1ac1a2b0"
+    },
+    "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1-seed7.json": {
+      "cases": 33,
+      "values": 107502,
+      "exact_f32": 107502,
+      "verdict": "PASS",
+      "sha256": "ea6a17469f5feded68df29c7839b79ad90132f54c92caa2511aad0ee6531c2ba"
+    },
+    "docs/architecture/reviews/evidence/f017-native-decoder-differential-corrected-oracle-v1-m1ultra.json": {
+      "cases": 33,
+      "values": 107502,
+      "exact_f32": 107502,
+      "verdict": "PASS",
+      "sha256": "750e292b642b863c267a1b2e1313954e7fb9dd18656031215266db6d1ac1a2b0"
+    }
+  },
+  "source_of_error": "the 117,806 figure was transcribed into the reconciliation record from a scratch tally, not from the evidence files; nothing else in the record (0 ULP, negative control flagged, per-format verdicts) depends on it",
+  "flagged_by": "independent gpt-6-astra read-only review (42-corp), finding P2-HARNESS-03; private branch review/glm52-weekend-astra-42corp-20260920",
+  "effect_on_bound_history": "none: the reconciliation record, declaration v3, corrected-oracle binding v1, the four opus ratification-cycle request packets that quote the sentence, and the consumed attempt-2 authorization are unchanged; readers of any of them should apply this correction"
+}

@@ -1,0 +1,21 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-support-ledger/7.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-support-ledger-v6.json",
+  "review_stage": "NUMERICAL_ARBITER_CYCLE_01_REPAIR_COMPLETE",
+  "repairs": {
+    "ARB-NUM-CI-001": {
+      "disposition": "CLAIM_CONCEDED",
+      "result": "C-CI-001_PROPOSED_UNTIL_R17"
+    },
+    "ARB-NUM-RECEIPT-001": {
+      "disposition": "REPAIR_IMPLEMENTED",
+      "implementation_head": "050e986b70e0b5253acfba68863b5c1dcabc5d24",
+      "full_native_run": 32976273072,
+      "required_native_skips": 0,
+      "result": "PASS"
+    }
+  },
+  "unresolved_material_findings": 0,
+  "result": "PASS"
+}

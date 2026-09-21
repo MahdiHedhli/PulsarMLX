@@ -1,0 +1,31 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-comparison-read-grant-review-request",
+  "schema_version":"1.0.0",
+  "cycle":3,
+  "reviewer_model_required":"claude-fable-5",
+  "reviewer_role":"INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"c7e3193d05dfe81576d2a07a633b77ed7aa52d9c",
+  "committed_pushed_bytes_only":true,
+  "reviewed_artifact_hashes":{
+    "grant":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json","sha256":"340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f"},
+    "stage_mapping":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-canonical-stage-mapping-v1.json","sha256":"9f8bb8b0b65188fd2377521c79655c82842063f870a30aeeaea97e0483cd74c5"},
+    "consumer":{"path":"crates/f017-native/src/bin/d35_grader.rs","sha256":"de2e39c899f5e847222b20d1771d192bae6ea512afb1353ad8d69547610ac580"},
+    "builder":{"path":"scripts/research/build_f017_native_d35_comparison_grant_v1.py","sha256":"181ce05086bd074b9f0960d0683d0729bccd2739cb4f1bc1f57a599b430c9a3b"},
+    "validator":{"path":"scripts/research/validate_f017_native_d35_comparison_grant_v1.py","sha256":"c3b34ccb6195a944ea7c6b726f44be71b2b00542a24322f4915542a531fab304"},
+    "mutation_tests":{"path":"scripts/research/tests/test_f017_native_d35_comparison_grant_v1.py","sha256":"6f7f9d11eabe8fb416e1962fc803ed8f79d04939ecfe989ee1500c1ee0361b0b"},
+    "d0":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json","sha256":"cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+    "cycle_02_response":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-02-exact-claude-response-v1.md","sha256":"30456801c1dfb13256e259a635493e9e29265b3bc91a727aafbe0839e89195e3"}
+  },
+  "required_attacks":[
+    "rerun cycle-2 metric-vocabulary attack and all prior required findings",
+    "verify exact 34-row D0 class/oracle/metric census and eight-expert OCB geometry",
+    "mutate read counts, expected registry SHAs, ranking, dtype, serialization, output root, and source authorities",
+    "verify signed-zero exactness on tier-B and OCB rows",
+    "verify no post-hoc tolerance, observed-error cap, checkpoint fallback, capture rerun, retry, or ledger advance",
+    "verify reproducible release executable and exact 89 same-descriptor receipts"
+  ],
+  "execution_prohibitions_during_review":{"comparison_payload_reads":0,"d3_5_numerical_execution":0,"original_checkpoint_reads":0,"real_p1_executions":0,"live_p1_authorizations":0},
+  "acceptance_rule":"ACCEPT_ONLY_WITH_ZERO_BLOCKING_AND_ZERO_NON_BLOCKING_REQUIRED",
+  "requested_verdicts":["ACCEPT","REJECT"]
+}

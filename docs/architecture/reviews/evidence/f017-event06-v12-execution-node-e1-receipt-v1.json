@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-node-receipt/1.0.0",
+  "node_id": "E1_SOURCE_AUTHORITY_CI_MANIFEST_RECONCILIATION",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "head": "eb85661ea3f1579f7566a9c23e469c7785557bd2",
+  "tree": "938ca67a872591852b60c14de75fb1c0a47a6ee6",
+  "remote_parity": "PASS",
+  "worktree_clean": true,
+  "manifest_bindings": 43,
+  "manifest_binding_failures": 0,
+  "full_native_run": 33124907328,
+  "full_native_result": "PASS",
+  "final_evidence_only_run": 33128506289,
+  "final_evidence_only_result": "PASS",
+  "final_evidence_only_native_jobs": 0,
+  "result": "PASS"
+}

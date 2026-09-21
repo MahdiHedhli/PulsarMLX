@@ -1,0 +1,5 @@
+# F017 lifecycle V6 semantic design — Gemini cycle 02
+
+Use `gemini-3.1-pro-high` at high effort. Review exact committed bytes at `409fc731cb14a411173560eaafa2d190f2a8db6d` in the detached read-only worktree `/tmp/f017-lifecycle-v6-design-c2`. Repository evidence outranks this request. Do not modify files, open checkpoint shard files, mint Event-04 authority, create Event-04 state, execute a real oracle, or execute P1 attempt 2.
+
+Reconstruct Opus cycle-01 B1/N1/N2 and independently verify their repairs: same-transition artifacts bind only earlier durable sibling SHAs in declared order; the combined artifact reference graph is acyclic; complete model bytes are independently projected; registry and matrix schema IDs are exact; tombstones are byte-anchored; and the stale measurement entry is removed. Attack the model, registry, matrix, outcomes, accounting, paths, serialization, schemas, numerical-v3 bindings, lifecycle implementation, synthetic qualification path, and no-access rehearsal. Return exactly `ACCEPT` or `REJECT` and identify any material disagreement.

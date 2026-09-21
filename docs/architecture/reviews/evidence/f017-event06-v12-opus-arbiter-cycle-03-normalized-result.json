@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-opus-arbiter-result/3.0.0",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "role": "ARBITER",
+  "reviewed_head": "3ca32357c1097673529bcd6dc6e6f4a6883aaf4c",
+  "reviewed_tree": "5612201d612d55bb6a1a9ff1bb974703f1827d4d",
+  "claim_verdicts": [
+    {"claim_id": "E-PROMPT-001", "verdict": "ACCEPT", "evidence": "The exact prompt snapshot, authority index, parent relation, duplicate guard, and distinct readiness-phase prompt disposition are internally consistent.", "invalidation_disposition": "Invalidated by prompt-control history rewrite, snapshot or external byte divergence, or a paired response predating the run."},
+    {"claim_id": "E-REF-001", "verdict": "ACCEPT", "evidence": "No runtime drift exists from the measured or starting heads and the terminal manifest chain is transitively complete through v6.", "invalidation_disposition": "Invalidated by runtime drift, manifest binding mismatch, or measurement divergence."},
+    {"claim_id": "E-CALLPATH-001", "verdict": "REJECT", "evidence": "The closed 28-key V12 identity candidate cannot satisfy V11 generation, numerical SHA, shard, catalog, event ID, type, scope, producer-signature, numerical-leg, or live-install requirements.", "invalidation_disposition": "Requires a separately authorized and measured V12-to-V11 numerical execution-authority bridge repair."},
+    {"claim_id": "E-SAFETY-001", "verdict": "ACCEPT", "evidence": "Fresh IDs occur only in the prompt snapshot; no Event 06 package or authority directory exists; E2 is terminal and E3 through E8 are blocked with a zero side-effect census.", "invalidation_disposition": "Accepted by causal absence and invalidated by any durable post-E2 side effect."},
+    {"claim_id": "E-CI-001", "verdict": "ACCEPT", "evidence": "All five committed EVIDENCE_ONLY records have exact head and tree bindings, PASS evidence integrity, and zero native jobs.", "invalidation_disposition": "Invalidated by divergence of an authoritative GitHub run bound in committed evidence."}
+  ],
+  "closed_findings": ["O-E06-C02-001", "O-E06-C02-002", "O-E06-C01-003"],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": [
+    {"finding_id": "O-E06-C03-001", "required_repair": "Bank the cycle-03 arbiter closeout artifacts, exact-head CI record, successor ledgers and graph, and a successor terminal manifest."}
+  ],
+  "defense_in_depth_findings": [
+    {"finding_id": "O-E06-C02-003", "disposition": "Future bridge-repair readiness must require end-to-end numerical call-path instantiability."},
+    {"finding_id": "O-E06-C03-002", "disposition": "Future bridge repair should add a cross-generation interface-compatibility predicate."}
+  ],
+  "unresolved_claims": [],
+  "global_execution_evidence_verdict": "REJECT",
+  "terminal_no_go_evidence_verdict": "ACCEPT_TERMINAL_PRE_MINT_NO_GO_EVIDENCE_AS_TRUTHFUL_AND_COMPLETE",
+  "smallest_rejected_claim": "E-CALLPATH-001",
+  "exact_next_safe_action": "OPEN_A_SEPARATELY_AUTHORIZED_V12_TO_V11_NUMERICAL_EXECUTION_AUTHORITY_BRIDGE_REPAIR_PHASE",
+  "ready_for_event_06_execution": false,
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "result": "CYCLE_02_FINDINGS_CLOSED_E11_CYCLE_03_CLOSEOUT_ACCEPTED"
+}

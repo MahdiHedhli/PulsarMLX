@@ -9,10 +9,23 @@
 
 pub mod cpu_dot;
 pub mod cpu_dot_tables;
+mod extra_ref;
 pub mod iq;
 mod q8_0_ref;
+mod q6_k_ref;
+mod iq_ref;
 
-pub use q8_0_ref::{decode_q8_0_row, matvec_q8_0, Q8_0Error};
+pub use extra_ref::{
+    decode_iq2_s_matrix, decode_iq4_xs_matrix, decode_q2_k_matrix, decode_q3_k_matrix,
+    ExtraQuantError,
+};
+
+pub use iq_ref::{
+    decode_iq2_xxs_matrix, decode_iq3_xxs_matrix, IQXXSError, IQ2_XXS_BLOCK_BYTES,
+    IQ3_XXS_BLOCK_BYTES, IQ_XXS_VALUES_PER_BLOCK,
+};
+pub use q6_k_ref::{decode_q6_k_matrix, Q6KError, Q6_K_BLOCK_BYTES};
+pub use q8_0_ref::{decode_q8_0_matrix, decode_q8_0_row, matvec_q8_0, Q8_0Error};
 
 pub const QK8_0: usize = 32;
 pub const QK_K: usize = 256;

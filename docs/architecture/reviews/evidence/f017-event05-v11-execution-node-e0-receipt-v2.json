@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-node-receipt/2.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "node_id": "E0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-v11-execution-node-e0-receipt-v1.json",
+  "input_head": "660bdc9fd5d1a2ace57a49492077d590e3b7b39d",
+  "input_tree": "a0beb722bd81f6489b22ba2b34baa0dd4264b5a1",
+  "output_head": "402023cfabe31cc6ed0e1bcc6dddc5a02f45d695",
+  "output_tree": "a03155cf200aa3dfda2a29abaaf4f414602c3cc4",
+  "input_authorities": {
+    "readiness_declaration": {"path":"docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json","sha256":"e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6"},
+    "authority_manifest": {"path":"docs/architecture/reviews/evidence/f017-event05-result-envelope-authority-manifest-v3.json","sha256":"a473903d2b24b57ecc69197712c71ef7946f3c9a01e8054e24d1d42413319d0a"},
+    "implementation_measurement": {"path":"docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v3.json","sha256":"a480f43888414fc866c34653511b8dc53a0a35cb04602711e78fbd6027b0b1af"},
+    "scientific_access": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v11-v3.json","sha256":"f38b04af187bda429467253d4de9ada8d32cbe0bd27293d1104f85238feeb6fa"}
+  },
+  "failure_evidence": {"path":"docs/architecture/reviews/evidence/f017-event05-v11-pre-mint-authority-failure-v1.json","sha256":"0c9e1c402304c497dbbb8947619ca03cd7336b5d5320429160932942edc2e802"},
+  "commands_executed": ["git authority and ownership reconciliation", "exact manifest and measurement binding checks", "final CI reconciliation", "readiness-to-authorizer field census"],
+  "tests_executed": {"authority_manifest_bindings":27,"measurement_paths":31,"required_readiness_fields":3,"missing_readiness_fields":3},
+  "result_counts": {"supported_claims":2,"rejected_claims":1,"created_approval":0,"created_candidate":0,"created_authorization":0,"created_package_state":0},
+  "checkpoint_access_census": {"new_original_checkpoint_shard_opens":0,"new_original_checkpoint_identity_hash_reads":0,"new_original_checkpoint_payload_reads":0},
+  "next_eligible_edges": ["FINAL_NO_GO_CLOSEOUT"],
+  "result": "TERMINAL_FAILURE"
+}

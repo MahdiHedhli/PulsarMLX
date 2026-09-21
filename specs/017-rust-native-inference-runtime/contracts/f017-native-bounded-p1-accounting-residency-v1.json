@@ -1,0 +1,96 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-accounting-residency",
+  "schema_version": "1.0.0",
+  "status": "FROZEN_BEFORE_REAL_CHECKPOINT_INTEGRATION",
+  "historical_master": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "schema": "pulsarmlx.f017.real-payload-access-ledger",
+    "schema_version": "2.0.0",
+    "semantic_role": "AUTHORITATIVE_HISTORICAL_MASTER_REAL_PAYLOAD_LEDGER",
+    "terminal_count": 175,
+    "unit": "BOUNDED_EXPLICIT_TENSOR_PAYLOAD_READ"
+  },
+  "access_layers": {
+    "authority_access": "EXACT_SIX_SHARD_CHECKPOINT_MANIFEST_AND_ROOT_IDENTITY",
+    "logical_tensor_use": "FULL_BOUND_MODEL_TENSOR_CENSUS_USED_TO_COMPUTE_ONE_P1",
+    "file_access": "SIX_READ_ONLY_REGULAR_SHARD_FILES_OPENED_AND_MAPPED_BY_OWNED_EXECUTOR",
+    "residency_page_activity": "OBSERVATIONAL_VM_AND_TASK_TELEMETRY_NOT_AN_AUTHORITY_LEDGER",
+    "historical_real_payload_ledger": "CLOSED_EXPLICIT_PAYLOAD_EXTRACTION_LINEAGE_NOT_PAGE_FAULT_OR_MMAP_COUNTER"
+  },
+  "native_event_model": {
+    "event_class": "NATIVE_P1_EXECUTION_EVENT",
+    "native_event_ledger": "APPEND_ONLY_SEPARATE_EVENT_CENSUS",
+    "native_event_delta_on_durable_start": 1,
+    "historical_master_before": 175,
+    "historical_master_after": 175,
+    "historical_master_delta": 0,
+    "historical_delta_reason": "NO_NEW_EXPLICIT_TENSOR_PAYLOAD_AUTHORITY_IS_EXTRACTED; THE EXECUTOR USES A PREAUTHORIZED IMMUTABLE CHECKPOINT AS A DISTINCT NATIVE_EXECUTION_EVENT",
+    "does_not_mean_no_checkpoint_access": true,
+    "does_not_create_competing_master": true,
+    "result_receipt_terminal_and_native_event_banked_atomically": true,
+    "historical_master_update_same_commit_if_future_receipt_advances_it": true,
+    "counts_derived_from_receipts_not_hand_entered": true
+  },
+  "checkpoint_access_contract": {
+    "real_p1_requires_future_human_authorization": true,
+    "checkpoint_manifest_required": true,
+    "shard_count": 6,
+    "expected_file_opens": 6,
+    "mapping_mode": "READ_ONLY_PRIVATE_OR_LIBRARY_EQUIVALENT_NO_WRITEBACK",
+    "symlinks": "PROHIBITED",
+    "alternate_root": "PROHIBITED",
+    "fallback": "PROHIBITED",
+    "per_shard_identity_rehash_before_attempt_start": true,
+    "logical_tensor_census_receipted": true,
+    "page_faults_as_historical_payload_units": false
+  },
+  "residency_model": {
+    "mmap_expected": true,
+    "shards_may_remain_mapped_for_attempt_lifetime_only": true,
+    "pre_and_post_vm_statistics": true,
+    "task_resident_peak": true,
+    "major_and_minor_faults_if_os_exposes_them": "OBSERVATIONAL_ONLY",
+    "page_cache_behavior": "OS_MANAGED_NOT_DETERMINISTIC_AUTHORITY",
+    "memory_pressure": "FAIL_CLOSED_BEFORE_START_OR_TERMINAL_FAILURE_AFTER_OWNED_START_NO_RETRY",
+    "physical_residency_may_CHANGE_DURING_EXECUTION": true,
+    "physical_residency_is_not_logical_tensor_consumption": true
+  },
+  "memory_admission": {
+    "minimum_free_bytes": 17179869184,
+    "source": "mach_vm_statistics64",
+    "maximum_sample_age_seconds": 5,
+    "role": "PRE_EXECUTION_SAFETY_MARGIN_NOT_PROOF_MODEL_FITS_IN_RAM",
+    "caller_supplied_value_authoritative": false
+  },
+  "rn1_attempt_lifecycle": {
+    "sequence": ["PREFLIGHT","EXCLUSIVE_OWNED_CLAIM","DURABLE_ATTEMPT_START","PRE_SNAPSHOT","BOUNDED_EXECUTION","POST_SNAPSHOT","RECEIPT","TERMINALIZE","MANDATORY_STOP"],
+    "claim_before_execution_authority": true,
+    "durably_records_owner_pid_and_attempt_identity": true,
+    "exception_may_terminalize_only_attempt_started_and_owned_by_this_process": true,
+    "shared_terminal_state_is_not_ownership_authority": true,
+    "terminal_consumed_counts_derived_from_receipts": true,
+    "terminal_receipt_count_cross_check": true,
+    "terminal_json_sole_accounting_authority": false,
+    "mismatch": "FAIL_CLOSED_NO_RETRY"
+  },
+  "future_banking": {
+    "native_event_receipt_required": true,
+    "shard_open_and_map_census_required": true,
+    "logical_tensor_use_census_required": true,
+    "residency_telemetry_required_but_non_authoritative": true,
+    "terminal_must_bind_receipt_sha256": true,
+    "immutable_prior_state": true
+  },
+  "d3_5_separation": {
+    "retained_qualification_event_class": "NATIVE_RETAINED_REPRESENTATIVE_QUALIFICATION_EVENT",
+    "original_checkpoint_reads": 0,
+    "original_checkpoint_shard_opens": 0,
+    "historical_master_delta": 0,
+    "requires_consumer_scoped_grant": true,
+    "per_read_size_sha_and_receipt_required": true
+  },
+  "phase_accounting": {"historical_master_before":175,"historical_master_after":175,"checkpoint_reads":0,"shard_opens":0,"real_m1_ultra_p1_executions":0,"live_p1_authorizations":0}
+}

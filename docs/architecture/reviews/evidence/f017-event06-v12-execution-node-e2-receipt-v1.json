@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-node-receipt/1.0.0",
+  "node_id": "E2_PRE_MINT_OWNER_MEMORY_NO_ACCESS_AND_CALL_PATH_PROOF",
+  "owner_conflict": false,
+  "call_path_result": "FAIL",
+  "failure_artifact": "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v1.json",
+  "failure_classification": "END_TO_END_EXECUTION_CALL_PATH_NOT_INSTANTIABLE",
+  "memory_observation": "NOT_RUN_AFTER_EARLY_LOAD_BEARING_CALL_PATH_FAILURE",
+  "checkpoint_metadata_observation": "NOT_RUN_AFTER_EARLY_LOAD_BEARING_CALL_PATH_FAILURE",
+  "operator_approval_banked": false,
+  "candidate_constructed": false,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "result": "TERMINAL_FAILURE"
+}

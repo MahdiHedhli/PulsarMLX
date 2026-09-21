@@ -1,0 +1,140 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-01-offline-independent-review-result",
+  "schema_version": "1.0.0",
+  "reviewer": {
+    "model": "claude-opus-5",
+    "canonical_model": "claude-opus-5",
+    "provider": "firstParty",
+    "effort": "high",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "invocation": "claude -p --model claude-opus-5 --effort high --output-format json --no-session-persistence --permission-mode dontAsk --disallowedTools Edit Write NotebookEdit",
+    "fresh_session": true,
+    "session_id": "99c06333-55cb-4a9a-a2ef-99110b2cdb7c",
+    "duration_ms": 870611,
+    "turns": 93
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "c749f2a85c7aefe2d1f8a73567c6dcb05d68eefb",
+  "reviewed_implementation_head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+  "detached_clean_worktree": true,
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-opus-review-request-v1.md",
+    "sha256": "a04d886bbe0a5b899c1be035aea22920e53859435ae460bf7fd41cd1e7f23f26"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-opus-exact-response-v1.md",
+    "sha256": "d9dfa271fdc27667beac299d1603e275020e7c02d84327415d1cc84fba5da518"
+  },
+  "direct_tests_rerun_by_reviewer": 0,
+  "review_method": "BYTE_AND_SOURCE_LEVEL_AUDIT_WITH_INDEPENDENT_SHA256_RECOMPUTATION",
+  "orchestrator_ci_confirmation": {
+    "run_id": 32590049780,
+    "head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+    "conclusion": "success",
+    "reviewer_direct_gh_access": false
+  },
+  "attack_results": {
+    "attempt_1_immutability": "PASS",
+    "facts_inferences_separated": "PASS",
+    "expected_token_disposition": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+    "q6_k_defect": "INDEPENDENTLY_CONFIRMED_BY_SOURCE",
+    "iq3_xxs_defect": "INDEPENDENTLY_CONFIRMED_BY_SOURCE",
+    "exact_causation": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+    "tensor_plan": "PASS_1809_TENSORS_METADATA_ONLY",
+    "quantization": "PASS_11_FORMATS_44_CASES",
+    "expanded_synthetic": "PASS_6_SEEDS_137_METRICS",
+    "forward_failure_evidence": "PASS_WITH_DEFENSE_IN_DEPTH_FINDINGS",
+    "ci_routing": "PASS_BY_SOURCE_AND_BOUND_EVIDENCE",
+    "cross_vendor_disagreement": "NONE",
+    "checkpoint_payload_access": 0,
+    "attempt_2_readiness": "NO"
+  },
+  "findings": [
+    {
+      "id": "OPUS-OFFLINE-DID-001",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": ".github/workflows/macos.yml",
+      "summary": "scripts/ci/tests is not invoked in FULL_NATIVE CI",
+      "disposition": "LOCAL_TESTS_PASSED;ADD_TO_NEXT_WORKFLOW_IMPLEMENTATION_CHANGE_BEFORE_ANY_ATTEMPT_2_READINESS"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-002",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": ".github/workflows/macos.yml",
+      "summary": "Attempt-1 immutable validator is not run in mixed FULL_NATIVE mode",
+      "disposition": "ATTEMPT_1_WAS_REVALIDATED_LOCALLY_AND_IN_EVIDENCE_MODE;RUN_UNCONDITIONALLY_AT_NEXT_WORKFLOW_GENERATION"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-003",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": ".github/workflows/macos.yml",
+      "summary": "Docs-only symlink type-change check can miss diff type T",
+      "disposition": "EVIDENCE_ROOT_IS_EXCLUDED_FROM_DOCS_ONLY_AND_EVIDENCE_VALIDATOR_USES_TREE_MODE;HARDEN_DOCS_JOB_AT_NEXT_WORKFLOW_GENERATION"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-004",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": ".github/workflows/macos.yml",
+      "summary": "New-branch first push fallback classifies only HEAD parent range",
+      "disposition": "AUTHORITATIVE_LONG_LIVED_BRANCH_NOT_AFFECTED;USE_DEFAULT_BRANCH_MERGE_BASE_AT_NEXT_WORKFLOW_GENERATION"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-005",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "scripts/ci/validate_evidence_change.py",
+      "summary": "Sibling-prefixed path/SHA pairs are not generically resolved",
+      "disposition": "LOAD_BEARING_PACKAGE_HASHES_WERE_RECOMPUTED_DIRECTLY;EXPAND_GENERIC_BINDING_RESOLUTION_BEFORE_FUTURE_EXECUTION_AUTHORITY"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-006",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "crates/stream/src/p1_domain.rs",
+      "summary": "Generic SHA readback checks digest length rather than intended serialized bytes",
+      "disposition": "TERMINALIZER_REHASHES_BANKED_ARTIFACTS_AND_DIAGNOSTIC_BANKING_COMPARE_READBACK_BYTES;REQUIRE_EXACT_SERIALIZED_READBACK_IN_NEXT_EXECUTOR_GENERATION"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-007",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "crates/stream/src/p1_domain.rs",
+      "summary": "Four access event kinds have no current producer",
+      "disposition": "NO_FUTURE_ATTEMPT_IS_READY;ADD_PRODUCERS_OR_EXPLICIT_UNOBSERVED_CLASSIFICATION_BEFORE_ANY_ATTEMPT_2_CONTRACT"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-008",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "crates/f017-native/src/bin/bounded_p1.rs",
+      "summary": "Historical contract v2 enables only legacy real execution; v3 remains future-gated",
+      "disposition": "INTENTIONAL_FORWARD_ONLY_BOUNDARY;DELETE_LEGACY_REAL_EXECUTION_ARM_AND_FREEZE_CONTRACT_V3_BEFORE_ANY_ATTEMPT_2"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-009",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-forward-failure-injection-v3.json",
+      "summary": "Physical receipt/terminal write failures are inspection-qualified, not injected",
+      "disposition": "MECHANISM_WAS_INDEPENDENTLY_INSPECTED;ADD_FILESYSTEM_FAULT_INJECTION_BEFORE_ATTEMPT_2_READINESS"
+    },
+    {
+      "id": "OPUS-OFFLINE-DID-010",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-expected-token-provenance-v1.json",
+      "summary": "Q6_K prose understates mixed nibble/high-bit/scale-index corruption",
+      "disposition": "DEFECT_CLASSIFICATION_AND_ORACLE_DISPOSITION_REMAIN_VALID;CLARIFY_IN_APPEND_ONLY_CLOSEOUT_WITHOUT_REWRITING_ACCEPTED_BYTES"
+    }
+  ],
+  "blocking_count": 0,
+  "non_blocking_required_count": 0,
+  "defense_in_depth_count": 10,
+  "expected_token_disposition": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+  "root_cause_classification": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+  "ready_to_prepare_attempt_2_authorization": false,
+  "verdict": "ACCEPT_F017_ATTEMPT_1_OFFLINE_FORENSICS",
+  "safety_state": {
+    "p1_attempt_1_retry": false,
+    "p1_attempt_2_executed": false,
+    "live_p1_attempt_2_authorization_created": false,
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "further_real_inference_executed": false,
+    "historical_master_ledger": 175
+  }
+}

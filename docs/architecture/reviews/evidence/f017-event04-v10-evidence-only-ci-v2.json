@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event04-evidence-only-ci/10.0.0",
+  "covered_head": "f659a31d6820bbd646395f475fd3b83564042031",
+  "run_id": 32918434857,
+  "workflow": "macOS baseline",
+  "event": "push",
+  "status": "completed",
+  "conclusion": "success",
+  "mode": "EVIDENCE_ONLY",
+  "jobs": [
+    {"job_id":98026927925,"name":"Classify committed change","conclusion":"success"},
+    {"job_id":98026958329,"name":"Evidence integrity","conclusion":"success"},
+    {"job_id":98026959415,"name":"Documentation integrity","conclusion":"skipped"},
+    {"job_id":98026959458,"name":"Apple Silicon workspace baseline","conclusion":"skipped"},
+    {"job_id":98026959584,"name":"Closed F017 branch guard","conclusion":"skipped"},
+    {"job_id":98026959713,"name":"Apple MLX small-fixture validation","conclusion":"skipped"},
+    {"job_id":98026984419,"name":"CI aggregate status","conclusion":"success"}
+  ],
+  "native_jobs_launched": 0,
+  "evidence_validation": "PASS",
+  "result": "PASS",
+  "scope_rule": "THIS_ARTIFACT_BANKS_THE_RUN_FOR_COVERED_HEAD; IT_DOES_NOT_CLAIM_TO_COVER_ITS_OWN_SUCCESSOR_COMMIT"
+}

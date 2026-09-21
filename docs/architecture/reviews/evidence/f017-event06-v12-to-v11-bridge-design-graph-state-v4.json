@@ -1,0 +1,16 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-bridge-design-graph-state/1.3.0",
+  "supersedes":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-graph-state-v3.json",
+  "active_generation":"NONE","event06_executed":false,"live_event06_authority_created":false,"original_checkpoint_access":0,
+  "nodes":[
+    {"node":"D0_STARTING_AUTHORITY_AND_FAILURE_REPRODUCTION","status":"PASS"},
+    {"node":"D1_BRIDGE_CONTRACT_AND_DATA_MODEL","status":"PASS"},
+    {"node":"D2_PRODUCER_CONSUMER_LIFECYCLE_CAPABILITY_PLAN","status":"PASS"},
+    {"node":"D3_GEMINI_DESIGN_CHALLENGE","status":"PASS"},
+    {"node":"D5_OPUS_DESIGN_ARBITER_CYCLE_01","status":"REPAIR_REQUIRED"},
+    {"node":"D4_SUPPORT_AND_DESIGN_REPAIR_CYCLE_02","status":"PASS"},
+    {"node":"D5_OPUS_DESIGN_ARBITER_CYCLE_02","status":"PENDING"},
+    {"node":"D6_IMPLEMENTATION","status":"BLOCKED"}
+  ],
+  "running_nodes":0,"result":"DESIGN_REARBITRATION_REQUIRED"
+}

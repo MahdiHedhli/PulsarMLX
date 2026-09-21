@@ -1,0 +1,31 @@
+{
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-authority-manifest-v1.json"
+  ],
+  "checkpoint_access_census": {"identity_hash_reads": 0, "mmaps": 0, "payload_reads": 0, "shard_opens": 0, "tensor_reads": 0},
+  "claims_closed": ["C-REF-001", "C-REF-002", "C-REF-003"],
+  "claims_introduced": ["C-REF-001", "C-REF-002", "C-REF-003"],
+  "claims_invalidated": [],
+  "commands_executed": ["git fetch --all --prune", "git worktree list --porcelain", "git status --porcelain=v2", "git merge-base --is-ancestor", "git rev-list --count", "process and lock census", "terminal evidence SHA and finding reconstruction"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "closeout_sha256": "1895c47e1728d861d7f0c44800456c955a66ade533e158a3c979c00833d899af",
+    "implementation_head": "5869bb436acc7fca4c1a4c1e2d5a774eb8d91f45",
+    "implementation_tree": "66d40a03e8f134034896e3f339b2e345e6dd7987",
+    "terminal_opus_request_sha256": "ae35720169e80bce7dfd32887f1c99e2f0866864c97e0033c13b5acd40644b0f",
+    "terminal_opus_response_sha256": "e9252a4ef7eb3663a68134474a78b410795bd67f325a9f907fa32329510b46c7"
+  },
+  "input_head": "90338840c94118651a85c695af22de780437663b",
+  "next_eligible_edges": ["R1"],
+  "node_id": "R0",
+  "output_head": "90338840c94118651a85c695af22de780437663b",
+  "result": "PASS",
+  "result_counts": {"authoritative_worktrees": 1, "closeout_commits_after_observed_remote": 21, "compatible_active_loops": 0, "divergent_remote_commits": 0, "terminal_findings": 2},
+  "tests_executed": ["observed remote is ancestor of closeout", "local/remote byte parity", "clean worktree", "closeout object and tree availability"]
+}

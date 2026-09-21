@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-graph-state/1.0.0",
+  "terminal_target": "PASS_PENDING_IMPLEMENTATION_GRAPH",
+  "nodes": [
+    {"id": "S0_PROMPT_PARENT_POLICY_SOURCE_AND_CONCURRENCY_GUARDS", "status": "PASS"},
+    {"id": "S1_SEQUENCE12_TERMINAL_REPRODUCTION", "status": "PASS"},
+    {"id": "S2_LIQUID_CAUSAL_SUCCESSOR_DERIVATION", "status": "PASS"},
+    {"id": "S3_CONSTRUCTIBILITY_WITNESS_AND_FALSIFICATION", "status": "PASS"},
+    {"id": "S4_DUAL_REVIEWED_PREOBSERVATION_FREEZE", "status": "RUNNING"},
+    {"id": "S5_FINAL_DESIGN_EVIDENCE_PUBLICATION", "status": "PENDING"}
+  ],
+  "running_nodes": 1,
+  "repair_loops_consumed": 0,
+  "authority_posture": "LIQUID",
+  "event06_execution": false,
+  "checkpoint_access": 0
+}

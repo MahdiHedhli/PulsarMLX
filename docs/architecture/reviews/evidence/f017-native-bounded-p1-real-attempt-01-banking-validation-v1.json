@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-real-execution-banking-validation",
+  "schema_version": "1.0.0",
+  "result": "PASS_WITH_EXECUTION_FAILURE_NONCONFORMITIES_PRESERVED",
+  "validated_authority_head": "fdb186d4df1c0ce6b3953eb97d1437a55ffd4c60",
+  "artifacts": [
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-human-approval-v1.json","sha256":"3788fe3060f5d78002adc7f22f94e98c9163a09be1e71648bcade3bde65b3ec7","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-live-authorization-v1.json","sha256":"c1a81febcec0171a0aba63da44f645d630b7daca1b4031d52a4b3cecea6a42b7","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-owned-claim-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-durable-start-v1.json","sha256":"35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-terminal-v1.json","sha256":"de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-preauthorization-memory-v1.txt","sha256":"8bebdaef9e08ca12cdd4ecba3273cc964593974455cb2d1622ed7ec6d2d827f2","machine_local_byte_match":true},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json","sha256":"c3dcc92cec8fde419bfdb437e0191a768fce8f48fc78b2e4b78171164caafb7b","machine_local_byte_match":null},
+    {"path":"docs/architecture/reviews/evidence/f017-native-bounded-p1-native-event-ledger-v1.json","sha256":"24d8bd899cf6809387c40d6bd37d5b8f30a2056fa23a19e84bd4f2758305b5dd","machine_local_byte_match":null}
+  ],
+  "checks": {
+    "all_json_parses": true,
+    "approval_exact_readback": true,
+    "authorization_exact_readback": true,
+    "claim_exact_readback": true,
+    "durable_start_exact_readback": true,
+    "terminal_exact_readback": true,
+    "terminal_state_exact": "TERMINAL_FAILURE_NO_RETRY",
+    "receipt_absent": true,
+    "receipt_count": 0,
+    "produced_token": 17351,
+    "expected_token": 21615,
+    "historical_master_sha_resolved_from_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "historical_master_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_terminal_value": 175,
+    "retry_permitted": false
+  },
+  "nonconformities_accepted_as_facts_not_repaired": [
+    "NO_FAILURE_RECEIPT",
+    "NO_DURABLE_PRE_POST_COUNTER_SNAPSHOTS",
+    "NO_DURABLE_SHARD_OPEN_MAP_CENSUS"
+  ],
+  "numerical_rerun_performed_during_banking": false
+}

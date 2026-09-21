@@ -1,0 +1,52 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-evidence-only-ci-history/1.0.0",
+  "runs": [
+    {
+      "run_id": 33142149732,
+      "head": "8f943e67ffccd8b59c85f4bb05e00ed0fc18e943",
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "evidence_integrity": "PASS",
+      "native_jobs_launched": 0
+    },
+    {
+      "run_id": 33142237334,
+      "head": "7aca5e2bc3f90b586fc701a5abe916fd3638daa3",
+      "mode": "EVIDENCE_ONLY",
+      "result": "FAIL",
+      "failure": "APPEND_ONLY_EVIDENCE_DELETION_DETECTED",
+      "native_jobs_launched": 0,
+      "authority": false
+    },
+    {
+      "run_id": 33142278211,
+      "head": "02ed1c536e632cf07d624db47f871788eb5c31c6",
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "evidence_integrity": "PASS",
+      "native_jobs_launched": 0,
+      "restoration_verified": true
+    },
+    {
+      "run_id": 33143982465,
+      "head": "83a463fd5bd526ad38f9731dea4c62be4864fb75",
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "evidence_integrity": "PASS",
+      "native_jobs_launched": 0
+    },
+    {
+      "run_id": 33144107149,
+      "head": "02b8668c7be99a78b3dc3ee151f15b230437e0e5",
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "evidence_integrity": "PASS",
+      "native_jobs_launched": 0
+    }
+  ],
+  "latest_authoritative_run": 33144107149,
+  "latest_authoritative_head": "02b8668c7be99a78b3dc3ee151f15b230437e0e5",
+  "native_jobs_launched": 0,
+  "failed_incident_run_preserved": true,
+  "result": "PASS"
+}

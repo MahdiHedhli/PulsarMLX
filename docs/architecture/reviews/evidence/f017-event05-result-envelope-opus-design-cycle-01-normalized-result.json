@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event05-result-envelope-opus-design-arbiter/1.0.0",
+  "reviewed_head": "ad314922baeafb3464b33725264b9d9dcea89bf4",
+  "reviewer": "claude-opus-5",
+  "effort": "high",
+  "cycle": 1,
+  "verdict": "REJECT",
+  "claim_verdicts": {"C-E4-001":"ACCEPT","C-E4-002":"ACCEPT","C-E4-003":"REJECT","C-REF-001":"REJECT","C-GEOM-001":"ACCEPT","C-BIN-001":"ACCEPT","C-BIN-002":"ACCEPT","C-CTRL-001":"ACCEPT","C-FLOAT-001":"ACCEPT","C-DAG-001":"ACCEPT","C-DAG-002":"ACCEPT","C-PRIMARY-GATE-001":"ACCEPT","C-CLOSURE-001":"REJECT","C-E4-IMM-001":"ACCEPT"},
+  "findings": [
+    {"id":"F-01","severity":"BLOCKING","summary":"Comparator classification contradicted frozen numerical contract V3."},
+    {"id":"F-02","severity":"BLOCKING","summary":"Event 04 diagnostic record was indistinguishable from authoritative primary payload."},
+    {"id":"F-03","severity":"NON_BLOCKING_REQUIRED","summary":"Release closure vocabulary was not fully ordered or mechanically derived."},
+    {"id":"F-04","severity":"NON_BLOCKING_REQUIRED","summary":"Bounded validation and payload derivation were incomplete for top32 and other control artifacts."},
+    {"id":"F-05","severity":"NON_BLOCKING_REQUIRED","summary":"Comparison summary did not bind compared payload SHAs."},
+    {"id":"F-06","severity":"NON_BLOCKING_REQUIRED","summary":"Historical observation literals appeared in new implementation."},
+    {"id":"F-07","severity":"DEFENSE_IN_DEPTH","summary":"Stream validation retained a same-fd mutation window and redundant reads."},
+    {"id":"F-08","severity":"DEFENSE_IN_DEPTH","summary":"Acyclicity counters were asserted rather than derived."},
+    {"id":"F-09","severity":"DEFENSE_IN_DEPTH","summary":"Primary terminal manifest binding was optional."},
+    {"id":"F-10","severity":"DEFENSE_IN_DEPTH","summary":"Diagnostic output root was unconstrained."},
+    {"id":"F-11","severity":"DEFENSE_IN_DEPTH","summary":"Producer identity was census-only and parent no-follow was absent."},
+    {"id":"F-12","severity":"NON_BLOCKING_REQUIRED","summary":"Comparator branch and diagnostic converter test coverage was incomplete."}
+  ],
+  "counters": {"blocking":2,"non_blocking_required":5,"defense_in_depth":5,"accepted_claims":11,"rejected_claims":3,"unresolved_claims":0},
+  "original_checkpoint_access": 0
+}

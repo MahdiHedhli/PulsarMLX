@@ -1,0 +1,87 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-authority-design/12.1.0",
+  "status": "DESIGN_REPAIRED_NOT_LIVE",
+  "supersedes": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-authority-design-v12.json",
+  "canonical_authority": {
+    "candidate_schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-candidate-authority/12.1.0",
+    "installed_schema": "pulsarmlx.f017.corrected-oracle-checkpoint-identity-installed-authority/12.1.0",
+    "authority_scopes": ["SYNTHETIC", "PRODUCTION"],
+    "operation_class_by_scope": {
+      "SYNTHETIC": ["CHECKPOINT_IDENTITY_QUALIFICATION"],
+      "PRODUCTION": ["CORRECTED_FULL_CHECKPOINT_ORACLE"]
+    },
+    "generations": ["V12"],
+    "event_number_capability_branches": [],
+    "unknown_fields": "REJECT",
+    "aliases": "REJECT",
+    "coercions": "REJECT"
+  },
+  "candidate_field_types": {
+    "schema": "EXACT_ENUM_STRING",
+    "authority_scope": "EXACT_ENUM_STRING",
+    "operation_class": "EXACT_ENUM_STRING_BY_SCOPE",
+    "generation": "EXACT_ENUM_STRING",
+    "authorization_id": "NONEMPTY_TYPED_ID_STRING",
+    "package_attempt_id": "NONEMPTY_TYPED_ID_STRING",
+    "checkpoint_set_sha256": "LOWERCASE_HEX_64",
+    "checkpoint_root": "CANONICAL_ABSOLUTE_NONSYMLINK_PATH_STRING",
+    "checkpoint_identity_contract_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "checkpoint_identity_contract_sha256": "LOWERCASE_HEX_64",
+    "producer_capability_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "producer_capability_sha256": "LOWERCASE_HEX_64",
+    "measured_producer_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "measured_producer_sha256": "LOWERCASE_HEX_64",
+    "primary_candidate_validator_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "primary_candidate_validator_sha256": "LOWERCASE_HEX_64",
+    "secondary_candidate_validator_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "secondary_candidate_validator_sha256": "LOWERCASE_HEX_64",
+    "identity_candidate_validator_path": "CANONICAL_REPOSITORY_RELATIVE_PATH_STRING",
+    "identity_candidate_validator_sha256": "LOWERCASE_HEX_64",
+    "expected_shard_count": "NONBOOLEAN_NONNEGATIVE_INTEGER",
+    "expected_identity_only_shard_count": "NONBOOLEAN_NONNEGATIVE_INTEGER",
+    "expected_graph_payload_shard_count": "NONBOOLEAN_NONNEGATIVE_INTEGER",
+    "expected_total_bytes": "NONBOOLEAN_NONNEGATIVE_INTEGER",
+    "attempts": "NONBOOLEAN_NONNEGATIVE_INTEGER_EXACTLY_1",
+    "retries": "NONBOOLEAN_NONNEGATIVE_INTEGER_EXACTLY_0",
+    "resume": "BOOLEAN_EXACTLY_FALSE",
+    "event_identity_plan_sha256": "LOWERCASE_HEX_64"
+  },
+  "installed_additional_field_types": {
+    "installed_authorization_sha256": "LOWERCASE_HEX_64",
+    "installation_receipt_sha256": "LOWERCASE_HEX_64"
+  },
+  "validation_triples": {
+    "candidate": [
+      {"member":"PRIMARY_CONSUMER","validator_path_field":"primary_candidate_validator_path","validator_sha256_field":"primary_candidate_validator_sha256"},
+      {"member":"SECONDARY_CONSUMER","validator_path_field":"secondary_candidate_validator_path","validator_sha256_field":"secondary_candidate_validator_sha256"},
+      {"member":"CHECKPOINT_IDENTITY_PRODUCER","validator_path_field":"identity_candidate_validator_path","validator_sha256_field":"identity_candidate_validator_sha256"}
+    ],
+    "installed": [
+      {"member":"PRIMARY_CONSUMER","authority":"EXACT_INSTALLED_BYTES"},
+      {"member":"SECONDARY_CONSUMER","authority":"EXACT_INSTALLED_BYTES"},
+      {"member":"CHECKPOINT_IDENTITY_PRODUCER","authority":"EXACT_INSTALLED_BYTES"}
+    ],
+    "required_verdict": "PASS_FOR_ALL_THREE_MEMBERS"
+  },
+  "derived_checkpoint_census": {
+    "shard_count": 6,
+    "identity_only_shard_count": 1,
+    "graph_payload_shard_count": 5,
+    "total_bytes": 238458632928,
+    "derivation": "SUM_ACCEPTED_SHARD_RECORD_SIZE_BYTES"
+  },
+  "validation_only": {
+    "state_created": false,
+    "checkpoint_root_opens": 0,
+    "checkpoint_shard_opens": 0,
+    "identity_hash_reads": 0,
+    "numerical_operations": 0
+  },
+  "live_producer_input": "IMMUTABLE_VALIDATED_INSTALLED_AUTHORITY_ONLY",
+  "package_start_gate": {
+    "candidate_triple": "PASS",
+    "installed_authority_triple": "PASS",
+    "ordering": "BEFORE_PACKAGE_CLAIM"
+  },
+  "result": "PASS"
+}

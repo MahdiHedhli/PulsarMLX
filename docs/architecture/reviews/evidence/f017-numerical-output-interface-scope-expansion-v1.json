@@ -1,0 +1,23 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-scope-expansion/1.0.0",
+  "branch":"feat/017-rust-native-inference-runtime",
+  "reconstructed_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "reconstructed_tree":"4890c525de117e7d91b491fd33fe6a1c568e52e0",
+  "classification":"F017_NUMERICAL_OUTPUT_INTERFACE_SCOPE_EXPANSION: REQUIRED",
+  "blocker":"LIFECYCLE_RESULT_SURFACE_IRRECONCILABLE_WITH_FROZEN_PURE_CORE_BYTES",
+  "blocker_node":"R11",
+  "primary":{"historical_sha256":"657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767","full_arrays_returned":["full_logits"],"hash_only_arrays":["final_hidden","final_normalized"]},
+  "secondary":{"historical_sha256":"e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791","full_arrays_returned":["full_logits"],"hash_only_arrays":["final_hidden","final_normalized"]},
+  "proof":{"arrays_exist_in_same_execution":true,"hashes_invertible":false,"capture_callback_exists":false,"nonreflective_interface_exists":false,"one_execution_can_bank_three_payloads_per_role":false},
+  "prohibited_shortcuts":["HASH_INVERSION","REPEATED_ORACLE_EXECUTION","REFLECTION","FRAME_LOCAL_INSPECTION","TRACING_HOOKS","CALLER_SUPPLIED_CALLBACKS","LOGITS_ONLY_CONTRACT_REDUCTION","V2_IN_PLACE_MUTATION"],
+  "authorized_scope":"FORMULA_EQUIVALENT_SUCCESSOR_CORES_WITH_EXPLICIT_IMMUTABLE_OUTPUT_INTERFACE_AND_COMPLETE_REQUALIFICATION",
+  "event_04_retry":false,
+  "event_04_resume":false,
+  "event_05_executed":false,
+  "live_event_05_authorization_created":false,
+  "event_05_package_started":false,
+  "original_checkpoint_access":0,
+  "p1_attempt_2_executed":false,
+  "historical_master_ledger":175,
+  "result":"PASS"
+}

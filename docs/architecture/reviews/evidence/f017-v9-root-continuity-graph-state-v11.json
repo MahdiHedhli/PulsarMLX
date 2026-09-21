@@ -1,0 +1,24 @@
+{
+  "active_frontier": "R8_CYCLE_06",
+  "authoritative_branch": "feat/017-rust-native-inference-runtime",
+  "authoritative_head": "79367b500fe80ac9af40fcc353e02cdfa4544217",
+  "authoritative_tree": "8688a9e0fc7274345e2e756a3b0529bc6764e3a0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "historical_master_ledger": 175,
+  "nodes": {
+    "R0": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json", "status": "PASS"},
+    "R1": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r1-receipt-v4.json", "status": "PASS"},
+    "R2": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r2-receipt-v10.json", "status": "PASS"},
+    "R3": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r3-receipt-v15.json", "status": "PASS"},
+    "R4": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r4-receipt-v14.json", "status": "PASS"},
+    "R5": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v10.json", "status": "PASS"},
+    "R6": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r6-receipt-v4.json", "status": "PASS"},
+    "R7": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r7-receipt-v9.json", "status": "PASS"},
+    "R8": {"receipt": "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r8-receipt-v5.json", "status": "RUNNING"},
+    "R9_FINAL_AUTHORITY_RECONCILIATION": {"receipt": null, "status": "PENDING"},
+    "R9_NO_GO_CLOSEOUT": {"receipt": null, "status": "PENDING"}
+  },
+  "original_checkpoint_access": 0,
+  "schema": "pulsarmlx.f017.v9-root-continuity-graph-state/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-graph-state-v10.json"
+}

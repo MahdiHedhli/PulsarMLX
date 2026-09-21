@@ -1,0 +1,77 @@
+{
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "node_id": "R8",
+  "input_head": "3100714e9b89593add5f0d54dfd340900614ee66",
+  "output_head": "1f3f1adf80607a2c848bd76e2a70b5074d705b99",
+  "input_authority_shas": {
+    "authority_manifest_v13": "d19691e93d09a50c67129ddb7e3099d1c62eeea662e024b5b9bc84d3adf8221a"
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-opus-arbiter-cycle-07-exact-response.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-arbiter-ledger-v7.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-challenge-ledger-v12.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v11.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v13.json",
+    "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r5-receipt-v12.json"
+  ],
+  "commands_executed": [
+    "fresh claude-opus-5 high-effort detached read-only arbiter cycle 07",
+    "independent exact-head qualifications and 25 claim verdicts"
+  ],
+  "tests_executed": [
+    "all 25 readiness-critical claims",
+    "252 root attacks",
+    "204 decode attacks",
+    "201 runtime failure executions",
+    "50 successful packages",
+    "43 measured implementation bindings",
+    "FULL_NATIVE run 32886210156"
+  ],
+  "result_counts": {
+    "accepted_claims": 25,
+    "rejected_claims": 0,
+    "unresolved_claims": 0,
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 7
+  },
+  "claims_introduced": [],
+  "claims_closed": [
+    "C-REF-001",
+    "C-REF-002",
+    "C-REF-003",
+    "C-ROOT-001",
+    "C-ROOT-002",
+    "C-ROOT-003",
+    "C-ROOT-004",
+    "C-ROOT-005",
+    "C-JSON-001",
+    "C-JSON-002",
+    "C-JSON-003",
+    "C-JSON-004",
+    "C-JSON-005",
+    "C-IMPL-001",
+    "C-IMPL-002",
+    "C-IMPL-003",
+    "C-IMPL-004",
+    "C-QUAL-001",
+    "C-QUAL-002",
+    "C-QUAL-003",
+    "C-QUAL-004",
+    "C-QUAL-005",
+    "C-CI-001",
+    "C-CI-002",
+    "C-CI-003"
+  ],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0
+  },
+  "next_eligible_edges": [
+    "R9_FINAL_AUTHORITY_RECONCILIATION"
+  ],
+  "result": "PASS"
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.event04-final-evidence-authority-manifest/10.0.0",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "starting_head": "3256b31d5b09bf2c71ea4e170172da6a75c89c1b",
+  "measured_implementation_head": "fa3daeaf37425cc7aeeab05bcc5fb7b74c7a7e28",
+  "measured_implementation_tree": "6c0fffdb4ab57a36bcc6444a29594003795e0d55",
+  "bindings": [
+    {"role":"HUMAN_GO","path":"docs/architecture/reviews/evidence/f017-event04-v10-human-go-receipt-v1.json","sha256":"dafc5aead31633aca98a07006de36f8e46fcb01cf878cf0e9729f9edf343e5c6"},
+    {"role":"OPERATOR_APPROVAL","path":"docs/architecture/reviews/evidence/f017-corrected-oracle-event-04-operator-approval-v10-v1.json","sha256":"80ab0644a111b10d0eb7bc636989280376f072e4511123dc1cf158d0198241d8"},
+    {"role":"AUTHORIZATION_CANDIDATE","path":"docs/architecture/reviews/evidence/f017-event04-v10-authorization-candidate-v1.json","sha256":"e107d1c353108904900969698eca1097fa04eb1c02e4a96b3e2d00fa5f4f668b"},
+    {"role":"PRIMARY_CANDIDATE_VALIDATION","path":"docs/architecture/reviews/evidence/f017-event04-v10-primary-candidate-validation-v1.json","sha256":"405ec0f20ac79b4e0801297bbc5021d42d48fcf8a4be4fd6131fb2c7f5381e49"},
+    {"role":"SECONDARY_CANDIDATE_VALIDATION","path":"docs/architecture/reviews/evidence/f017-event04-v10-secondary-candidate-validation-v1.json","sha256":"86eb5eeb80497fcde65710424c73cf198502b036ffa77f3d30196d5657797f84"},
+    {"role":"INSTALLATION_EVIDENCE","path":"docs/architecture/reviews/evidence/f017-event04-v10-authorization-installation-evidence-v1.json","sha256":"ef3c40dcade63ae5cb187ecb42cbccc9a8cb4831bb091809ff9c8bc1f45e9c45"},
+    {"role":"IMMUTABLE_EXECUTION_INDEX","path":"docs/architecture/reviews/evidence/f017-event04-v10-immutable-execution-evidence-index-v1.json","sha256":"38b98d1a8ab8b19d09caedaf1a34d6df9b0af6b7f7d11a8846a72d52e6daf8a6"},
+    {"role":"TERMINAL_EXECUTION_RESULT","path":"docs/architecture/reviews/evidence/f017-event04-v10-terminal-execution-result-v1.json","sha256":"9ea346b6d0fa7f144799b6a9bd13dbeffba4fb816163a7e39d811d141543907d"},
+    {"role":"GEMINI_CHALLENGE","path":"docs/architecture/reviews/evidence/f017-event04-v10-gemini-challenge-cycle-01-exact-response-v1.json","sha256":"15cf514c9af19bdffae8f798bcefc18cd2c5759633059708ce1a79c7c57d9dce"},
+    {"role":"CHALLENGE_LEDGER","path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-challenge-ledger-v2.json","sha256":"2da8f790638349d311554426cc05e48939dfd6aa6f18cc5182200455da74c291"},
+    {"role":"SUPPORT_LEDGER","path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-support-ledger-v2.json","sha256":"c894dc37e4fe391c87bbcb3206659394eb249da0bc03705c1274e82b3c6b6e83"},
+    {"role":"FINAL_CLAIM_LEDGER","path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-claim-ledger-v9.json","sha256":"3985a50410f45cc4ecf43fd37d70b60560b152a6679adb9cc97629324e41ab4b"},
+    {"role":"FINAL_ARBITER_LEDGER","path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-arbiter-ledger-v4.json","sha256":"5e3580a4bb2d63652e3fd968d74466a985af1dc4f02fe56a71eaa4df72b527a9"},
+    {"role":"FINAL_GRAPH_STATE","path":"docs/architecture/reviews/evidence/f017-event04-v10-execution-graph-state-v9.json","sha256":"390805980a07aa7f6c36225f7237f07509e05aef03b49044976232eb83c08458"},
+    {"role":"ARBITER_NODE_RECEIPT","path":"docs/architecture/reviews/evidence/f017-event04-v10-node-e12-receipt-v3.json","sha256":"b4a46325415152d899fa6092d04674be7bdb1abb970c5990ff638ed93caa534d"},
+    {"role":"DECLARATION_NODE_RECEIPT","path":"docs/architecture/reviews/evidence/f017-event04-v10-node-e13-receipt-v1.json","sha256":"8844bc1c553c4fec4f76ebb404570bca104a73a8927690d3d90ff62475109474"},
+    {"role":"COVERED_HEAD_EVIDENCE_CI","path":"docs/architecture/reviews/evidence/f017-event04-v10-evidence-only-ci-v3.json","sha256":"120c2767c0262ed56f2a3581bbc0a6bc3642788fe4125d4a4e52815ae7ad50e3"},
+    {"role":"POST_EXECUTION_CI","path":"docs/architecture/reviews/evidence/f017-event04-v10-post-execution-ci-v1.json","sha256":"938fab49bc9688aaeefbbcce16c94bb30c63c4739d9a7a5ad911176654527bbf"}
+  ],
+  "binding_count": 18,
+  "corrected_oracle_classification": "ORACLE_EXECUTION_FAILURE",
+  "global_arbiter_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE",
+  "acceptance_scope": "TRUTHFUL_FAILURE_EVIDENCE_ONLY",
+  "event_04_retry": false,
+  "ready_to_prepare_p1_attempt_2_authorization": false
+}

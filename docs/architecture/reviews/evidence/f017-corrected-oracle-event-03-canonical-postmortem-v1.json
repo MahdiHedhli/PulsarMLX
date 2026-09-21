@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-03-canonical-postmortem/1.0.0",
+  "classification": "PACKAGE_ATTEMPT_IDENTITY_NOT_REPRESENTABLE",
+  "operator_approval": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-03-operator-approval-v1.json",
+    "sha256": "eba1982bfce4be9902a1a20d5f56c013f91087fd74361b34f0a37b159e67bde3",
+    "valid_evidence_of_operator_intent": true
+  },
+  "pre_mint_failure": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-03-pre-mint-interface-failure-v1.json",
+    "sha256": "e2dcbec3b5ad4edb088e58b13f18fcd4a020b2ae5c7230694e5b3ede9c89135b"
+  },
+  "facts": {
+    "go_expired": true,
+    "candidate_constructed": false,
+    "authorization_installed": false,
+    "authorization_identity_consumed": false,
+    "package_attempt_created": false,
+    "primary_event_created": false,
+    "secondary_event_created": false,
+    "state_root_created": false,
+    "memory_observation_required_after_interface_failure": false,
+    "checkpoint_metadata_access": 0,
+    "checkpoint_payload_access": 0,
+    "ledger_delta": 0,
+    "retry_permitted": false
+  },
+  "authority_disposition": {
+    "event_03_artifact_promotable_to_event_04": false,
+    "package_state_root_name_is_typed_identity": false,
+    "mutable_filename_can_substitute_for_contract_field": false,
+    "event_03_artifacts_immutable": true,
+    "historical_master_ledger": 175
+  }
+}

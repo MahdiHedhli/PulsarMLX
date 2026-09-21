@@ -1,0 +1,318 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence42-package-start-receipt-accounting-repair/1.0.0",
+  "recorded_at_utc": "2026-09-05T03:52:18Z",
+  "feature_id": "F017",
+  "sequence": 42,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "result": "PASS_PENDING_PLANNER_REVIEW",
+  "prompt_authority": {
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "commit": "c090d3930e1a605d58754717c167287033f2110d",
+    "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/042__F017__Mac-Studio-M1-Ultra__package-start-and-receipt-accounting-repair-and-no-access-requalification__prompt.md",
+    "digest": "792c677a1142f207df04cde874e679bdb44c7188f9d520efe9b2f47df4de7448",
+    "basename_sidecar": "PASS",
+    "support_commit": "29a9c7b4a0ffe10532edc25a2c066b5491336ae6",
+    "planner_declaration": {
+      "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/042__F017__Mac-Studio-M1-Ultra__package-start-and-access-accounting-safety-repair__planner-declaration.md",
+      "digest": "917d61ea0d3df7cf255de177bc1c7d9db5a870813307eeb9efba74fe5626a2be"
+    },
+    "freeze_transition_table": {
+      "relative_name": "Prompts/F017/Mac-Studio-M1-Ultra/042__F017__Mac-Studio-M1-Ultra__package-start-and-access-accounting-safety-repair__freeze-transition-table.json",
+      "digest": "8ae2204fb66d2b25550c4973876ed3113a1598ee93c36f86ad455939213b1d7b"
+    },
+    "declaration_table_and_sidecar_guards": "PASS",
+    "sequence41_planner_acceptance_guard": "PASS"
+  },
+  "predecessor_authority": {
+    "source_head": "f415a605e96c964742c7befe0e63ba47d7f99e6e",
+    "source_tree": "114f133cc06e40b82917ff86b4c66fe5607de106",
+    "sequence41_response_digest": "9e3335156372a95c219198fe641a3001ec2f6a80d4d03d1016eadf3ea3681e23",
+    "sequence41_handoff_digest": "f58f346273e50239357f1a3d19353d213b10d22140ee26bca79e9bd793c83d74",
+    "sequence41_correction_digest": "28dfd0a7599572950370a6fe5a764faec07967f78344edd7d90abf3f92d82f4a",
+    "sequence40_terminal_evidence_digest": "ddaca36a24dd4b5cde4fee8dfb3913093d7d128c880b9e249403f692a58b0339",
+    "sequence40_consumed_decision_digest": "25b1312d26a436e103f26f1645f2d83e3147cbabc6522c91e5fa92d89ee73bdd",
+    "sequence40_consumed_decision_reusable": false,
+    "sequence40_package_start": 1,
+    "sequence40_original_checkpoint_opens_hashes_payload_reads_mmaps": "0/0/0/0",
+    "sequence40_primary_secondary_executions": "0/0",
+    "sequence40_accounting": "0/1/0/0",
+    "sequence40_terminal_winners": 1,
+    "historical_sequence40_extra_vs_missing": "UNOBSERVABLE_NON_GATING"
+  },
+  "source_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "start_head": "f415a605e96c964742c7befe0e63ba47d7f99e6e",
+    "start_tree": "114f133cc06e40b82917ff86b4c66fe5607de106",
+    "start_remote_parity": "PASS",
+    "implementation_head": "4b48167f9fd02b81ed1c5796022ad70b3c2a61b6",
+    "implementation_tree": "9054eaf333f49c57b6420c51c79a03b5c52cf29a",
+    "implementation_remote_parity": "PASS",
+    "implementation_worktree_clean": true,
+    "changed_path_count": 12,
+    "insertions": 11468,
+    "deletions": 397
+  },
+  "implementation_bindings": [
+    {
+      "path": "scripts/research/f017_checkpoint_identity_lifecycle_v12.py",
+      "sha256": "7b58502e48f2a41459b49ef05b8ae73dd8616f85cecbb6dd42a5d49d9d63d416",
+      "predecessor_sha256": "238ca91917ab33a97ab55c6d1b20985a30d519994b0e8a01d698238b9ceae163"
+    },
+    {
+      "path": "scripts/research/f017_checkpoint_identity_producer_v12.py",
+      "sha256": "e7b6e499d265fd752ccdf855aa10cb8a5fc286594bd121e72f9743bedeb8d4d3",
+      "predecessor_sha256": "7fb87265bcb649bf9fe080caa61723fdaf35225022212f7300898d52850724ba"
+    },
+    {
+      "path": "scripts/research/f017_event06_minimum_gate_contract_v1.py",
+      "sha256": "ce98965b7741797df8962260395fc6eb5358e31545d1c054516e5524d055e1bd",
+      "predecessor_sha256": "cdd59f753f11f642801e4488b15d216dfd06ae9b98ef274a8fb314f1fabe562e"
+    },
+    {
+      "path": "scripts/research/f017_event06_minimum_gate_path_v1.py",
+      "sha256": "ed61519c14afe8e3a7353b31ad1192f35fbafc9c6cd1ea939fc68680001f282d",
+      "predecessor_sha256": "2e7e2cb526fd5bfa81da951c2a583b4f891e2dcc71d4c900575ea40a9706e5ff"
+    },
+    {
+      "path": "scripts/research/f017_sequence42_no_access_barrier/sitecustomize.py",
+      "sha256": "40c553869f0af1b172c4ff0f6b7bf07be1509fae96768094d5594c6cebb3b832",
+      "predecessor_sha256": "ABSENT"
+    },
+    {
+      "path": "scripts/research/qualify_f017_checkpoint_identity_authority_v12.py",
+      "sha256": "9c9114bd48adb8ae47c48170f1872d1103fccb47c7f89196dc53b3fafa4d0cfa",
+      "predecessor_sha256": "9a7a38fb0a4c99e9807d0e9275a361016e729cf9bc8ac49fe89e155629db2522"
+    },
+    {
+      "path": "scripts/research/qualify_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "fbe128ed88529105216f99e064c64ade4e64e374e65710c9e081733d5a660694",
+      "predecessor_sha256": "7a117f9de62045a00cf1ae9d0eb83f0d9bb42ab7dc8e6fe189bcd7a29fcaf426"
+    },
+    {
+      "path": "scripts/research/run_f017_sequence42_no_access.py",
+      "sha256": "4001e5c4804f2f22852e7fe1dbe08117e88e07ca3c103d1436320510bfdac601",
+      "predecessor_sha256": "ABSENT"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_checkpoint_identity_minimum_authority_v1.py",
+      "sha256": "1f9b1f203e0e02ecf87287ce32919a1b3114c03dfb0fc3936dff6e3f2ccb354e",
+      "predecessor_sha256": "4e476bfd55744bb61c92d8facb3bced48700b694bdf387f835469d4ed292a60c"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_event06_minimum_gate_path_v1.py",
+      "sha256": "75246b2690a7272dba52e057be89fb065dec8f8412245a633961fd4021ac90c6",
+      "predecessor_sha256": "38d06f2e3c3f47ff5cfcbb0655972224230401b03b6ad8709267d34485daa776"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_event06_sequence42_package_accounting_v1.py",
+      "sha256": "d6fee3faea795f6c93e6b5ea81716f1ff55f6f8d6f64d1c780c61a1a5f044b4c",
+      "predecessor_sha256": "ABSENT"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_sequence42_no_access_barrier_v1.py",
+      "sha256": "b5a980743e7e50a506a3e90e23c302fcb32c32eab64e4dfbb9ab5ee303fc9f3b",
+      "predecessor_sha256": "ABSENT"
+    }
+  ],
+  "frozen_authority": {
+    "drift_count": 0,
+    "undeclared_transition_count": 0,
+    "current_required_gate_count": 17,
+    "new_required_gates_go_fields_authority_classes": "0/0/0",
+    "bindings": [
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-checkpoint-identity-v12.json",
+        "sha256": "fee13b771363cd29123c3e945c856560e11ca9752a0501139dd518c8aafb20f2"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v12.json",
+        "sha256": "cad79cd9a87897347d096ad698e7dc2da3f0fe18b13aa124ef559dc9691a450d"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v4.json",
+        "sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-result-authority-v11-v2.json",
+        "sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101"
+      },
+      {
+        "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-production-tensor-plan-v9.json",
+        "sha256": "17732cd5d98c434bdeea4ee66701e80aaf7713db772b20b537f21e5bbfa4ee23"
+      }
+    ]
+  },
+  "package_start_terminality": {
+    "durable_truth_source": "WRITE_ONCE_MARKER",
+    "fault_boundaries_tested": "23/23",
+    "post_durability_unterminaled_packages": 0,
+    "valid_start_without_valid_reserved_terminal_cases": 3,
+    "executing_owner_closeout_writes_or_effects": "0/0",
+    "foreign_terminal_bytes_truncated_or_overwritten": "0/0",
+    "restart_closeout_checkpoint_or_numerical_effects": "0/0",
+    "concurrent_closeout_contenders_and_terminal_winners": "24/1",
+    "second_attempts_reaching_checkpoint_or_numerical_boundary": "0/0",
+    "restart_closeout_terminal_origin_and_failure_type": "PASS/PASS",
+    "pre_start_original_exception_identity": "PASS",
+    "package_accounting_after_valid_durable_start": 1,
+    "terminal_ownership": "EXACTLY_ONE_EVENTUAL_PACKAGE_TERMINAL"
+  },
+  "access_accounting": {
+    "truth_source": "VALIDATED_DURABLE_RECEIPTS",
+    "receipt_chain": "PASS",
+    "receipt_count_complete_success": 24,
+    "success_inventory_leaf_count": 31,
+    "post_open_failure_cases_tested": 58,
+    "post_open_accounting_mismatches": 0,
+    "unresolved_access_intents_in_complete_success": 0,
+    "crash_window_access_bound_violations": 0,
+    "access_prefix_receipt_mutations_rejected": "16/16",
+    "synthetic_success_opens_and_identity_hash_reads": "6/6",
+    "handled_completion_receipt_failure_categories": [
+      "WRITE",
+      "FSYNC",
+      "READBACK"
+    ],
+    "additional_reachable_faults": [
+      "HASH_READ_ERROR",
+      "LEASESET_CONSTRUCTION_FAILURE"
+    ]
+  },
+  "qualification": {
+    "qualification_result_sha256": "48c4dd2a139f1b68ae3d3eb6c614cf8760156c48b8f7eed27f6ee0167d090d66",
+    "qualification_barrier_log_sha256": "0c3e6b4803a2216b68a3766982de2d5ef1fe4aa567682699436a8dc5435cd365",
+    "root_census_policy": "REQUIRED_SUBSET_EXTRAS_IGNORED",
+    "missing_required_shard_preopen_failures": "6/6",
+    "extra_leaves_opened_followed_stated_hashed": "0/0/0/0",
+    "full_call_path_dry_run_with_synthetic_authority": "PASS",
+    "synthetic_success_opens_and_identity_hash_reads": "6/6",
+    "synthetic_decision_equals_consumed_sequence40_go": false,
+    "synthetic_authority_production_consumable": false,
+    "changed_typed_boundaries_total": 30,
+    "changed_typed_boundaries_with_composition_tests": 30,
+    "changed_callable_or_carrier_interfaces": 17,
+    "changed_version_forward_schemas": 13,
+    "uncovered_or_extraneous_changed_boundaries": "0/0",
+    "required_gate_mutations": "17/17",
+    "result": "PASS"
+  },
+  "tests": {
+    "focused_sequence42": "155 passed",
+    "applicable_current_authority_main_barrier": "308 passed in 318.24s",
+    "applicable_current_authority_barrier_self_tests": "12 passed in 2.55s",
+    "applicable_f017_total": "320 passed",
+    "main_barrier_log_sha256": "5ef46f08f9a939cf0942ac02d55f85b0de0d4492f6f88adf95ad05be7dada10b",
+    "main_barrier_processes": 237,
+    "main_barrier_spawn_intents": 236,
+    "main_barrier_target_imports": 509,
+    "main_barrier_native_subprocesses": 2,
+    "main_barrier_blocked_accesses": 0,
+    "main_barrier_policy_violations": 0,
+    "checkpoint_identity_authority_qualification": {
+      "filesystem_cases": "54/54",
+      "evidence_close_cases": "17/17",
+      "runtime_failure_cases": 300,
+      "total_cases": 393,
+      "unexpected_passes": 0,
+      "capability_result": "PASS"
+    },
+    "generator_check": "PASS",
+    "git_diff_check": "PASS",
+    "python_compilation": "PASS",
+    "configured_external_lint_or_type_tool": "NONE",
+    "broad_historical_compatibility_telemetry": {
+      "passed": 748,
+      "failed": 125,
+      "errors": 4,
+      "subtests": 105,
+      "acceptance_gate": false,
+      "classification": "HISTORICAL_AND_SUPERSEDED_AUTHORITY_TELEMETRY_DISCLOSED_SEPARATELY"
+    }
+  },
+  "repair_loops": {
+    "authorized_structural": 10,
+    "consumed_structural": 10,
+    "consumed_nonstructural": 0,
+    "same_structural_root_failed_repairs": "1/3",
+    "consecutive_no_progress_cycles": "0/2",
+    "implementation_commit_containing_all_dispositions": "4b48167f9fd02b81ed1c5796022ad70b3c2a61b6",
+    "entries": [
+      {
+        "loop": 1,
+        "root_cause_class": "PACKAGE_START_DURABLE_TRUTH_AND_EXCEPTION_IDENTITY",
+        "changed_claim": "DURABLE_START_CONTROLS_TERMINALITY_AND_ORIGINAL_EXCEPTION_IS_PRESERVED",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 2,
+        "root_cause_class": "RESTART_CLOSEOUT_AND_TERMINAL_OWNERSHIP",
+        "changed_claim": "ONE_NONEXECUTING_CLOSEOUT_AND_ONE_TERMINAL_WINNER",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 3,
+        "root_cause_class": "ACCESS_PREFIX_RECEIPT_CHAIN",
+        "changed_claim": "OPEN_AND_HASH_INTENT_COMPLETION_CHAIN",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 4,
+        "root_cause_class": "RECEIPT_DERIVED_FAILURE_ACCOUNTING",
+        "changed_claim": "POST_OPEN_ACCOUNTING_TRUTH_FROM_DURABLE_RECEIPTS",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 5,
+        "root_cause_class": "ATOMIC_TERMINAL_AND_STORAGE_IDENTITY",
+        "changed_claim": "PRIVATE_STAGE_RENAME_AND_PATH_RETARGET_REJECTION",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 6,
+        "root_cause_class": "DESCRIPTOR_EVIDENCE_AND_CONSERVATIVE_FALLBACK",
+        "changed_claim": "ROOT_SUBSTITUTION_AND_PARTIAL_FAILURE_CLOSEOUT",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 7,
+        "root_cause_class": "CRASH_CONCURRENCY_QUALIFICATION",
+        "changed_claim": "RESTART_DETERMINISM_AND_KERNEL_CLAIM_OWNERSHIP",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 8,
+        "root_cause_class": "SOURCE_DERIVED_TYPED_BOUNDARY_COMPOSITION",
+        "changed_claim": "ALL_30_CHANGED_BOUNDARIES_COMPOSE",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 9,
+        "root_cause_class": "ALL_PROCESS_NO_ACCESS_SUPERVISION",
+        "changed_claim": "STARTUP_HOOK_AND_NATIVE_SUBPROCESS_POLICY",
+        "disposition": "REPAIRED"
+      },
+      {
+        "loop": 10,
+        "root_cause_class": "FAULT_REACHABILITY_AND_HISTORICAL_QUALIFIER_COMPATIBILITY",
+        "changed_claim": "FIVE_MISSING_FAULTS_AND_CURRENT_IMMUTABLE_AUTHORITY",
+        "disposition": "REPAIRED_AFTER_ONE_FAILED_SYNTHETIC_TERMINAL_SETUP"
+      }
+    ]
+  },
+  "safety_state": {
+    "original_checkpoint_root_resolutions_or_enumerations": "0/0",
+    "original_checkpoint_opens_hashes_payload_reads_mmaps": "0/0/0/0",
+    "primary_secondary_real_executions": "0/0",
+    "full_model_inference": "NONE",
+    "live_event_06_authority_or_package_state": "NONE",
+    "sequence40_retry_resume_continuation_or_replay": "NONE",
+    "new_human_go_created_requested_or_reused": false,
+    "p1_attempt_2_authority_or_execution": "NONE",
+    "historical_master_ledger": 175,
+    "macbook_lane_mutation": "NONE"
+  },
+  "readiness": {
+    "ready_to_request_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+    "exact_next_safe_action": "INDEPENDENT_PLANNER_REVIEW_OF_THE_BANKED_SEQUENCE_42_TECHNICAL_RESPONSE"
+  }
+}

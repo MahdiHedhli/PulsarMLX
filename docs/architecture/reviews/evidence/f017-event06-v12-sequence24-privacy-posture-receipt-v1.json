@@ -1,0 +1,12 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence24-privacy-posture-receipt/1.0.0",
+  "official_privacy_posture": "RETENTION_DISABLED",
+  "proof_class": "HUMAN_FOREGROUND_LIVE_UI",
+  "nonce_sha256": "f2fc1dbd4a3cd3f2228f24bcf3ddf9be04a2595235368a3e28a1cfebd66a730a",
+  "confirmed_at_utc": "2026-08-30T22:27:37Z",
+  "source_bytes_sent_before_privacy_proof": 0,
+  "privacy_session_residual_processes": 0,
+  "privacy_session_residual_socket": false,
+  "response_contents_or_identifiers_banked": false,
+  "result": "PASS"
+}

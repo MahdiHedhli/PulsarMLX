@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-01-root-cause-hypothesis-ledger/1.0.0",
+  "status": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+  "observation": {
+    "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+    "prompt_token": 9703,
+    "frozen_expected_token": 21615,
+    "observed_token": 17351,
+    "attempts": 1,
+    "retries": 0
+  },
+  "hypotheses": [
+    {"id":"H01","hypothesis":"expected-token authority mismatch","priority":"HIGHEST","support":["Q6_K expected-path lane permutation proven","IQ3_XXS expected-path lane permutation proven","21615 derives from the affected F016 source family"],"contradiction":[],"tests":["11-format independent synthetic block matrix","source dependency trace"],"disposition":"PROVEN_AUTHORITY_DEFECT; sufficient to invalidate 21615, not sufficient to derive the corrected token"},
+    {"id":"H02","hypothesis":"context/BOS/KV/RoPE mismatch","priority":"HIGH","support":[],"contradiction":["both authorities use prompt token 9703, one-token context, empty KV, and position zero","position-zero RoPE is identity"],"tests":["static graph audit","expanded synthetic position-zero cases"],"disposition":"NOT_SUPPORTED_FOR_ATTEMPT_1"},
+    {"id":"H03","hypothesis":"layer-count or graph omission","priority":"HIGH","support":[],"contradiction":["metadata plan proves layers 0..78","native source loop is 0..79 exclusive","expanded production-orchestration synthetic cases pass"],"tests":["1,809-tensor plan audit","layer-count mutation"],"disposition":"NOT_SUPPORTED"},
+    {"id":"H04","hypothesis":"tensor-name mapping defect","priority":"HIGH","support":[],"contradiction":["exact canonical census and required layer/expert roles pass metadata audit"],"tests":["missing/duplicate tensor mutations","static source audit"],"disposition":"NO DEFECT FOUND; real-byte selection was not durably receipted in attempt 1"},
+    {"id":"H05","hypothesis":"tensor orientation defect","priority":"HIGH","support":[],"contradiction":["native and reference orientation agree for embedding, projections, experts, and output"],"tests":["synthetic production orchestration","output-orientation mutation"],"disposition":"NO DEFECT FOUND"},
+    {"id":"H06","hypothesis":"shard-offset or alignment defect","priority":"HIGH","support":[],"contradiction":["all 1,809 metadata ranges aligned, in-bounds, non-overlapping"],"tests":["offset/alignment/overlap mutations"],"disposition":"NO METADATA DEFECT FOUND; attempt 1 emitted no actual access census"},
+    {"id":"H07","hypothesis":"quant decoder defect","priority":"HIGHEST","support":["two defects proven in F016 expected-token decoder"],"contradiction":["native Rust decoders match repaired independent decoders on 44 adversarial cases"],"tests":["all 11 formats","type-ID and lane-order mutations"],"disposition":"PROVEN IN EXPECTED-TOKEN ORACLE; NO NATIVE DECODER DEFECT REPRODUCED"},
+    {"id":"H08","hypothesis":"MLX matvec interpretation defect","priority":"MEDIUM","support":[],"contradiction":["expanded native MLX production-orchestration fixtures agree with independent scalar oracle"],"tests":["137 stage metrics across six predeclared seeds"],"disposition":"NO DEFECT REPRODUCED"},
+    {"id":"H09","hypothesis":"routing defect","priority":"HIGH","support":[],"contradiction":["formula and lower-ID tie rule agree","exact and near-tie synthetic cases pass"],"tests":["structural route comparisons before numerical comparisons"],"disposition":"NO DEFECT REPRODUCED"},
+    {"id":"H10","hypothesis":"shared/routed FFN composition defect","priority":"HIGH","support":["route weight is applied pre-down natively and post-down in F016, creating different binary32 rounding"],"contradiction":["algebraically equivalent in exact arithmetic","D3.5 layer-3 qualification passed under frozen D0"],"tests":["static differential","expanded synthetic oracle"],"disposition":"INTENDED_OR_SCOPE_NUMERICAL DIFFERENCE; full-forward token impact unknown"},
+    {"id":"H11","hypothesis":"final norm defect","priority":"MEDIUM","support":[],"contradiction":["same formula and shape; synthetic final norm passes"],"tests":["six synthetic final-stage comparisons"],"disposition":"NO DEFECT REPRODUCED"},
+    {"id":"H12","hypothesis":"output projection or logits defect","priority":"HIGH","support":[],"contradiction":["orientation, geometry, and lowest-ID argmax agree; synthetic logits pass"],"tests":["projection-orientation mutation","near-tie final logits"],"disposition":"NO DEFECT REPRODUCED"},
+    {"id":"H13","hypothesis":"precision accumulation difference","priority":"HIGH","support":["79-layer native serial-binary32 surface differs from the F016 binary64 control surface at multiple scalar boundaries"],"contradiction":["differences are accepted in D0 but no full-checkpoint stability margin exists"],"tests":["static stage table","D3.5 layer-3 qualification"],"disposition":"PLAUSIBLE CONTRIBUTOR; NOT QUANTIFIED FOR THE FULL FORWARD"},
+    {"id":"H14","hypothesis":"runtime or memory-lifetime defect","priority":"LOW","support":[],"contradiction":["in-process 22-counter reconciliation passed before token comparison","B1/B2 qualification remained green"],"tests":["native lifecycle regression"],"disposition":"NOT SUPPORTED; exact counters were not durably retained"},
+    {"id":"H15","hypothesis":"unknown","priority":"RESIDUAL","support":["attempt 1 has no per-layer fingerprints or durable access census"],"contradiction":[],"tests":[],"disposition":"REMAINS UNTIL A CORRECTED INDEPENDENT FULL-CHECKPOINT EXPECTATION EXISTS"}
+  ],
+  "top_level_classification": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+  "high_confidence_statement": "The frozen comparison failed against a demonstrably defective expected-token source, and accumulated native/reference precision differences may also affect the argmax. The committed evidence does not establish why the exact native argmax is 17351.",
+  "prohibited_claims": [
+    "17351 is correct",
+    "21615 is the corrected expected token",
+    "the native implementation is free of all real-checkpoint defects",
+    "attempt 2 is scientifically ready"
+  ],
+  "phase_accounting": {
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "p1_attempt_2_executed": false,
+    "live_attempt_2_authorization_created": false
+  }
+}

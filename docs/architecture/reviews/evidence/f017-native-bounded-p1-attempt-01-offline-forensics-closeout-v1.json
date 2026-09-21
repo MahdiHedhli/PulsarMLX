@@ -1,0 +1,116 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-attempt-01-offline-forensics-closeout",
+  "schema_version": "1.0.0",
+  "status": "ACCEPTED_OFFLINE_FORENSICS_WITH_ATTEMPT_2_BLOCKED",
+  "authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "program_start_head": "1c231dbfc545af59a1e4e428db3c25b67ceb2697",
+    "offline_implementation_head": "59538ccb15ae4d13e42e2ab91d790fbb295c5524",
+    "attempt_1_implementation_head": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+    "attempt_1_execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
+    "historical_master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "historical_master_ledger_terminal": 175
+  },
+  "attempt_1": {
+    "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+    "authorization_id": "F017-NATIVE-BOUNDED-P1-AUTHORIZATION-1",
+    "execution_evidence_sha256": "c3dcc92cec8fde419bfdb437e0191a768fce8f48fc78b2e4b78171164caafb7b",
+    "terminal_sha256": "de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed",
+    "prompt_token": 9703,
+    "expected_token_at_execution": 21615,
+    "produced_token": 17351,
+    "result": "TOKEN_MISMATCH",
+    "terminal": "TERMINAL_FAILURE_NO_RETRY",
+    "receipt_count": 0,
+    "contract_nonconformity": "FAILURE_RECEIPT_SNAPSHOTS_AND_ACCESS_CENSUS_ABSENT",
+    "retroactive_receipt_created": false,
+    "retry_permitted": false
+  },
+  "ci_routing": {
+    "acceptance_path": "docs/architecture/reviews/evidence/f017-evidence-aware-ci-routing-acceptance-v1.json",
+    "acceptance_sha256": "6b30c380204dfb0885fee873a04c73e73089a86533208ddbf1f38fc189dbfad7",
+    "full_exact_head_run": 32590049780,
+    "full_exact_head_conclusion": "success",
+    "evidence_only_run": 32590531803,
+    "evidence_only_conclusion": "success",
+    "historical_branch_evidence_only_run": 32586543464,
+    "historical_branch_evidence_only_conclusion": "success",
+    "native_jobs_on_evidence_only": 0,
+    "review_history_run": {
+      "id": 32590912146,
+      "conclusion": "failure",
+      "reason": "APPEND_ONLY_VALIDATOR_REJECTED_MODIFICATION_OF_AN_ALREADY_COMMITTED_REVIEW_REQUEST",
+      "native_jobs_started": 0,
+      "disposition": "VALIDATOR_CORRECTLY_FAILED_CLOSED;FINAL_REVIEW_USED_THE_COMMITTED_MODIFIED_REQUEST_BYTES;NO_FURTHER_MODIFICATION_PERMITTED"
+    }
+  },
+  "forward_failure_evidence": {
+    "contract_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v3.json",
+    "contract_sha256": "47db44bdf794f6609d069f4b15a54350cfecf112d7a30b686b0ce40141071228",
+    "injection_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-forward-failure-injection-v3.json",
+    "injection_sha256": "029afd80895f3891fdcac98378b00d3bd86c0c5910ffcab48fed504c35243e7e",
+    "token_mismatch_pre_snapshot": true,
+    "token_mismatch_post_snapshot": true,
+    "token_mismatch_access_census": true,
+    "token_mismatch_receipt": true,
+    "token_mismatch_receipt_bound_terminal": true,
+    "attempt_1_claimed_conforming": false,
+    "forward_only": true
+  },
+  "diagnosis": {
+    "expected_token_disposition": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+    "expected_token_provenance_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-expected-token-provenance-v1.json",
+    "expected_token_provenance_sha256": "87711d80ebdea2a875b8d45e49a34cbffb97ce285d129cbd9db7658228f44aa2",
+    "q6_k_defect": "OLD_DECODER_MIXED_LOW_HIGH_NIBBLES_WITH_MISMATCHED_HIGH_BIT_FIELDS_AND_SCALE_INDICES;NOT_A_SIMPLE_COORDINATE_SWAP",
+    "iq3_xxs_defect": "OLD_DECODER_INTERLEAVED_GRID1_AND_GRID2_WHERE_GGML_EMITS_FOUR_VALUES_FROM_EACH_GRID",
+    "affected_catalog_tensors": {
+      "Q6_K": 82,
+      "IQ3_XXS": 71
+    },
+    "root_cause_classification": "ROOT_CAUSE_HIGH_CONFIDENCE_NOT_PROVEN",
+    "token_17351_promoted_to_expected": false,
+    "smallest_unresolved_blocker": "NO_CORRECTED_INDEPENDENT_FULL_CHECKPOINT_EXPECTED_TOKEN_AUTHORITY_AND_NO_ATTEMPT_1_PER_LAYER_FINGERPRINTS"
+  },
+  "qualification": {
+    "checkpoint_plan": "PASS_1809_TENSORS_79_LAYERS_256_EXPERTS_6_SHARDS_METADATA_ONLY",
+    "quantization": "PASS_11_FORMATS_44_ADVERSARIAL_CASES",
+    "synthetic_full_graph": "PASS_6_PREDECLARED_SEEDS_137_STAGE_METRICS",
+    "retained_reads": 0,
+    "new_original_checkpoint_shard_opens": 0
+  },
+  "cross_vendor_review": {
+    "model": "gemini-3.1-pro-high",
+    "mechanism": "AGY",
+    "result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-gemini-normalized-result-v1.json",
+    "result_sha256": "3fad33c6f2e7c3c1a8e55f8f81d3a067d5a98174bb76864ad980d8390440584e",
+    "verdict": "ADVISORY_CONCUR",
+    "material_disagreement": false
+  },
+  "final_review": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "reviewed_head": "c749f2a85c7aefe2d1f8a73567c6dcb05d68eefb",
+    "request_sha256": "a04d886bbe0a5b899c1be035aea22920e53859435ae460bf7fd41cd1e7f23f26",
+    "response_sha256": "d9dfa271fdc27667beac299d1603e275020e7c02d84327415d1cc84fba5da518",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-opus-normalized-result-v1.json",
+    "normalized_result_sha256": "64946461cf53deaa509093e30ea619e1ba2a63f65b98aa7cc9b916d0cd832c2c",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 10,
+    "verdict": "ACCEPT_F017_ATTEMPT_1_OFFLINE_FORENSICS"
+  },
+  "safety": {
+    "p1_attempt_1_retry": false,
+    "p1_attempt_2_executed": false,
+    "live_p1_attempt_2_authorization_created": false,
+    "real_p1_authorization_consumed_during_phase": false,
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_mmaps": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "full_model_real_checkpoint_inference_executed": false,
+    "further_real_inference_executed": false,
+    "historical_master_ledger": 175
+  },
+  "ready_to_prepare_p1_attempt_2_authorization": false,
+  "exact_next_safe_action": "ESTABLISH_A_CORRECTED_INDEPENDENT_FULL_CHECKPOINT_EXPECTED_TOKEN_AUTHORITY_UNDER_A_SEPARATELY_REVIEWED_SCIENTIFIC_ACCESS_PLAN;THEN_CLOSE_ALL_FORWARD_V3_DEFENSE_FINDINGS_BEFORE_PROPOSING_ATTEMPT_2;DO_NOT_MINT_AUTHORIZATION"
+}

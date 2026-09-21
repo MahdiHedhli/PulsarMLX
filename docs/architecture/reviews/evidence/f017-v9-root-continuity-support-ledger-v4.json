@@ -1,0 +1,53 @@
+{
+  "cycle": "OPUS_PRE_ARBITER_01",
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "prior_support_ledger": "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v3.json",
+  "schema": "pulsarmlx.f017.v9-root-continuity-support-ledger/1.0.0",
+  "support": [
+    {
+      "challenge_id": "O-PRE-C01-001",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "evidence": ["Both bound-root arms normalize serialization TypeError, OverflowError, and RecursionError.", "Non-serializable payload creates no partial authoritative artifact."],
+      "remaining_uncertainty": "NONE",
+      "repair_commit": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "support_id": "S-O-PRE-C01-001",
+      "tests": ["test_terminal_banking_normalizes_nonserializable_payload", "252 root attacks", "47 outcomes in 235 executions"]
+    },
+    {
+      "challenge_id": "O-PRE-C01-002",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "evidence": ["All descriptor fields are initialized before acquisition.", "The constructor invokes idempotent cleanup on every construction exception."],
+      "remaining_uncertainty": "NONE",
+      "repair_commit": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "support_id": "S-O-PRE-C01-002",
+      "tests": ["test_constructor_closes_retained_descriptors_when_identity_binding_fails"]
+    },
+    {
+      "challenge_id": "O-PRE-C01-003",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "evidence": ["compile, eval, and exec are prohibited semantic execution capabilities.", "The policy is applied to the complete active runtime closure."],
+      "remaining_uncertainty": "NONE",
+      "repair_commit": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "support_id": "S-O-PRE-C01-003",
+      "tests": ["eval/compile mutation", "exec mutation", "direct-parser policy PASS"]
+    },
+    {
+      "challenge_id": "O-PRE-C01-004",
+      "disposition": "REPAIR_IMPLEMENTED",
+      "evidence": ["Relative imports are prohibited rather than silently omitted from closure traversal.", "The independently measured active closure remains exactly 32 modules."],
+      "remaining_uncertainty": "NONE",
+      "repair_commit": "456b5d8d32bab01fb00fb98c25b1261be42e94e7",
+      "support_id": "S-O-PRE-C01-004",
+      "tests": ["relative-import mutation", "43 measured implementation bindings", "32-module closure census"]
+    },
+    {
+      "challenge_id": "O-PRE-C01-005",
+      "disposition": "ANSWERED_BY_EXISTING_EVIDENCE",
+      "evidence": ["Root/decode campaign: 47 outcomes times five executions equals 235.", "Retained runtime campaign: three ordinary and five high-risk repetitions equals 201.", "Both independently report 47 of 47 outcomes and zero generic fallback."],
+      "remaining_uncertainty": "NONE",
+      "repair_commit": null,
+      "support_id": "S-O-PRE-C01-005",
+      "tests": ["f017-v10-root-continuity-bounded-decode-qualification-v9", "f017-event04-runtime-hardening-qualification-v10-v9"]
+    }
+  ]
+}

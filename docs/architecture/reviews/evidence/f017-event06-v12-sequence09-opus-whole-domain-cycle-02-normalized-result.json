@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-opus-whole-domain-result/1.0.0",
+  "reviewed_commit": "7b19119d6382b7ce435242de789ed1274e741e2b",
+  "reviewed_tree": "c6733547be7cfe13a8717ea8452ec144e672ec5b",
+  "verdict": "ACCEPT_FOR_FRESH_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_06_GO",
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "advisory_findings": 3,
+  "unresolved_claims": 0,
+  "conditional_acceptance": false,
+  "claim_verdicts": [
+    {"claim_id": "C-PREQUAL-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-CAPABILITY-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-TRANSACTION-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-READINESS-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-INSTALL-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-PROVENANCE-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-MUTATION-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-OUTCOME-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-NOACCESS-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-CORPUS-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-CI-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-REVIEW-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-FREEZE-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-HISTORY-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-SAFETY-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"},
+    {"claim_id": "C-LAYERING-001", "verdict": "ACCEPT", "invalidation_disposition": "NOT_INVALIDATED"}
+  ],
+  "finding_ids": ["F-ARB2-A01", "F-ARB2-A02", "F-ARB2-A03"],
+  "reproduction_report_path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-authoritative-qualification-reproduction-v3.json",
+  "reproduction_report_sha256": "561e0a0f1a9673c4c30d55fb3b9158f2059ce76b714cf29e7c3b3415e7efc6f5"
+}

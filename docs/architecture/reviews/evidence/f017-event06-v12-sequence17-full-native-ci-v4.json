@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence17-full-native-ci/1.3.0",
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "run_id": 33266610898,
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/33266610898",
+  "head_sha": "eda06fae6797e410be15c256913a0be4ebfc5a15",
+  "mode": "FULL_NATIVE",
+  "classifier_job": {"job_id":99137668530,"conclusion":"success"},
+  "native_jobs": [
+    {"job_id":99137685668,"name":"Apple Silicon workspace baseline","conclusion":"success"},
+    {"job_id":99137685647,"name":"Apple MLX small-fixture validation","conclusion":"success"}
+  ],
+  "native_jobs_launched": 2,
+  "aggregate_job": {"job_id":99139335507,"conclusion":"success"},
+  "required_native_skips": 0,
+  "unexpected_native_skips": 0,
+  "routing_jobs_skipped_as_inapplicable": [
+    "Evidence integrity",
+    "Closed F017 branch guard",
+    "Documentation integrity"
+  ],
+  "result": "PASS"
+}

@@ -1,0 +1,20 @@
+{
+  "active_generation": "NONE",
+  "bridge_digest": "83712e17780debafc7981b17b996ac944bda9883a35b98f682a0f0163474e88b",
+  "event_06_executed": false,
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "implementation_tree": "d5bc4245ff2bf2d93a8640d8fb5e878d6ca1fbbf",
+  "nodes": [
+    {"node": "B0_PROMPT_AND_STARTING_AUTHORITY", "status": "PASS"},
+    {"node": "B1_FAILURE_RECONSTRUCTION", "status": "PASS"},
+    {"node": "B2_DESIGN_AND_ADVERSARIAL_REVIEW", "status": "PASS"},
+    {"node": "B3_BRIDGE_IMPLEMENTATION", "status": "PASS"},
+    {"node": "B4_SYNTHETIC_QUALIFICATION", "status": "PASS"},
+    {"node": "B5_FULL_NATIVE_CI", "status": "RUNNING"},
+    {"node": "B6_WHOLE_DOMAIN_REVIEW", "status": "PENDING"},
+    {"node": "B7_FINAL_RECONCILIATION", "status": "PENDING"}
+  ],
+  "original_checkpoint_access": 0,
+  "result": "IN_PROGRESS",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-graph-state/1.0.0"
+}

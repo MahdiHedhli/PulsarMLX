@@ -1,0 +1,47 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-claim-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "claims": [
+    {
+      "claim_id": "E-REF-001",
+      "statement": "The current lineage and accepted V11 authority are exact.",
+      "dependencies": [],
+      "evidence": ["27/27 authority-manifest bindings PASS", "31/31 measured paths PASS", "measured path changes after implementation head 0"],
+      "challenges": [],
+      "support": "SUPPORTED",
+      "arbiter_verdict": null,
+      "invalidated_nodes": [],
+      "readiness_critical": true,
+      "status": "SUPPORTED"
+    },
+    {
+      "claim_id": "E-REF-002",
+      "statement": "No competing process owns Event 05.",
+      "dependencies": [],
+      "evidence": ["one authoritative worktree", "zero competing Event 05 processes", "zero task locks"],
+      "challenges": [],
+      "support": "SUPPORTED",
+      "arbiter_verdict": null,
+      "invalidated_nodes": [],
+      "readiness_critical": true,
+      "status": "SUPPORTED"
+    },
+    {
+      "claim_id": "E-REF-003",
+      "statement": "The final CI, review, readiness declaration, and measured live authorizer are mutually usable.",
+      "dependencies": ["E-REF-001"],
+      "evidence": ["final-head EVIDENCE_ONLY run 33013599030 PASS", "measured authorizer readiness field check fails against accepted declaration"],
+      "challenges": ["READINESS_DECLARATION_INTERFACE_MISMATCH"],
+      "support": "CONCEDED",
+      "arbiter_verdict": null,
+      "invalidated_nodes": ["E1","E2","E3","E4","E5","E6","E7","E8","E9","E10","E11","E12","E13"],
+      "readiness_critical": true,
+      "status": "REJECTED"
+    }
+  ],
+  "accepted": 0,
+  "supported": 2,
+  "rejected": 1,
+  "unresolved": 0,
+  "result": "TERMINAL_FAILURE_AT_E0"
+}

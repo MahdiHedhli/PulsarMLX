@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-interface-inventory/1.0.0",
+  "superseded_interfaces": [
+    {
+      "artifact": "LIVE_GO",
+      "field_count": 16,
+      "source": "scripts/research/f017_event06_live_go_contract_v3.py"
+    },
+    {
+      "artifact": "APPROVAL",
+      "field_count": 12,
+      "source": "scripts/research/f017_event06_live_go_contract_v3.py"
+    },
+    {
+      "artifact": "EVENT_IDENTITY",
+      "field_count": 9,
+      "source": "scripts/research/f017_event06_live_go_contract_v3.py"
+    },
+    {
+      "artifact": "PREPARATION_RECEIPT",
+      "field_count": 21,
+      "source": "scripts/research/f017_event06_production_installation_v3.py"
+    }
+  ],
+  "total_fields_across_four_artifacts": 58,
+  "historical_simplicity_precedent": {
+    "path": "docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json",
+    "sha256": "13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8",
+    "field_count": 8,
+    "authority_disposition": "SIMPLICITY_PRECEDENT_ONLY_NOT_CURRENT_AUTHORITY"
+  },
+  "collapsed_go_field_count": 8,
+  "schemas_and_field_censuses_classification": "REPAIRABLE_INTERFACES",
+  "result": "PASS"
+}

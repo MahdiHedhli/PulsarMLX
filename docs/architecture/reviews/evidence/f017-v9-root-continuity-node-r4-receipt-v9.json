@@ -1,0 +1,13 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v9.json", "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v9.json", "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v10.json"],
+  "claims_closed": ["C-QUAL-001", "C-QUAL-002", "C-QUAL-003", "C-QUAL-004", "C-QUAL-005"], "claims_introduced": [], "claims_invalidated": [],
+  "commands_executed": ["root/decode qualification", "retained runtime qualification", "production-shaped rehearsal"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"implementation_measurement": "a601a0be4e6f2b4afe3f487798e327d1ee045fd7e5eddb48a860447feffe59c6"},
+  "input_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7", "next_eligible_edges": ["R5"], "node_id": "R4",
+  "output_head": "456b5d8d32bab01fb00fb98c25b1261be42e94e7", "result": "PASS",
+  "result_counts": {"decode_cases": 204, "modeled_outcome_executions": 235, "retained_runtime_failures": 201, "root_cases": 252, "successful_packages": 110},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["252 root attacks", "204 decode attacks", "47 outcomes in 235 executions", "50 retained runtime packages", "60 root/decode successes", "production-shaped no-access rehearsal"]
+}

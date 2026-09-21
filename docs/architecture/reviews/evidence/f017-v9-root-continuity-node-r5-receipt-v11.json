@@ -1,0 +1,45 @@
+{
+  "checkpoint_access_census": {
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_shard_opens": 0
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v11.json"
+  ],
+  "claims_closed": [
+    "C-CI-001",
+    "C-CI-002",
+    "C-CI-003"
+  ],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": [
+    "gh run view 32882085157",
+    "inspect all required jobs and native skip census"
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {
+    "measurement_v17": "826928fecad2c209ce25c5a8e393d2663f21cd24de1d517e6d9c4cf248fbba1d"
+  },
+  "input_head": "07ebd970fb1fd4ad8c89194d0a589443859d2ad4",
+  "next_eligible_edges": [
+    "R7",
+    "R8_CYCLE_07"
+  ],
+  "node_id": "R5",
+  "output_head": "07ebd970fb1fd4ad8c89194d0a589443859d2ad4",
+  "result": "PASS",
+  "result_counts": {
+    "full_native_run_id": 32886210156,
+    "native_required_skips": 0,
+    "required_jobs_passed": 4
+  },
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": [
+    "workspace baseline",
+    "pinned native MLX",
+    "historical/active authority split",
+    "root/decode policy and qualifications"
+  ]
+}

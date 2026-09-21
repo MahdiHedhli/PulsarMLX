@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-opus-whole-domain-normalized-result/1.0.0",
+  "reviewer": "claude-opus-5",
+  "effort": "high",
+  "cycle": 2,
+  "reviewed_head": "c87fbf96475425ec52a6bdfd5aa20984d6d99a13",
+  "reviewed_tree": "cf22d7ec070760c0cbf569c38bbb65a4dc63b0c0",
+  "claim_verdicts": {
+    "C-SCOPE-001": "ACCEPT",
+    "C-SCOPE-002": "ACCEPT",
+    "C-INTERFACE-001": "ACCEPT",
+    "C-VALIDATE-001": "ACCEPT",
+    "C-VALIDATE-002": "ACCEPT",
+    "C-VALIDATE-003": "ACCEPT",
+    "C-RUNTIME-001": "ACCEPT",
+    "C-RUNTIME-002": "ACCEPT",
+    "C-FAIL-001": "ACCEPT",
+    "C-FAIL-002": "ACCEPT",
+    "C-FAIL-003": "ACCEPT",
+    "C-HIST-001": "ACCEPT",
+    "C-SYN-001": "ACCEPT",
+    "C-NOACCESS-001": "ACCEPT",
+    "C-CI-001": "ACCEPT",
+    "C-GO-001": "ACCEPT"
+  },
+  "accepted_claims": 16,
+  "rejected_claims": 0,
+  "unresolved_claims": 0,
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "unresolved_findings": 0,
+  "earliest_invalidated_node": null,
+  "carry_forward_constraints": [
+    "MINT_AUTHORITY_MANIFEST_V4",
+    "LIVE_EXECUTOR_MUST_USE_VALIDATE_PACKAGE_START",
+    "LIVE_IDENTITY_PRODUCER_PROGRESS_CALLBACK_PROHIBITED"
+  ],
+  "global_verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_06_EXECUTION_AUTHORIZATION_PREPARATION"
+}

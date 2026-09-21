@@ -1,0 +1,1 @@
+{"artifact_kind":"checkpoint_access_journal_terminal","payload":{"checkpoint_identity_hash_reads":6,"checkpoint_shard_opens":6,"event_count":6,"unexpected_access_count":0},"schema":"pulsarmlx.f017.v10.runtime.checkpoint_access_journal_terminal/1.0.0"}

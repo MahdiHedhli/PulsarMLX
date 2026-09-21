@@ -1,0 +1,10 @@
+{
+  "event06_executed": false,
+  "historical_master_ledger": 175,
+  "original_checkpoint_access": "NONE",
+  "repair_class": "NO_ACCESS_ASSURANCE",
+  "repair_loop": 8,
+  "result": "PASS",
+  "sandbox_event06_executed_field": false,
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-sandbox-evidence-interface-repair-receipt/1.0.0"
+}

@@ -1,0 +1,21 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-comparison-read-grant-independent-review-result",
+  "schema_version":"1.0.0",
+  "cycle":3,
+  "reviewer_model":"claude-fable-5",
+  "reviewer_track":"INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch":"feat/017-rust-native-inference-runtime",
+  "reviewed_head":"c7e3193d05dfe81576d2a07a633b77ed7aa52d9c",
+  "request":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-03-review-request-v1.json","sha256":"9132509603ec0420298f19eadee4349e676f46d907d49262062462fcb82dd5e2"},
+  "exact_response":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-03-exact-claude-response-v1.md","sha256":"48b7a4822376360d6f7540644f09973a77fb2e955de91a2adc87ae5dd1f4eac1"},
+  "findings":[
+    {"id":"F017-D35-GRADER-009","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_NON_WEAKENING_NEXT_D0_REVISION","rationale":"Pass/fail booleans, class, oracle, and metric remain exact; the three result labels cover frozen structural/reproducibility classes absent from the existing D0 result vocabulary."},
+    {"id":"F017-D35-GRADER-010","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_FAIL_CLOSED_POST_GRADING_BIND","rationale":"The independently accepted grant SHA is required in the grading result and acceptance validator; runtime also pins counts and all expected registry values. Capture/operand pins will move into the next consumer generation."},
+    {"id":"F017-D35-VALIDATOR-013","severity":"DEFENSE_IN_DEPTH","disposition":"ACCEPTED_FAIL_CLOSED_CONSUMER_ENFORCED","rationale":"The consumer compile-time rejects substituted grant_id and tie semantics; the next validator revision will mirror these checks."}
+  ],
+  "blocking_findings":0,
+  "non_blocking_required_findings":0,
+  "defense_in_depth_findings":3,
+  "verdict":"ACCEPT",
+  "statement":"THE_D3_5_COMPARISON_READ_GRANT_AND_CONSUMER_ARE_ACCEPTED_FOR_EXACTLY_ONE_RECEIPTED_GRADING_EVENT"
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence20-review-cli-capability-census/1.0.0",
+  "agy": {
+    "binary": "agy",
+    "version": "1.1.22",
+    "requested_model": "gemini-3.1-pro-high",
+    "requested_model_available": true,
+    "sanitized_help_sha256": "c26943c81bf16cf55fb35e6152eda42de30f6e09cd671e29dcbc22bc5517fde6",
+    "sanitized_help_bytes": 2675,
+    "all_mandatory_invariants_exposed": true,
+    "sunset_gemini_cli_used": false
+  },
+  "opus": {
+    "binary": "claude",
+    "version": "2.1.235",
+    "requested_model": "claude-opus-5",
+    "sanitized_help_sha256": "71ad650f59e08ae40ede14c534db4f49d8590ee5a4f92f6da2882d3a5560fea6",
+    "sanitized_help_bytes": 16890,
+    "mandatory_missing_invariant": "--restricted",
+    "all_mandatory_invariants_exposed": false,
+    "disposition": "REVIEW_TRANSPORT_UNAVAILABLE_WITHOUT_PROBE"
+  },
+  "credentials_exposed": false,
+  "local_paths_committed": false,
+  "result": "PASS"
+}

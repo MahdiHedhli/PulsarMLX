@@ -1,0 +1,24 @@
+{
+  "allowed_json_pointers": [
+    "/candidate_head",
+    "/candidate_tree",
+    "/nonce",
+    "/output_schema/properties/nonce_echo/const",
+    "/output_schema/properties/reviewed_head/const",
+    "/output_schema/properties/reviewed_tree/const"
+  ],
+  "canary_payload_sha256": "0cc29bb029ecf6f62cb7d7a5cb0f223281052c77d4a6b51eccf70758a85a5610",
+  "differing_json_pointers": [
+    "/candidate_head",
+    "/candidate_tree",
+    "/nonce",
+    "/output_schema/properties/nonce_echo/const",
+    "/output_schema/properties/reviewed_head/const",
+    "/output_schema/properties/reviewed_tree/const"
+  ],
+  "only_nonce_head_tree_differ": true,
+  "real_payload_sha256": "b3d4dc3e6ef5326ec7240b3d6ae194748082bc71bfd9dc488b2bc90184475ba5",
+  "result": "PASS",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-canary-real-payload-diff/1.0.0"
+}

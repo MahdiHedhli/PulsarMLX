@@ -1,0 +1,41 @@
+{
+  "schema": "pulsarmlx.f017.native-p1-execution-event-ledger",
+  "schema_version": "1.0.0",
+  "event_class": "NATIVE_P1_EXECUTION_EVENT",
+  "historical_master": {
+    "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "before": 175,
+    "after": 175,
+    "delta": 0,
+    "unit": "BOUNDED_EXPLICIT_TENSOR_PAYLOAD_READ",
+    "disposition": "UNCHANGED_NATIVE_EXECUTION_IS_A_DISTINCT_EVENT_CLASS"
+  },
+  "native_event_count_before": 0,
+  "native_event_count_after": 1,
+  "native_event_delta": 1,
+  "events": [
+    {
+      "ordinal": 1,
+      "authorization_id": "F017-NATIVE-BOUNDED-P1-AUTHORIZATION-1",
+      "attempt_id": "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+      "durable_start_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-durable-start-v1.json",
+      "durable_start_sha256": "35d95dacd3b0464c6f12d70adf318f60869b1d4366c04c8508be06948844b965",
+      "execution_evidence_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json",
+      "execution_evidence_sha256": "c3dcc92cec8fde419bfdb437e0191a768fce8f48fc78b2e4b78171164caafb7b",
+      "terminal_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-terminal-v1.json",
+      "terminal_sha256": "de5f918324048fec8e49d63a60d9db6ba536171f4e1ea0dae6f5e5ddfdf7a6ed",
+      "terminal_state": "TERMINAL_FAILURE_NO_RETRY",
+      "prompt_token": 9703,
+      "produced_token": 17351,
+      "expected_token": 21615,
+      "receipt_count": 0,
+      "receipt_sha256": null,
+      "accounting_closure": "FAIL",
+      "count_basis": "DURABLE_OWNED_START_NOT_MANUAL_PAYLOAD_LEDGER_INCREMENT"
+    }
+  ],
+  "receipt_derived_count_requirement": "NOT_SATISFIED_BECAUSE_FAILURE_PATH_EMITTED_NO_RECEIPT",
+  "ledger_status": "FAIL_CLOSED_EVENT_RECORDED_WITH_NONCONFORMITY",
+  "retry_permitted": false
+}

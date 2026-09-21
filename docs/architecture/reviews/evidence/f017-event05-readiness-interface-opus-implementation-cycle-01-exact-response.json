@@ -1,0 +1,69 @@
+## F017 Event 05 readiness interface — IMPLEMENTATION ARBITER cycle 01
+
+**Head check.** `git rev-parse HEAD` → `39d7045db0c9318408d041267efa467028495c02`. Detached (no symbolic ref), working tree clean. This equals the detached checkout under review. Model `claude-opus-5`, high effort, read-only (no repository bytes written; all probes ran in private temp roots).
+
+---
+
+### What I reproduced independently
+
+**E0, both legs, exactly.** `docs/.../f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json` → sha256 `e7b2ce81…` (matches the reproduction record), schema `…/11.0.0`, 39 fields, all-lowercase keys; `read_artifact` raises `ArtifactDecodeError: noncanonical JSON artifact bytes`. The historical authorizer blob at `53c114f7` hashes to `474fd9e3…` and requires `F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS == "ACCEPTED"`, `READY_FOR_…_GO == "YES"`, `ACTIVE_CORRECTED_ORACLE_GENERATION == "V11"` (lines 163–165) against a producer emitting lowercase keys with a compound string and boolean `true`.
+
+**Mechanical gates at HEAD.** Design validator → PASS (56 fields, 0 uppercase aliases, 226 planned mutations, 31 authority bindings). `generate_f017_event05_readiness_interface_manifest_v1.py --check` and `generate_f017_v11_measurement_v1.py --check` → clean. All 7 readiness-authority unit tests pass. The qualification campaign re-run at HEAD is **byte-identical** to the committed evidence (`206e8c12…`, 49 771 bytes): 226 cases, 0 unexpected passes, 20 fresh processes with 1 distinct candidate digest, all 10 mandatory named mutations PASS, all side-effect counters 0.
+
+**Mutation sweep (mine, beyond the committed plan).** 259/259 rejected: every one of the 56 fields rejects drop / uppercase-alias / type-substitution / null; every one of the 35 exact predicates rejects value drift; conflicting uppercase alias, int-for-bool, str-for-bool, bool-for-int, uppercase SHA, path traversal, absolute path and duplicate JSON keys all rejected.
+
+**Gemini cycle-02 repair, retested without mocking production authority.** Using the real `_candidate_context(PRODUCTION_CATALOG)`: baseline rederivation PASS (primary + secondary PASS); **all 35 candidate fields mutated individually → 35/35 rejected**; catalog substitution → `V11 live candidate rederivation`; validation-only approval swap and expired-approval swap → `Event 05 approval posture`; forged install → rejected with **no canonical authorization and no receipt written**; `live:true` candidate → rejected by the V10 projection as `future-live candidate posture`. Validation-only vs live candidates share an identical key set and differ only in `operator_approval_path`/`operator_approval_sha256` — both inside the declared allowlist. Validation-only rendering wrote exactly one file (the candidate) and nothing else; 0 checkpoint opens/reads, 0 numerical ops, 0 IDs consumed.
+
+**Why `live:false` is required.** `f017_corrected_oracle_authorization_v11.parse_candidate_bytes` projects every candidate onto the V10 model, and `v10.parse_candidate_bytes:78` fails closed on `value["live"] is not False` for the live key set. Authority is conferred only by `_install(..., authoritative=True)` — `O_CREAT|O_EXCL`, fsync, byte-readback — plus the bound `CANONICAL_LIVE` receipt that `validate_installed_operator_go` re-verifies. Demanding a `live:true` candidate would demand a structurally unparseable artifact. Confirmed empirically.
+
+**Zero access / no live authority.** No Event-05 operator approval, live authorization or installation receipt exists at HEAD; the GO template is `INERT_TEMPLATE_NOT_APPROVAL` with all identity fields null. Tombstone verified against real git objects (`d98a2fed`, `7d8fe6bb`). Only the generation-pinned V9/V10 authorizers retain uppercase readiness checks; the V11 path has exactly one readiness route.
+
+---
+
+### Blocking finding
+
+**F-A (BLOCKING) — the final readiness declaration is uninstantiable at HEAD.** `_validate_bound_authority` reads `full_native_evidence_path`, `evidence_only_evidence_path`, `gemini_result_path`, `opus_result_path`, the manifest and the measurement through `read_artifact` with `DEFAULT_LIMITS` (`require_canonical_bytes=True`). At HEAD:
+
+| bound artifact | status |
+|---|---|
+| implementation measurement v5 | CANONICAL |
+| `f017-event05-readiness-interface-full-native-ci-v2.json` | **NONCANONICAL** |
+| `f017-event05-v11-terminal-failure-evidence-only-ci-v1.json` | **NONCANONICAL** |
+| gemini whole-domain cycle-03 normalized result | **NONCANONICAL** |
+
+I attempted the instantiation against the real committed evidence: it failed at `f017_bounded_artifact_decode_v1.py:200` with `noncanonical JSON artifact bytes` — the *first leg of E0*, recurring one hop out. Re-emitting those three artifacts through `canonical_bytes` (and nothing else) makes the declaration validate end-to-end (`a8bb836b…`, head `3f81a59d`, tree `b0534b39bdff…`, run 33038039750). No contract, mutation-plan case, CI gate or review protocol requires canonical bytes for the transitively-read evidence; the campaign banks its bound artifacts synthetically through `canonical_bytes`, so nothing exercises the real producers. The repository already emits canonical CI records elsewhere (`f017-event04-runtime-hardening-full-native-ci-v2…v6`), so the convention exists and the repair is mechanical. Fail-closed, not fail-open. Earliest invalidated node: **R2** (design authority + preregistered mutation plan).
+
+### Non-blocking-required findings
+
+**F-B — `measured_implementation_tree` names an object that does not exist.** `whole-domain-review-manifest-v2.json:7` and `full-native-ci-v2.json:9` both record `b0534b399877c016e559973d9ad4a47cc00d9ab2`. `git cat-file` reports no such object; the true tree of `3f81a59d` is `b0534b39bdff53161cbf9de4cd5863548d826852`, which is what measurement v5 and scientific-access v11-v5 record — the same measurement v5 those two documents bind by sha256 in the same file. Fail-closed (a declaration carrying the bad tree is rejected with `readiness implementation measurement`). Earliest invalidated node: **R8**.
+
+**F-C — the whole-domain cycle-03 closure is not sound.** 12/12 DEFENDED, 0 open, at head `43d46bcb` — the commit that *introduced* the manifest carrying F-B, while its own `BINDING_FRAUD` row claims verification of "exact equality of `measured_implementation_head`, tree SHAs". Its `ASYMMETRIC_CANDIDATE` row cites evidence that is false in this repository (`render_rehearsal_candidate` builds its candidate inline at lines 47–65; it does not call `build_operator_go_candidate`). It also did not reach F-A on the artifacts it was reviewing. Earliest invalidated node: **R9**.
+
+### Defense-in-depth
+
+Versioning decision still names successor revisions `V4`/`V4`/`V11_V4` where the graph landed on manifest v3 / measurement v5 / scientific-access v11-v5; the R8 receipt records `output_head 69824ea2` for a node whose changed path is absent from that tree.
+
+---
+
+### Claim verdicts
+
+| Claim | Verdict | Basis |
+|---|---|---|
+| C-SCHEMA-001 | **ACCEPT** | 56 required fields, 56 unique, zero non-lowercase, `field_count` 56, `field_vocabulary` LOWERCASE_SNAKE_CASE_ONLY — recounted at HEAD. |
+| C-SCHEMA-002 | **ACCEPT** | `exact_types` is an exact 56-name partition (11/11/14/2/8/2/8), no duplicates; predicates (35) ⊎ free-value (21) = 56 exactly, zero overlap; all predicate values type-consistent and now gated at `validate_f017_event05_readiness_interface_design_v1.py:104-113`; plan floor 226 ≥ 220. |
+| C-VALIDATOR-001 | **ACCEPT** | One validator, one entrypoint, bounded canonical decode before semantics, exact key/type census, transitive bound bytes, immutable `MappingProxyType` return; 259/259 mutations rejected; named canonical exclusive emitter exists. |
+| C-AUTHORIZER-001 | **ACCEPT** | Zero uppercase/ad-hoc readiness logic in the V11 path (census); single route to `validate_readiness_declaration`; the cycle-02 forgery challenge is genuinely closed (35/35 field mutations, catalog substitution, approval swap, expiry — all rejected before any exclusive write). |
+| C-INSTANT-001 | **ACCEPT** | One shared builder for both postures; identical key sets; only allowlisted differences; 20 fresh-process constructions byte-identical; validation-only isolation has zero side effects. |
+| C-INSTANT-002 | **REJECT** | F-A. Earliest invalidated node: R2. |
+| C-BIND-001 | **REJECT** | F-B. All sha256 bindings close (22 review-manifest + 31 authority-manifest + 52 scientific-access + 34 measured paths, zero mismatches), but the head/tree leg does not: the packet's own binding manifest self-contradicts. Earliest invalidated node: R8. |
+| C-SAFETY-001 | **ACCEPT** | All 18 frozen safety predicates and all six alias-policy switches enforced; every alias, normalization, unknown-key and duplicate-key vector rejected. |
+| C-LEGACY-001 | **ACCEPT** | Tombstoned blobs exist and hash exactly; E0 reproduced from committed bytes; live minting from the uppercase interface prohibited; historical blob is not active behaviour. |
+| C-CI-001 | **ACCEPT** | Run 33038039750, `required_native_skips` 0, `numerical_drift` 0, `result_authority_drift` 0, 4 required jobs success, head `69824ea2` / tree `0c7cfc06` verified against git. The run head is an ancestor of HEAD, but the four intervening commits add review evidence only — zero code, contract or workflow change — and I re-executed every CI-bound gate green at HEAD. `readiness_mutations: 227` = 226 campaign + 1 supplemental install mutation, as the R7 receipt documents. Its two defects are charged to C-BIND-001 and C-INSTANT-002. |
+| C-REVIEW-001 | **REJECT** | F-C. Earliest invalidated node: R9. |
+| C-GO-001 | **REJECT** | The declaration that would carry the go cannot be produced at HEAD. Earliest invalidated node: R2. |
+
+**Counts** — blocking: **1**; non-blocking-required: **2**; unresolved: **0**. (Defense-in-depth: 1.) Claims: 8 ACCEPT, 4 REJECT, 0 UNRESOLVED. Original checkpoint access observed across every probe: **0**. Live Event-05 authorization created: **false**.
+
+The implementation itself is strong — the canonical validator, the shared builder and the install-time rederivation all survived everything I threw at them, and the cycle-02 forgery repair is real. What fails is the seam this graph exists to eliminate: the readiness consumer now transitively reads the CI and review evidence, and those producers were never instantiated against it.
+
+REJECT

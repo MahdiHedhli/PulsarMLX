@@ -1,0 +1,90 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-independent-review-result/2.0.0",
+  "review_cycle": 2,
+  "temporary_reviewer_substitution": {
+    "active": true,
+    "reason": "CLAUDE_FABLE_5_QUOTA_EXHAUSTED",
+    "fable_ratification_pending": true
+  },
+  "reviewer": {
+    "identity": "claude-opus-5",
+    "canonical_model": "claude-opus-5",
+    "provider": "Anthropic firstParty via Claude Code CLI",
+    "track": "temporary-whole-domain-interim-independent-rereview",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235",
+    "invocation": "claude --model claude-opus-5 --effort high --output-format json --dangerously-skip-permissions -p <exact committed request>",
+    "session_id": "e63f04de-2718-4932-8823-0d14a81af866",
+    "service_tier": "standard",
+    "num_turns": 113,
+    "duration_ms": 1214702
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_commit": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+  "review_worktree": "DETACHED_CLEAN_EXACT_REVIEWED_COMMIT",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-request.md",
+    "sha256": "a597f14e65221d1ee78874f0d21e5c939b33cdb3c35b7f0d2d3f79b72195b5db"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-cycle-02-exact-cli-response.json",
+    "sha256": "b89eb63d7ae372ae4f226ec0a60db3640b8740d01b130de33b058e4cfbaa4251"
+  },
+  "exact_head_ci": {
+    "run_id": 32572958959,
+    "head": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+    "conclusion": "success",
+    "reviewer_inspected_directly": true,
+    "native_qualification_skips": 0
+  },
+  "c1_repairs": [
+    {"finding_id": "F017-OPUS-C1-F1", "status": "REPAIRED_INDEPENDENTLY_REPRODUCED"},
+    {"finding_id": "F017-OPUS-C1-F2", "status": "REPAIRED_DIRECT_CI_CONFIRMED"}
+  ],
+  "tests_performed_by_reviewer": [
+    "direct CI run and native-job log inspection",
+    "38 contract-declared SHA recomputations",
+    "ten-fresh-process receipt-v2 synthetic qualification",
+    "receipt/terminal/summary/counter census verification",
+    "replay rejection",
+    "14 negative authority mutations",
+    "relative and absolute attempt-id traversal exploits",
+    "8-way concurrent race",
+    "cargo test -p stream --lib: 45 passed",
+    "cargo test -p f017-native --release: 8 passed",
+    "cargo test -p quant: 44 passed",
+    "plan-only and validate-contract",
+    "machine-preflight",
+    "contract rebuild reproduction",
+    "D3.5 grants, diagnostics, mapping, grading and ledger audits",
+    "tiny fixture independent regeneration"
+  ],
+  "findings": [
+    {
+      "id": "F017-OPUS-C2-F1",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "title": "attempt_id path traversal succeeds and relocates durable evidence outside the contract state root",
+      "affected": ["crates/stream/src/p1_domain.rs::OwnedAttempt::claim", "crates/stream/src/p1_domain.rs::validate_authority", "crates/f017-native/src/bin/bounded_p1.rs"],
+      "evidence": "Both ../../ESCAPED and an absolute attempt_id completed successfully and wrote receipt/terminal outside the bound state root.",
+      "required_repair": "Reject unsafe authorization_id and attempt_id grammar; bind attempt_id to committed human approval/contract authority before execution.",
+      "fresh_ci_required": true,
+      "status": "ACCEPTANCE_BLOCKING"
+    },
+    {"id": "F017-OPUS-C2-F2", "severity": "DEFENSE_IN_DEPTH", "title": "CI builds a synthetic binary it does not run", "disposition": "Pinned committed binary is independently SHA-bound and checkpoint-unreachable; close source/binary reproducibility alongside future build rebind."},
+    {"id": "F017-OPUS-C2-F3", "severity": "DEFENSE_IN_DEPTH", "title": "Prior review incorrectly stated zero path overlap for disclosed diagnostics", "disposition": "All paths overlap after HOME expansion, but D0 froze first and grant has no tolerances; correct rationale in later assurance evidence."},
+    {"id": "F017-OPUS-C2-F4", "severity": "DEFENSE_IN_DEPTH", "title": "Zero-checkpoint fields are structural constants rather than measured counters", "disposition": "Checkpoint unreachability is structurally enforced; bind a real I/O-boundary counter before real P1."},
+    {"id": "F017-OPUS-C2-F5", "severity": "DEFENSE_IN_DEPTH", "title": "Historical master ledger is object-graph-bound rather than copied into the native head", "disposition": "Exact historical commit/path/SHA and receipt continuity were independently confirmed; preserve cross-branch authority binding."},
+    {"id": "F017-OPUS-C2-F6", "severity": "DEFENSE_IN_DEPTH", "title": "CI semantically re-derives but cannot byte-rederive the contract-bound qualification artifact", "disposition": "Execution code is unchanged between evidence and repair head; semantic fields and summaries independently match."}
+  ],
+  "blocking_count": 0,
+  "non_blocking_required_count": 1,
+  "defense_in_depth_count": 5,
+  "verdict": "REJECT",
+  "invariants": {
+    "fable_ratification_pending": true,
+    "real_m1_ultra_p1_executed_during_review": false,
+    "full_model_real_checkpoint_inference_executed_during_review": false,
+    "original_checkpoint_reads_during_review": 0,
+    "live_p1_authorization_created_during_review": false
+  }
+}

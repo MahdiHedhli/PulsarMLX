@@ -1,0 +1,158 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-ratification-result/1.0.0",
+  "cycle": 1,
+  "reviewer_policy": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-policy-transition-v1.json",
+    "sha256": "c2608b669c3bebf986d2735a156431ee4f3babb1fa648006f257dffec73c187c",
+    "operator_authorized_final_reviewer": "claude-opus-5"
+  },
+  "reviewer": {
+    "model": "claude-opus-5",
+    "provider": "firstParty",
+    "effort": "high",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235 (Claude Code)",
+    "session_id": "f582c1ed-acf4-4298-bd4b-90ec1d7069d4",
+    "fresh_session": true,
+    "turns": 92
+  },
+  "reviewed_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "implementation_head": "ab236b924f7dd7a95d226c5bb528315a4a68d72c",
+    "request_evidence_head": "3f1cd5a13dd3aa4c146f33202f1d06505cf3ce9d",
+    "exact_head_ci_run": 32574711605,
+    "exact_head_ci_conclusion": "success",
+    "detached_clean_worktree": true
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-01-request.md",
+    "sha256": "8400bdb8a0e9f36aeebe08789f8c42465f6b187efb28623ce9265ab9ab254d2c"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-01-exact-cli-response.json",
+    "sha256": "b627c169b3c9b241a642eda370c1834846545ab010ff798c51c24aa8c518e6d4",
+    "is_error": false,
+    "stop_reason": "end_turn"
+  },
+  "independent_attack_results": {
+    "load_bearing_hashes": "17/17 MATCH",
+    "ci_log_sha256": "779f7ce02b334975a6b9c61f5848dab803f6e14a6c62478aa432fcab0fdf9670",
+    "c3_request_sha_discrepancy": "RESOLVED_AS_TWO_TRUTHFUL_GIT_REVISIONS_WITH_NO_SCOPE_CHANGE",
+    "live_executor_mutation_differential": "22/22 IDENTICAL_REJECTION_BEHAVIOR",
+    "live_attempt_id_traversal": "REJECTED_WITH_ZERO_STATE",
+    "d3_5_receipts": "89/89 EXACT; ZERO ORIGINAL_CHECKPOINT_READS",
+    "d0_stage_bindings": "34/34 MATCH",
+    "d0_ocb_ordinals": "20,21,25,27,28 RECOMPUTED AND PASS",
+    "routing": "MEMBERSHIP_ORDER_TIES_STRUCTURAL_FIRST_PASS",
+    "checkpoint_plan": "6 SHARDS; 1809 TENSORS; ZERO PLAN_ONLY PAYLOAD OPENS",
+    "quantization": "11/11 FORMATS BOUND AND EXERCISED",
+    "accounting": "22/22 LIVE PRODUCERS; ALL_ZERO_MUTATION_ACCEPTED",
+    "receipt_mutations": "29/29 REJECTED EXCEPT SEPARATE ALL_ZERO_ACCOUNTING CASE",
+    "rn1": "REPLAY_CONCURRENCY_TRAVERSAL_SYMLINK_ATTACKS_CONTAINED",
+    "runtime": "M1_ULTRA_ARM64_MLX_MLXC_DYLIB_MEMORY_BINDINGS_MATCH",
+    "historical_ledger": "CONTINUOUS_TO_175; NATIVE_ACCOUNTING_SEPARATE",
+    "synthetic_full_model": "10/10 BANKED AND SOURCE-BUILT RUNS PASS; BANKED EXECUTABLE IS PRE-REPAIR",
+    "b1_b2": "B1 MISSING-FREE AND B2 SOURCE-FIRST_NO-EVAL_NO-SYNC PASS",
+    "safety": "NO_P1_NO_CHECKPOINT_READ_NO_LIVE_AUTHORIZATION"
+  },
+  "findings": [
+    {
+      "id": "F017-OPUS-C4-01",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "The load-bearing full-graph synthetic authority attests to pre-containment-repair bytes demonstrated to permit attempt-root traversal.",
+      "required_repair": "Rebuild and rebind the exact-head synthetic executor, rerun ten fresh processes, rebank evidence, and rebind the admission contract."
+    },
+    {
+      "id": "F017-OPUS-C4-02",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "CI builds a source binary but executes a different banked binary while stamping the current Git head.",
+      "required_repair": "Execute the built binary and derive execution-code identity from the binary provenance; run fresh exact-head CI."
+    },
+    {
+      "id": "F017-OPUS-C4-03",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "Accounting validators accept a semantically inert all-zero 22-counter delta pair.",
+      "required_repair": "Require concrete owned-stream, native-free, registration, teardown, managed-owner, and callback liveness deltas and reject all-zero deltas."
+    },
+    {
+      "id": "F017-OPUS-C4-04",
+      "severity": "NON_BLOCKING_REQUIRED",
+      "summary": "The operator authorizer hard-pins claude-fable-5 and verdict ACCEPT, so it rejects the operator-authorized Opus final verdict.",
+      "required_repair": "Rebind authorizer and tests to the operator-authorized reviewer and exact final verdict vocabulary, then rebind code and executor authority."
+    },
+    {
+      "id": "F017-OPUS-C4-05",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The 16 GiB memory floor is asserted rather than derived, and abort terminal semantics remain incomplete.",
+      "disposition": "Availability hardening; derive measured peak and optimize large temporary allocations before live scheduling."
+    },
+    {
+      "id": "F017-OPUS-C4-06",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "RoPE is absent in the P1 producer although position-zero makes it an exact identity for this bounded operation.",
+      "disposition": "Correct the comment and bind/assert position zero in the math layer before any broader-position use."
+    },
+    {
+      "id": "F017-OPUS-C4-07",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The source code manifest omits load-bearing crates/f017-native/src/json.rs.",
+      "disposition": "Add the parser source at the next authority rebind; binary triple-binding currently contains drift."
+    },
+    {
+      "id": "F017-OPUS-C4-08",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Catalog type_id geometry and type decoder channels are not directly cross-checked; bound catalog is 1809/1809 consistent.",
+      "disposition": "Add the cross-check in plan validation before any catalog rebind or live authorization."
+    },
+    {
+      "id": "F017-OPUS-C4-09",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Three accepted D3.5 result labels are outside the frozen D0 result-vocabulary list.",
+      "disposition": "Add an append-only vocabulary registry revision; pass computation is boolean and unaffected."
+    },
+    {
+      "id": "F017-OPUS-C4-10",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The authorizer creates the state root before attempt/contract cross-check, causing an availability-only wedge.",
+      "disposition": "Move state-root creation after all authority validation."
+    },
+    {
+      "id": "F017-OPUS-C4-11",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The real producer lacks the converse inert producer-ID guard; exact executor/backend binding currently contains substitution.",
+      "disposition": "Add explicit inert-ID rejection before live authorization."
+    },
+    {
+      "id": "F017-OPUS-C4-12",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Some Tier-B absolute caps are loose relative to observed errors, with cosine serving as the governing discriminator.",
+      "disposition": "Preserve frozen a-priori bounds; document cosine as governing or revise only through append-only predeclared D0 methodology."
+    },
+    {
+      "id": "F017-OPUS-C4-13",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Historical C2-F6 unchanged-code wording became false after repair; exact-head rederivation repairs substance.",
+      "disposition": "Bank an append-only historical correction rather than mutate accepted evidence."
+    }
+  ],
+  "prior_c3_reassessment": {
+    "F017-OPUS-C3-F1": "PROMOTED_TO_NON_BLOCKING_REQUIRED_AS_C4_01_AND_C4_02",
+    "F017-OPUS-C3-F2": "RETAINED_AS_C4_13",
+    "F017-OPUS-C3-F3": "DEMOTED_IN_SUBSTANCE_BUT_RETAINED_AS_C4_05",
+    "F017-OPUS-C3-F4": "RETAINED_AS_C4_08",
+    "F017-OPUS-C3-F5": "RETAINED_AS_C4_10",
+    "F017-OPUS-C3-F6": "RETAINED_AS_C4_11",
+    "F017-OPUS-C3-F7": "PROMOTED_TO_NON_BLOCKING_REQUIRED_AS_C4_03"
+  },
+  "counts": {
+    "blocking": 0,
+    "non_blocking_required": 4,
+    "defense_in_depth": 9
+  },
+  "verdict": "REJECT",
+  "safety_state": {
+    "real_m1_ultra_p1_executed_during_review": false,
+    "original_checkpoint_reads_during_review": 0,
+    "live_p1_authorization_created_during_review": false
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-failure-reproduction/1.0.0",
+  "source_head": "41ceba4c6781063dbc6f858a311afaebdfe42979",
+  "source_tree": "4ea5625e4b28f27327b135a758fa24c3a11974e6",
+  "findings": [
+    {
+      "id": "F017-S11-REPAIR-001",
+      "contract_field_count": 14,
+      "producer_field_count": 15,
+      "contract_only": ["event_identity_plan_sha256", "execution_plan_sha256", "human_go_sha256", "operator_approval_sha256", "scope"],
+      "producer_only": ["decision", "live", "prepared_installation_sha256", "readiness_sha256", "target_leaf", "target_parent"],
+      "field_sets_equal": false,
+      "result": "REPRODUCED"
+    },
+    {
+      "id": "F017-S11-REPAIR-002",
+      "prepare_signature_human_go_type": "_SealedDocument",
+      "only_public_sealer": "validate_inert_human_go(raw: bytes) -> _SealedDocument",
+      "accepted_sealer_schema": "pulsarmlx.f017.event06-v12-inert-human-go/1.0.0",
+      "live_schema": "pulsarmlx.f017.event06-v12-future-human-go/2.0.0",
+      "live_schema_sealable_for_preparation": false,
+      "result": "REPRODUCED"
+    },
+    {
+      "id": "F017-S11-REPAIR-003",
+      "historical_identity_field_count": 5,
+      "prompt_binding_accepted": false,
+      "failure_type": "ProductionInstallationError",
+      "failure_detail": "EVENT_IDENTITY field census",
+      "result": "REPRODUCED"
+    },
+    {
+      "id": "F017-S11-REPAIR-004",
+      "sequence09_rehearsal_result": "PASS",
+      "real_signatures_bound": 0,
+      "mock_or_fixture_edges": ["inert human-GO sealer", "inert approval sealer", "unprompted identity plan", "unissued live capability edge", "uncalled production commit edge"],
+      "result": "REPRODUCED"
+    }
+  ],
+  "side_effect_census": {
+    "human_go_documents": 0,
+    "capability_instances": 0,
+    "approvals": 0,
+    "plans": 0,
+    "identities": 0,
+    "checkpoint_root_resolutions": 0,
+    "checkpoint_access": 0,
+    "numerical_operations": 0,
+    "package_starts": 0
+  },
+  "result": "PASS"
+}

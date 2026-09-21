@@ -1,0 +1,10 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-node-receipt/1.1.0",
+  "node": "B5_FULL_NATIVE_CI",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "run_id": 33141124246,
+  "required_native_jobs_passed": 2,
+  "required_native_skips": 0,
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-node-b5-receipt-v1.json",
+  "status": "PASS"
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-result-authority-design-arbiter/1.0.0",
+  "cycle": 2,
+  "reviewed_head": "8bc7c468d685cb446f8187324385104ee87d6bc2",
+  "reviewer": "claude-opus-5",
+  "claim_verdicts": {
+    "C-BIN-002": "ACCEPT",
+    "C-CLOSURE-001": "REJECT",
+    "C-COMP-001": "REJECT",
+    "C-ROUTE-001": "ACCEPT",
+    "C-AUTH-001": "REJECT",
+    "C-TOP32-001": "ACCEPT",
+    "C-LEAF-001": "ACCEPT",
+    "C-BUNDLE-001": "REJECT"
+  },
+  "findings": [
+    {"id":"V11-01","classification":"BLOCKING","summary":"comparison closure trusted caller-built bundle indexes and did not rederive the comparison"},
+    {"id":"V11-02","classification":"BLOCKING","summary":"payload bytes could be relabelled across package and event identities"},
+    {"id":"V11-03","classification":"NON_BLOCKING_REQUIRED","summary":"closure validation used Python equality rather than canonical-byte equality"},
+    {"id":"V11-04","classification":"NON_BLOCKING_REQUIRED","summary":"receipts did not enforce the frozen numerical-contract identity"},
+    {"id":"V11-05","classification":"NON_BLOCKING_REQUIRED","summary":"approved six-leaf bundle behavior lacked committed end-to-end mutations"},
+    {"id":"V11-06","classification":"DEFENSE_IN_DEPTH","summary":"contract wording implied one consumer event rather than distinct role events"},
+    {"id":"V11-07","classification":"DEFENSE_IN_DEPTH","summary":"comparison builder retained unused bounded-parser declarations"}
+  ],
+  "blocking_count": 2,
+  "non_blocking_required_count": 3,
+  "original_checkpoint_access": 0,
+  "global_verdict": "REJECT"
+}

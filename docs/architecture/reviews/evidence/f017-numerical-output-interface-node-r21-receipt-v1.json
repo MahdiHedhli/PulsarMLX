@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id": "R21",
+  "input_head": "cf69ddde9d16c589733196919b61bbe00a291b91",
+  "output_head": "cfbffdf9d3bb892a4bb473ffde6782ceab48c325",
+  "output_tree": "9fc53411a54c0bf39037fea12d4a9017b3d0833c",
+  "input_authorities": {
+    "arbiter_ledger": {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-arbiter-ledger-v4.json","sha256":"243ae220c44443568b6f60eb4ea9b0332e48ff50ed789eee135ff1aa3cc71472"},
+    "full_native_ci": {"path":"docs/architecture/reviews/evidence/f017-v11-event05-full-native-ci-v2.json","sha256":"87b1a86cd3f6450a407e25e852ebae164f686ccae96529259511e1d88c483021"},
+    "evidence_only_ci": {"path":"docs/architecture/reviews/evidence/f017-numerical-output-interface-evidence-only-ci-v2.json","sha256":"9c897b5558ad680d3dd8dc16917c2c10f782bf30e6ac35dc5157345666b0940c"},
+    "authority_manifest": {"path":"docs/architecture/reviews/evidence/f017-event05-result-envelope-authority-manifest-v3.json","sha256":"a473903d2b24b57ecc69197712c71ef7946f3c9a01e8054e24d1d42413319d0a"},
+    "readiness_declaration": {"path":"docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json","sha256":"e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6"}
+  },
+  "changed_paths": [
+    "docs/architecture/reviews/evidence/f017-numerical-output-interface-evidence-only-ci-v2.json",
+    "docs/architecture/reviews/evidence/f017-numerical-output-interface-final-reconciliation-mutations-v1.json",
+    "docs/architecture/reviews/evidence/f017-event05-result-envelope-authority-manifest-v3.json",
+    "docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json"
+  ],
+  "commands_executed": [
+    "exact path/SHA authority binding validation",
+    "V11 implementation and execution-authority validators",
+    "measurement and scientific-access generator check modes"
+  ],
+  "tests_executed": {
+    "coordinated_binding_mutations": 15,
+    "unexpected_mutation_accepts": 0,
+    "readiness_critical_claims_accepted": 15,
+    "full_native_run": 33008441584,
+    "evidence_only_run": 33012864957
+  },
+  "result_counts": {"accepted":15,"rejected":0,"unresolved":0,"blocking":0,"non_blocking_required":0},
+  "claims_introduced": [],
+  "claims_closed": ["C-V11-001","C-V11-002","C-CI-001"],
+  "claims_invalidated": [],
+  "checkpoint_access_census": {"original_checkpoint_access":0},
+  "next_eligible_edges": ["STOP_AT_FRESH_HUMAN_EVENT05_GO"],
+  "result": "PASS"
+}

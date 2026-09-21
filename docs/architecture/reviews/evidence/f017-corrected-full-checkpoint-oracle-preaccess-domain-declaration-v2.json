@@ -1,0 +1,175 @@
+{
+  "schema": "pulsarmlx.f017.corrected-full-checkpoint-oracle-preaccess-domain-declaration/2.0.0",
+  "declaration": "F017_CORRECTED_FULL_CHECKPOINT_ORACLE_PREACCESS_DOMAIN: ACCEPTED",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "declaration_base_head": "876c636013dcc78cd7fa007117b9af02dafa4bcf",
+  "implementation_head": "e00811df76c480b53b1bcab35fcb01ea8475b089",
+  "bound_package_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "historical_authority": {
+    "cross_branch_authority": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json",
+      "sha256": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90"
+    },
+    "historical_branch": "feat/017-real-checkpoint-runner",
+    "historical_commit": "f2a7aa38c96b85cf7939c8ed653076732f066222",
+    "historical_ledger_repository_locator": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+    "master_ledger_sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+    "terminal": 175
+  },
+  "bindings": [
+    {
+      "role": "ATTEMPT_1_OFFLINE_CLOSEOUT",
+      "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-attempt-01-offline-forensics-closeout-v1.json",
+      "sha256": "efc398e1b1a11160b18e174688d99c71cbb15ff7dee629bc978d9b1d8863697a"
+    },
+    {
+      "role": "FORWARD_EVIDENCE_VNEXT",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-forward-failure-evidence-v4.json",
+      "sha256": "41c46f55369a71a632e30669aa848e2b9ffcc24ff69a8e469e7f8f12d66bbf03"
+    },
+    {
+      "role": "PRIMARY_INDEPENDENT_CPU_ORACLE",
+      "path": "scripts/research/f017_corrected_oracle_primary.py",
+      "sha256": "2041c0337ab6f3d98c342f2b0177b5f0cfb249bfed3b4aba8989afdd9396cdf1"
+    },
+    {
+      "role": "SECONDARY_ACCELERATED_CROSS_CHECK",
+      "path": "scripts/research/f017_corrected_oracle_secondary.py",
+      "sha256": "8c4f9fde6991369bbc2549e2daa05896a9d38626bb080ca4f25b715d07bb6e29"
+    },
+    {
+      "role": "NUMERICAL_METHODOLOGY",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-numerical-contract-v1.json",
+      "sha256": "7c22507f15c79713a0f81dcf14ea3472aafef3cf43c09d388a6c021b3f1069c4"
+    },
+    {
+      "role": "PRIMARY_DECODER_AUTHORITY",
+      "path": "scripts/research/f017_oracle_primary_decoders.py",
+      "sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e"
+    },
+    {
+      "role": "SECONDARY_DECODER_AUTHORITY",
+      "path": "scripts/research/qualify_f017_quantization_matrix_v1.py",
+      "sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53"
+    },
+    {
+      "role": "IQ4_XS_PINNED_KNOWN_ANSWER",
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-iq4-xs-ggml-known-answer-v1.json",
+      "sha256": "4564b86d28965c183202e5dc671fda5ed34ee4dff12aa591a814163aedb1d41d"
+    },
+    {
+      "role": "CHECKPOINT_FREE_QUALIFICATION",
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-checkpoint-free-qualification-v1.json",
+      "sha256": "b9c2f7dcd9982120f804594e9e268b7d0d764190625789717d104f4e4829c052"
+    },
+    {
+      "role": "RETAINED_QUALIFICATION_DISPOSITION",
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-retained-qualification-disposition-v1.json",
+      "sha256": "d17ecf4f50a98d5dc02d58c15ff0f1aa97fbea1a4214a6ea69a0bdd87cfcf502"
+    },
+    {
+      "role": "SCIENTIFIC_ACCESS_CONTRACT",
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v1.json",
+      "sha256": "fdff100fc91efc3ca337bd256dd290a6211f18eb6ce38255ed50f30da806b434"
+    },
+    {
+      "role": "INERT_AUTHORIZATION_FIXTURE",
+      "path": "specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v1.json",
+      "sha256": "fb379d7ec2f32cd68a34631a0d6be33138ddde497eb51a48361c8cc6ea9f876e"
+    }
+  ],
+  "qualification": {
+    "result": "PASS",
+    "synthetic_cases": 12,
+    "fresh_process_repetitions": 3,
+    "packed_decoder_cases": 44,
+    "formats": 11,
+    "localized_mutations": 16,
+    "retained_qualification": "NOT_EXECUTED_NO_NEW_CONSUMER_GRANT",
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_payload_reads": 0
+  },
+  "ci": {
+    "full_native_run": 32604077031,
+    "full_native_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+    "full_native_result": "PASS",
+    "evidence_only_run": 32604565394,
+    "evidence_only_head": "34029f179a107c02a1cd28cbb0085c22f12190d9",
+    "evidence_only_result": "PASS",
+    "native_jobs_on_evidence_only_run": 0
+  },
+  "cross_vendor_review": {
+    "model": "gemini-3.1-pro-high",
+    "mechanism": "AGY",
+    "reviewed_head": "34029f179a107c02a1cd28cbb0085c22f12190d9",
+    "request": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-gemini-review-request-cycle-03.md",
+      "sha256": "4e734b6500017f4fa9d584dd52f9cf80014fc9f0cb3bf2871a30feaebf11e0fe"
+    },
+    "response": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-gemini-exact-response-cycle-03.json",
+      "sha256": "50a1e15c12bf2d540a574aac9005b3e98a794aed202ad0fb30193a50c16e59d1"
+    },
+    "result": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-gemini-normalized-result-cycle-03.json",
+      "sha256": "783f51b8ee89c9c334afc4a9a41a08b99b89eb510ec3e39fc15b34c942b56765"
+    },
+    "verdict": "ACCEPT",
+    "material_disagreement": false
+  },
+  "final_independent_review": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "reviewed_head": "34029f179a107c02a1cd28cbb0085c22f12190d9",
+    "request": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-opus-review-request-cycle-03.md",
+      "sha256": "e85850153eea963656b457c6f5b7878e47844cf289ebc34ec61c4a6bc82c5259"
+    },
+    "response": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-opus-exact-response-cycle-03.json",
+      "sha256": "8196f1efe4e3b76f8bade57c9c7f85086e68a934f29383bc0c3f0ac1b237054b"
+    },
+    "result": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-preaccess-opus-normalized-result-cycle-03.json",
+      "sha256": "ec0df5e60340c68a3e33872a19158b0730fe2a2053e2167a75cf21c8716f5ab5"
+    },
+    "verdict": "ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION_PREPARATION",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0,
+    "defense_in_depth_findings": 6,
+    "all_defense_in_depth_dispositions_non_weakening": true
+  },
+  "scope": {
+    "accepted": "Pre-access scientific domain for one separately human-authorized corrected full-checkpoint oracle event with two independently accounted consumers.",
+    "nonclaims": [
+      "The corrected full-checkpoint oracle has not executed.",
+      "No corrected expected token has been established.",
+      "P1 attempt 2 is not authorized or ready.",
+      "No full-model real-checkpoint inference occurred in this phase."
+    ]
+  },
+  "safety": {
+    "P1_ATTEMPT_1_RETRY": "NO",
+    "P1_ATTEMPT_2_EXECUTED": "NO",
+    "LIVE_P1_ATTEMPT_2_AUTHORIZATION_CREATED": "NO",
+    "CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTED": "NO",
+    "LIVE_ORACLE_ACCESS_AUTHORIZATION_CREATED": "NO",
+    "NEW_ORIGINAL_CHECKPOINT_SHARD_OPENS": 0,
+    "NEW_ORIGINAL_CHECKPOINT_PAYLOAD_READS": 0,
+    "FURTHER_REAL_INFERENCE_EXECUTED": "NO",
+    "HISTORICAL_MASTER_LEDGER": 175
+  },
+  "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EXECUTION_AUTHORIZATION": "YES",
+  "READY_TO_PREPARE_P1_ATTEMPT_2_AUTHORIZATION": "NO",
+  "supersedes": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-full-checkpoint-oracle-preaccess-domain-declaration-v1.json",
+    "sha256": "d082a1bd187512d721c0a60464c1cad96ce57bcdde004851c7e58d84f808dfb5",
+    "reason": "V1 failed evidence-only CI because it expressed a cross-branch ledger source as a current-tree path; historical bytes remain immutable."
+  },
+  "evidence_validation_repair": {
+    "failed_run": 32605743228,
+    "failure_class": "CROSS_BRANCH_PATH_RESOLUTION_FAILED_CLOSED",
+    "historical_artifacts_modified": false,
+    "implementation_modified": false
+  }
+}

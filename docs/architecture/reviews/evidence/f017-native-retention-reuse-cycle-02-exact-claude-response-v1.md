@@ -1,0 +1,85 @@
+All verification complete. Every requested hash recomputed and matched, all cycle-1 attacks re-run, all six repairs inspected mechanically, validator/mutation/Rust tests all pass, and no retained bytes, checkpoint data, or executions were touched. One inexactness surfaced (a wrong `json_path` citation inside the repair record) plus two residual hardening gaps — none rise above defense-in-depth.
+
+```json
+{
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_ADVERSARIAL_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "e37732a16f6ef347f067bff00b624f144eb8a961",
+  "reviewed_artifact_hashes": {
+    "grant": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28",
+    "package": "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f",
+    "consumer": "ea4280f4c8a766b80e530888de869ef0ccacee64326133ba14d285b5637a0664",
+    "enforcer": "bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613e43c4427158c5".replace ? "bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613e43c4427158c5" : "bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613e43c4427158c5"
+  }
+}
+```
+I need to correct that malformed output — here is the single JSON object:
+
+```json
+{
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_ADVERSARIAL_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "e37732a16f6ef347f067bff00b624f144eb8a961",
+  "reviewed_artifact_hashes": {
+    "grant": "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28",
+    "package": "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f",
+    "consumer": "ea4280f4c8a766b80e530888de869ef0ccacee64326133ba14d285b5637a0664",
+    "enforcer": "bbab9aabc184b709c4375da5edcc7ac874ac01ee16801b8613e43c4427158c5",
+    "authority_repair": "5e2bb009b630551d5d65438e080f4dc2fe5f9455bbbadf09955a58666b65078a",
+    "validator": "87b2aa51ec9b8033fce2aef4a3319c932b353ce25bc1614a69998cfa6d24a89f",
+    "mutation_tests": "2977db60533d50dbb57fac674f8e37648f72112c02fbee2a36069d146694a560",
+    "architecture": "9b8fc4783933f93d26fcf6a549167dbc630ffb4bf7283fa622c6843888fd08d1",
+    "cycle_01_response": "75af842dc6838d37186b1b3ad3ca9b527c70f003710c0754b959d2b4efd9bae9",
+    "cycle_01_result": "9451bc8a5dadef54400f721f87f36bd9c19845babfb0a22193df8007bb83610a"
+  },
+  "tests_performed": [
+    "all ten reviewed artifact hashes recomputed from committed bytes at detached HEAD e37732a1 and matched the cycle-2 request; working tree verified byte-identical to HEAD",
+    "native package root 03ccbb1b and historical package root 564a33ae independently rederived under the pinned canonicalization (442a444e spec); Rust/Python canonicalization byte-compatibility confirmed (serde_json BTreeMap sorted keys, compact separators, trailing LF)",
+    "40/40 source authority tuples resolved by content hash at their pinned commits and 40/40 source commits verified ancestors of origin/feat/017-real-checkpoint-runner",
+    "40/40 grant-package cross-consistency, ordinal 0-39 census, role uniqueness, quantized byte geometry per encoding (F32_LE/Q5_K/Q6_K/Q8_0/IQ2_XXS/IQ3_XXS), total 257305600 bytes, all paths under the fixed retained-package root",
+    "grant payload identity verified row-by-row against historical package eacab640 at b0011879; authority tuple delta confined to exactly ordinals 10-12",
+    "authority repair verified field-by-field: defect tuple matches historical rows 10-12, declared path unresolvable at every commit of the historical branch, declared sha 17553942 located as the reproduction bundle sha inside the pinned attestation dc53b458, replacement authority c46b00cb at f2a7aa38 on-branch and attesting the exact ordinal 10-12 sha/shape/byte identities bound by the grant, grant sha and both roots bound, no byte rewrites",
+    "D0 cc62cdc7, historical master ledger aa98f5cc (cumulative 175, closure PASS), canonical graph f27df239 byte-identical to crates/f017-runner/src/apple_serial_f32.rs at 2deb3c99, and all architecture/load-bearing source pins recomputed",
+    "F1 repair mechanics traced: one durable owner (owner.json + durable-attempt-start.json) published before any retained read; 10 in-process runs plus 10 spawned fresh OS processes under that owner; canonical graph emits exactly 34 census-enforced stages; bank requires 20 manifests x 34 byte-exact stages plus s2 and 40 receipts per run; terminal sums receipt files and requires 800 on success",
+    "F5 ordering verified: runtime_preflight (dylib hashes, Apple M1 Ultra brand, arch, env pins, thread limits) precedes attempt-root claim, which precedes all reads; direct --execute rejected in main; fresh workers require live-owner pid/nonce/sha verification; only the owner terminalizes",
+    "F3/F4 enforcer inspected: duplicate reads rejected before authorization lookup, exact ordinal set census, O_NOFOLLOW single-descriptor open with dev/ino stability and same-descriptor seek-0 readback producing measured AFTER identity",
+    "checkpoint/fallback unreachability re-verified: no checkpoint interface in crate, package.checkpoint_paths empty and enforced twice, canonical graph performs no filesystem/env/process access, non-pinned-MLX builds fail closed",
+    "D0 v2 epistemic lock confirmed: misderived-tolerance repair requires an append-only D0 revision from a fresh corpus excluding the triggering D3.5 output plus new review; numeric_tolerance_may_hide_repeat_failure=false; scope remains REPRESENTATIVE_LAYER3_S0_TO_S2_ONLY_NOT_FULL_FORWARD",
+    "validator PASS, 24/24 grant mutations rejected (including new run-count, receipt-count, and ancestry cases), cargo test --locked -p f017-native 4/4 PASS including the F6 Rust execution-enforcer test, all with temporary writable build outputs outside the repository",
+    "no retained tensor bytes read, no checkpoint data accessed, no qualification or D3.5 executed, no authorization created, no P1 run, no repository bytes modified"
+  ],
+  "findings": [
+    {
+      "id": "F017-RRC2-F1",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "docs/architecture/reviews/evidence/f017-native-retained-router-authority-repair-v1.json",
+      "evidence": "defect.sha_resolution.json_path cites 'retained_only_reproduction.bundle_sha256', but the pinned attestation dc53b458 holds the value at 'reproduction.bundle_sha256'; the sha does occur uniquely there and every authority-bearing binding (defective tuple, affected ordinals, replacement, grant sha, both roots) is exact and machine-verified.",
+      "failure_mode": "A reviewer following the citation literally finds no value at the stated json_path and must fall back to content search, mildly weakening the reconstructibility the record exists to provide.",
+      "required_repair": "Append a corrigendum record (or corrected revision) fixing json_path to 'reproduction.bundle_sha256'; do not rewrite the existing record."
+    },
+    {
+      "id": "F017-RRC2-F2",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "crates/f017-native/src/bin/retained_qualification.rs",
+      "evidence": "runtime_preflight (dylib hashes, machine brand, env pins) runs once in the batch owner before the attempt claim; --fresh-worker processes verify durable ownership but do not re-run runtime_preflight in their own process before their 40 retained reads.",
+      "failure_mode": "A dylib substitution in the window between owner preflight and a fresh worker's dlopen would go locally undetected in that worker, caught only indirectly by D3.5 stage-byte divergence.",
+      "required_repair": "Call runtime_preflight from the fresh-worker path before execute_one, or record per-worker dylib hashes in each run's receipts."
+    },
+    {
+      "id": "F017-RRC2-F3",
+      "severity": "DEFENSE_IN_DEPTH",
+      "path": "crates/f017-native/src/bin/retained_qualification.rs",
+      "evidence": "bank_batch_result and terminalize_batch derive receipt counts from each retained-read-receipts.json self-declared actual_count field rather than recomputing len(reads); the files are consumer-written, census-enforced at write time, 0o400, and readback-verified, so the committed flow cannot produce a mismatch.",
+      "failure_mode": "A post-hoc tampered receipts file declaring actual_count=40 over a shorter reads array would still sum to 800 at terminalization.",
+      "required_repair": "Derive per-run counts from the length of the reads array (and cross-check against actual_count) in bank_batch_result and terminalize_batch."
+    }
+  ],
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 3,
+  "verdict": "ACCEPT",
+  "statement": "All ten artifact hashes, both package roots, 40/40 source tuples with branch ancestry, byte geometry, and every pin recomputed independently and held. All six cycle-1 repairs verified mechanically: one durable owned event now represents exactly 10 same-process plus 10 genuinely fresh-process runs of 34 census-enforced byte-exact stages with 800 derived receipts; runtime and machine identity are checked before the claim and the claim precedes every read; workers cannot reach reads without a live verified owner and only the owner terminalizes; duplicate reads are rejected with an exact ordinal census; AFTER identity is measured by same-descriptor readback; the append-only authority repair exactly binds the defective ordinal 10-12 tuple, the resolvable v2 replacement, and both roots (one non-authority-bearing json_path citation is inexact); the Rust execution-enforcer test exists and passes; checkpoint and runtime fallback remain unreachable and D3.5 output cannot tune D0. Validator PASS, 24/24 mutations rejected, 4/4 crate tests PASS. No retained bytes, checkpoint data, qualification execution, D3.5, authorization, or P1 was used, and no repository bytes were modified."
+}
+```

@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.event05-result-envelope-challenge-ledger/1.0.0","graph_id":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-01","gemini":{"cycles":2,"final_verdict":"ACCEPT","open_challenges":0},"opus":{"cycles":5,"final_verdict":"REJECT","open_challenges":["F5-01","F5-02","F5-03","F5-04","F5-05"],"blocking":1,"non_blocking_required":4},"original_checkpoint_access":0}

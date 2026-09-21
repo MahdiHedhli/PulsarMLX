@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-supersession-repair-disposition/1.0.0",
+  "cycle": 3,
+  "reviewed_head": "80f44b458824903f5dca101bc8f1d590f6845422",
+  "findings": {
+    "F5-R2": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "EXACT_NUMPY_AND_MLX_ATTRIBUTE_ALLOWLISTS_REJECT_FILE_MMAP_SERIALIZATION_AND_EXPORT_CAPABILITIES"
+    },
+    "D1": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "DANGEROUS_BUILTIN_ALIAS_FLOW_AND_DECORATOR_USE_REJECTED"
+    },
+    "D2": {
+      "classification": "REPAIR_IMPLEMENTED",
+      "repair": "ASSIGNED_GRAPH_ARITHMETIC_NAMES_REJECTED_ALONGSIDE_EXACT_FUNCTION_CENSUS"
+    }
+  },
+  "numerical_methodology_changed": false,
+  "thresholds_changed": false,
+  "original_checkpoint_access": 0,
+  "requires_cycle_4_review": true
+}

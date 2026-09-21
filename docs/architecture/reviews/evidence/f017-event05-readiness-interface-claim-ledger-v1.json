@@ -1,0 +1,22 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-claim-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "claims": [
+    {"claim_id":"C-SCHEMA-001","status":"SUPPORTED","readiness_critical":true,"proof_artifacts":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"]},
+    {"claim_id":"C-SCHEMA-002","status":"SUPPORTED","readiness_critical":true,"proof_artifacts":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json","docs/architecture/reviews/evidence/f017-event05-readiness-interface-mutation-plan-v1.json"]},
+    {"claim_id":"C-VALIDATOR-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"claim_id":"C-AUTHORIZER-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"claim_id":"C-INSTANT-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"claim_id":"C-INSTANT-002","status":"PROPOSED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]},
+    {"claim_id":"C-BIND-001","status":"SUPPORTED","readiness_critical":true,"proof_artifacts":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"]},
+    {"claim_id":"C-SAFETY-001","status":"SUPPORTED","readiness_critical":true,"proof_artifacts":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event05-readiness-consumer-interface-v1.json"]},
+    {"claim_id":"C-LEGACY-001","status":"SUPPORTED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-versioning-decision-v1.json"]},
+    {"claim_id":"C-CI-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":[]},
+    {"claim_id":"C-REVIEW-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":[]},
+    {"claim_id":"C-GO-001","status":"PROPOSED","readiness_critical":true,"proof_artifacts":["docs/architecture/reviews/evidence/f017-event05-readiness-interface-design-authority-v1.json"]}
+  ],
+  "claim_count": 12,
+  "accepted_count": 0,
+  "rejected_count": 0,
+  "unresolved_count": 0
+}

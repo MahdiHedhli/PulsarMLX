@@ -10,6 +10,7 @@ members = [
     "crates/quant",
     "crates/backend",
     "crates/mlx-backend",
+    "crates/f017-native",
 ]
 
 [workspace.package]

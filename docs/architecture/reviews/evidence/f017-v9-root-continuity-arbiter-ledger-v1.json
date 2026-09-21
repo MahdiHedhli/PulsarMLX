@@ -1,0 +1,6 @@
+{
+  "arbiter_cycles": [],
+  "global_verdict": null,
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "schema": "pulsarmlx.f017.v9-root-continuity-arbiter-ledger/1.0.0"
+}

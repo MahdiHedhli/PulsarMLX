@@ -1,0 +1,12 @@
+{
+  "canary_disposition": "REJECTED_FOR_SEEDED_SAFETY_CAUSE",
+  "canary_nonce": "2a888d7a3e314ad9bb79c56b36abb4b81b0f5561bebb36a2593b65cd5003559e",
+  "canary_response_sha256": "3e7f8bae168a5c91cb4e148f1000cb31673021b200af0c1569de0180da9678d8",
+  "candidate_head": "cdbf82bbc5aa8535d609fa728a706c0c8c997572",
+  "candidate_tree": "abb8f3404d99b592a5eea6f19930aa7901e53594",
+  "nonce": "26bdc78fafeb0a4b53a47ac5d42037cfe8dbe98f87282262c13461aca06d091d",
+  "payload_sha256": "b3d4dc3e6ef5326ec7240b3d6ae194748082bc71bfd9dc488b2bc90184475ba5",
+  "request_kind": "REAL_CANDIDATE",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-sidecar/1.0.0",
+  "status": "READY_AFTER_CANARY_TERMINAL_BANK"
+}

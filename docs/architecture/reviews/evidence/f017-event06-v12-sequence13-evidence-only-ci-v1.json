@@ -1,0 +1,11 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-evidence-only-ci/1.0.0",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "workflow": "macOS baseline",
+  "run_id": 33232801792,
+  "head_sha": "a3d71779c0dbb800414766eef97ee353cf16e972",
+  "mode": "EVIDENCE_ONLY",
+  "evidence_integrity": "PASS",
+  "native_jobs_launched": 0,
+  "result": "PASS"
+}

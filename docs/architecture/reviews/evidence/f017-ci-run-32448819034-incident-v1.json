@@ -1,0 +1,73 @@
+{
+  "schema": "pulsarmlx.f017.ci-incident",
+  "schema_version": "1.0.0",
+  "run": {
+    "repository": "MahdiHedhli/PulsarMLX",
+    "run_id": 32448819034,
+    "workflow": "macOS baseline",
+    "event": "push",
+    "branch": "feat/017-real-checkpoint-runner",
+    "head": "aa7b6226d55867a007e4760018c4286cba0f2d1d",
+    "conclusion": "failure",
+    "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32448819034"
+  },
+  "trigger_commit": {
+    "subject": "docs(f017): bank serial-f32 specification acceptance",
+    "content_classification": "DOCUMENTATION_AND_EVIDENCE_ONLY",
+    "current_fail_closed_path_classification": "FULL_NATIVE",
+    "classification_reason": "The commit changed specs/** authority-document paths, which the new policy intentionally treats as FULL_NATIVE even when the observed content is prose.",
+    "files_added": [
+      "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-result-v1.json",
+      "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-cycle-02-independent-review-v1.json",
+      "docs/architecture/reviews/evidence/f017-production-serial-f32-equivalence-specification-closeout-v1.json"
+    ],
+    "files_modified": [
+      "specs/017-rust-native-inference-runtime/checklists/production-serial-f32-equivalence-specification-v1.md",
+      "specs/017-rust-native-inference-runtime/tasks.md"
+    ],
+    "native_product_bytes_changed": false
+  },
+  "workflow_at_incident": {
+    "source_commit": "aa7b6226d55867a007e4760018c4286cba0f2d1d",
+    "path": ".github/workflows/macos.yml",
+    "sha256": "c4978f0b1609f9db2c9074464ffe939f9d6d382035c9e273b4c1ef3c0ddcd441",
+    "routing": "UNCONDITIONAL_PUSH_JOBS",
+    "concurrency_cancel_in_progress": false
+  },
+  "jobs": [
+    {
+      "name": "Apple Silicon workspace baseline",
+      "conclusion": "success",
+      "unnecessarily_launched_for_evidence_push": true
+    },
+    {
+      "name": "Apple MLX small-fixture validation",
+      "conclusion": "failure",
+      "unnecessarily_launched_for_evidence_push": true,
+      "native_mlx_construction": "success_before_failure",
+      "failing_step": "Validate Feature 002 research methodology"
+    }
+  ],
+  "failure": {
+    "broad_test_command": ".venv/bin/python -m unittest discover -s scripts/research/tests -v",
+    "tests_run": 1344,
+    "failures": 1,
+    "errors": 4,
+    "causes": [
+      "HISTORICAL_EXECUTORS_REQUIRE_CPYTHON_3_14_6_BUT_JOB_PINNED_CPYTHON_3_13_13",
+      "HISTORICAL_OPT_HOMEBREW_PYTHON3_14_EXECUTION_INCOMPATIBILITY",
+      "PYTEST_NOT_INSTALLED_IN_THE_PINNED_JOB_ENVIRONMENT",
+      "SECONDARY_ASSERTION_MASKED_BY_INTERPRETER_PRECONDITION_FAILURE"
+    ],
+    "native_mlx_dependency_build_failure": false,
+    "native_product_regression_demonstrated": false
+  },
+  "disposition": {
+    "failures_are_real": true,
+    "failure_scope": "BROAD_HISTORICAL_RESEARCH_CORPUS_ENVIRONMENT_MISMATCH",
+    "remedy": "FAIL_CLOSED_CHANGED_PATH_CLASSIFICATION_AND_LIGHTWEIGHT_EVIDENCE_VALIDATION_FOR_STRICT_APPEND_ONLY_EVIDENCE_PUSHES",
+    "same_commit_would_be_full_native_under_new_policy": true,
+    "skip_ci_primary_remedy": false,
+    "full_native_manual_mode_preserved": true
+  }
+}

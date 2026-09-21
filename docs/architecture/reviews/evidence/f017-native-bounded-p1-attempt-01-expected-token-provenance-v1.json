@@ -1,0 +1,121 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-expected-token-provenance/1.0.0",
+  "status": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+  "subject": {
+    "prompt_text": "Hello",
+    "prompt_token_ids": [9703],
+    "context": "ONE_TOKEN_CONTEXT",
+    "sequence_position": 0,
+    "initial_kv_state": "EMPTY",
+    "causal_visibility": "ONE_VISIBLE_KEY",
+    "sampling": "NONE_GREEDY_ARGMAX",
+    "expected_first_output_token": 21615
+  },
+  "checkpoint": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "manifest": {
+      "path": "docs/validation/glm52-checkpoint.json",
+      "sha256": "34b65d586c86d24ee10f3a2ed55491fb3a5a6b9ddbaf893bf9e0ab962c96cf8f"
+    },
+    "catalog": {
+      "path": "docs/research/glm52/raw/f016-c01-catalog-0001.json",
+      "sha256": "135500cc46b65a877027b597bf20e0c7bb613802e5137c48204e7ab6e7a7ff19"
+    },
+    "shard_count": 6,
+    "quantization": "UD-IQ2_XXS"
+  },
+  "primary_authorities": [
+    {
+      "path": "docs/research/glm52/raw/f016-inference-p1-iq3-0001.json",
+      "sha256": "c229912117a0ec01267797982aafc0cf0076f944a3da4f22815a31efa244286c",
+      "source_commit": "99751b9c3d8bf00a6b1af166f8f07adf9e90dd15",
+      "generated_token_ids": [9703, 21615],
+      "requested_new_tokens": 1,
+      "source_dirty": false,
+      "result": "PASS"
+    },
+    {
+      "path": "docs/research/glm52/raw/f016-inference-p2-iq3-0001.json",
+      "sha256": "9274e719abc84c15562047c75e8aa08d7b4f6d60d2300313e2be156b292123e9",
+      "source_commit": "d5e1cf3cc092c7629d5905fd9da1a85afd1fd363",
+      "generated_token_ids": [9703, 21615, 220],
+      "requested_new_tokens": 2,
+      "source_dirty": false,
+      "result": "PASS"
+    },
+    {
+      "path": "docs/research/glm52/raw/f016-inference-p1-token1.json",
+      "sha256": "b62c3062adc21498e1af19111202ac4a976aaa48106e7de7852f78280b8b2bfb",
+      "generated_token_ids": [9703, 21615],
+      "result": "PASS"
+    }
+  ],
+  "source_surface": {
+    "branch": "feat/017-real-checkpoint-runner",
+    "runtime": "PYTHON_CONTROL_PLUS_MLX_F32_MATVEC_PLUS_PYTHON_BINARY64_SCALAR_COMPOSITION",
+    "source_files": [
+      {"path": "scripts/research/glm52_inference.py", "sha256": "f8fca783dde72bc3c0440967aa58d988a4adf85a36e55eb057c0686548a816de"},
+      {"path": "scripts/research/glm52_dense_primitives.py", "sha256": "7cc93aba3c0b70f64746f08f6da31d961f9cbe7ff3eeff3837dd821aba2a79ae"},
+      {"path": "scripts/research/glm52_layer.py", "sha256": "7ead143029da3bc519afc853c40a7ad7e9a64066d46cbb5ed779dcac4825226a"},
+      {"path": "scripts/research/glm52_mla.py", "sha256": "763136b5f0c62406ed3900f5d526b17dafd9b05bf23ad5c39823e860412f7cb5"},
+      {"path": "scripts/research/glm52_router.py", "sha256": "0d625fc62d38e603cc7f822d6996c966b77cfe1aec17e6ead98420118e3de607"}
+      ,{"path": "scripts/research/ggml_kquants.py", "sha256": "1e578385e0411c8f213425780c2ec1a925be7aa906d30048824d94f7987d2f16"}
+      ,{"path": "scripts/research/iq3_xxs_dequant.py", "sha256": "316ab363b6a78681a8e3b1960ef86e77983e46654099a2e8aff4f5c81417bec8"}
+    ]
+  },
+  "native_attempt_1": {
+    "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+    "prompt_token": 9703,
+    "position": 0,
+    "initial_kv_state": "EMPTY",
+    "argmax": "GREEDY_LOWEST_ID_TIE_RULE",
+    "accepted_implementation_head": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+    "accepted_model_source_sha256": "d4b62c6f0f995b6955ae00b430ed8157bd7523a3d9eacfccbfb46bfc471d24b3",
+    "numerical_surface": "NATIVE_MLX_MATVEC_PLUS_SERIAL_BINARY32_SCALAR_COMPOSITION",
+    "observed_token": 17351
+  },
+  "independence_assessment": {
+    "token_21615_repeated_across_distinct_committed_F016_runs": true,
+    "checkpoint_and_scope_identity_match_attempt_1": true,
+    "source_family_is_shared_between_primary_runs": true,
+    "independent_native_serial_f32_full_forward_oracle_exists": false,
+    "token_21615_is_revalidated_for_F016_reference_hybrid_surface": false,
+    "token_21615_is_not_proven_byte_exact_for_native_serial_f32_surface": true,
+    "source_decoder_defect_proven": true
+  },
+  "proven_authority_defects": [
+    {
+      "id": "F017-OFFLINE-Q6-LANE-001",
+      "format": "Q6_K",
+      "affected_tensor_count": 82,
+      "defect": "The F016 Python decoder swapped logical coordinate groups 32..63 and 64..95 in every 256-coordinate Q6_K block.",
+      "dependency": "glm52_dense_primitives.dequant_row and glm52_expert._dequant_row_bytes import this decoder and the token-producing F016 runs used those execution paths."
+    },
+    {
+      "id": "F017-OFFLINE-IQ3-LANE-001",
+      "format": "IQ3_XXS",
+      "affected_tensor_count": 71,
+      "defect": "The F016 Python decoder interleaved two four-coordinate IQ3 grids rather than emitting the committed four-then-four layout.",
+      "dependency": "glm52_expert._dequant_row_bytes imports this decoder for type ID 18."
+    }
+  ],
+  "checkpoint_free_oracle_repairs": [
+    {
+      "path": "scripts/research/ggml_kquants.py",
+      "repaired_sha256": "af51990d2605e604b4c81b6d49d7efc8f213f5315489c0d31d5128dbf113e236",
+      "scope": "Q6_K coordinate semantics only; no real tensor decoded"
+    },
+    {
+      "path": "scripts/research/iq3_xxs_dequant.py",
+      "repaired_sha256": "93e979548ba6e973f504643715708f6cfcb528f777a338d41e8b3c4e2bf78de5",
+      "scope": "IQ3_XXS coordinate semantics only; no real tensor decoded"
+    }
+  ],
+  "disposition": "EXPECTED_TOKEN_AUTHORITY_DEFECT_PROVEN",
+  "prohibited_inference": "The defects invalidate token 21615 as an independent exact oracle for attempt 1. They do not prove that token 17351 is correct and do not establish which token a corrected independent full-checkpoint computation would select.",
+  "phase_accounting": {
+    "new_original_checkpoint_shard_opens": 0,
+    "new_original_checkpoint_payload_reads": 0,
+    "p1_attempt_2_executed": false
+  }
+}

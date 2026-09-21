@@ -1,0 +1,402 @@
+{
+  "attention_scale": 0.0625,
+  "checkpoint_paths": [],
+  "execution_code_head": "b1e23acaedc7a386ef34ef7b0db3944a74eb08b1",
+  "expert_weight_scale": 2.5,
+  "fixed_attempt_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/attempt-state",
+  "fixed_capture_root": "/Users/mhedhli/.local/share/pulsarmlx/f017/native-representative-retained-qualification-1/captures",
+  "graph_version": "f017-apple-serial-f32-s0-s2-v1",
+  "heads": 64,
+  "kv_lora": 512,
+  "position": 0,
+  "qk_nope": 192,
+  "qk_rope": 64,
+  "rope_base": 1000000,
+  "routed_expert_ids": [
+    250,
+    10,
+    237,
+    62,
+    73,
+    177,
+    218,
+    28
+  ],
+  "runtime": {
+    "backend": "MLX_C_MATVEC_PLUS_RUST_SERIAL_F32",
+    "device": "APPLE_METAL_GPU",
+    "libmlx_sha256": "6622caeb3e65a8310cf2290751ffbecf32135187aa75ef05f398916ac37bd9ed",
+    "libmlxc_sha256": "a060915d4b9accbf58e84d174029d5c51805891834494d50cf87a0d573222e62",
+    "mlx_c_version": "0.6.0",
+    "mlx_version": "0.31.2",
+    "thread_limits": {
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "VECLIB_MAXIMUM_THREADS": "1"
+    }
+  },
+  "schema": "pulsarmlx.f017.apple-production-serial-f32-package",
+  "schema_version": "1.0.0",
+  "tensors": {
+    "attention_norm_scale": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/01-attention_norm_scale.f32le",
+      "sha256": "8f642efd9c89ec5cb59fea36262ad370985428a8f0f028b78d524e581f584b85",
+      "shape": [
+        6144
+      ]
+    },
+    "attention_output": {
+      "encoding": "Q5_K",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/09-attention_output.bin",
+      "sha256": "30d37ee75f7877defe1720f6bf14f4d9b9c4151b3d164f0618e5c2bff454b084",
+      "shape": [
+        6144,
+        16384
+      ]
+    },
+    "correction_bias": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/11-correction_bias.f32le",
+      "sha256": "eb6feeb8d7ab446e4e786aaac55c22cc7b98521dbd71cb0a57610d8da59b0491",
+      "shape": [
+        256
+      ]
+    },
+    "ffn_norm_scale": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/10-ffn_norm_scale.f32le",
+      "sha256": "1d9228483902bf2ca1088589d25c1cbc116facd82454a117e7dafb2d48f83d8f",
+      "shape": [
+        6144
+      ]
+    },
+    "k_b": {
+      "encoding": "Q8_0",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/07-k_b.bin",
+      "sha256": "9903c9eea679d86016d28d61f8cf30f831ddf0d1458f9a8f43e062f2aa1f420f",
+      "shape": [
+        64,
+        512,
+        192
+      ]
+    },
+    "kv_a": {
+      "encoding": "Q8_0",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/05-kv_a.bin",
+      "sha256": "8f45a6d6e69a204c714acf4a09f7c29a1c5b34e4f581fb2fcc5771f0290d9053",
+      "shape": [
+        576,
+        6144
+      ]
+    },
+    "kv_norm_scale": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/06-kv_norm_scale.f32le",
+      "sha256": "ab7ae58c665fd82c5731ebea86b818d7d9652f870e503019068e154524801ce4",
+      "shape": [
+        512
+      ]
+    },
+    "q_a": {
+      "encoding": "Q5_K",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/02-q_a.bin",
+      "sha256": "30eac1dc6c0538ebff3ceb56216423002ec798fd896785186e0653af3758d579",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "q_b": {
+      "encoding": "Q8_0",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/04-q_b.bin",
+      "sha256": "c54a2250b8da6f4bb4a3f7676a83dec862ccfd0d145634250dea7167496f1b47",
+      "shape": [
+        64,
+        256,
+        2048
+      ]
+    },
+    "q_rank_norm_scale": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/03-q_rank_norm_scale.f32le",
+      "sha256": "faf7fc183f8539ac4c7be45d97353ca0068212d435c46c96daa1f6b8bb809f0f",
+      "shape": [
+        2048
+      ]
+    },
+    "routed.0.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/15-routed-0-down.bin",
+      "sha256": "a48ad063e644ca57eda6a289e5fa02e3bffea95ea1e80c8b3cff9667697bebc0",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.0.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/13-routed-0-gate.bin",
+      "sha256": "e613c5ba56ab0c916f9ab119b3ef8e63127f06485c0c3d34c67bff759d17bbf6",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.0.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/14-routed-0-up.bin",
+      "sha256": "793a6eefeec5a9d879ba5c30b1af795477a5184bb84030984f08de2f07c4a2bc",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.1.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/18-routed-1-down.bin",
+      "sha256": "b7e4f855d999e5b411a4fab3388c19ca67c96df82e14ddd61dd20536cbedebc9",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.1.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/16-routed-1-gate.bin",
+      "sha256": "ce6e74edc6626e676d87c0dcc68d58aed3469b2565b4afc74f38a1fd0ab192d2",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.1.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/17-routed-1-up.bin",
+      "sha256": "6210d76534e8642620946d3107c5756b75cca97c3f1989e9013817172888b19a",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.2.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/21-routed-2-down.bin",
+      "sha256": "ab54025c1ae1d71967178c911dd01f192d83469ce55ca0a5ed7b3558dc856f96",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.2.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/19-routed-2-gate.bin",
+      "sha256": "23e8d2454898a857b602c028d282912413aaa378f78a49004291b1c469e93bdf",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.2.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/20-routed-2-up.bin",
+      "sha256": "9cce3c663ed33ec1ac01246ea3288b49f01604403be42479836a65d11f36de79",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.3.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/24-routed-3-down.bin",
+      "sha256": "2be8b94e40f7644899ac6cb8ebc4e2c53ff029805f7f5ad1388a4c2a7756d6b1",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.3.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/22-routed-3-gate.bin",
+      "sha256": "5be4d37764c41e1d00da6dba6a835cd941d2b38c4f6d130fa71390e4292b6e52",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.3.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/23-routed-3-up.bin",
+      "sha256": "195073ca8888f2281c35acd564945947db0e5088ca805a32a0dbc05642317a51",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.4.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/27-routed-4-down.bin",
+      "sha256": "1d8c56883f463652898b2a4fe1ddfc8c9108b964bb747d3cedeaff7dd48d6697",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.4.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/25-routed-4-gate.bin",
+      "sha256": "0078727840938c597f055d117c1b8064301b9f7a1fb650996e4a74273b4ac9b0",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.4.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/26-routed-4-up.bin",
+      "sha256": "191b5040835f35e1937975d332949b2926e0ef3e1cf0ee0574391b39317af24d",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.5.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/30-routed-5-down.bin",
+      "sha256": "9c576015d119c6ab3feacd3ee9dcbbc7fbf8c8553a5a4aadbda16b5c2367bed1",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.5.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/28-routed-5-gate.bin",
+      "sha256": "11c3343737c270f0120261442a43123aa0798c1a925fdd661717daeece6c8f3f",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.5.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/29-routed-5-up.bin",
+      "sha256": "d8f21cdf66425d2e771ab574ddab3328bc9822344286c49b55ebe4ebe8fce33e",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.6.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/33-routed-6-down.bin",
+      "sha256": "8e6a5139d2a9f80baa2849aa2714175d02a0d431f8b839750da5f20de4a4d341",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.6.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/31-routed-6-gate.bin",
+      "sha256": "931f9e83cb2dff359267ab2f6efbc76cdae9d5f3c9e41d9df02c88e0e2361287",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.6.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/32-routed-6-up.bin",
+      "sha256": "ee46156298d3aecf5fbc73586d23e95f3a74b60ceb42be4ed35e4f71fb49bc1e",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.7.down": {
+      "encoding": "IQ3_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/36-routed-7-down.bin",
+      "sha256": "28d49109243d17c9f8f6dd703fdcfb6734bdf540ac117614e0ee01e9304f3604",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "routed.7.gate": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/34-routed-7-gate.bin",
+      "sha256": "bea04db17cb072fce161706bb72ceb53f3cdadee29df607b3b9d0ece1a149bd4",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "routed.7.up": {
+      "encoding": "IQ2_XXS",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/35-routed-7-up.bin",
+      "sha256": "cc6fceb76623c545cb23d7bcc5941e10f98828cb647ae74e528bf9a073a302f6",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "router": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/12-router.f32le",
+      "sha256": "da0263ba11f06e21532aff708b8677c76381c1165e11134c72d7039ebb64439a",
+      "shape": [
+        256,
+        6144
+      ]
+    },
+    "s0": {
+      "encoding": "F32_LE",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/00-s0.f32le",
+      "sha256": "9c3a8821deda6a9983b49544d5726efad97b2e560f55a7eb0f182aaa128ceb11",
+      "shape": [
+        6144
+      ]
+    },
+    "shared.down": {
+      "encoding": "Q6_K",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/39-shared-down.bin",
+      "sha256": "48c5469bf71d1c5291f806a79388901f094d5fd7adaec5c25c0f3391b0d67083",
+      "shape": [
+        6144,
+        2048
+      ]
+    },
+    "shared.gate": {
+      "encoding": "Q5_K",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/37-shared-gate.bin",
+      "sha256": "750b148ada60dbbfc9bd3b2d4c2bbfa70f304c34328b025f912626dea70c1414",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "shared.up": {
+      "encoding": "Q5_K",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/38-shared-up.bin",
+      "sha256": "13727df9b9129906538081fcef3a23d4db8ba37235bb96605c46b3ff683c59fe",
+      "shape": [
+        2048,
+        6144
+      ]
+    },
+    "v_b": {
+      "encoding": "Q8_0",
+      "path": "/Users/mhedhli/.local/share/pulsarmlx/f017/apple-production-serial-f32-equivalence-readiness-1/retained-package/tensors/08-v_b.bin",
+      "sha256": "86dbc54eae38b1d0dc8f9f7a3dfdbcca00e0eb87ac6dee2d244054a496a35367",
+      "shape": [
+        64,
+        256,
+        512
+      ]
+    }
+  },
+  "value_dim": 256
+}

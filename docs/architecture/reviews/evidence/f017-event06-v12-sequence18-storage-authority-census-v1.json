@@ -1,0 +1,64 @@
+{
+  "fixed_authority_runtime_digest_verified": true,
+  "fixed_live_registry_root_canonical_utf8_length": 60,
+  "fixed_live_registry_root_canonical_utf8_sha256": "e9628d51208d2340d67885b471bf87a5cfa0a372a759e095378f5609c1843e83",
+  "legacy_production_writers_fail_closed_proven": 5,
+  "legacy_production_writers_reachable_to_safety_state": 0,
+  "legacy_production_writers_removed": 0,
+  "legacy_production_writers_total": 5,
+  "legacy_writer_rows": [
+    {
+      "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+      "module": "f017_event06_package_attempt_registry_v1",
+      "symbol": "reserve_package_attempt"
+    },
+    {
+      "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+      "module": "f017_event06_package_attempt_registry_v1",
+      "symbol": "claim_terminal_sinks"
+    },
+    {
+      "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+      "module": "f017_event06_package_attempt_registry_v1",
+      "symbol": "claim_qualification_terminal_sinks"
+    },
+    {
+      "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+      "module": "f017_event06_package_attempt_registry_v1",
+      "symbol": "bank_terminal"
+    },
+    {
+      "disposition": "FAIL_CLOSED_BEFORE_SIDE_EFFECT",
+      "module": "execute_f017_corrected_oracle_event_v12_bridge",
+      "symbol": "bank_package_start"
+    }
+  ],
+  "production_closure_modules": [
+    "scripts/research/f017_event06_storage_authority_v1.py",
+    "scripts/research/f017_event06_storage_primitives_v1.py",
+    "scripts/research/f017_event06_package_attempt_registry_v2.py",
+    "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py",
+    "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
+    "scripts/research/f017_event06_numerical_bridge_v1.py",
+    "scripts/research/f017_event06_numerical_bridge_v2.py"
+  ],
+  "production_entrypoints": [
+    "f017_event06_package_attempt_registry_v2:reserve_live_package_attempt",
+    "f017_event06_package_attempt_registry_v2:load_live_package_attempt",
+    "f017_event06_package_attempt_registry_v2:claim_live_terminal_sinks",
+    "f017_event06_package_attempt_registry_v2:bank_live_terminal",
+    "execute_f017_corrected_oracle_event_v12_bridge:bank_live_package_start",
+    "execute_f017_corrected_oracle_event_v12_bridge:execute_event06_bridge",
+    "execute_f017_corrected_oracle_event_v12_bridge_v2:execute_event06_bridge"
+  ],
+  "production_indirect_storage_location_findings": [],
+  "production_indirect_storage_location_inputs": 0,
+  "production_public_storage_location_findings": [],
+  "production_public_storage_location_inputs": 0,
+  "production_storage_authority_source": "scripts/research/f017_event06_storage_authority_v1.py:24:fixed_live_registry_root",
+  "production_storage_authority_source_blob_sha256": "e1d3ef694ea4ac6396041bf171d838d45a5206493a2a76b7cd3a7150eaf90f19",
+  "reclaim_findings": [],
+  "reservation_reclaim_expire_unlock_or_override_symbols_reachable": 0,
+  "result": "PASS",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-storage-authority-census/1.0.0"
+}

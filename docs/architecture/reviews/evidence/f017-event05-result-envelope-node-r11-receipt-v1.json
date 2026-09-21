@@ -1,0 +1,16 @@
+{
+  "schema":"pulsarmlx.f017.event05-result-envelope-node-receipt/1.0.0",
+  "graph_id":"F017-EVENT05-RESULT-ENVELOPE-GRAPH-02",
+  "node_id":"R11",
+  "input_head":"1810ec2ed4404477df49ec367f08d0cf6d4a26c9",
+  "output_head":"1810ec2ed4404477df49ec367f08d0cf6d4a26c9",
+  "input_authorities":["a52e9474cfe0f30a849910a60e0182603c5029aae5ac934166fd6fa17ba0593b","657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767","e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791"],
+  "changed_paths":[],
+  "tests_executed":["STATIC_RETURN_SURFACE_CENSUS","CAPTURE_INTERFACE_CENSUS","FROZEN_CORE_SHA_RECOMPUTATION"],
+  "claims_introduced":["C-IMPL-001"],
+  "claims_closed":[],
+  "claims_invalidated":["C-QUAL-001","C-CI-001"],
+  "checkpoint_access_census":0,
+  "next_eligible_edges":[],
+  "result":"BLOCKED"
+}

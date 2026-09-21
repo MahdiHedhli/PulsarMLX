@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-agy-final-normalized-result/2.0.0",
+  "reviewer": "AGY CHALLENGE",
+  "transport": "agy",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+  "reviewed_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
+  "full_native_run": 33239842492,
+  "focused_tests": "11/11 PASS",
+  "mutation_campaign": "211/211 REJECTED",
+  "unexpected_passes": 0,
+  "attack_outcomes": {
+    "multiple_capabilities_from_one_prepared_package": "REJECTED",
+    "qualification_chain_crossing_into_live": "REJECTED",
+    "readiness_replay": "REJECTED",
+    "copy_deepcopy_pickle": "REJECTED"
+  },
+  "claim_verdicts": {
+    "COLLAPSED_TOKEN": "ACCEPT",
+    "HUMAN_GO_AUTHENTICITY": "ACCEPT",
+    "ROOT_TYPE_SEPARATION": "ACCEPT",
+    "CHECKPOINT_BOUND_COMPOSITION": "ACCEPT",
+    "ONE_SHOT_ACCOUNTING": "ACCEPT",
+    "NO_ACCESS": "ACCEPT",
+    "FROZEN_AUTHORITY": "ACCEPT",
+    "FULL_NATIVE": "ACCEPT"
+  },
+  "blocking_findings": 0,
+  "advisory_findings": 0,
+  "unresolved_findings": 0,
+  "global_verdict": "ACCEPT_F017_EVENT06_V12_COLLAPSED_LIVE_INSTALLATION_OPERATIONAL_RATIFICATION",
+  "result": "PASS"
+}

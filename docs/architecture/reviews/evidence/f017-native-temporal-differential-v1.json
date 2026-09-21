@@ -1,0 +1,1182 @@
+{
+ "cases": [
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 896,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 2,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 7,
+   "seed": 17030,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999941,
+      "max_abs": 5.3682525022469285e-08,
+      "rmse": 2.430972269965002e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 2.7635474464382526e-08,
+      "rmse": 1.9612628961245046e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999973,
+      "max_abs": 2.806348553541227e-08,
+      "rmse": 1.389657310107497e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999996,
+      "max_abs": 1.2331361765038906e-08,
+      "rmse": 9.342283824874457e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999977,
+      "max_abs": 2.8626698123090932e-08,
+      "rmse": 1.522612105441911e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999991,
+      "max_abs": 2.033960194713913e-08,
+      "rmse": 1.3849682568863315e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999952,
+      "max_abs": 5.307857070535604e-08,
+      "rmse": 2.3025644279140925e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999993,
+      "max_abs": 1.805141083832673e-08,
+      "rmse": 1.210457878426626e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999981,
+      "max_abs": 4.541764062060416e-08,
+      "rmse": 2.1663854403837252e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999993,
+      "max_abs": 1.468818111582948e-08,
+      "rmse": 7.343171784386179e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999976,
+      "max_abs": 2.8251836897696947e-08,
+      "rmse": 1.1611777603584298e-08,
+      "within_thresholds": true
+     },
+     "position": 5,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999992,
+      "max_abs": 1.3903839551909769e-08,
+      "rmse": 7.993811690381984e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999926,
+      "max_abs": 7.956580810875025e-08,
+      "rmse": 3.981904267609059e-08,
+      "within_thresholds": true
+     },
+     "position": 6,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    6,
+    10,
+    6,
+    10,
+    3,
+    0,
+    2
+   ]
+  },
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 1024,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 3,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 8,
+   "seed": 17031,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999891,
+      "max_abs": 4.640111603282371e-08,
+      "rmse": 1.7045201000979358e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 6.981192790522783e-09,
+      "rmse": 6.981192762767208e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999569,
+      "max_abs": 7.976235529699727e-08,
+      "rmse": 3.270183052953016e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999999,
+      "max_abs": 2.2716546699275142e-08,
+      "rmse": 1.490974667265241e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999944,
+      "max_abs": 4.485634408357697e-08,
+      "rmse": 1.9359006207907605e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 5.04400216039258e-09,
+      "rmse": 3.3594987313266697e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999879,
+      "max_abs": 2.4963982631076576e-08,
+      "rmse": 1.467128473187784e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 1.2724832465504932e-08,
+      "rmse": 9.377759663047183e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999895,
+      "max_abs": 7.433401649770133e-08,
+      "rmse": 3.270053102122957e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999996,
+      "max_abs": 1.295332655026904e-08,
+      "rmse": 8.580627882242659e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999939,
+      "max_abs": 3.5168193579515616e-08,
+      "rmse": 2.264652807182389e-08,
+      "within_thresholds": true
+     },
+     "position": 5,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999997,
+      "max_abs": 1.4136809861620137e-08,
+      "rmse": 8.195033479027878e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999948,
+      "max_abs": 3.808319645748348e-08,
+      "rmse": 2.0011412111918574e-08,
+      "within_thresholds": true
+     },
+     "position": 6,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 8.3983318077685e-09,
+      "rmse": 6.05724993263996e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999807,
+      "max_abs": 7.105011945451878e-08,
+      "rmse": 3.3908794881363606e-08,
+      "within_thresholds": true
+     },
+     "position": 7,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    7,
+    8,
+    4,
+    8,
+    15,
+    2,
+    14,
+    10
+   ]
+  },
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 640,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 2,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 5,
+   "seed": 17032,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999938,
+      "max_abs": 9.716475570659133e-08,
+      "rmse": 4.927774544559184e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 1.9182263000239175e-08,
+      "rmse": 1.357622752282678e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999969,
+      "max_abs": 3.89752654317288e-08,
+      "rmse": 2.1521746429445884e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999999,
+      "max_abs": 2.401492532611016e-08,
+      "rmse": 2.060208117596997e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999859,
+      "max_abs": 7.380473709961421e-08,
+      "rmse": 4.232947523712683e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 9.432260639208323e-09,
+      "rmse": 6.016767762527505e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999978,
+      "max_abs": 4.6769535133606155e-08,
+      "rmse": 2.71848717407909e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999992,
+      "max_abs": 1.586425441013617e-08,
+      "rmse": 9.992799811713903e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999946,
+      "max_abs": 5.6716366825249054e-08,
+      "rmse": 2.8448163506922035e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    8,
+    7,
+    2,
+    7,
+    13
+   ]
+  },
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 768,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 3,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 6,
+   "seed": 17033,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999949,
+      "max_abs": 8.863658201851976e-08,
+      "rmse": 2.9124332431696386e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 3.419257665893127e-08,
+      "rmse": 2.663650623367906e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999936,
+      "max_abs": 5.150799919396987e-08,
+      "rmse": 2.3764889526963104e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999999,
+      "max_abs": 1.0267712458045253e-08,
+      "rmse": 7.139536885508892e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999906,
+      "max_abs": 4.2128017546660956e-08,
+      "rmse": 2.4847682142881713e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999996,
+      "max_abs": 1.8538770185649867e-08,
+      "rmse": 1.0778326346848514e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999912,
+      "max_abs": 6.604952986627444e-08,
+      "rmse": 3.3312925574936584e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999994,
+      "max_abs": 2.2008357636327247e-08,
+      "rmse": 1.562535633554076e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999796,
+      "max_abs": 7.854686357930407e-08,
+      "rmse": 3.85573398475563e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999997,
+      "max_abs": 1.479787428704249e-08,
+      "rmse": 7.266184243168953e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999951,
+      "max_abs": 4.637630859893882e-08,
+      "rmse": 2.1652499052826508e-08,
+      "within_thresholds": true
+     },
+     "position": 5,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    9,
+    5,
+    3,
+    5,
+    0,
+    14
+   ]
+  },
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 896,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 2,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 7,
+   "seed": 17034,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999861,
+      "max_abs": 8.492565919948625e-08,
+      "rmse": 3.837718905913122e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 1.1098299723677485e-08,
+      "rmse": 1.1098299640410758e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999922,
+      "max_abs": 1.0491322965933136e-07,
+      "rmse": 4.5613841803701454e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999999,
+      "max_abs": 1.2588278974767775e-08,
+      "rmse": 7.552660432912753e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999805,
+      "max_abs": 1.380879851575756e-07,
+      "rmse": 7.688323085029556e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 9.649160970237602e-09,
+      "rmse": 5.508071339890743e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999681,
+      "max_abs": 1.480795116942657e-07,
+      "rmse": 5.885284453581858e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 1.186136364128565e-08,
+      "rmse": 8.033953427189595e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999972,
+      "max_abs": 6.145654921074772e-08,
+      "rmse": 3.024860621609643e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999996,
+      "max_abs": 1.1097342156318746e-08,
+      "rmse": 6.585141540674192e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999927,
+      "max_abs": 8.526576059098012e-08,
+      "rmse": 3.980948490732734e-08,
+      "within_thresholds": true
+     },
+     "position": 5,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.999999999999999,
+      "max_abs": 9.86972659156038e-09,
+      "rmse": 6.666388995904441e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999963,
+      "max_abs": 4.8366169957958505e-08,
+      "rmse": 2.6313715941024837e-08,
+      "within_thresholds": true
+     },
+     "position": 6,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    10,
+    1,
+    0,
+    1,
+    7,
+    8,
+    1
+   ]
+  },
+  {
+   "backend": "NATIVE_RUST_MLX_TEMPORAL_ORCHESTRATION_SYNTHETIC_SOURCE",
+   "final_state_bytes": 1024,
+   "geometry": {
+    "expert_count": 4,
+    "expert_top_k": 2,
+    "heads": 3,
+    "kv_rank": 4,
+    "layer_count": 4,
+    "qk_nope": 4,
+    "qk_rope": 4
+   },
+   "original_checkpoint_reads": 0,
+   "positions": 8,
+   "seed": 17035,
+   "status": "PASS",
+   "steps": [
+    {
+     "attention_weights": {
+      "cosine": 1.0,
+      "max_abs": 0.0,
+      "rmse": 0.0,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999906,
+      "max_abs": 5.2708536618650825e-08,
+      "rmse": 2.407148765234404e-08,
+      "within_thresholds": true
+     },
+     "position": 0,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 1.8539390578276027e-08,
+      "rmse": 1.541192026065571e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999792,
+      "max_abs": 5.4799982537878655e-08,
+      "rmse": 3.457724836835644e-08,
+      "within_thresholds": true
+     },
+     "position": 1,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999987,
+      "max_abs": 3.9443540267303234e-08,
+      "rmse": 2.380471451854198e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.999999999999992,
+      "max_abs": 5.285303904256633e-08,
+      "rmse": 2.9360654761429584e-08,
+      "within_thresholds": true
+     },
+     "position": 2,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 2.359500450577201e-08,
+      "rmse": 1.6333538113584515e-08,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999941,
+      "max_abs": 3.904225163997577e-08,
+      "rmse": 2.0322725542938012e-08,
+      "within_thresholds": true
+     },
+     "position": 3,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999998,
+      "max_abs": 8.81375297745457e-09,
+      "rmse": 5.449738573918328e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.99999999999999,
+      "max_abs": 4.375460739558523e-08,
+      "rmse": 2.105069402890041e-08,
+      "within_thresholds": true
+     },
+     "position": 4,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999997,
+      "max_abs": 1.1655849868619228e-08,
+      "rmse": 7.977952237006524e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999958,
+      "max_abs": 1.0054164623074513e-07,
+      "rmse": 4.792794073865335e-08,
+      "within_thresholds": true
+     },
+     "position": 5,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999997,
+      "max_abs": 1.4041106194406794e-08,
+      "rmse": 7.59058694794197e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999776,
+      "max_abs": 5.075878040106119e-08,
+      "rmse": 2.0102633431611998e-08,
+      "within_thresholds": true
+     },
+     "position": 6,
+     "status": "PASS"
+    },
+    {
+     "attention_weights": {
+      "cosine": 0.9999999999999991,
+      "max_abs": 9.989376631436286e-09,
+      "rmse": 5.334510333720352e-09,
+      "within_thresholds": true
+     },
+     "exact": {
+      "expert_selection_and_order": true,
+      "position": true,
+      "selected_token": true,
+      "state_growth": true,
+      "token": true,
+      "visible_keys": true
+     },
+     "logits": {
+      "cosine": 0.9999999999999946,
+      "max_abs": 5.3694644341906184e-08,
+      "rmse": 2.9319863695227017e-08,
+      "within_thresholds": true
+     },
+     "position": 7,
+     "status": "PASS"
+    }
+   ],
+   "tokens": [
+    11,
+    11,
+    0,
+    11,
+    5,
+    10,
+    14,
+    15
+   ]
+  }
+ ],
+ "exactness_rules": [
+  "selected token",
+  "expert selection and order",
+  "visible-key count",
+  "position index",
+  "input token",
+  "retained state growth"
+ ],
+ "original_checkpoint_reads": 0,
+ "producer": "crates/f017-native temporal_differential (execute_position on the MLX GPU backend, one retained state)",
+ "reference": "scripts/research/f017_temporal_reference_v1.py (independent binary64, explicit full history)",
+ "result": "PASS",
+ "schema": "pulsarmlx.f017.native-temporal-differential/1.0.0",
+ "seeds": [
+  17030,
+  17031,
+  17032,
+  17033,
+  17034,
+  17035
+ ],
+ "thresholds": {
+  "cosine": 0.9999999981,
+  "max_abs": 0.0065,
+  "rmse": 0.0035,
+  "source": "frozen graph-differential thresholds, reused unchanged"
+ }
+}

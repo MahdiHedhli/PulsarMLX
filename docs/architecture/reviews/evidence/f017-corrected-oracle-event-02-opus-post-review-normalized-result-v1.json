@@ -1,0 +1,45 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-event-final-post-review-result/1.0.0",
+  "reviewer": {
+    "model": "claude-opus-5",
+    "effort": "high",
+    "cli": "Claude Code 2.1.235",
+    "session_id": "a9db2d54-d66d-4de4-b524-2002a07eaf76",
+    "fresh_session": true
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "f69b7e3680d6a35bf5b43a596ee788417c2f2bfc",
+  "request_head": "fc590841a99fddfe71416b361924b54ca5877a58",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-opus-post-review-request-v1.md",
+    "sha256": "5e17ee78e42141389858ed695ee7dd179ef14ec81df791cf05cf53334ecf35cc"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event-02-opus-post-review-response-v1.md",
+    "sha256": "71e12cd479d68128cadb1111f19e4f12acde69b00a6a2d1cd189e50531f56ed0"
+  },
+  "evidence_only_ci": {
+    "run_id": 32616025531,
+    "conclusion": "success",
+    "native_jobs_launched": 0
+  },
+  "adversarial_cross_checks": {
+    "passed": 56,
+    "failed": 0
+  },
+  "blocking_findings": 0,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": [
+    "claim_and_durable_start_are_byte_identical",
+    "accounting_fields_are_contract_literals_not_measurements",
+    "non_authorizing_pre_mint_report_is_not_committed",
+    "unexpected_and_fallback_zero_counts_are_structurally_inferred",
+    "complete_state_root_has_no_committed_directory_census",
+    "preexecution_contract_status_is_historically_stale_after_event"
+  ],
+  "scope": "TERMINAL_FAILURE_EVIDENCE_ONLY",
+  "numerical_acceptance": false,
+  "rerun_authority": false,
+  "corrected_oracle_classification": "ORACLE_EXECUTION_FAILURE",
+  "verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVIDENCE"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-implementation-measurement/1.0.0",
+  "implementation_head": "a2dc1ecc3d44b4a19e13db5b7b5364800649a221",
+  "implementation_tree": "4da0c1962dc139b86024a418b20fefe9f7d435bb",
+  "paths": [
+    {"path": ".github/workflows/macos.yml", "sha256": "83dd289a1c6b2790cee9b1f71f8cc143dd9da1728145c3a64ac33d02a1dc222c"},
+    {"path": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py", "sha256": "3aab0f22dc4a62a820668b31dafadccb3dc27335636bc2034ab81159327fd2b3"},
+    {"path": "scripts/research/f017_corrected_oracle_primary_wrapper_v12_bridge_v2.py", "sha256": "a62a8f9d28d4c777e627a72e728fad4024b0d6278085c56e57141b39b1aba2eb"},
+    {"path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v12_bridge_v2.py", "sha256": "b9065e3cdf511e93102a6b23f8ec2975332d248c002c51a48c8f58ae09f38293"},
+    {"path": "scripts/research/f017_event06_bridge_synthetic_fixture_v2.py", "sha256": "c42c87735d3b8dbdddbf8fa545d38a98ac5d890e8e962b4a482caacfc0f1826f"},
+    {"path": "scripts/research/f017_event06_numerical_bridge_v2.py", "sha256": "2fdd7645721cbe2ef5a84086369dbe422d7f630818a69be420519c82489fa87a"},
+    {"path": "scripts/research/qualify_f017_event06_identity_bridge_v2.py", "sha256": "39c6d333505377d2ebe7c72a6ffdec4183be16d20ce20c1fac6c88d9ee5b7ae2"},
+    {"path": "scripts/research/tests/test_f017_event06_numerical_bridge_v2.py", "sha256": "b5d17cb45ba7299a91ae853f829be7fb01a933b28cdec500d8cf735cdeb82bc7"},
+    {"path": "scripts/research/f017_event06_identity_bridge_contract_v2.py", "sha256": "82c914f4f1d600505b752e8e38d095b7800752745fc1a14dae0ba03e4d64a743"},
+    {"path": "scripts/research/generate_f017_event06_identity_bridge_v2.py", "sha256": "e4227c097ce0bb6cfd89646689be78979b0e6c2a339e335ca77e91b8786f4e91"},
+    {"path": "scripts/research/validate_f017_event06_identity_bridge_contract_v2.py", "sha256": "1d61f71c19f59d2a425b483cf63cd60d92c18597126a26d0ade42360b07b6885"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-requirements-v1.json", "sha256": "1e7f3a1269127bf2c40cdd2eae69133f806dd094bc1fb777ad7beff4154aa5fd"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-identity-to-numerical-bridge-v2.json", "sha256": "fdf3485232a763da602bf15afe0514e4b39b012e28d88194aeb207dd1132fb0b"}
+  ],
+  "historical_bridge_sha256": "b7d8eaedcd87d4d8363a14977750f59406b171677a87417aebe31d11ed04112e",
+  "historical_coordinator_sha256": "aa99e0071c1654eace328cabfb12c02c99858dd1ffaaa7c53d2bea601949b5fd",
+  "historical_primary_wrapper_sha256": "a95f0720e0d6f476b934412beabc1e8823940416472ebd500b4deb5c9856c4b5",
+  "historical_secondary_wrapper_sha256": "119bc41cfc4790ebf93435f112fef3a1c6e3c96d3488cd574782628134c71d95",
+  "numerical_contract_sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+  "result_authority_sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+  "numerical_and_result_authority_drift": 0,
+  "result": "PASS"
+}

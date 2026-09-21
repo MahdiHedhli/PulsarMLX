@@ -1,0 +1,832 @@
+{
+  "claims": [
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-REF-001",
+      "depends_on": [],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "AUTHORITATIVE_BRANCH_LINEAGE",
+      "statement": "One and only one authoritative branch lineage exists.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R0",
+      "test_evidence": [
+        "git merge-base --is-ancestor 313a4832d492c241cde738fc979d2b6890607906 90338840c94118651a85c695af22de780437663b",
+        "git rev-list --count 313a4832d492c241cde738fc979d2b6890607906..90338840c94118651a85c695af22de780437663b"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-REF-002",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-node-r0-receipt-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "GRAPH_OWNERSHIP",
+      "statement": "No compatible loop is concurrently modifying the authoritative implementation.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R0",
+      "test_evidence": [
+        "git worktree list --porcelain",
+        "process and task-lock census"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-REF-003",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R0",
+      "invalidates_nodes": [
+        "R0",
+        "R1",
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-review-budget-exhaustion-v1.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-opus-cycle-06-normalized-result.json"
+      ],
+      "readiness_critical": true,
+      "scope": "TERMINAL_REVIEW_EVIDENCE",
+      "statement": "The selected head contains the complete terminal review evidence.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R0",
+      "test_evidence": [
+        "sha256sum of terminal closeout",
+        "terminal Opus cycle-06 reconstruction"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "ANSWERED_G_C01_001_G_C01_002_G_C03_002_G_C03_003",
+      "claim_id": "C-ROOT-001",
+      "depends_on": [
+        "C-REF-001",
+        "C-REF-002"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json",
+        "scripts/research/f017_accounting_root_continuity_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v3.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ACCOUNTING_ROOT_IDENTITY",
+      "statement": "Accounting is permanently bound to the original evidence-root identity.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_03",
+      "test_evidence": [
+        "root identity attack matrix",
+        "descriptor-relative manifest race regression",
+        "component-relative root acquisition",
+        "descriptor-relative offline accounting"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-ROOT-002",
+      "depends_on": [
+        "C-ROOT-001"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/qualify_f017_v10_root_continuity_bounded_decode_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "FALSE_ZERO_PREVENTION",
+      "statement": "Root substitution or loss cannot produce a false zero.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_01",
+      "test_evidence": [
+        "252 root attack executions",
+        "journal in-place truncation false-zero regression"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-ROOT-003",
+      "depends_on": [
+        "C-ROOT-001"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "FALLBACK_SEMANTICS",
+      "statement": "Fallback evidence never becomes the source of accounting truth.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R1",
+      "test_evidence": [
+        "fallback substitution and unavailability attacks"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-ROOT-004",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-002"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_accounting_root_continuity_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MONOTONIC_TERMINAL_OBLIGATION",
+      "statement": "A verified durable start always creates a monotonic terminal obligation.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_01",
+      "test_evidence": [
+        "journal plus artifact plus in-process lower-bound tests",
+        "repeated post-corruption monotonic observation"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-ROOT-005",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-004"
+      ],
+      "introduced_by_node": "R1",
+      "invalidates_nodes": [
+        "R1",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/execute_f017_corrected_oracle_event_v10.py"
+      ],
+      "readiness_critical": true,
+      "scope": "DEGRADED_ROOT_TERMINALIZATION",
+      "statement": "Every degraded-root outcome produces the maximal constructible capsule.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R1",
+      "test_evidence": [
+        "bound-primary and bound-fallback terminal banking tests"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-JSON-001",
+      "depends_on": [
+        "C-REF-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_bounded_artifact_decode_v1.py",
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py"
+      ],
+      "readiness_critical": true,
+      "scope": "CANONICAL_RUNTIME_PARSER",
+      "statement": "Every runtime authority artifact uses one bounded parser.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R2",
+      "test_evidence": [
+        "32-module import-closure source policy"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-JSON-002",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-bounded-artifact-decode-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json"
+      ],
+      "readiness_critical": true,
+      "scope": "PREDECODE_BOUNDS",
+      "statement": "Artifact nesting and size are bounded before recursive decode.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_01",
+      "test_evidence": [
+        "depth 65, 128, 1024, and 10000 rejection",
+        "257, 10000, and 1000000 character float rejection"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-JSON-003",
+      "depends_on": [
+        "C-JSON-002",
+        "C-ROOT-004"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/tests/test_f017_root_continuity_bounded_decode_v1.py"
+      ],
+      "readiness_critical": true,
+      "scope": "RECURSION_NORMALIZATION",
+      "statement": "No raw RecursionError escapes terminalization.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R2",
+      "test_evidence": [
+        "deep durable-start terminalization regression"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-JSON-004",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/f017_bounded_artifact_decode_v1.py"
+      ],
+      "readiness_critical": true,
+      "scope": "CONTROLLED_DECODE_FAILURE",
+      "statement": "All malformed artifacts map to stable reviewed failure classes.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R2",
+      "test_evidence": [
+        "204 malformed artifact attacks"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "ANSWERED_G_C01_006_G_C02_001_G_C03_001",
+      "claim_id": "C-JSON-005",
+      "depends_on": [
+        "C-JSON-001"
+      ],
+      "introduced_by_node": "R2",
+      "invalidates_nodes": [
+        "R2",
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "scripts/research/check_f017_bounded_artifact_decode_policy_v1.py",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v2.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v3.json"
+      ],
+      "readiness_critical": true,
+      "scope": "DIRECT_PARSER_PROHIBITION",
+      "statement": "Direct active-runtime JSON parsing outside the canonical parser is prohibited.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_03",
+      "test_evidence": [
+        "AST direct-parser prohibition",
+        "sys.modules and builtins dynamic resolution mutations",
+        "eight reflective and aliased sys/builtins mutations",
+        "os.sys transitive export rejected",
+        "dynamic object-graph capability traversal rejected"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-IMPL-001",
+      "depends_on": [
+        "C-ROOT-001",
+        "C-ROOT-002",
+        "C-ROOT-003",
+        "C-ROOT-004",
+        "C-ROOT-005"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ROOT_CONTINUITY_IMPLEMENTATION",
+      "statement": "The V10 implementation matches the accepted accounting-root continuity design.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R3",
+      "test_evidence": [
+        "252 root attack cases",
+        "descriptor-relative terminal banking tests"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-IMPL-002",
+      "depends_on": [
+        "C-JSON-001",
+        "C-JSON-002",
+        "C-JSON-003",
+        "C-JSON-004",
+        "C-JSON-005"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "BOUNDED_DECODE_IMPLEMENTATION",
+      "statement": "The V10 implementation matches the accepted bounded-artifact decode design.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R3",
+      "test_evidence": [
+        "204 decode attacks",
+        "direct-parser import-closure policy"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-IMPL-003",
+      "depends_on": [
+        "C-REF-003"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "NUMERICAL_AUTHORITY_ISOLATION",
+      "statement": "Numerical authority bytes remain unchanged.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R3",
+      "test_evidence": [
+        "primary 657cdff9...",
+        "secondary e3670b22...",
+        "decoder 60a4b4e7..."
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-IMPL-004",
+      "depends_on": [
+        "C-IMPL-001",
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R3",
+      "invalidates_nodes": [
+        "R3",
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-implementation-measurement-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "IMPLEMENTATION_MEASUREMENT",
+      "statement": "All load-bearing implementation bytes are measured at exact Git objects.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R3",
+      "test_evidence": [
+        "43 exact path/SHA/blob bindings",
+        "32-module active runtime closure"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-QUAL-001",
+      "depends_on": [
+        "C-IMPL-001"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "ROOT_MUTATION_QUALIFICATION",
+      "statement": "Every qualified root mutation preserves truthful accounting.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R4",
+      "test_evidence": [
+        "252 root attacks",
+        "6 combined root/decode attacks",
+        "false zero results 0"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-QUAL-002",
+      "depends_on": [
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MALFORMED_ARTIFACT_QUALIFICATION",
+      "statement": "Every qualified malformed artifact fails through the controlled boundary.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R4",
+      "test_evidence": [
+        "204 decode attacks",
+        "raw RecursionError count 0"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-QUAL-003",
+      "depends_on": [
+        "C-IMPL-001",
+        "C-IMPL-002"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v7.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v7.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "MODELED_RUNTIME_OUTCOMES",
+      "statement": "Every modeled runtime outcome is realized with exact accounting and no generic fallback.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R4",
+      "test_evidence": [
+        "47 outcomes",
+        "235 root/decode executions",
+        "201 retained runtime-hardening executions"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-QUAL-004",
+      "depends_on": [
+        "C-IMPL-003"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v7.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "SUCCESS_REGRESSION",
+      "statement": "Normal five-shard numerical success behavior remains unchanged.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R4",
+      "test_evidence": [
+        "110 successful package executions across both qualification suites",
+        "1410 graph tensors",
+        "399 non-access denials",
+        "all 11 formats"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-QUAL-005",
+      "depends_on": [
+        "C-QUAL-001",
+        "C-QUAL-002",
+        "C-QUAL-003",
+        "C-QUAL-004"
+      ],
+      "introduced_by_node": "R4",
+      "invalidates_nodes": [
+        "R4",
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v6.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v6.json",
+        "docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v1.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-bounded-decode-qualification-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-runtime-hardening-qualification-v10-v8.json",
+        "docs/architecture/reviews/evidence/f017-event04-production-shaped-no-access-rehearsal-v10-v9.json"
+      ],
+      "readiness_critical": true,
+      "scope": "CHECKPOINT_ACCESS_ISOLATION",
+      "statement": "Original checkpoint access remains zero.",
+      "status": "REPAIRED",
+      "support_status": "SUPPORTED_BY_R7_CYCLE_01",
+      "test_evidence": [
+        "original shard opens 0",
+        "identity hash reads 0",
+        "payload reads 0",
+        "external-inode hardlink rejection"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-CI-001",
+      "depends_on": [
+        "C-QUAL-001",
+        "C-QUAL-002",
+        "C-QUAL-003",
+        "C-QUAL-004",
+        "C-QUAL-005"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json"
+      ],
+      "readiness_critical": true,
+      "scope": "EXACT_HEAD_FULL_NATIVE_CI",
+      "statement": "Exact-head FULL_NATIVE CI passes.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R5",
+      "test_evidence": [
+        "GitHub Actions run 32852990982",
+        "workspace and pinned native MLX jobs PASS",
+        "GitHub Actions run 32856475208"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-CI-002",
+      "depends_on": [
+        "C-CI-001"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json"
+      ],
+      "readiness_critical": true,
+      "scope": "NATIVE_SKIP_CENSUS",
+      "statement": "Required native skips equal zero.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R5",
+      "test_evidence": [
+        "PULSAR_REQUIRE_NATIVE_MLX=1 native lane PASS",
+        "native_required_skips 0",
+        "GitHub Actions run 32856475208"
+      ]
+    },
+    {
+      "arbiter_verdict": null,
+      "challenge_status": "GEMINI_CYCLE_03_NO_OPEN_CHALLENGE",
+      "claim_id": "C-CI-003",
+      "depends_on": [
+        "C-CI-001",
+        "C-REF-003"
+      ],
+      "introduced_by_node": "R5",
+      "invalidates_nodes": [
+        "R5",
+        "R6",
+        "R7",
+        "R8",
+        "R9_FINAL_AUTHORITY_RECONCILIATION"
+      ],
+      "proof_artifacts": [
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v3.json",
+        "docs/architecture/reviews/evidence/f017-v10-root-continuity-full-native-ci-v4.json"
+      ],
+      "readiness_critical": true,
+      "scope": "HISTORICAL_ACTIVE_CI_SEPARATION",
+      "statement": "Historical validation and active validation remain separated.",
+      "status": "SUPPORTED",
+      "support_status": "SUPPORTED_BY_R5",
+      "test_evidence": [
+        "historical Git-object reconstruction PASS",
+        "active V10 validation PASS",
+        "GitHub Actions run 32856475208"
+      ]
+    }
+  ],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "schema": "pulsarmlx.f017.v9-root-continuity-claim-ledger/1.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-v9-root-continuity-claim-ledger-v4.json"
+}

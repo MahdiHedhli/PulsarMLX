@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-comparison-read-grant-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 2,
+  "reviewer_model_required": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "d11054eb67a8e193a9d84dd663f90aa028e97131",
+  "committed_pushed_bytes_only": true,
+  "reviewed_artifact_hashes": {
+    "grant": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json","sha256":"bcf136d13dc702b08b40eb44b92222e83d956ba8520b7c069aa927ba2abdeedc"},
+    "stage_mapping": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-canonical-stage-mapping-v1.json","sha256":"9f8bb8b0b65188fd2377521c79655c82842063f870a30aeeaea97e0483cd74c5"},
+    "consumer": {"path":"crates/f017-native/src/bin/d35_grader.rs","sha256":"e446ab7edea7299e9e92e94791d08bd318577a588af7b9eb55045b8adef868f7"},
+    "builder": {"path":"scripts/research/build_f017_native_d35_comparison_grant_v1.py","sha256":"8cf25967c094eb438935e7bc79905cc5a34d8d65960d7360e034a3abe73b8a96"},
+    "validator": {"path":"scripts/research/validate_f017_native_d35_comparison_grant_v1.py","sha256":"25d637cb669a3154b2d4766cae36c6c10a470d2c33d555a9a0cc2dffbc976de0"},
+    "mutation_tests": {"path":"scripts/research/tests/test_f017_native_d35_comparison_grant_v1.py","sha256":"c87fb710aef352d8adbe52223241e407c6b9708735a43770e7a1f8a7c6d467a4"},
+    "d0": {"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json","sha256":"cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"},
+    "d3_5_evidence": {"path":"docs/architecture/reviews/evidence/f017-native-retained-qualification-execution-evidence-v1.json","sha256":"13b1a3a653cf0325f59b0b3b035b7804439a19c000ef8ddf19dad9ecb8316ac8"},
+    "cycle_01_response": {"path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-01-exact-claude-response-v1.md","sha256":"400c32bdf3365aa34d6d1a646a90acbf0e3340b38724e35cd8763fb8e3964460"}
+  },
+  "validation_at_reviewed_head": [
+    "cargo build --release -p f017-native --bin f017-native-d35-grader => PASS",
+    "python3 scripts/research/validate_f017_native_d35_comparison_grant_v1.py => PASS; exact 89-read metadata census; payload reads 0",
+    "python3 -m unittest scripts.research.tests.test_f017_native_d35_comparison_grant_v1 -v => PASS; 20 mutation classes plus capture-manifest and oracle-census attacks",
+    "cargo test -p f017-native --no-run => PASS"
+  ],
+  "required_attacks": [
+    "rerun all cycle-1 findings against their exact repairs",
+    "nonexistent or wrong source commit, path, authority SHA, capture manifest SHA, or dtype",
+    "source/executable substitution or unresolved committed authority",
+    "all eight routed experts are covered by OCB gate/up grading",
+    "all 34 D0 stages receive exact registry vocabulary and a valid classification",
+    "OCB cap derived only from independently decoded operands, never observed native error",
+    "route membership/order/tie/interval gates precede numeric comparison",
+    "disclosed ungranted metrics remain unusable",
+    "checkpoint fallback, native capture regeneration, second D3.5 execution, retry, or ledger advance",
+    "EXPECTED=BEFORE=CONSUMED=AFTER same-descriptor receipt enforcement",
+    "fixed output root and exact one-event terminal policy"
+  ],
+  "execution_prohibitions_during_review": {"comparison_payload_reads":0,"d3_5_numerical_execution":0,"original_checkpoint_reads":0,"real_p1_executions":0,"live_p1_authorizations":0},
+  "acceptance_rule": "ACCEPT_ONLY_WITH_ZERO_BLOCKING_AND_ZERO_NON_BLOCKING_REQUIRED",
+  "requested_verdicts": ["ACCEPT","REJECT"]
+}

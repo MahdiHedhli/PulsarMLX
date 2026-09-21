@@ -1,0 +1,1 @@
+I reviewed the F017 Event 06 V12 identity-authority design CHALLENGE cycle 2 request. The requested committed files were not visible to the reviewer session, so it declined to invent challenge rows. It requested an absolute workspace path or fetch instructions before evaluating the exact claim IDs.

@@ -1,0 +1,73 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-review-package",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "07bcf123f5f4db3339bf4fb88822552d8f61c7df",
+  "execution_code_head": "22a76e4c248434a1827e81501607f93b0779352e",
+  "pre_review_validation": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-pre-review-validation-v1.json",
+    "sha256": "677b0e07c713665111887211b268953f50bc0deac562451af272cbfd10d42f56"
+  },
+  "review_graph": [
+    "CROSS_BRANCH_AUTHORITY_AND_MASTER_LEDGER",
+    "D0_NUMERICAL_ACCEPTANCE_AND_EPISTEMIC_LOCK",
+    "D1_22_COUNTER_SEMANTICS",
+    "D2_ACCOUNTING_AND_RESIDENCY",
+    "D3_INSTANTIABLE_NATIVE_EXECUTOR",
+    "MATH_ONLY_MOCK_WITH_REAL_LIFECYCLE_AND_RECEIPT",
+    "CONSUMER_SCOPED_RETENTION_REUSE_GRANTS",
+    "D3_5_RETAINED_NATIVE_QUALIFICATION",
+    "EXACT_P1_CONTRACT_AND_PINNED_RUNTIME",
+    "FUTURE_HUMAN_ONLY_ONE_SHOT_AUTHORIZATION"
+  ],
+  "mandatory_attacks": [
+    "unjustified_or_post_hoc_tolerance_derivation",
+    "native_output_used_as_its_own_correctness_oracle",
+    "GPU_nondeterminism_hidden_by_grading",
+    "ambiguous_native_to_canonical_stage_mapping",
+    "counter_with_no_live_producer_or_meaningless_invariant",
+    "all_zero_or_stale_snapshot",
+    "mocked_accounting_or_fixture_authored_receipt",
+    "checkpoint_reachable_from_inert_math_boundary",
+    "retained_read_outside_consumer_scoped_grant",
+    "historical_ledger_175_ignored_or_duplicated",
+    "page_fault_confused_with_historical_payload_authority",
+    "unbound_binary_or_runtime_drift",
+    "alternate_checkpoint_or_partial_shard_census",
+    "RN1_foreign_attempt_terminalization",
+    "terminal_count_not_derived_from_receipts",
+    "retry_resume_continuation_or_second_token",
+    "live_authorization_created_by_validation",
+    "D3_5_layer3_qualification_overclaimed_as_full_forward_qualification"
+  ],
+  "cross_vendor_policy": {
+    "required_cli": "AGY",
+    "model": "gemini-3.1-pro-high",
+    "effort": "high",
+    "role": "DISAGREEMENT_SEARCH_NOT_VOTE",
+    "material_disagreement": "ESCALATE_NO_MAJORITY_VOTE"
+  },
+  "final_reviewer_policy": {
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "model": "claude-fable-5",
+    "blocking_severities": [
+      "BLOCKING",
+      "NON_BLOCKING_REQUIRED"
+    ],
+    "review_committed_pushed_exact_head_only": true
+  },
+  "scope_limitations": [
+    "D3_5_QUALIFIES_ONLY_THE_REPRESENTATIVE_LAYER_3_S0_TO_S2_SURFACE",
+    "THE_REMAINING_79_LAYER_FULL_FORWARD_RELIES_ON_F016_STRUCTURAL_LINEAGE_AND_D0_PER_STAGE_SEMANTICS_UNTIL_THE_SINGLE_REAL_P1",
+    "NO_PRODUCTION_CORRECTNESS_CLAIM_IS_MADE_BEYOND_THE_FROZEN_DOMAIN",
+    "NO_CROSS_DEVICE_PORTABILITY_CLAIM_IS_MADE"
+  ],
+  "requested_final_verdicts": [
+    "F017_NATIVE_BOUNDED_P1_EXECUTION_DOMAIN: ACCEPTED",
+    "REJECT"
+  ],
+  "phase_status": "READY_FOR_EXACT_HEAD_CI_AND_INDEPENDENT_REVIEW",
+  "real_m1_ultra_p1_executed": false,
+  "full_model_real_checkpoint_inference_executed": false,
+  "live_p1_authorization_created": false
+}

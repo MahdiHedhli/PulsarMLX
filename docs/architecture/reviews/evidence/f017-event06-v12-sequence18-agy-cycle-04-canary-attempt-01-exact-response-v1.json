@@ -1,0 +1,22 @@
+{
+  "blocking_findings": [
+    {
+      "claim_id": "S18-C-DAG-001",
+      "consequence_term": "AMBIGUOUS_ACCOUNTING",
+      "finding_id": "F017-S18-AMBIGUOUS-ACCOUNTING",
+      "seeded_symbol_or_edge": "f017_event06_package_attempt_registry_v2:claim_live_terminal_sinks",
+      "statement": "The public entrypoint claim_live_terminal_sinks (via _validate_view) fails to assert that the bridge authorization_id matches the reservation authorization_id, allowing cross-authorization consumption of execution results."
+    }
+  ],
+  "model": "gemini-3.1-pro-high",
+  "nonce_echo": "0b08f2be8fff4819b8a476690547b9eaa93db4b182a897a156ccacf47ac4a4d8",
+  "payload_sha256_echo": "d32f18715ddebb374c9039286a822880758a7dca4d7227a8c19b557eaefb1d59",
+  "reviewed_head": "f5c2c991fa9d07830cf2678dbfd11166e7cfb27c",
+  "reviewed_tree": "78c3afcbc122cf5b8dc87c085c92081c5d75ff18",
+  "reviewer": "AGY",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-independent-review/1.0.0",
+  "summary": "I have reviewed the specified detached repository tree. I found a blocking safety violation in the terminal claim boundary: `claim_live_terminal_sinks` (and `_validate_view`) fails to verify that the bridge's `authorization_id` matches the reservation's `authorization_id`. This omission at a public entrypoint permits cross-authorization consumption of execution results, resulting in ambiguous accounting. I have rejected the payload and cited the exact symbol and consequence term.",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "unresolved_findings": [],
+  "verdict": "REJECT"
+}

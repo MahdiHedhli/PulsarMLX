@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.event04-opus-arbiter-normalized-result/10.0.0",
+  "reviewed_head": "e49e54991e9cea88cc97d7bbd135c815ef6ed4db",
+  "reviewer_model": "claude-opus-5",
+  "targeted_claim_verdict": {
+    "claim_id": "E-CI-001",
+    "verdict": "ACCEPT",
+    "evidence": [
+      "committed CI artifact SHA 14c6c30350943138693b71d6212ca63a5ed5f435b526fc4ca85d56b32743af5b matches graph-state-v8",
+      "artifact scopes run 32918434857 to covered head f659a31d6820bbd646395f475fd3b83564042031",
+      "evidence integrity passed and native_jobs_launched equals zero",
+      "claim does not self-referentially assert coverage of the successor commit",
+      "cycle-2 finding O-E04-C02-001 is discharged"
+    ],
+    "invalidation_disposition": [
+      "acceptance covers the scoped evidence-only CI claim only",
+      "no execution success claim is upgraded",
+      "ORACLE_EXECUTION_FAILURE remains final"
+    ]
+  },
+  "carried_verdict_census": {"accepted":21,"rejected":7,"unresolved":0,"total":28,"result":"PASS"},
+  "findings": [
+    {"finding_id":"O-E04-C03-001","claim_id":"E-CI-001","classification":"INFORMATIONAL","observed":"cycle-3 ACCEPT changes final census to 21/7/0","required_repair":"emit successor ledger and graph with derived final census"},
+    {"finding_id":"O-E04-C03-002","claim_id":"E-CI-001","classification":"DEFENSE_IN_DEPTH","observed":"CI job table is a committed transcription without provider-side response digest","required_repair":"future events should bank raw CI API response digest"},
+    {"finding_id":"O-E04-C03-003","claim_id":null,"classification":"INFORMATIONAL","observed":"cycle-3 discharges graph E12 repair edge","required_repair":"emit PASS receipt and advance graph without reopening execution nodes"},
+    {"finding_id":"O-E04-C03-004","claim_id":null,"classification":"DEFENSE_IN_DEPTH","observed":"79-layer completion remains attested scalar and raw output remains outside package-terminal closure","required_repair":"future event requires bounded per-layer digest chain and bounded terminal receipt binding output SHA"}
+  ],
+  "corrected_oracle_classification": "ORACLE_EXECUTION_FAILURE",
+  "event_04_retry_observed": false,
+  "secondary_execution_observed": false,
+  "p1_attempt_2_observed": false,
+  "global_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE"
+}

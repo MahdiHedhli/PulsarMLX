@@ -1,0 +1,59 @@
+{
+  "schema":"pulsarmlx.f017.event06-v12-to-v11-numerical-authority-bridge-contract/1.3.0",
+  "supersedes":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v3.json",
+  "correction_reason":"Close the real V12 identity-producer seam, transitive execution-plan provenance, and the comparison-release-accounting-terminal chain identified by whole-domain arbitration cycle 1.",
+  "state":"IMPLEMENTED_REPAIR_CYCLE_1",
+  "unchanged_sections":["generation_truth","historical_schema_policy","canonical_document","descriptor_record","shard_record","sealed_object_policy","transition_binding_journal","event_number_policy","consumer_views"],
+  "identity_producer_adapter":{
+    "input_authority":"ValidatedIdentityAuthority with INSTALLED posture",
+    "input_leases":"LeaseSet returned by f017_checkpoint_identity_producer_v12.produce",
+    "input_report":"exact V12 producer report with complete banked evidence closure",
+    "output":"ValidatedIdentityStage",
+    "access_census_sha256_source":"evidence.access_journal_sha256",
+    "identity_manifest_sha256_source":"evidence.identity_manifest_sha256",
+    "identity_terminal_sha256_source":"evidence.identity_terminal_sha256",
+    "descriptor_identity_sha256_source":"canonical SHA-256 of LeaseSet.descriptors",
+    "lease_owner_source":"installed package_attempt_id",
+    "lease_id_rule":"LEASE-{package_attempt_id}-{shard_ordinal}",
+    "unknown_or_missing_report_fields":"REJECT"
+  },
+  "production_path":{
+    "entrypoint":"execute_event06_bridge",
+    "fixed_dependencies":true,
+    "caller_callbacks":false,
+    "package_gate":"validate_package_start",
+    "identity_stage":"run_identity_stage",
+    "bridge_adapter":"derive_bridge_from_identity_output",
+    "durable_starts":"coordinator-created sealed package, primary, and secondary artifacts",
+    "primary_calls":1,
+    "secondary_calls":1,
+    "descriptor_release":"exactly once on success and every modeled exception path",
+    "terminal_inputs":"derived from sealed coordinator-created starts and validated execution artifacts, never caller digest strings"
+  },
+  "execution_plan_provenance":{
+    "cycle_break":"execution plan is canonicalized first; event identity plan then binds execution_plan_sha256",
+    "installed_binding":"installed V12 authority binds the canonical event identity plan SHA-256",
+    "transitive_chain":"installed authority -> event identity plan -> execution plan -> every measured numerical/result/lifecycle field",
+    "valid_substitution_disposition":"REJECT",
+    "bridge_reconstruction_requires_expected_digest":true
+  },
+  "success_closure":{
+    "comparison_binding":["bridge_sha256","authorization_id","package_attempt_id","comparison_view_sha256","comparison_summary_sha256"],
+    "release_binding":["bridge_sha256","package_attempt_id","comparison_binding_sha256","release_view_sha256","release_report_sha256"],
+    "accounting_binding":["bridge_sha256","authorization_id","package_attempt_id","primary_event_id","secondary_event_id","installed_authority_sha256","installation_receipt_sha256","release_binding_sha256","package_delta","primary_delta","secondary_delta","historical_master_ledger"],
+    "package_terminal_inputs":["derived transition-chain head","derived V11 closure root","derived accounting binding"],
+    "caller_supplied_closure_digest":false
+  },
+  "qualification":{
+    "real_producer_adapter_instantiated":true,
+    "fixed_production_coordinator_invoked_with_no-capability spies":true,
+    "real_primary_and_secondary_wrapper_call_sites_reached":true,
+    "success_descriptor_release_paths":1,
+    "modeled_failure_descriptor_release_paths":4,
+    "original_checkpoint_access":0,
+    "numerical_operations":0,
+    "live_state_created":false,
+    "event06_ids_consumed":0
+  },
+  "result":"PROPOSED_FOR_REVIEW_CYCLE_2"
+}

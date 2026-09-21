@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-full-native-ci/1.0.0",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "evidence_head": "39880c8dc2d191251b32e5226a8abe6a40238538",
+  "evidence_tree_before_sequence19": "9e97291115160baedbcf97e6d5734ae869ac84d8",
+  "source_closure_equal_to_candidate": true,
+  "workflow": "macOS baseline",
+  "event": "workflow_dispatch",
+  "mode": "FULL_NATIVE",
+  "run": 33285890775,
+  "run_head": "39880c8dc2d191251b32e5226a8abe6a40238538",
+  "apple_silicon_workspace_baseline": "PASS",
+  "apple_mlx_small_fixture_validation": "PASS",
+  "ci_aggregate_status": "PASS",
+  "required_native_skips": 0,
+  "unexpected_native_skips": 0,
+  "result": "PASS"
+}

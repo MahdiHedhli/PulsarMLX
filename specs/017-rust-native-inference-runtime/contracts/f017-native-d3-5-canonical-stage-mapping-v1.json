@@ -1,0 +1,532 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-canonical-stage-mapping/1.0.0",
+  "mapping_id": "F017-NATIVE-D3_5-CANONICAL-STAGE-MAPPING-1",
+  "source_capture_manifest_sha256": "5ad1e8f4a984ae0b9ffff6d5c338a7a35e4c15d56d02e74a7d0c04b3f923c7d8",
+  "stage_count": 34,
+  "rows": [
+    {
+      "ordinal": 0,
+      "native_stage_id": "input_hidden",
+      "canonical_stage_id": "input_hidden",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_INPUT_HIDDEN",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "RETAINED_DIRECT_VALUE",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 1,
+      "native_stage_id": "attention_normalized",
+      "canonical_stage_id": "attention_normalized",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ATTENTION_NORMALIZED",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 2,
+      "native_stage_id": "query_rank",
+      "canonical_stage_id": "query_rank",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_QUERY_RANK",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 3,
+      "native_stage_id": "query_rank_normalized",
+      "canonical_stage_id": "query_rank_normalized",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_QUERY_RANK_NORMALIZED",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 4,
+      "native_stage_id": "query_heads",
+      "canonical_stage_id": "query_heads",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_QUERY_HEADS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        64,
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 5,
+      "native_stage_id": "kv_raw",
+      "canonical_stage_id": "kv_raw",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_KV_RAW",
+      "dtype": "little-endian-f32",
+      "shape": [
+        576
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 6,
+      "native_stage_id": "kv_normalized",
+      "canonical_stage_id": "kv_normalized",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_KV_NORMALIZED",
+      "dtype": "little-endian-f32",
+      "shape": [
+        512
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 7,
+      "native_stage_id": "key_nope",
+      "canonical_stage_id": "key_nope",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_KEY_NOPE",
+      "dtype": "little-endian-f32",
+      "shape": [
+        64,
+        512
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 8,
+      "native_stage_id": "attention_scores",
+      "canonical_stage_id": "attention_scores",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ATTENTION_SCORES",
+      "dtype": "little-endian-f32",
+      "shape": [
+        64
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 9,
+      "native_stage_id": "attention_weights",
+      "canonical_stage_id": "attention_weights",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ATTENTION_WEIGHTS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        64
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 10,
+      "native_stage_id": "value_heads",
+      "canonical_stage_id": "value_heads",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_VALUE_HEADS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        64,
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 11,
+      "native_stage_id": "attention_output",
+      "canonical_stage_id": "attention_output",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ATTENTION_OUTPUT",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 12,
+      "native_stage_id": "post_attention_residual",
+      "canonical_stage_id": "post_attention_residual",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_POST_ATTENTION_RESIDUAL",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 13,
+      "native_stage_id": "router_normalized",
+      "canonical_stage_id": "router_normalized",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTER_NORMALIZED",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 14,
+      "native_stage_id": "router_logits",
+      "canonical_stage_id": "router_logits",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTER_LOGITS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 15,
+      "native_stage_id": "router_probabilities",
+      "canonical_stage_id": "router_probabilities",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTER_PROBABILITIES",
+      "dtype": "little-endian-f32",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 16,
+      "native_stage_id": "router_scores",
+      "canonical_stage_id": "router_scores",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTER_SCORES",
+      "dtype": "little-endian-f32",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 17,
+      "native_stage_id": "ranking",
+      "canonical_stage_id": "ranking",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_RANKING",
+      "dtype": "little-endian-u16",
+      "shape": [
+        256
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 18,
+      "native_stage_id": "selected_ids",
+      "canonical_stage_id": "selected_ids",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SELECTED_IDS",
+      "dtype": "little-endian-u16",
+      "shape": [
+        8
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 19,
+      "native_stage_id": "routing_weights",
+      "canonical_stage_id": "routing_weights",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTING_WEIGHTS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 20,
+      "native_stage_id": "routed_gate",
+      "canonical_stage_id": "routed_gate",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_GATE",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 21,
+      "native_stage_id": "routed_up",
+      "canonical_stage_id": "routed_up",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_UP",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 22,
+      "native_stage_id": "routed_silu",
+      "canonical_stage_id": "routed_silu",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_SILU",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 23,
+      "native_stage_id": "routed_gate_up_product",
+      "canonical_stage_id": "routed_gate_up_product",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_GATE_UP_PRODUCT",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 24,
+      "native_stage_id": "routed_weighted_hidden",
+      "canonical_stage_id": "routed_weighted_hidden",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_WEIGHTED_HIDDEN",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 25,
+      "native_stage_id": "routed_down_outputs",
+      "canonical_stage_id": "routed_down_outputs",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_DOWN_OUTPUTS",
+      "dtype": "little-endian-f32",
+      "shape": [
+        8,
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 26,
+      "native_stage_id": "routed_aggregate",
+      "canonical_stage_id": "routed_aggregate",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_ROUTED_AGGREGATE",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 27,
+      "native_stage_id": "shared_gate",
+      "canonical_stage_id": "shared_gate",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SHARED_GATE",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 28,
+      "native_stage_id": "shared_up",
+      "canonical_stage_id": "shared_up",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SHARED_UP",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 29,
+      "native_stage_id": "shared_silu",
+      "canonical_stage_id": "shared_silu",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SHARED_SILU",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 30,
+      "native_stage_id": "shared_gate_up_product",
+      "canonical_stage_id": "shared_gate_up_product",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SHARED_GATE_UP_PRODUCT",
+      "dtype": "little-endian-f32",
+      "shape": [
+        2048
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 31,
+      "native_stage_id": "shared_expert_output",
+      "canonical_stage_id": "shared_expert_output",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_SHARED_EXPERT_OUTPUT",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 32,
+      "native_stage_id": "production_ffn",
+      "canonical_stage_id": "production_ffn",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_PRODUCTION_FFN",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    },
+    {
+      "ordinal": 33,
+      "native_stage_id": "production_s2",
+      "canonical_stage_id": "production_s2",
+      "semantic_role": "CANONICAL_F017_APPLE_SERIAL_F32_STAGE_PRODUCTION_S2",
+      "dtype": "little-endian-f32",
+      "shape": [
+        6144
+      ],
+      "serialization": "CANONICAL_LITTLE_ENDIAN_CONTIGUOUS_NO_METADATA",
+      "comparison_profile": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "oracle_authority": "RESOLVED_BY_D0_V2_STAGE_ROW",
+      "production_method": "NATIVE_RECOMPUTATION",
+      "diagnostic_only": false
+    }
+  ],
+  "policy": {
+    "producer_role_validated_before_alias": true,
+    "implicit_mapping": false,
+    "direct_production_copy_allowed_for_recomputed_stage": false
+  }
+}

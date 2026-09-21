@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence21-final-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "sequence20_evidence_head": "1b6e6559a946b814ea0944349c5f2be8a6e2c772",
+  "sequence20_evidence_tree": "78815d77a7b26e5a8ae97a9f107f32ffb8fd4976",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "full_native_run_reused": 33285890775,
+  "manifest_bound_evidence_only_run": 33318787763,
+  "bindings": [
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-authority-guard-receipt-v1.json", "sha256": "ab5e22fd9802c62772c50df796e06189cf8f474b1a9042053ffcc8e7105c0907"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-claude-capability-probe-failure-v1.json", "sha256": "cc15bb761d696159bd83a117670f8837af67dd9be2c8be49e9b1f28eca50dad9"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-claude-installation-receipt-v1.json", "sha256": "69920e1107d17a39bb569fd6145b914841ec4ae141e80251559b16a54ca6488b"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-claude-postinstall-qualification-v1.json", "sha256": "bf896b1fbae0ab1d1ac72b8d763a2e2276651795f689af2a761007adfa69986b"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-claude-preinstall-receipt-v1.json", "sha256": "7880a5520620a4eabe732be2e13ea5014eeebd1d15f03fd0efa1aa1a807d6ea5"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-final-capability-repair-failure-declaration-v1.json", "sha256": "66baf4fc9d85bdae01b63fa0f81befe3554c513b9bc8191d9278117a1c1b218c"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-final-safety-census-v1.json", "sha256": "96125e4aeeed25fa43ab3036828f5dfeff3004f0d7d93537d02832bf2aa480bc"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-source-authority-receipt-v1.json", "sha256": "01e202e2c99b42a3754c89eee3482a2334aaf6ac67f1c87347382c608f8629fe"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-structural-loop-ledger-v1.json", "sha256": "8d714adc119e31fcae745c534dd30f233dae09e9fdd625a502dfc11e8e201cee"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence21-manifest-bound-evidence-only-ci-v1.json", "sha256": "c82fb5d29bf7d2d83edf864fcabf6aa61cf056e20b406dc54d022c61c8c18106"}
+  ],
+  "binding_count": 10,
+  "terminal_result": "CLAUDE_CAPABILITY_REPAIR_FAILED",
+  "independent_review_result": "NOT_RUN",
+  "package_scoped_terminal_uniqueness_and_no_second_attempt": "PENDING_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

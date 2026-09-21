@@ -1,0 +1,153 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-pre-review-validation",
+  "schema_version": "1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "07bcf123f5f4db3339bf4fb88822552d8f61c7df",
+  "execution_code_head": "22a76e4c248434a1827e81501607f93b0779352e",
+  "authorities": {
+    "historical_master_ledger": {
+      "branch": "feat/017-real-checkpoint-runner",
+      "path": "docs/architecture/reviews/evidence/f017-real-payload-access-ledger-v2.json",
+      "sha256": "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e",
+      "terminal_count": 175,
+      "receipt_continuity": "PASS"
+    },
+    "d0": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
+      "sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"
+    },
+    "d1": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-counter-semantics-v1.json",
+      "sha256": "f3aab3b065628f96bfe1fab1a045a9af3d2261e2b5d7ef69c1528fb0a7d88246"
+    },
+    "d2": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-accounting-residency-v1.json",
+      "sha256": "d2312004f05cafbfd1f1779ccfbbb9e1a0c8c5b4e916aa0601abb04dbefe9c84"
+    },
+    "execution_architecture": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-execution-architecture-v2.json",
+      "sha256": "ccb01e8dfeb5432598ded15b99783f186ebb5a03a794f25b70660a202d7a6f39"
+    },
+    "runtime_provenance": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-runtime-provenance-v1.json",
+      "sha256": "a614377d4faacd501f34ef8dedc1754e432f3ed13630233208f32b5e19819b6d"
+    },
+    "admission_contract": {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+      "sha256": "44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda"
+    },
+    "executor": {
+      "path": "specs/017-rust-native-inference-runtime/bin/f017-native-bounded-p1",
+      "sha256": "3894c4d12c93ac4c4f3584d2a9a41370c5074e7ef91402cfd8b16bf698c9c7ba"
+    },
+    "d3_5_result": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json",
+      "sha256": "472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4"
+    },
+    "d3_5_acceptance": {
+      "path": "docs/architecture/reviews/evidence/f017-native-d3-5-numerical-qualification-acceptance-v1.json",
+      "sha256": "9d4d29870e8aa67d9ca9ed2702bddd4b9248930204e4f03f05c5f05f2727b163"
+    },
+    "synthetic_full_graph": {
+      "path": "docs/architecture/reviews/evidence/f017-native-full-model-synthetic-qualification-v1.json",
+      "sha256": "3ea4091530d62b00eb5dd149de822fcfde7e092209462c5e7f4bf662a4ac99d2"
+    }
+  },
+  "runtime": {
+    "install_prefix": "/opt/homebrew/opt/pulsarmlx-f017-native-mlx-0.31.2",
+    "mlx_version": "0.31.2",
+    "mlx_commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+    "mlx_c_version": "0.6.0",
+    "mlx_c_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "libmlx_sha256": "ad9b597b08e28b43c9b9791d2948fea601c76fe0b4a06d08cceeb4ad7b15e20d",
+    "libmlxc_sha256": "3401e4f91a1d3f9b02c9bd1e728a10753f256d90bb1b40aebcaf8225592bee1a",
+    "mlx_metallib_sha256": "5518fd265f31a8973732996d5eecc612301c94c1852156fb9ff30f6b708be365",
+    "machine": "Apple M1 Ultra",
+    "architecture": "arm64",
+    "macos_build": "25A354",
+    "sdk": "26.2",
+    "metal": "32023.864"
+  },
+  "validation": [
+    {
+      "command": "python3 scripts/research/validate_f017_native_bounded_p1_d3_v2.py",
+      "result": "PASS",
+      "detail": "instantiable D3-v2 bound by exact admission contract"
+    },
+    {
+      "command": "python3 scripts/research/validate_f017_native_d35_numerical_grading_v1.py",
+      "result": "PASS",
+      "detail": "34 stages; 89 retained-read receipts; result SHA 472a3085; original checkpoint reads 0"
+    },
+    {
+      "command": "python3 scripts/research/validate_f017_native_bounded_p1_d1_d2_v1.py",
+      "result": "PASS",
+      "detail": "22 counters; historical master 175; zero phase delta"
+    },
+    {
+      "command": "python3 -m unittest scripts/research/tests/test_f017_native_bounded_p1_d1_d2_v1.py",
+      "result": "PASS",
+      "detail": "14 mutation tests"
+    },
+    {
+      "command": "python3 scripts/research/validate_f017_oracle_independence.py",
+      "result": "PASS"
+    },
+    {
+      "command": ".venv/bin/python -m unittest scripts.research.tests.test_f017_independent_oracle -v",
+      "result": "PASS",
+      "detail": "CPython 3.13.13; NumPy 2.4.5; ambient CPython 3.14.7 rejected as required"
+    },
+    {
+      "command": "cargo test -p engine --test f017_independent_oracle -- --nocapture",
+      "result": "PASS",
+      "detail": "4/4 including executable residual cancellation and signed-zero cases"
+    },
+    {
+      "command": "PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p stream --test apple_mlx_bridge -- --test-threads=1",
+      "result": "PASS",
+      "detail": "15/15; 1000-cycle default CPU/default GPU/owned GPU; missing-free and duplicate-free mutations; exact no-eval/no-sync source-first regression"
+    },
+    {
+      "command": "PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p stream p1_domain -- --nocapture",
+      "result": "PASS",
+      "detail": "2/2 inert producer and failure-terminal paths"
+    },
+    {
+      "command": "PULSAR_REQUIRE_NATIVE_MLX=1 cargo test -p f017-native --all-targets",
+      "result": "PASS",
+      "detail": "7 library tests plus retained qualification fresh-process contract test"
+    },
+    {
+      "command": "python3 -m unittest scripts/research/tests/test_f017_native_p1_contract_v2.py",
+      "result": "PASS",
+      "detail": "3/3 exact contract, machine preflight, and inert human gate; 22 contract mutations rejected"
+    }
+  ],
+  "retained_qualification": {
+    "classification": "MIXED_D0_V2_CLASS/PASS",
+    "native_execution_count": 1,
+    "stage_count": 34,
+    "allowed_retained_read_receipts": 89,
+    "original_checkpoint_reads": 0,
+    "historical_payload_ledger_delta": 0,
+    "scope": "REPRESENTATIVE_LAYER_3_S0_TO_S2_ONLY",
+    "full_forward_non_claim": "THE_REMAINING_79_LAYER_FULL_FORWARD_IS_NOT_DIRECTLY_QUALIFIED_BY_D3_5"
+  },
+  "d0_epistemics": {
+    "rule": "D3_5_RESULTS_MAY_FALSIFY_A_DERIVATION_BUT_MUST_NEVER_SET_A_TOLERANCE",
+    "repair_rule": "A_MIS_DERIVED_TOLERANCE_REQUIRES_A_NEW_D0_REVISION_USING_A_FRESH_SYNTHETIC_OR_PINNED_FIXTURE_CORPUS_AND_NEW_REVIEW",
+    "triggering_output_quarantined_from_threshold_selection": true
+  },
+  "phase_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "full_model_real_checkpoint_inference_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false,
+    "real_p1_authorization_consumed": false,
+    "state_root_exists": false,
+    "master_ledger_before": 175,
+    "master_ledger_after": 175
+  },
+  "result": "PASS_PENDING_EXACT_HEAD_CI_AND_FINAL_ADVERSARIAL_REVIEW"
+}

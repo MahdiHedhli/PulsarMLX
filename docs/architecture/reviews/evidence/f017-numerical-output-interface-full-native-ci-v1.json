@@ -1,0 +1,62 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-full-native-ci/1.0.0",
+  "classification": "FULL_NATIVE",
+  "head": "858f2013829993a23508b673a4bbc1d6b8d6e243",
+  "tree": "0919de5f7142b5320e275edd57daa8948185db08",
+  "run_id": 32971168057,
+  "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/32971168057",
+  "classifier_job": {
+    "job_id": 98185123978,
+    "name": "Classify committed change",
+    "conclusion": "success"
+  },
+  "jobs": {
+    "workspace_baseline": {
+      "job_id": 98185178588,
+      "name": "Apple Silicon workspace baseline",
+      "conclusion": "success",
+      "duration_seconds": 85
+    },
+    "native_mlx": {
+      "job_id": 98185178707,
+      "name": "Apple MLX small-fixture validation",
+      "conclusion": "success",
+      "duration_seconds": 861
+    }
+  },
+  "aggregate_job": {
+    "job_id": 98189595217,
+    "name": "CI aggregate status",
+    "conclusion": "success"
+  },
+  "evidence_jobs": {
+    "evidence_integrity": "skipped",
+    "documentation_integrity": "skipped",
+    "closed_branch_guard": "skipped"
+  },
+  "numerical_output_interface": {
+    "v2_historical_authority_validation": "PASS",
+    "successor_core_validation": "PASS",
+    "formula_manifest": "PASS",
+    "normalized_source_comparison": "PASS",
+    "legacy_equivalence_cases": 36,
+    "fresh_process_runs": 120,
+    "one_execution_all_outputs": "PASS",
+    "output_buffer_hash_binding": "PASS",
+    "source_read_equivalence": "PASS",
+    "ownership_and_geometry_mutations_rejected": 60,
+    "capability_mutations_rejected": 187,
+    "decoder_cases": 44,
+    "formats": 11,
+    "numerical_localization_mutations": 16
+  },
+  "native_required_skips": 0,
+  "original_checkpoint_access": 0,
+  "event_04_retry": false,
+  "event_04_resume": false,
+  "event_05_executed": false,
+  "live_event_05_authorization_created": false,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

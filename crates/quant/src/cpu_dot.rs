@@ -240,6 +240,52 @@ pub fn dequant_q4_k(row: &[u8], n: usize) -> Vec<f32> {
     out
 }
 
+/// Full q5_K dequant to f32 for independently hash-bound F017 retained imports.
+/// Invalid or partial block geometry fails closed with an empty result.
+pub fn dequant_q5_k(row: &[u8], n: usize) -> Vec<f32> {
+    const BLOCK_BYTES: usize = 176;
+    if n == 0 || n % QK_K != 0 || row.len() != n / QK_K * BLOCK_BYTES {
+        return Vec::new();
+    }
+    let mut out = Vec::with_capacity(n);
+    for block in row.chunks_exact(BLOCK_BYTES) {
+        let d = f16_to_f32(u16::from_le_bytes([block[0], block[1]]));
+        let dmin = f16_to_f32(u16::from_le_bytes([block[2], block[3]]));
+        let scales = &block[4..16];
+        let high = &block[16..48];
+        let quants = &block[48..176];
+        for group in 0..4 {
+            let (scale_low, min_low) = k4_scale_min(2 * group, scales);
+            let (scale_high, min_high) = k4_scale_min(2 * group + 1, scales);
+            for lane in 0..32 {
+                let byte = quants[32 * group + lane];
+                let high_bit = if high[lane] & (1 << (2 * group)) != 0 {
+                    16
+                } else {
+                    0
+                };
+                out.push(
+                    d * scale_low as f32 * ((byte & 0x0f) + high_bit) as f32
+                        - dmin * min_low as f32,
+                );
+            }
+            for lane in 0..32 {
+                let byte = quants[32 * group + lane];
+                let high_bit = if high[lane] & (2 << (2 * group)) != 0 {
+                    16
+                } else {
+                    0
+                };
+                out.push(
+                    d * scale_high as f32 * ((byte >> 4) + high_bit) as f32
+                        - dmin * min_high as f32,
+                );
+            }
+        }
+    }
+    out
+}
+
 pub fn vec_dot_q4_k_q8_k(row: &[u8], x: &Q8KRow, n: usize) -> f32 {
     #[cfg(target_arch = "x86_64")]
     if std::arch::is_x86_feature_detected!("avx2") {

@@ -1,0 +1,202 @@
+{
+ "active_source_measurement": {
+  "drifted_and_reviewed": 7,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v9.json",
+   "sha256": "5f102e096fdf4081f681354effa4a4cc4fd8da548833aa6d7bb787bed29471d6"
+  },
+  "measured_paths": 36,
+  "numerical_authority_unchanged": [
+   "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+   "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py"
+  ],
+  "schema": "pulsarmlx.f017.v11-result-envelope-implementation-measurement/9.0.0",
+  "state": "DONE",
+  "unchanged_since_predecessor": 29
+ },
+ "chat_template_generation_real_checkpoint": null,
+ "checkpoint_free_reconciliation": {
+  "decoder_differential_max_ulp": 0,
+  "decoder_differential_values_per_seed": 107502,
+  "evidence": [
+   {
+    "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1.json",
+    "sha256": "7af5cd9da4d8625c8a890d4a67ad913d5166f0218c41ca80f06b34f4d2ac2c34"
+   },
+   {
+    "path": "docs/architecture/reviews/evidence/f017-native-checkpoint-free-reconciliation-20260920-v1-count-correction-v2.json",
+    "sha256": "b248dfe5dc64502c01cefb446d3e4e33aa8626dd2a7689129d4793c3c978f868"
+   }
+  ],
+  "note": "the reconciliation record's own sentence says 117,806; that figure was a scratch transcription and is corrected append-only",
+  "state": "DONE"
+ },
+ "component": "F017 native GLM-5.2 runtime",
+ "contract": {
+  "evidence": {
+   "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-temporal-successor-contract-v1.json",
+   "sha256": "d8b44cdb9a0eacee01fae3b75c0ae76c04dfa4bd1078330a4d58ec9cc279db42"
+  },
+  "indexer_implemented": false,
+  "max_positions_default": 2048,
+  "rope_pairing_status": "DECLARED_NOT_YET_VALIDATED_AGAINST_REAL_WEIGHTS",
+  "state": "FROZEN"
+ },
+ "generated_by": "scripts/research/generate_f017_native_status_v1.py",
+ "head_binding": "NONE_BY_DESIGN: every claim is bound to the evidence file it comes from",
+ "native_text_cli": {
+  "binary": "f017-native-generate",
+  "cases": 12,
+  "cases_passed": 12,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-cli-qualification-v1.json",
+   "sha256": "2c3637b9b7577daf01add751426c11e8e1a3afce4e3394127f1bad6b67c71068"
+  },
+  "python_inference_process_required": false,
+  "result": "PASS",
+  "scope": "admission, identity metadata, tokenizer and chat template; no shard payload and no forward pass",
+  "state": "DONE_SYNTHETIC"
+ },
+ "not_claimed": [
+  "answer quality on any task",
+  "any throughput figure",
+  "any tokens-per-second figure",
+  "general quality",
+  "indexer behaviour beyond its top-k budget",
+  "multi-token generation on the real checkpoint",
+  "production readiness",
+  "real-checkpoint multi-token agreement",
+  "the rope pairing of the real checkpoint"
+ ],
+ "one_token_real_checkpoint": {
+  "attempt": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",
+  "authorization": "consumed; retry not permitted; never replayed by later work",
+  "duration_seconds": 1003.6,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-02-execution-evidence-v1.json",
+   "sha256": "3ebe0a890efa850b3b0f4b5bd760153465985e84326354f6d0230fa202bf5de5"
+  },
+  "expected_token": 154820,
+  "forward_pass_seconds": 299.2,
+  "produced_token": 154820,
+  "prompt_token": 9703,
+  "shard_identity_rehash_seconds": 704.0,
+  "state": "DONE",
+  "verdict": "EXPECTED_TOKEN_MATCH / COMPLETE_MANDATORY_STOP"
+ },
+ "original_checkpoint_access_by_this_summary": 0,
+ "schema": "pulsarmlx.f017.native-runtime-status/1.0.0",
+ "temporal_multi_position": {
+  "cases": 6,
+  "cases_passed": 6,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-temporal-differential-v1.json",
+   "sha256": "878910e2cefa7cf2b2edfd0b2682d120686fa9ee3df0f3bd37f8b9ce56fd89a2"
+  },
+  "exactness_rules": [
+   "selected token",
+   "expert selection and order",
+   "visible-key count",
+   "position index",
+   "input token",
+   "retained state growth"
+  ],
+  "logits_max_abs_range": [
+   2.4963982631076576e-08,
+   1.480795116942657e-07
+  ],
+  "positions_per_case": [
+   7,
+   8,
+   5,
+   6,
+   7,
+   8
+  ],
+  "result": "PASS",
+  "scope": "synthetic fixtures on the MLX GPU backend against an independent binary64 reference; not the real checkpoint",
+  "seeds": [
+   17030,
+   17031,
+   17032,
+   17033,
+   17034,
+   17035
+  ],
+  "state": "DONE_SYNTHETIC",
+  "thresholds": {
+   "cosine": 0.9999999981,
+   "max_abs": 0.0065,
+   "rmse": 0.0035,
+   "source": "frozen graph-differential thresholds, reused unchanged"
+  }
+ },
+ "temporal_multi_position_real_checkpoint": {
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-real-stage-a-position-ladder-v1.json",
+   "sha256": "9b5664c0dbeff5ce7a0e96c3e2646d61c17fe5e7c132c45a3ace0f0778119195"
+  },
+  "identity_verification_seconds": 716.595055625,
+  "later_positions": "MEASURED_NOT_QUALIFIED",
+  "mode": "RAW_TOKEN_DIAGNOSTIC",
+  "peak_state_bytes": 1456128,
+  "position_seconds": [
+   131.1669715,
+   96.792784542,
+   95.23179175,
+   93.151901083,
+   91.673462375,
+   91.755202958,
+   92.251265666,
+   92.086356292
+  ],
+  "position_zero_binding": {
+   "expected_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+   "expected_token": 154820,
+   "meaning": "the stateful successor reproduces the banked one-token result bit for bit on the real checkpoint",
+   "observed_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+   "observed_token": 154820,
+   "result": "MATCH"
+  },
+  "positions_executed": 8,
+  "stage": "stageA",
+  "state": "DONE",
+  "wall_seconds": 1501.0
+ },
+ "text_generation_real_checkpoint": {
+  "answer_text": " 17 times table\n",
+  "decode_rate_caveat": "three tokens over one interval on a cold, uncached weight path; it is a measurement of this build, not a runtime capability",
+  "decode_tokens_per_second": 0.01155677893488516,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-real-stage-b1-text-generation-v1.json",
+   "sha256": "b21e44e789897bf62a91f262a8900543d42399f66f2513c18f7627747eaa6fb1"
+  },
+  "finish_reason": "length",
+  "generated_token_count": 4,
+  "generated_tokens": [
+   220,
+   99419,
+   3039,
+   1965
+  ],
+  "identity_verification_seconds": 698.41942775,
+  "known_defect": "in --no-chat-template mode the stop set is empty, so the run could only end on max-tokens",
+  "position_seconds": [
+   97.085082708,
+   91.035553084,
+   88.200831292,
+   87.398269583,
+   87.798007041,
+   86.473158667,
+   86.719217375,
+   86.388806875
+  ],
+  "prefill_seconds": 451.526744625,
+  "prompt_mode": "RAW_TEXT_NO_TEMPLATE",
+  "prompt_tokens": 5,
+  "python_inference_process": false,
+  "quality_claim": "NONE: four tokens of raw-text continuation from a 2-bit quantisation without a chat template is not a task result",
+  "stage": "stageB1",
+  "state": "DONE"
+ }
+}

@@ -13,6 +13,10 @@
 //! always receive explicit per-slot device pointers, wherever the bytes
 //! ended up.
 
+mod f017_oracle_generated;
+pub mod f017_parity;
+pub mod f017_soak;
+
 #[cfg(target_os = "linux")]
 mod real {
     /// Bytes per GiB. Memory sizes are reported in GiB everywhere so a

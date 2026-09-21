@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-full-native-ci/1.0.0",
+  "run_id": 33222657559,
+  "head_sha": "b4de45d40b8ffdb568ecdfda0d4ecdbbd4c60536",
+  "head_tree": "f0a557c4617953fb1dc23ef08364362f1a1b403c",
+  "classification": "FULL_NATIVE",
+  "result": "PASS",
+  "required_native_jobs": [
+    {"job_id": 99019823162, "name": "Apple MLX small-fixture validation", "result": "PASS"},
+    {"job_id": 99019823192, "name": "Apple Silicon workspace baseline", "result": "PASS"}
+  ],
+  "aggregate_job_id": 99022181268,
+  "aggregate_result": "PASS",
+  "successor_qualification_step": "PASS",
+  "required_skips": 0,
+  "unexpected_skips": 0,
+  "original_checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false
+}

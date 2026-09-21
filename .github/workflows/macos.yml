@@ -4,13 +4,131 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: CI routing override (evidence cannot override code classification)
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - full
+          - evidence
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  classify:
+    name: Classify committed change
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.route.outputs.mode }}
+      base: ${{ steps.route.outputs.base }}
+      head: ${{ steps.route.outputs.head }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: route
+        name: Select fail-closed CI mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REQUESTED_MODE: ${{ github.event.inputs.mode || 'auto' }}
+        run: |
+          set -euo pipefail
+          HEAD_SHA="$(git rev-parse HEAD)"
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          BASE_SHA="$EVENT_BEFORE"
+          if test "$EVENT_NAME" = pull_request; then
+            BASE_SHA="$PR_BASE_SHA"
+          fi
+          if test -z "$BASE_SHA" || test "$BASE_SHA" = 0000000000000000000000000000000000000000; then
+            DEFAULT_BRANCH="$(git remote show origin | sed -n 's/.*HEAD branch: //p')"
+            BASE_SHA="$(git merge-base HEAD "origin/${DEFAULT_BRANCH:-main}" 2>/dev/null || git rev-list --max-parents=0 HEAD | tail -1)"
+          fi
+          python3 scripts/ci/classify_ci_change.py \
+            --repository . \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --branch "$BRANCH" \
+            --requested-mode "$REQUESTED_MODE" \
+            --output-json "$RUNNER_TEMP/ci-classification.json" \
+            --github-output "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/ci-classification.json"
+          cat "$RUNNER_TEMP/ci-classification.json" >> "$GITHUB_STEP_SUMMARY"
+
+  evidence-integrity:
+    name: Evidence integrity
+    needs: classify
+    if: needs.classify.outputs.mode == 'EVIDENCE_ONLY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate append-only committed evidence
+        env:
+          BASE_SHA: ${{ needs.classify.outputs.base }}
+          HEAD_SHA: ${{ needs.classify.outputs.head }}
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          ATTEMPT_FLAG=--skip-attempt1
+          if test -f docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json; then
+            ATTEMPT_FLAG=
+          fi
+          python3 -m scripts.ci.validate_evidence_change \
+            --repository . \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --branch "$BRANCH" \
+            --output "$RUNNER_TEMP/evidence-validation-summary.json" \
+            $ATTEMPT_FLAG
+          cat "$RUNNER_TEMP/evidence-validation-summary.json"
+          cat "$RUNNER_TEMP/evidence-validation-summary.json" >> "$GITHUB_STEP_SUMMARY"
+
+  documentation:
+    name: Documentation integrity
+    needs: classify
+    if: needs.classify.outputs.mode == 'DOCS_ONLY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Validate documentation-only diff
+        env:
+          BASE_SHA: ${{ needs.classify.outputs.base }}
+          HEAD_SHA: ${{ needs.classify.outputs.head }}
+        run: |
+          set -euo pipefail
+          git diff --check "$BASE_SHA" "$HEAD_SHA"
+          test -z "$(git diff --raw "$BASE_SHA" "$HEAD_SHA" | awk '$2=="120000" || $3=="120000" {print}' || true)"
+          git diff --name-status "$BASE_SHA" "$HEAD_SHA"
+
+  closed-branch-guard:
+    name: Closed F017 branch guard
+    needs: classify
+    if: needs.classify.outputs.mode == 'CLOSED_BRANCH_GUARD'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse automatic implementation qualification
+        run: |
+          echo 'The closed F017 proof/reference branch cannot auto-qualify implementation-affecting changes.' >&2
+          echo 'Use an explicit, separately authorized workflow_dispatch full qualification.' >&2
+          exit 1
+
   macos-15-arm64:
     name: Apple Silicon workspace baseline
+    needs: classify
+    if: needs.classify.outputs.mode == 'FULL_NATIVE' || needs.classify.outputs.mode == 'UNKNOWN_DEFAULT_FULL'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v7
@@ -22,15 +140,22 @@ jobs:
           cargo -V
           test "$(uname -m)" = arm64
       - name: Check workspace
-        run: cargo check --workspace --all-targets
+        # f017-native deliberately has no non-native implementation: its
+        # public executor surface is compiled only after the pinned MLX/MLX-C
+        # installation in the dedicated qualification job below. Keep the
+        # general baseline explicit rather than silently compiling a stub.
+        run: cargo check --workspace --exclude f017-native --all-targets
       - name: Test workspace
-        run: cargo test --workspace --no-fail-fast
+        run: cargo test --workspace --exclude f017-native --no-fail-fast
 
   apple-mlx-small-fixtures:
     name: Apple MLX small-fixture validation
+    needs: classify
+    if: needs.classify.outputs.mode == 'FULL_NATIVE' || needs.classify.outputs.mode == 'UNKNOWN_DEFAULT_FULL'
     runs-on: macos-15
     env:
       PULSARMLX_MODEL_GGUF: ""
+      PULSAR_REQUIRE_NATIVE_MLX: "1"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,11 +174,46 @@ jobs:
           test -f docs/validation/mlx-device-smoke.json
           test -f docs/validation/mlx-tensor-fixtures.json
           test -f docs/validation/synthetic-moe-v1.json
+      - name: Build pinned official native MLX dependencies
+        run: |
+          brew install cmake ninja
+          scripts/ci/install_native_mlx.sh "$RUNNER_TEMP/pulsar-native-mlx"
+          echo "MLX_C_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
+          echo "MLX_PREFIX=$RUNNER_TEMP/pulsar-native-mlx" >> "$GITHUB_ENV"
+          echo "DYLD_LIBRARY_PATH=$RUNNER_TEMP/pulsar-native-mlx/lib" >> "$GITHUB_ENV"
+          echo "RUSTFLAGS=-C link-arg=-Wl,-rpath,$RUNNER_TEMP/pulsar-native-mlx/lib" >> "$GITHUB_ENV"
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.17"
+          python-version: "3.13.13"
+          enable-cache: true
+      - name: Sync lockfile-backed MLX environment
+        run: |
+          uv python install 3.13.13
+          uv sync --frozen --python 3.13.13
+          .venv/bin/python - <<'PY'
+          import platform
+          import sys
+          from importlib.metadata import version
+
+          assert platform.machine() == "arm64"
+          assert sys.version_info[:3] == (3, 13, 13)
+          assert version("mlx") == "0.32.0"
+          assert version("mlx-metal") == "0.32.0"
+          assert version("numpy") == "2.4.5"
+          PY
+      - name: Build exact native F017 producer targets
+        run: cargo build -p f017-native --release --all-targets
+      - name: Test exact native F017 producer targets
+        run: cargo test -p f017-native --release --no-fail-fast
+      - name: Test evidence-aware CI routing and integrity tooling
+        run: python3 -m unittest discover -s scripts/ci/tests -v
       - name: Validate Feature 002 research methodology
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
           scripts/research/setup.sh
-          python3 -m unittest discover -s scripts/research/tests -v
+          .venv/bin/python -m unittest discover -s scripts/research/tests -v
           python3 scripts/research/validate_evidence.py \
             --schema-dir schemas/research/v1 \
             --input fixtures/research/router-v1/evidence
@@ -61,25 +221,701 @@ jobs:
             --feature 002-qwen-router-parity \
             --fixture-only
           test -z "$PULSARMLX_MODEL_GGUF"
-      - name: Install pinned uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
-        with:
-          version: "0.11.17"
-          python-version: "3.12.13"
-          enable-cache: true
-      - name: Sync lockfile-backed MLX environment
+      - name: Validate independent Feature 017 oracle
         run: |
-          uv python install 3.12.13
-          uv sync --frozen --python 3.12.13
+          .venv/bin/python scripts/research/validate_f017_oracle_independence.py
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_independent_oracle -v
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_validate_f017_oracle_independence -v
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_p1_admission -v
+          .venv/bin/python scripts/research/generate_f017_independent_oracle.py \
+            --generator-commit a9779097de029f26be1cb9fde3543cc517ff153e \
+            --output specs/017-rust-native-inference-runtime/fixtures/f017-independent-oracle-v1.json \
+            --rust-output crates/engine/src/f017_oracle_generated.rs \
+            --check
+          cargo test -p engine --test f017_independent_oracle -- --nocapture
+      - name: Validate retained D3.5 authority and numerical grading
+        run: |
           .venv/bin/python - <<'PY'
-          import platform
-          from importlib.metadata import version
+          import importlib.util
+          from pathlib import Path
 
-          assert platform.machine() == "arm64"
-          assert version("mlx") == "0.32.0"
-          assert version("mlx-metal") == "0.32.0"
-          assert version("numpy") == "2.4.5"
+          path = Path("scripts/research/validate_f017_native_d35_comparison_grant_v1.py")
+          spec = importlib.util.spec_from_file_location("f017_d35_grant", path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          result = module.validate(
+              resolve_executable=False,
+              resolve_machine_local=False,
+              require_pre_event_root_absent=False,
+          )
+          assert result["result"] == "PASS_COMMITTED_STRUCTURE_ONLY"
+          assert result["validation_scope"] == "COMMITTED_STRUCTURE_ONLY_NOT_EXECUTION_AUTHORITY"
+          assert result["read_census"] == 89
+          assert result["original_checkpoint_reads"] == 0
           PY
+          .venv/bin/python scripts/research/validate_f017_native_d35_numerical_grading_v1.py
+          .venv/bin/python -m unittest \
+            scripts.research.tests.test_f017_native_d35_comparison_grant_v1 \
+            scripts.research.tests.test_f017_native_d35_numerical_grading_v1 \
+            -v
+      - name: Execute required native MLX adapter matrix
+        run: |
+          echo "PULSAR_REQUIRE_NATIVE_MLX=1; executing native adapter tests (no skip permitted)"
+          test -f "$MLX_C_PREFIX/include/mlx/c/mlx.h"
+          test -f "$MLX_C_PREFIX/lib/libmlxc.dylib"
+          test -f "$MLX_PREFIX/lib/libmlx.dylib"
+          cargo test -p stream --test apple_mlx_bridge -- --nocapture
+          cargo test -p stream --test apple_metal_bridge -- --nocapture
+          cargo test -p stream --lib -- --nocapture
+      - name: Execute receipt-v2 synthetic full-model qualification
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo build -p f017-native --release --bin f017-native-synthetic-p1
+          SOURCE_BINARY=target/release/f017-native-synthetic-p1
+          SOURCE_AUTHORITY="$RUNNER_TEMP/f017-native-synthetic-source-authority.json"
+          .venv/bin/python scripts/research/build_f017_native_synthetic_inert_authority.py \
+            --template specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-inert-authority-v2.json \
+            --binary "$SOURCE_BINARY" \
+            --execution-code-head "$(git rev-parse HEAD)" \
+            --authorization-id F017-NATIVE-TINY-FULL-MODEL-CI-AUTHORITY-3 \
+            --attempt-id F017-NATIVE-TINY-FULL-MODEL-CI-ATTEMPT-3 \
+            --output "$SOURCE_AUTHORITY"
+          .venv/bin/python scripts/research/qualify_f017_native_full_model_synthetic_v2.py \
+            --binary "$SOURCE_BINARY" \
+            --fixture specs/017-rust-native-inference-runtime/fixtures/f017-native-tiny-full-model-v1.json \
+            --authority "$SOURCE_AUTHORITY" \
+            --output-root "$RUNNER_TEMP/f017-native-synthetic-v2" \
+            --evidence-output "$RUNNER_TEMP/f017-native-synthetic-v2-evidence.json" \
+            --execution-code-head "$(git rev-parse HEAD)" \
+            --fresh-processes 10
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "f017-native-synthetic-v2-evidence.json").read_text()
+          )
+          assert evidence["result"] == "PASS"
+          assert evidence["receipt_schema"] == "pulsarmlx.f017.native-bounded-p1-execution-receipt/2.0.0"
+          assert evidence["fresh_processes"] == 10
+          assert evidence["summary_byte_identity"] == "EXACT_10_OF_10"
+          assert evidence["original_checkpoint_reads"] == 0
+          assert evidence["real_m1_ultra_p1_executed"] is False
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify attempt-1 offline diagnostics and forward evidence
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify corrected oracle historical and active authority split
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          cargo test -p stream p1_domain --no-default-features
+          .venv/bin/python scripts/research/qualify_f017_corrected_oracles.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-qualification.json"
+          .venv/bin/python scripts/research/validate_f017_historical_corrected_oracle_authorities_v6.py
+          .venv/bin/python scripts/research/extract_f017_corrected_oracle_numerics_v2.py
+          .venv/bin/python scripts/research/extract_f017_corrected_oracle_target_sources_v6.py
+          .venv/bin/python scripts/research/generate_f017_numerical_capability_authorities_v1.py
+          git diff --exit-code -- \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-receiver-provenance-v1.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-use-manifest-v1.json \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-bytecode-audit-v1.json
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v3.py
+          .venv/bin/python scripts/research/qualify_f017_numerical_capability_policy_v1.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-capability-qualification-v1.json"
+          cmp \
+            "$RUNNER_TEMP/f017-corrected-oracle-numerical-capability-qualification-v1.json" \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-capability-qualification-v1.json
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_geometry.py \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json \
+            crates/f017-native/src/model.rs
+          .venv/bin/python scripts/research/validate_f017_attempt_2_template.py \
+            specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-attempt-02-template-v1.json \
+            --expect-blocked
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result=json.loads((Path(os.environ["RUNNER_TEMP"])/"f017-corrected-oracle-qualification.json").read_text())
+          assert result["result"]=="PASS"
+          assert result["original_checkpoint_shard_opens"]==0
+          assert result["original_checkpoint_payload_reads"]==0
+          assert result["mutation_count"]==16
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_audit_f017_native_checkpoint_plan.py \
+            scripts/research/tests/test_f017_q6_oracle_lane_order.py \
+            scripts/research/tests/test_f017_iq3_oracle_lane_order.py \
+            scripts/research/tests/test_f017_iq4_xs_oracle_lane_order.py \
+            scripts/research/tests/test_f017_corrected_oracle_instantiability_v3.py \
+            scripts/research/tests/test_f017_corrected_oracle_preaccess.py \
+            scripts/research/tests/test_f017_corrected_oracle_numerical_authority_v2.py \
+            scripts/research/tests/test_f017_numerical_capability_policy_v1.py \
+            scripts/research/tests/test_f017_numerical_output_interface_design_v1.py \
+            scripts/research/tests/test_f017_numerical_output_interface_implementation_v1.py \
+            scripts/research/tests/test_validate_f017_failure_evidence_v3.py \
+            scripts/research/tests/test_f017_native_synthetic_family_v1.py
+          .venv/bin/python scripts/research/audit_f017_native_checkpoint_plan.py \
+            docs/validation/glm52-checkpoint.json \
+            docs/research/glm52/raw/f016-c01-catalog-0001.json \
+            --output "$RUNNER_TEMP/f017-plan-audit.json"
+          cargo build -p f017-native --release \
+            --bin quant_native_matvec_probe --bin synthetic_differential \
+            --bin temporal_differential --bin native_generate
+          cargo test -p f017-native --release --test temporal --test session
+          .venv/bin/python scripts/research/qualify_f017_native_cli_v1.py \
+            --binary target/release/native_generate \
+            --output "$RUNNER_TEMP/f017-native-cli-qualification.json"
+          cmp "$RUNNER_TEMP/f017-native-cli-qualification.json" \
+            docs/architecture/reviews/evidence/f017-native-cli-qualification-v1.json
+          .venv/bin/python scripts/research/qualify_f017_native_temporal_v1.py \
+            --native-binary target/release/temporal_differential \
+            --work "$RUNNER_TEMP/f017-temporal" \
+            --output "$RUNNER_TEMP/f017-native-temporal-differential.json"
+          cmp "$RUNNER_TEMP/f017-native-temporal-differential.json" \
+            docs/architecture/reviews/evidence/f017-native-temporal-differential-v1.json
+          .venv/bin/python scripts/research/qualify_f017_corrected_oracle_numerical_authority_v3.py \
+            --synthetic-binary target/release/synthetic_differential \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v3.json"
+          cmp \
+            "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v3.json" \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v3.json
+          .venv/bin/python scripts/research/qualify_f017_numerical_output_interface_v4.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v4.json"
+          cmp \
+            "$RUNNER_TEMP/f017-corrected-oracle-numerical-requalification-v4.json" \
+            docs/architecture/reviews/evidence/f017-corrected-oracle-numerical-requalification-v4.json
+          .venv/bin/python scripts/research/validate_f017_corrected_oracle_numerical_authority_v4.py
+          .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_result_envelope_v11.py \
+            scripts/research/tests/test_f017_result_bundle_builder_v11.py \
+            scripts/research/tests/test_f017_v11_measurement_v2.py
+          .venv/bin/python scripts/research/validate_f017_result_envelope_design_v11.py
+          .venv/bin/python scripts/research/validate_f017_result_authority_v11.py
+          .venv/bin/python scripts/research/validate_f017_v11_execution_authority_v1.py
+          .venv/bin/python scripts/research/generate_f017_v11_measurement_v2.py --check
+          .venv/bin/python scripts/research/generate_f017_native_status_v1.py --check
+          .venv/bin/python scripts/research/generate_f017_v11_authorities_v1.py --check
+          .venv/bin/python scripts/research/generate_f017_event05_readiness_interface_manifest_v1.py --check
+          .venv/bin/python scripts/research/validate_f017_event05_readiness_interface_design_v1.py
+          .venv/bin/python scripts/research/qualify_f017_event05_readiness_interface_v1.py \
+            --output "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json"
+          cmp "$RUNNER_TEMP/f017-event05-readiness-interface-qualification.json" \
+            docs/architecture/reviews/evidence/f017-event05-readiness-interface-qualification-v4.json
+          .venv/bin/python scripts/research/qualify_f017_event04_diagnostic_v11.py \
+            --output "$RUNNER_TEMP/f017-event04-diagnostic-v11.json"
+          cmp "$RUNNER_TEMP/f017-event04-diagnostic-v11.json" \
+            docs/architecture/reviews/evidence/f017-event04-diagnostic-fixture-qualification-v11-v1.json
+          .venv/bin/python scripts/research/qualify_f017_v11_full_geometry_v1.py \
+            --output "$RUNNER_TEMP/f017-v11-full-geometry.json"
+          cmp "$RUNNER_TEMP/f017-v11-full-geometry.json" \
+            docs/architecture/reviews/evidence/f017-v11-full-geometry-qualification-v2.json
+          .venv/bin/python scripts/research/qualify_f017_v11_failure_campaign_v1.py \
+            --output "$RUNNER_TEMP/f017-v11-result-failure-qualification.json"
+          cmp "$RUNNER_TEMP/f017-v11-result-failure-qualification.json" \
+            docs/architecture/reviews/evidence/f017-v11-result-failure-qualification-v2.json
+          .venv/bin/python scripts/research/rehearse_f017_event05_v11.py \
+            --output "$RUNNER_TEMP/f017-event05-v11-rehearsal.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          result = json.loads((Path(os.environ["RUNNER_TEMP"]) / "f017-event05-v11-rehearsal.json").read_text())
+          assert result["result"] == "PASS"
+          assert result["state_created"] is False
+          assert result["live_authority_created"] is False
+          assert result["checkpoint_opens"] == 0
+          assert result["checkpoint_reads"] == 0
+          assert result["numerical_operations"] == 0
+          PY
+          WORKSPACE_ROOT="$PWD"
+          V6_HISTORICAL_HEAD=ccf76d95ff33b333d2d40e29181a926528bc8ca6
+          V6_HISTORICAL_WORKTREE="$RUNNER_TEMP/f017-v6-historical"
+          cleanup_v6_historical_worktree() {
+            git worktree remove --force "$V6_HISTORICAL_WORKTREE" >/dev/null 2>&1 || true
+            git worktree prune
+            if git worktree list --porcelain | grep -F "$V6_HISTORICAL_WORKTREE"; then
+              echo "historical validation worktree survived cleanup" >&2
+              return 1
+            fi
+          }
+          trap cleanup_v6_historical_worktree EXIT
+          git worktree add --detach "$V6_HISTORICAL_WORKTREE" "$V6_HISTORICAL_HEAD"
+          (
+            cd "$V6_HISTORICAL_WORKTREE"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/generate_f017_lifecycle_v6_authorities.py --check
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/validate_f017_lifecycle_semantic_authority_v6.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/check_f017_lifecycle_v6_independent.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/validate_f017_event04_authority_reconciliation_v1.py \
+              --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
+              --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
+              --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
+              --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
+              --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
+              --run-mutations
+            "$WORKSPACE_ROOT/.venv/bin/python" -m pytest -q \
+              scripts/research/test_f017_lifecycle_semantics_v6.py \
+              scripts/research/test_f017_lifecycle_v6_implementation.py
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/qualify_f017_corrected_oracle_target_adapters_v6.py \
+              --repeats 10 \
+              --output "$RUNNER_TEMP/f017-corrected-oracle-target-adapters-v6.json"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/qualify_f017_lifecycle_v6.py \
+              --success-repeats 10 \
+              --failure-repeats 5 \
+              --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v6.json"
+            "$WORKSPACE_ROOT/.venv/bin/python" scripts/research/rehearse_f017_event04_authority_reconciliation_v1.py \
+              --scientific specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v6-binding-reconciliation-v3.json \
+              --measurement docs/architecture/reviews/evidence/f017-corrected-oracle-lifecycle-v6-implementation-measurement-v5.json \
+              --declaration docs/architecture/reviews/evidence/f017-event04-load-bearing-authority-binding-correction-v2.json \
+              --inert specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v6-binding-reconciliation-v3.json \
+              --authority-manifest specs/017-rust-native-inference-runtime/contracts/f017-event04-load-bearing-authority-manifest-v3.json \
+              --output "$RUNNER_TEMP/f017-event04-authority-reconciliation-rehearsal-v1.json"
+          )
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          lifecycle = json.loads((root / "f017-corrected-oracle-lifecycle-v6.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-authority-reconciliation-rehearsal-v1.json").read_text())
+          assert lifecycle["result"] == "PASS"
+          assert lifecycle["successful_package_count"] == 10
+          assert lifecycle["failure_trace_count"] >= 195
+          assert lifecycle["original_checkpoint_shard_opens"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["checkpoint_shard_opens"] == 0
+          assert rehearsal["checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          assert rehearsal["event_04_authorization_created"] is False
+          assert rehearsal["authority_reconciliation_result"] == "PASS"
+          assert rehearsal["all_implementation_bindings_equal_measurement_manifest"] is True
+          PY
+          .venv/bin/python scripts/research/generate_f017_lifecycle_v8_implementation_authorities.py
+          git diff --exit-code -- \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-scientific-access-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-active-generation-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-primary-capability-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-secondary-capability-v8.json \
+            specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-v8-implementation-authority-manifest.json \
+            specs/017-rust-native-inference-runtime/fixtures/f017-corrected-full-checkpoint-oracle-inert-authorization-v8.json
+          .venv/bin/python scripts/research/validate_f017_lifecycle_v8_implementation.py
+          .venv/bin/python scripts/research/test_f017_lifecycle_causal_design_v8.py
+          .venv/bin/python scripts/research/test_f017_lifecycle_v8_implementation.py
+          .venv/bin/python scripts/research/qualify_f017_lifecycle_v8.py \
+            --output "$RUNNER_TEMP/f017-corrected-oracle-lifecycle-v8.json"
+          .venv/bin/python scripts/research/rehearse_f017_corrected_oracle_event04_v8.py \
+            --output "$RUNNER_TEMP/f017-event04-v8-rehearsal.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          lifecycle = json.loads((root / "f017-corrected-oracle-lifecycle-v8.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-v8-rehearsal.json").read_text())
+          assert lifecycle["result"] == "PASS"
+          assert lifecycle["successful_package_count"] == 20
+          assert lifecycle["minimal_f32_package_count"] == 10
+          assert lifecycle["mixed_format_package_count"] == 10
+          assert lifecycle["terminal_outcome_class_fresh_process_repetitions"] == 5
+          assert lifecycle["runtime_descriptor_mutations_rejected"] >= 40
+          assert lifecycle["total_v8_design_and_runtime_mutations_rejected"] >= 256
+          assert lifecycle["mutation_unexpected_passes"] == 0
+          assert lifecycle["original_checkpoint_shard_opens"] == 0
+          assert lifecycle["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["candidate_installed_byte_identity"] is True
+          assert rehearsal["type_safety_probes_rejected"] >= 40
+          assert rehearsal["state_created"] is False
+          assert rehearsal["checkpoint_shard_opens"] == 0
+          assert rehearsal["checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          assert rehearsal["event_04_authorization_created"] is False
+          PY
+          cleanup_v6_historical_worktree
+          trap - EXIT
+          .venv/bin/python scripts/research/generate_f017_v10_root_continuity_authority_v1.py --check
+          .venv/bin/python scripts/research/validate_f017_event04_runtime_hardening_v10.py
+          .venv/bin/python scripts/research/validate_f017_event04_implementation_measurement_v10.py --head "$GITHUB_SHA"
+          .venv/bin/python scripts/research/check_f017_bounded_artifact_decode_policy_v1.py
+          .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event04_runtime_hardening_v10.py \
+            scripts/research/tests/test_f017_root_continuity_bounded_decode_v1.py
+          .venv/bin/python scripts/research/qualify_f017_event04_runtime_hardening_v10.py \
+            --output "$RUNNER_TEMP/f017-event04-runtime-hardening-v10.json"
+          .venv/bin/python scripts/research/qualify_f017_v10_root_continuity_bounded_decode_v1.py \
+            --output "$RUNNER_TEMP/f017-v10-root-continuity-bounded-decode.json"
+          .venv/bin/python scripts/research/rehearse_f017_event04_runtime_hardening_v10.py \
+            --output "$RUNNER_TEMP/f017-event04-runtime-hardening-rehearsal-v10.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-event04-runtime-hardening-v10.json").read_text())
+          root_decode = json.loads((root / "f017-v10-root-continuity-bounded-decode.json").read_text())
+          rehearsal = json.loads((root / "f017-event04-runtime-hardening-rehearsal-v10.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["runtime_failure_outcomes_realized"] == 47
+          assert qualification["runtime_coordinator_outcomes_realized"] == 41
+          assert qualification["runtime_authorizer_phase_outcomes_realized"] == 6
+          assert qualification["runtime_failure_executions"] == 201
+          assert qualification["runtime_accounting_mismatches"] == 0
+          assert qualification["uncontrolled_modeled_failures"] == 0
+          assert qualification["terminal_root_fault_cases"] == 2
+          assert qualification["primary_consumed_shards"] == [2, 3, 4, 5, 6]
+          assert qualification["secondary_consumed_shards"] == [2, 3, 4, 5, 6]
+          assert qualification["production_graph_tensor_plan"] == 1410
+          assert qualification["non_access_tensors_rejected"] == 399
+          assert qualification["path_reopen_count"] == 0
+          assert qualification["original_checkpoint_payload_reads"] == 0
+          assert root_decode["result"] == "PASS"
+          assert root_decode["root_attack_cases"] >= 252
+          assert root_decode["decode_attack_cases"] >= 100
+          assert root_decode["cross_product_cases"] >= 6
+          assert root_decode["modeled_outcomes_realized"] == 47
+          assert root_decode["modeled_outcome_executions"] >= 235
+          assert root_decode["successful_packages"] >= 60
+          assert root_decode["deterministic_core_unique_byte_sequences"] == 1
+          assert root_decode["raw_recursion_errors"] == 0
+          assert root_decode["false_zero_results"] == 0
+          assert root_decode["unexpected_passes"] == 0
+          assert root_decode["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["deterministic_core"]["checkpoint_shard_opens"] == 0
+          assert rehearsal["deterministic_core"]["checkpoint_payload_reads"] == 0
+          assert rehearsal["deterministic_core"]["numerical_operations"] == 0
+          PY
+          .venv/bin/python scripts/research/qualify_f017_quantization_matrix_v1.py \
+            --binary target/release/quant_native_matvec_probe \
+            --output "$RUNNER_TEMP/f017-quant-matrix.json"
+          .venv/bin/python scripts/research/qualify_f017_native_synthetic_family_v1.py \
+            --binary target/release/synthetic_differential \
+            --output "$RUNNER_TEMP/f017-synthetic-family.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          assert json.loads((root / "f017-plan-audit.json").read_text())["status"] == "PASS"
+          assert json.loads((root / "f017-quant-matrix.json").read_text())["result"] == "PASS"
+          assert json.loads((root / "f017-synthetic-family.json").read_text())["result"] == "PASS"
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify V12 checkpoint identity authority
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          .venv/bin/python scripts/research/generate_f017_checkpoint_identity_authority_v12.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_checkpoint_identity_authority_v12.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_checkpoint_identity_authority_v12.py \
+            > "$RUNNER_TEMP/f017-v12-checkpoint-identity-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/rehearse_f017_event06_no_access_v12.py \
+            > "$RUNNER_TEMP/f017-event06-v12-no-access-rehearsal.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-v12-checkpoint-identity-qualification.json").read_text())
+          rehearsal = json.loads((root / "f017-event06-v12-no-access-rehearsal.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["successful_identity_stages"] >= 30
+          assert qualification["identity_terminals_complete"] >= 90
+          assert qualification["minimal_six_shard_packages"] >= 20
+          assert qualification["mixed_size_six_shard_packages"] >= 20
+          assert qualification["mixed_format_six_shard_packages"] >= 20
+          assert qualification["event_identity_variations"] >= 20
+          assert qualification["candidate_fresh_process_repetitions"] >= 20
+          assert qualification["installed_fresh_process_repetitions"] >= 20
+          assert qualification["identity_stage_fresh_process_repetitions"] >= 20
+          assert qualification["total_failure_executions"] >= 300
+          assert qualification["runtime_failure_executions"] >= 300
+          assert qualification["runtime_failure_fresh_processes"] >= 60
+          assert qualification["modeled_outcomes_realized"] == qualification["modeled_outcomes"]
+          assert qualification["filesystem_faults_realized"] >= 50
+          assert qualification["evidence_and_close_faults_realized"] >= 17
+          assert qualification["scope_separation"]["result"] == "PASS"
+          assert qualification["unexpected_passes"] == 0
+          assert qualification["original_checkpoint_shard_opens"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["state_created"] is False
+          assert rehearsal["event_06_executed"] is False
+          assert rehearsal["live_event_06_authority_created"] is False
+          assert rehearsal["original_checkpoint_root_opens"] == 0
+          assert rehearsal["original_checkpoint_shard_opens"] == 0
+          assert rehearsal["original_checkpoint_identity_hash_reads"] == 0
+          assert rehearsal["original_checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 live-GO production call path
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_live_go_call_path_v3.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_live_go_call_path_v3.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/validate_f017_event06_live_go_call_path_v3.py \
+            > "$RUNNER_TEMP/f017-event06-live-go-call-path-v3.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "f017-event06-live-go-call-path-v3.json").read_text()
+          )
+          assert result["result"] == "PASS"
+          assert result["deterministic_reconstructions"] >= 20
+          assert result["real_public_signatures"]["real_signatures_bound"] == 12
+          assert result["mutation_campaign"]["total"] >= 300
+          assert result["mutation_campaign"]["rejected"] == result["mutation_campaign"]["total"]
+          assert result["unexpected_passes"] == 0
+          assert result["authority_edge_witnesses"]["witnessed"] == 15
+          assert result["authority_edge_witnesses"]["total"] == 15
+          assert result["sealed_type_security"]["operation_rejections"] == 30
+          assert result["sealed_type_security"]["operation_total"] == 30
+          assert all(value == 0 for value in result["side_effect_census"].values())
+          assert result["event_06_executed"] is False
+          assert result["live_event_06_authority_created"] is False
+          assert result["event_06_package_started"] is False
+          assert result["original_checkpoint_access"] == 0
+          assert result["numerical_operations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 V12-to-V11 numerical authority bridge
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_bridge_authority_v1.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_numerical_bridge_v1.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_numerical_bridge_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_bridge_failures_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-failure-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_bridge_call_path_v2.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-call-path-qualification.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/rehearse_f017_event06_bridge_no_access_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-no-access-rehearsal.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/f017_event06_bridge_capability_v1.py \
+            > "$RUNNER_TEMP/f017-event06-bridge-capability.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          qualification = json.loads((root / "f017-event06-bridge-qualification.json").read_text())
+          failures = json.loads((root / "f017-event06-bridge-failure-qualification.json").read_text())
+          call_path = json.loads((root / "f017-event06-bridge-call-path-qualification.json").read_text())
+          rehearsal = json.loads((root / "f017-event06-bridge-no-access-rehearsal.json").read_text())
+          capability = json.loads((root / "f017-event06-bridge-capability.json").read_text())
+          assert qualification["result"] == "PASS"
+          assert qualification["bridge_field_count"] == 42
+          assert qualification["execution_plan_field_count"] == 25
+          assert qualification["fresh_process_repetitions"] >= 20
+          assert qualification["unique_fresh_process_digests"] == 1
+          assert qualification["mutation_cases_rejected"] >= 350
+          assert qualification["valid_provenance_substitutions_rejected"] == 14
+          assert qualification["unexpected_passes"] == 0
+          assert qualification["transition_phases"] == 10
+          assert qualification["lifecycle_outcomes"] == 9
+          assert qualification["lifecycle_release_paths"] == 5
+          assert qualification["real_consumer_invocations"] == 2
+          assert qualification["producer_adapter"] == "PASS"
+          assert qualification["comparison_release_accounting_chain"] == "PASS"
+          assert qualification["failure_release_paths"] == 4
+          assert qualification["complete_call_path"] == "PASS"
+          assert qualification["numerical_and_result_drift"] == 0
+          assert qualification["original_checkpoint_access"] == 0
+          assert qualification["numerical_operations"] == 0
+          assert failures["result"] == "PASS"
+          assert failures["modeled_failure_classes"] >= 38
+          assert failures["lifecycle_outcomes"] == 9
+          assert failures["unique_failure_outcomes"] == failures["modeled_failure_classes"]
+          assert failures["substantive_mutation_cases"] >= 350
+          assert failures["unexpected_passes"] == 0
+          assert failures["original_checkpoint_access"] == 0
+          assert failures["implemented_failure_release_paths"] == 4
+          assert failures["success_release_passes"] == 1
+          assert call_path["result"] == "PASS"
+          assert call_path["production_coordinator_instantiated"] == "PASS"
+          assert call_path["primary_calls"] == 1
+          assert call_path["secondary_calls"] == 1
+          assert call_path["sealed_durable_starts"] == 3
+          assert call_path["caller_supplied_start_digests"] == 0
+          assert call_path["sealed_execution_result"] == "PASS"
+          assert call_path["failure_release_paths"] == 4
+          assert call_path["original_checkpoint_access"] == 0
+          assert rehearsal["result"] == "PASS"
+          assert rehearsal["state_created"] is False
+          assert rehearsal["checkpoint_root_resolved"] is False
+          assert rehearsal["checkpoint_opens"] == 0
+          assert rehearsal["checkpoint_payload_reads"] == 0
+          assert rehearsal["numerical_operations"] == 0
+          assert capability["result"] == "PASS"
+          assert capability["violations"] == 0
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 prompt-bound identity bridge successor
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_identity_bridge_v2.py --check
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/validate_f017_event06_identity_bridge_contract_v2.py \
+            > "$RUNNER_TEMP/f017-event06-identity-bridge-contract-v2.json"
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_numerical_bridge_v2.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_identity_bridge_v2.py \
+            > "$RUNNER_TEMP/f017-event06-identity-bridge-qualification-v2.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          contract = json.loads((root / "f017-event06-identity-bridge-contract-v2.json").read_text())
+          qualification = json.loads((root / "f017-event06-identity-bridge-qualification-v2.json").read_text())
+          assert contract["result"] == "PASS"
+          assert contract["acyclic"] is True
+          assert contract["legacy_projection_permitted"] is False
+          assert qualification["result"] == "PASS"
+          assert qualification["deterministic_reconstructions"] >= 20
+          assert qualification["fresh_process_repetitions"] >= 20
+          assert qualification["unique_fresh_process_digests"] == 1
+          assert qualification["identity_plan_digest_continuity"]["passed"] == qualification["identity_plan_digest_continuity"]["total"]
+          assert qualification["complete_authority_dag"] == {"passed": 17, "total": 17}
+          assert qualification["real_signatures_bound"] == 18
+          assert qualification["mutation_campaign"]["total"] >= 350
+          assert qualification["mutation_campaign"]["rejected"] == qualification["mutation_campaign"]["total"]
+          assert qualification["unexpected_passes"] == 0
+          assert qualification["legacy_projection_attempts_accepted"] == 0
+          assert qualification["numerical_authority_drift"] == 0
+          assert qualification["result_authority_drift"] == 0
+          assert all(value == 0 for value in qualification["side_effect_census"].values())
+          assert qualification["package_start_eligible_dry_stop"] == "PASS"
+          assert qualification["event06_executed"] is False
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 DAG-derived composition and full no-access path
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_authority_dag_v1.py --check
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_dag_derived_composition_v1.py
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Qualify Event 06 package-scoped terminal uniqueness
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/generate_f017_event06_authority_dag_v2.py --check
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/validate_f017_event06_authority_dag_v2.py \
+            > "$RUNNER_TEMP/f017-event06-authority-dag-v2.json"
+          PYTHONPATH=scripts/research .venv/bin/python -m pytest -q \
+            scripts/research/tests/test_f017_event06_package_attempt_registry_v2.py
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_package_transaction_v2.py \
+            > "$RUNNER_TEMP/f017-event06-package-transaction-v2.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/qualify_f017_event06_sequence18_amendment_v1.py \
+            > "$RUNNER_TEMP/f017-event06-sequence18-amendment-v1.json"
+          PYTHONPATH=scripts/research .venv/bin/python \
+            scripts/research/run_f017_event06_sequence18_sandbox_v1.py \
+            --output "$RUNNER_TEMP/f017-event06-sequence18-sandbox-v1.json"
+          .venv/bin/python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"])
+          dag = json.loads((root / "f017-event06-authority-dag-v2.json").read_text())
+          qualification = json.loads((root / "f017-event06-package-transaction-v2.json").read_text())
+          amendment = json.loads((root / "f017-event06-sequence18-amendment-v1.json").read_text())
+          sandbox = json.loads((root / "f017-event06-sequence18-sandbox-v1.json").read_text())
+          assert dag["result"] == "PASS"
+          assert dag["source_typed_boundaries_total"] == dag["dag_edges_total"]
+          assert dag["dag_edges_with_composition_tests"] == dag["dag_edges_total"]
+          assert dag["uncovered_typed_boundaries"] == 0
+          assert dag["extraneous_dag_edges"] == 0
+          assert dag["live_terminal_boundaries_with_composition_tests"] == dag["live_terminal_boundaries_total"]
+          assert qualification["result"] == "PASS"
+          assert qualification["production_public_registry_root_inputs"] == 0
+          assert qualification["production_public_generic_keyword_inputs"] == 0
+          assert qualification["production_authority_accepted_by_qualification_api"] == 0
+          assert qualification["qualification_authority_accepted_by_production_api"] == 0
+          assert qualification["cross_mode_reservation_or_sink_substitutions_accepted"] == 0
+          assert qualification["package_uniqueness"]["package_reservation_winners_per_identity"] == 1
+          assert qualification["package_uniqueness"]["package_terminal_claim_winners_per_identity"] == 1
+          assert qualification["package_uniqueness"]["competing_terminal_outcomes_accepted"] == 0
+          assert qualification["package_uniqueness"]["ambiguous_accounting_outcomes"] == 0
+          assert qualification["qualification_full_call_path_no_access"] == "PASS"
+          assert qualification["qualification_full_call_path_repetitions"] >= 20
+          assert qualification["production_fixed_root_interception_rehearsal"] == "PASS"
+          assert qualification["production_live_registry_creates_or_writes"] == 0
+          assert qualification["qualification_live_root_aliases_accepted"] == 0
+          assert qualification["execution_result_freeze_round_trips"] >= 4
+          assert qualification["mutation_campaign"]["passed"] == qualification["mutation_campaign"]["total"]
+          assert qualification["mutation_campaign"]["unexpected_passes"] == 0
+          assert qualification["original_checkpoint_access"] == "NONE"
+          assert qualification["full_model_inference"] == "NONE"
+          assert qualification["event06_executed"] is False
+          assert qualification["historical_master_ledger"] == 175
+          assert amendment["result"] == "PASS"
+          assert amendment["package_identity_keys_per_identity"] == 1
+          storage = amendment["storage_authority_census"]
+          assert storage["result"] == "PASS"
+          assert storage["production_public_storage_location_inputs"] == 0
+          assert storage["production_indirect_storage_location_inputs"] == 0
+          assert storage["production_storage_authority_source"].endswith(":fixed_live_registry_root")
+          assert storage["legacy_production_writers_fail_closed_proven"] == 5
+          assert storage["legacy_production_writers_reachable_to_safety_state"] == 0
+          assert amendment["contention_contenders"] == 20
+          assert amendment["contention_winners"] == 1
+          assert amendment["losing_contenders_with_pre_package_start_abort_proof"] == "19/19"
+          assert amendment["mutation_campaign"]["passed"] == amendment["mutation_campaign"]["total"]
+          assert amendment["mutation_campaign"]["survivors"] == []
+          assert amendment["frozen_authority_census"]["frozen_authority_drift"] == 0
+          assert amendment["production_live_registry_creates_or_writes"] == 0
+          assert amendment["original_checkpoint_access"] == "NONE"
+          assert amendment["event06_executed"] is False
+          assert sandbox["result"] == "PASS"
+          assert sandbox["mechanism"] == "MACOS_SANDBOX_EXEC_DEFAULT_DENY_PLUS_OUT_OF_PROCESS_MONITOR"
+          assert sandbox["denial_probe_exit_status"] != 0
+          assert sandbox["denial_probe_fixed_root_created"] is False
+          assert sandbox["child_exit_status"] == 0
+          assert sandbox["fixed_root_fd_mentions"] == 0
+          assert sandbox["checkpoint_filename_fd_mentions"] == 0
+          assert sandbox["original_checkpoint_access"] == "NONE"
+          assert sandbox["event06_executed"] is False
+          PY
+          test -z "$PULSARMLX_MODEL_GGUF"
       - name: Qualify vectorized IQ2_XXS decoder on synthetic blocks
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
@@ -158,29 +994,33 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract
         run: |
-          PYTHONPATH=python .venv/bin/python -m unittest discover \
+          env -u DYLD_LIBRARY_PATH PYTHONPATH=python \
+            .venv/bin/python -m unittest discover \
             -s python/pulsar_mlx_worker/tests -v
       - name: Execute Rust-to-worker generated router integration
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
-          PULSARMLX_MODEL_GGUF='' cargo test -p mlx-backend \
+          env -u DYLD_LIBRARY_PATH PULSARMLX_MODEL_GGUF='' \
+            cargo test -p mlx-backend \
             --test router_worker_integration \
             real_python_worker_two_row_router_matches_committed_golden -- \
             --ignored --exact
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Execute native MLX device smoke
         run: |
-          cargo test -p mlx-backend --test device_smoke \
+          env -u DYLD_LIBRARY_PATH cargo test -p mlx-backend --test device_smoke \
             native_device_smoke_command_emits_evaluated_evidence -- \
             --ignored --exact
       - name: Execute bounded MLX tensor fixtures
         run: |
-          cargo run -p mlx-backend --bin pulsar-mlx -- validate-fixtures \
+          env -u DYLD_LIBRARY_PATH cargo run -p mlx-backend --bin pulsar-mlx -- \
+            validate-fixtures \
             --manifest fixtures/mlx/manifest.json \
             --evidence "$RUNNER_TEMP/mlx-tensor-fixtures.json"
       - name: Execute synthetic routed-MoE fixture
         run: |
-          cargo run -p mlx-backend --bin pulsar-mlx -- validate-synthetic-moe \
+          env -u DYLD_LIBRARY_PATH cargo run -p mlx-backend --bin pulsar-mlx -- \
+            validate-synthetic-moe \
             --fixture fixtures/mlx/routed-moe-v1.json \
             --evidence "$RUNNER_TEMP/synthetic-moe-v1.json"
       - name: Verify bounded evidence and external-model exclusion
@@ -200,3 +1040,62 @@ jobs:
           assert synthetic["fallback_used"] is False
           assert os.environ.get("PULSARMLX_MODEL_GGUF", "") == ""
           PY
+
+  aggregate:
+    name: CI aggregate status
+    if: always()
+    needs:
+      - classify
+      - evidence-integrity
+      - documentation
+      - closed-branch-guard
+      - macos-15-arm64
+      - apple-mlx-small-fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce selected mode result
+        env:
+          MODE: ${{ needs.classify.outputs.mode }}
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          EVIDENCE_RESULT: ${{ needs.evidence-integrity.result }}
+          DOCS_RESULT: ${{ needs.documentation.result }}
+          GUARD_RESULT: ${{ needs.closed-branch-guard.result }}
+          BASELINE_RESULT: ${{ needs.macos-15-arm64.result }}
+          NATIVE_RESULT: ${{ needs.apple-mlx-small-fixtures.result }}
+        run: |
+          set -euo pipefail
+          test "$CLASSIFY_RESULT" = success
+          case "$MODE" in
+            FULL_NATIVE)
+              test "$BASELINE_RESULT" = success
+              test "$NATIVE_RESULT" = success
+              ;;
+            EVIDENCE_ONLY)
+              test "$EVIDENCE_RESULT" = success
+              test "$BASELINE_RESULT" = skipped
+              test "$NATIVE_RESULT" = skipped
+              ;;
+            DOCS_ONLY)
+              test "$DOCS_RESULT" = success
+              test "$BASELINE_RESULT" = skipped
+              test "$NATIVE_RESULT" = skipped
+              ;;
+            NO_CHANGES)
+              test "$BASELINE_RESULT" = skipped
+              test "$NATIVE_RESULT" = skipped
+              ;;
+            CLOSED_BRANCH_GUARD)
+              test "$GUARD_RESULT" = failure
+              echo 'Closed-branch guard correctly refused automatic implementation qualification.'
+              exit 1
+              ;;
+            UNKNOWN_DEFAULT_FULL)
+              test "$BASELINE_RESULT" = success
+              test "$NATIVE_RESULT" = success
+              ;;
+            *)
+              echo "Unknown CI mode: $MODE" >&2
+              exit 1
+              ;;
+          esac
+          printf 'selected_mode=%s\n' "$MODE"

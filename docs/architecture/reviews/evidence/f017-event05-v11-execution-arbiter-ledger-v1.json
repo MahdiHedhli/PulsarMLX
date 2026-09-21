@@ -1,0 +1,9 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-arbiter-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "arbiter_invoked": false,
+  "reason": "EXECUTION_GRAPH_TERMINATED_AT_E0_BEFORE_OPERATOR_APPROVAL",
+  "claim_verdicts": {},
+  "global_verdict": "NOT_ELIGIBLE_FOR_POST_EXECUTION_ARBITRATION",
+  "result": "NOT_RUN"
+}

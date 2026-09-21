@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-claim-ledger/4.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v3.json",
+  "claims": [
+    {"claim_id": "E-PROMPT-001", "statement": "The exact prompt bytes, parent relation, and duplicate guard pass.", "state": "SUPPORTED", "readiness_critical": true, "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-launch-prompt-authority-index-v1.json"]},
+    {"claim_id": "E-REF-001", "statement": "The exact source, manifest, and CI authority pass.", "state": "SUPPORTED", "readiness_critical": true, "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e1-receipt-v1.json"]},
+    {"claim_id": "E-CALLPATH-001", "statement": "The committed V12 package gate can invoke the exact primary and secondary numerical paths without changing measured bytes or inventing authority.", "state": "REJECTED", "readiness_critical": true, "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json"]},
+    {"claim_id": "E-SAFETY-001", "statement": "The pre-mint failure creates no approval, candidate, live authority, package state, checkpoint access, numerical execution, or consumed identity.", "state": "SUPPORTED", "readiness_critical": true, "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-execution-node-e2-receipt-v2.json"]},
+    {"claim_id": "E-CI-001", "statement": "The complete append-only arbiter-repair layer at head 8dc40ada passes EVIDENCE_ONLY CI with zero native jobs.", "state": "SUPPORTED", "readiness_critical": true, "evidence": ["docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v3.json"]}
+  ],
+  "supported_claims": 4,
+  "rejected_claims": 1,
+  "unresolved_claims": 0,
+  "result": "REJECT"
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-graph-state/1.0.0",
+  "source_start_head": "3be5b731ef37d1817ca0569c8a4cbf53a2846654",
+  "source_start_tree": "2aa4b490558263b9e0bd1bd2b9f6af98ce0535ce",
+  "active_node": "R2_VERSION_FORWARD_CONTRACT_AND_PREOBSERVATION_FREEZE",
+  "nodes": [
+    {"node_id": "R0_PROMPT_PARENT_GO_EXPIRATION_SOURCE_AND_CONCURRENCY_GUARDS", "status": "PASS"},
+    {"node_id": "R1_EXACT_IDENTITY_TO_BRIDGE_FAILURE_REPRODUCTION", "status": "PASS"},
+    {"node_id": "R2_VERSION_FORWARD_CONTRACT_AND_PREOBSERVATION_FREEZE", "status": "RUNNING"},
+    {"node_id": "R3_BOUNDED_BRIDGE_AND_COORDINATOR_REPAIR", "status": "PENDING"},
+    {"node_id": "R4_REAL_SIGNATURE_AND_DIGEST_CONTINUITY_QUALIFICATION", "status": "PENDING"},
+    {"node_id": "R5_COMPLETE_NO_ACCESS_EXECUTION_PATH_REHEARSAL", "status": "PENDING"},
+    {"node_id": "R6_FAILURE_MUTATION_AND_RESTART_CAMPAIGN", "status": "PENDING"},
+    {"node_id": "R7_FULL_NATIVE_CI", "status": "PENDING"},
+    {"node_id": "R8_AGY_INDEPENDENT_CHALLENGE", "status": "PENDING"},
+    {"node_id": "R9_OPUS_ARBITRATION", "status": "PENDING"},
+    {"node_id": "R10_EVIDENCE_ONLY_AND_CONDITIONAL_READINESS", "status": "PENDING"},
+    {"node_id": "R11_PUBLICATION_NOTIFICATION_AND_MANUAL_HANDOFF", "status": "PENDING"}
+  ],
+  "repair_loops_authorized": 10,
+  "repair_loops_consumed": 0,
+  "same_root_cause_repair_limit": 2,
+  "same_root_cause_repairs": 0,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "event_06_executed": false,
+  "result": "IN_PROGRESS"
+}

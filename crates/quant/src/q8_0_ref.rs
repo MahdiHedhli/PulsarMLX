@@ -132,6 +132,55 @@ pub fn decode_q8_0_row(
     Ok(())
 }
 
+/// Decode a complete row-major Q8_0 matrix into an exact f32 buffer.
+///
+/// Validation, including all block scales, completes before the destination is
+/// modified. Logical element order is the GGUF row/block order used by the
+/// scalar reference decoder.
+pub fn decode_q8_0_matrix(
+    encoded: &[u8],
+    rows: usize,
+    row_width: usize,
+    destination: &mut [f32],
+) -> Result<(), Q8_0Error> {
+    let layout = checked_row_layout(row_width)?;
+    let expected_elements = rows
+        .checked_mul(row_width)
+        .ok_or(Q8_0Error::ArithmeticOverflow)?;
+    let expected_bytes = rows
+        .checked_mul(layout.encoded_bytes)
+        .ok_or(Q8_0Error::ArithmeticOverflow)?;
+    if encoded.len() != expected_bytes {
+        return Err(Q8_0Error::EncodedLengthMismatch {
+            expected: expected_bytes,
+            actual: encoded.len(),
+        });
+    }
+    if destination.len() != expected_elements {
+        return Err(Q8_0Error::DestinationLengthMismatch {
+            expected: expected_elements,
+            actual: destination.len(),
+        });
+    }
+    validate_scales(encoded)?;
+
+    for (encoded_row, output_row) in encoded
+        .chunks_exact(layout.encoded_bytes)
+        .zip(destination.chunks_exact_mut(row_width))
+    {
+        for (block, output) in encoded_row
+            .chunks_exact(BLOCK_BYTES)
+            .zip(output_row.chunks_exact_mut(QK8_0))
+        {
+            let scale = f16_to_f32(u16::from_le_bytes([block[0], block[1]]));
+            for (value, &quantized) in output.iter_mut().zip(&block[2..]) {
+                *value = scale * (quantized as i8) as f32;
+            }
+        }
+    }
+    Ok(())
+}
+
 fn dot_row(encoded_row: &[u8], activation: &[f32]) -> f32 {
     let mut accumulator = 0.0_f32;
     for (block, activation_block) in encoded_row

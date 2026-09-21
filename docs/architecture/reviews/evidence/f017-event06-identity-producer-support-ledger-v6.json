@@ -1,0 +1,36 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-support-ledger/6.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-support-ledger-v5.json",
+  "gemini_cycle": 1,
+  "reviewed_head": "63af837dbd14d4ca595a86a3a220efbe342f7653",
+  "finding": "QUALIFICATION_ARTIFACTS_NAMED_STALE_IMPLEMENTATION_HEADS",
+  "disposition": "REPAIRED_APPEND_ONLY",
+  "repair": {
+    "execution_bytes_changed": false,
+    "measured_implementation_head": "2626496a746d08ec1df194085493dbf97e3ad50c",
+    "qualification_rerun": "PASS",
+    "candidate_instantiability_rerun": "PASS",
+    "failure_campaign_rerun": "PASS",
+    "no_access_rehearsal_rerun": "PASS",
+    "original_checkpoint_access": 0,
+    "event_06_executed": false,
+    "live_event_06_authorization_created": false
+  },
+  "repaired_claims": [
+    "C-SCOPE-001",
+    "C-SCOPE-002",
+    "C-INTERFACE-001",
+    "C-VALIDATE-001",
+    "C-VALIDATE-002",
+    "C-VALIDATE-003",
+    "C-RUNTIME-001",
+    "C-RUNTIME-002",
+    "C-FAIL-001",
+    "C-FAIL-002",
+    "C-FAIL-003",
+    "C-SYN-001"
+  ],
+  "conceded_claims": [],
+  "unresolved_claims": [],
+  "result": "PASS"
+}

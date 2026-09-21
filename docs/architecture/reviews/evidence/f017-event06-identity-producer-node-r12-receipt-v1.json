@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "node": "R12",
+  "status": "PASS",
+  "implementation_head": "2626496a746d08ec1df194085493dbf97e3ad50c",
+  "implementation_tree": "be36e12c14c315fe7c58473753ccaa0b5da220ec",
+  "full_native_run": 33110366206,
+  "full_native_result": "PASS",
+  "required_native_skips": 0,
+  "original_checkpoint_access": 0,
+  "event_06_executed": false,
+  "result": "PASS"
+}

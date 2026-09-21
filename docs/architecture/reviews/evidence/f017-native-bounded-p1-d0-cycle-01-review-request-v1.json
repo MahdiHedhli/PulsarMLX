@@ -1,0 +1,74 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-d0-independent-review-request",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model_required": "claude-fable-5",
+  "reviewer_role": "INDEPENDENT_NUMERICAL_CONTRACT_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "ff29823ff025a712f70b026f4ba91e92133cab86",
+  "committed_bytes_only": true,
+  "execution_prohibitions": {
+    "real_m1_ultra_p1": true,
+    "full_model_real_checkpoint_inference": true,
+    "checkpoint_reads": true,
+    "retained_representative_reads": true,
+    "d3_5_qualification": true,
+    "live_authorization_creation": true
+  },
+  "reviewed_artifacts": [
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v1.json",
+      "sha256": "e30b86475b8161a434a91c958829cd66306935076900c489688e0fb116cf9997"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/f017-native-bounded-p1-numeric-acceptance-v1.md",
+      "sha256": "dd5b7076380ff44fcf922c4de5216ec0bf5fb6727ad5095d8139edf80df0ab16"
+    },
+    {
+      "path": "scripts/research/validate_f017_native_bounded_p1_d0_v1.py",
+      "sha256": "1d7d235641fb78599100ea28a8939ae4a136516d43deaf3c2061618614f34159"
+    },
+    {
+      "path": "scripts/research/tests/test_f017_native_bounded_p1_d0_v1.py",
+      "sha256": "b5f76d36801d82fafa343ad517d24566db8a849cd7fd7f1839fd86abf4e155d9"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-domain-cross-branch-authority-v1.json",
+      "sha256": "dec44d48faf46d30f3cad6193442eac55a1bd978311d9daa9c1ac28f40308f90"
+    }
+  ],
+  "validation_at_reviewed_head": [
+    "python3 scripts/research/validate_f017_native_bounded_p1_d0_v1.py --root . => PASS 34 stages unresolved 0",
+    "python3 -m unittest scripts.research.tests.test_f017_native_bounded_p1_d0_v1 => PASS 12/12",
+    "python3 scripts/research/validate_f017_oracle_independence.py => PASS",
+    "cargo test -p engine --test f017_independent_oracle => PASS 4/4"
+  ],
+  "required_attacks": [
+    "post-hoc tolerance leakage",
+    "unjustified numerical threshold or safety factor",
+    "invalid Tier-B reuse by tensor role or arithmetic assumptions",
+    "native output used as its own correctness oracle",
+    "GPU nondeterminism hidden by loose tolerances",
+    "routing structural predicates weakened to numerical similarity",
+    "byte-exact requirement where Metal semantics do not justify it",
+    "bounded requirement where structural exactness is required",
+    "canonical 34-stage vocabulary mismatch",
+    "proof/reference output relabeled as production",
+    "D3.5 representative output used to tune D0",
+    "D3.5 scope overclaimed as full-forward qualification",
+    "retained representative bytes used before consumer-scoped grant",
+    "cross-branch source path/SHA/schema unresolved",
+    "observed equivalence claimed before execution"
+  ],
+  "epistemic_rule": "D3.5_MAY_FALSIFY_BUT_NEVER_SET_A_TOLERANCE;_REPAIR_REQUIRES_NEW_D0_FRESH_NON_TRIGGER_CORPUS_AND_NEW_REVIEW",
+  "finding_severities": [
+    "BLOCKING",
+    "NON_BLOCKING_REQUIRED",
+    "DEFENSE_IN_DEPTH"
+  ],
+  "acceptance_rule": "ACCEPT_ONLY_WITH_ZERO_BLOCKING_AND_ZERO_NON_BLOCKING_REQUIRED",
+  "requested_verdicts": [
+    "ACCEPT",
+    "REJECT"
+  ]
+}

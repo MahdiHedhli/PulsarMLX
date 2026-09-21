@@ -14,6 +14,103 @@ pub struct Read {
 mod positional;
 pub use positional::{
     ExpertSource, OwnedSlab, PositionalRead, PositionalSource, ReaderShard, ShardPath, SourceError,
+    MatrixReadSpec, ReadTelemetry,
+};
+
+mod apple_lifecycle;
+pub use apple_lifecycle::{
+    AppleBridgeEvent, AppleBridgeGeneration, AppleBridgeLifecycle, AppleBridgeLifecycleError,
+    AppleBridgeState,
+};
+
+mod portable_fixture;
+pub use portable_fixture::{
+    ArtifactRecord,
+    ByteRange,
+    FixtureProvenance,
+    FixtureManifestPolicy,
+    PortableFixtureBoundaryArtifacts,
+    PortableFixtureManifest,
+    PortableFixtureManifestSet,
+    PortableFixtureValidationError,
+    TrunkInventoryReference,
+};
+
+mod fixture_ladder;
+pub use fixture_ladder::{FixtureLadder, FixtureLadderError};
+
+mod residency;
+pub use residency::{
+    authoritative_candidates, AdmissionDecision, AdmissionRejection, HostMemoryBudget,
+    ResidentOrMissing, ResidencyCandidate, ResidencyClass, ResidencyDisposition,
+    ResidencyOptionId, ResidencySlot, ResidencyTransitionError, SlotLifecycle, GIB,
+};
+
+mod expert_residency;
+pub use expert_residency::{
+    ExpertAdmissionError, ExpertAdmissionPolicy, ExpertAdmissionRequest, ExpertFallback,
+    ExpertKey, ExpertKind, ExpertLifecycle, ExpertLookup, ExpertResidencyTable,
+    ExpertResidencyTier, ExpertResident,
+};
+
+mod slot_classes;
+pub use slot_classes::{observed_slot_classes, ObservedSlotClass, SlotEncoding};
+
+mod trunk_inventory;
+pub use trunk_inventory::{
+    TrunkGroupSummary, TrunkInventorySummary, AUTHORITATIVE_COMPRESSED_BYTES,
+    AUTHORITATIVE_DECODED_F32_BYTES, AUTHORITATIVE_EXCLUDED_EXPERT_MATRIX_COUNT,
+    AUTHORITATIVE_TENSOR_COUNT, TrunkTensorSummary,
+};
+
+pub use stable_slab::{
+    SlabAllocatorError, StableSlab, StableSlabAllocator, StableSlabConfig, StableSlabTelemetry,
+    SlotId, ZeroingPolicy,
+};
+
+mod stable_slab;
+
+mod telemetry;
+pub use telemetry::{
+    RuntimeTelemetry, TelemetryBucket, TelemetryError, TelemetrySnapshot,
+};
+
+mod validation;
+pub use validation::{
+    BoundaryEvidence, ParityBoundary, ParityLadder, ParityLadderError, ValidationClassification,
+    ValidationMode,
+};
+
+pub mod f017_apple_serial_f32;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+mod p1_domain;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+pub use p1_domain::{
+    execute_bounded_p1_once, execute_evidenced_bounded_p1_once, execute_inert_bounded_p1_once,
+    validate_real_p1_authority, BoundedP1Math, BoundedP1Receipt, EvidencedBoundedP1Receipt,
+    EvidencedP1Math, P1AccessCensus, P1AccessEvent, P1AttemptAuthority, P1DomainError,
+    P1DurableSnapshot, P1EvidenceRecorder, P1LayerDiagnostic, P1NumericalDiagnosticManifest,
+    P1RuntimeIdentity, ACCESS_CENSUS_SCHEMA, ACCESS_EVENT_SCHEMA, DIAGNOSTIC_SCHEMA,
+    EVIDENCED_RECEIPT_SCHEMA, EVIDENCED_TERMINAL_SCHEMA, EXPECTED_TOKEN, PROMPT_TOKEN,
+    RECEIPT_SCHEMA, SNAPSHOT_SCHEMA,
+};
+
+#[cfg(target_os = "macos")]
+mod apple_metal_bridge;
+
+#[cfg(target_os = "macos")]
+pub use apple_metal_bridge::{MetalBridge, MetalRegistration};
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+mod apple_mlx_bridge;
+
+#[cfg(all(target_os = "macos", pulsar_native_mlx))]
+pub use apple_mlx_bridge::{
+    MlxArray, MlxComputedArray, MlxContext, MlxDebugStreamCounters, MlxDevice,
+    MlxNativeFreeCounters, MlxOwnershipSnapshot, MlxStreamAuthority, MlxStreamMode,
+    MlxStreamOrigin, P1AccountingSnapshot,
 };
 
 /// Build the universe of per-expert slab reads for every streamed layer of

@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence21-claude-installation-receipt/1.0.0",
+  "semantic_argv": ["claude", "install", "2.1.250"],
+  "invocation_count": 1,
+  "launcher_resolution": "EXISTING_VERIFIED_NATIVE_LAUNCHER_DIRECT",
+  "argv0": "claude",
+  "shell_command_string": false,
+  "package_manager_used": false,
+  "alternate_url_used": false,
+  "sudo_used": false,
+  "force_used": false,
+  "stdout_sha256": "a8a5a62481dabc544321f30870b0b198fc9a5ee89090d0a2fb1db374ba587564",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "raw_exit_status": "NOT_RETAINED_DUE_ORCHESTRATION_VARIABLE_COLLISION_AFTER_PROCESS_RETURN",
+  "installer_reported_target": true,
+  "qualified_final_version": "2.1.250",
+  "second_installation_invocation": false,
+  "rollback_performed": false,
+  "result": "PASS"
+}

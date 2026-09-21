@@ -1,0 +1,12 @@
+{
+  "apple_mlx_small_fixture_validation": "PASS",
+  "apple_silicon_workspace_baseline": "PASS",
+  "bridge_qualification_step": "PASS",
+  "implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "node": "B5_FULL_NATIVE_CI",
+  "required_native_skips": 0,
+  "result": "PASS",
+  "run_id": 33137473493,
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-node-receipt/1.0.0",
+  "unexpected_skips": 0
+}

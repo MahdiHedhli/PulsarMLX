@@ -1,0 +1,81 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-collapsed-live-installation-qualification/1.0.0",
+  "implementation_head": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+  "implementation_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
+  "fresh_process_reconstructions": 20,
+  "deterministic_reconstructions": 20,
+  "distinct_reconstruction_sets": 1,
+  "eight_field_collapsed_go_drift": 0,
+  "human_go_authenticity_binding": "PASS",
+  "qualification_live_root_type_separation": "PASS",
+  "checkpoint_bound_candidate_composition": "PASS",
+  "collapsed_go_derived_installation_capability": "PASS",
+  "legacy_second_go_authority_required": false,
+  "installed_triple_and_package_gate_composition": "PASS",
+  "real_public_end_to_end_composition": "PASS",
+  "focused_integration_tests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "applicable_f017_tests": {
+    "passed": 71,
+    "failed": 0
+  },
+  "full_applicable_local_suite": {
+    "tests_passed": 914,
+    "subtests_passed": 555,
+    "failed": 0,
+    "command": "PYTHONPATH=. uv run --locked pytest -q scripts/research/tests"
+  },
+  "mutation_campaign": {
+    "total": 211,
+    "rejected": 211,
+    "unexpected_passes": 0,
+    "categories": {
+      "acceptance_fields": 7,
+      "acceptance_semantics": 7,
+      "acceptance_types": 7,
+      "alias_unknown": 30,
+      "authority_fields": 16,
+      "authority_semantics": 16,
+      "authority_types": 16,
+      "capability_replay": 1,
+      "causal_splice": 6,
+      "closed_types": 36,
+      "filesystem_fault": 10,
+      "forged_types": 17,
+      "legacy_second_go": 1,
+      "mode_substitution": 2,
+      "public_boundary": 16,
+      "record_fields": 7,
+      "record_semantics": 7,
+      "record_types": 7,
+      "reverse_mode_substitution": 2
+    }
+  },
+  "observed_no_access_counters": {
+    "sanitized_human_decisions_from_live_go": 0,
+    "collapsed_live_go_tokens": 0,
+    "canonical_live_reservations": 0,
+    "live_checkpoint_root_resolutions": 0,
+    "live_installation_commit_calls": 0,
+    "live_authorities_or_capabilities": 0,
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_identity_hash_reads": 0,
+    "original_checkpoint_payload_reads": 0,
+    "original_checkpoint_mmaps_or_tensor_reads": 0,
+    "event06_identities_instantiated": 0,
+    "event06_identities_consumed": 0,
+    "package_starts": 0,
+    "numerical_operations": 0,
+    "authorization_delta": 0,
+    "package_delta": 0,
+    "primary_delta": 0,
+    "secondary_delta": 0,
+    "p1_actions": 0
+  },
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

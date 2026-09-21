@@ -1,0 +1,60 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-node-receipt/1.0.0",
+  "node_id": "E1_SOURCE_AUTHORITY_CI_MANIFEST_RECONCILIATION",
+  "completed_at_utc": "2026-08-28T21:37:18Z",
+  "source": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "f4bbdcacad01d3e5cb86216010d301ff2a344b6e",
+    "tree": "8717916755bbf16d7b318307eacad71d9512ae4f",
+    "local_remote_parity": "PASS",
+    "worktree_clean": true
+  },
+  "machine": {
+    "model_identifier": "Mac13,2",
+    "chip": "Apple M1 Ultra",
+    "architecture": "arm64",
+    "memory": "128 GB",
+    "target_guard": "PASS"
+  },
+  "ratified_authority": {
+    "readiness_declaration": {
+      "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event06-execution-readiness-final-declaration-v12-v4.json",
+      "sha256": "511c7afadeeb7b3b7dc90395bcecc1bc42c656bccf8ae9ac0f7ea6aa0d0c7476"
+    },
+    "terminal_authority_index": {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-terminal-authority-index-v1.json",
+      "sha256": "ad024ab7398ac14a31610b4021b2b29f390880f7413e88331cdd1b80861628e6"
+    },
+    "authority_manifest": {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-readiness-authority-manifest-v1.json",
+      "sha256": "f295388ad8328a346a10bcf03c9040dd42b00d2479809e99cbd0f25f612580db"
+    },
+    "manifest_bindings_verified": "28/28",
+    "runtime_sha_bindings_verified": "28/28"
+  },
+  "ci": {
+    "full_native_run": 33201043086,
+    "full_native_result": "PASS",
+    "required_native_skips": 0,
+    "evidence_only_run": 33210405666,
+    "evidence_only_result": "PASS",
+    "evidence_only_native_jobs": 0,
+    "final_head_evidence_only_run": 33210746086,
+    "final_head_evidence_only_result": "PASS",
+    "final_head_native_jobs": 0
+  },
+  "ownership": {
+    "compatible_f017_processes": 0,
+    "competing_event06_owners": 0,
+    "live_event06_capabilities": 0,
+    "live_event06_installations": 0
+  },
+  "safety": {
+    "historical_master_ledger": 175,
+    "original_checkpoint_root_resolved": false,
+    "original_checkpoint_access": 0,
+    "event06_executed": false,
+    "p1_attempt_2_executed": false
+  },
+  "result": "PASS"
+}

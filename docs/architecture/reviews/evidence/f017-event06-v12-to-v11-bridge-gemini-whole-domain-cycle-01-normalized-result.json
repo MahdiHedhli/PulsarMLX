@@ -1,0 +1,27 @@
+{
+  "blocking_findings": 0,
+  "challenge_rows": 0,
+  "claim_verdicts": {
+    "C-BRIDGE-CALLPATH-001": "SUPPORTED",
+    "C-BRIDGE-CAP-001": "SUPPORTED",
+    "C-BRIDGE-CI-001": "SUPPORTED",
+    "C-BRIDGE-DIGEST-001": "SUPPORTED",
+    "C-BRIDGE-DRIFT-001": "SUPPORTED",
+    "C-BRIDGE-GEN-001": "SUPPORTED",
+    "C-BRIDGE-LEGACY-001": "SUPPORTED",
+    "C-BRIDGE-LIFE-001": "SUPPORTED",
+    "C-BRIDGE-PROV-001": "SUPPORTED",
+    "C-BRIDGE-QUAL-001": "SUPPORTED",
+    "C-BRIDGE-SAFETY-001": "SUPPORTED"
+  },
+  "cycle": 1,
+  "material_unresolved_findings": 0,
+  "measured_implementation_head": "2729aa260695ec77e0b138ed73891da9d1291aab",
+  "measured_implementation_tree": "d5bc4245ff2bf2d93a8640d8fb5e878d6ca1fbbf",
+  "model": "gemini-3.1-pro-high",
+  "request_sha256": "0e837385223e847fd2b669afc8850d54cb4a1a62952d9925a2ee27c6a2806bce",
+  "response_sha256": "c22942a566a1f74da74a67b87f9f35d71833e20042e6a0274104cc4db107679b",
+  "reviewed_evidence_head": "c868b2a4504e2fbf1e48697407856533ad7c3c0f",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-gemini-whole-domain-result/1.0.0",
+  "verdict": "ACCEPT_FOR_OPUS_WHOLE_DOMAIN_ARBITRATION"
+}

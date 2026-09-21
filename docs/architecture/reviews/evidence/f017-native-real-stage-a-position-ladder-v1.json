@@ -1,0 +1,119 @@
+{
+ "answer_bytes": 2,
+ "answer_sha256": "34a6225b83a638ed08f01ecdbf30cf0be3478ffdd36be92295fee92c5585d57c",
+ "answer_text": "\t\n",
+ "diagnostics": {
+  "attention_softmax_scale": 0.0625,
+  "backend": "NATIVE_RUST_MLX_GPU",
+  "decode_tokens_per_second": null,
+  "generation": {
+   "decode_seconds": 0.0,
+   "finish_reason": "length",
+   "first_token_seconds": 4.1e-08,
+   "generated_token_count": 1,
+   "generated_tokens": [
+    197
+   ],
+   "peak_state_bytes": 1456128,
+   "position_logits_sha256": [
+    "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+    "237230c19ea102a63620090f310592ef01fdde3f44ce862f0b96c24cf16a302a",
+    "2dc98a3768a57879fd9fa54abec4dc25cb137f96daf55139506b1e45a74ee49c",
+    "c74347f94fd9eecbd44b2a3738320f78c00275aec653bd26a8d0e04f96ab2c85",
+    "f669933eb5eecfa02a108495b4b729a120dd61c619bbd622ceab41e9640b257d",
+    "ba44c880a917cd07ce26ce1b34dfb89c3c025bdd5027e398689fe13b26675e7f",
+    "a75c7330f40245b09e286015be6524cacc79ddb36785fb34206ad0205886a279",
+    "400a24fd17590b8606515d50d90a115e88d0060e8e5da76ca22653facb6f98fa"
+   ],
+   "position_seconds": [
+    131.1669715,
+    96.792784542,
+    95.23179175,
+    93.151901083,
+    91.673462375,
+    91.755202958,
+    92.251265666,
+    92.086356292
+   ],
+   "position_selected_tokens": [
+    154820,
+    154820,
+    154822,
+    16581,
+    428,
+    311,
+    198,
+    197
+   ],
+   "positions_executed": 8,
+   "prefill_seconds": 784.124185667,
+   "prompt_tokens": 8,
+   "stop_token": null
+  },
+  "identity": {
+   "architecture": "glm-dsa",
+   "checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee",
+   "indexer_top_k": 2048,
+   "model_directory": "/Users/mhedhli/Models/PulsarMLX/f017-native-root-20260920",
+   "name": "GLM-5.2",
+   "quantization_file_type": null,
+   "shards": 6,
+   "tensors": 1809,
+   "total_bytes": 238458632928,
+   "vocabulary": 154880
+  },
+  "max_output_tokens": 1,
+  "max_positions": 9,
+  "phases_seconds": {
+   "checkpoint_identity_verification": 716.595055625,
+   "cleanup": 0.17488025,
+   "decode_after_first": 0.0,
+   "first_token": 4.1e-08,
+   "prefill": 784.124185667,
+   "preflight": 0.054912334
+  },
+  "prompt_mode": "RAW_TOKEN_DIAGNOSTIC",
+  "prompt_tokens": 8,
+  "python_inference_process": false,
+  "result": "COMPLETE",
+  "rope_pairing": "NeoxHalfSplit",
+  "schema": "pulsarmlx.f017.native-generate-diagnostics/1.0.0",
+  "stop_token_ids": [
+   154820,
+   154827,
+   154829
+  ],
+  "verified_checkpoint_set_sha256": "d7d1e6a8f8ab11726a7f1e43e4d8f02ed73f04ee27ffb876915147a568b9afee"
+ },
+ "evidence_status": "SANITIZED_PUBLIC_PROJECTION: token ids, digests, timings and counters only; no weight bytes and no logit vectors",
+ "exit_code": 0,
+ "host_after_sha256": "aef14cfc13164e6d4691276361a0ec162c50855c55ae44d97a06ea3f1ec59660",
+ "host_before_sha256": "a2dc7a2e1cc580411d3cb7a290fba3238de9d193f5037652ae87ff9bb2692d4c",
+ "not_claimed": [
+  "numerical qualification of positions after 0 on the real checkpoint",
+  "the rope pairing of the real checkpoint",
+  "any sustained throughput figure",
+  "answer quality",
+  "readiness for deployment"
+ ],
+ "position_zero_binding": {
+  "expected_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+  "expected_token": 154820,
+  "logits_match": true,
+  "observed_logits_sha256": "db1456d8aec1c6c26860828a4994452feac14c58ebd4e85ca63c2e9d01a0306d",
+  "observed_token": 154820,
+  "result": "MATCH",
+  "rule": "position 0 must reproduce the banked attempt-2 one-token result",
+  "source_of_the_expectation": "docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-02-execution-evidence-v1.json",
+  "token_match": true,
+  "what_this_is": "a comparison against existing evidence produced by a different binary with no authorization, no receipt and no ledger entry; it is not a re-execution of the consumed one-shot"
+ },
+ "position_zero_binding_applicability": "applied: this stage begins from the same prompt token the banked one-shot used",
+ "qualified": {
+  "later_positions": "MEASURED_NOT_QUALIFIED: no independent multi-token oracle exists for the real checkpoint, and the rope pairing is still a declared parameter",
+  "position_zero": "compared against banked evidence"
+ },
+ "schema": "pulsarmlx.f017.native-real-checkpoint-stage/1.0.0",
+ "stage": "stageA",
+ "wall_seconds": 1501.0
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-execution-support-ledger/1.0.0",
+  "graph_id": "F017-EVENT05-V11-ONE-SHOT-EXECUTION-GRAPH-01",
+  "support_rows": [
+    {
+      "support_id": "E0-S01",
+      "challenge_id": "E0-C01",
+      "disposition": "CLAIM_CONCEDED",
+      "evidence": ["accepted declaration SHA e7b2ce81...", "measured authorizer SHA 474fd9e3...", "three required fields absent"],
+      "repair_commit": null,
+      "tests": ["exact key census", "static measured-authorizer predicate reconstruction"],
+      "remaining_uncertainty": "NONE_ABOUT_MISMATCH; REPAIR_REQUIRES_NEW_AUTHORITY_AND_REVIEW"
+    }
+  ],
+  "answered_by_evidence": 0,
+  "repairs": 0,
+  "conceded_claims": 1,
+  "unresolved": 0,
+  "result": "GO_EXPIRED_NO_IN_SCOPE_REPAIR"
+}

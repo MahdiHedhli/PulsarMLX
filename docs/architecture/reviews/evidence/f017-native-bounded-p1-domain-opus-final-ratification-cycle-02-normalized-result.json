@@ -1,0 +1,146 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-final-ratification-result/1.0.0",
+  "cycle": 2,
+  "reviewer_policy": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-policy-transition-v1.json",
+    "sha256": "c2608b669c3bebf986d2735a156431ee4f3babb1fa648006f257dffec73c187c",
+    "operator_authorized_final_reviewer": "claude-opus-5",
+    "technical_acceptance_standards_changed": false
+  },
+  "reviewer": {
+    "model": "claude-opus-5",
+    "provider": "firstParty",
+    "effort": "high",
+    "cli": "/Users/mhedhli/.local/bin/claude",
+    "cli_version": "2.1.235 (Claude Code)",
+    "session_id": "1c57e748-5e4e-4407-a82e-f42bbaaa7f8d",
+    "fresh_session": true,
+    "turns": 135
+  },
+  "reviewed_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "implementation_head": "e3fd6ca64f299e3b2293e0522c46fa66ebe09b13",
+    "execution_code_head": "4faa404c4205d172251436781b6d54042e8409f6",
+    "request_evidence_head": "f644f254511b6dedd95ff4e0a6943fe49ad99a19",
+    "exact_head_ci_run": 32578854836,
+    "exact_head_ci_conclusion": "success",
+    "detached_clean_worktree": true
+  },
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-request.md",
+    "sha256": "9f983e9fa54f9717961d6dbce666307cbf8a59896a6d47e514938dcd68fdf119"
+  },
+  "response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-opus-final-ratification-cycle-02-exact-cli-response.json",
+    "sha256": "86e4dac2cb18d86af194a78347f294307eae90eda7a511065055c494afe3d2e1",
+    "is_error": false,
+    "stop_reason": "end_turn"
+  },
+  "cycle_1_required_repairs": {
+    "F017-OPUS-C4-01": "CLOSED_BY_BIT_REPRODUCIBLE_SOURCE_BUILT_SYNTHETIC_EXECUTOR_AND_54_OF_54_CONTAINMENT_REJECTIONS",
+    "F017-OPUS-C4-02": "CLOSED_BY_CI_EXECUTION_OF_THE_EXACT_SOURCE_BUILT_BINARY_AND_10_FRESH_PROCESS_REQUALIFICATION",
+    "F017-OPUS-C4-03": "CLOSED_BY_LIVENESS_INVARIANTS_AND_HASH_REPAIRED_ALL_ZERO_OR_STALE_RECEIPT_REJECTION",
+    "F017-OPUS-C4-04": "CLOSED_BY_EXACT_CLAUDE_OPUS_5_AND_FINAL_VERDICT_VOCABULARY_BINDING"
+  },
+  "independent_attack_results": {
+    "load_bearing_hashes": "ALL_REBOUND_AUTHORITY_HASHES_MATCH",
+    "binary_reproduction": "BOUNDED_AND_SYNTHETIC_BANKED_BINARIES_BIT_IDENTICAL_TO_SOURCE_BUILD",
+    "ci": "DIRECTLY_INSPECTED_RUN_32578854836_AT_EXACT_IMPLEMENTATION_HEAD_SUCCESS",
+    "c3_request_sha_discrepancy": "RESOLVED_AS_TWO_TRUTHFUL_GIT_REVISIONS_WITH_NO_SCOPE_CHANGE",
+    "d3_5": "89_OF_89_RECEIPTS_EXACT_34_OF_34_STAGE_MAPPING_ZERO_ORIGINAL_CHECKPOINT_READS",
+    "d0": "34_OF_34_CLASSIFICATIONS_MATCH_OCB_ORDINALS_20_21_25_27_28_RECOMPUTED",
+    "routing": "MEMBERSHIP_ORDER_AND_TIE_GATES_PRECEDE_NUMERIC_GRADING",
+    "native_producer": "79_LAYERS_64_HEADS_256_EXPERTS_TOP8_PLUS_SHARED_NO_HARDCODED_REPRESENTATIVE_ROUTE",
+    "quantization": "11_OF_11_FORMATS_BOUND_WITH_TYPE_AND_TYPE_ID_CROSSCHECK",
+    "checkpoint_plan": "6_SHARDS_1809_TENSORS_PLAN_ONLY_ZERO_PAYLOAD_READS_AND_OPENS",
+    "accounting": "22_OF_22_LIVE_PRODUCERS_ALL_ZERO_STALE_AND_EIGHT_REQUIRED_LIVENESS_MUTATIONS_REJECTED",
+    "receipt": "54_OF_54_SCHEMA_IDENTITY_AND_TERMINAL_MUTATIONS_REJECTED",
+    "rn1": "REPLAY_FRESH_AUTH_AFTER_CLAIM_RACE_TRAVERSAL_AND_SYMLINK_ATTACKS_FAIL_CLOSED",
+    "synthetic_full_model": "10_GENUINELY_FRESH_SOURCE_BUILT_PROCESSES_EXACT_10_OF_10",
+    "b1_b2": "MISSING_NATIVE_FREE_REJECTED_AND_SOURCE_FIRST_NO_EVAL_NO_SYNC_PASSES_ON_PINNED_NATIVE_MLX",
+    "total_adversarial_cases": 172
+  },
+  "c3_defense_in_depth_reassessment": {
+    "F017-OPUS-C3-F1": "PROMOTED_IN_CYCLE_1_THEN_CLOSED_BY_C4_01_AND_C4_02_REPAIRS",
+    "F017-OPUS-C3-F2": "CLOSED_BY_APPEND_ONLY_HISTORICAL_CORRECTION",
+    "F017-OPUS-C3-F3": "RETAINED_AS_C5_D01_AVAILABILITY_HARDENING_NOT_LIVE_BOUNDARY_WEAKENING",
+    "F017-OPUS-C3-F4": "CLOSED_BY_DIRECT_CATALOG_TYPE_AND_TYPE_ID_CROSSCHECK",
+    "F017-OPUS-C3-F5": "CLOSED_FOR_AUTHORITY_VALIDATION_ORDERING;_DISTINCT_PREEXISTING_ATTEMPT_DIRECTORY_WEDGE_RECORDED_AS_C5_D08",
+    "F017-OPUS-C3-F6": "CLOSED_BY_CONVERSE_INERT_PRODUCER_ID_GUARDS",
+    "F017-OPUS-C3-F7": "CLOSED_BY_REQUIRED_LIVENESS_DELTAS_AND_GENUINE_RECEIPT_MUTATION_TEST"
+  },
+  "findings": [
+    {
+      "id": "F017-OPUS-C5-D01",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Memory sample freshness is not re-enforced immediately before bounded math after shard rehash.",
+      "disposition": "Fail-closed availability hardening; re-sample immediately before execution or bind a measured peak before live scheduling."
+    },
+    {
+      "id": "F017-OPUS-C5-D02",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Position-zero makes attention scores irrelevant for the single visible key, but the math layer lacks an internal position-zero assertion.",
+      "disposition": "Add the assertion before any broader-position reuse; current exact contract and validator freeze position zero."
+    },
+    {
+      "id": "F017-OPUS-C5-D03",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Three D3.5 labels are outside the frozen result-vocabulary list although all grading classes and boolean gates are bound.",
+      "disposition": "Add an append-only vocabulary registry revision without reopening numerical thresholds."
+    },
+    {
+      "id": "F017-OPUS-C5-D04",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Tier-B caps and cosine floors are weakly discriminating relative to observed errors.",
+      "disposition": "Preserve a-priori bounds; document their corroborative role and rely on OCB and byte-exact gates for tight discrimination."
+    },
+    {
+      "id": "F017-OPUS-C5-D05",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The frozen future misderived-tolerance workflow still names Fable despite the operator reviewer transition.",
+      "disposition": "Use an append-only D0 revision before any future tolerance repair; no tolerance changed in this cycle."
+    },
+    {
+      "id": "F017-OPUS-C5-D06",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The tiny synthetic fixture does not make route choice affect output and one test name overstates route coverage.",
+      "disposition": "Rename the test and add distinguishable experts; real routing correctness remains independently established by D3.5."
+    },
+    {
+      "id": "F017-OPUS-C5-D07",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The committed CI metadata SHA lacks a documented stable normalization although the complete log SHA reproduces.",
+      "disposition": "Define the normalization or drop the volatile metadata SHA; direct CI and log evidence controls."
+    },
+    {
+      "id": "F017-OPUS-C5-D08",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "A pre-created attempt directory can wedge a fresh private state root after the contract-wide claim is written.",
+      "disposition": "Availability-only under the fresh 0700 authorizer-created root; reorder creation or remove the owned claim on failure."
+    },
+    {
+      "id": "F017-OPUS-C5-D09",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "The contract code census omits two synthetic-only source files despite a bit-reproduced bound synthetic binary.",
+      "disposition": "Add both synthetic sources at the next authority rebind."
+    },
+    {
+      "id": "F017-OPUS-C5-D10",
+      "severity": "DEFENSE_IN_DEPTH",
+      "summary": "Shared authority validation length-checks hashes and Git head without hexadecimal validation.",
+      "disposition": "Add hex validation in the shared layer; the real path exact-value crosschecks fully contain substitution."
+    }
+  ],
+  "counts": {
+    "blocking": 0,
+    "non_blocking_required": 0,
+    "defense_in_depth": 10
+  },
+  "verdict": "ACCEPT_FOR_SINGLE_BOUNDED_M1_ULTRA_P1",
+  "safety_state": {
+    "real_m1_ultra_p1_executed_during_review": false,
+    "original_checkpoint_reads_during_review": 0,
+    "live_p1_authorization_created_during_review": false,
+    "historical_master_ledger": 175
+  }
+}

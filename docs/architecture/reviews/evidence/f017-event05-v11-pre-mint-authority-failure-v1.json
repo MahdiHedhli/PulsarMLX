@@ -1,0 +1,85 @@
+{
+  "schema": "pulsarmlx.f017.event05-v11-pre-mint-authority-failure/1.0.0",
+  "classification": "READINESS_DECLARATION_INTERFACE_MISMATCH",
+  "failed_node": "E0_AUTHORITY_AND_OWNERSHIP_RECONCILIATION",
+  "operator_go_disposition": "EXPIRED_BEFORE_APPROVAL",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "head": "660bdc9fd5d1a2ace57a49492077d590e3b7b39d",
+  "tree": "a0beb722bd81f6489b22ba2b34baa0dd4264b5a1",
+  "parity": "EXACT",
+  "worktree": "CLEAN_BEFORE_FAILURE_EVIDENCE",
+  "accepted_readiness_declaration": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-event05-execution-readiness-final-declaration-v11-v1.json",
+    "sha256": "e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6",
+    "actual_fields": {
+      "declaration": "F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS: ACCEPTED",
+      "active_corrected_oracle_generation": "V11",
+      "ready_for_corrected_full_checkpoint_oracle_event_05_execution_go": true
+    }
+  },
+  "measured_authorizer": {
+    "path": "scripts/research/validate_f017_corrected_oracle_access_v11.py",
+    "sha256": "474fd9e3939a9b9b5dd93eea431f4cb73793b4b8e6511adc11fa11f67af8cc39",
+    "required_fields": {
+      "F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS": "ACCEPTED",
+      "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_GO": "YES",
+      "ACTIVE_CORRECTED_ORACLE_GENERATION": "V11"
+    },
+    "failure_class": "ValueError",
+    "failure_message": "Event 05 readiness authority"
+  },
+  "mismatch": {
+    "F017_CORRECTED_ORACLE_EVENT05_EXECUTION_READINESS": "ABSENT",
+    "READY_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_GO": "ABSENT",
+    "ACTIVE_CORRECTED_ORACLE_GENERATION": "ABSENT"
+  },
+  "reconciled_authority": {
+    "authority_manifest_bindings": 27,
+    "authority_manifest_result": "PASS",
+    "implementation_measurement_paths": 31,
+    "implementation_measurement_result": "PASS",
+    "measured_paths_changed_after_measurement": 0,
+    "full_native_run": 33008441584,
+    "full_native_result": "PASS",
+    "final_evidence_only_run": 33013599030,
+    "final_evidence_only_head": "660bdc9fd5d1a2ace57a49492077d590e3b7b39d",
+    "final_evidence_only_result": "PASS",
+    "final_evidence_only_native_jobs": 0,
+    "opus_accepted_claims": 15,
+    "opus_rejected_claims": 0,
+    "opus_unresolved_claims": 0
+  },
+  "ownership": {
+    "authoritative_worktrees": 1,
+    "competing_event05_processes": 0,
+    "task_locks": 0
+  },
+  "identity_census": {
+    "operator_approval_id_occurrences": 0,
+    "authorization_id_occurrences": 0,
+    "package_attempt_id_occurrences": 0,
+    "primary_event_id_occurrences": 0,
+    "secondary_event_id_occurrences": 0
+  },
+  "created_state": {
+    "operator_approval": false,
+    "candidate": false,
+    "live_authorization": false,
+    "package_state": false,
+    "package_start": false
+  },
+  "event_04_retry": false,
+  "event_04_resume": false,
+  "event_05_retry": false,
+  "event_05_executed": false,
+  "primary_real_oracle_event05_executions": 0,
+  "secondary_real_oracle_event05_executions": 0,
+  "new_original_checkpoint_shard_opens": 0,
+  "new_original_checkpoint_identity_hash_reads": 0,
+  "new_original_checkpoint_payload_reads": 0,
+  "p1_attempt_2_executed": false,
+  "live_p1_attempt_2_authorization_created": false,
+  "historical_master_ledger": 175,
+  "smallest_safe_repair": "APPEND_ONLY_READINESS_DECLARATION_SUCCESSOR_OR_MEASURED_AUTHORIZER_SUCCESSOR_WITH_ONE_EXACT_TYPED_FIELD_CONTRACT_FOLLOWED_BY_FRESH_FULL_NATIVE_AND_INDEPENDENT_REVIEW",
+  "result": "TERMINAL_PRE_MINT_FAILURE_NO_RETRY"
+}

@@ -1,0 +1,59 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-terminal-authority-manifest/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "starting_evidence_head": "7de68b8629249d5b83c2c8ff80910ac199e21fc5",
+  "starting_evidence_tree": "8c58ce0836940392c2f82f848b85461739122def",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "full_native_run_reused": 33285890775,
+  "bindings": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-pregraph-reviewer-smoke-receipt-v1.json",
+      "sha256": "cc63a2079d018ac6c9d1dbcbe573317fd50a8c7aa40568cf5a2b062f50fa8bfd"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-authority-guard-receipt-v1.json",
+      "sha256": "63b0e17e8aff75c5e6e2815fa5484c5a666ea2555911566a4e33015cb5653bea"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-banked-frontier-reverification-v1.json",
+      "sha256": "b0b7a3422a2da1bdd1fd2daa6dab07f954fe2fe8bdf780e94f778487840dfdd5"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-review-transport-preflight-v1.json",
+      "sha256": "b533c272cc6f3791be568e3d3652efbd5e6b244b3b5427a759338bfe04c926d0"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-opus-canary-normalized-result-v1.json",
+      "sha256": "6406992d08570f039d54db7729d53891dfcb6069c327174fb8cc4fc7a99f4055"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-review-attempt-ledger-v1.json",
+      "sha256": "dba07d01e04af7f80db57a8c3015f61e965a8018cac4c15f30ed62a6772302a5"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-structural-loop-ledger-v1.json",
+      "sha256": "05f9eccfcc16c7b3f1bc19cb98fd5235505ac6ac795982da577a159f5db75e69"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-final-safety-census-v1.json",
+      "sha256": "c39082f9de33ac36584984e059d132c91ab939d28739bf7868403ddae9de2d80"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-final-review-transport-unavailable-declaration-v1.json",
+      "sha256": "d907b7bc2195ad374acfc7e4b03a79a4073e4ce5e571e053d8fd2e1d16d54fef"
+    },
+    {
+      "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence22-review-canary-disposal-v1.json",
+      "sha256": "a2173700e1d53fc31769a15af01ef9cfc44bffa333a68ff91cfe6768085242ea"
+    }
+  ],
+  "binding_count": 10,
+  "independent_review_result": "REVIEW_TRANSPORT_UNAVAILABLE",
+  "package_scoped_terminal_uniqueness_and_no_second_attempt": "PENDING_REVIEW",
+  "ready_for_new_fresh_corrected_full_checkpoint_oracle_event_06_go": false,
+  "event_06_executed": false,
+  "original_checkpoint_access": "NONE",
+  "historical_master_ledger": 175,
+  "result": "PASS"
+}

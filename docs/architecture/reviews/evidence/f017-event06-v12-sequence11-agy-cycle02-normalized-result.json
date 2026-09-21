@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-agy-normalized-result/1.0.0",
+  "reviewer": "AGY_CHALLENGE",
+  "transport": "agy-cli/1.1.22",
+  "model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "c1951f2d725008b35a510bf77cb6cc0caa02def0",
+  "reviewed_tree": "7077540c7d2771a388f142c786da6eba3c4c0f09",
+  "verdict": "ACCEPT",
+  "blocking_findings": [],
+  "required_findings": [],
+  "advisory_findings": [],
+  "unresolved_findings": [],
+  "claim_verdicts": {
+    "CANONICAL_LIVE_GO_FIELD_SET": "ACCEPT",
+    "NONCIRCULAR_AUTHORITY_DAG": "ACCEPT",
+    "LIVE_GO_SEALED_TYPE_COMPATIBILITY": "ACCEPT",
+    "PROMPT_BOUND_IDENTITY_PLAN": "ACCEPT",
+    "REAL_PUBLIC_SIGNATURES_BOUND": "ACCEPT",
+    "END_TO_END_NO_ACCESS_COMPOSITION": "ACCEPT",
+    "SEALED_TYPE_SECURITY": "ACCEPT"
+  },
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "result": "PASS"
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-design-authority-manifest/1.0.0",
+  "source_starting_authority": {
+    "branch": "feat/017-rust-native-inference-runtime",
+    "head": "9aebdb79c3fa69c3f905ad135429a9b89bc681b1",
+    "tree": "47eecd7c0d5edeb9ad522872749b0411e68348de",
+    "remote_parity": "PASS"
+  },
+  "prompt_authority": {
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "commit": "3631aab694b4ec958a6021967541920d6ed11f3b",
+    "blob": "281b4c595390327e7c5086eaa1e0e46fc9136e65",
+    "repository_relative_path": "Prompts/F017/Mac-Studio-M1-Ultra/003__F017__Mac-Studio-M1-Ultra__Event-06-V12-to-V11-numerical-authority-bridge-repair__prompt.md",
+    "sha256": "5576cfbf345e637fab30ae6559e0036d37d2cf3d2962d7ade1a81227331692ea",
+    "sidecar_blob": "9ad988b929232e20d224a25b72b3a87ca9e98020",
+    "sidecar_match": true
+  },
+  "parent_terminal_authority": {
+    "failure_path": "docs/architecture/reviews/evidence/f017-event06-v12-pre-mint-call-path-failure-v2.json",
+    "failure_sha256": "822752fae481657623411568d9ab4c04154af696a2ff176946f5fc68f9a56e46",
+    "no_go_path": "docs/architecture/reviews/evidence/f017-event06-v12-final-no-go-declaration-v3.json",
+    "no_go_sha256": "a4b99d92e211add78f7865263b1c214bdd13d60ca350513c2a9fb508af58562e",
+    "terminal_manifest_path": "docs/architecture/reviews/evidence/f017-event06-v12-terminal-pre-mint-authority-manifest-v7.json",
+    "terminal_manifest_sha256": "4d9740a55f57f331fa0f4a1662f5063e3f5ad39034f862e5b3ba3b5747ff4715",
+    "go_disposition": "EXPIRED_BEFORE_APPROVAL"
+  },
+  "design_bindings": [
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-numerical-authority-bridge-v1.json","sha256":"f3851e45fbf7503da47178121e19d629dc73de3f29be6c34938968f12190d1b8"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-lifecycle-v1.json","sha256":"c1bbb1c10ed2b2b77069246a5f5c2d9236a80563e6554095871a2cb7475b0634"},
+    {"path":"specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-to-v11-bridge-capability-v1.json","sha256":"b922850c1480d178df250131881c5637cf20ea1d2a0f0b5d23379b2186da5592"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-v1.md","sha256":"fa1ce7d0694306be5ffeb464d62e413466faa0475f2cb8f7d1922bc9bf29f8c9"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-starting-failure-reproduction-v1.json","sha256":"fbea6319c6a198ef33749586217456017df06c1143659182f424537fc76a06a9"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-claim-ledger-v1.json","sha256":"4db77f6d119db9bb327319a4f6e3f363911ec6b4a9262f83c35edde951cc8f56"},
+    {"path":"docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-design-graph-state-v1.json","sha256":"d513dcf764f97e2004f33fa9f691756225aa531dcd4ee0f71d0ffbe9c1697636"}
+  ],
+  "immutable_runtime_bindings": {
+    "primary_numerical_v4_sha256": "56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6",
+    "secondary_numerical_v4_sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+    "numerical_contract_v4_sha256": "a555abe0ff2aff03a693ac7313d4af17061d01766e90971d92a7ba528f4995f2",
+    "result_authority_v11_sha256": "4fd71e90f4184e5f2c7449eac6089f7392f1cc0d1961aecb0243f7ef723af101",
+    "result_bundle_builder_v11_sha256": "296fc64befb92fc47db4458d19df444a645bfd62e269d911e9c4a46b9773d145",
+    "comparison_authority_v11_sha256": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352"
+  },
+  "design_review_state": "PENDING_GEMINI_AND_OPUS",
+  "event06_executed": false,
+  "live_event06_authority_created": false,
+  "original_checkpoint_access": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175,
+  "result": "PROPOSED"
+}

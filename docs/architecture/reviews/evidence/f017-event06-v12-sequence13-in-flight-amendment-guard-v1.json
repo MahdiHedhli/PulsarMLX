@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence13-in-flight-amendment-guard/1.0.0",
+  "amendment": {
+    "commit": "14dea268f8f05597aa7433576f4cfa1d6fea7533",
+    "path": "Prompts/F017/Mac-Studio-M1-Ultra/013__F017__Mac-Studio-M1-Ultra__Event-06-V12-collapsed-GO-path__in-flight-amendment.md",
+    "sha256": "9fd76073d8a282cd90b087babb8fcba517b383ddbc3262fe69139659c58349ae",
+    "sidecar": "PASS",
+    "ancestor_of_prompt_control_main_at_adoption": true
+  },
+  "classification_correction": {
+    "commit": "a24e6763ba9d0f3d3d6596419ea9c94825faf784",
+    "sha256": "9e590c6c37155a455ae7baf17d67085cfb9d02c23fa397d54ecee38095c52e23",
+    "corrected_transition_table_v2_sha256": "49b610570550a0efc6f7b07af250da2eabbdbadb663457234c68820ccce03ebe",
+    "result": "PASS"
+  },
+  "atomic_read_only_operation_finished": "AGY_PRE_AMENDMENT_DESIGN_CHALLENGE",
+  "old_freeze_transition_entered": false,
+  "old_design_disposition": "LIQUID_UNTIL_INSTANTIABLE",
+  "sequence_restarted": false,
+  "state_json_modified": false,
+  "checkpoint_access": 0,
+  "event06_executed": false,
+  "live_event06_authority_created": false,
+  "result": "PASS"
+}

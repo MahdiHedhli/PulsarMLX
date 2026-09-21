@@ -1,0 +1,251 @@
+{
+  "schema": "pulsarmlx.f017.sequence45.python-delta-findings/1.0.0",
+  "feature_id": "F017",
+  "sequence": 45,
+  "target_machine": "MAC_STUDIO_M1_ULTRA",
+  "source_start_head": "906cd913b04ac1649fbc0210e93f30731046502c",
+  "source_start_tree": "77a76c7ab891f87e75fc58dac3e5b4623dfd3192",
+  "status": "PRELIMINARY_NOT_QUALIFIED",
+  "scope": "Bounded read-only Python delta planning performed while N0 prerequisite qualification was pending; no executor imports, implementation, fixture execution or numerical equivalence run.",
+  "parent_findings_reused": [
+    {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-historical-reconstructability-v1.json",
+      "sha256": "81747fba3f8df2826757798a1794ce678809d61287f0dff0e00192ade9fcdea9"
+    },
+    {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-preliminary-read-site-inventory-v1.json",
+      "sha256": "caed3fe75988a44ce1f521e7bd6c11df76144fb9f14b4316d57ee0161f5d054b"
+    },
+    {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-instrumentation-tooling-outcome-v1.json",
+      "sha256": "6648072e300fbb4433a44cb89eaae52893abb11487642a4c9bd59861df171505"
+    },
+    {
+      "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+      "path": "docs/architecture/reviews/evidence/f017-sequence44-scoped-evidence-manifest-v1.json",
+      "sha256": "def4a7fff4d7d9d540dca750deffcc2188a28ec9e478a381e382eed580e75aa6"
+    }
+  ],
+  "historical_disposition": {
+    "method": "REUSE_VERIFIED_SEQUENCE44_REPORT_NOT_NEW_RECONSTRUCTION",
+    "full_program_audit_repeated": false,
+    "sequence43_numerical_read_map_fault_counts": "NOT_SEPARATELY_BANKED",
+    "historical_counts_estimated_or_backfilled": 0,
+    "historical_master_ledger": 175,
+    "retained_package_or_checkpoint_access": "NONE"
+  },
+  "prerequisite_disposition": {
+    "node": "N0",
+    "result": "HUMAN_REQUIRED_TOOLING",
+    "basis": "Main task reports initial Python OS-sandbox smoke and three changed unsuccessful corrections exited 134 without diagnostics; no executor imports or fixture execution. This static findings artifact does not independently rerun that smoke.",
+    "N1": "NOT_CROSSED_N0_PREREQUISITE_FAILED",
+    "F45_02": "NOT_CROSSED_N0_PREREQUISITE_FAILED",
+    "instrumentation": "NOT_STARTED",
+    "fixture_tests": "NOT_RUN",
+    "numerical_equivalence": "NOT_RUN",
+    "complete_python_coverage_proven": false
+  },
+  "sites": [
+    {
+      "site_id": "PY-PRIMARY",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
+        "sha256": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4"
+      },
+      "symbol": "PrimaryDescriptorSourceV10._raw",
+      "boundary": "os.pread",
+      "line": 86,
+      "reachability": "Active V11 inheritance; vector, matrix row, expert row and exercise_format_probes converge on this boundary.",
+      "current_behavior": "Descriptor metadata and byte bounds are checked before os.pread. Short results raise before old tensor_reads increments. Full returns increment old logical tensor_reads before caller-side decoding.",
+      "prospective_observation": "One actual library/API invocation attempt; actual size/offset; successful/error/short/zero return; returned bytes before any fallible decoder. Validated record purpose distinguishes FORMAT_PROBE from GRAPH-derived NUMERICAL_PAYLOAD.",
+      "required_cases": [
+        "normal_multiple_shards",
+        "vector_matrix_expert_rows",
+        "format_probe",
+        "pre_io_identity_or_bounds_refusal",
+        "short_zero_error_return",
+        "caller_decode_failure_after_bytes_returned"
+      ],
+      "qualified_test": "NOT_RUN",
+      "successor_producer": "NOT_IMPLEMENTED"
+    },
+    {
+      "site_id": "PY-SECONDARY",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+        "sha256": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8"
+      },
+      "symbol": "SecondaryDescriptorStoreV10._get",
+      "boundary": "os.pread",
+      "line": 91,
+      "reachability": "Active V11 inheritance; vector, matrix row, expert row, single-row copy and exercise_format_probes converge on this boundary.",
+      "current_behavior": "Descriptor metadata and byte bounds are checked before os.pread. Short results raise. independent_decode executes before the old tensor_reads increment.",
+      "prospective_observation": "Count actual os.pread attempts and returned bytes before independent_decode. Preserve exact original decoding and error behavior; old successful logical tensor counters are not an actual-call oracle.",
+      "required_cases": [
+        "normal_multiple_shards",
+        "vector_matrix_expert_rows",
+        "single_row_copy",
+        "format_probe",
+        "pre_io_identity_or_bounds_refusal",
+        "short_zero_error_return",
+        "independent_decode_failure_after_bytes_returned"
+      ],
+      "qualified_test": "NOT_RUN",
+      "successor_producer": "NOT_IMPLEMENTED"
+    }
+  ],
+  "factory_wrapper_edges": [
+    {
+      "edge_id": "PY-PRIMARY-FACTORY",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+        "sha256": "3942be5766513eb5b96fa4dd342b96d98cb1b1923254ca7479daa8b368063f27"
+      },
+      "symbol": "source_from_inherited_descriptors",
+      "line": 16,
+      "static_finding": "Constructs source, runs format probes, derives Geometry, then returns. A probe or geometry failure can occur before the caller receives source.",
+      "prospective_requirement": "Attempt-scoped observation owner must predate factory probes and preserve any observed prefix on construction/probe/geometry failure.",
+      "qualified_test": "NOT_RUN"
+    },
+    {
+      "edge_id": "PY-SECONDARY-FACTORY",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
+        "sha256": "fddf87e77309f7267ef1b48db152130d5a1387bedcf5ba567a73f923788f8dd4"
+      },
+      "symbol": "source_from_inherited_descriptors",
+      "line": 16,
+      "static_finding": "Constructs store, runs format probes, then returns store and document. Probe failure can precede caller access to the store.",
+      "prospective_requirement": "Owner and failure observation prefix must remain reachable before factory return without another read or retry.",
+      "qualified_test": "NOT_RUN"
+    },
+    {
+      "edge_id": "PY-PRIMARY-WRAPPER",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+        "sha256": "1fda818af33e29e52e1b3b3f653d913dcae6d5877e6090e2fd0acffa89a30940"
+      },
+      "symbol": "_minimum_gate_execute_target_and_bank",
+      "line": 54,
+      "static_finding": "Candidate/descriptor validation, factory call, one core execution, output banking, then transient logical counter projection. No durable numerical observation prefix is transported on exceptions by this baseline wrapper.",
+      "prospective_requirement": "Cover validation refusal, factory failure, core failure and bank failure; transport measurement completeness separately from unchanged numerical stop/outcome semantics.",
+      "qualified_test": "NOT_RUN"
+    },
+    {
+      "edge_id": "PY-SECONDARY-WRAPPER",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+        "sha256": "97e640e1e0fa4da36e7aed407c612ea991681422316f527a585e7c70eb6c8c55"
+      },
+      "symbol": "_minimum_gate_execute_target_and_bank",
+      "line": 62,
+      "static_finding": "Target wrapper creates/probes the source before calling the inner execute-and-bank helper; require_primary_terminal occurs inside that helper before core execution. Direct helper refusal can therefore follow a genuine factory probe prefix.",
+      "prospective_requirement": "Do not silently reorder baseline reads. Preserve observed factory prefix and the separate upstream production primary-terminal prerequisite.",
+      "qualified_test": "NOT_RUN"
+    }
+  ],
+  "persistence_edges": [
+    {
+      "edge_id": "PY-BUNDLE-BANKING",
+      "symbol": "_minimum_gate_bank_output_bundle",
+      "static_locations": {
+        "validation": 185,
+        "payload_banking": 190,
+        "manifest": 197,
+        "routing": 200,
+        "summary": 203,
+        "receipt": 210,
+        "result_terminal": 212,
+        "consumer_terminal": 218,
+        "bundle_validation": 230
+      },
+      "prospective_requirement": "Cover each fallible output validation/write/readback boundary with genuine executor-produced observation transport; no synthetic final-bundle substitute proves composition.",
+      "qualified_test": "NOT_RUN",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_result_bundle_builder_v11.py",
+        "sha256": "8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b"
+      }
+    },
+    {
+      "edge_id": "PY-RECEIPT-CONSUMER",
+      "symbols": [
+        "build_receipt",
+        "validate_receipt"
+      ],
+      "static_finding": "The existing access_census_sha256 is identity-stage authority, not a numerical read-call census. Existing result receipt key/schema checks are exact.",
+      "prospective_requirement": "Use a distinct version-forward measurement field or validated attachment; preserve identity-stage field meanings, exact role/attempt binding, inherited vocabulary identity, measured implementation identity and last durable prefix.",
+      "qualified_test": "NOT_RUN",
+      "source": {
+        "commit": "906cd913b04ac1649fbc0210e93f30731046502c",
+        "path": "scripts/research/f017_result_artifacts_v11.py",
+        "sha256": "d82af8629c8ad989baa760c13cea94a7e42bd3628aa6a5e24a6795dc33fa4ae4"
+      }
+    }
+  ],
+  "composition_limitations": [
+    {
+      "kind": "STATIC_TINY_FIXTURE_GEOMETRY_SEAM",
+      "finding": "Existing synthetic descriptor fixtures have tiny numerical geometry; baseline bundle validation requires hidden6144, vocabulary154880 and79 captures. Static call-path analysis predicts genuine tiny wrapper execution reaches a result-geometry refusal. No such execution was performed in this graph.",
+      "implication": "Do not report full-result-success composition from mocked bundles, manufactured full-size outputs or a patched baseline. Any unsupported genuine composition domain remains NOT_RUN; observation receipt/terminal failure-prefix coverage must be independently demonstrated in a later admitted harness."
+    },
+    {
+      "kind": "STATIC_EXISTING_REGRESSION_LIMIT",
+      "finding": "Existing bundle tests contain mocked core/bank calls and manufactured output objects; those are useful legacy regressions but not evidence of real descriptor-read instrumentation."
+    },
+    {
+      "kind": "CRASH_AND_TRANSPORT_LIMIT",
+      "finding": "No durable prefix, interruption, partial/torn record, transport overflow or false-complete mutation was executed.",
+      "implication": "Crash-safe exact totals, numerical equivalence, complete persistence coverage and counter correctness are NOT_QUALIFIED."
+    }
+  ],
+  "prospective_regression_selection": {
+    "status": "STATIC_SELECTION_ONLY_NOT_EXECUTED",
+    "bundle_suite": "scripts/research/tests/test_f017_result_bundle_builder_v11.py",
+    "bundle_methods": 7,
+    "envelope_suite": "scripts/research/tests/test_f017_result_envelope_v11.py",
+    "envelope_selected_methods": 20,
+    "envelope_excluded_methods": [
+      "test_event04_diagnostic_record_cannot_enter_manifest",
+      "test_diagnostic_output_cannot_enter_repository"
+    ],
+    "exclusion_reason": "These diagnostic cases reference historical Event04 raw-result data; the proposed executor-data selection is synthetic only.",
+    "whole_suite_claim": false,
+    "native_import_disposition": "Static selected Python source closure reaches scalar decoder and tensor-store definitions without constructing the store or initializing an in-repository native F017 extension; use_mlx=False would avoid deferred MLX imports. Required harness import admission was not achieved."
+  },
+  "deferred": {
+    "native_positional_mapping_unmap_residency": "DEFERRED_NOT_QUALIFIED",
+    "known_native_discarded_unmap_result": "RETAINED_FROM_BANKED_SEQUENCE44_FINDINGS_NOT_REPAIRED",
+    "PY_IDENTITY_low_level_hash_loop": "OUTSIDE_PYTHON_NUMERICAL_SCOPE",
+    "native_required_before_p1_accounting_model": true,
+    "native_gates_python_planner_review": false,
+    "per_shard_fault_events": "NOT_MEASURABLE_BY_IDENTIFIED_EXISTING_MECHANISM",
+    "physical_disk_read_bytes": "NOT_MEASURABLE"
+  },
+  "safety": {
+    "executor_imports_by_this_subtask": 0,
+    "fixture_test_executions_by_this_subtask": 0,
+    "instrumentation_edits_by_this_subtask": 0,
+    "native_compiler_linker_invocations_by_this_subtask": 0,
+    "original_checkpoint_access": "NONE",
+    "retained_event06_package_provenance_payload_access": "NONE",
+    "prior_trash_access": "NONE",
+    "privacy_or_credential_configuration_access": "NONE",
+    "event06_reexecution_go_reuse_or_new_go": "NONE",
+    "p1_authority_or_execution": "NONE",
+    "live_registry_or_ledger_writes": 0,
+    "historical_master_ledger": 175,
+    "historical_backfill": 0
+  },
+  "result": "PRELIMINARY_NOT_QUALIFIED_N0_HUMAN_REQUIRED_TOOLING",
+  "next_safe_action": "Return bounded static findings with the main tooling terminal to the planner; no further harness correction, executor import, instrumentation or qualification under this parked run."
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-evidence-only-ci-history/1.0.0",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "runs": [
+    {
+      "run_id": 33112357172,
+      "head": "9a98470898a36eee13e720a2bb3461ecd59b8515",
+      "mode": "EVIDENCE_ONLY",
+      "result": "FAIL",
+      "native_jobs_launched": 0,
+      "failure": "IMMUTABLE_EVIDENCE_MODIFIED",
+      "path": "docs/architecture/reviews/evidence/f017-event06-identity-producer-challenge-ledger-v3.json",
+      "disposition": "IMMUTABLE_DISCLOSED_HISTORY_NOT_AUTHORITY"
+    },
+    {
+      "run_id": 33112777151,
+      "head": "b26ae20167041ccebaf6d447083de92f47a3e40a",
+      "mode": "EVIDENCE_ONLY",
+      "result": "FAIL",
+      "native_jobs_launched": 0,
+      "failure": "IMMUTABLE_EVIDENCE_MODIFIED",
+      "path": "docs/architecture/reviews/evidence/f017-event06-identity-producer-challenge-ledger-v4.json",
+      "disposition": "IMMUTABLE_DISCLOSED_HISTORY_NOT_AUTHORITY"
+    },
+    {
+      "run_id": 33115885569,
+      "head": "b7ae502625fd6b4d342dd266a24b3f025cf716fd",
+      "mode": "EVIDENCE_ONLY",
+      "result": "PASS",
+      "evidence_integrity": "PASS",
+      "native_jobs_launched": 0,
+      "disposition": "CURRENT_APPEND_ONLY_REPAIR_AUTHORITY"
+    }
+  ],
+  "failed_runs_preserved": 2,
+  "successful_recovery_runs": 1,
+  "existing_evidence_files_modified_after_recovery": 0,
+  "result": "PASS_WITH_DISCLOSED_HISTORICAL_FAILURES"
+}

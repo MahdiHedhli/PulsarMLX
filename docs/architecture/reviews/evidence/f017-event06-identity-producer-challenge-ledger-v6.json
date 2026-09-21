@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-challenge-ledger/6.0.0",
+  "graph_id": "F017-EVENT06-IDENTITY-PRODUCER-V12-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-challenge-ledger-v5.json",
+  "gemini_whole_domain_cycle": 3,
+  "reviewed_head": "e9f6b1323a21a5981e50e549c537a882f10cf9df",
+  "supported_claims": 13,
+  "challenged_claims": ["C-HIST-001", "C-CI-001"],
+  "unresolved_claims": ["C-GO-001"],
+  "material_challenges": 2,
+  "repair_scope": "APPEND_ONLY_CI_HISTORY_AND_EVIDENCE_INDEX_ONLY",
+  "earliest_invalidated_node": "R13",
+  "result": "REPAIR_REQUIRED"
+}

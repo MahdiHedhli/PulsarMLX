@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event04-execution-node-receipt/10.0.2",
+  "graph_id": "F017-EVENT04-V10-EXECUTION-1",
+  "node_id": "E12",
+  "review_cycle": 3,
+  "input_head": "e49e54991e9cea88cc97d7bbd135c815ef6ed4db",
+  "output_binding_kind": "SUCCESSOR_AUTHORITY_MANIFEST_BINDS_THIS_RECEIPT",
+  "reviewer_model": "claude-opus-5",
+  "explicit_claim_verdicts": 28,
+  "claims_accepted": 21,
+  "claims_rejected": 7,
+  "claims_unresolved": 0,
+  "reported_global_verdict": "ACCEPT_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_04_EVIDENCE",
+  "node_result": "PASS",
+  "checkpoint_access_census": {"new_access_during_review":0},
+  "event_04_retry": false,
+  "next_eligible_edges": ["E13"],
+  "acceptance_scope": "TRUTHFUL_FAILURE_EVIDENCE_ONLY"
+}

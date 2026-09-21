@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-opus-numerical-arbiter/1.0.0",
+  "cycle": 1,
+  "session_id": "d0f958b5-1bfc-4d5c-bc81-e95737ee7a41",
+  "reviewed_head": "046b1a81eb6d6e969a1773f609576d0123a8f507",
+  "reviewed_tree": "c8343640e2b8184024a2a4b0861aea5fd1065a3c",
+  "blocking": [
+    {
+      "id": "ARB-NUM-CI-001",
+      "claim_id": "C-CI-001",
+      "finding": "C-CI-001 was closed at R8 even though its authoritative definition is the later V11 whole-domain R17 claim.",
+      "required_repair": "Reopen C-CI-001 until R17; do not treat the numerical-only FULL_NATIVE run as V11 acceptance."
+    }
+  ],
+  "non_blocking_required": [
+    {
+      "id": "ARB-NUM-RECEIPT-001",
+      "claim_id": "C-CI-001",
+      "finding": "The R8 v1 receipt transcribed an unresolvable numerical-requalification SHA.",
+      "required_repair": "Supersede the receipt with the true SHA and mechanically enforce typed receipt bindings in evidence CI."
+    }
+  ],
+  "defense_in_depth": [
+    {"id": "ARB-NUM-DID-001", "finding": "Frozen output dataclasses retain a writable __dict__; payload validators still fail closed."},
+    {"id": "ARB-NUM-DID-002", "finding": "The 60-case ownership geometry mutation corpus targets the primary role."},
+    {"id": "ARB-NUM-DID-003", "finding": "Numerical requalification uses checkpoint-free small geometry rather than production shapes."}
+  ],
+  "claim_verdicts": {
+    "C-OUT-001": "ACCEPT",
+    "C-OUT-002": "ACCEPT",
+    "C-FORM-001": "ACCEPT",
+    "C-FORM-002": "ACCEPT",
+    "C-LEGACY-001": "ACCEPT",
+    "C-LEGACY-002": "ACCEPT",
+    "C-BITS-001": "ACCEPT",
+    "C-BITS-002": "ACCEPT",
+    "C-PURITY-001": "ACCEPT",
+    "C-ONEEXEC-001": "ACCEPT",
+    "C-INDEP-001": "ACCEPT",
+    "C-QUAL-001": "ACCEPT",
+    "C-CI-001": "REJECT"
+  },
+  "original_checkpoint_access": 0,
+  "unresolved_material_disagreement": true,
+  "global_verdict": "REJECT"
+}

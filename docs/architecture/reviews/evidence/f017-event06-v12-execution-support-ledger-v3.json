@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-execution-support-ledger/3.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-execution-support-ledger-v2.json",
+  "cycle": 2,
+  "rows": [
+    {"finding_id": "O-E06-C01-001", "claim_id": "E-CI-001", "disposition": "REPAIRED", "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-execution-claim-ledger-v3.json"},
+    {"finding_id": "O-E06-C01-002", "claim_id": "E-CI-001", "disposition": "REPAIRED", "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-execution-evidence-only-ci-v2.json"},
+    {"finding_id": "O-E06-C01-003", "claim_id": "E-REF-001", "disposition": "REPAIR_IN_SAME_APPEND_ONLY_CLOSEOUT_LAYER", "evidence": "f017-event06-v12-terminal-pre-mint-authority-manifest-v3.json"},
+    {"finding_id": "O-E06-C01-004", "claim_id": "E-PROMPT-001", "disposition": "REPAIRED", "evidence": "docs/architecture/reviews/evidence/f017-event06-v12-launch-prompt-authority-index-v1.json"},
+    {"finding_id": "O-E06-C01-005", "claim_id": "E-SAFETY-001", "disposition": "FORWARD_DEFENSE_IN_DEPTH", "evidence": "Zero side-effect census remains accepted."}
+  ],
+  "supported": 0,
+  "repaired": 4,
+  "conceded": 0,
+  "unresolved": 0,
+  "runtime_bytes_changed": false,
+  "execution_evidence_changed": false,
+  "result": "PASS"
+}

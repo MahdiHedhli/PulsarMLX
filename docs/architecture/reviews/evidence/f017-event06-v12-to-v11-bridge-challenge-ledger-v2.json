@@ -1,0 +1,24 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-challenge-ledger/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-challenge-ledger-v1.json",
+  "cycles": [
+    {
+      "cycle": 1,
+      "model": "gemini-3.1-pro-high",
+      "result": "ACCEPT_FOR_OPUS_WHOLE_DOMAIN_ARBITRATION",
+      "challenge_rows": 0
+    },
+    {
+      "cycle": 2,
+      "model": "gemini-3.1-pro-high",
+      "reviewed_evidence_head": "02ed1c536e632cf07d624db47f871788eb5c31c6",
+      "result": "ACCEPT_FOR_OPUS_WHOLE_DOMAIN_ARBITRATION",
+      "supported_claims": 11,
+      "challenge_rows": 0,
+      "unresolved_rows": 0
+    }
+  ],
+  "material_challenges_remaining": 0,
+  "unresolved_rows": 0,
+  "result": "PASS"
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-claim-ledger/7.0.0",
+  "graph_id": "F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-numerical-output-interface-claim-ledger-v6.json",
+  "accepted_numerical_claims": [
+    "C-OUT-001", "C-OUT-002", "C-FORM-001", "C-FORM-002",
+    "C-LEGACY-001", "C-LEGACY-002", "C-BITS-001", "C-BITS-002",
+    "C-PURITY-001", "C-ONEEXEC-001", "C-INDEP-001", "C-QUAL-001"
+  ],
+  "v11_claims": {
+    "C-V11-001": "PROPOSED",
+    "C-V11-002": "PROPOSED",
+    "C-CI-001": "PROPOSED"
+  },
+  "c_ci_001_stage_disposition": "PROPERLY_DEFERRED_TO_R17",
+  "result": "NUMERICAL_OUTPUT_INTERFACE_AND_REQUALIFICATION_ACCEPTED"
+}

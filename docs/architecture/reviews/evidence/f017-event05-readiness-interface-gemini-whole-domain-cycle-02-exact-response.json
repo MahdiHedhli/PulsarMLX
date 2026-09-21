@@ -1,0 +1,40 @@
+{
+  "reviewer_model": "gemini-3.1-pro-high",
+  "effort": "high",
+  "reviewed_head": "b0b040bce205bb699a9b0a1dee275fb27ea6767b",
+  "packet_read": true,
+  "recomputed_binding_count": 19,
+  "sha_mismatches": [],
+  "challenges": [
+    {
+      "challenge_id": "AUTHORIZER_CANDIDATE_FORGERY",
+      "claim_id": "shared candidate construction",
+      "attack": "An attacker can tamper with critical candidate fields (e.g., shards, causal_dag_sha256, memory gate observation) in the candidate file before installation. The authorizer validates the operator approval but fails to re-invoke the shared candidate builder, allowing a forged candidate to be installed authoritatively without executing the memory gate or verifying context hashes.",
+      "mutation_or_trace": "In validate_f017_corrected_oracle_access_v11.py, install_operator_go_candidate parses candidate_path, validates the approval and readiness files, but never calls build_operator_go_candidate to ensure the candidate's exact bytes are unfalsified.",
+      "expected_behavior": "install_operator_go_candidate must recompute the candidate using the validated approval, readiness, and canonical CandidateContext via build_operator_go_candidate (including live memory gating), and assert that the resulting bytes exactly match the provided candidate_path.",
+      "observed_behavior": "The authorizer blindly trusts the tampered candidate's contents (other than the approval/readiness SHAs) and installs it as authoritative.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/validate_f017_corrected_oracle_access_v11.py"
+      ],
+      "status": "UNRESOLVED"
+    },
+    {
+      "challenge_id": "LIVE_CANDIDATE_UNINSTANTIABLE",
+      "claim_id": "final-byte instantiability planning",
+      "attack": "The shared candidate builder unconditionally hardcodes 'live': False for all candidates. It is therefore structurally impossible to instantiate a valid final-byte candidate for a LIVE_OPERATOR_GO event, as the authoritative installation would require the live schema or inadvertently install a non-live candidate authoritatively.",
+      "mutation_or_trace": "In f017_event05_candidate_builder_v1.py, build_operator_go_candidate returns a dict with 'live': False regardless of the approval posture.",
+      "expected_behavior": "build_operator_go_candidate should set 'live': True when generating a candidate from a LIVE_OPERATOR_GO approval to satisfy the final-byte instantiation requirements for a live event.",
+      "observed_behavior": "The 'live' field is strictly hardcoded to False, violating final-byte instantiability planning for live events.",
+      "severity": "BLOCKING",
+      "affected_artifacts": [
+        "scripts/research/f017_event05_candidate_builder_v1.py"
+      ],
+      "status": "UNRESOLVED"
+    }
+  ],
+  "blocking_count": 2,
+  "non_blocking_required_count": 0,
+  "defense_in_depth_count": 0,
+  "verdict": "UNRESOLVED_MATERIAL_CHALLENGES"
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-instantiability-review-banking-recovery/1.0.0",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_reviewed_head": "a7a7b82f7fbfb894e3bd21a995bce481f12123f5",
+  "review_banking_head": "e48d19a3954470847d490bd440db541c3720c1b3",
+  "failed_evidence_only_run": {
+    "run_id": 32626766691,
+    "mode": "EVIDENCE_ONLY",
+    "conclusion": "failure",
+    "native_mlx_jobs_launched": 0,
+    "failure": "GIT_DIFF_CHECK_REJECTED_EXACT_GEMINI_RESPONSE_TRAILING_WHITESPACE"
+  },
+  "ci_descriptor_correction": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-exact-head-ci-v1.json",
+    "sha256": "4b202d8bc2fbb52dfeb3ee969ad25e291434de56e9377e2b180724fb2d510126",
+    "prior_value": 462,
+    "correct_value": 463,
+    "authority": "DIRECTLY_INSPECTED_CONTROLLING_RUN_32624610787",
+    "history_rewritten": false,
+    "disclosure": "The committed evidence correction is visible at e48d19a and is not hidden or rewritten."
+  },
+  "gemini_request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-review-request-cycle-01.md",
+    "sha256": "1e8c757089871a534c794cb9a65d3d19c15c71f5d9c945ac14ac3e3badbf2ff3"
+  },
+  "gemini_response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-response-cycle-01.md",
+    "sha256": "e58debac82cac9bfdaf45e23a74e6616060fe519dec75a3d3631219796f63c21"
+  },
+  "gemini_result": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-gemini-normalized-result-cycle-01.json",
+    "sha256": "cd2cb8a116684d9916e06a22f233675ba5c03657bd25e521841ac82163f0e180"
+  },
+  "opus_request": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-opus-review-request-cycle-01.md",
+    "sha256": "032a21a73ce8fce49f8ed81131800dbaa7b754d3747d4bd0adbb66359fa40671"
+  },
+  "opus_response": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-opus-response-cycle-01.md",
+    "sha256": "114cce2a1e22c0ead1cba1e1209323e09d19f573d75ad66cc5fda7754f59efce"
+  },
+  "opus_result": {
+    "path": "docs/architecture/reviews/evidence/f017-corrected-oracle-instantiability-opus-normalized-result-cycle-01.json",
+    "sha256": "80832f8a13720dd7e7aeeb2417fd5a89bc4b0ffdadd692054d750e861fb3fea0"
+  },
+  "implementation_bytes_changed": false,
+  "numerical_authority_bytes_changed": false,
+  "event_03_authorization_created": false,
+  "event_03_executed": false,
+  "original_checkpoint_access": 0,
+  "p1_attempt_2_executed": false,
+  "recovery_policy": "APPEND_ONLY_FOLLOWUP; NO_FORCE_PUSH; NO_HISTORY_REWRITE"
+}

@@ -1,0 +1,1 @@
+{"artifact_kind":"coordinator_handshake","payload":{"candidate_sha256":"2876a55750aa894c301f54c9104d493c733b8a0d9fcf7c39241a580af631c7e3","checkpoint_opens":0,"checkpoint_reads":0,"result":"PASS"},"schema":"pulsarmlx.f017.v10.runtime.coordinator_handshake/1.0.0"}

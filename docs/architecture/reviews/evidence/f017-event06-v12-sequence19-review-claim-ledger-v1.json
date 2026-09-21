@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-review-claim-ledger/1.0.0",
+  "closed_safety_scope": [
+    "incorrect irreversible checkpoint-read consumption",
+    "ambiguous authorization/package/primary/secondary accounting",
+    "retry, resume, second attempt, competing terminal, or repeated consumption"
+  ],
+  "claims": [
+    {"claim_id":"S19-C-ROOT-001","statement":"No public or indirect production input selects the safety-authoritative storage location."},
+    {"claim_id":"S19-C-WRITER-001","statement":"Every legacy production writer is removed from the live closure or fails closed before safety-state mutation."},
+    {"claim_id":"S19-C-KEY-001","statement":"One immutable package identity yields exactly one exclusive reservation and terminal key."},
+    {"claim_id":"S19-C-DAG-001","statement":"All 55 typed boundaries and all 9 live terminal boundaries are source-derived and composition-tested."},
+    {"claim_id":"S19-C-ONESHOT-001","statement":"Concurrent or restarted contenders admit one package attempt and one terminal decision; every loser aborts before package start."},
+    {"claim_id":"S19-C-MODE-001","statement":"Qualification and production authorities, reservations, claims, and sinks cannot cross modes."},
+    {"claim_id":"S19-C-DURABILITY-001","statement":"Live safety state uses exclusive create, exact write, file fsync, parent-directory fsync, and readback."},
+    {"claim_id":"S19-C-NOACCESS-001","statement":"Qualification and independent sandbox evidence establish zero live-registry writes and no checkpoint access."},
+    {"claim_id":"S19-C-FREEZE-001","statement":"Frozen numerical, result, collapsed-GO, checkpoint-identity, and freezing-policy bytes have zero drift."}
+  ],
+  "required_attacks": [
+    "caller-controlled production registry location",
+    "legacy writer reachability",
+    "live terminal bank edge omission",
+    "qualification and production namespace fork",
+    "cross-mode authority substitution",
+    "second package attempt or competing terminal",
+    "ambiguous authorization/package/primary/secondary accounting",
+    "crash or restart race around exclusive create and fsync",
+    "reservation reclaim, expiry, unlock, force, or overwrite",
+    "package identity fork across reinstallation",
+    "checkpoint or numerical access during qualification",
+    "incomplete independent sandbox assurance"
+  ],
+  "consequence_vocabulary": ["RETRY","RESUME","SECOND_ATTEMPT","REPEATED_CONSUMPTION","AMBIGUOUS_ACCOUNTING"]
+}

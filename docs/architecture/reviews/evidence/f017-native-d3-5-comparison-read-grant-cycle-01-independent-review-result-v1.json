@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.f017.native-d3-5-comparison-read-grant-independent-review-result",
+  "schema_version": "1.0.0",
+  "cycle": 1,
+  "reviewer_model": "claude-fable-5",
+  "reviewer_track": "INDEPENDENT_ADVERSARIAL_COMPARISON_AUTHORITY_REVIEWER",
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_head": "3b83ef6a4bfbd6b6282bcfe1a13fc02dd59cc8e3",
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-01-review-request-v1.json",
+    "sha256": "f91b36319146e61c147d436bfb0300c9afb6dfbf534b862e7f50123c40335819"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-cycle-01-exact-claude-response-v1.md",
+    "sha256": "400c32bdf3365aa34d6d1a646a90acbf0e3340b38724e35cd8763fb8e3964460"
+  },
+  "repair_commit": "d11054eb67a8e193a9d84dd663f90aa028e97131",
+  "findings": [
+    {"id":"F017-D35-GRANT-001","severity":"BLOCKING","disposition":"REPAIRED","fix":"Corrected capture banking commit, mechanically resolved every source commit/path/SHA tuple, and added mutation coverage."},
+    {"id":"F017-D35-VALIDATOR-002","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIRED","fix":"Pinned the real capture manifest to committed D3.5 evidence, checked dtype, and added manifest-hash mutation coverage."},
+    {"id":"F017-D35-GRADER-003","severity":"NON_BLOCKING_REQUIRED","disposition":"REPAIRED","fix":"Emits exact D0-v2 oracle registry labels and grades all eight routed expert gate/up slices."},
+    {"id":"F017-D35-GRADER-004","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Added the explicit finite [0,1] routing-weight interval gate."},
+    {"id":"F017-D35-GRADER-005","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Removed dead cap arithmetic and enforcement-checks signed-zero equivalence."},
+    {"id":"F017-D35-GRADER-006","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Pinned grant/mapping/route/output identities and structurally discovers the repository root."},
+    {"id":"F017-D35-VALIDATOR-007","severity":"DEFENSE_IN_DEPTH","disposition":"REPAIRED","fix":"Pinned the prior reuse grant, exact output root, and every committed source authority tuple."}
+  ],
+  "blocking_findings": 1,
+  "non_blocking_required_findings": 2,
+  "defense_in_depth_findings": 4,
+  "verdict": "REJECT",
+  "next_boundary": "FRESH_CYCLE_2_REVIEW_OF_REPAIRED_COMMITTED_BYTES"
+}

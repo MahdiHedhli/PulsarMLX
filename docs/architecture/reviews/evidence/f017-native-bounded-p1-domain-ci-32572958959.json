@@ -1,0 +1,33 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-exact-head-ci/1.0.0",
+  "run_id": 32572958959,
+  "workflow": "macOS baseline",
+  "event": "push",
+  "branch": "feat/017-rust-native-inference-runtime",
+  "head": "d282f318211a942c5fe87445350fd1b4a209cc7c",
+  "status": "completed",
+  "conclusion": "success",
+  "started_at": "2026-08-22T12:25:41Z",
+  "completed_at": "2026-08-22T12:32:39Z",
+  "direct_log_sha256": "6b38cb7ff641646e78c9a586df0d685625400b794c625b8cee56517d4578b030",
+  "jobs": [
+    {"name": "Apple Silicon workspace baseline", "conclusion": "success"},
+    {"name": "Apple MLX small-fixture validation", "conclusion": "success"}
+  ],
+  "repair_gates": {
+    "pinned_native_mlx_required": true,
+    "pulsar_require_native_mlx": "1",
+    "stream_lib_tests": {"executed": true, "passed": 45, "failed": 0},
+    "rn1_attempt_lifecycle_tests": {"executed": true, "passed": 2, "failed": 0},
+    "receipt_v2_synthetic_full_model": {
+      "executed": true,
+      "fresh_processes": 10,
+      "result": "PASS",
+      "ci_ephemeral_evidence_sha256": "00238f8ee0e6b5781742d47f77a2557c085bfd45f5fe2fe3c030d1c9eecd3675",
+      "original_checkpoint_reads": 0,
+      "real_m1_ultra_p1_executed": false
+    }
+  },
+  "native_qualification_skips": 0,
+  "note": "The general workspace baseline intentionally lacks native MLX and is not used as native qualification authority. The dedicated Apple MLX job requires and executes native qualification without skips."
+}

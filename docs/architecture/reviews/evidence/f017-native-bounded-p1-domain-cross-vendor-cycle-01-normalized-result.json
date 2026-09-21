@@ -1,0 +1,79 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-domain-cross-vendor-review-result/1.0.0",
+  "reviewer": {
+    "model": "gemini-3.1-pro-high",
+    "provider_family": "Google Gemini",
+    "track": "AGY CLI cross-vendor disagreement search",
+    "effort": "high",
+    "invocation_status": "ERROR_WITH_SUBSTANTIVE_RESPONSE",
+    "invocation_error": "Find command timed out after the substantive review completed"
+  },
+  "reviewed_branch": "feat/017-rust-native-inference-runtime",
+  "reviewed_commit": "4fedd623fa575f1cbd9fd3cdf69da81561e56767",
+  "exact_head_ci": {
+    "run_id": 32560028143,
+    "conclusion": "success"
+  },
+  "reviewed_artifacts": [
+    {
+      "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-final-review-package-v1.json",
+      "sha256": "c40ccfbde041f9158f27e93451e782077c69753f79cca4b36daf2699b32ac80f"
+    },
+    {
+      "path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json",
+      "sha256": "44b9416ff2c4e14ae3005e8df931443f38adb4ab49d5c173dcdf103a222a7dda"
+    },
+    {
+      "path": ".github/workflows/macos.yml",
+      "sha256": "fe41497a07fcb4d0797520e3e60836f90d6d5503933a054457ef0b2a3a2e6349"
+    }
+  ],
+  "request": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-01-request.md",
+    "sha256": "2f5f826c04ad8fd90a89346a385c03cf72fd0318a0056d4b916f1befe3da6f2e"
+  },
+  "exact_response": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-domain-cross-vendor-cycle-01-exact-agy-response.json",
+    "sha256": "386dc84fd463a4c6ca119188c4c201dda1f9367c2b9805e21475544e1e6f91a0"
+  },
+  "tests_performed_by_reviewer": [
+    "recomputed contract and historical-ledger bindings",
+    "inspected exact-head CI workflow",
+    "inspected D1 counter invariants and RN1 terminalization",
+    "inspected math-only mock checkpoint exclusion",
+    "inspected D3.5 tolerance freeze"
+  ],
+  "findings": [
+    {
+      "id": "CI_OMITS_F017_NATIVE_TESTS",
+      "severity": "BLOCKING",
+      "disposition": "REPAIRED",
+      "finding_to_fix": {
+        "commit": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+        "path": ".github/workflows/macos.yml",
+        "validation": "cargo test -p f017-native --release --no-fail-fast",
+        "exact_head_ci_run": 32560783265
+      }
+    },
+    {
+      "id": "CI_OMITS_D3_5_VALIDATORS",
+      "severity": "BLOCKING",
+      "disposition": "REPAIRED",
+      "finding_to_fix": {
+        "commit": "aeca5b08ae96f6bd97f507c81ae373e4b86f9e90",
+        "path": ".github/workflows/macos.yml",
+        "validation": "explicit comparison-grant structure, numerical-grading, and mutation tests",
+        "exact_head_ci_run": 32560783265
+      }
+    }
+  ],
+  "blocking_findings": 2,
+  "non_blocking_required_findings": 0,
+  "defense_in_depth_findings": 0,
+  "verdict": "MATERIAL_DISAGREEMENT_ESCALATE",
+  "runtime_invariants": {
+    "real_m1_ultra_p1_executed": false,
+    "original_checkpoint_reads": 0,
+    "live_p1_authorization_created": false
+  }
+}

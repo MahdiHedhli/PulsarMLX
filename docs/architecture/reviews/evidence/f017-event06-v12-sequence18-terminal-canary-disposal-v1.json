@@ -1,0 +1,11 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-canary-disposal/1.0.0",
+  "canary_commit": "44e0a8e5bb8288c3e3ff4c246e513f4ba696baee",
+  "canary_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "seeded_symbol": "build_package_terminal",
+  "named_refs_containing_canary": 0,
+  "worktrees_at_canary_commit": 0,
+  "merged_into_candidate": false,
+  "disposable_tree_deleted": true,
+  "result": "PASS"
+}

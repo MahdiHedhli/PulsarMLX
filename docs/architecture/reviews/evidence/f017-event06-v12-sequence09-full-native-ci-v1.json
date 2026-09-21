@@ -1,0 +1,38 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence05-full-native-ci/1.0.0",
+  "result": "PASS",
+  "mode": "FULL_NATIVE",
+  "requested_mode": "full",
+  "run_id": 33193441295,
+  "run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/33193441295",
+  "ci_head": "8804b6b9a44eddd59d5a121180496b0354c71902",
+  "ci_tree": "e8b095f810d0086a0e8cee6a25a2372c41b464ef",
+  "implementation_head": "80d9c39f2e16a7e00afc1ff09a7d1c9422ee2214",
+  "implementation_tree": "ba8783c2f692fa181d87f50d7b54b3c559d8387b",
+  "classification_job": {
+    "job_id": 98924496359,
+    "conclusion": "success"
+  },
+  "apple_mlx_small_fixture_validation": {
+    "job_id": 98924539808,
+    "conclusion": "success"
+  },
+  "apple_silicon_workspace_baseline": {
+    "job_id": 98924539879,
+    "conclusion": "success"
+  },
+  "ci_aggregate_status": {
+    "job_id": 98929826053,
+    "conclusion": "success"
+  },
+  "required_native_skips": 0,
+  "unexpected_skips": 0,
+  "authoritative_query": "gh run view 33193441295 -R MahdiHedhli/PulsarMLX --json databaseId,headSha,status,conclusion,url,jobs",
+  "event_06_executed": false,
+  "live_event_06_authorization_created": false,
+  "production_commit_success_calls": 0,
+  "checkpoint_access": 0,
+  "numerical_operations": 0,
+  "p1_attempt_2_executed": false,
+  "historical_master_ledger": 175
+}

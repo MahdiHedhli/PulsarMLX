@@ -1,0 +1,91 @@
+I have completed the read-only verification. No repository state was modified; no script was executed; no checkpoint, alias, authority, or package state was touched. All checks were byte reads, SHA-256 recomputation, git tree resolution, and static reading of the two Python files.
+
+---
+
+# F017 Event 06 Sequence 5 — Opus Design Arbiter, Cycle 6
+
+**Reviewed commit:** `9ac074e595be354618af9524b436f3cecf9474d9` (22 files, 311 insertions, 0 deletions)
+
+## Global verdict
+
+**REJECT**
+
+3 blocking, 6 required, 2 unresolved. No conditional acceptance.
+
+## Claim verdicts
+
+| Claim | Verdict | Grounds |
+|---|---|---|
+| CANONICAL_READINESS_DESIGN | **REJECT** | C6-B2, C6-R2 |
+| MANIFEST_ACYCLICITY | **REJECT** | C6-R5, C6-R6 |
+| PRODUCTION_INSTALLATION_DESIGN | **REJECT** | C6-R2, C6-R3 |
+| POSTURE_SEPARATION | **ACCEPT** | cycle-5 B4/R6 genuinely closed |
+| FUTURE_GO_CAPABILITY_GATE | **ACCEPT** | — |
+| DRY_INSTANTIABILITY_DESIGN | **REJECT** | C6-B2, C6-B3, C6-R5, U1 |
+| NO_ACCESS_DESIGN | **ACCEPT** | A1 remains advisory only |
+| IMPLEMENTATION_QUALIFICATION_PLAN | **REJECT** | C6-R1, C6-R2, C6-R4 |
+
+## Cycle-5 findings independently reproduced (not taken from the committed response)
+
+At `e92c8162` I recomputed rather than read: readiness v6 `field_count: 84`, and 4 distinct cross-binding targets (`review_head`, `challenge_reproduction_sha256`, `measured_implementation_head`, `measured_implementation_tree`) absent from the closed census → **B1 real**. Prepared v1 keys lack `implementation_head`/`implementation_tree`/`result` and `roles` is a flat list → **R2 real**. `challenge_result` → agy cycle-04-repair result, `opus_result` → opus cycle-04 result, `failure_qualification` → failure-matrix-v4, all under `PROVISIONAL_NOT_FINAL` against unrelated `required_schema` → **B4 and R1 real**. Cycle-5's finding set was accurate and is correctly enumerated in the bound normalized result (`finding_ids` 14 + `unresolved_claim_ids` 2 = 16).
+
+## What cycle 6 genuinely closed
+
+- **B1 — closed.** Readiness v7: `required_fields` = 86, `field_count` = 86, `exact_types` total 86, bijective, zero duplicates, zero orphans in either direction. All 6 distinct cross-binding targets resolve. `validate_…_v3.py` computes `missing` from the actual role rules and raises — a real derivation, not an assertion.
+- **B3 — closed.** `validated_binding_count: 12`, checked against `len(current)`; exactly those 12 are SHA-verified. I recomputed all 12 against commit bytes: all MATCH.
+- **B4 — closed.** The 9 future roles carry `binding_state: UNBOUND_FUTURE` with only `required_schema` + `availability_stage`. No artifact is bound, so no cross-posture substitution is possible. The posture partition is enforced in both directions. R6 is closed by removal, not substitution.
+- **Raw provider envelopes retained.** Both envelopes present; each exact-response `.md` reproduces `envelope[field].rstrip()+"\n"` byte-for-byte; provenance `response_sha256` matches recomputation.
+- **No historical erasure, no deference.** 0 deletions, 0 deleted paths. The agy cycle-05 zero-finding `ACCEPT_DESIGN_FOR_IMPLEMENTATION` — issued on the commit Opus rejected with 4 blocking — is added as the 4th `FALSE_ZERO_FINDING_ACCEPT` / `NONAUTHORITATIVE_MISSED_MATERIAL_FINDINGS`, and the count is validator-enforced.
+- **No dry-path write.** `durable_commit_authorized_in_sequence_5: false`; the only `write: true` edges are the synthetic temporary root and the capability-gated production commit Sequence 5 cannot reach; prepared instance `final_acceptance_eligible: false`, `live_authority: false`, `checkpoint_access: 0`, `numerical_operations: 0`.
+- **Finding census is derived.** `expected = finding_ids ∪ unresolved_claim_ids` is read from the bound cycle-05 result and `expected ⊆ covered` is enforced. That is half of B2's repair.
+
+## Blocking findings
+
+**C6-B1 — B2 is reproduced verbatim: 5 of the 16 closure observations are hardcoded literals.**
+In `scripts/research/validate_f017_event06_sequence05_design_v3.py`, the `checks` dict sets `"B2": True`, `"R6": True`, `"A1": True`, `"A2": True`, `"A3": True`. B2 was precisely *"the reproducibility report is a hardcoded constant, not a derivation"*; its closure row is a hardcoded constant. Worse, `if not all(checks.values()): raise ValueError` executes **before** the rows are built, so `"result": "PASS" if v else "FAIL"` can only ever emit `PASS`; `unexpected_misses: 0` and `result: "PASS"` are likewise literals. The published 16/16 PASS in `challenge-reproducibility-cycle05-v1.json` is structurally guaranteed, not measured. The report is also authored by the same script that defines the checks, so `design-mechanical-validation-v3.json` attests to its own generator.
+
+**C6-B2 — Two current-authority bindings assert contradictory values for the same cross-bound fields.**
+The prepared instance binds `bridge_declaration` → `…bridge-final-declaration-v1.json`, which carries `bridge_digest = b7f473d7066a…`, `measured_implementation_head = 7fbc641339f6…`, `measured_implementation_tree = 4ea92265360b…`. It binds `implementation_measurement` → `…bridge-implementation-measurement-**v1**.json`, which carries `bridge_digest = 83712e17780d…`, `implementation_head = 2729aa260695…`, `implementation_tree = d5bc4245ff2b…`. Qualification v4 cross-binds `bridge_digest` from the first and `implementation_head`/`implementation_tree` from the second into the same readiness fields. Both cannot hold. `…bridge-implementation-measurement-**v2**.json` is present in this tree, explicitly `supersedes` v1, and carries `b7f473d7…` / `7fbc6413…` / `4ea92265…` — agreeing exactly with the bridge declaration. The manifest binds the superseded, contradicting predecessor. This is cycle-5 R1 unrepaired for this role, and the validator cannot see it: the `"R1"` check inspects only `readiness_interface`, `live_installation_interface`, and `qualification_role_requirements` by filename, and is tautologically true by construction of `current_bindings()`.
+
+**C6-B3 — The prepared manifest is not instantiable at the head and tree it declares.**
+`prepared()` in `generate_f017_event06_sequence05_design_v6.py` hardcodes `implementation_head: "e92c8162302edb609c8bef69921ab71887cca525"` and `implementation_tree: "89e8143afa2de7d3388d0b3f9741f076d4a13c61"`. I confirmed `89e8143a…` is exactly `e92c8162`'s tree. Three of the 12 current bindings do not exist in that tree — `readiness_interface` (consumer-interface-**v7**), `live_installation_interface` (**v6**), `qualification_role_requirements` (**v4**) — all three ABSENT at `e92c8162`, all three MATCH at `9ac074e5`. The instance therefore names a tree under which a quarter of its current bindings are unresolvable. The validator hashes the working tree and never the declared tree, so the defect is invisible to it. The U1 instantiability claim is not satisfied.
+
+## Required findings
+
+**C6-R1 — The R7 defect is reproduced in the provenance artifacts cycle 6 itself generates.**
+The `challenge_provenance` role requires 21 fields. Both newly generated cycle-05 provenance files carry 19 and are missing `tool_version`, `command`, `started_at_utc`, `completed_at_utc` — the same omission class R7 cited. Separately, `provider_reported_model` is written from a hardcoded literal in the generator's loop tuple, not extracted from the envelope, making it a self-report under a contract that sets `self_report_alone_sufficient: false`. The validator's `"R7"` check is `(…provider-envelope.json).is_file()` — file existence, a strictly weaker predicate than the finding it claims to close.
+
+**C6-R2 — The B1 repair broke R4's arithmetic and nothing reconciles it.**
+`failure-matrix-v5.json` states `derivation` = `{acceptance_predicates: 34, alternate_encoding_alias_binding_floor: 18, installation_and_race_floor: 100, readiness_deletions: 84, readiness_types: 84, total: 320}`. The last two terms are bound to `len(required_fields)` and `len(exact_types)`, which cycle 6 raised to 86 each. The correct total is now **324**. `minimum_mutations` remains 320 and qualification v4 `failure_qualification.minimums.mutation_cases` remains 320. No failure-matrix v6 ships, and no validator check ties the floor to the census. Cycle 5 recorded the arithmetic as the one sound part of R4; cycle 6 invalidated it without noticing. Additionally, the alias factorization "6 named families × 3 independent structural variants" is not what was enumerated: `alias_structural_variants` names `duplicate_key`, `unknown_alias`, `type_coercion` — three of the six entries already listed in `alternate_encoding_alias_binding_cases`. That is a subset relabel, not an independent axis, so the ×3 factor remains ungrounded.
+
+**C6-R3 — The 16-outcome mapping is a two-valued substring heuristic with demonstrable misassignments.**
+`artifacts()` assigns each outcome's transition by `any(x in name.lower() for x in ["capability","target","fsync","partial","collision","replace"])`. Two of those six substrings (`collision`, `replace`) match no outcome name at all. The result is 5 outcomes on `PREPARED_VALIDATION_ONLY->PRODUCTION_INSTALLED` and 11 on `CANDIDATE->PREPARED_VALIDATION_ONLY`. `write` (`F017_V12_PRODUCTION_INSTALL_WRITE_FAILURE`) and `readback` (`…READBACK_MISMATCH`) are both assigned to `CANDIDATE->PREPARED_VALIDATION_ONLY`, which the state machine declares `"write": false`. A write failure and a post-write readback mismatch cannot arise on a non-writing edge, and both are named `race_mutation_families` of the production-install edge. The validator checks only `len(failure_outcome_edge_mapping) == 16`; it never checks that a mapped transition exists in `transitions`, nor that it is consistent with that transition's `write` flag. R3 asked for each outcome mapped to a *specific* transition; a name heuristic over two buckets is not that.
+
+**C6-R4 — The advisory disposition ledger is a constant function, and one row is provably false.**
+All six rows come from `for i in range(1,7)` with identical `disposition: "RESOLVED_BY_CYCLE6_DESIGN"` and identical `evidence: "cycle-6 manifest/reproduction/state-machine authority"`. No advisory text, no per-finding artifact, no verification — the same defect shape cycle 5 rejected in R3. The ledger's `source_arbiter` is the cycle-**04** result (A1–A6), while `checks["A1"/"A2"/"A3"] = True` claims to close cycle-**05** advisories A1–A3: two disjoint finding namespaces collapsed into one `row_count == 6` test. Cycle-5 A2 is demonstrably open — `design-graph-state-v5.json` still reports `current_cycle_unresolved_claims: 1` against `design-claim-ledger-v5.json` `unresolved: 0`, and no v6 of either ships. Graph-state v5 also still records `opus_cycle: 4`, `current_cycle_blocking_findings: 0`, `current_cycle_required_findings: 3`, against the cycle-05 result's 4 / 7 / 2.
+
+**C6-R5 — The prepared-manifest shape contract is declared but not enforceable as claimed.**
+Adding `prepared_required_keys` (13 keys) and `prepared_binding_states` is real progress, and the instance now supplies `implementation_head`, `implementation_tree`, and `result`. But the entire `"R2"` check is `all(k in p for k in m["prepared_required_keys"])` — presence only. The instance carries four keys outside that census (`checkpoint_access`, `checkpoint_root_resolved`, `event_06_executed`, `numerical_operations`) under no stated extras policy. Of `instance_validation_algorithm`'s six steps, only partial SHA verification is implemented: there is no exact key census, no role census or `role_count` equality, no "each role path/sha pair equals one bindings entry", no `binding_count == role_count == mapping lengths`, no symlink/traversal resolution, and no "reject self/final-declaration/future dependency". `roles_type: "closed role-to-{path,sha256} mapping"` still contradicts the flat list the instance supplies. Qualification v4 concedes the position outright: `all_requirements_mechanically_validated: false` alongside `validation_required_before_acceptance: true`, while `design-mechanical-validation-v3.json` reports `result: "PASS"`.
+
+**C6-R6 — A3's self-edge is no longer merely unfixed; it is now constructed.**
+`qualification()` executes `d["roles"]["qualification_role_requirements"]["required"]["schema"] = d["schema"]` — the requirement a role must satisfy is assigned from the file that role binds. The same pattern is applied to `readiness_interface` and `live_installation_interface`. `manifest_may_bind_itself: false` and the algorithm's "reject self dependency" are unimplemented, and the closure row is the literal `True`.
+
+## Unresolved claims
+
+- **U1 (carried)** — Prepared-manifest instantiability. Path/SHA resolution against the working tree is genuine and the 12/9 partition is clean, but the instance names a tree missing 3 of its 12 bindings (C6-B3) and binds two current authorities that contradict each other on cross-bound fields (C6-B2).
+- **U2 (carried)** — Advisory disposition. Cycle-04 A1–A6 are stamped without evidence, cycle-05 A1–A3 are asserted by literal, and A2 is provably open (C6-R4).
+
+## Minimum repair set for cycle 7
+
+1. Derive `observed` for every finding from repository state; delete the five `True` literals, and remove the pre-row `raise` so a FAIL row can actually be emitted.
+2. Rebind `implementation_measurement` to v2 and assert, in the validator, that every cross-bound field has one consistent value across all current bindings.
+3. Set `implementation_head`/`implementation_tree` to the commit that contains the bound bytes, and validate every binding path against the declared tree, not the working tree.
+4. Emit `challenge_provenance`-conformant provenance (all 21 fields) and read `provider_reported_model` from the envelope.
+5. Ship failure-matrix v6 with `readiness_deletions`/`readiness_types` = 86 and `minimum_mutations` = 324; update qualification v4's `mutation_cases`; assert the floor equals the census-derived sum.
+6. Map each outcome to a transition present in `transitions`, and assert `write`-class outcomes only on `write: true` edges.
+7. Give each advisory a distinct disposition with a named artifact; separate the cycle-04 and cycle-05 A-namespaces; ship graph-state v6 / claim-ledger v6 reconciled to the cycle-05 result.
+8. Implement all six steps of `instance_validation_algorithm`, enforce an exact key census on the prepared instance, and resolve the `roles_type` contradiction.
+
+---
+
+**REJECT**

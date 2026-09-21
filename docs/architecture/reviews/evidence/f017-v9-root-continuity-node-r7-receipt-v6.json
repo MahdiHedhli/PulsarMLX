@@ -1,0 +1,13 @@
+{
+  "checkpoint_access_census":{"original_checkpoint_identity_hash_reads":0,"original_checkpoint_payload_reads":0,"original_checkpoint_shard_opens":0},
+  "changed_paths":["docs/architecture/reviews/evidence/f017-v9-root-continuity-support-ledger-v6.json"],
+  "claims_closed":["C-JSON-005","C-IMPL-002"],"claims_introduced":[],"claims_invalidated":[],
+  "commands_executed":["classify eight Opus cycle-03 findings","repair four blocking findings","requalify affected graph"],
+  "graph_id":"F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas":{"challenge_ledger_v7":"56226cc382c5adb8ba1f345633f07519e1b8dbb1a96dd4065b0a342fe6c4ac01"},
+  "input_head":"0e7c6970e133435f5dc78bb4af74bf05f2cd5194","next_eligible_edges":["R5","R8_CYCLE_04"],"node_id":"R7",
+  "output_head":"0b9888ca71009f6d99e2de833d8654e9cab6d9b9","result":"PASS",
+  "result_counts":{"answered_by_existing_evidence":4,"repairs":4,"unresolved":0},
+  "schema":"pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed":["15 new parser-policy regressions","91 focused tests","136 combined tests","complete qualifications"]
+}

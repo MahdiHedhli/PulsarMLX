@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-separation-architecture/1.0.0",
+  "status": "FROZEN_FOR_CHECKPOINT_FREE_REQUALIFICATION",
+  "historical_commit": "84f0d1dc3e60a4151329ed82773880951ee3e618",
+  "primary": {
+    "pure_core": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+    "target_source": "scripts/research/f017_corrected_oracle_primary_target_source_v6.py",
+    "active_wrapper": "scripts/research/f017_corrected_oracle_primary_v6.py",
+    "decoder": "scripts/research/f017_oracle_primary_decoders.py"
+  },
+  "secondary": {
+    "pure_core": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+    "target_source": "scripts/research/f017_corrected_oracle_secondary_target_source_v6.py",
+    "active_wrapper": "scripts/research/f017_corrected_oracle_secondary_v6.py",
+    "decoder": "scripts/research/qualify_f017_quantization_matrix_v1.py"
+  },
+  "pure_core_allowed": ["GEOMETRY", "NUMERICAL_PROTOCOL", "IN_MEMORY_SYNTHETIC_SOURCE", "GRAPH_EVALUATION", "NUMERICAL_HELPER", "NUMERICAL_OUTPUT_CONSTRUCTION"],
+  "pure_core_forbidden": ["ARGPARSE_TARGET_MODE", "AUTHORIZATION_SCHEMA", "LIVE_AUTHORITY", "CHECKPOINT_ROOT", "FILE_OPEN", "PREAD", "MMAP", "ACCESS_EVENT", "OPERATOR_APPROVAL", "LIFECYCLE_STATE", "STATE_ROOT", "RECEIPT", "TERMINAL"],
+  "target_source_owns": ["AUTHORIZATION_BOUND_CHECKPOINT_SOURCE", "METADATA_BINDING", "READ_ONLY_SHARD_ACCESS", "TENSOR_RESOLUTION", "ACCESS_EVENTS", "DECODER_DISPATCH"],
+  "target_source_forbidden": ["FULL_GRAPH", "ROUTING", "RMSNORM", "ATTENTION", "EXPERT_GRAPH", "FINAL_LOGITS"],
+  "wrapper_owns": ["V6_AUTHORIZATION", "ROLE_VALIDATION", "CAPABILITY", "VALIDATION_ONLY", "TARGET_INVOCATION", "SOURCE_CONSTRUCTION", "OUTPUT_BANKING"],
+  "independence": {
+    "shared_graph_implementation": false,
+    "shared_routing_implementation": false,
+    "shared_result_generation": false,
+    "shared_authorization_parser_only": true,
+    "primary_decoder_independent": true,
+    "secondary_decoder_dispatch_independent": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-challenge-ledger/1.7.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event05-readiness-interface-challenge-ledger-v7.json",
+  "gemini_design_cycles": 3,
+  "gemini_whole_domain_cycles": 3,
+  "cycle_03": {"valid":true,"reviewed_head":"43d46bcbe5a30d51354c1f20957f4db4d7d7dfe5","attack_rows":12,"defended":12,"open_blocking":0,"open_non_blocking_required":0,"unresolved":0,"verdict":"NO_UNRESOLVED_MATERIAL_CHALLENGE"},
+  "challenges": [
+    {"challenge_id":"AUTHORIZER_CANDIDATE_FORGERY","claim_id":"C-AUTHORIZER-001","status":"CLOSED_BY_REPAIR_AND_FRESH_REVIEW","repair_commit":"aceefb8cf38b8fd1f1bebe36dd91fac97de2a512"},
+    {"challenge_id":"LIVE_CANDIDATE_UNINSTANTIABLE","claim_id":"C-GO-001","status":"CLOSED_BY_ACCEPTED_TWO_PHASE_LIFECYCLE"}
+  ],
+  "blocking_open": 0,
+  "non_blocking_required_open": 0,
+  "unresolved": 0,
+  "result": "PASS"
+}

@@ -1,0 +1,83 @@
+The Write tool is disabled in this session, so I can't create the plan file. Delivering the arbitration directly.
+
+# F017 Event 06 Sequence 5 — Opus Design Arbitration, Cycle 7
+
+**Reviewed:** `235ce844278f21df84c076e87868848a4544c1d7`, tree `039c0405cc155b3346b313f4faa5200523d7b626` (both confirmed).
+
+**Posture:** No repository state written (`git status` clean before and after). No original checkpoint path resolved, stat-ed, enumerated, opened, hashed, read, or mmap-ed. No authority created, Event 06 not executed, no numerical operations. Bytecode redirected via `PYTHONPYCACHEPREFIX=/tmp/f017-c7-pyc` to keep the tree byte-clean.
+
+## Global verdict: REJECT
+
+3 blocking, 7 required, 4 advisory/challenged, 2 unresolved.
+
+## Independent execution
+
+| Command | Result |
+|---|---|
+| `generate_…_v7.py --check` | exit 0, no drift |
+| `validate_…_v4.py` | exit 0, `result: PASS` (5/5 derived, 6/6 checks, 12/12 mutations isolated) |
+| `py_compile` both | exit 0 |
+
+I did not accept those labels. Independently recomputed: all 12 bindings re-hashed from git objects at declared head `79d4cd2e` (0 mismatches); declared tree confirmed; the 12 bound paths byte-identical between `79d4cd2e` and HEAD; provenance exactly 21 unique fields both tools; readiness v8 census 86/86 bijective across 6 type buckets, 0 duplicates/orphans; `acceptance_predicates` 34 = `len(exact_predicates)`; 86+86+34+18+100 = 324; opus envelope `modelUsage` carries `claude-opus-5` (36,595 output tokens) so the model attestation is envelope-true; agy envelope has no model field so `UNAVAILABLE_FROM_PROVIDER_ENVELOPE` is truthful.
+
+## What cycle 7 genuinely closed
+
+Repairs 2, 3, 4, 6 and the arithmetic half of 5 are real. Notably repair 3: `check_prepared` now validates every binding against the **declared** head via `git show`, not the working tree. And the five literals are gone — I proved the predicates are live by perturbing `source_blocking_findings` to 4 in memory and watching A2 flip to FAIL.
+
+## Blocking findings
+
+**C7-OPUS-B1 — A predecessor final declaration is bound as current manifest authority, violating four declared invariants at once.**
+`generate_…_v7.py:97` binds `bridge_declaration` → `…numerical-authority-bridge-final-declaration-v1.json` as `CURRENT_DESIGN_AUTHORITY`. This violates, simultaneously: readiness v8 `historical_declarations_permitted_as_current: false`; readiness v8 `historical_source_binding_policy.manifest_membership_required: false` whose stated reason is *"predecessor layer-3 declaration cannot be a layer-2 current-authority dependency"*; manifest v6 `manifest_may_bind_final_declaration: false`; and `instance_validation_algorithm[5]` *"reject self/final-declaration/future dependency"*. `validate_…_v4.py:320` sets `forbidden = {prepared path}` — self only. Compounding: `bridge_declaration` is a mandatory member of `required_roles`, and `prepared_required_keys` has no `supersedes_path`/`supersedes_sha256` under `prepared_unknown_keys_permitted: false` — the instance is structurally incapable of complying with its own policy.
+*Repair:* bind it via `supersedes_*` outside manifest membership; add the final-declaration schema to `forbidden`; add an isolating mutation.
+
+**C7-OPUS-B2 — A FAIL verdict is unreachable; the pre-row raise was relocated, not removed.**
+`validate_…_v4.py:357-359` raises `ValueError("positive baseline failed")` inside `mutation_suite`, which `main()` calls at :391 — *before* the report is built at :398 and `result` computed at :419. So `all(derived)` and `all(other)` at :419 are tautologically true; the `"FAIL"` branch and `return 1` at :445 are dead. Proved empirically: A2 computes FAIL correctly, then `mutation_suite` raises and `main()` dies with no banked result. Minimum repair 1 said verbatim *"remove the pre-row `raise` so a FAIL row can actually be emitted."* This is C6-B1's second half, reproduced.
+
+**C7-OPUS-B3 — The qualification contract still concedes acceptance is ungrounded while the mechanical validation reports PASS.**
+`…qualification-role-requirements-v5.json` carries `all_requirements_mechanically_validated: false` alongside `validation_required_before_acceptance: true`, while `…design-mechanical-validation-v4.json` reports `result: "PASS"` — the exact contradiction C6-R5 cited against v4, carried into v5 unchanged, with nothing reconciling them.
+
+## Required findings
+
+- **R1** — Alias 6×3 axis still a relabel: `alias_structural_variants` `["duplicate_semantic_key","unknown_case_alias","scalar_type_coercion"]` are three of the six families; `:258` compares `total == 18` to a literal and never computes `len(families) * variants_per_family` nor disjointness.
+- **R2** — Floor not census-derived: `:255-256` compare `86`/`86` to integer literals; the validator never opens readiness v8. Repair 5's *"assert the floor equals the census-derived sum"* is unimplemented, so the 84→86 drift class that produced C6-R2 stays undetectable.
+- **R3** — C6-R6 closed for 1 of the 3 roles it named: `:43-44` still assign `readiness_interface`/`live_installation_interface` required schemas from the artifacts those roles bind; `derive_R6` inspects only the third role.
+- **R4** — `roles_type` contradiction relocated to `bindings_type` (`"path-to-sha256 mapping"` vs an actual role→object mapping); step 3 unimplementable as written and unimplemented; step 5's symlink clause absent (`:313` checks only `is_absolute()` and `".."`).
+- **R5** — Advisory ledger: all 9 rows share one disposition; `named_evidence` has 7 distinct values across 9 rows (two labels duplicated) and they are free text, not paths; `:285` asserts only truthiness; ledger self-reports `unresolved: 9`.
+- **R6** — `ast_guard:197` scans only `derive_*`; all six `check_*` functions are unguarded and literal-bearing (`check_failure_floor`: 86, 86, 324, 18, 100, 324). The guarded namespace was created beside an equally authoritative unguarded one.
+- **R7** — `check_measurement:219-220` passes `canonical=False` for measurement v2 and the bridge declaration; I confirmed both are genuinely non-canonical while readiness v8 declares `canonical_bytes_required: true`.
+
+## Advisory/challenged
+
+**A1** `check_outcomes:269` compares against `failure_outcome_count` in the same generated document, never cross-checking the 16 keys against failure-matrix `category_outcomes` (they do currently agree exactly). **A2** the schema authority is emitted by the generator it authorizes and is not a manifest role. **A3** graph/claim v6 reconcile to cycle-06, not cycle-05 as repair 7 specified. **A4** `derive_B2:87` proves the eight repairs by substring `"1."`…`"8."`.
+
+## Unresolved
+
+**U1** instantiability — declared-tree validation genuine and C6-B2/B3 closed, but B1 and R4 reopen the binding-legality half. **U2** advisory disposition — self-reported `unresolved: 9`.
+
+## Claim verdicts
+
+| Claim | Verdict | Grounds |
+|---|---|---|
+| CANONICAL_READINESS_DESIGN | **REJECT** | B1, B2, B3, R1, R2, R7 |
+| MANIFEST_ACYCLICITY | **REJECT** | B1, R3, R4 |
+| PRODUCTION_INSTALLATION_DESIGN | **ACCEPT** | Repair 6 genuinely closed; 16 real category outcomes, transitions present, write-consistency mutation-proved |
+| POSTURE_SEPARATION | **ACCEPT** | `derive_A3` derived and mutation-proved; 12/9 partition disjoint |
+| FUTURE_GO_CAPABILITY_GATE | **ACCEPT** | `sequence_5_factory_available: false` |
+| DRY_INSTANTIABILITY_DESIGN | **REJECT** | B1, B2, R4, U1 |
+| NO_ACCESS_DESIGN | **ACCEPT** | 3/3 callables resolve by AST; 6 boundaries `UNBOUND_FUTURE`; counters 0 |
+| IMPLEMENTATION_QUALIFICATION_PLAN | **REJECT** | B2, B3, R1, R2, R3, R5, R6, U2 |
+
+## Antigravity challenge disposition
+
+- **Finding 1: ACCEPTED, refined upward to blocking.** Antigravity found the enforcement gap; the bytes show four invariants violated at once plus a structurally non-compliable required role. One correction to its framing — no literal cycle exists (`…bridge-authority-manifest-v4.json` has no back-edge), so acyclicity is *unenforced*, not broken.
+- **Finding 2: ACCEPTED at required severity.** The cycle-7 change was a pure relabel; the validator additionally never computes the product.
+
+## Counts
+
+Blocking **3** · Required **7** · Advisory/challenged **4** · Unresolved **2**
+
+Acceptance requires all four zero. They are not.
+
+**REJECT** — `ACCEPT_F017_EVENT06_SEQUENCE5_DESIGN_CYCLE7` is not issued.
+
+Cycle 8 must demonstrate rather than assert: a banked `"FAIL"` under an injected defect; new isolating mutations for final-declaration binding, readiness-census drift, the two remaining schema self-edges, and advisory non-distinctness; an `ast_guard` census covering `check_*`; and either `all_requirements_mechanically_validated: true` or a validator-enforced empty gap list.

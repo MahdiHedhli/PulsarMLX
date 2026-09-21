@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence19-review-canary-disposal/1.0.0",
+  "candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "seeded_defect": {
+    "symbol": "build_package_terminal",
+    "edge": "ValidatedLivePackageTerminalSink -> bank_live_terminal",
+    "mutation": "LIVE_TERMINAL_BANK_EDGE_OMITTED",
+    "consequence": "REPEATED_CONSUMPTION",
+    "patch_sha256": "1a94287f85b980f6b9349fdba96af33f5b61bf32caa0e13c8ba5cab3cb11979a"
+  },
+  "agy_canary_head": "0f506b73e10b38213fda475c536f231a38d786c0",
+  "opus_canary_head": "bb81db834baf37a72bfebece895e41722ae54e61",
+  "agy_canary_worktrees_after_disposal": 0,
+  "opus_canary_worktrees_after_disposal": 0,
+  "agy_canary_refs_after_disposal": 0,
+  "opus_canary_refs_after_disposal": 0,
+  "merged_into_candidate": false,
+  "result": "PASS"
+}

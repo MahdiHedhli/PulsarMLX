@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f017.event06-identity-producer-arbiter-ledger/3.0.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-identity-producer-arbiter-ledger-v2.json",
+  "reviewer": "claude-opus-5",
+  "cycle": 1,
+  "reviewed_head": "b26ae20167041ccebaf6d447083de92f47a3e40a",
+  "accepted_claims": 12,
+  "rejected_claims": ["C-SCOPE-002", "C-VALIDATE-002", "C-FAIL-003"],
+  "unresolved_claims": ["C-GO-001"],
+  "blocking_findings": 2,
+  "non_blocking_required_findings": 3,
+  "earliest_invalidated_node": "R7",
+  "global_verdict": "REJECT",
+  "result": "REPAIR_REQUIRED"
+}

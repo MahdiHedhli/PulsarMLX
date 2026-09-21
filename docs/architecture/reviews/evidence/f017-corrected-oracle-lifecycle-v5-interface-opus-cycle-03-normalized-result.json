@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-lifecycle-interface-opus-normalized-result/1.0.0",
+  "cycle": 3,
+  "reviewer": "claude-opus-5",
+  "effort": "high",
+  "reviewed_head": "0bfbe244461cb4b36725269246394f36dc7d9d4f",
+  "request_sha256": "0ccc8b89e0a8691da84107986ec83f62c3efd04a71643dd7943a40bff8323227",
+  "response_sha256": "217872604a68ec803da67dc3408e5d0cf9fdae048884b545264ef23e4219288e",
+  "reproduced": {
+    "generated_authorities": "PASS",
+    "semantic_validator": "PASS_139_IDENTITIES_3616_CELLS_46_MUTATIONS",
+    "unit_tests": "PASS_12",
+    "independent_variants": 39,
+    "independent_binding_cells": 64107,
+    "root_relation_pairs": 36
+  },
+  "blocking": [
+    {
+      "id": "C3-F-1",
+      "finding": "V1_V2_DIRECT_NUMERICAL_TARGET_SURFACES_REMAIN_REACHABLE_WHILE_MODEL_CLAIMS_COMPLETE_RETIREMENT",
+      "requires_numerical_source_change_or_authority_repin": true,
+      "requires_original_checkpoint_access": false
+    }
+  ],
+  "non_blocking_required": [
+    {
+      "id": "C3-F-2",
+      "finding": "REGISTRY_AND_MATRIX_NOT_BYTE_ANCHORED_AND_MATRIX_SEMANTIC_COLUMNS_ONLY_TRUTHINESS_CHECKED"
+    }
+  ],
+  "defense_in_depth": [
+    {
+      "id": "C3-F-3",
+      "finding": "EIGHT_MODEL_FIELDS_OUTSIDE_FIXED_PROJECTION_ANCHORS"
+    },
+    {
+      "id": "C3-F-4",
+      "finding": "FOUR_GENERATED_AUTHORITIES_REVALIDATED_THROUGH_SHARED_DERIVATION_MODULE"
+    }
+  ],
+  "verdict": "REJECT",
+  "prohibited_actions_observed": false
+}

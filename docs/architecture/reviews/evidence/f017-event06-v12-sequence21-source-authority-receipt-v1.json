@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence21-source-authority-receipt/1.0.0",
+  "source_branch": "feat/017-rust-native-inference-runtime",
+  "sequence20_evidence_head": "1b6e6559a946b814ea0944349c5f2be8a6e2c772",
+  "sequence20_evidence_tree": "78815d77a7b26e5a8ae97a9f107f32ffb8fd4976",
+  "technical_candidate_head": "9bfe3c0af88d774df15d595389f7f2778cea7806",
+  "technical_candidate_tree": "ffb9417e862faf74de35687ad331fa5df4a6a9a6",
+  "local_remote_parity": "PASS",
+  "worktree_clean": true,
+  "post_candidate_source_drift": 0,
+  "sequence20_required_evidence_bindings": "11/11",
+  "full_native_run_reused": 33285890775,
+  "full_native_result": "PASS",
+  "full_native_required_or_unexpected_skips": "0/0",
+  "full_native_new_run": "NOT_RUN",
+  "minimum_deterministic_reverification": "NOT_RUN_AFTER_G2_TERMINAL",
+  "candidate_mutated": false,
+  "result": "PASS"
+}

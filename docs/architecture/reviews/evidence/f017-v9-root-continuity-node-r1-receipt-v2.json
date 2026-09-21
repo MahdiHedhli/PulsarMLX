@@ -1,0 +1,19 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/f017_accounting_root_continuity_v1.py", "scripts/research/f017_descriptor_lease_manager_v10.py"],
+  "claims_closed": ["C-ROOT-001", "C-ROOT-002", "C-ROOT-004"],
+  "claims_introduced": [],
+  "claims_invalidated": [],
+  "commands_executed": ["pytest root-continuity and runtime-hardening regressions"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"root_contract": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-accounting-root-continuity-v1.json"},
+  "input_head": "aa3447ee30c9766b5058453d3c37cd53df05e192",
+  "next_eligible_edges": ["R2", "R3"],
+  "node_id": "R1",
+  "output_head": "3f138d50014db76f7591281c96a7f3d8da6c2253",
+  "repair": "G_C01_001_G_C01_003_G_C01_004",
+  "result": "PASS",
+  "result_counts": {"false_zero_results": 0, "journal_truncation_regressions": 1, "manifest_symlink_race_regressions": 1},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["retained descriptor manifest open", "journal truncation detection", "monotonic lower-bound latch"]
+}

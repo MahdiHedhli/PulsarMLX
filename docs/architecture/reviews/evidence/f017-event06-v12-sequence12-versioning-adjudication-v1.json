@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence12-versioning-adjudication/1.0.0",
+  "finding_id": "F017-S12-PREFLIGHT-001",
+  "decision": "VERSION_FORWARD_SEALED_DIGEST_PRESERVING_IDENTITY_TO_BRIDGE_AND_COORDINATOR_INTERFACE",
+  "corrected_oracle_generation": "V12",
+  "numerical_authority": "V4",
+  "result_authority": "V11",
+  "historical_bridge": {"path": "scripts/research/f017_event06_numerical_bridge_v1.py", "sha256": "b7d8eaedcd87d4d8363a14977750f59406b171677a87417aebe31d11ed04112e", "disposition": "IMMUTABLE_HISTORICAL"},
+  "historical_coordinator": {"path": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge.py", "sha256": "aa99e0071c1654eace328cabfb12c02c99858dd1ffaaa7c53d2bea601949b5fd", "disposition": "IMMUTABLE_HISTORICAL"},
+  "successor_bridge_path": "scripts/research/f017_event06_numerical_bridge_v2.py",
+  "successor_coordinator_path": "scripts/research/execute_f017_corrected_oracle_event_v12_bridge_v2.py",
+  "banked_numerical_results_affected": false,
+  "scope_expansion": 0,
+  "event_06_execution_authorized": false,
+  "checkpoint_access_authorized": false,
+  "result": "PASS"
+}

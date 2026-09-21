@@ -1,0 +1,110 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence39-repair-loop-ledger/1.0.0",
+  "recorded_at_utc": "2026-09-04T02:53:26Z",
+  "authorized_structural_loops": 10,
+  "consumed_structural_loops": 10,
+  "consumed_nonstructural_loops": 0,
+  "consecutive_no_progress_cycles": 0,
+  "git_state_during_liquid_repairs": {
+    "head": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729",
+    "tree": "e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+    "disposition": "LIQUID_UNCOMMITTED_SEQUENCE39_CANDIDATE"
+  },
+  "final_implementation": {
+    "head": "5b39a21aa8369ea2e53ea8e406002cc74250cec3",
+    "tree": "f6960677878233a7e7fba0f3f0f3470a92e9ec00"
+  },
+  "loops": [
+    {
+      "loop": 1,
+      "triggering_finding": "35 mandatory mechanisms exceeded the accepted minimum",
+      "root_cause_class": "OVERCOUPLED_CONTROL_PLANE",
+      "claim_changed": "EXACT_M001_TO_M017_PATH",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "MINIMUM_GATE_CONTRACT_IMPLEMENTED"
+    },
+    {
+      "loop": 2,
+      "triggering_finding": "authority and storage were caller-selectable across old entrypoints",
+      "root_cause_class": "FORKABLE_AUTHORITY_SURFACE",
+      "claim_changed": "SOLE_EIGHT_FIELD_PUBLIC_ENTRY",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "AUTHORITY_AND_STORAGE_INTERNALLY_DERIVED"
+    },
+    {
+      "loop": 3,
+      "triggering_finding": "hand-maintained gate lists could miss renamed equivalents",
+      "root_cause_class": "NON_DERIVED_CLOSURE_CENSUS",
+      "claim_changed": "SOURCE_DERIVED_GATE_AND_PREDICATE_OWNERSHIP",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "SOURCE_DERIVED_91_OF_91_PREDICATES"
+    },
+    {
+      "loop": 4,
+      "triggering_finding": "package start and identity bridge had multiple state keys",
+      "root_cause_class": "NON_UNIQUE_PACKAGE_IDENTITY_TRANSITION",
+      "claim_changed": "ONE_CONSUMED_GATE_AND_ONE_IDENTITY_KEY",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "PACKAGE_SCOPED_ONE_SHOT_IDENTITY_BRIDGE"
+    },
+    {
+      "loop": 5,
+      "triggering_finding": "legacy effectful facades remained callable",
+      "root_cause_class": "BYPASS_SURFACE",
+      "claim_changed": "CALLABLE_BYPASSES_ZERO",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "27_TOMBSTONED_5_INTRINSIC_FAIL_CLOSED"
+    },
+    {
+      "loop": 6,
+      "triggering_finding": "result bundles did not yet close through the minimum composer",
+      "root_cause_class": "INCOMPLETE_BINARY_RESULT_COMPOSITION",
+      "claim_changed": "PRIMARY_SECONDARY_COMPARISON_RELEASE_CLOSURE",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "SIX_PAYLOAD_RESULT_CLOSURE_INTEGRATED"
+    },
+    {
+      "loop": 7,
+      "triggering_finding": "terminal collision and partial-write races could create ambiguous outcomes",
+      "root_cause_class": "NON_ATOMIC_PACKAGE_TERMINAL",
+      "claim_changed": "PACKAGE_SCOPED_SINGLE_WINNER_TERMINAL",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "EARLY_O_EXCL_RESERVATION_AND_TRUTHFUL_ROLLBACK"
+    },
+    {
+      "loop": 8,
+      "triggering_finding": "pre-terminal writer descriptors could outlive tree sealing",
+      "root_cause_class": "RETAINED_WRITABLE_PREDECESSOR",
+      "claim_changed": "WRITE_ONCE_RESULT_AND_IDENTITY_LEAVES",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "ORIGINAL_WRITER_FD_SEALED_AND_COMPACT_IDENTITY_SURFACE_RESTORED"
+    },
+    {
+      "loop": 9,
+      "triggering_finding": "deep hostile directories and close-state ambiguity could suppress truthful terminalization",
+      "root_cause_class": "UNBOUNDED_FAILURE_TRAVERSAL_AND_AMBIGUOUS_DESCRIPTOR_RETIREMENT",
+      "claim_changed": "BOUNDED_TERMINAL_RECOVERY",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "disposition": "NONRECURSIVE_CENSUS_AND_KERNEL_CONFIRMED_WRITER_RETIREMENT"
+    },
+    {
+      "loop": 10,
+      "triggering_finding": "write-once helper placement changed historical V10 bytes",
+      "root_cause_class": "HISTORICAL_AUTHORITY_BYTE_DRIFT",
+      "claim_changed": "FROZEN_V10_BYTE_COMPATIBILITY",
+      "head_tree_before": "a47c320941cdcd1d6e62f801a2a3ccb88bd3d729/e03faf44b27f1753f070a1b54bc33f73277c6bbf",
+      "head_tree_after": "5b39a21aa8369ea2e53ea8e406002cc74250cec3/f6960677878233a7e7fba0f3f0f3470a92e9ec00",
+      "disposition": "PRIVATE_HELPER_RELOCATED_AND_HISTORICAL_BYTES_RESTORED"
+    }
+  ],
+  "result": "PASS"
+}

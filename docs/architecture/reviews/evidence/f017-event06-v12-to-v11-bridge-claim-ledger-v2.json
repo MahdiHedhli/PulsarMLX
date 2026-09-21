@@ -1,0 +1,19 @@
+{
+  "claims": [
+    {"claim_id": "C-BRIDGE-GEN-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-PROV-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-DIGEST-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-LEGACY-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-CALLPATH-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-LIFE-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-CAP-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-DRIFT-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-QUAL-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-CI-001", "readiness_critical": true, "state": "SUPPORTED"},
+    {"claim_id": "C-BRIDGE-SAFETY-001", "readiness_critical": true, "state": "SUPPORTED"}
+  ],
+  "readiness_critical_claims": 11,
+  "result": "WHOLE_DOMAIN_REVIEW_PENDING",
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-claim-ledger/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-claim-ledger-v1.json"
+}

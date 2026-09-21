@@ -1,0 +1,348 @@
+{
+  "binding_forms": [
+    "Assign",
+    "AnnAssign",
+    "AugAssign",
+    "NamedExpr",
+    "Tuple",
+    "List",
+    "Starred",
+    "For",
+    "AsyncFor",
+    "comprehension",
+    "With",
+    "AsyncWith",
+    "ExceptHandler",
+    "arguments",
+    "defaults",
+    "kw_defaults",
+    "decorators",
+    "class_attributes",
+    "Match",
+    "Import",
+    "ImportFrom"
+  ],
+  "exact_capability_imports": {
+    "primary": [],
+    "secondary": [
+      {
+        "local": "np",
+        "module": "numpy",
+        "scope": "<module>"
+      },
+      {
+        "local": "mx",
+        "module": "mlx.core",
+        "scope": "mv"
+      },
+      {
+        "local": "mx",
+        "module": "mlx.core",
+        "scope": "mv"
+      },
+      {
+        "local": "mx",
+        "module": "mlx.core",
+        "scope": "transpose_mv"
+      }
+    ]
+  },
+  "fixed_point": true,
+  "function_return_provenance": {
+    "Store": "PROTOCOL_OBJECT:STORE",
+    "_hash_f64": "SAFE_STRING",
+    "_hash_json": "SAFE_STRING",
+    "_matvec": "ARRAY_VALUE",
+    "_projection": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+    "_residual": "ARRAY_VALUE",
+    "_rms": "ARRAY_VALUE",
+    "_route": "UNKNOWN",
+    "_swiglu": "ARRAY_VALUE",
+    "digest": "SAFE_STRING",
+    "mv": "ARRAY_VALUE",
+    "rms": "ARRAY_VALUE",
+    "swiglu": "ARRAY_VALUE",
+    "transpose_mv": "ARRAY_VALUE",
+    "_payload_f64le": "SAFE_BYTES",
+    "_payload_f32le": "SAFE_BYTES"
+  },
+  "interprocedural_rule": "REJECT_CAPABILITY_ARGUMENT_TRANSPORT",
+  "member_return_provenance": {
+    "MLX_MEMBER:array": "ARRAY_VALUE",
+    "MLX_MEMBER:eval": "SAFE_SCALAR",
+    "MLX_MEMBER:transpose": "ARRAY_VALUE",
+    "NUMPY_MEMBER:asarray": "ARRAY_VALUE",
+    "NUMPY_MEMBER:dot": "SAFE_SCALAR",
+    "NUMPY_MEMBER:exp": "ARRAY_VALUE",
+    "NUMPY_MEMBER:float32": "SAFE_SCALAR",
+    "NUMPY_MEMBER:float64": "SAFE_SCALAR",
+    "NUMPY_MEMBER:isfinite": "ARRAY_VALUE",
+    "NUMPY_MEMBER:mean": "SAFE_SCALAR",
+    "NUMPY_MEMBER:ndarray": "UNKNOWN",
+    "NUMPY_MEMBER:sqrt": "ARRAY_VALUE",
+    "NUMPY_MEMBER:stack": "ARRAY_VALUE",
+    "NUMPY_MEMBER:zeros": "ARRAY_VALUE"
+  },
+  "module_identities": {
+    "mlx.core": "PYTHON_MODULE_MLX_CORE",
+    "numpy": "PYTHON_MODULE_NUMPY"
+  },
+  "non_escape_rule": "MODULE_AND_MEMBER_CAPABILITIES_MAY_ONLY_APPEAR_AS_APPROVED_DIRECT_USES",
+  "non_method_attributes": [],
+  "parameter_roles": {
+    "primary": {
+      "JsonSource.__init__.self": "PROTOCOL_OBJECT:STORE",
+      "JsonSource._get.self": "PROTOCOL_OBJECT:STORE",
+      "JsonSource.expert.self": "PROTOCOL_OBJECT:STORE",
+      "JsonSource.matrix.self": "PROTOCOL_OBJECT:STORE",
+      "JsonSource.vector.self": "PROTOCOL_OBJECT:STORE",
+      "_matvec.matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+      "_projection.source": "PROTOCOL_OBJECT:SOURCE",
+      "_swiglu.source": "PROTOCOL_OBJECT:SOURCE",
+      "_transpose_matvec.matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+      "execute.source": "PROTOCOL_OBJECT:SOURCE",
+      "_execute_graph.source": "PROTOCOL_OBJECT:SOURCE",
+      "execute_outputs.source": "PROTOCOL_OBJECT:SOURCE",
+      "_freeze_capture.value": "SAFE_DICT"
+    },
+    "secondary": {
+      "Store.expert.self": "PROTOCOL_OBJECT:STORE",
+      "Store.get.self": "PROTOCOL_OBJECT:STORE",
+      "Store.matrix.self": "PROTOCOL_OBJECT:STORE",
+      "Store.vector.self": "PROTOCOL_OBJECT:STORE",
+      "digest.values": "ARRAY_VALUE",
+      "execute.document": "SAFE_DICT",
+      "execute.store": "PROTOCOL_OBJECT:STORE",
+      "mv.matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+      "mv.vector": "ARRAY_VALUE",
+      "rms.weight": "ARRAY_VALUE",
+      "rms.x": "ARRAY_VALUE",
+      "swiglu.store": "PROTOCOL_OBJECT:STORE",
+      "swiglu.x": "ARRAY_VALUE",
+      "transpose_mv.matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+      "transpose_mv.vector": "ARRAY_VALUE",
+      "_execute_graph.document": "SAFE_DICT",
+      "_execute_graph.store": "PROTOCOL_OBJECT:STORE",
+      "execute_outputs.document": "SAFE_DICT",
+      "execute_outputs.store": "PROTOCOL_OBJECT:STORE",
+      "_payload_f32le.values": "ARRAY_VALUE",
+      "_freeze_capture.value": "SAFE_DICT"
+    }
+  },
+  "prohibited_capability_member_names": [
+    "dump",
+    "export",
+    "export_function",
+    "fromfile",
+    "load",
+    "memmap",
+    "open_memmap",
+    "save",
+    "tofile"
+  ],
+  "prohibited_dynamic_names": [
+    "__builtins__",
+    "__import__",
+    "__loader__",
+    "__spec__",
+    "compile",
+    "eval",
+    "exec",
+    "getattr",
+    "globals",
+    "hasattr",
+    "locals",
+    "open",
+    "setattr",
+    "vars"
+  ],
+  "prohibited_meta_attributes": [
+    "__class__",
+    "__dict__",
+    "__getattribute__",
+    "__globals__",
+    "__loader__",
+    "__spec__",
+    "exec_module",
+    "find_module",
+    "find_spec",
+    "load_module"
+  ],
+  "receiver_roles": {
+    "ARRAY_VALUE": {
+      "methods": {
+        "all": "SAFE_SCALAR",
+        "astype": "ARRAY_VALUE",
+        "copy": "ARRAY_VALUE",
+        "reshape": "ARRAY_VALUE",
+        "tobytes": "SAFE_BYTES"
+      },
+      "readable_attributes": [
+        "T",
+        "size"
+      ],
+      "writable_attributes": []
+    },
+    "HASH_OBJECT": {
+      "methods": {
+        "hexdigest": "SAFE_STRING",
+        "update": "SAFE_SCALAR"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "PROTOCOL_OBJECT:ROW_MATRIX": {
+      "methods": {
+        "row": "ARRAY_VALUE"
+      },
+      "readable_attributes": [
+        "rows",
+        "cols",
+        "columns"
+      ],
+      "writable_attributes": []
+    },
+    "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY": {
+      "methods": {
+        "astype": "ARRAY_VALUE",
+        "row": "ARRAY_VALUE"
+      },
+      "readable_attributes": [
+        "T",
+        "rows",
+        "cols",
+        "columns"
+      ],
+      "writable_attributes": []
+    },
+    "PROTOCOL_OBJECT:SOURCE": {
+      "attribute_returns": {},
+      "methods": {
+        "expert": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+        "matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+        "vector": "ARRAY_VALUE"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "PROTOCOL_OBJECT:STORE": {
+      "attribute_returns": {
+        "tensors": "SAFE_DICT"
+      },
+      "methods": {
+        "_get": "ARRAY_VALUE",
+        "expert": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+        "get": "ARRAY_VALUE",
+        "matrix": "PROTOCOL_OBJECT:ROW_MATRIX_OR_ARRAY",
+        "vector": "ARRAY_VALUE"
+      },
+      "readable_attributes": [
+        "tensors"
+      ],
+      "writable_attributes": [
+        "tensors"
+      ]
+    },
+    "SAFE_BYTES": {
+      "methods": {
+        "hex": "SAFE_STRING",
+        "join": "SAFE_BYTES"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "SAFE_DICT": {
+      "methods": {
+        "get": "UNKNOWN"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "SAFE_LIST": {
+      "methods": {
+        "append": "SAFE_SCALAR",
+        "extend": "SAFE_SCALAR"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "SAFE_SET": {
+      "methods": {
+        "issubset": "SAFE_SCALAR"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    },
+    "SAFE_STRING": {
+      "methods": {
+        "encode": "SAFE_BYTES"
+      },
+      "readable_attributes": [],
+      "writable_attributes": []
+    }
+  },
+  "relative_import_policy": "REJECT_ALL_UNRESOLVABLE_RELATIVE_IMPORTS",
+  "schema": "pulsarmlx.f017.numerical-capability-policy/2.0.0",
+  "semantic_identity_basis": "IMPORT_RESOLUTION_NOT_LOCAL_SPELLING",
+  "semantic_identity_matching": "EXACT_DESCENDANT_OR_ANCESTOR_PACKAGE_FAIL_CLOSED",
+  "semantic_modules": {
+    "PYTHON_MODULE_MLX_CORE": {
+      "direct_callable_members": [
+        "array",
+        "eval",
+        "transpose"
+      ],
+      "dtype_consumers": [],
+      "type_dtype_members": []
+    },
+    "PYTHON_MODULE_NUMPY": {
+      "direct_callable_members": [
+        "asarray",
+        "dot",
+        "exp",
+        "isfinite",
+        "mean",
+        "sqrt",
+        "stack",
+        "zeros"
+      ],
+      "dtype_consumers": [
+        "asarray",
+        "astype",
+        "exp",
+        "zeros"
+      ],
+      "type_dtype_members": [
+        "float32",
+        "float64",
+        "ndarray"
+      ]
+    }
+  },
+  "standard_member_return_provenance": {
+    "hashlib.sha256": "HASH_OBJECT",
+    "json.dumps": "SAFE_STRING",
+    "math.cos": "SAFE_SCALAR",
+    "math.exp": "SAFE_SCALAR",
+    "math.isfinite": "SAFE_SCALAR",
+    "math.prod": "SAFE_SCALAR",
+    "math.sin": "SAFE_SCALAR",
+    "math.sqrt": "SAFE_SCALAR",
+    "struct.pack": "SAFE_BYTES"
+  },
+  "standard_module_roots": [
+    "hashlib",
+    "json",
+    "math",
+    "struct"
+  ],
+  "status": "FROZEN_FOR_NUMERICAL_OUTPUT_INTERFACE_V4",
+  "unknown_behavior": "REJECT",
+  "supersedes": {
+    "path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+    "sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13"
+  },
+  "scope_change": "PROVENANCE_NAMES_FOR_SUCCESSOR_OUTPUT_INTERFACE_ONLY",
+  "new_external_capabilities": 0,
+  "exact_capability_imports_unchanged_from_v1": true
+}

@@ -1,0 +1,18 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-graph-state/1.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "branch":"feat/017-rust-native-inference-runtime",
+  "starting_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "starting_tree":"4890c525de117e7d91b491fd33fe6a1c568e52e0",
+  "active_frontier":"R3",
+  "nodes":{"R0":"PASS","R1":"PASS","R2":"PASS","R3":"PENDING","R4":"PENDING","R5":"PENDING","R6":"PENDING","R7":"PENDING","R8":"PENDING","R9":"PENDING","R10":"PENDING","R11":"PENDING","R12":"PENDING","R13":"PENDING","R14":"PENDING","R15":"PENDING","R16":"PENDING","R17":"PENDING","R18":"PENDING","R19":"PENDING","R20":"PENDING","R21":"PENDING"},
+  "event_04_retry":false,
+  "event_04_resume":false,
+  "event_05_executed":false,
+  "live_event_05_authorization_created":false,
+  "event_05_package_started":false,
+  "original_checkpoint_access":0,
+  "p1_attempt_2_executed":false,
+  "historical_master_ledger":175,
+  "result":"RUNNING"
+}

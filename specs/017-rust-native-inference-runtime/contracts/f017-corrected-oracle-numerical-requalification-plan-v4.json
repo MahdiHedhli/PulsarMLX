@@ -1,0 +1,39 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-requalification-plan/4.0.0",
+  "status": "PREREGISTERED_BEFORE_SUCCESSOR_RESULTS",
+  "historical_equivalence_minimum": 24,
+  "canonical_seeds": [18101,18102,18103,18104,18105,18106,18107,18108,18109,18110,18111,18112],
+  "expanded_seeds": [17018,17019,17020,17021,17022,17023],
+  "fixture_classes": ["DENSE","MOE","EXACT_ROUTE_TIE","NEAR_ROUTE_TIE","RESIDUAL_EDGE","FINAL_LOGIT_NEAR_TIE"],
+  "quantization_formats": ["F32","F16","Q4_0","Q4_1","Q5_0","Q5_1","Q8_0","Q6_K","IQ2_XXS","IQ3_XXS","BF16"],
+  "packed_decoder_cases": 44,
+  "numerical_localization_mutations": 16,
+  "fresh_process_minimums": {
+    "primary_v2_legacy":20,
+    "primary_v3_legacy":20,
+    "primary_v3_outputs":20,
+    "secondary_v2_legacy":20,
+    "secondary_v3_legacy":20,
+    "secondary_v3_outputs":20
+  },
+  "per_case_equalities": [
+    "layer_captures", "attention_score_bits", "routing_ids", "routing_weight_bits",
+    "layer_output_hash", "final_hidden_hash", "final_normalized_hash", "full_logits_hash",
+    "every_full_logit", "top_32", "selected_token", "top_1_margin", "legacy_result",
+    "tensor_source_calls", "tensor_names", "tensor_shapes", "source_read_count", "expert_access"
+  ],
+  "output_buffer_proofs": [
+    "sha256(final_hidden_payload)==legacy.final_hidden_sha256",
+    "sha256(final_normalized_payload)==legacy.final_norm_sha256",
+    "sha256(full_logits_payload)==legacy.full_logits_sha256",
+    "independent_decode_matches_every_execution_element"
+  ],
+  "same_execution_proofs": [
+    "core_execution_count==1", "no_second_tensor_source_traversal",
+    "no_second_final_normalization", "no_second_output_projection", "no_hash_inversion"
+  ],
+  "ownership_mutation_minimum": 50,
+  "capability_mutation_suite": "COMPLETE_ACCEPTED_F017_NUMERICAL_CAPABILITY_SUITE",
+  "historical_observations_quarantined": [21615,17351,154820],
+  "original_checkpoint_access": 0
+}

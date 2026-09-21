@@ -1,0 +1,30 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-preaccess-ci-evidence/1.0.0",
+  "cycle": 3,
+  "branch": "feat/017-rust-native-inference-runtime",
+  "implementation_head": "e00811df76c480b53b1bcab35fcb01ea8475b089",
+  "package_head": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "run_id": 32604077031,
+  "head_sha": "4badbcc9f2f0c0221b2c1abf84ee26817229c792",
+  "selected_mode": "FULL_NATIVE",
+  "conclusion": "success",
+  "jobs": {
+    "Classify committed change": "success",
+    "Apple Silicon workspace baseline": "success",
+    "Apple MLX small-fixture validation": "success",
+    "Evidence integrity": "skipped",
+    "Documentation integrity": "skipped",
+    "Closed F017 branch guard": "skipped",
+    "CI aggregate status": "success"
+  },
+  "corrected_oracle_qualification": {
+    "result": "PASS",
+    "synthetic_cases": 12,
+    "fresh_process_repeats": 3,
+    "packed_decoder_cases": 44,
+    "localized_mutations": 16,
+    "original_checkpoint_shard_opens": 0,
+    "original_checkpoint_payload_reads": 0
+  },
+  "required_native_skips": 0
+}

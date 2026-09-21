@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.numerical-output-interface-gemini-numerical-review/1.0.0",
+  "cycle": 3,
+  "conversation_id": "ba175ea7-8bfa-40de-a3b1-2b9f09b5109b",
+  "reviewed_head": "7d1f014a97887f427d4664abe996a259d6817141",
+  "reviewed_tree": "c0a18fcf6d509f4ef564bb28d2d92914e0a019f0",
+  "protocol": "VALID",
+  "blocking": [],
+  "non_blocking_required": [],
+  "defense_in_depth": [
+    {
+      "id": "CC-JSON-LEAK-001",
+      "claim_id": "C-BITS-001",
+      "attack": "control-JSON leakage via direct serialization",
+      "disposition": "SUPPORTED_BY_IMMUTABLE_BYTES_AND_REJECTION_TESTS"
+    }
+  ],
+  "claim_challenges": {
+    "C-FORM-001": "SUPPORTED",
+    "C-FORM-002": "SUPPORTED",
+    "C-LEGACY-001": "SUPPORTED",
+    "C-LEGACY-002": "SUPPORTED",
+    "C-BITS-001": "SUPPORTED",
+    "C-BITS-002": "SUPPORTED",
+    "C-OUT-001": "SUPPORTED",
+    "C-OUT-002": "SUPPORTED",
+    "C-ONEEXEC-001": "SUPPORTED",
+    "C-PURITY-001": "SUPPORTED",
+    "C-INDEP-001": "SUPPORTED",
+    "C-QUAL-001": "SUPPORTED",
+    "C-CI-001": "SUPPORTED"
+  },
+  "unresolved_material_disagreement": false,
+  "verdict": "NO_MATERIAL_CHALLENGES"
+}

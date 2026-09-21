@@ -1,0 +1,35 @@
+{
+  "schema": "pulsarmlx.f017.native-bounded-p1-d0-acceptance",
+  "schema_version": "1.0.0",
+  "disposition": "D0_NATIVE_NUMERICAL_ACCEPTANCE_CONTRACT_ACCEPTED",
+  "effective_contract": {
+    "base_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v1.json",
+    "base_sha256": "e30b86475b8161a434a91c958829cd66306935076900c489688e0fb116cf9997",
+    "overlay_path": "specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-numeric-acceptance-contract-v2.json",
+    "overlay_sha256": "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9"
+  },
+  "accepted_review": {
+    "path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-d0-cycle-02-independent-review-v1.json",
+    "sha256": "48d80155ba635b8bd608313263a6e54d4e546b42a5e23fa91581fec9845a0200",
+    "normalized_result_path": "docs/architecture/reviews/evidence/f017-native-bounded-p1-d0-cycle-02-independent-review-result-v1.json",
+    "normalized_result_sha256": "6531f05a8aa1109de290914925cb32a3f36522b86b8acdb0a5d01223dee8829b",
+    "reviewed_head": "f43d3a9c661ba80fe4c49813a568ee3e6910847a",
+    "reviewer_model": "claude-fable-5",
+    "verdict": "ACCEPT",
+    "blocking_findings": 0,
+    "non_blocking_required_findings": 0
+  },
+  "epistemic_boundary": {
+    "d3_5_may_falsify": true,
+    "d3_5_may_set_or_tune_tolerances": false,
+    "triggering_d3_5_output_quarantined_from_future_threshold_derivation": true,
+    "misderived_tolerance_repair_requires": "APPEND_ONLY_NEW_D0_REVISION_FROM_FRESH_SYNTHETIC_OR_PINNED_FIXTURE_CORPUS_EXCLUDING_TRIGGER_AND_NEW_FABLE_REVIEW"
+  },
+  "execution_accounting": {
+    "retained_qualification_executions": 0,
+    "real_m1_ultra_p1_executions": 0,
+    "checkpoint_reads": 0,
+    "live_p1_authorizations": 0
+  },
+  "next_boundary": "D1_COUNTER_SEMANTICS_AND_D2_ACCOUNTING_RESIDENCY"
+}

@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence11-failure-to-repair-traceability/1.0.0",
+  "historical_sources": [
+    {"path": "scripts/research/f017_event06_production_installation_v1.py", "sha256": "13579b0d5b8d27e84b2eb8c5e91e85eac648798b24847169458370da670a6d6d"},
+    {"path": "scripts/research/f017_event06_production_installation_v2.py", "sha256": "72fa96bd7bbc54baa257f18e928c179af8c1a8920e87aa132703581a0b1b7e05"},
+    {"path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event06-future-go-capability-v2.json", "sha256": "35541cf33d29a809ba3ef960c59886829e3e4affe9b00d9eb3ebe8152eae9d8c"},
+    {"path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence09-no-access-rehearsal-v4.json", "sha256": "39d7f0dc58cc79428e2498664fdd58038e26225c03035e82ce88494fbfada16b"}
+  ],
+  "rows": [
+    {
+      "finding": "F017-S11-REPAIR-001",
+      "historical_anchor": "f017_event06_production_installation_v2.py:FUTURE_GO_FIELDS and _validate_future_go_value",
+      "successor_requirement": "one generated 16-field live-GO schema and exact producer/validator equality",
+      "planned_tests": ["field equality", "every deletion", "every addition", "every type substitution", "alias rejection"],
+      "review_claim": "CANONICAL_LIVE_GO_FIELD_SET"
+    },
+    {
+      "finding": "F017-S11-REPAIR-002",
+      "historical_anchor": "f017_event06_production_installation_v1.py:validate_inert_human_go and f017_event06_production_installation_v2.py:prepare_production_installation_v2",
+      "successor_requirement": "distinct opaque LiveHumanGoV3 accepted by exact prepare_production_installation_v3 signature",
+      "planned_tests": ["constructor rejection", "copy/deepcopy/pickle rejection", "inert cross-substitution", "signature type binding"],
+      "review_claim": "LIVE_GO_SEALED_TYPE_COMPATIBILITY"
+    },
+    {
+      "finding": "F017-S11-REPAIR-003",
+      "historical_anchor": "f017_event06_production_installation_v1.py:DOCUMENT_RULES.EVENT_IDENTITY",
+      "successor_requirement": "nine-field prompt-bound identity plan with commit path and SHA consumed by preparation",
+      "planned_tests": ["prompt commit mutation", "prompt path mutation", "prompt SHA mutation", "cross-prompt substitution"],
+      "review_claim": "PROMPT_BOUND_IDENTITY_PLAN"
+    },
+    {
+      "finding": "F017-S11-REPAIR-004",
+      "historical_anchor": "f017-event06-v12-sequence09-no-access-rehearsal-v4.json and qualify_f017_event06_sequence09_no_access_v1.py",
+      "successor_requirement": "independent enumeration and binding of every real public signature through the durable transaction boundary",
+      "planned_tests": ["signature annotations", "sealed type adjacency", "real edge count", "zero-side-effect interposition"],
+      "review_claim": "REAL_PUBLIC_SIGNATURES_BOUND"
+    }
+  ],
+  "result": "PASS"
+}

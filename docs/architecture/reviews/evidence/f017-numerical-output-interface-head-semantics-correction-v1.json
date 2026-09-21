@@ -1,0 +1,1 @@
+{"schema":"pulsarmlx.f017.numerical-output-interface-head-semantics-correction/1.0.0","superseded_wording":"ONLY_EVIDENCE_JSON_AFTER_FULL_NATIVE","corrected_wording":"ONLY_EVIDENCE_DIRECTORY_ARTIFACTS_AFTER_FULL_NATIVE; REVIEW_REQUEST_MARKDOWN_MAY_ALSO_BE_PRESENT","measured_execution_path_drift":0,"implementation_or_contract_drift_after_full_native":0,"result":"PASS"}

@@ -1,0 +1,5 @@
+# F017 checkpoint identity lifecycle V7 — Opus design review cycle 03
+
+Use a fresh `claude-opus-5` session at high effort. Review exact committed bytes at `17e3defd` in a detached read-only worktree. Repository evidence outranks this request. Do not modify files, open/hash/mmap/pread original checkpoint shards, mint Event-04 authority, execute a real oracle, or execute P1 attempt 2.
+
+Reconstruct all cycle-01 and cycle-02 findings and verify exact closure. Attack primary-pre-start failure, identity-hash-window failure exits, package-terminal semantics, exact terminalization producers, mutually exclusive outcomes, pinned V7 artifact namespace, post-primary continuity schema/back-reference, uniform lease release evidence, lease activation timing, distinct secondary-pre-start failure state, active-registry anchoring, nested census, and validator enforcement. Required verdict: `ACCEPT_CHECKPOINT_IDENTITY_LIFECYCLE_V7_FOR_IMPLEMENTATION` or `REJECT`; report `BLOCKING`, `NON_BLOCKING_REQUIRED`, and `DEFENSE_IN_DEPTH` separately.

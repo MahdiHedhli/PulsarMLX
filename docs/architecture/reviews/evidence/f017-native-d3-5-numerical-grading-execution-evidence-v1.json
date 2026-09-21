@@ -1,0 +1,16 @@
+{
+  "schema":"pulsarmlx.f017.native-d3-5-numerical-grading-execution-evidence/1.0.0",
+  "evidence_id":"F017-NATIVE-D3_5-NUMERICAL-GRADING-EVIDENCE-1",
+  "branch":"feat/017-rust-native-inference-runtime",
+  "execution_head":"dd81630591b9b04abf0480a8fbc73bfcab75d877",
+  "accepted_grant":{"path":"specs/017-rust-native-inference-runtime/contracts/f017-native-d3-5-comparison-read-grant-v1.json","sha256":"340e91aa3f00c91b0275c052307dba1ab0ebef091b3e07f99e4121a4bc1c788f","acceptance_path":"docs/architecture/reviews/evidence/f017-native-d3-5-comparison-read-grant-acceptance-v1.json"},
+  "consumer":{"source_path":"crates/f017-native/src/bin/d35_grader.rs","source_sha256":"de2e39c899f5e847222b20d1771d192bae6ea512afb1353ad8d69547610ac580","executable_sha256":"3768dcc632cdc8f572cc5f0880040c8eaf72ba979cb2f8148ada6f5e802e4992"},
+  "event":{"event_id":"F017-NATIVE-D3_5-NUMERICAL-GRADING-1","attempt_id":"F017-NATIVE-D3_5-NUMERICAL-GRADING-1-ATTEMPT-1","invocations":1,"state":"COMPLETE","retries":0,"resume":false},
+  "banked_result":{"normalized_path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-result-v1.json","normalized_sha256":"472a3085111ed023c3fafafc97600edaba4e6b8dbc0f58d35020561b650fa7e4","normalization":"BYTE_EXACT_REPLACE_MACHINE_HOME_PREFIX_WITH_${HOME}/","restored_machine_local_sha256":"df5cc8e549b0d794846c4cd3205a5759c721009368b680f29e608e0457dad613","machine_local_path":"${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1/grading-result.json"},
+  "banked_terminal":{"path":"docs/architecture/reviews/evidence/f017-native-d3-5-numerical-grading-terminal-v1.json","sha256":"fda21b8ccbe32bdcf15cf285b7369bcbcc04486e81bb4b2af92d990e790e9fdf","machine_local_path":"${HOME}/.local/share/pulsarmlx/f017/native-d3-5-numerical-grading-1/terminal.json"},
+  "read_accounting":{"expected_reads":15,"operand_reads":40,"capture_reads":34,"total_receipts":89,"expected_before_consumed_after_equal":89,"original_checkpoint_reads":0,"original_checkpoint_shard_opens":0,"historical_payload_ledger_delta":0},
+  "numerical_accounting":{"native_model_executions":0,"capture_regenerations":0,"existing_capture_files_reused":680,"graded_stage_count":34,"required_numerical_or_structural_stage_count":15,"failed_stage_count":0},
+  "ocb":{"required_ordinals":[20,21,25,27,28],"formula":"2*gamma(2*n)*sum(abs(f64(weight)*f64(input))) + 4*n*2^-149","input_or_output_feedback_used_to_set_caps":false,"per_coordinate_caps_enforced_in_process":true,"all_coordinates_passed":true,"banking_disposition":"SUMMARY_METRICS_AND_MAXIMUM_PER_COORDINATE_CAP_BANKED; FULL_CAP_VECTORS_MECHANICALLY_REPRODUCIBLE_FROM_RECEIPTED_OPERANDS_AND_ACCEPTED_CONSUMER_BUT_NOT_SEPARATELY_SERIALIZED"},
+  "result":{"retained_qualification":"MIXED_D0_V2_CLASS/PASS","pass":true,"requires_independent_numerical_adjudication":true},
+  "hard_invariants":{"real_m1_ultra_p1_executed":false,"full_model_real_checkpoint_inference_executed":false,"live_p1_authorization_created":false,"master_real_payload_ledger":175}
+}

@@ -1,0 +1,31 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-repair-loop-ledger/1.0.0",
+  "budget": 10,
+  "loops": [
+    {
+      "loop": 1,
+      "root_cause": "CAPABILITY_IDENTITY_INCLUDED_TARGET_LEAF_AND_EXPIRY_ALLOWING_MULTIPLE_INSTALLATION_CAPABILITIES_FOR_ONE_PREPARED_PACKAGE",
+      "reproduced": true,
+      "review_origin": "OPUS_DYNAMIC_ATTACK",
+      "repair": "ENFORCE_ONE_CAPABILITY_PER_PREPARED_PACKAGE_AND_BIND_DURABLE_CONSUMPTION_MARKER_TO_PREPARED_PACKAGE_DIGEST",
+      "regression": "test_one_prepared_package_cannot_issue_a_second_capability",
+      "mutation": "second_capability_for_one_prepared_package",
+      "result": "PASS"
+    },
+    {
+      "loop": 2,
+      "root_cause": "QUALIFICATION_AUTHORITY_MODE_NOT_TRANSITIVELY_BOUND_TO_LIVE_PREPARATION_AND_RESOLVER_BOUNDARIES",
+      "reproduced": true,
+      "review_origin": "OPUS_DYNAMIC_CROSS_MODE_ATTACK",
+      "repair": "SEAL_DECISION_MODE_AND_BIND_IT_THROUGH_APPROVAL_PREPARATION_PROMPT_IDENTITY_ROOT_ELIGIBILITY_AND_INSTALLATION_PREPARATION",
+      "regression": "test_qualification_chain_cannot_cross_into_live_mode",
+      "mutation": "qualification_decision_to_live_root_resolver_AND_qualification_chain_to_live_preparation",
+      "result": "PASS"
+    }
+  ],
+  "loops_consumed": 2,
+  "loops_remaining": 8,
+  "consecutive_no_progress_cycles": 0,
+  "no_progress_cap": 2,
+  "result": "PASS"
+}

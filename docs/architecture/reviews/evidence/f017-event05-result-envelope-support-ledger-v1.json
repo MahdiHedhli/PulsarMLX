@@ -1,0 +1,16 @@
+{
+  "schema": "pulsarmlx.f017.event05-result-envelope-support-ledger/1.0.0",
+  "cycle": 1,
+  "reviewed_head": "035ffdda3bcb5d4a61ea261d5bc581f209191bb1",
+  "responses": [
+    {"support_id":"S-DESIGN-001","challenge_id":"ITER_PAYLOAD_TOCTOU_VULNERABILITY","disposition":"REPAIR_IMPLEMENTED","tests":["test_stream_hash_is_revalidated","test_streaming_full_vocabulary_comparison"],"remaining_uncertainty":"NONE"},
+    {"support_id":"S-DESIGN-002","challenge_id":"MISSING_PACKAGE_RECEIPT_CLOSURE","disposition":"REPAIR_IMPLEMENTED","tests":["CLOSURE_PACKAGE_RECEIPT_BINDING"],"remaining_uncertainty":"NONE"},
+    {"support_id":"S-DESIGN-003","challenge_id":"CONTRACT_VALIDATION_BLIND_SPOTS","disposition":"REPAIR_IMPLEMENTED","tests":["PROTOCOL_MUTATIONS","NUMERICAL_CONTRACT_MUTATIONS"],"remaining_uncertainty":"NONE"},
+    {"support_id":"S-DESIGN-004","challenge_id":"DAG_CLOSURE_VALIDATION_WEAKNESS","disposition":"REPAIR_IMPLEMENTED","tests":["21_CLOSURE_OMISSION_MUTATIONS"],"remaining_uncertainty":"NONE"}
+  ],
+  "answered_by_existing_evidence": 0,
+  "repairs": 4,
+  "conceded_claims": 0,
+  "unresolved_claims": 0,
+  "original_checkpoint_access": 0
+}

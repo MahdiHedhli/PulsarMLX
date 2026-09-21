@@ -1,0 +1,120 @@
+{
+  "schema": "pulsarmlx.f017.corrected-oracle-numerical-output-interface/1.0.0",
+  "authority_state": "DESIGN_FROZEN_PENDING_INDEPENDENT_ACCEPTANCE",
+  "purpose": "Expose all accepted final numerical values from one pure-core execution without changing graph arithmetic or adding dynamic capability.",
+  "roles": {
+    "PRIMARY": {
+      "successor_path": "scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+      "historical_path": "scripts/research/f017_corrected_oracle_primary_numerics_v2.py",
+      "historical_sha256": "657cdff9ee833cb2b3a0b3fa71b6cbc3dd1e0fbc71b74b9bbff9dca6b5b76767",
+      "output_type": "PrimaryNumericalOutputs",
+      "dtype": "f64le",
+      "geometry_scope": "PRODUCTION_V11_ENVELOPE",
+      "legacy_api": "execute(source, geometry, token, position=0) -> dict",
+      "output_api": "execute_outputs(source, geometry, token, position=0) -> PrimaryNumericalOutputs",
+      "payloads": [
+        {"kind": "final_hidden", "shape": [6144], "element_count": 6144, "itemsize": 8, "expected_bytes": 49152},
+        {"kind": "final_normalized", "shape": [6144], "element_count": 6144, "itemsize": 8, "expected_bytes": 49152},
+        {"kind": "full_logits", "shape": [154880], "element_count": 154880, "itemsize": 8, "expected_bytes": 1239040}
+      ]
+    },
+    "SECONDARY": {
+      "successor_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
+      "historical_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "historical_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+      "output_type": "SecondaryNumericalOutputs",
+      "dtype": "f32le",
+      "geometry_scope": "PRODUCTION_V11_ENVELOPE",
+      "legacy_api": "execute(document, use_mlx=False, store=None) -> dict",
+      "output_api": "execute_outputs(document, use_mlx=False, store=None) -> SecondaryNumericalOutputs",
+      "payloads": [
+        {"kind": "final_hidden", "shape": [6144], "element_count": 6144, "itemsize": 4, "expected_bytes": 24576},
+        {"kind": "final_normalized", "shape": [6144], "element_count": 6144, "itemsize": 4, "expected_bytes": 24576},
+        {"kind": "full_logits", "shape": [154880], "element_count": 154880, "itemsize": 4, "expected_bytes": 619520}
+      ]
+    }
+  },
+  "output_object": {
+    "frozen_dataclass": true,
+    "deep_immutability": "REQUIRED",
+    "payload_representation": "IMMUTABLE_BYTES",
+    "payload_endianness": "LITTLE",
+    "writable_aliases": "PROHIBITED",
+    "cross_execution_reuse": "PROHIBITED",
+    "cross_role_buffer_sharing": "PROHIBITED",
+    "fields": [
+      "role", "dtype", "core_execution_count", "final_hidden_element_count",
+      "final_normalized_element_count", "full_logits_element_count",
+      "final_hidden_payload", "final_normalized_payload", "full_logits_payload",
+      "final_hidden_sha256", "final_normalized_sha256", "full_logits_sha256",
+      "layer_captures", "selected_token", "top_32", "top_1_margin", "tie_rule"
+    ],
+    "field_types": {
+      "payloads": "bytes",
+      "layer_captures": "tuple[frozen_role_specific_layer_capture,...]",
+      "top_32": "tuple[frozen_role_specific_top_record,...]",
+      "scalar_metadata": "str|int|float",
+      "mutable_list_or_dict_fields": "PROHIBITED"
+    }
+  },
+  "qualification_geometry": {
+    "rule": "For synthetic qualification only, element counts and byte counts derive from the frozen input geometry and role dtype; live V11 accepts only the production role tables above.",
+    "primary_itemsize": 8,
+    "secondary_itemsize": 4,
+    "production_geometry_required_for_live_v11": true
+  },
+  "one_execution_rule": {
+    "shared_internal_graph_path_per_role": true,
+    "core_execution_count": 1,
+    "recompute_final_hidden": false,
+    "recompute_final_normalized": false,
+    "recompute_full_logits": false,
+    "reconstruct_from_hash": false,
+    "legacy_adapter_reruns_graph": false,
+    "capture_timing": {
+      "final_hidden": "AFTER_FINAL_CONFIGURED_LAYER; production geometry completes 79 layers",
+      "final_normalized": "AFTER_FINAL_RMS_NORMALIZATION",
+      "full_logits": "AFTER_OUTPUT_PROJECTION"
+    }
+  },
+  "legacy_compatibility": {
+    "required": "EXACT",
+    "runtime_scope": "PYTHON_SUCCESSOR_CORE_OFFLINE_REQUALIFICATION_AND_HISTORICAL_COMPATIBILITY_ONLY",
+    "cross_language_json_equivalence_claimed": false,
+    "active_v11_calls_legacy_api": false,
+    "active_v11_serializes_legacy_result": false,
+    "primary_canonical_json_bytes": "EXACT",
+    "primary_result_sha256": "EXACT",
+    "secondary_all_fields_and_values": "EXACT",
+    "source_read_census": "EXACT",
+    "source_read_optimization_in_this_formula_preserving_scope": "PROHIBITED"
+  },
+  "hash_binding": {
+    "PRIMARY": "sha256(payload_bytes) equals the matching V2-compatible hash field under f64le serialization",
+    "SECONDARY": "sha256(payload_bytes) equals the matching V2-compatible hash field under f32le serialization"
+  },
+  "control_plane": {
+    "output_object_is_control_json": false,
+    "full_payload_serialization": "PROHIBITED",
+    "writable_array_serialization": "PROHIBITED",
+    "v11_consumption": "DIRECT_BINARY_PAYLOAD_BANKING",
+    "legacy_full_logits_dictionary_allowed_only_in_offline_requalification": true,
+    "legacy_full_logits_dictionary_rejected_by_active_control_serializer": true
+  },
+  "prohibited_capabilities": [
+    "FILE_IO", "CHECKPOINT_ACCESS", "LIFECYCLE_STATE", "AUTHORIZATION",
+    "SUBPROCESS", "NEW_OR_UNREVIEWED_DYNAMIC_IMPORT", "REFLECTION", "FRAME_INSPECTION",
+    "TRACING_HOOK", "DEBUGGER_HOOK", "CALLER_SUPPLIED_CAPTURE_CALLBACK"
+  ],
+  "accepted_historical_scoped_capabilities": {
+    "secondary_mlx_imports": "The three existing function-scope mlx.core imports inside mv and transpose_mv remain governed by the exact frozen numerical capability policy; the successor may add no import capability.",
+    "source_store_rowmatrix_protocols": "Existing closed Source, Store, and RowMatrix tensor-access protocols are numerical inputs, not output-capture callbacks; their method sets remain governed by the exact frozen capability policy.",
+    "capability_policy_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-capability-policy-v1.json",
+    "capability_policy_sha256": "5ca6576781e269c18671b834b5d115494ec95462a17a59045e930eb256ce4d13"
+  },
+  "numerical_formulas_changed": false,
+  "numerical_operation_order_changed": false,
+  "routing_semantics_changed": false,
+  "decoder_semantics_changed": false,
+  "original_checkpoint_access": 0
+}

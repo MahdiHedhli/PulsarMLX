@@ -1,0 +1,17 @@
+{
+  "candidate_head": "44e0a8e5bb8288c3e3ff4c246e513f4ba696baee",
+  "candidate_tree": "5ebfc7eb28a185fc0b8424e4a890e9a278f87883",
+  "consequence_term": "AMBIGUOUS_ACCOUNTING",
+  "exit_status": 0,
+  "model_ids": ["gemini-3.1-pro-high"],
+  "nonce_digest_echo": "PASS",
+  "payload_sha256": "5080707927a671039d1273fd8738d221ee8933d532bd911cafe17c77a162c5f4",
+  "response_sha256": "f85b75fa3f0f7f0f3759ad38c27629226bc1144e96eea0a38712a175f8cbe2bc",
+  "result": "REJECTED_FOR_SEEDED_SAFETY_CAUSE",
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-review-canary-terminal/1.0.0",
+  "seeded_symbol": "build_package_terminal",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_sha256": "63e0ef37e85ec1429c319cbb1aa6c0b26e4a41d395fa23b5c9850639b947761e",
+  "terminal_marker": "END_F017_SEQUENCE18_REVIEW",
+  "transport": "PASS"
+}

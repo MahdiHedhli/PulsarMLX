@@ -1,0 +1,17 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence14-full-native-ci/1.0.0",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "workflow": "macOS baseline",
+  "run_id": 33239842492,
+  "head_sha": "48087b3cd62cbdd427f9da71fd3d6fed9f55e7c7",
+  "head_tree": "5e9209b4310a06caca909f41939a5b737fa91cca",
+  "mode": "FULL_NATIVE",
+  "result": "PASS",
+  "executed_jobs": 4,
+  "required_skips": 0,
+  "unexpected_skips": 0,
+  "conditional_nonrequired_skips": 3,
+  "workspace_baseline": "PASS",
+  "native_mlx_job": "PASS",
+  "aggregate_status": "PASS"
+}

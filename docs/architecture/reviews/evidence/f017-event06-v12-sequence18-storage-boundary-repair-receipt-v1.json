@@ -1,0 +1,52 @@
+{
+  "after_repair": {
+    "event06_executed": false,
+    "fixed_live_registry_root_exists": false,
+    "full_model_inference": "NONE",
+    "historical_master_ledger": 175,
+    "original_checkpoint_access": "NONE",
+    "production_live_registry_creates_or_writes": 0
+  },
+  "authority": {
+    "amendment_commit": "2f6cf145ef935c130bcef66bfaf010bee71b5f4e",
+    "amendment_sha256": "966be24b26e5ebf1b3398e1b1fc8ec7b5c52a2bd921eea6499b1808db8f0943d",
+    "base_prompt_commit": "1582afb528acf2b97d823239c671ff0f0b7c5f62",
+    "base_prompt_sha256": "7f6a871af9ec6be65d0c4ebc15bc9ca50a3f85a35a1ec4c1587e76f9884f1489"
+  },
+  "classification": "QUALIFICATION_INTERPOSITION_COVERAGE_DEFECT",
+  "detected_transition": "VIRTUAL_FILESYSTEM_COMPOSITION_TERMINAL_CHAIN_BANKING",
+  "disposition": "REPAIRED_BEFORE_CANDIDATE_COMMIT_AND_RERUN_UNDER_INDEPENDENT_SANDBOX",
+  "fixed_live_registry_root_canonical_utf8_length": 60,
+  "fixed_live_registry_root_canonical_utf8_sha256": "e9628d51208d2340d67885b471bf87a5cfa0a372a759e095378f5609c1843e83",
+  "observed_effect": {
+    "accounting_delta": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "checkpoint_access": 0,
+    "directory_entries_created": 3,
+    "event06_identities_instantiated_or_consumed": [
+      0,
+      0
+    ],
+    "files_created": 0,
+    "live_authority_created": false,
+    "numerical_operations": 0,
+    "package_start": false,
+    "symlinks_created": 0
+  },
+  "repair": {
+    "changed_symbol": "execute_f017_corrected_oracle_event_v12_bridge:_bank_bridge_transition_chain",
+    "root_cause_classes": [
+      "CALLER_CONTROLLED_PRODUCTION_REGISTRY_AUTHORITY",
+      "NO_ACCESS_ASSURANCE"
+    ],
+    "statement": "Route directory creation through the measured storage primitive so qualification interposition and the independent sandbox govern every terminal-chain storage operation."
+  },
+  "repair_loop": 4,
+  "schema": "pulsarmlx.f017.event06-v12-sequence18-storage-boundary-repair-receipt/1.0.0",
+  "starting_source_head": "1adb647e1cd18509d0edb4bcf7c01b6d5819a9b5",
+  "status": "PASS"
+}

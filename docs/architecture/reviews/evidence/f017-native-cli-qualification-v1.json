@@ -1,0 +1,102 @@
+{
+ "binary": "native_generate",
+ "case_count": 12,
+ "cases": [
+  {
+   "case": "chat_template_render",
+   "exit_code": 0,
+   "expected_exit_code": 0,
+   "identity": "glm-dsa",
+   "indexer_top_k": 2048,
+   "max_positions": 2048,
+   "ok": true,
+   "prompt_mode": "CHAT_TEMPLATE",
+   "prompt_tokens": 24,
+   "status": "PASS",
+   "stop_token_count": 3
+  },
+  {
+   "case": "raw_text_no_template",
+   "exit_code": 0,
+   "expected_exit_code": 0,
+   "ok": true,
+   "raw_text_prompt_tokens": 10,
+   "status": "PASS"
+  },
+  {
+   "case": "raw_token_diagnostic",
+   "exit_code": 0,
+   "expected_exit_code": 0,
+   "ok": true,
+   "raw_token_mode": "RAW_TOKEN_DIAGNOSTIC",
+   "status": "PASS"
+  },
+  {
+   "case": "missing_model",
+   "exit_code": 2,
+   "expected_exit_code": 2,
+   "expected_message": "--model is required",
+   "status": "PASS"
+  },
+  {
+   "case": "absent_model_directory",
+   "exit_code": 3,
+   "expected_exit_code": 3,
+   "expected_message": "No such file",
+   "status": "PASS"
+  },
+  {
+   "case": "model_is_a_file",
+   "exit_code": 3,
+   "expected_exit_code": 3,
+   "expected_message": "not a directory",
+   "status": "PASS"
+  },
+  {
+   "case": "two_prompt_sources",
+   "exit_code": 2,
+   "expected_exit_code": 2,
+   "expected_message": "exactly one prompt source",
+   "status": "PASS"
+  },
+  {
+   "case": "unknown_flag",
+   "exit_code": 2,
+   "expected_exit_code": 2,
+   "expected_message": "unknown flag",
+   "status": "PASS"
+  },
+  {
+   "case": "output_exceeds_context",
+   "exit_code": 2,
+   "expected_exit_code": 2,
+   "expected_message": "max_positions",
+   "status": "PASS"
+  },
+  {
+   "case": "wrong_architecture",
+   "exit_code": 3,
+   "expected_exit_code": 3,
+   "expected_message": "census",
+   "status": "PASS"
+  },
+  {
+   "case": "wrong_geometry",
+   "exit_code": 3,
+   "expected_exit_code": 3,
+   "expected_message": "block_count",
+   "status": "PASS"
+  },
+  {
+   "case": "missing_tokenizer",
+   "exit_code": 3,
+   "expected_exit_code": 3,
+   "expected_message": "tokenizer",
+   "status": "PASS"
+  }
+ ],
+ "original_checkpoint_reads": 0,
+ "result": "PASS",
+ "schema": "pulsarmlx.f017.native-cli-qualification/1.0.0",
+ "scope": "admission, identity metadata, tokenizer and chat template; no shard payload and no forward pass"
+}

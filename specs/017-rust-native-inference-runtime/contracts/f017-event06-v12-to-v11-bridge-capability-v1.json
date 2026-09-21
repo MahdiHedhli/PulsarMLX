@@ -1,0 +1,20 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-capability/1.0.0",
+  "state": "DESIGN_REVIEW_REQUIRED",
+  "bridge_module_allowed_capabilities": ["CANONICAL_SERIALIZATION","SHA256","STRICT_TYPED_VALIDATION","SEALED_ROLE_VIEW_DERIVATION"],
+  "bridge_module_prohibited_capabilities": ["CHECKPOINT_ROOT_RESOLUTION","FILESYSTEM_OPEN","CHECKPOINT_HASH_READ","PAYLOAD_READ","MMAP","TENSOR_READ","NUMERICAL_EXECUTION","STATE_CREATION","AUTHORIZATION_INSTALL","ID_CONSUMPTION","SUBPROCESS","NETWORK","DYNAMIC_IMPORT","REFLECTION","CALLER_CALLBACK","ENVIRONMENT_POLICY","UNBOUNDED_JSON"],
+  "qualification_spy_policy": {
+    "binds_real_consumer_signatures": true,
+    "bypasses_consumer_signatures": false,
+    "fails_if_prohibited_capability_reached": true,
+    "synthetic_temporary_roots_only": true,
+    "original_checkpoint_name_or_root_discovery": "PROHIBITED"
+  },
+  "historical_admission": {
+    "legacy_v11_accepts_v12_candidate": false,
+    "legacy_v11_accepts_bridge_document": false,
+    "v12_accepts_v11_only_fields": false,
+    "v12_accepts_bridge_fields": false
+  },
+  "result": "PROPOSED"
+}

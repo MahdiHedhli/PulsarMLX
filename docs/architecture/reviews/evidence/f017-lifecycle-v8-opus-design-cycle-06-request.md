@@ -1,0 +1,9 @@
+# F017 lifecycle V8 causal design — Opus design review cycle 06
+
+Use a fresh `claude-opus-5` high-effort session. Review exact committed bytes at `f9224e3e138f675a4a41fffd8f96bb355c0f6d80` in a detached read-only worktree. Do not modify files or access original checkpoint shards.
+
+Reconstruct cycle 05 and re-attack its `B1`, `N1`, and `N2`. Comparison classification now uses an outcome-aware rule derived from numerical-contract V3: complete success admits only non-blocking verdicts, while failure outcomes retain the full five-member vocabulary. Verify `ORACLE_DISAGREEMENT` is accepted at `COMPARISON_FAILURE__AFTER_RANK_041` but rejected at `COMPLETE_SUCCESS`. Lease closure derives live leases from expected minus successful minus duplicate; unknown extra attempts remain recordable but cannot discharge an expected lease. Package identifiers use a strict uppercase-hyphen grammar and authorization, package, operator approval, ownership nonce, package ledger, primary event, and secondary event identities must be pairwise distinct. Consumer event chains bind end to end.
+
+Also attack the strengthened adjacent controls: descriptor mode must identify a regular file, timestamps and identity integers are nonnegative, symbolic descriptors use one device with distinct inodes, primary/secondary execution evidence bind role, event ID, and numerical-output digest, and comparison evidence binds both output digests. Causal evidence reports the number of strict rank edges actually validated rather than a literal cycle count. The suite constructs all 48 outcomes, verifies all 1128 immutable prefixes, and rejects 211 mutations.
+
+Run the independent validator, 13 tests, all symbolic outcomes, and coordinated fixed-point forgeries. Report `BLOCKING`, `NON_BLOCKING_REQUIRED`, and `DEFENSE_IN_DEPTH` separately. Required verdict exactly `ACCEPT_CHECKPOINT_IDENTITY_CAUSAL_DESIGN_V8_FOR_IMPLEMENTATION` or `REJECT`; any required finding must produce `REJECT`.

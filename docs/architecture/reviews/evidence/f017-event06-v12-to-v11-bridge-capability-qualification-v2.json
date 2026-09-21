@@ -1,0 +1,14 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-to-v11-bridge-capability-qualification/1.1.0",
+  "supersedes": "docs/architecture/reviews/evidence/f017-event06-v12-to-v11-bridge-capability-qualification-v1.json",
+  "implementation_head": "7fbc641339f65619f77cca78a86eabc4d19277b7",
+  "pure_modules": 2,
+  "file_io_capability": 0,
+  "checkpoint_capability": 0,
+  "subprocess_capability": 0,
+  "reflection_capability": 0,
+  "callback_capability": 0,
+  "ambient_policy_capability": 0,
+  "violations": 0,
+  "result": "PASS"
+}

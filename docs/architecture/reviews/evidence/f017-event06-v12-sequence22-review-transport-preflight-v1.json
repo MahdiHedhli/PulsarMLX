@@ -1,0 +1,34 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence22-review-transport-preflight/1.0.0",
+  "agy_version": "1.1.22",
+  "agy_shell_denial": {
+    "provider_status": "CANCELED",
+    "command_permission_auto_denied": true,
+    "shell_execution_count": 0,
+    "sentinel_created": false,
+    "stdout_sha256": "380213c3a7b3c170cfe5574df8b822e872515d83b38ccde6ec36ae9b5b5bc593"
+  },
+  "agy_closure_denial": {
+    "provider_status": "SUCCESS",
+    "read_file_permission_auto_denied": true,
+    "outside_read_success_count": 0,
+    "sentinel_content_disclosed": false,
+    "stdout_sha256": "b418ca25db94f7cc48124686f17e369ca49cc3d74107060a124fd3df5e04c3c7"
+  },
+  "agy_closure_and_shell_denial_preflight": "PASS",
+  "opus_version": "2.1.250",
+  "opus_closure_denial": {
+    "provider_status": "SUCCESS",
+    "requested_main_model": "claude-opus-5",
+    "structured_result": "PASS",
+    "read_permission_denials": 1,
+    "outside_read_success_count": 0,
+    "shell_capability_available": false,
+    "subagents_spawned": 0,
+    "stdout_sha256": "acf7d9442d416bd9ae44ef4174026fdcd0763cfef22cdda06bb3592f7c4fe402"
+  },
+  "opus_closure_and_shell_denial_preflight": "PASS",
+  "checkpoint_access": "NONE",
+  "side_effects": 0,
+  "result": "PASS"
+}

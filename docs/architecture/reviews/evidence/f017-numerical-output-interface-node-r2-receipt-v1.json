@@ -1,0 +1,15 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-node-receipt/1.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "node_id":"R2",
+  "input_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "output_head":"37e753cbd0540cb13a2152b134998e80909801bf",
+  "changed_paths":["specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-formula-manifest-v4.json","specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-v2-v3-source-map-v1.json","specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-numerical-requalification-plan-v4.json"],
+  "tests_executed":["V2_FUNCTION_AST_SHA_CENSUS","FORMULA_SURFACE_CENSUS","PREREGISTERED_CORPUS_CENSUS"],
+  "claims_introduced":["C-FORM-001","C-FORM-002","C-LEGACY-001","C-LEGACY-002","C-INDEP-001","C-QUAL-001"],
+  "claims_closed":[],
+  "claims_invalidated":[],
+  "checkpoint_access_census":0,
+  "next_eligible_edges":["R3"],
+  "result":"PASS"
+}

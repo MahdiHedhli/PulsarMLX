@@ -1,0 +1,25 @@
+{
+  "schema": "pulsarmlx.f017.event06-v12-sequence10-evidence-only-ci/1.0.0",
+  "run": 33213515642,
+  "source_head": "844c7140abdee0c350dc6724061525a376ec622b",
+  "source_tree": "44ac4d4979776641584ae8386da0980621230c7e",
+  "workflow": "macOS baseline",
+  "mode": "EVIDENCE_ONLY",
+  "result": "PASS",
+  "evidence_integrity_job": 98991985654,
+  "evidence_integrity_result": "PASS",
+  "aggregate_job": 98992011891,
+  "aggregate_result": "PASS",
+  "native_jobs_launched": 0,
+  "checkpoint_opens": 0,
+  "changed_file_count": 5,
+  "json_file_count": 5,
+  "resolved_binding_count": 8,
+  "append_only": true,
+  "credential_scan": "PASS",
+  "run_locator": "github-actions-run-33213515642",
+  "result_evidence": {
+    "path": "docs/architecture/reviews/evidence/f017-event06-v12-sequence10-end-to-end-call-path-instantiability-failure-v1.json",
+    "sha256": "f7158c7812924facd6e793718a1783d207242fec530ec2e2ddee713805d09266"
+  }
+}

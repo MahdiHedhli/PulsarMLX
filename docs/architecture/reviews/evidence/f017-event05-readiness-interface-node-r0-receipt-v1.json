@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-node-receipt/1.0.0",
+  "graph_id": "F017-EVENT05-READINESS-AUTHORITY-INTERFACE-GRAPH-01",
+  "node_id": "R0",
+  "input_head": "57724fb9cdbe283cde557bb54c1684b2e1c986e4",
+  "output_head": "35436691b308a466255bf0b4ace5be0d438ee578",
+  "output_tree": "9ca0c444daf79e7e4e96cd6caea6cc05887b6263",
+  "input_authority_shas": ["e7b2ce81f45f69bec60b058db78e763a99993d24528d552a930800727558b1f6", "474fd9e3939a9b9b5dd93eea431f4cb73793b4b8e6511adc11fa11f67af8cc39"],
+  "changed_paths": ["docs/architecture/reviews/evidence/f017-event05-readiness-interface-mismatch-reproduction-v1.json"],
+  "commands_executed": ["git fetch --all --tags --prune", "bounded decoder exact-byte reproduction", "field-interface injected-content reproduction", "repository producer-consumer inventory"],
+  "tests_executed": ["exact committed declaration bounded decode", "mock-isolated authorizer field boundary"],
+  "result_counts": {"exact_failures_reproduced":2,"side_effects":0,"checkpoint_access":0},
+  "claims_introduced": ["C-SCHEMA-001", "C-AUTHORIZER-001", "C-LEGACY-001"],
+  "claims_closed": [],
+  "claims_invalidated": [],
+  "checkpoint_access_census": 0,
+  "next_eligible_edges": ["R1"],
+  "result": "PASS"
+}

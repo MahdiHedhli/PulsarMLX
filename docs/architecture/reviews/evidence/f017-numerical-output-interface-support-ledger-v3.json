@@ -1,0 +1,19 @@
+{
+  "schema":"pulsarmlx.f017.numerical-output-interface-support-ledger/3.0.0",
+  "graph_id":"F017-NUMERICAL-OUTPUT-INTERFACE-AND-EVENT05-READINESS-GRAPH-01",
+  "cycle":2,
+  "arbiter_cycle":1,
+  "support":[
+    {"support_id":"SUP-ARB-PREFIX-001","finding_id":"ARB-PREFIX-001","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["normalizer now stops before terminal Return as well as result assignment","secondary prefix is 10 statements with SHA a233729b..."],"tests":["145 perturbed-document mutations","secondary prefix recomputation"],"remaining_uncertainty":"Independent rereview required."},
+    {"support_id":"SUP-ARB-INSTANTIABLE-002","finding_id":"ARB-INSTANTIABLE-002","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["secondary interface suffix is now causally possible after the exact 10-statement numerical prefix"],"tests":["graph-prefix validator"],"remaining_uncertainty":"Successor implementation remains prohibited until design acceptance."},
+    {"support_id":"SUP-ARB-CLOSURE-003","finding_id":"ARB-CLOSURE-003","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["SUP-AST claim corrected by terminal-return-aware normalization"],"tests":["primary and secondary prefix checks"],"remaining_uncertainty":"Independent rereview required."},
+    {"support_id":"SUP-ARB-MUTATION-004","finding_id":"ARB-MUTATION-004","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["validator now deep-copies the four authority documents, applies 145 real perturbations, and reruns the complete invariant validator","unexpected mutation passes are an explicit list"],"tests":["145_OF_145_REJECTED"],"remaining_uncertainty":"None at mechanical design scope."},
+    {"support_id":"SUP-ARB-DYNIMPORT-005","finding_id":"ARB-DYNIMPORT-005","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["prohibition is now NEW_OR_UNREVIEWED_DYNAMIC_IMPORT","three historical scoped mlx.core imports remain bound to capability-policy SHA 5ca657..."],"tests":["capability-policy binding mutation"],"remaining_uncertainty":"Successor capability analysis remains at R7."},
+    {"support_id":"SUP-ARB-CALLBACK-006","finding_id":"ARB-CALLBACK-006","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["contract now prohibits caller-supplied capture callbacks specifically","existing closed tensor-source protocols are explicitly governed by the frozen capability policy"],"tests":["capture callback prohibition mutation"],"remaining_uncertainty":"None at design scope."},
+    {"support_id":"SUP-ARB-GEOMETRY-007","finding_id":"ARB-GEOMETRY-007","disposition":"REPAIR_IMPLEMENTED","repair_commit":"d9c5ce6177154c5ce8bd81e343b3ca02a38665f1","evidence":["role tables explicitly identify production V11 geometry","synthetic qualification derives counts from frozen input geometry and role itemsize"],"tests":["production geometry and qualification rule mutations"],"remaining_uncertainty":"Runtime geometry tests remain at R7."},
+    {"support_id":"SUP-ARB-MANIFEST-008","finding_id":"ARB-MANIFEST-008","disposition":"REPAIR_IMPLEMENTED","repair_commit":null,"evidence":["next manifest uses measured_content_head and measured_content_tree for already-committed entries and excludes its own bytes","no authority_head label will claim same-commit entries"],"tests":["manifest entry SHA recomputation"],"remaining_uncertainty":"Manifest is banked after this support ledger commit."}
+  ],
+  "repairs_implemented":8,
+  "unresolved":0,
+  "result":"PASS_PENDING_GEMINI_AND_OPUS_REREVIEW"
+}

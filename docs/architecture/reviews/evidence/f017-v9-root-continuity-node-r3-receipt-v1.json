@@ -1,0 +1,18 @@
+{
+  "checkpoint_access_census": {"original_checkpoint_identity_hash_reads": 0, "original_checkpoint_payload_reads": 0, "original_checkpoint_shard_opens": 0},
+  "changed_paths": ["scripts/research/execute_f017_corrected_oracle_event_v10.py", "scripts/research/f017_accounting_root_continuity_v1.py", "scripts/research/f017_bounded_artifact_decode_v1.py", "scripts/research/f017_canonical_serialization_v10.py", "scripts/research/f017_corrected_oracle_authorization_v10.py", "scripts/research/f017_corrected_oracle_event_accounting_v10.py", "scripts/research/validate_f017_corrected_oracle_access_v10.py", "specs/017-rust-native-inference-runtime/contracts/f017-corrected-oracle-event04-runtime-authority-manifest-v10.json"],
+  "claims_closed": [],
+  "claims_introduced": ["C-IMPL-001", "C-IMPL-002", "C-IMPL-003", "C-IMPL-004"],
+  "claims_invalidated": [],
+  "commands_executed": ["generate_f017_v10_root_continuity_authority_v1.py --check", "validate_f017_event04_implementation_measurement_v10.py --head 11e4c7e911752214708fc8077c78a9345a7181ca", "check_f017_bounded_artifact_decode_policy_v1.py"],
+  "graph_id": "F017-V9-ROOT-CONTINUITY-AND-BOUNDED-DECODE-GRAPH-01",
+  "input_authority_shas": {"numerical_contract_v3": "84ff9ba061952e4aa9fe4fe2c76ac6cafa3f03eb74a37ac1056c2a44b5003cf9", "terminal_closeout_head": "90338840c94118651a85c695af22de780437663b"},
+  "input_head": "90338840c94118651a85c695af22de780437663b",
+  "next_eligible_edges": ["R4"],
+  "node_id": "R3",
+  "output_head": "11e4c7e911752214708fc8077c78a9345a7181ca",
+  "result": "PASS",
+  "result_counts": {"implementation_bindings": 43, "runtime_import_closure": 32, "focused_tests_passed": 77},
+  "schema": "pulsarmlx.f017.v9-root-continuity-node-receipt/1.0.0",
+  "tests_executed": ["77 focused root/decode and V10 runtime tests", "252 quick root attacks", "204 quick decode attacks", "6 root/decode cross-products"]
+}

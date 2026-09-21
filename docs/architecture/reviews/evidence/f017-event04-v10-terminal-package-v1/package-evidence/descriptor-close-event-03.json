@@ -1,0 +1,1 @@
+{"artifact_kind":"descriptor_close_event","payload":{"attempt":1,"lease_id":"LEASE-F017-CORRECTED-ORACLE-PACKAGE-ATTEMPT-04-V10-1-5","prior_state":"OPEN","result":"PASS_CLOSE","shard_ordinal":5,"state":"CLOSED"},"schema":"pulsarmlx.f017.v10.runtime.descriptor_close_event/1.0.0"}

@@ -1,0 +1,9 @@
+{
+  "schema": "pulsarmlx.f017.event05-readiness-interface-review-protocol/1.0.0",
+  "design_gemini": {"node":"R3","acceptance_token":"NO_MATERIAL_CHALLENGE","final_declaration_field":false},
+  "design_opus": {"node":"R5","acceptance_token":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_FOR_IMPLEMENTATION","final_declaration_field":false},
+  "whole_domain_gemini": {"node":"R9","acceptance_token":"NO_UNRESOLVED_MATERIAL_CHALLENGE","final_declaration_field":"gemini_verdict"},
+  "implementation_opus": {"node":"R11","acceptance_token":"ACCEPT_F017_EVENT05_READINESS_INTERFACE_IMPLEMENTATION","final_declaration_field":"opus_verdict"},
+  "final_opus_ratification": {"node":"R14","acceptance_token":"ACCEPT_FOR_CORRECTED_FULL_CHECKPOINT_ORACLE_EVENT_05_EXECUTION_AUTHORIZATION_PREPARATION","final_declaration_field":false},
+  "result": "EXACT_REVIEW_SCOPES_AND_TOKENS_FROZEN"
+}
