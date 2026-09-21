@@ -100,3 +100,58 @@ No checkpoint or retained event data, GO, replay, P1 authority, local native bui
 other-machine activity or historical authority update is part of these checks.
 Actual local tests, independent review and hosted CI outcomes must be reported
 separately; source publication alone is not acceptance or main readiness.
+
+## 2026-09-20 consolidation note — inventory by invocation, not whole-file bytes
+
+Nothing above this heading is changed.
+
+`verify_workflow_inventory` in `scripts/ci/f017_measurement_scope_v1.py` used to
+require the whole of `.github/workflows/macos.yml` to equal its frozen base
+(`6f59d9db`) byte for byte, modulo the one substitution that relocated the old
+`generate_f017_v11_measurement_v1.py --check` invocation. That was an over-broad
+way to enforce this document's actual guarantee — that **every F017 check remains
+a separate, mandatory, unaltered invocation in its existing context** — because it
+also forbade any unrelated addition anywhere in the file. It therefore could not
+survive integration with another track's CI: consolidating the GLM-5.3-Flash and
+F017 lines adds steps that have nothing to do with the measurement scope, and the
+byte comparison failed on all of them at once with a single opaque label.
+
+The check is now an **ordered invocation inventory**. An invocation is the entire
+whitespace-stripped workflow line that references a `scripts/research/...` or
+`scripts/ci/...` Python check — interpreter, flags, arguments and any trailing
+shell included. The expected invocations, derived from the frozen base exactly as
+before, must appear in the current workflow with identical text, in the same
+relative order, the same number of times, and under the same `jobs.<name>` key.
+Anything else in the file may be added.
+
+The guarantee is therefore unchanged and still exact for every listed invocation:
+
+- a dropped check is a missing expected invocation → rejected;
+- an edited check, including a masked one (`|| true`), a redirect, or a changed
+  path, is a different line → rejected;
+- a check moved to another job — that is, another environment — fails the job
+  comparison → rejected;
+- a check reordered relative to another expected check breaks the ordered
+  subsequence → rejected.
+
+All four continue to raise `WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`, and
+`WORKFLOW_ORIGINAL_IDENTITY`, `WORKFLOW_OLD_CHECK_CENSUS` and
+`F017_ORIGINAL_CHECK_PRESENT` are unchanged. The returned inventory now also
+reports `required_invocations` and `additive_invocations`, the latter being the
+number of current invocation lines beyond the required set.
+
+One normalisation is applied: a trailing backslash is line-joining punctuation
+rather than part of a command, so it is stripped before comparison. Appending an
+argument to a multi-line command gives the previously final argument a `\` without
+otherwise changing it; that addition is then inventoried as its own line when it
+references a check. This is exactly what the consolidated workflow does — the
+`pytest` invocation that ran `test_f017_result_envelope_v11.py` and
+`test_f017_result_bundle_builder_v11.py` now also runs
+`test_f017_v11_measurement_v2.py` — and it is why that addition is additive rather
+than an alteration. No other trailing text is normalised.
+
+The mutation controls in `scripts/ci/f017_measurement_scope_tests_v1.py` cover all
+of the above: the five pre-existing rejections keep their labels, and four cases
+were added — an unrelated added check is accepted as additive, a duplicated
+expected invocation is accepted, a relocated invocation is rejected, and a
+reordered pair is rejected.

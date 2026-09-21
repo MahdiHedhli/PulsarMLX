@@ -43,6 +43,56 @@ def run(work_dir, code_view):
     rejection('missing unrelated mandatory check','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:scope.verify_workflow_inventory(before,current_workflow.replace(b'validate_f017_result_authority_v11.py',b'NOT_RUN.py')))
     rejection('current validators moved to historical context','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:scope.verify_workflow_inventory(before,current_workflow.replace(b'validate_f017_v11_execution_authority_v1.py',b'old/validate_f017_v11_execution_authority_v1.py')))
     rejection('masked command error','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:scope.verify_workflow_inventory(before,current_workflow.replace(scope.NEW_COMMANDS[0].encode(),scope.NEW_COMMANDS[0].encode()+b' || true')))
+    # --- narrowed inventory: additive CI is allowed, dropped/edited/moved is not ---
+    inventory=scope.verify_workflow_inventory(before,current_workflow)
+    assert inventory['required_invocations']>0
+    baseline_additive=inventory['additive_invocations']
+
+    def step(job_marker, body):
+        """An extra step appended to the job that already carries the checks."""
+        return body
+
+    # (b) an unrelated added step with a new check is additive, not a rejection.
+    text=current_workflow.decode()
+    marker='      - name: Validate independent Feature 017 oracle\n'
+    assert text.count(marker)==1
+    added=('      - name: Unrelated added step\n'
+           '        run: |\n'
+           '          .venv/bin/python scripts/ci/some_other_check.py --check\n')
+    augmented=text.replace(marker, added+marker, 1).encode()
+    result=scope.verify_workflow_inventory(before,augmented)
+    assert result['result']=='PASS', result
+    assert result['additive_invocations']==baseline_additive+1, result
+    results.append(dict(case='additive unrelated check',result='ACCEPTED_AS_ADDITIVE',
+                        diagnostic='additive_invocations=%d'%result['additive_invocations']))
+
+    # (d1) duplicating an expected invocation elsewhere stays a PASS.
+    duplicated=text.replace(marker, added.replace('scripts/ci/some_other_check.py --check',
+                                                  scope.NEW_COMMANDS[0])+marker, 1).encode()
+    assert scope.verify_workflow_inventory(before,duplicated)['result']=='PASS'
+    results.append(dict(case='duplicated expected invocation',result='ACCEPTED_AS_ADDITIVE',diagnostic='duplicate permitted'))
+
+    # (c) an expected invocation moved into a different job is rejected.
+    moved_line='          .venv/bin/python scripts/research/validate_f017_result_authority_v11.py\n'
+    assert text.count(moved_line)==1
+    other_job=('  relocated-job:\n'
+               '    runs-on: macos-15\n'
+               '    steps:\n'
+               '      - name: Relocated check\n'
+               '        run: |\n'
+               +moved_line)
+    relocated=(text.replace(moved_line,'',1).rstrip('\n')+'\n'+other_job).encode()
+    rejection('expected invocation relocated to another job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:scope.verify_workflow_inventory(before,relocated))
+
+    # (d2) reordering two expected invocations relative to each other is rejected.
+    first='          .venv/bin/python scripts/research/validate_f017_result_envelope_design_v11.py\n'
+    second='          .venv/bin/python scripts/research/validate_f017_result_authority_v11.py\n'
+    assert text.count(first)==1 and text.count(second)==1 and text.index(first)<text.index(second)
+    swapped=text.replace(first,'\x00',1).replace(second,first,1).replace('\x00',second,1).encode()
+    rejection('expected invocations reordered','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:scope.verify_workflow_inventory(before,swapped))
+
     # Expectations use independently read recorded rows, not adapter results.
     assert len(objects)==36 and declared['implementation_head']=='f35d341110c67377200ad353ab56a3cf38615a73'
     return dict(result='PASS',historical_controls=len(results),mutations=results,

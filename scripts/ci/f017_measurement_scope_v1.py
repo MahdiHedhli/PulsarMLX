@@ -116,18 +116,99 @@ def verify_historical(record_raw, generator_raw, head, tree, objects):
                 current_execution_authorization=False)
 
 
+_SCRIPT_REFERENCE = re.compile(r"scripts/(?:research|ci)/[\w./-]+\.py")
+_JOB_KEY = re.compile(r"^  ([A-Za-z0-9_-]+):\s*$")
+_BLOCK_SCALAR = re.compile(r"^(\s*)[^\s#][^:]*:\s*[|>][-+0-9]*\s*$")
+
+
+def _invocation_lines(text):
+    """Every workflow line that invokes a repository check, with its job.
+
+    An invocation is the ENTIRE whitespace-stripped line, so the interpreter,
+    its flags, the arguments and any trailing shell are all part of the identity:
+    appending `|| true`, adding a redirect or changing the command's context on
+    the same line all produce a different invocation.
+
+    The single exception is a trailing backslash, which is line-joining
+    punctuation rather than part of the command: when an argument is appended to
+    a multi-line command, the previously final argument gains a `\\` without
+    itself changing. Normalising it keeps that addition additive -- the appended
+    argument is inventoried as its own line when it references a check -- while
+    leaving every other trailing text, `|| true` included, identity-bearing.
+
+    The job is the `jobs.<name>` key the line sits under, which is what makes a
+    check moved to a different job (and therefore a different environment)
+    detectable. Job keys are only recognised outside block scalars, so a `run: |`
+    body can never be mistaken for one; the invocations themselves live inside
+    those bodies and are still collected.
+    """
+    rows = []
+    job = None
+    block_indent = None
+    for raw in text.split("\n"):
+        stripped = raw.strip()
+        indent = len(raw) - len(raw.lstrip(" "))
+        if block_indent is not None and stripped and indent <= block_indent:
+            block_indent = None
+        if block_indent is None:
+            key = _JOB_KEY.match(raw)
+            if key:
+                job = key.group(1)
+            block = _BLOCK_SCALAR.match(raw)
+            if block:
+                block_indent = len(block.group(1))
+        if stripped and _SCRIPT_REFERENCE.search(stripped):
+            if stripped.endswith("\\"):
+                stripped = stripped[:-1].rstrip()
+            rows.append((stripped, job))
+    return rows
+
+
+def _ordered_subsequence(expected_rows, current_rows):
+    """Greedy ordered match; returns the matched indices or None on the first miss."""
+    matched = []
+    cursor = 0
+    for row in expected_rows:
+        while cursor < len(current_rows) and current_rows[cursor] != row:
+            cursor += 1
+        if cursor == len(current_rows):
+            return None
+        matched.append(cursor)
+        cursor += 1
+    return matched
+
+
 def verify_workflow_inventory(original, current):
+    """Every expected check is still a separate, unaltered, in-context invocation.
+
+    The guarantee this doctor exists to give is that no F017 check was dropped,
+    edited, masked or relocated. It used to enforce that by requiring the whole
+    workflow file to equal the frozen base byte for byte, which also forbade any
+    unrelated addition and so could not survive integration with another track's
+    CI. The inventory below keeps the guarantee and drops the over-reach: the
+    expected invocations must appear in `current` with identical text, in the
+    same relative order, the same number of times, and under the same job.
+    Additional steps and additional invocations elsewhere are permitted.
+    """
     require(digest(original) == WORKFLOW_BASE_SHA, "WORKFLOW_ORIGINAL_IDENTITY")
     before = original.decode()
     require(before.count(OLD_COMMAND) == 1, "WORKFLOW_OLD_CHECK_CENSUS")
     replacement = ("\n          ").join(NEW_COMMANDS)
-    require(current.decode() == before.replace(OLD_COMMAND, replacement), "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-    checks = re.findall(r"scripts/(?:research|ci)/[\w./-]+\.py", before)
+    expected = before.replace(OLD_COMMAND, replacement)
+
+    expected_rows = _invocation_lines(expected)
+    current_rows = _invocation_lines(current.decode())
+    require(_ordered_subsequence(expected_rows, current_rows) is not None,
+            "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+
+    checks = re.findall(_SCRIPT_REFERENCE, before)
     f017_checks = [p for p in checks if 'f017' in PurePosixPath(p).name.lower()]
     require(GENERATOR in f017_checks, "F017_ORIGINAL_CHECK_PRESENT")
     return dict(result="PASS", original_script_references=len(checks), f017_script_references=len(f017_checks), relocated_checks=1,
                 unchanged_other_f017_checks=len(f017_checks)-1, historical_context="EXACT_F35D_OBJECTS",
-                current_context="CURRENT_CHECKOUT", both_legs_required=True)
+                current_context="CURRENT_CHECKOUT", both_legs_required=True,
+                required_invocations=len(expected_rows),
+                additive_invocations=len(current_rows)-len(expected_rows))
 
 
 def read_current(relative):
