@@ -111,3 +111,97 @@ The FULL_NATIVE step in `.github/workflows/macos.yml` now runs
 stays in the tree as the generator that produced v8 and is no longer a CI
 gate. The Event 05 readiness/scientific-access authorities keep binding v8 —
 they describe `f35d3411` and are unchanged by this repair.
+
+## Addendum 2026-09-20 — consolidation of the qualify line
+
+Scope: source-only. Checkpoint access: 0. Nothing above this heading is changed.
+
+Consolidating `qualify/f017-qwen-admission-c2-20260913` onto the native line
+(`work/glm52-weekend-20260920`) brings in commits that change measured V11
+bodies the native line had never seen, so the committed v9 record no longer
+reproduced at the consolidated head and
+`generate_f017_v11_measurement_v2.py --check` reported
+`ACTIVE_MEASUREMENT_DRIFT`. That is the designed behaviour of an *active*
+measurement: the record inventories the bytes at the current head, and the
+remedy the generator itself prescribes is to regenerate it in the same commit
+as the source change. This addendum is the accompanying review; the v9 record
+regenerated alongside it binds this file by sha256.
+
+**Four measured bodies moved, not three.** The count is stated here because a
+first reading of the drift named only the three oracle bodies; the fourth is
+the validator that checks them.
+
+| Measured path | predecessor sha256 | current sha256 | accepted qualify-line commits |
+| --- | --- | --- | --- |
+| `scripts/research/f017_corrected_oracle_primary_wrapper_v11.py` | `6bec968b7f82ad719fc3927f96df9bca07ec8d73c0f962df2a29f7b4446af4fb` | `515b23b0ac4fd382b9f4a75d01b4bbabe079020e17834347d6c1cfa2d7529133` | `1f49d767` |
+| `scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py` | `2dad5b54bdc875d981dd5d5f7cf6eb8c78c83f751925a063e5423f04b11a0d22` | `77b3b473f3744c88f37ab18175df6ace4f6e44d6b15aeefa1832aa3913834586` | `e7759c3e` |
+| `scripts/research/f017_corrected_oracle_primary_target_source_v11.py` | `3942be5766513eb5b96fa4dd342b96d98cb1b1923254ca7479daa8b368063f27` | `33e6473aff9ba468b0614d5f06261c8995bf4ac609f9b61e59c6238b9cd99f74` | `1f49d767`, `6f59d9db` |
+| `scripts/research/validate_f017_v11_execution_authority_v1.py` | `8277276239ed6ec35bd9085b7fd29133468c95d82b6c70135b9f3d629fd55966` | `dec34ba2157f04dcea6e64347bb96dc4288bfc8d676fdb1b10801c5146602253` | `0ae4c6f1`, `f52cd006` |
+
+All five accepted commits are contained in `qualify/f017-qwen-admission-c2-20260913`
+and in none of the native line; `git cherry` had already shown that no commit on
+this line has a patch equivalent on the native side. The remaining four drift
+entries in the record (`f017_result_envelope_v11.py`,
+`f017_result_bundle_builder_v11.py`, `qualify_f017_v11_full_geometry_v1.py`,
+`qualify_f017_v11_failure_campaign_v1.py`) are unchanged from the previous v9:
+they carry the already-reviewed `5b39a21a` lineage only.
+
+### What each change does
+
+**`f017_corrected_oracle_primary_wrapper_v11.py` (`1f49d767`).** Adds primary
+read-observation instrumentation around the existing path. It imports the
+observation helpers, starts an observation owner before the descriptor source is
+built, marks the `CORE` / `CORE_COMPLETE` / `BANK` phases around the unchanged
+`primary_core.execute_outputs(...)` call, wraps the execute-and-bank body in
+`try/except BaseException` so a raising path still finishes its observation as
+`RAISED` (attaching it to the exception) before re-raising, and adds one field,
+`primary_read_observation`, to the returned bundle. The numerical call itself,
+its arguments and the banked bundle are otherwise untouched.
+
+**`f017_corrected_oracle_secondary_wrapper_v11.py` (`e7759c3e`).** The symmetric
+change on the secondary side, plus a source swap: the descriptor prefix now comes
+from `f017_secondary_read_observation_prefix_v1.open_secondary_descriptor_prefix`
+instead of `f017_corrected_oracle_secondary_target_source_v11`. Phases
+`PRIMARY_PREREQUISITE`, `CORE`, `CORE_COMPLETE` and `BANK` bracket the unchanged
+`secondary_core.execute_outputs(...)` call and the unchanged
+`require_primary_terminal(...)` prerequisite check.
+
+**`f017_corrected_oracle_primary_target_source_v11.py` (`1f49d767`, `6f59d9db`).**
+Re-bases `PrimaryDescriptorSourceV11` from
+`f017_corrected_oracle_primary_target_source_v10` onto
+`f017_primary_observed_descriptor_source_v1`, which is the same V10 semantics with
+an observation owner threaded through, and adds the keyword-only
+`_observation_owner` parameter to the class and to
+`source_from_inherited_descriptors`. This is the commit that separates the *active*
+primary observation from the *historical* authority so the two cannot be conflated.
+Fourteen lines change; no numerical behaviour is touched.
+
+**`validate_f017_v11_execution_authority_v1.py` (`0ae4c6f1`, `f52cd006`).** Purely
+additive hardening of the validator that guards the three bodies above: +249 lines
+against 3 removed. It gains AST-level checks — `_imports`, `_one_function`,
+`_one_method`, `_require_import`, `_reject_rebinding`, `_reject_imports`,
+`_direct_name_call`, `_bridge_get` and
+`_validate_active_target_source_separation` — which require the exact observation
+imports to be present and bound, reject rebinding or substituting them, and assert
+that the active target source stays separated from the historical one. This makes
+the gate stricter, not weaker: it is the enforcement that the instrumentation above
+cannot be quietly bypassed.
+
+### Numerical authority
+
+Both scientific numerical cores are **byte-unchanged**. The regenerated record
+reports `numerical_authority_unchanged` as
+`scripts/research/f017_corrected_oracle_primary_numerics_v3.py` (sha256
+`56f4179a58ff9558e143e79af73f9709e731ca74b6536f346b1a8e1b29e3f3a6`) and
+`scripts/research/f017_corrected_oracle_secondary_numerics_v3.py` (sha256
+`c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3`), and neither
+appears in `drift_from_predecessor`. The generator's own rule — "these bodies must
+never drift under a measurement refresh; a v9 that reports them as changed is a
+stop, not a re-baseline" — is therefore satisfied, and `verify()` raises nothing:
+the run emits `"result": "PASS"` with 28 of 36 bodies unchanged since the
+predecessor and 8 carrying reviewed lineage.
+
+The frozen v8 predecessor is not regenerated and is not touched:
+`predecessor_historical_verification` still reports 36 verified paths, 0 blob
+mismatches, at head `f35d3411`, tree `08864e7d`. `original_checkpoint_access`
+stays 0 and no authority is minted by this refresh.
