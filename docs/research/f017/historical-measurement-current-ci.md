@@ -246,3 +246,44 @@ longer be edited *at all* — not even additively — without advancing
 `RESOLUTION_BASE` and `RESOLUTION_WORKFLOW_SHA256` in the same commit. That is
 the review point a change to a mandatory qualification step should have. Steps
 that are not required, and steps added anywhere, remain unconstrained.
+
+### 2026-09-21 amendment 3 — canonical form and residual byte-freeze
+
+Nothing above this heading is changed.
+
+The step-level byte-freeze recorded above was still bypassable, and the reason is
+that it compared *key spellings*. Adversarial review installed
+`run.shell: /usr/bin/true {0}` under the required job by writing the key as
+`"defaults"` — quoted. YAML resolves it identically, every required step inherits
+the no-op shell, a script containing `exit 73` returns 0 without running, and the
+doctor and all 38 controls passed. Anchored quoted defaults reused through an
+alias, an explicit `? defaults`, a tab after `defaults:`, a flow-style
+`needs: [classify, documentation]`, and quoted `"continue-on-error"` or
+`"strategy"` all did the same.
+
+Enumerating keys is therefore abandoned. Two rules replace it.
+
+**1. Canonical form (`WORKFLOW_NONCANONICAL`).** The whole file must be written
+in one spelling, checked over structural lines only — `run:` bodies are shell and
+Python, where `!=`, `&&` and `{` are not YAML. Rejected: tabs, anchors, aliases,
+merge keys, tags, explicit `? ` keys, quoted mapping keys, flow collections,
+duplicate keys within a mapping, duplicate job ids, duplicate step names within a
+job, and step items that are not `- name:`, `- uses:` or `- id:` — the three
+forms the resolution itself uses.
+
+**2. Residual byte-freeze.** The *residual* of a workflow is the file with every
+non-required step block removed, a block carrying the comments written directly
+above it. `residual(current)` must equal `residual(resolution)` byte for byte.
+That freezes, in one comparison and with no key list to miss: the workflow header
+and its `on`, `concurrency`, `permissions`, `defaults` and `env`; every job
+header and every job-level key; every job that contains no required step
+(`classify`, `aggregate`, `evidence-integrity`, `documentation`,
+`closed-branch-guard`) in full; and every required step block. Non-required step
+blocks — the Flash steps, the Feature 002 discovery step, anything added later —
+are removed before the comparison and stay free.
+
+**Consequence, stronger again:** *any* change to this workflow outside a
+non-required step now requires advancing `RESOLUTION_BASE` and
+`RESOLUTION_WORKFLOW_SHA256` deliberately in the same commit. That includes the
+workflow header, concurrency, permissions, any job-level key, and any job that
+runs no required step — not just the required steps themselves.

@@ -42,6 +42,8 @@ def run(work_dir, code_view):
     def inventory(cur=None,base=None,nat=None,res=None):
         return scope.verify_workflow_inventory(base or before,cur or current_workflow,
                                                nat or native_workflow,res or resolution_workflow)
+    def canonical(problem_text):
+        return problem_text.encode()
     assert inventory()['both_legs_required']
     rejection('missing old workflow source','WORKFLOW_ORIGINAL_IDENTITY',lambda:inventory(base=before+b'\n'))
     rejection('missing native workflow source','WORKFLOW_NATIVE_IDENTITY',lambda:inventory(nat=native_workflow+b'\n'))
@@ -49,6 +51,8 @@ def run(work_dir, code_view):
 
     text=current_workflow.decode()
     res_text=resolution_workflow.decode()
+    unrelated_marker='      - name: Validate independent Feature 017 oracle\n'
+    jobs_head='jobs:\n'
     required=[s for s in scope._steps(res_text) if scope._is_required('\n'.join(s['lines']))]
     assert len(required)==10,len(required)
     target=[s for s in required if s['name']=='Qualify corrected oracle historical and active authority split'][0]
@@ -88,7 +92,9 @@ def run(work_dir, code_view):
         return text.replace(job_head,job_head+extra,1).encode()
     rejection('job-level defaults.run.shell replaces execution','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(job_insert('    defaults:\n      run:\n        shell: /usr/bin/true {0}\n')))
-    rejection('job disabled with if: false','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+    # The job already carries an `if:`, so a second one is a duplicate key and
+    # the canonical gate rejects it before the residual comparison runs.
+    rejection('job disabled with if: false','WORKFLOW_NONCANONICAL',
               lambda:inventory(job_insert('    if: false\n')))
     rejection('job made non-fatal','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(job_insert('    continue-on-error: true\n')))
@@ -152,8 +158,49 @@ def run(work_dir, code_view):
     rejection('required step name duplicated in a second job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(duplicate.encode()))
 
+    # --- Astra round 3: spellings that keep YAML meaning but change the bytes ---
+    job_head='  apple-mlx-small-fixtures:\n'
+    assert text.count(job_head)==1
+    noop='      run:\n        shell: /usr/bin/true {0}\n'
+    def job_insert(extra): return text.replace(job_head,job_head+extra,1).encode()
+    rejection('quoted job-level "defaults" installs a no-op shell','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    "defaults":\n'+noop)))
+    rejection('anchored quoted defaults reused through an alias','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    "defaults": &noop\n'+noop)))
+    rejection('explicit complex key ? defaults','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    ? defaults\n    :\n'+noop)))
+    rejection('tab after defaults:','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    defaults:\t\n'+noop)))
+    rejection('quoted "continue-on-error"','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    "continue-on-error": true\n')))
+    rejection('quoted "strategy"','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    "strategy":\n      fail-fast: false\n')))
+    rejection('flow-style needs list','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    needs: [classify, documentation]\n')))
+    rejection('duplicate jobs: key shadowing the required job','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace('jobs:\n','jobs:\n  decoy:\n    runs-on: macos-15\n    steps:\n      - name: decoy\n        run: |\n          true\njobs:\n',1).encode()))
+    rejection('second job with the same id','WORKFLOW_NONCANONICAL',
+              lambda:inventory((text.rstrip('\n')+'\n'+job_head+'    runs-on: macos-15\n    steps:\n      - name: shadow\n        run: |\n          true\n').encode()))
+    rejection('step item without a name','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(unrelated_marker,'      - run: |\n          true\n'+unrelated_marker,1).encode()))
+    rejection('alias-only merge into a required step','WORKFLOW_NONCANONICAL',
+              lambda:inventory(swap('\n'.join([lines[0],'        <<: *noop']+lines[1:]))))
+
+    # --- workflow-level content is frozen by the residual comparison ---
+    rejection('workflow-level quoted "defaults"','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(jobs_head,'"defaults":\n  run:\n    shell: /usr/bin/true {0}\n'+jobs_head,1).encode()))
+    rejection('concurrency changed','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace('concurrency:\n','concurrency:\n  cancel-in-progress: true\n',1).encode()))
+    rejection('permissions changed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace('permissions:\n','permissions:\n  actions: write\n',1).encode()))
+    # The job already sets `env:`, so a second one is a duplicate key.
+    rejection('job env added','WORKFLOW_NONCANONICAL',
+              lambda:inventory(job_insert('    env:\n      PYTHONOPTIMIZE: "1"\n')))
+    rejection('a job with no required steps changed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace('  aggregate:\n','  aggregate:\n    continue-on-error: true\n',1).encode()))
+
     # --- still permitted ---
-    unrelated='      - name: Validate independent Feature 017 oracle\n'
+    unrelated=unrelated_marker
     assert text.count(unrelated)==1
     added=('      - name: Unrelated added step\n        run: |\n'
            '          .venv/bin/python scripts/ci/some_other_check.py --check\n')

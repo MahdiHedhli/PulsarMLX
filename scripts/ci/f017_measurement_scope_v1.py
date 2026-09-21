@@ -247,69 +247,171 @@ def _is_required(block_text):
     return any(command in block_text for command in NEW_COMMANDS)
 
 
-def _key_block(lines, indent, keys):
-    """The named mapping keys at `indent`, verbatim, in file order.
+_BLOCK_SCALAR = re.compile(r"^(\s*)[^\s#][^:]*:\s*[|>][-+0-9]*\s*$")
+_STEP_ITEM = re.compile(r"^(\s*)- (name|uses|id):")
+_QUOTED_KEY = re.compile(r"""^\s*(?:-\s+)?["'][^"']+["']\s*:""")
+_COMPLEX_KEY = re.compile(r"^\s*\?\s")
+_MERGE_KEY = re.compile(r"^\s*<<\s*:")
+_ANCHOR = re.compile(r"(?:^|\s)&[A-Za-z0-9_-]+\s*$|(?:^|\s)&[A-Za-z0-9_-]+\s")
+_ALIAS = re.compile(r":\s*\*[A-Za-z0-9_-]+\s*$|^\s*-\s*\*[A-Za-z0-9_-]+\s*$")
+_TAG = re.compile(r":\s*!!?[A-Za-z0-9_/-]+")
+_FLOW = re.compile(r":\s*[\[{]")
+_MAP_KEY = re.compile(r"^(\s*)(?:- )?([A-Za-z0-9_.-]+):(\s|$)")
 
-    A key that is absent stays absent, so a step or job cannot acquire one.
+
+def _structural(text):
+    """Every line that is YAML structure rather than block-scalar content.
+
+    `run: |` bodies are shell and Python. They legitimately contain `!=`, `&&`,
+    `*` and `{`, none of which are YAML constructs there, so the canonical-form
+    gate must not read them as such.
     """
-    pad = " " * indent
-    captured = []
-    active = False
-    for line in lines:
-        if line.startswith(pad) and not line.startswith(pad + " ") and line.strip():
-            entry = line.strip()
-            active = any(entry == k + ":" or entry.startswith(k + ": ") for k in keys)
-            if active:
-                captured.append(line)
-        elif active and (not line.strip() or line.startswith(pad + " ")):
-            captured.append(line)
-        elif line.strip():
-            active = False
-    return "\n".join(captured)
-
-
-def _job_lines(text, job):
-    """Every line of one job, from its key to the next job or top-level key."""
     lines = text.split("\n")
-    out = []
-    active = False
-    for line in lines:
-        key = _JOB_KEY.match(line)
-        if key:
-            if active:
-                break
-            active = key.group(1) == job
+    block_indent = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+        if block_indent is not None:
+            if stripped and indent <= block_indent:
+                block_indent = None
+            else:
+                continue
+        if stripped:
+            block = _BLOCK_SCALAR.match(line)
+            if block:
+                yield index, line
+                block_indent = len(block.group(1))
+                continue
+        yield index, line
+
+
+def canonical_form(text):
+    """Reject any YAML spelling that hides meaning from a textual comparison.
+
+    A freeze that compares text only protects what the attacker spells the way
+    the freeze expects. Quoting a key, aliasing an anchored mapping, using an
+    explicit `? key`, a merge key or a tab all preserve YAML meaning while
+    changing the bytes, so the file is first required to be written in one
+    canonical form. The constructs the resolution itself uses -- `- name:`,
+    `- uses:` and `- id:` step items -- are allowed explicitly; it contains no
+    quoted keys, no flow collections, no anchors, aliases, tags or tabs.
+    """
+    problems = []
+    structural = list(_structural(text))
+    seen_keys = {}
+    jobs = []
+    step_names = {}
+    current_job = None
+    in_steps = False
+    for index, line in structural:
+        if "\t" in line:
+            problems.append(f"line {index + 1}: tab in workflow structure")
+        if not line.strip() or line.lstrip().startswith("#"):
             continue
-        if active:
-            if line.strip() and not line.startswith("  "):
-                break
-            out.append(line)
-    return out
+        for pattern, label in ((_QUOTED_KEY, "quoted mapping key"),
+                               (_COMPLEX_KEY, "explicit complex key"),
+                               (_MERGE_KEY, "merge key"),
+                               (_ANCHOR, "anchor"),
+                               (_ALIAS, "alias"),
+                               (_TAG, "tag"),
+                               (_FLOW, "flow collection")):
+            if pattern.search(line):
+                problems.append(f"line {index + 1}: {label}")
+        four_space = re.match(r"^    ([A-Za-z0-9_.-]+):", line)
+        if four_space:
+            in_steps = four_space.group(1) == "steps"
+        item = re.match(r"^(\s*)- (\S+)", line)
+        if item and item.group(1) == "      " and in_steps and not _STEP_ITEM.match(line):
+            problems.append(f"line {index + 1}: step item is not - name:/- uses:/- id:")
+        job = _JOB_KEY.match(line)
+        if job:
+            if job.group(1) in jobs:
+                problems.append(f"line {index + 1}: duplicate job id {job.group(1)}")
+            jobs.append(job.group(1))
+            current_job = job.group(1)
+            step_names.setdefault(current_job, [])
+        name = _STEP_NAME.match(line)
+        if name and current_job is not None:
+            if name.group(1) in step_names[current_job]:
+                problems.append(f"line {index + 1}: duplicate step name in {current_job}")
+            step_names[current_job].append(name.group(1))
+        key = _MAP_KEY.match(line)
+        if key:
+            indent = len(key.group(1)) + (2 if line.lstrip().startswith("- ") else 0)
+            for level in [k for k in seen_keys if k > indent]:
+                del seen_keys[level]
+            if line.lstrip().startswith("- "):
+                seen_keys[indent] = set()
+            bucket = seen_keys.setdefault(indent, set())
+            if key.group(2) in bucket:
+                problems.append(f"line {index + 1}: duplicate key {key.group(2)}")
+            bucket.add(key.group(2))
+    return problems
+
+
+def _step_spans(text):
+    """(start, end, block) for every step, including the comments above it.
+
+    A comment immediately above a step documents that step, so it travels with
+    it: otherwise removing a non-required step would strand its comment in the
+    residual and make an unrelated CI edit look like a frozen-region change.
+    """
+    lines = text.split("\n")
+    spans = []
+    index = 0
+    while index < len(lines):
+        if _STEP_START.match(lines[index]):
+            start = index
+            while start > 0:
+                previous = lines[start - 1]
+                if previous.strip().startswith("#") and previous.startswith("      "):
+                    start -= 1
+                else:
+                    break
+            end = index + 1
+            while end < len(lines) and not _STEP_START.match(lines[end]) and not (
+                lines[end].strip() and not lines[end].startswith("       ")
+            ):
+                end += 1
+            # A trailing comment block belongs to the next step, not this one.
+            while end - 1 > index and lines[end - 1].strip().startswith("#"):
+                end -= 1
+            spans.append((start, end, "\n".join(lines[index:end])))
+            index = end
+            continue
+        index += 1
+    return spans
+
+
+def residual(text):
+    """The workflow with every non-required step block removed.
+
+    What remains is everything this doctor freezes: the workflow header, its
+    `on`, `concurrency`, `permissions`, `defaults` and `env`, every job header
+    and job-level key, every job that carries no required step, and every
+    required step block. Non-required steps -- the Flash steps, the Feature 002
+    discovery step, anything added later -- are removed before comparison and are
+    therefore free to change.
+    """
+    lines = text.split("\n")
+    keep = [True] * len(lines)
+    for start, end, block in _step_spans(text):
+        if not _is_required(block):
+            for position in range(start, end):
+                keep[position] = False
+    return "\n".join(line for line, flag in zip(lines, keep) if flag)
 
 
 def verify_workflow_inventory(original, current, native, resolution):
-    """Freeze every required F017 step at the consolidation resolution.
+    """Freeze the qualification workflow everywhere except non-required steps.
 
-    Line-level rules are exhausted. An ordered-subsequence plus set-membership
-    check over allowed lines still permits *composing* them: the existing
-    `cleanup_v6_historical_worktree() {` and its `}` can be relocated to wrap a
-    step's whole body in a function that is never called, so every required line
-    is present, in order, from a frozen lineage -- and nothing runs. Execution can
-    also be redirected from outside the step entirely, by a job- or
-    workflow-level `defaults.run.shell`, a job `if:`, or a job
-    `continue-on-error:`, none of which appear inside the step at all.
-
-    So the scope is narrowed and the comparison is made absolute. A required step
-    is byte-identical to the resolution commit, in the same job, in the same
-    order, and its name occurs exactly once. The job's execution keys and the
-    workflow's own defaults are byte-identical too, and a key absent in the
-    resolution must stay absent. Steps that are not required, and steps added
-    anywhere, remain unconstrained.
-
-    The consequence is deliberate: a required F017 step can no longer be edited
-    at all without advancing `RESOLUTION_BASE` in the same commit, which is the
-    review point a change to a mandatory qualification step should have. The
-    qualify and native identities are retained as lineage provenance.
+    Enumerating key spellings does not work: a quoted `"defaults"`, an anchored
+    mapping reused through an alias, an explicit `? defaults` or a tab all keep
+    their YAML meaning while escaping a textual key comparison, and any one of
+    them can install `run.shell: /usr/bin/true {0}` so that every required step
+    becomes a no-op. So the file is first required to be in one canonical form,
+    and then everything except non-required step blocks is compared byte for byte
+    against the resolution. There is no key list left to miss.
     """
     require(digest(original) == WORKFLOW_BASE_SHA, "WORKFLOW_ORIGINAL_IDENTITY")
     require(digest(native) == NATIVE_WORKFLOW_SHA256, "WORKFLOW_NATIVE_IDENTITY")
@@ -319,39 +421,25 @@ def verify_workflow_inventory(original, current, native, resolution):
 
     resolution_text = resolution.decode()
     current_text = current.decode()
+    require(not canonical_form(current_text), "WORKFLOW_NONCANONICAL")
+    require(residual(current_text) == residual(resolution_text),
+            "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+
     resolution_steps = _steps(resolution_text)
     current_steps = _steps(current_text)
-
     required = [s for s in resolution_steps if _is_required("\n".join(s["lines"]))]
     require(required, "F017_REQUIRED_STEP_CENSUS")
-
     by_name = {}
     for step in current_steps:
         by_name.setdefault(step["name"], []).append(step)
-
     positions = []
-    frozen_jobs = []
     for step in required:
         matches = by_name.get(step["name"], [])
-        # A second step of the same name would let a decoy satisfy the freeze.
         require(len(matches) == 1, "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        current_step = matches[0]
-        require(current_step["lines"] == step["lines"],
-                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        require(current_step["job"] == step["job"],
-                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        positions.append(current_steps.index(current_step))
-        if step["job"] not in frozen_jobs:
-            frozen_jobs.append(step["job"])
+        require(matches[0]["lines"] == step["lines"], "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        require(matches[0]["job"] == step["job"], "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        positions.append(current_steps.index(matches[0]))
     require(positions == sorted(positions), "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-
-    for job in frozen_jobs:
-        require(_key_block(_job_lines(current_text, job), 4, JOB_EXECUTION_KEYS)
-                == _key_block(_job_lines(resolution_text, job), 4, JOB_EXECUTION_KEYS),
-                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-    require(_key_block(current_text.split("\n"), 0, WORKFLOW_EXECUTION_KEYS)
-            == _key_block(resolution_text.split("\n"), 0, WORKFLOW_EXECUTION_KEYS),
-            "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
 
     checks = re.findall(_SCRIPT_REFERENCE, before)
     f017_checks = [p for p in checks if 'f017' in PurePosixPath(p).name.lower()]
@@ -359,9 +447,9 @@ def verify_workflow_inventory(original, current, native, resolution):
     return dict(result="PASS", original_script_references=len(checks), f017_script_references=len(f017_checks), relocated_checks=1,
                 unchanged_other_f017_checks=len(f017_checks)-1, historical_context="EXACT_F35D_OBJECTS",
                 current_context="CURRENT_CHECKOUT", both_legs_required=True,
-                required_steps=len(required), frozen_jobs=len(frozen_jobs),
-                frozen_at=RESOLUTION_BASE,
-                additive_steps=len(current_steps)-len(resolution_steps))
+                required_steps=len(required), frozen_at=RESOLUTION_BASE,
+                canonical_form="PASS", residual_frozen=True,
+                free_steps=len([s for s in _step_spans(current_text) if not _is_required(s[2])]))
 
 
 def read_current(relative):
