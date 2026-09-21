@@ -18,6 +18,17 @@ It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisan
 
 > **DON'T PANIC.** The giant model does not need to fit entirely in memory.
 
+## Status at a glance (2026-09-20)
+
+| Track | What runs today | Machine | Runtime | Observed speed | Fidelity evidence | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Qwen3-30B-A3B Q8_0** (frozen research baseline) | full 48-layer execution, greedy token, bounded generation | Apple Silicon (MLX GPU) | Python/NumPy reference + MLX worker | validation timings only (not advertised) | exact numerical boundaries vs the CPU architecture oracle, ≈10⁻⁷–10⁻⁸ at MoE boundaries | tag [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research) |
+| **GLM-5.2 UD-IQ2_XXS** (research ladder + Rust-native runtime track) | committed research ladder C01–C11 (Python/NumPy reference path); **Rust-native one-token boundary established on the real checkpoint on 2026-09-20**: the native executor (Rust + MLX bridge) produced token 154820 for prompt 9703, equal to the corrected full-checkpoint oracle (Event 06), under a human-approved one-shot; multi-token generation, tokenizer/template and a CLI loop do not exist yet | Mac Studio M1 Ultra, internal SSD | Python/NumPy reference (research); Rust + MLX-bridge native P1 (one token, human-gated one-shots) | native one token: 1003.6 s = 704 s shard identity rehash (~238 GB) + 299 s forward pass — not a throughput claim | checkpoint-free native-vs-corrected-oracle differentials (11 formats bit-exact; 6/6 graph cases) + real-checkpoint attempt 2 (token and top-1 margin agree with the oracle) | [`docs/architecture/GLM52_CONTRACT.md`](docs/architecture/GLM52_CONTRACT.md), branch `feat/017-rust-native-inference-runtime` ([attempt-2 readiness + outcome](https://github.com/MahdiHedhli/PulsarMLX/blob/e38d002e54b5552966ccb7a586c2b0cc23b47e08/docs/architecture/reviews/f017-native-attempt-2-readiness-20260920.md)) |
+| **GLM-5.3-Flash mixed-4/8, unpruned** (paged / persistent research candidate) | persistent OpenAI-style research server paging 288 experts × 42 layers through a wired slot store; corrected termination; 6.03 h soak segment at the 60 GB budget, and a **70 GB budget admitted on 2026-09-20** (117 slots/layer) after a paired ladder and an 80-request server soak | Mac Studio M1 Ultra 128 GB | Python/MLX (mlx 0.32.2, mlx-vlm 0.7.0 + pipenetwork `glm5_next`) | decode **2.6–3.3 tok/s** at the 60 GB budget (miss-bound); at the admitted 70 GB budget the same six paired CLI prompts give **3.06–4.20 tok/s** against **2.75–3.64** at 60 GB (+9–17 % per pair, mean +13.4 %, 18/18 token-identical); exact-repeat request latency 12–15 % lower, A-B-A 9–13 % lower than a fresh process (prefill) | 120/120 token-identical task pairs vs the fresh-process paged reference; 119/119 relative task retention; 0.9724 exact 95 % lower bound on group retention (scope-limited) | [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md), commit `971db9c1` on `serve/glm53-flash-unpruned-persistent-20260919b` |
+| **Pruned REAP variants** (GLM-5.3-Flash REAP50 etc.) | resident serving experiments on the pruned 144-expert build | Mac Studio M1 Ultra | Python/MLX | recorded in [`docs/glm53-flash/performance-notes.md`](docs/glm53-flash/performance-notes.md) | **not the fidelity target**; pruned-model numbers are never compared with unpruned results | same branch family |
+
+None of these is a production runtime. The Python/MLX Flash candidate is **not** the Rust-native shipping architecture and does not complete it.
+
 ## The idea
 
 A giant MoE may hold hundreds of billions of parameters while **activating only a fraction** on each token. That changes the memory problem: not every expert must stay resident for every step.
@@ -231,7 +242,9 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | Evidence / claims / reviewer indexes | ✅ Verified |
 | Optimized MLX-only generation | 🚧 |
 | KV-cached decode | 🚧 |
-| GLM-5.2 full stack | 🚧 Active bring-up (see below) |
+| GLM-5.2 full stack (research ladder) | ✅ C01–C11 committed (Python/NumPy reference path) |
+| GLM-5.2 Rust-native runtime (F017) | 🚧 In progress on feature branches; not merged, not claimed |
+| GLM-5.3-Flash unpruned paged/persistent serving (research) | ✅ Measured candidate `971db9c1` (Python/MLX); see [results](docs/glm53-flash/persistent-serving-results.md) |
 | OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
@@ -275,6 +288,14 @@ GLM is the model that **forces** SSD-backed expert residency rather than “fit 
 Evidence: [`docs/research/glm52/`](docs/research/glm52/) · ledger: [`docs/research/glm52/CLAIMS_LEDGER.md`](docs/research/glm52/CLAIMS_LEDGER.md).
 
 **Not claimed:** GLM product support, generation quality, tok/s, M2 Max, external RAID, or CUDA bit-parity.
+
+### Rust-native runtime track (F017)
+
+The shipping architecture for GLM-5.2 is a Rust-native runtime with no required Python hot path ([strategy](docs/roadmap/PULSARMLX_STRATEGY.md)). Its work lives on `feat/017-rust-native-inference-runtime`. State on 2026-09-20: the bounded one-token native executor (Rust + MLX bridge) **executed the real checkpoint and produced token 154820 for prompt 9703, equal to the corrected full-checkpoint oracle** (Event 06), under a human-approved one-shot (attempt 2; attempt 1 on 2026-08-22 had failed against an expected token later proven to come from a defective decoder family). Before the run, the native decoders were shown bit-identical to that oracle's independent decoders on all 11 checkpoint formats and the native graph matched it on the synthetic differential family. One token took 1003.6 s (704 s of shard identity rehash over ~238 GB plus a 299 s forward pass) — a correctness event, not a performance figure. Multi-token native generation, tokenizer/template handling and a CLI loop do not exist yet; every real-checkpoint run is human-gated; formal feature closeout requires a human approval that has not been granted. See the [attempt-2 readiness and outcome note](https://github.com/MahdiHedhli/PulsarMLX/blob/e38d002e54b5552966ccb7a586c2b0cc23b47e08/docs/architecture/reviews/f017-native-attempt-2-readiness-20260920.md). No native GLM-5.2 execution is committed on the default branch. The historical Python/NumPy research ladder above is banked evidence, not the native runtime.
+
+## GLM-5.3-Flash: unpruned paged / persistent serving (research, 2026-09-20)
+
+A separate research track ran the **unpruned** `GLM-5.3-Flash-MLX-mixed-4_8bit` (288 routed experts, top-8, 42 MoE layers, ~170 GB of experts) on a Mac Studio M1 Ultra 128 GB by paging experts through a 60 GB wired slot store, first as a CLI and then as a persistent OpenAI-style research server (Python/MLX; commit `971db9c1`). Headline results, all relative to a fresh-process run of the same paged path with the same corrected stop policy: token-identical outputs on 120/120 sealed tasks, 119/119 relative task retention (exact 95 % lower bound 0.9724 on group retention, scope-limited), exact-repeat request latency 12–15 % lower and A-B-A 9–13 % lower (a prefill effect; decode stays 2.6–3.3 tok/s because the budget holds ~35 % of the experts), and a 6.03 h single-process soak segment with 0 failed requests. The round also root-caused the `<|user|>`-after-answer termination fault (loader without eos ids) and fixed it. Full tables, definitions, the soak usability clarification and limitations: [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md). Deployment authorization was not granted; nothing replaced a default service. A follow-on round on 2026-09-20 profiled decode (66 % cold expert reads), simulated the capacity curve and then raised the expert budget: **70e9 bytes (117 slots per layer) is now the recommended configuration**, with 18/18 token-identical paired runs, decode +9–17 % (mean +13.4 %), decode misses/token −16.4 %, peak MLX memory +10.107 GB and an 80-request server soak with 0 failed requests; 80e9 is not admitted on this host. Streaming the prefill outside the store was measured and is a negative result (identity failure from MLX's kernel selection, slower prefill, no reclaimable budget), as are speculative/union batching and request batching, which do not reduce expert I/O.
 
 ## Performance: not the point yet
 
