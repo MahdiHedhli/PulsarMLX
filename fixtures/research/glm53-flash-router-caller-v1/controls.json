@@ -1,0 +1,169 @@
+{
+  "version": "g3-pre-observation-group-case",
+  "controls": {
+    "changed-source": {
+      "exception_type": "rc_source.SourceGuardError",
+      "message_contains": [
+        "SOURCE_NODE_DIGEST_MISMATCH"
+      ],
+      "boundary": "same source loader rejects changed selected node before compile",
+      "requires_caller_evaluation": false,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "unlisted-global": {
+      "exception_type": "rc_source.SourceGuardError",
+      "message_contains": [
+        "UNLISTED_GLOBAL"
+      ],
+      "boundary": "real AST/symtable selected-node audit",
+      "requires_caller_evaluation": false,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "wrong-selector-binding": {
+      "exception_type": "rc_source.SourceGuardError",
+      "message_contains": [
+        "SELECTOR_BINDING_MISMATCH"
+      ],
+      "boundary": "real namespace selector-identity guard before caller class compilation",
+      "requires_caller_evaluation": false,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "missing-bias": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-bias-sensitive"
+    },
+    "swapped-bias": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-bias-sensitive"
+    },
+    "omit-weight-transpose": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "permuted-weight-rows": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "wrong-top-k": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "wrong-scaling": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "wrong-normalization": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "cross-instance-config": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "wrong-expert-score-association": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual complete caller and selector evaluated, then independently frozen ID/shape/per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-small-top2"
+    },
+    "omit-input-cast": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual BF16-input/weight caller derivative and selector evaluated, frozen scalar per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "DETECTION_OR_EXPLICIT_NUMERICAL_NONDISTINGUISHABILITY_OR_NATIVE_BF16_UNSUPPORTED",
+      "case": "bf16-conversion-precision"
+    },
+    "omit-weight-cast": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual BF16-input/weight caller derivative and selector evaluated, frozen scalar per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "DETECTION_OR_EXPLICIT_NUMERICAL_NONDISTINGUISHABILITY_OR_NATIVE_BF16_UNSUPPORTED",
+      "case": "bf16-conversion-precision"
+    },
+    "omit-both-casts": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "actual BF16-input/weight caller derivative and selector evaluated, frozen scalar per-ID score criterion",
+      "requires_caller_evaluation": true,
+      "policy": "DETECTION_OR_EXPLICIT_NUMERICAL_NONDISTINGUISHABILITY_OR_NATIVE_BF16_UNSUPPORTED",
+      "case": "bf16-conversion-precision"
+    },
+    "wrong-group-count": {
+      "exception_type": "rc_checks.ComparisonError",
+      "message_contains": [
+        "ROUTER_OUTPUT_MISMATCH"
+      ],
+      "boundary": "complete caller with n_group changed from2 to1, evaluated before exact frozen group-sensitive ID/score comparison",
+      "requires_caller_evaluation": true,
+      "policy": "REQUIRED_INTENDED_REJECTION",
+      "case": "fp32-group-sensitive"
+    }
+  },
+  "semantic_variant_classification": "Only canonical nodes are unchanged upstream. Named cast/transpose code derivatives and attribute/data mutations are explicit controls. Every step rebuilds fresh functions/classes/selector objects; no cached global rebinding.",
+  "wrong_mechanism_probes": "For every expected control: wrong exact exception type, correct type/wrong message, and no exception. Unrelated errors are HARNESS_FAILURE, never intended detection.",
+  "optional_cast_gap_policy": "Single omissions can be numerically masked by mixed-operand promotion; never call those discriminating if outputs pass. Omitted-both fixture has predeclared scalar BF16-rounding separation; unsupported/no-separation remains explicitly unqualified. Mandatory FP32 controls have no survivor allowance.",
+  "native_unsupported_predicate": "Exact ValueError/RuntimeError/TypeError with bfloat16 or bfloat plus unsupported/not support/unavailable; bank actual exception and execution/evaluation count, no acceptance by arbitrary exception."
+}

@@ -1,0 +1,125 @@
+{
+  "schema": "flash-boundary-completion-template-v1",
+  "expected_origin": "hand-authored JSON literals; source-derived static suffix and loop spacing; prefix from separately banked standard-filter failure before candidate adapter exists",
+  "baseline_prefix_stdout_sha256": "70ce2b0f417705d3658b2771ab5cb928cf070632884cd69ce66ab4da71489809",
+  "base": {
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello."
+      }
+    ],
+    "tools": [],
+    "add_generation_prompt": true
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "weather",
+        "description": "Café \"Nord\" \\ ligne\n\t<&>",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "Montréal"
+            },
+            "prefs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "°C",
+                "été"
+              ]
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "additionalProperties": false,
+          "example": null
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "echo",
+        "description": "Écho",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "payload": {
+              "type": "array",
+              "default": [
+                true,
+                null,
+                2.5
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "literal_json_declarations": [
+    "{\"name\": \"weather\", \"description\": \"Café \\\"Nord\\\" \\\\ ligne\\n\\t<&>\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"Montréal\"}, \"prefs\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"default\": [\"°C\", \"été\"]}}, \"required\": [\"city\"], \"additionalProperties\": false, \"example\": null}}",
+    "{\"name\": \"echo\", \"description\": \"Écho\", \"parameters\": {\"type\": \"object\", \"properties\": {\"payload\": {\"type\": \"array\", \"default\": [true, null, 2.5]}}}}"
+  ],
+  "expected_text": "[gMASK]<sop><|system|>Reasoning Effort: Max<|user|>Hello.<|assistant|><think>",
+  "expected_one_tool": "[gMASK]<sop><|system|>Reasoning Effort: Max<|system|>\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within <tools></tools> XML tags:\n<tools>\n\n{\"name\": \"weather\", \"description\": \"Café \\\"Nord\\\" \\\\ ligne\\n\\t<&>\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"Montréal\"}, \"prefs\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"default\": [\"°C\", \"été\"]}}, \"required\": [\"city\"], \"additionalProperties\": false, \"example\": null}}\n\n\n</tools>\n\nFor each function call, output the function name and arguments within the following XML format:\n<tool_call>{function-name}<arg_key>{arg-key-1}</arg_key><arg_value>{arg-value-1}</arg_value><arg_key>{arg-key-2}</arg_key><arg_value>{arg-value-2}</arg_value>...</tool_call><|user|>Hello.<|assistant|><think>",
+  "expected_multiple_tools": "[gMASK]<sop><|system|>Reasoning Effort: Max<|system|>\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within <tools></tools> XML tags:\n<tools>\n\n{\"name\": \"weather\", \"description\": \"Café \\\"Nord\\\" \\\\ ligne\\n\\t<&>\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\", \"description\": \"Montréal\"}, \"prefs\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"default\": [\"°C\", \"été\"]}}, \"required\": [\"city\"], \"additionalProperties\": false, \"example\": null}}\n\n\n{\"name\": \"echo\", \"description\": \"Écho\", \"parameters\": {\"type\": \"object\", \"properties\": {\"payload\": {\"type\": \"array\", \"default\": [true, null, 2.5]}}}}\n\n\n</tools>\n\nFor each function call, output the function name and arguments within the following XML format:\n<tool_call>{function-name}<arg_key>{arg-key-1}</arg_key><arg_value>{arg-value-1}</arg_value><arg_key>{arg-key-2}</arg_key><arg_value>{arg-value-2}</arg_value>...</tool_call><|user|>Hello.<|assistant|><think>",
+  "assistant_message": {
+    "role": "assistant",
+    "content": "",
+    "reasoning_content": "",
+    "tool_calls": [
+      {
+        "function": {
+          "name": "weather",
+          "arguments": {
+            "city": "Paris \"Nord\"\\Rue\n",
+            "options": {
+              "unit": "°C",
+              "ok": false
+            },
+            "values": [
+              true,
+              null,
+              2.5
+            ],
+            "count": 3,
+            "enabled": false,
+            "nothing": null
+          }
+        }
+      }
+    ]
+  },
+  "literal_argument_fragments": {
+    "city": "Paris \"Nord\"\\Rue\n",
+    "options": "{\"unit\": \"°C\", \"ok\": false}",
+    "values": "[true, null, 2.5]",
+    "count": "3",
+    "enabled": "false",
+    "nothing": "null"
+  },
+  "expected_assistant_call": "[gMASK]<sop><|system|>Reasoning Effort: Max<|assistant|><think></think>\n<tool_call>weather<arg_key>city</arg_key><arg_value>Paris \"Nord\"\\Rue\n</arg_value><arg_key>options</arg_key><arg_value>{\"unit\": \"°C\", \"ok\": false}</arg_value><arg_key>values</arg_key><arg_value>[true, null, 2.5]</arg_value><arg_key>count</arg_key><arg_value>3</arg_value><arg_key>enabled</arg_key><arg_value>false</arg_value><arg_key>nothing</arg_key><arg_value>null</arg_value></tool_call>\n<|assistant|><think>",
+  "supported_forms": "wrapped calls with mapping arguments: strings raw, object/array/int/float/bool/null as JSON; whole encoded argument string is unsupported",
+  "unsupported_kwargs": [
+    "indent",
+    "separators",
+    "sort_keys"
+  ],
+  "input_limits": {
+    "bytes": 65536,
+    "depth": 16,
+    "nodes": 4096,
+    "string_bytes": 32768,
+    "messages": 16,
+    "tools": 8
+  }
+}

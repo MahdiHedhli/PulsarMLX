@@ -1,0 +1,549 @@
+{
+ "schema": "glm53-flash-decoder-moe-v1",
+ "cases": [
+  {
+   "fixture_id": "moe-e4-k2-t2",
+   "config": {
+    "n_routed_experts": 4,
+    "hidden_size": 4,
+    "num_experts_per_tok": 2,
+    "norm_topk_prob": true,
+    "routed_scaling_factor": 2.5,
+    "n_group": 1,
+    "topk_group": 1,
+    "topk_method": "noaux_tc",
+    "moe_intermediate_size": 3,
+    "n_shared_experts": 1,
+    "swiglu_limit": 1.0
+   },
+   "tokens": 2,
+   "x": [
+    [
+     -1.0,
+     0.25,
+     -0.75,
+     -1.0
+    ],
+    [
+     -0.5,
+     -0.25,
+     0.625,
+     -0.25
+    ]
+   ],
+   "gate_weight": [
+    [
+     -0.25,
+     0.0625,
+     -0.3125,
+     0.125
+    ],
+    [
+     -0.125,
+     0.0625,
+     -0.25,
+     0.125
+    ],
+    [
+     0.1875,
+     -0.1875,
+     -0.3125,
+     0.1875
+    ],
+    [
+     0.1875,
+     0.3125,
+     -0.25,
+     -0.4375
+    ]
+   ],
+   "gate_bias": [
+    0.0,
+    -0.25,
+    -0.1875,
+    -0.25
+   ],
+   "experts": {
+    "gate": [
+     [
+      [
+       -0.875,
+       -1.0,
+       -0.875,
+       1.0
+      ],
+      [
+       0.375,
+       0.5,
+       -1.125,
+       -0.75
+      ],
+      [
+       1.25,
+       1.375,
+       1.375,
+       1.25
+      ]
+     ],
+     [
+      [
+       0.5,
+       0.875,
+       1.25,
+       1.5
+      ],
+      [
+       1.125,
+       0.625,
+       -0.875,
+       -0.875
+      ],
+      [
+       1.125,
+       -0.25,
+       -1.25,
+       0.75
+      ]
+     ],
+     [
+      [
+       0.5,
+       1.0,
+       0.25,
+       -0.75
+      ],
+      [
+       1.375,
+       -0.25,
+       1.125,
+       -0.25
+      ],
+      [
+       -0.75,
+       -0.625,
+       -0.875,
+       1.125
+      ]
+     ],
+     [
+      [
+       -0.375,
+       1.125,
+       -0.25,
+       -0.5
+      ],
+      [
+       0.625,
+       0.375,
+       1.25,
+       1.125
+      ],
+      [
+       0.75,
+       -1.5,
+       -0.75,
+       -1.25
+      ]
+     ]
+    ],
+    "up": [
+     [
+      [
+       0.25,
+       0.625,
+       1.25,
+       0.625
+      ],
+      [
+       1.375,
+       -1.125,
+       1.0,
+       -0.875
+      ],
+      [
+       1.5,
+       -1.25,
+       -0.25,
+       -1.5
+      ]
+     ],
+     [
+      [
+       1.5,
+       -0.75,
+       1.25,
+       -1.125
+      ],
+      [
+       0.5,
+       0.375,
+       1.125,
+       0.625
+      ],
+      [
+       -1.375,
+       0.375,
+       1.0,
+       1.5
+      ]
+     ],
+     [
+      [
+       0.5,
+       -0.875,
+       -1.125,
+       -1.5
+      ],
+      [
+       0.25,
+       1.5,
+       1.25,
+       -0.375
+      ],
+      [
+       -1.25,
+       1.5,
+       -0.75,
+       -0.25
+      ]
+     ],
+     [
+      [
+       0.625,
+       0.875,
+       1.5,
+       1.125
+      ],
+      [
+       -0.875,
+       0.25,
+       -1.25,
+       -1.375
+      ],
+      [
+       -1.0,
+       -0.5,
+       1.5,
+       0.375
+      ]
+     ]
+    ],
+    "down": [
+     [
+      [
+       -0.5,
+       -0.5,
+       0.75
+      ],
+      [
+       -0.375,
+       -0.75,
+       -0.125
+      ],
+      [
+       0.5,
+       -0.75,
+       -0.75
+      ],
+      [
+       0.5,
+       0.375,
+       -0.625
+      ]
+     ],
+     [
+      [
+       0.75,
+       0.375,
+       -0.25
+      ],
+      [
+       -0.625,
+       -0.375,
+       -0.75
+      ],
+      [
+       0.625,
+       -0.125,
+       0.125
+      ],
+      [
+       -0.375,
+       -0.5,
+       0.125
+      ]
+     ],
+     [
+      [
+       0.5,
+       0.25,
+       -0.25
+      ],
+      [
+       -0.5,
+       -0.75,
+       0.75
+      ],
+      [
+       -0.75,
+       0.75,
+       -0.75
+      ],
+      [
+       0.75,
+       -0.75,
+       -0.75
+      ]
+     ],
+     [
+      [
+       0.5,
+       -0.375,
+       0.75
+      ],
+      [
+       -0.375,
+       0.5,
+       0.375
+      ],
+      [
+       0.75,
+       0.75,
+       0.5
+      ],
+      [
+       -0.25,
+       0.25,
+       -0.75
+      ]
+     ]
+    ]
+   },
+   "shared": {
+    "gate": [
+     [
+      -1.0,
+      0.625,
+      1.125,
+      1.125
+     ],
+     [
+      -1.5,
+      -1.125,
+      0.5,
+      -1.5
+     ],
+     [
+      0.375,
+      -1.25,
+      -1.5,
+      1.25
+     ]
+    ],
+    "up": [
+     [
+      -0.5,
+      -1.375,
+      -0.25,
+      1.25
+     ],
+     [
+      0.25,
+      -1.25,
+      -0.625,
+      0.375
+     ],
+     [
+      -0.5,
+      -0.375,
+      0.75,
+      0.625
+     ]
+    ],
+    "down": [
+     [
+      0.25,
+      0.75,
+      0.625
+     ],
+     [
+      -0.5,
+      -0.75,
+      0.75
+     ],
+     [
+      -0.375,
+      0.25,
+      0.25
+     ],
+     [
+      0.75,
+      0.5,
+      -0.5
+     ]
+    ]
+   },
+   "generator": {
+    "seed": "0x20260916b9",
+    "attempt": 1,
+    "margin_floor": 0.01
+   }
+  }
+ ],
+ "expected": {
+  "moe-e4-k2-t2": {
+   "tokens": [
+    {
+     "logits": [
+      0.375,
+      0.203125,
+      -0.1875,
+      0.515625
+     ],
+     "selected_ids": [
+      0,
+      3
+     ],
+     "scores_by_id": {
+      "0": 1.215685684224263,
+      "3": 1.2843143157757373
+     },
+     "selection_margin": 0.07551681169306301,
+     "experts": {
+      "0": [
+       0.4575100183858378,
+       0.606421380807054,
+       0.4563132049016683,
+       -0.3641534960628007
+      ],
+      "3": [
+       -0.5123280264816468,
+       0.07674054228218542,
+       -0.8265336585622582,
+       0.35211011930064456
+      ]
+     },
+     "combine": [
+      -0.1018018390426676,
+      0.8357767683080497,
+      -0.5067955794405526,
+      0.009523874923557274
+     ],
+     "shared": [
+      -0.07849600368768173,
+      0.29017983317423185,
+      -0.12176448336293805,
+      -0.09915474200693869
+     ],
+     "output": [
+      -0.18029784273034932,
+      1.1259566014822815,
+      -0.6285600628034906,
+      -0.08963086708338142
+     ]
+    },
+    {
+     "logits": [
+      -0.1171875,
+      -0.140625,
+      -0.2890625,
+      -0.21875
+     ],
+     "selected_ids": [
+      0,
+      2
+     ],
+     "scores_by_id": {
+      "0": 1.3090998703307575,
+      "2": 1.1909001296692425
+     },
+     "selection_margin": 0.025831826692832016,
+     "experts": {
+      "0": [
+       0.09137716691006893,
+       0.08471231302640352,
+       0.04631748813459549,
+       -0.07303879982932113
+      ],
+      "2": [
+       0.015054191679870009,
+       -0.019275402373146976,
+       -0.013083563459931839,
+       -0.016579926255896955
+      ]
+     },
+     "combine": [
+      0.13754987617678605,
+      0.08794179881267582,
+      0.04505300029007677,
+      -0.1153601197137326
+     ],
+     "shared": [
+      -0.2595321954488133,
+      -0.005593710453728064,
+      -0.12399033613042143,
+      0.030947656730060155
+     ],
+     "output": [
+      -0.12198231927202724,
+      0.08234808835894775,
+      -0.07893733584034465,
+      -0.08441246298367244
+     ]
+    }
+   ],
+   "clamp_active_elements": 6
+  }
+ },
+ "tolerances": {
+  "logits": 0.0001,
+  "scores": 0.0001,
+  "experts": 0.0001,
+  "combine": 0.0001,
+  "shared": 0.0001,
+  "output": 0.0001
+ },
+ "limits": [
+  "tiny geometry; float32 router; no quantized experts; E288 bias-dominated selection and nondiscriminating individual-cast controls remain historical router limits; not real-model correctness"
+ ],
+ "expected_kill_matrix": {
+  "schema": "flash-moe-expected-kill-matrix/1",
+  "frozen_before_tests": true,
+  "fixtures": [
+   "moe-e4-k2-t2"
+  ],
+  "kill_margin_factor": 10,
+  "matrix": {
+   "scores-unweighted-combine": [
+    "KILL"
+   ],
+   "shared-expert-omitted": [
+    "KILL"
+   ],
+   "expert-score-pairing-reversed": [
+    "KILL"
+   ],
+   "combine-axis-wrong": [
+    "KILL"
+   ],
+   "routed-activation-unclamped": [
+    "KILL"
+   ]
+  },
+  "needle_counts": {
+   "scores-unweighted-combine": 1,
+   "shared-expert-omitted": 1,
+   "expert-score-pairing-reversed": 1,
+   "combine-axis-wrong": 1,
+   "routed-activation-unclamped": 1
+  },
+  "reasoning": {
+   "scores-unweighted-combine": "dropping the score weights changes the combine unless scores are all 1; scores are normalised x2.5 and differ: KILL",
+   "shared-expert-omitted": "the shared expert contributes on both tokens (reference shared outputs are nonzero): KILL",
+   "expert-score-pairing-reversed": "reversing the selected order pairs each expert output with the other expert's score; the two scores differ per token (margins 0.076/0.026 imply distinct sigmoid scores): KILL",
+   "combine-axis-wrong": "summing over the wrong axis changes the output shape; a shape mismatch is a kill by rule: KILL",
+   "routed-activation-unclamped": "the reference counts 4 clamp-active elements inside routed experts (and 2 in the shared expert, unaffected by this mutant); removing the clamp on routed experts changes their outputs: KILL"
+  },
+  "rule": "KILL: max_abs_error(output) >= 10*tolerances.output or shape mismatch; INACTIVE: <= tolerances.output; otherwise WEAK_STRUCTURAL; deviations fail, no relabelling after observation."
+ }
+}

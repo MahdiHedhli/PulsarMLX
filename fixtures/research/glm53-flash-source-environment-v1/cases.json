@@ -1,0 +1,340 @@
+{
+  "schema": "flash-source-bound-cases-v1",
+  "seed": 20260908,
+  "generation": "prospective-g1",
+  "router": {
+    "gates": [
+      -1.5,
+      -0.5,
+      0.5,
+      1.5
+    ],
+    "bias": [
+      2.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "top_k": 2,
+    "n_group": 1,
+    "topk_group": 1,
+    "scale": 2.5,
+    "normalize": true
+  },
+  "grouped": {
+    "gates": [
+      -2.0,
+      -1.0,
+      -0.5,
+      0.0,
+      0.5,
+      1.0,
+      1.5,
+      2.0
+    ],
+    "bias": [
+      1.25,
+      1.125,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "top_k": 2,
+    "n_group": 2,
+    "topk_group": 1,
+    "scale": 2.5,
+    "normalize": true
+  },
+  "negative_group_mask_diagnostic": {
+    "gates": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "bias": [
+      -1.0,
+      -1.125,
+      -1.25,
+      -1.375,
+      -2.0,
+      -2.125,
+      -2.25,
+      -2.375
+    ],
+    "top_k": 2,
+    "n_group": 2,
+    "topk_group": 1,
+    "scale": 2.5,
+    "normalize": true
+  },
+  "ties": {
+    "gates": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "bias": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "top_k": 3,
+    "n_group": 1,
+    "topk_group": 1,
+    "scale": 2.5,
+    "normalize": true
+  },
+  "convolution": {
+    "input": [
+      [
+        [
+          1.0,
+          -0.375,
+          -0.5625
+        ],
+        [
+          -0.125,
+          -1.0,
+          -0.375
+        ],
+        [
+          -0.0625,
+          -0.125,
+          -0.1875
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0625,
+          0.125,
+          0.1875
+        ],
+        [
+          0.125,
+          0.25,
+          0.375
+        ],
+        [
+          0.1875,
+          0.375,
+          0.5625
+        ]
+      ],
+      [
+        [
+          -0.375,
+          -0.75,
+          -1.125
+        ],
+        [
+          -0.25,
+          -0.5,
+          -0.75
+        ],
+        [
+          -0.125,
+          -0.25,
+          1.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.125,
+          0.25,
+          0.375
+        ],
+        [
+          0.25,
+          0.5,
+          0.75
+        ],
+        [
+          0.375,
+          0.75,
+          1.125
+        ]
+      ]
+    ],
+    "weights": [
+      [
+        [
+          0.125
+        ],
+        [
+          -0.25
+        ],
+        [
+          0.375
+        ],
+        [
+          0.5
+        ]
+      ],
+      [
+        [
+          -0.5
+        ],
+        [
+          0.125
+        ],
+        [
+          0.25
+        ],
+        [
+          0.75
+        ]
+      ],
+      [
+        [
+          0.75
+        ],
+        [
+          -0.5
+        ],
+        [
+          0.25
+        ],
+        [
+          -0.125
+        ]
+      ]
+    ],
+    "nonzero_state": [
+      [
+        [
+          0.03125,
+          -0.0625,
+          0.09375
+        ],
+        [
+          -0.0625,
+          0.09375,
+          -0.125
+        ],
+        [
+          0.09375,
+          -0.125,
+          0.15625
+        ]
+      ],
+      [
+        [
+          -0.03125,
+          0.0625,
+          -0.09375
+        ],
+        [
+          0.0625,
+          -0.09375,
+          0.125
+        ],
+        [
+          -0.09375,
+          0.125,
+          -0.15625
+        ]
+      ]
+    ],
+    "impulse": [
+      [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          2.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          -1.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ]
+    ],
+    "chunks": [
+      2,
+      1,
+      4
+    ]
+  },
+  "old_fixture": {
+    "path": "fixtures/research/glm53-flash-tiny-v1/arithmetic.json",
+    "sha256": "bd01af310a0fa30777ddc37254494a10e202002de47a7a1591459689dbfbb5d2"
+  },
+  "configured_selector_generator": "For E<=512, gates[i]=(i-(E-1)/2)/64, bias[0]=2 and others0; execute configured top_k/group/scaling/normalization only after artifact-text admission. No expert matrices.",
+  "criteria": {
+    "raw_conv": {
+      "atol": 2e-05,
+      "rtol": 2e-06
+    },
+    "silu": {
+      "atol": 4e-05,
+      "rtol": 4e-06
+    },
+    "routing_weight": {
+      "atol": 4e-05,
+      "rtol": 4e-06
+    },
+    "minimum_separated_margin": 0.0001,
+    "ids_shapes_suffix_bytes": "EXACT within declared domain",
+    "tie_rule": "Required strictly-greater membership plus arbitrary unique threshold-tied IDs; raw order retained; no sorted-order guarantee",
+    "composition_absolute_bound": "4e-5*sum(abs(expert_output)) + 64*(2**-24)*max(1,sum(abs(weighted_expert_products))) per output component",
+    "mutation_ids": [
+      "changed-source-hash",
+      "missing-mx-binding",
+      "wrong-module-origin",
+      "dropped-routing-bias",
+      "wrong-weight-id-association",
+      "reversed-convolution-taps",
+      "swapped-convolution-axes"
+    ],
+    "nonfinite": "Reject inputs; reject source normalization nonfinite output for finite underflow logits separately, never numerical PASS."
+  }
+}

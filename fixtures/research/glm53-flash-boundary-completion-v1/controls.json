@@ -1,0 +1,119 @@
+{
+  "schema": "flash-expected-mechanisms-v1",
+  "numeric_ids": [
+    "changed-source-hash",
+    "missing-mx-binding",
+    "unexpected-selector-global",
+    "wrong-module-origin",
+    "dropped-routing-bias",
+    "wrong-weight-id-association",
+    "reversed-convolution-taps",
+    "swapped-convolution-axes",
+    "forced-normalization",
+    "kernel-one-retained-input"
+  ],
+  "template_ids": [
+    "json-forced-ascii"
+  ],
+  "controls": {
+    "changed-source-hash": {
+      "exception_type": "backend.DomainError",
+      "message_contains": [
+        "capsule source hash mismatch"
+      ],
+      "boundary": "exact capsule hash guard",
+      "requires_evaluation": false
+    },
+    "missing-mx-binding": {
+      "exception_type": "builtins.NameError",
+      "message_contains": [
+        "name 'mx' is not defined"
+      ],
+      "boundary": "unchanged @mx.compile decorator exec with empty namespace",
+      "requires_evaluation": false
+    },
+    "unexpected-selector-global": {
+      "exception_type": "backend.DomainError",
+      "message_contains": [
+        "unexpected external global dependency",
+        "'mx'",
+        "'np'"
+      ],
+      "boundary": "production AST/symtable validator on unexecuted copy",
+      "requires_evaluation": false
+    },
+    "wrong-module-origin": {
+      "exception_type": "builtins.ValueError",
+      "message_contains": [
+        "module origin outside admitted environment"
+      ],
+      "boundary": "real capsule module-origin guard",
+      "requires_evaluation": false
+    },
+    "dropped-routing-bias": {
+      "exception_type": "bc_checks.NumericMismatch",
+      "message_contains": [
+        "ROUTE_IDS_MISMATCH"
+      ],
+      "boundary": "evaluated upstream selector then independent ID comparison",
+      "requires_evaluation": true
+    },
+    "wrong-weight-id-association": {
+      "exception_type": "bc_checks.NumericMismatch",
+      "message_contains": [
+        "EXPERT_PAIRING_MISMATCH"
+      ],
+      "boundary": "evaluated source selector and fictional expert sum",
+      "requires_evaluation": true
+    },
+    "reversed-convolution-taps": {
+      "exception_type": "bc_checks.NumericMismatch",
+      "message_contains": [
+        "CONV_NUMERIC_MISMATCH"
+      ],
+      "boundary": "real nn.Conv1d output then scalar comparison",
+      "requires_evaluation": true
+    },
+    "swapped-convolution-axes": {
+      "exception_type": "builtins.ValueError",
+      "message_contains": [
+        "Given groups=3",
+        "weights of shape (3,1,4)",
+        "expected to have 12 input channels",
+        "got 3 input channels"
+      ],
+      "boundary": "real nn.Conv1d channel-shape rejection before evaluation",
+      "requires_evaluation": false
+    },
+    "forced-normalization": {
+      "exception_type": "bc_checks.NumericMismatch",
+      "message_contains": [
+        "NORMALIZATION_OFF_MISMATCH"
+      ],
+      "boundary": "evaluated upstream selector with forced norm=true versus frozen norm=false oracle",
+      "requires_evaluation": true
+    },
+    "kernel-one-retained-input": {
+      "exception_type": "bc_checks.NumericMismatch",
+      "message_contains": [
+        "KERNEL_ONE_SUFFIX_MISMATCH"
+      ],
+      "boundary": "real evaluated Conv1d with deliberate native -0 suffix slice",
+      "requires_evaluation": true
+    },
+    "json-forced-ascii": {
+      "exception_type": "bc_checks.TemplateMismatch",
+      "message_contains": [
+        "TEMPLATE_UTF8_BYTES_MISMATCH"
+      ],
+      "boundary": "completed real template render with JSON Unicode semantic mutant",
+      "requires_evaluation": true
+    }
+  },
+  "classifier_negative_probes": [
+    "matching message with wrong exception type",
+    "matching type with wrong message",
+    "no exception"
+  ],
+  "normal_mutant_restored": "required per real control"
+}

@@ -1,0 +1,115 @@
+{
+  "capsule_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a",
+  "excluded_source_paths": [
+    "Glm5NextForgetGate.__call__: module uses its parameters and f_b_proj directly",
+    "Glm5NextLinearAttention unfused diagnostic path",
+    "quantized fused projection branch",
+    "masked/scalar recurrent kernels",
+    "nonlinear-attention model classes"
+  ],
+  "global_name_census": [
+    "Any",
+    "Glm5NextForgetGate",
+    "Glm5NextRMSNormGated",
+    "Optional",
+    "TextConfig",
+    "_l2norm",
+    "float",
+    "gated_delta_update",
+    "hasattr",
+    "int",
+    "mx",
+    "nn",
+    "super"
+  ],
+  "mutations": {
+    "drop_cache1": {
+      "after": "state = None",
+      "before": "state = cache[1] if cache is not None else None",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "2d60c44b9311d914c586caa534841dc9a49aa5657925517f5e0fd3b9928a911f"
+    },
+    "missing_q_scale": {
+      "after": "* 1.0",
+      "before": "* (self.head_dim**-0.5)",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "324c0f60bea415ad0e143b0807388987dd7b2eb320f99ed33cd898dc3a51340a"
+    },
+    "omit_output_norm": {
+      "after": "out = out.reshape(B, S, -1)",
+      "before": "out = self.o_norm(out, gate).reshape(B, S, -1)",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "3e292be8e046ceeb39d16d8e3e58bfc82bc428442be389abfe8aaeafe8472d83"
+    },
+    "projection_swap": {
+      "after": "v_o, k_o, q_o, fa_o, ga_o, b_o = self._fused_in_proj(inputs)",
+      "before": "q_o, k_o, v_o, fa_o, ga_o, b_o = self._fused_in_proj(inputs)",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "fffe8638e40a18b53268fb9da137faa4bfadab35b7ddc5d50f0b243ce750f45f"
+    },
+    "wrong_advance": {
+      "after": "cache.advance(S + 1)",
+      "before": "cache.advance(S)",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "7554584774fe1c7a40d63129e8543c010dedbb7d1aca278dcb031981751cf8e4"
+    },
+    "wrong_forget": {
+      "after": "(fg.A_log + 0.25).reshape(self.num_heads, 1)",
+      "before": "fg.A_log.reshape(self.num_heads, 1)",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "faa8afb2a552ca1ff6f0a56b5242cb5e089161c954557fa88e8fe7d927df7c1f"
+    },
+    "wrong_history": {
+      "after": "conv_state = mx.zeros_like(cache[0])",
+      "before": "conv_state = cache[0]",
+      "kind": "safe_source_semantic_mutation",
+      "sha256": "212f3fcfe46edc939c9e81496259796fd38fc57d44df9a95dc634de93603e1f9"
+    }
+  },
+  "origin_sha256": "6de479b6eafc0731e5e965f01f28797a58eecb606e7d5d5657db13642c230196",
+  "source_spans": [
+    {
+      "byte_end": 4082,
+      "byte_start": 3519,
+      "line_end": 104,
+      "line_start": 91,
+      "name": "Glm5NextRMSNormGated",
+      "sha256": "437b58d0aa49430cdf039aa9e91728e9a22592c18bcb4be7d306d0b8d81b3818"
+    },
+    {
+      "byte_end": 5258,
+      "byte_start": 4084,
+      "line_end": 129,
+      "line_start": 107,
+      "name": "Glm5NextForgetGate",
+      "sha256": "ff0e72d5fb9623ffb5131252eac4ea0ac5ebb8316db542bccc7cf2701c518117"
+    },
+    {
+      "byte_end": 5384,
+      "byte_start": 5260,
+      "line_end": 133,
+      "line_start": 132,
+      "name": "_l2norm",
+      "sha256": "94ca835b08e21e04a0039d2a949914f49eb7477821616fb90491a1b956d45281"
+    },
+    {
+      "byte_end": 11923,
+      "byte_start": 6728,
+      "line_end": 307,
+      "line_start": 177,
+      "name": "Glm5NextLinearAttention",
+      "sha256": "76691fc1524f270139109f1e34e843739c82c96200a5afabf5af42c6ea68e904"
+    }
+  ],
+  "supplied_globals": [
+    "mx",
+    "nn",
+    "Optional",
+    "Any",
+    "TextConfig",
+    "gated_delta_update"
+  ],
+  "wrapper_controls": [
+    "illicit_inner_barrier"
+  ]
+}

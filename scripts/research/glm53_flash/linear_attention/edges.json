@@ -1,0 +1,2065 @@
+{
+  "active_edge_total": 27,
+  "active_producer_consumer_edges": [
+    {
+      "id": 1,
+      "name": "synthetic_config_to_constructor",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "witness_contract": "parameter census; native instances"
+    },
+    {
+      "id": 2,
+      "name": "constructor_to_forget_parameters",
+      "owner": "Glm5NextForgetGate.__init__",
+      "witness_contract": "thirteen exact FP32 leaves"
+    },
+    {
+      "id": 3,
+      "name": "constructor_to_output_norm",
+      "owner": "Glm5NextRMSNormGated.__init__",
+      "witness_contract": "norm weight in census"
+    },
+    {
+      "id": 4,
+      "name": "qkv_fa_ga_beta_weights_to_fused_concat",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "witness_contract": "first-call build and exact split points"
+    },
+    {
+      "id": 5,
+      "name": "cached_fused_weights_to_next_matmul",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "witness_contract": "same actual fused weight object after first call"
+    },
+    {
+      "id": 6,
+      "name": "fused_matmul_to_ordered_split",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "witness_contract": "full output/cache references plus projection swap"
+    },
+    {
+      "id": 7,
+      "name": "qkv_segments_to_mixed_mask",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "boolean mask fixture and projection swap"
+    },
+    {
+      "id": 8,
+      "name": "initial_or_carried_cache0_to_conv_input",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "anchor zero history; nonzero/cache carry; wrong history"
+    },
+    {
+      "id": 9,
+      "name": "conv_input_to_cache0",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "complete outer cache0 every call"
+    },
+    {
+      "id": 10,
+      "name": "depthwise_conv_to_silu",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "independent ordered depthwise convolution/SiLU reference"
+    },
+    {
+      "id": 11,
+      "name": "conv_segments_to_head_reshape",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "distinct channels and one/two-head whole/partition cases"
+    },
+    {
+      "id": 12,
+      "name": "qk_to_l2norm_scale",
+      "owner": "_l2norm",
+      "witness_contract": "two actual entries per call; independent normalization; missing query scale"
+    },
+    {
+      "id": 13,
+      "name": "fa_projection_to_forget_fb_projection",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "independent two dense reductions"
+    },
+    {
+      "id": 14,
+      "name": "a_Alog_bias_to_ordinary_g",
+      "owner": "compute_g",
+      "witness_contract": "ordinary cases; wrong forget parameter"
+    },
+    {
+      "id": 15,
+      "name": "a_Alog_bias_to_safe_g",
+      "owner": "compute_g_safe",
+      "witness_contract": "safe cases; complete cache/output references"
+    },
+    {
+      "id": 16,
+      "name": "beta_projection_to_sigmoid",
+      "owner": "gated_delta_update",
+      "witness_contract": "independent beta reference"
+    },
+    {
+      "id": 17,
+      "name": "gates_qkv_cache1_to_default_selector",
+      "owner": "gated_delta_update",
+      "witness_contract": "actual original entries and CPU/Metal default devices"
+    },
+    {
+      "id": 18,
+      "name": "default_selector_to_ops",
+      "owner": "gated_delta_ops",
+      "witness_contract": "CPU ops entries and per-step counts"
+    },
+    {
+      "id": 19,
+      "name": "ops_loop_to_step",
+      "owner": "_gated_delta_step_ops",
+      "witness_contract": "complete states and outputs; no normal inner barrier"
+    },
+    {
+      "id": 20,
+      "name": "default_selector_to_kernel",
+      "owner": "gated_delta_kernel",
+      "witness_contract": "Metal vector API submissions and source-derived geometry"
+    },
+    {
+      "id": 21,
+      "name": "factory_initializer_to_native_API",
+      "owner": "_make_gated_delta_kernel",
+      "witness_contract": "four exact factory initializers; no forced selector"
+    },
+    {
+      "id": 22,
+      "name": "recurrent_return_to_cache1",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "complete actual cache1 observed; dropped cache1 control"
+    },
+    {
+      "id": 23,
+      "name": "sequence_length_to_cache_advance",
+      "owner": "ArraysCache.advance",
+      "witness_contract": "actual lengths/padding counters and wrong advance"
+    },
+    {
+      "id": 24,
+      "name": "ga_projection_to_output_gate",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "independent two dense reductions and gated RMS reference"
+    },
+    {
+      "id": 25,
+      "name": "recurrent_output_and_gate_to_RMS",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "witness_contract": "actual norm entry plus omitted norm/gate control"
+    },
+    {
+      "id": 26,
+      "name": "normalized_heads_to_output_projection",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "complete output reference and same-backend partitions"
+    },
+    {
+      "id": 27,
+      "name": "cache0_cache1_to_next_or_interleaved_call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "witness_contract": "actual carried tensors and separate interleaved cache objects"
+    }
+  ],
+  "all_source_call_and_operator_sites": [
+    {
+      "end_line": 3,
+      "expression": "super().__init__()",
+      "line": 3,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 3,
+      "expression": "super()",
+      "line": 3,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 5,
+      "expression": "mx.ones(hidden_size)",
+      "line": 5,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 9,
+      "expression": "hidden_states.astype(mx.float32)",
+      "line": 9,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 10,
+      "expression": "(x * x).mean(-1, keepdims=True)",
+      "line": 10,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 10,
+      "expression": "x * x",
+      "line": 10,
+      "node": "BinOp",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 11,
+      "expression": "x * mx.rsqrt(var + self.eps)",
+      "line": 11,
+      "node": "BinOp",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 11,
+      "expression": "mx.rsqrt(var + self.eps)",
+      "line": 11,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 11,
+      "expression": "var + self.eps",
+      "line": 11,
+      "node": "BinOp",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 12,
+      "expression": "self.weight.astype(mx.float32) * x",
+      "line": 12,
+      "node": "BinOp",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 12,
+      "expression": "self.weight.astype(mx.float32)",
+      "line": 12,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 13,
+      "expression": "x * mx.sigmoid(gate.astype(mx.float32))",
+      "line": 13,
+      "node": "BinOp",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 13,
+      "expression": "mx.sigmoid(gate.astype(mx.float32))",
+      "line": 13,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 13,
+      "expression": "gate.astype(mx.float32)",
+      "line": 13,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 14,
+      "expression": "x.astype(dt)",
+      "line": 14,
+      "node": "Call",
+      "owner": "Glm5NextRMSNormGated.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 19,
+      "expression": "super().__init__()",
+      "line": 19,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 19,
+      "expression": "super()",
+      "line": 19,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 22,
+      "expression": "self.head_dim * self.num_heads",
+      "line": 22,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 23,
+      "expression": "nn.Linear(config.hidden_size, self.head_dim, bias=False)",
+      "line": 23,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 24,
+      "expression": "nn.Linear(self.head_dim, self.qkv_dim, bias=False)",
+      "line": 24,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 25,
+      "expression": "mx.zeros(self.qkv_dim)",
+      "line": 25,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 26,
+      "expression": "mx.zeros(self.num_heads)",
+      "line": 26,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 31,
+      "expression": "self.f_b_proj(self.f_a_proj(hidden_states))",
+      "line": 31,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 31,
+      "expression": "self.f_a_proj(hidden_states)",
+      "line": 31,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 34,
+      "expression": "(fg.astype(mx.float32) + self.dt_bias.astype(mx.float32)).reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 32,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 32,
+      "expression": "fg.astype(mx.float32) + self.dt_bias.astype(mx.float32)",
+      "line": 32,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 32,
+      "expression": "fg.astype(mx.float32)",
+      "line": 32,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 32,
+      "expression": "self.dt_bias.astype(mx.float32)",
+      "line": 32,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 35,
+      "expression": "mx.exp(self.A_log.astype(mx.float32)).reshape(1, 1, self.num_heads, 1)",
+      "line": 35,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 35,
+      "expression": "mx.exp(self.A_log.astype(mx.float32))",
+      "line": 35,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 35,
+      "expression": "self.A_log.astype(mx.float32)",
+      "line": 35,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 37,
+      "expression": "self.safe_gate_lower_bound * mx.sigmoid(decay * g)",
+      "line": 37,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 37,
+      "expression": "mx.sigmoid(decay * g)",
+      "line": 37,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 37,
+      "expression": "decay * g",
+      "line": 37,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 38,
+      "expression": "mx.where(g > 20.0, g, mx.log(1.0 + mx.exp(g)))",
+      "line": 38,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 38,
+      "expression": "mx.log(1.0 + mx.exp(g))",
+      "line": 38,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 38,
+      "expression": "1.0 + mx.exp(g)",
+      "line": 38,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 38,
+      "expression": "mx.exp(g)",
+      "line": 38,
+      "node": "Call",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 39,
+      "expression": "-decay * g_softplus",
+      "line": 39,
+      "node": "BinOp",
+      "owner": "Glm5NextForgetGate.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 43,
+      "expression": "x * mx.rsqrt((x * x).sum(axis=-1, keepdims=True) + eps)",
+      "line": 43,
+      "node": "BinOp",
+      "owner": "_l2norm",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 43,
+      "expression": "mx.rsqrt((x * x).sum(axis=-1, keepdims=True) + eps)",
+      "line": 43,
+      "node": "Call",
+      "owner": "_l2norm",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 43,
+      "expression": "(x * x).sum(axis=-1, keepdims=True) + eps",
+      "line": 43,
+      "node": "BinOp",
+      "owner": "_l2norm",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 43,
+      "expression": "(x * x).sum(axis=-1, keepdims=True)",
+      "line": 43,
+      "node": "Call",
+      "owner": "_l2norm",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 43,
+      "expression": "x * x",
+      "line": 43,
+      "node": "BinOp",
+      "owner": "_l2norm",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 48,
+      "expression": "super().__init__()",
+      "line": 48,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 48,
+      "expression": "super()",
+      "line": 48,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 52,
+      "expression": "self.num_heads * self.head_dim",
+      "line": 52,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 55,
+      "expression": "nn.Linear(self.hidden_size, self.qkv_dim, bias=False)",
+      "line": 55,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 56,
+      "expression": "nn.Linear(self.hidden_size, self.qkv_dim, bias=False)",
+      "line": 56,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 57,
+      "expression": "nn.Linear(self.hidden_size, self.qkv_dim, bias=False)",
+      "line": 57,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 59,
+      "expression": "self.qkv_dim * 3",
+      "line": 59,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 67,
+      "expression": "nn.Conv1d(in_channels=self.conv_dim, out_channels=self.conv_dim, bias=False, kernel_size=self.conv_kernel_size, groups=self.conv_dim, padding=0)",
+      "line": 60,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 69,
+      "expression": "Glm5NextForgetGate(config)",
+      "line": 69,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 70,
+      "expression": "nn.Linear(self.hidden_size, self.num_heads, bias=False)",
+      "line": 70,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 71,
+      "expression": "nn.Linear(self.hidden_size, self.head_dim, bias=False)",
+      "line": 71,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 72,
+      "expression": "nn.Linear(self.head_dim, self.qkv_dim, bias=False)",
+      "line": 72,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 73,
+      "expression": "Glm5NextRMSNormGated(self.head_dim, eps=config.rms_norm_eps)",
+      "line": 73,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 74,
+      "expression": "nn.Linear(self.qkv_dim, self.hidden_size, bias=False)",
+      "line": 74,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__init__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 93,
+      "expression": "pts.append(acc)",
+      "line": 93,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 95,
+      "expression": "hasattr(mods[0], 'scales')",
+      "line": 95,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 96,
+      "expression": "mx.concatenate([m.weight for m in mods], axis=0)",
+      "line": 96,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 98,
+      "expression": "mx.concatenate([m.scales for m in mods], axis=0)",
+      "line": 98,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 99,
+      "expression": "mx.concatenate([m.biases for m in mods], axis=0)",
+      "line": 99,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 111,
+      "expression": "mx.quantized_matmul(inputs, self._fw, self._fs, self._fb, transpose=True, group_size=self._gs, bits=self._bits)",
+      "line": 103,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 113,
+      "expression": "inputs @ self._fw.T",
+      "line": 113,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 114,
+      "expression": "mx.split(out, self._split_pts, axis=-1)",
+      "line": 114,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention._fused_in_proj",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 124,
+      "expression": "self._fused_in_proj(inputs)",
+      "line": 124,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 125,
+      "expression": "mx.concatenate([q_o, k_o, v_o], axis=-1)",
+      "line": 125,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 129,
+      "expression": "mx.concatenate([self.q_proj(inputs), self.k_proj(inputs), self.v_proj(inputs)], axis=-1)",
+      "line": 127,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 128,
+      "expression": "self.q_proj(inputs)",
+      "line": 128,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 128,
+      "expression": "self.k_proj(inputs)",
+      "line": 128,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 128,
+      "expression": "self.v_proj(inputs)",
+      "line": 128,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 130,
+      "expression": "self.forget_gate.f_a_proj(inputs)",
+      "line": 130,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 131,
+      "expression": "self.g_a_proj(inputs)",
+      "line": 131,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 132,
+      "expression": "self.b_proj(inputs)",
+      "line": 132,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 134,
+      "expression": "mx.where(mask[..., None], mixed, 0)",
+      "line": 134,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 141,
+      "expression": "mx.zeros((B, self.conv_kernel_size - 1, self.conv_dim), dtype=inputs.dtype)",
+      "line": 139,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 140,
+      "expression": "self.conv_kernel_size - 1",
+      "line": 140,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 142,
+      "expression": "mx.concatenate([conv_state, mixed], axis=1)",
+      "line": 142,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 144,
+      "expression": "mx.contiguous(conv_input[:, -(self.conv_kernel_size - 1):, :])",
+      "line": 144,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 144,
+      "expression": "self.conv_kernel_size - 1",
+      "line": 144,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 145,
+      "expression": "nn.silu(self.conv1d(conv_input))",
+      "line": 145,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 145,
+      "expression": "self.conv1d(conv_input)",
+      "line": 145,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 147,
+      "expression": "mx.split(conv_out, [self.qkv_dim, 2 * self.qkv_dim], axis=-1)",
+      "line": 147,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 147,
+      "expression": "2 * self.qkv_dim",
+      "line": 147,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 148,
+      "expression": "q.reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 148,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 149,
+      "expression": "k.reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 149,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 150,
+      "expression": "v.reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 150,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 153,
+      "expression": "fg.f_b_proj(fa_o).reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 153,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 153,
+      "expression": "fg.f_b_proj(fa_o)",
+      "line": 153,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 155,
+      "expression": "(_l2norm(q.astype(mx.float32)) * self.head_dim ** (-0.5)).astype(in_dtype)",
+      "line": 155,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 155,
+      "expression": "_l2norm(q.astype(mx.float32)) * self.head_dim ** (-0.5)",
+      "line": 155,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 155,
+      "expression": "_l2norm(q.astype(mx.float32))",
+      "line": 155,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 155,
+      "expression": "q.astype(mx.float32)",
+      "line": 155,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 155,
+      "expression": "self.head_dim ** (-0.5)",
+      "line": 155,
+      "node": "BinOp",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 156,
+      "expression": "_l2norm(k.astype(mx.float32)).astype(in_dtype)",
+      "line": 156,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 156,
+      "expression": "_l2norm(k.astype(mx.float32))",
+      "line": 156,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 156,
+      "expression": "k.astype(mx.float32)",
+      "line": 156,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 169,
+      "expression": "gated_delta_update(q, k, v, a, b_o, fg.A_log.reshape(self.num_heads, 1), fg.dt_bias.reshape(self.num_heads, self.head_dim), state=state, lower_bound=fg.safe_gate_lower_bound)",
+      "line": 159,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 165,
+      "expression": "fg.A_log.reshape(self.num_heads, 1)",
+      "line": 165,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 166,
+      "expression": "fg.dt_bias.reshape(self.num_heads, self.head_dim)",
+      "line": 166,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 172,
+      "expression": "cache.advance(S)",
+      "line": 172,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 174,
+      "expression": "self.g_b_proj(ga_o).reshape(B, S, self.num_heads, self.head_dim)",
+      "line": 174,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 174,
+      "expression": "self.g_b_proj(ga_o)",
+      "line": 174,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 175,
+      "expression": "self.o_norm(out, gate).reshape(B, S, -1)",
+      "line": 175,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 175,
+      "expression": "self.o_norm(out, gate)",
+      "line": 175,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 176,
+      "expression": "self.o_proj(out)",
+      "line": 176,
+      "node": "Call",
+      "owner": "Glm5NextLinearAttention.__call__",
+      "source": "linear_attention/capsule.py",
+      "source_sha256": "17c8d704138b81e9c0573eeda64d7b4eac89422d6b499510215c07a755381d7a"
+    },
+    {
+      "end_line": 3,
+      "expression": "mx.exp(-mx.exp(A_log.astype(mx.float32)) * nn.softplus(a + dt_bias))",
+      "line": 3,
+      "node": "Call",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 3,
+      "expression": "-mx.exp(A_log.astype(mx.float32)) * nn.softplus(a + dt_bias)",
+      "line": 3,
+      "node": "BinOp",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 3,
+      "expression": "mx.exp(A_log.astype(mx.float32))",
+      "line": 3,
+      "node": "Call",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 3,
+      "expression": "A_log.astype(mx.float32)",
+      "line": 3,
+      "node": "Call",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 3,
+      "expression": "nn.softplus(a + dt_bias)",
+      "line": 3,
+      "node": "Call",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 3,
+      "expression": "a + dt_bias",
+      "line": 3,
+      "node": "BinOp",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 1,
+      "expression": "partial(mx.compile, shapeless=True)",
+      "line": 1,
+      "node": "Call",
+      "owner": "compute_g",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 10,
+      "expression": "mx.exp(lower_bound * mx.sigmoid(mx.exp(A_log.astype(mx.float32)) * (a + dt_bias)))",
+      "line": 8,
+      "node": "Call",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "lower_bound * mx.sigmoid(mx.exp(A_log.astype(mx.float32)) * (a + dt_bias))",
+      "line": 9,
+      "node": "BinOp",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "mx.sigmoid(mx.exp(A_log.astype(mx.float32)) * (a + dt_bias))",
+      "line": 9,
+      "node": "Call",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "mx.exp(A_log.astype(mx.float32)) * (a + dt_bias)",
+      "line": 9,
+      "node": "BinOp",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "mx.exp(A_log.astype(mx.float32))",
+      "line": 9,
+      "node": "Call",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "A_log.astype(mx.float32)",
+      "line": 9,
+      "node": "Call",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 9,
+      "expression": "a + dt_bias",
+      "line": 9,
+      "node": "BinOp",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 6,
+      "expression": "partial(mx.compile, shapeless=True)",
+      "line": 6,
+      "node": "Call",
+      "owner": "compute_g_safe",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 14,
+      "expression": "mx.metal.is_available()",
+      "line": 14,
+      "node": "Call",
+      "owner": "_make_gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 102,
+      "expression": "inputs.append('mask')",
+      "line": 102,
+      "node": "Call",
+      "owner": "_make_gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 115,
+      "expression": "mx.fast.metal_kernel(name=f'gated_delta_step{suffix}', input_names=inputs, output_names=['y', 'state_out'], source=source)",
+      "line": 110,
+      "node": "Call",
+      "owner": "_make_gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 118,
+      "expression": "_make_gated_delta_kernel(has_mask=False, vectorized=False)",
+      "line": 118,
+      "node": "Call",
+      "owner": "",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 121,
+      "expression": "_make_gated_delta_kernel(has_mask=True, vectorized=False)",
+      "line": 121,
+      "node": "Call",
+      "owner": "",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 124,
+      "expression": "_make_gated_delta_kernel(has_mask=False, vectorized=True)",
+      "line": 124,
+      "node": "Call",
+      "owner": "",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 129,
+      "expression": "_make_gated_delta_kernel(has_mask=True, vectorized=True)",
+      "line": 127,
+      "node": "Call",
+      "owner": "",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 163,
+      "expression": "ValueError(f'Unsupported gating shape {g.shape}')",
+      "line": 163,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 164,
+      "expression": "state * decay",
+      "line": 164,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 165,
+      "expression": "(state * k[..., None, :]).sum(axis=-1)",
+      "line": 165,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 165,
+      "expression": "state * k[..., None, :]",
+      "line": 165,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 166,
+      "expression": "(v - kv_mem) * beta[..., None]",
+      "line": 166,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 166,
+      "expression": "v - kv_mem",
+      "line": 166,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 167,
+      "expression": "state + k[..., None, :] * delta[..., None]",
+      "line": 167,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 167,
+      "expression": "k[..., None, :] * delta[..., None]",
+      "line": 167,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 169,
+      "expression": "(state * q[..., None, :]).sum(axis=-1)",
+      "line": 169,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 169,
+      "expression": "state * q[..., None, :]",
+      "line": 169,
+      "node": "BinOp",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 172,
+      "expression": "mx.expand_dims(mask, axis=(1, 2, 3))",
+      "line": 172,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 173,
+      "expression": "mx.where(mask, state, old_state)",
+      "line": 173,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 174,
+      "expression": "y.astype(q.dtype)",
+      "line": 174,
+      "node": "Call",
+      "owner": "_gated_delta_step_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 195,
+      "expression": "inputs.append(mask)",
+      "line": 195,
+      "node": "Call",
+      "owner": "gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 201,
+      "expression": "inputs.append(mask)",
+      "line": 201,
+      "node": "Call",
+      "owner": "gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 217,
+      "expression": "kernel(inputs=inputs, template=[('InT', input_type), ('StT', state_type), ('Dk', Dk), ('Dv', Dv), ('Hk', Hk), ('Hv', Hv)], grid=(32, Dv, B * Hv), threadgroup=(32, 4, 1), output_shapes=[(B, T, Hv, Dv), state.shape], output_dtypes=[input_type, state_type])",
+      "line": 203,
+      "node": "Call",
+      "owner": "gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 213,
+      "expression": "B * Hv",
+      "line": 213,
+      "node": "BinOp",
+      "owner": "gated_delta_kernel",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 246,
+      "expression": "mx.zeros((B, Hv, Dv, Dk), dtype=mx.float32)",
+      "line": 246,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 248,
+      "expression": "Hv // Hk",
+      "line": 248,
+      "node": "BinOp",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 249,
+      "expression": "mx.repeat(q, repeat_factor, -2)",
+      "line": 249,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 250,
+      "expression": "mx.repeat(k, repeat_factor, -2)",
+      "line": 250,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 253,
+      "expression": "range(T)",
+      "line": 253,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 262,
+      "expression": "_gated_delta_step_ops(q[:, t], k[:, t], v[:, t], g[:, t], beta[:, t], state, None if mask is None else mask[:, t])",
+      "line": 254,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 263,
+      "expression": "ys.append(y)",
+      "line": 263,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 264,
+      "expression": "mx.stack(ys, axis=1)",
+      "line": 264,
+      "node": "Call",
+      "owner": "gated_delta_ops",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 281,
+      "expression": "mx.sigmoid(b)",
+      "line": 281,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 283,
+      "expression": "compute_g(A_log, a, dt_bias)",
+      "line": 283,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 285,
+      "expression": "compute_g_safe(A_log, a, dt_bias, lower_bound)",
+      "line": 285,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 289,
+      "expression": "mx.zeros((B, Hv, Dv, Dk), dtype=mx.float32)",
+      "line": 289,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 293,
+      "expression": "mx.default_device()",
+      "line": 293,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 294,
+      "expression": "mx.metal.is_available()",
+      "line": 294,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 296,
+      "expression": "k.shape[-1] % 32",
+      "line": 296,
+      "node": "BinOp",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 298,
+      "expression": "gated_delta_ops(q, k, v, g, beta, state, mask)",
+      "line": 298,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 299,
+      "expression": "gated_delta_kernel(q, k, v, g, beta, state, mask)",
+      "line": 299,
+      "node": "Call",
+      "owner": "gated_delta_update",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 314,
+      "expression": "gated_delta_update(q, k, v, a, b_o, fg.A_log.reshape(self.num_heads, 1), fg.dt_bias.reshape(self.num_heads, self.head_dim), state=state, lower_bound=fg.safe_gate_lower_bound)",
+      "line": 304,
+      "node": "Call",
+      "owner": "source_recurrent_step",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 310,
+      "expression": "fg.A_log.reshape(self.num_heads, 1)",
+      "line": 310,
+      "node": "Call",
+      "owner": "source_recurrent_step",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 311,
+      "expression": "fg.dt_bias.reshape(self.num_heads, self.head_dim)",
+      "line": 311,
+      "node": "Call",
+      "owner": "source_recurrent_step",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 317,
+      "expression": "cache.advance(S)",
+      "line": 317,
+      "node": "Call",
+      "owner": "source_recurrent_step",
+      "source": "recurrent_dispatch/capsule.py",
+      "source_sha256": "97c3b0daf09b01794fd05c8ad653fe5cf65ab141864d8ef0dd9353571dfcf872"
+    },
+    {
+      "end_line": 13,
+      "expression": "ValueError('This cache has no state but a state was set.')",
+      "line": 13,
+      "node": "Call",
+      "owner": "_BaseCache.state",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 22,
+      "expression": "ValueError('This cache has no meta_state but a meta_state was set.')",
+      "line": 22,
+      "node": "Call",
+      "owner": "_BaseCache.meta_state",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 39,
+      "expression": "NotImplementedError('Cache sub-class must implement nbytes')",
+      "line": 39,
+      "node": "Call",
+      "owner": "_BaseCache.nbytes",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 45,
+      "expression": "NotImplementedError('Cache sub-class must implement this.')",
+      "line": 45,
+      "node": "Call",
+      "owner": "_BaseCache.empty",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 50,
+      "expression": "cls.__new__(cls)",
+      "line": 50,
+      "node": "Call",
+      "owner": "_BaseCache.from_state",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 85,
+      "expression": "super().__new__(cls)",
+      "line": 85,
+      "node": "Call",
+      "owner": "ArraysCache.__new__",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 85,
+      "expression": "super()",
+      "line": 85,
+      "node": "Call",
+      "owner": "ArraysCache.__new__",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 93,
+      "expression": "[None] * size",
+      "line": 93,
+      "node": "BinOp",
+      "owner": "ArraysCache.__init__",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 95,
+      "expression": "mx.array(left_padding)",
+      "line": 95,
+      "node": "Call",
+      "owner": "ArraysCache.__init__",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 103,
+      "expression": "self._left_padding - self._left_padding_advance",
+      "line": 103,
+      "node": "BinOp",
+      "owner": "ArraysCache.left_padding",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 116,
+      "expression": "self._lengths - self._lengths_advance",
+      "line": 116,
+      "node": "BinOp",
+      "owner": "ArraysCache.lengths",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 180,
+      "expression": "mx.zeros((a_batch,) + shape[1:], dtype=dtype)",
+      "line": 180,
+      "node": "Call",
+      "owner": "ArraysCache.extend.cat",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 180,
+      "expression": "(a_batch,) + shape[1:]",
+      "line": 180,
+      "node": "BinOp",
+      "owner": "ArraysCache.extend.cat",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 182,
+      "expression": "mx.zeros((b_batch,) + shape[1:], dtype=dtype)",
+      "line": 182,
+      "node": "Call",
+      "owner": "ArraysCache.extend.cat",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 182,
+      "expression": "(b_batch,) + shape[1:]",
+      "line": 182,
+      "node": "BinOp",
+      "owner": "ArraysCache.extend.cat",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 184,
+      "expression": "mx.concatenate([a, b])",
+      "line": 184,
+      "node": "Call",
+      "owner": "ArraysCache.extend.cat",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 186,
+      "expression": "cat(c, o)",
+      "line": 186,
+      "node": "Call",
+      "owner": "ArraysCache.extend",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 186,
+      "expression": "zip(self.cache, other.cache)",
+      "line": 186,
+      "node": "Call",
+      "owner": "ArraysCache.extend",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 187,
+      "expression": "cat(self.left_padding, other.left_padding)",
+      "line": 187,
+      "node": "Call",
+      "owner": "ArraysCache.extend",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 188,
+      "expression": "cat(self.lengths, other.lengths)",
+      "line": 188,
+      "node": "Call",
+      "owner": "ArraysCache.extend",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 191,
+      "expression": "ArraysCache(len(self.cache))",
+      "line": 191,
+      "node": "Call",
+      "owner": "ArraysCache.extract",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 191,
+      "expression": "len(self.cache)",
+      "line": 191,
+      "node": "Call",
+      "owner": "ArraysCache.extract",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 192,
+      "expression": "idx + 1",
+      "line": 192,
+      "node": "BinOp",
+      "owner": "ArraysCache.extract",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 196,
+      "expression": "mx.array(lengths)",
+      "line": 196,
+      "node": "Call",
+      "owner": "ArraysCache.prepare",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 210,
+      "expression": "mx.arange(N)",
+      "line": 210,
+      "node": "Call",
+      "owner": "ArraysCache.make_mask",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 213,
+      "expression": "mx.arange(N)",
+      "line": 213,
+      "node": "Call",
+      "owner": "ArraysCache.make_mask",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 220,
+      "expression": "len(caches[0].cache)",
+      "line": 220,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 221,
+      "expression": "len(caches)",
+      "line": 221,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 222,
+      "expression": "cls(n_state)",
+      "line": 222,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 225,
+      "expression": "all((c.empty() for c in caches))",
+      "line": 225,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 225,
+      "expression": "c.empty()",
+      "line": 225,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 226,
+      "expression": "mx.array([0] * B)",
+      "line": 226,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 226,
+      "expression": "[0] * B",
+      "line": 226,
+      "node": "BinOp",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 229,
+      "expression": "range(n_state)",
+      "line": 229,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 230,
+      "expression": "next(iter((c[e] for c in caches if c[e] is not None)))",
+      "line": 230,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 230,
+      "expression": "iter((c[e] for c in caches if c[e] is not None))",
+      "line": 230,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 231,
+      "expression": "list(c_init.shape)",
+      "line": 231,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 233,
+      "expression": "mx.zeros(shape, c_init.dtype)",
+      "line": 233,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 234,
+      "expression": "range(B)",
+      "line": 234,
+      "node": "Call",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 237,
+      "expression": "i + 1",
+      "line": 237,
+      "node": "BinOp",
+      "owner": "ArraysCache.merge",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 245,
+      "expression": "sum((c.nbytes for c in self.cache if c is not None))",
+      "line": 245,
+      "node": "Call",
+      "owner": "ArraysCache.nbytes",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    },
+    {
+      "end_line": 249,
+      "expression": "ArraysCache(size=2)",
+      "line": 249,
+      "node": "Call",
+      "owner": "source_make_cache",
+      "source": "cache_lifecycle/capsule.py",
+      "source_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1"
+    }
+  ],
+  "coverage_meaning": "An edge is tested when its finite-path method/API boundary is exercised and complete independent consumer observations pass. This is whole-path numerical coverage, not an internal tensor probe or physical instruction/branch trace.",
+  "finite_path_exclusions": [
+    "Glm5NextForgetGate.__call__: unused standalone method",
+    "fuse_in=False branch: no diagnostic unfused trial",
+    "quantized projection branches: FP32 Linear has no scales",
+    "cache object None: passing path always owns actual ArraysCache; anchor has None slot values",
+    "gated_delta_update use_kernel=False and non-Dk32 geometries: unused",
+    "scalar/masked kernel handles: constructed original initializers but never submitted by module",
+    "gated_delta_ops repeated-head path and internal state initialization: Hk=Hv, update supplies state",
+    "_gated_delta_step_ops scalar gate and mask branch: module produces vector gate and forwards no mask",
+    "all ArraysCache methods except actual construction/state/index/prepare/lengths/padding/advance used here",
+    "source_recurrent_step: predecessor partial caller seam is not executed",
+    "all transformer/model/quantization/weight-loader classes outside this closure"
+  ],
+  "schema": "full-module-source-edges-v1"
+}

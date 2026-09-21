@@ -1,0 +1,707 @@
+{
+  "accepted_fixture_sha256": "3ef5266921478b31a247761111dddcc88ae2942e8420ad3d6f481b3c76fc891a",
+  "bounds": {
+    "B_max": 2,
+    "C_values": [
+      3,
+      6
+    ],
+    "K_main": [
+      2,
+      3,
+      4
+    ],
+    "T_max": 8,
+    "T_max_measured": 7,
+    "accumulation_terms_max": 4,
+    "dtype": "float32",
+    "input_state_abs_max": 1.5,
+    "weight_abs_max": 1
+  },
+  "cache_capsule_sha256": "df93a9fbf822dbb12a9898eed16602bdbbd4a88febc236d1e2450329e7095ac1",
+  "cache_expectations": {
+    "advance": {
+      "advance": 2,
+      "left_padding_after": [
+        1,
+        -1
+      ],
+      "left_padding_initial": [
+        3,
+        1
+      ],
+      "left_padding_priority_mask_N4": [
+        [
+          false,
+          true,
+          true,
+          true
+        ],
+        [
+          true,
+          true,
+          true,
+          true
+        ]
+      ],
+      "lengths_after": [
+        5,
+        3
+      ],
+      "lengths_initial": [
+        7,
+        5
+      ],
+      "lengths_only_mask_N4": [
+        [
+          true,
+          true,
+          true,
+          true
+        ],
+        [
+          true,
+          true,
+          true,
+          false
+        ]
+      ]
+    },
+    "alias": "state getter/setter and base prefix snapshot/restore/from_state retain list and array references. Sharing intentionally aliases; fresh instances own distinct lists. No invented functional-immutability or reset guarantee.",
+    "errors": {
+      "extract_none": [
+        "TypeError",
+        "'NoneType' object is not subscriptable"
+      ],
+      "getitem_2": [
+        "IndexError",
+        "list index out of range"
+      ],
+      "meta_state": [
+        "ValueError",
+        "This cache has no meta_state but a meta_state was set."
+      ],
+      "setitem_2": [
+        "IndexError",
+        "list assignment index out of range"
+      ]
+    },
+    "extend": "concatenate batch rows in self,other order; missing state/auxiliary values are zeros shaped from present peer; both missing remains None.",
+    "extract": "single batch slice in a new ArraysCache, auxiliary lengths/padding absent; partially None state raises TypeError before mutating original.",
+    "filter": "selected batch rows in supplied order for every non-None slot and auxiliary array; independent scalar rows are selected before next convolution.",
+    "finalize": "clear padding and lengths only, reset their deferred advances via setters; leave state slots unchanged; next convolution consumes their existing suffix.",
+    "fresh": {
+      "batch_size": 1,
+      "empty": true,
+      "is_trimmable": false,
+      "meta_state": "",
+      "size": 0,
+      "slots": [
+        null,
+        null
+      ]
+    },
+    "merge": "combine per-slot batch rows, missing peers zero-filled; all empty creates left_padding zeros and keeps state None."
+  },
+  "cache_provenance_sha256": "0e6ede96724fdc2fd9d5002a8405b550584fcc19c2afcfcb31c9de8788dc1e7d",
+  "cases": [
+    {
+      "B": 2,
+      "C": 6,
+      "K": 4,
+      "T": 7,
+      "inputs": [
+        [
+          [
+            -1.5,
+            -0.75,
+            0.0,
+            0.75,
+            1.5,
+            -1.0
+          ],
+          [
+            0.25,
+            1.0,
+            -1.5,
+            -0.75,
+            0.0,
+            0.75
+          ],
+          [
+            -1.25,
+            -0.5,
+            0.25,
+            1.0,
+            -1.5,
+            -0.75
+          ],
+          [
+            0.5,
+            1.25,
+            -1.25,
+            -0.5,
+            0.25,
+            1.0
+          ],
+          [
+            -1.0,
+            -0.25,
+            0.5,
+            1.25,
+            -1.25,
+            -0.5
+          ],
+          [
+            0.75,
+            1.5,
+            -1.0,
+            -0.25,
+            0.5,
+            1.25
+          ],
+          [
+            -0.75,
+            0.0,
+            0.75,
+            1.5,
+            -1.0,
+            -0.25
+          ]
+        ],
+        [
+          [
+            1.25,
+            -1.25,
+            -0.5,
+            0.25,
+            1.0,
+            -1.5
+          ],
+          [
+            -0.25,
+            0.5,
+            1.25,
+            -1.25,
+            -0.5,
+            0.25
+          ],
+          [
+            1.5,
+            -1.0,
+            -0.25,
+            0.5,
+            1.25,
+            -1.25
+          ],
+          [
+            0.0,
+            0.75,
+            1.5,
+            -1.0,
+            -0.25,
+            0.5
+          ],
+          [
+            -1.5,
+            -0.75,
+            0.0,
+            0.75,
+            1.5,
+            -1.0
+          ],
+          [
+            0.25,
+            1.0,
+            -1.5,
+            -0.75,
+            0.0,
+            0.75
+          ],
+          [
+            -1.25,
+            -0.5,
+            0.25,
+            1.0,
+            -1.5,
+            -0.75
+          ]
+        ]
+      ],
+      "name": "configured-k4-zero",
+      "partitions": [
+        [
+          7
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          3,
+          1
+        ]
+      ],
+      "state": null,
+      "weights": [
+        [
+          [
+            -0.875
+          ],
+          [
+            -0.25
+          ],
+          [
+            0.375
+          ],
+          [
+            -0.875
+          ]
+        ],
+        [
+          [
+            -0.5
+          ],
+          [
+            0.125
+          ],
+          [
+            0.75
+          ],
+          [
+            -0.5
+          ]
+        ],
+        [
+          [
+            -0.125
+          ],
+          [
+            0.5
+          ],
+          [
+            -0.75
+          ],
+          [
+            -0.125
+          ]
+        ],
+        [
+          [
+            0.25
+          ],
+          [
+            0.875
+          ],
+          [
+            -0.375
+          ],
+          [
+            0.25
+          ]
+        ],
+        [
+          [
+            0.625
+          ],
+          [
+            -0.625
+          ],
+          [
+            0.0
+          ],
+          [
+            0.625
+          ]
+        ],
+        [
+          [
+            -0.875
+          ],
+          [
+            -0.25
+          ],
+          [
+            0.375
+          ],
+          [
+            -0.875
+          ]
+        ]
+      ]
+    },
+    {
+      "B": 1,
+      "C": 3,
+      "K": 4,
+      "T": 7,
+      "inputs": [
+        [
+          [
+            -1.5,
+            -0.75,
+            0.0
+          ],
+          [
+            0.25,
+            1.0,
+            -1.5
+          ],
+          [
+            -1.25,
+            -0.5,
+            0.25
+          ],
+          [
+            0.5,
+            1.25,
+            -1.25
+          ],
+          [
+            -1.0,
+            -0.25,
+            0.5
+          ],
+          [
+            0.75,
+            1.5,
+            -1.0
+          ],
+          [
+            -0.75,
+            0.0,
+            0.75
+          ]
+        ]
+      ],
+      "name": "configured-k4-state",
+      "partitions": [
+        [
+          7
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          3,
+          1
+        ]
+      ],
+      "state": [
+        [
+          [
+            -1.25,
+            0.0,
+            1.25
+          ],
+          [
+            -0.75,
+            0.5,
+            -1.0
+          ],
+          [
+            -0.25,
+            1.0,
+            -0.5
+          ]
+        ]
+      ],
+      "weights": [
+        [
+          [
+            -0.875
+          ],
+          [
+            -0.25
+          ],
+          [
+            0.375
+          ],
+          [
+            -0.875
+          ]
+        ],
+        [
+          [
+            -0.5
+          ],
+          [
+            0.125
+          ],
+          [
+            0.75
+          ],
+          [
+            -0.5
+          ]
+        ],
+        [
+          [
+            -0.125
+          ],
+          [
+            0.5
+          ],
+          [
+            -0.75
+          ],
+          [
+            -0.125
+          ]
+        ]
+      ]
+    },
+    {
+      "B": 1,
+      "C": 3,
+      "K": 3,
+      "T": 6,
+      "inputs": [
+        [
+          [
+            0.25,
+            0,
+            0
+          ],
+          [
+            0,
+            0.5,
+            0
+          ],
+          [
+            0,
+            0,
+            0.75
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      ],
+      "name": "square-k3-impulse",
+      "partitions": [
+        [
+          6
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          3,
+          2
+        ]
+      ],
+      "state": null,
+      "weights": [
+        [
+          [
+            -0.875
+          ],
+          [
+            -0.25
+          ],
+          [
+            0.375
+          ]
+        ],
+        [
+          [
+            -0.5
+          ],
+          [
+            0.125
+          ],
+          [
+            0.75
+          ]
+        ],
+        [
+          [
+            -0.125
+          ],
+          [
+            0.5
+          ],
+          [
+            -0.75
+          ]
+        ]
+      ]
+    },
+    {
+      "B": 1,
+      "C": 3,
+      "K": 2,
+      "T": 5,
+      "inputs": [
+        [
+          [
+            -1.5,
+            -0.75,
+            0.0
+          ],
+          [
+            0.25,
+            1.0,
+            -1.5
+          ],
+          [
+            -1.25,
+            -0.5,
+            0.25
+          ],
+          [
+            0.5,
+            1.25,
+            -1.25
+          ],
+          [
+            -1.0,
+            -0.25,
+            0.5
+          ]
+        ]
+      ],
+      "name": "k2-signed",
+      "partitions": [
+        [
+          5
+        ],
+        [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        [
+          2,
+          1,
+          2
+        ]
+      ],
+      "state": [
+        [
+          [
+            -1.25,
+            0.0,
+            1.25
+          ]
+        ]
+      ],
+      "weights": [
+        [
+          [
+            -0.875
+          ],
+          [
+            -0.25
+          ]
+        ],
+        [
+          [
+            -0.5
+          ],
+          [
+            0.125
+          ]
+        ],
+        [
+          [
+            -0.125
+          ],
+          [
+            0.5
+          ]
+        ]
+      ]
+    }
+  ],
+  "classifier": "Exact Mismatch class/message and post-mutation target-step convolution delta, not aggregate warmup count. Wrong class/message/zero-or-extra delta reject. Normal-mutant-restored use identical input/weight/environment identities.",
+  "error_analysis": "Fixed inputs/state are quarters and weights eighths; each depthwise sum has at most4 dyadic products and |sum|<=6. Values/products/sums in this finite domain are exactly FP32 representable. Conservative gamma4*6 is <1.44e-6; retained raw budget is2e-5+2e-6|y|. SiLU derivative <=1.1 and an engineering16u sigmoid allowance propagated through |y|<=6 remain below4e-5+4e-6|silu(y)|; this is not a library ULP guarantee. No tolerance changes after outputs.",
+  "failure_boundary": "Controlled ConvObserver failure is after source cache[0] write, before numerical convolution; state-write observation only, no upstream exception-safety promise.",
+  "generation": 1,
+  "mutants": {
+    "cross_stream_alias": {
+      "message": "RAW_VALUES",
+      "numeric_required": true
+    },
+    "reset_omission": {
+      "message": "RAW_VALUES",
+      "numeric_required": true
+    },
+    "stale_prefill_state": {
+      "message": "RAW_VALUES",
+      "numeric_required": true
+    },
+    "wrong_advance": {
+      "message": "BOOKKEEPING_ADVANCE",
+      "numeric_required": false
+    },
+    "wrong_slot": {
+      "message": "SLOT1_CHANGED",
+      "numeric_required": true
+    },
+    "wrong_suffix": {
+      "message": "STATE_VALUES",
+      "numeric_required": true
+    },
+    "wrong_update_order": {
+      "message": "STATE_UPDATE_ORDER",
+      "numeric_required": true
+    }
+  },
+  "mutation_overlap": "reset omission and cross-stream alias both inject stale cache state; named controls are not independent mechanisms.",
+  "not_qualified": [
+    "K1 multi-step",
+    "empty chunks/T8",
+    "nativeBF16/quantized weights",
+    "KDA/full model",
+    "cross-user/physical-I/O/performance"
+  ],
+  "scalar_equation": "Per stream keep chronological scalar history h initialized by explicit state or K-1 zeros. At each token append input, output sum_{j=0}^{K-1} h[-K+j,c]*w[c,j,0], activate y/(1+exp(-y)), retain last K-1 for K>1. q/k/v are successive equal channel blocks reshaped B,T,1,C/3. Reference has no candidate convolution/state code.",
+  "scalar_oracle_sha256": "07101a26b169260b1fd93efedca097e07d38ffb37325e5147a52c7fd6ae101b4",
+  "schema": "flash-cache-lifecycle-fixtures-v1",
+  "scope": "ACTUAL_CACHE_METHOD_EXECUTED for explicitly measured methods and SOURCE_SLICE_EXECUTED convolution with unchanged mixed-input/observer seams. Auxiliary bookkeeping is not KDA.",
+  "tolerances": {
+    "raw_atol": 2e-05,
+    "raw_rtol": 2e-06,
+    "same_device_confirmation": "exact ordered numerical observations; RSS separately retained",
+    "silu_atol": 4e-05,
+    "silu_rtol": 4e-06,
+    "state": "exact shape and values"
+  }
+}
