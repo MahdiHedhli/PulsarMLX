@@ -1,12 +1,5 @@
 #!/usr/bin/env python3
-"""Generate/check the exact Git-byte V11 Event-05 implementation measurement.
-
-This generator produced the frozen v8 record and is kept for that history. It
-compares the measurement head's bytes with the working tree, so `--check` only
-holds while the branch sits at that head; the active CI gate is
-`generate_f017_v11_measurement_v2.py`, which separates the historical and
-current verifications. See docs/architecture/reviews/f017-v11-active-measurement-repair-20260920.md.
-"""
+"""Generate/check the exact Git-byte V11 Event-05 implementation measurement."""
 from __future__ import annotations
 
 import argparse
