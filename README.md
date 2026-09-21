@@ -13,6 +13,16 @@ planned shipping runtime is Rust-native with no required Python process; direct
 quantized Metal expert kernels are roadmap work, not a verified current
 capability. See the [PulsarMLX strategy](docs/roadmap/PULSARMLX_STRATEGY.md).
 
+PulsarMLX approaches that through:
+
+- **MLX** as the Apple Silicon execution layer
+- **unified memory** shared by CPU and GPU
+- **SSD-backed expert residency** rather than whole-checkpoint RAM residency
+- **expert caching** with an explicitly admitted byte budget
+- **prefetching** of experts the router is about to need
+- **storage-aware execution** that treats I/O as a first-class scheduling term
+- **correctness-first qualification**: every capability is bounded by committed evidence before it is claimed
+
 It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisanni/pulsar). The Apple path has grown into a substantially independent runtime: MLX backend, portable storage, architecture-oracle methodology, research/evidence framework, and unified-memory-aware residency work—while still preserving Pulsar’s MIT license, Git history, and Linux/CUDA implementation.
 
 > [!IMPORTANT]
@@ -22,14 +32,19 @@ It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisan
 
 ## Status at a glance (2026-09-20)
 
-| Track | What runs today | Machine | Runtime | Observed speed | Fidelity evidence | Source |
-| --- | --- | --- | --- | --- | --- | --- |
-| **Qwen3-30B-A3B Q8_0** (frozen research baseline) | full 48-layer execution, greedy token, bounded generation | Apple Silicon (MLX GPU) | Python/NumPy reference + MLX worker | validation timings only (not advertised) | exact numerical boundaries vs the CPU architecture oracle, ≈10⁻⁷–10⁻⁸ at MoE boundaries | tag [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research) |
-| **GLM-5.2 UD-IQ2_XXS** (research ladder + Rust-native runtime track) | committed research ladder C01–C11 (Python/NumPy reference path); **Rust-native one-token boundary established on the real checkpoint on 2026-09-20**: the native executor (Rust + MLX bridge) produced token 154820 for prompt 9703, equal to the corrected full-checkpoint oracle (Event 06), under a human-approved one-shot. Since then the native runtime has gained multi-position decoding (RoPE at nonzero positions, causal multi-key MLA attention, a retained per-layer cache) and a text CLI with the checkpoint's own tokenizer and chat template and no Python inference process — both qualified on synthetic fixtures against an independent reference, **not yet run on the real checkpoint** | Mac Studio M1 Ultra, internal SSD | Python/NumPy reference (research); Rust + MLX-bridge native P1 (one token, human-gated one-shots) | native one token: 1003.6 s = 704 s shard identity rehash (~238 GB) + 299 s forward pass — not a throughput claim | checkpoint-free native-vs-corrected-oracle differentials (11 formats bit-exact; 6/6 graph cases) + real-checkpoint attempt 2 (token and top-1 margin agree with the oracle) | [`docs/architecture/GLM52_CONTRACT.md`](docs/architecture/GLM52_CONTRACT.md), branch `feat/017-rust-native-inference-runtime` ([attempt-2 readiness + outcome](https://github.com/MahdiHedhli/PulsarMLX/blob/e38d002e54b5552966ccb7a586c2b0cc23b47e08/docs/architecture/reviews/f017-native-attempt-2-readiness-20260920.md)) |
-| **GLM-5.3-Flash mixed-4/8, unpruned** (paged / persistent research candidate) | persistent OpenAI-style research server paging 288 experts × 42 layers through a wired slot store; corrected termination; 6.03 h soak segment at the 60 GB budget, and a **70 GB budget admitted on 2026-09-20** (117 slots/layer) after a paired ladder and an 80-request server soak | Mac Studio M1 Ultra 128 GB | Python/MLX (mlx 0.32.2, mlx-vlm 0.7.0 + pipenetwork `glm5_next`) | decode **2.6–3.3 tok/s** at the 60 GB budget (miss-bound); at the admitted 70 GB budget the same six paired CLI prompts give **3.06–4.20 tok/s** against **2.75–3.64** at 60 GB (+9–17 % per pair, mean +13.4 %, 18/18 token-identical); exact-repeat request latency 12–15 % lower, A-B-A 9–13 % lower than a fresh process (prefill) | 120/120 token-identical task pairs vs the fresh-process paged reference; 119/119 relative task retention; 0.9724 exact 95 % lower bound on group retention (scope-limited) | [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md), commit `971db9c1` on `serve/glm53-flash-unpruned-persistent-20260919b` |
-| **Pruned REAP variants** (GLM-5.3-Flash REAP50 etc.) | resident serving experiments on the pruned 144-expert build | Mac Studio M1 Ultra | Python/MLX | recorded in [`docs/glm53-flash/performance-notes.md`](docs/glm53-flash/performance-notes.md) | **not the fidelity target**; pruned-model numbers are never compared with unpruned results | same branch family |
+Every claim below is classified, and every number is traceable to the document cited beside it. The five columns are the only vocabulary this project uses for capability status.
 
-None of these is a production runtime. The Python/MLX Flash candidate is **not** the Rust-native shipping architecture and does not complete it.
+| Track | ✅ Verified (independent evidence) | 📏 Measured (observed, not independently qualified) | 🧪 Experimental / research | 🗺️ Planned | ❌ Not implemented / not claimed |
+| --- | --- | --- | --- | --- | --- |
+| **Qwen3-30B-A3B Q8_0** — frozen Apple MLX baseline | full 48-layer execution, real router, expert MLP, top-8 aggregation, MoE residual, attention, full-vocab logits, greedy token 320, bounded generation, all against a CPU architecture oracle ([boundaries](#exact-numerical-boundaries-mlx-vs-architecture-cpu-oracle)) | validation timings only (never advertised) | — | — | production tok/s, optimized MLX-only serving, KV-cached decode, llama.cpp bit-identical output |
+| **GLM-5.2 UD-IQ2_XXS** — Python/NumPy research ladder | C01–C11 committed boundaries ([ledger](docs/research/glm52/CLAIMS_LEDGER.md)) | — | — | — | MLX-only performance |
+| **GLM-5.2 — F017 Rust-native runtime** | one token on the real 222 GiB checkpoint (token **154820**, attempt 2); decoder differential 0 ULP over 107,502 values per seed across 11 formats; graph differential 6/6; multi-position temporal graph 6/6 on synthetic fixtures; native text CLI on synthetic fixtures ([status](docs/architecture/f017-native-runtime-status.md)) | real-checkpoint Stage A positions 1–7; Stage B1 text generation (` 17 times table`); Stage A timings | — | multi-token real-checkpoint generation under the standing approval | answer quality, tokens/sec, the sparse `glm-dsa` indexer, validated RoPE pairing, formal F017 closeout |
+| **GLM-5.3-Flash mixed-4/8, unpruned** — Python/MLX paged research | 120/120 token-identical task pairs and 18/18 token-identical paired runs against the fresh-process paged reference ([results](docs/glm53-flash/persistent-serving-results.md)) | decode 2.6–3.3 tok/s at 60e9 and 3.06–4.20 tok/s at the admitted 70e9 ceiling; 6.03 h soak segment at 60e9; 1.33 h / 80-request soak at 70e9 | persistent OpenAI-style research server, paged expert residency, expert-cache ceiling ladder | a 6 h soak segment at 70e9 (**has not run**) | production readiness; 80e9 on a 128 GB host; this is **not** the Rust-native runtime |
+| **Pruned REAP variants** (REAP50 etc.) | — | resident serving experiments ([notes](docs/glm53-flash/performance-notes.md)) | — | — | **not the fidelity target**; never compared with unpruned results |
+| **OpenAI-style synthetic serving crate** | 20/20 mutation guards killed, contention and lifecycle qualification ([contract](docs/serving/synthetic-api-contract.md)) | — | `crates/serve-synthetic`, a bounded synthetic API server outside the root workspace | a real runtime backend behind the same seam | it serves **no model**; it is a protocol and lifecycle harness, not inference |
+| **Native MLX checkpoint ingestion** (the next target) | — | — | — | Safetensors ingestion + MLX affine quantization + expert residency, for `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` and `…-Flash-…` ([below](#next-target-native-mlx-checkpoints)) | **not started** |
+
+None of this is a production runtime. The Python/MLX Flash research path is **not** the Rust-native shipping architecture and does not complete it.
 
 ## The idea
 
@@ -53,7 +68,7 @@ This is a **feasibility and resource-use** thesis—not a claim that Macs outrun
 
 ## Verified today
 
-**Baseline (committed evidence):** [Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF) **Q8_0** on **native Apple MLX GPU**, under the architecture contract *Q8_0 weight dequantization × f32 activation*. Research freeze tag: [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research).
+**Baseline (committed evidence):** [Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-GGUF) **Q8_0** on **native Apple MLX GPU**, under the architecture contract *Q8_0 weight dequantization × f32 activation*. Research freeze tag: [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/tree/v0.2.0-qwen30b-e2e-research).
 
 Narrative report: **[PULSARMLX_APPLE_RUNTIME_REPORT.md](PULSARMLX_APPLE_RUNTIME_REPORT.md)** · raw evidence under [`docs/research/raw/`](docs/research/raw/).
 
@@ -256,7 +271,10 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | GLM-5.2 native answer quality | ❌ Not claimed — four tokens from a 2-bit quantisation is not a task result |
 | GLM-5.2 native tokens/sec | ❌ Not claimed |
 | GLM-5.3-Flash unpruned paged/persistent serving (research) | ✅ Measured candidate `971db9c1` (Python/MLX); see [results](docs/glm53-flash/persistent-serving-results.md) |
-| OpenAI-compatible serving on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
+| GLM-5.3-Flash expert-cache budget | ✅ 60e9 default, **70e9 admitted ceiling** via `--max-expert-cache-bytes`; 80e9 refused on a 128 GB host |
+| OpenAI-style **synthetic** serving crate (`crates/serve-synthetic`) | 🧪 Protocol, contention and lifecycle qualification only — **serves no model**; 20/20 mutation guards killed |
+| OpenAI-compatible serving of a real model on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
+| Native Safetensors / MLX affine-quantized checkpoint ingestion | 🗺️ Planned, not started |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
 
@@ -335,14 +353,59 @@ cargo build -p f017-native --release --bin native_generate
   --prompt "What is 17 times 6? Answer with the number only." --max-tokens 8
 ```
 
-The answer goes to stdout and one diagnostics object to stderr. The sparse
-`glm-dsa` indexer is not implemented, so the runtime refuses sequences longer
-than the checkpoint's `attention.indexer.top_k` rather than silently
-substituting dense attention.
+The answer goes to stdout and one diagnostics object to stderr.
+
+**Unfinished, exactly as the status document lists it:**
+
+| Not done | Status |
+| --- | --- |
+| Text generation on the real checkpoint | **In progress.** Stage A (teacher-forced positions) is done; the text stages run under the same approval. |
+| Performance baseline | **First real numbers, not a baseline.** No tokens-per-second figure is published: a teacher-forced ladder is not a decode rate. |
+| Answer quality | **Not claimed, and B1 is not evidence of it.** Four tokens of raw-text continuation from a 2-bit quantisation is not a task result. |
+| The checkpoint's RoPE pairing | **Declared, not validated.** B1 is consistent with `NeoxHalfSplit`, not proof of it; it is settled by the first approved multi-token run. |
+| The sparse indexer | **Not implemented.** The runtime refuses sequences longer than `attention.indexer.top_k` rather than substituting dense attention beyond it. |
+| Feature 017 formal closeout | **Pending the standing human approval.** Technical state and formal signoff are separate. |
+
+There is also a known defect found by Stage B1: `--no-chat-template` currently
+supplies an empty stop set, so a raw-text run terminates on `max-tokens` rather
+than on the model's own terminal. Chat-template runs are unaffected.
 
 ## GLM-5.3-Flash: unpruned paged / persistent serving (research, 2026-09-20)
 
-A separate research track ran the **unpruned** `GLM-5.3-Flash-MLX-mixed-4_8bit` (288 routed experts, top-8, 42 MoE layers, ~170 GB of experts) on a Mac Studio M1 Ultra 128 GB by paging experts through a 60 GB wired slot store, first as a CLI and then as a persistent OpenAI-style research server (Python/MLX; commit `971db9c1`). Headline results, all relative to a fresh-process run of the same paged path with the same corrected stop policy: token-identical outputs on 120/120 sealed tasks, 119/119 relative task retention (exact 95 % lower bound 0.9724 on group retention, scope-limited), exact-repeat request latency 12–15 % lower and A-B-A 9–13 % lower (a prefill effect; decode stays 2.6–3.3 tok/s because the budget holds ~35 % of the experts), and a 6.03 h single-process soak segment with 0 failed requests. The round also root-caused the `<|user|>`-after-answer termination fault (loader without eos ids) and fixed it. Full tables, definitions, the soak usability clarification and limitations: [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md). Deployment authorization was not granted; nothing replaced a default service. A follow-on round on 2026-09-20 profiled decode (66 % cold expert reads), simulated the capacity curve and then raised the expert budget: **70e9 bytes (117 slots per layer) is now the recommended configuration**, with 18/18 token-identical paired runs, decode +9–17 % (mean +13.4 %), decode misses/token −16.4 %, peak MLX memory +10.107 GB and an 80-request server soak with 0 failed requests; 80e9 is not admitted on this host. Streaming the prefill outside the store was measured and is a negative result (identity failure from MLX's kernel selection, slower prefill, no reclaimable budget), as are speculative/union batching and request batching, which do not reduce expert I/O.
+A separate research track ran the **unpruned** `GLM-5.3-Flash-MLX-mixed-4_8bit` (288 routed experts, top-8, 42 MoE layers, ~170 GB of experts) on a Mac Studio M1 Ultra 128 GB by paging experts through a 60 GB wired slot store, first as a CLI and then as a persistent OpenAI-style research server (Python/MLX; commit `971db9c1`). Headline results, all relative to a fresh-process run of the same paged path with the same corrected stop policy: token-identical outputs on 120/120 sealed tasks, 119/119 relative task retention (exact 95 % lower bound 0.9724 on group retention, scope-limited), exact-repeat request latency 12–15 % lower and A-B-A 9–13 % lower (a prefill effect; decode stays 2.6–3.3 tok/s because the budget holds ~35 % of the experts), and a 6.03 h single-process soak segment with 0 failed requests. The round also root-caused the `<|user|>`-after-answer termination fault (loader without eos ids) and fixed it. Full tables, definitions, the soak usability clarification and limitations: [`docs/glm53-flash/persistent-serving-results.md`](docs/glm53-flash/persistent-serving-results.md). Deployment authorization was not granted; nothing replaced a default service. A follow-on round on 2026-09-20 profiled decode (66 % cold expert reads), simulated the capacity curve and then raised the expert budget: **70e9 bytes (117 slots per layer) is now the recommended configuration**, with 18/18 token-identical paired runs, decode +9–17 % (mean +13.4 %), decode misses/token −16.4 %, peak MLX memory +10.107 GB and an 80-request server soak with 0 failed requests; 80e9 is not admitted on this host. A 6 h soak segment at the 70e9 budget **has not been completed**; the 70e9 exposure is 80 requests over 1.33 h against 335 requests over 6.03 h at 60e9.
+
+**The decode I/O finding.** Decode is latency-bound on many small per-layer expert reads, not bandwidth-bound: at 60e9 about 66 % of decode expert reads are cold, and the reads are small and scattered rather than large and sequential. Read parallelism and coalescing therefore do not help much, and **capacity is the lever** — holding more experts resident is what removes the read, which is why the budget ladder (60e9 → admitted 70e9 ceiling) produced the gain and why 80e9 is refused on a 128 GB host.
+
+**Negative results, retained on purpose.** Streaming the prefill outside the store is a negative result (identity failure from MLX's kernel selection between the plain and sorted `gather_qmm` kernels, slower prefill, no reclaimable budget); union/speculative batching and request batching are also negative, because they do not reduce expert I/O. The streaming-prefill code is merged here, default-off, and is **not** a candidate — it is kept so the measurement stays reproducible.
+
+**This track is the Python/MLX research path** (`scripts/research/glm53_flash/`), **not the F017 Rust-native runtime.** It demonstrates the value of PulsarMLX's paged expert-residency architecture; it does not implement the shipping architecture, and no result here transfers to the native runtime as a claim.
+
+## Next target: native MLX checkpoints
+
+**Status: planned. Not implemented. Not started.**
+
+The next major target is to consume MLX-native mixed-precision checkpoints directly:
+
+- `PipeNetwork GLM-5.3-MLX-mixed-4_8bit`
+- `PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit`
+
+The planned capability is the composition:
+
+```text
+Native Rust runtime
+      +
+Safetensors checkpoint ingestion
+      +
+MLX affine quantization
+      +
+PulsarMLX expert residency / streaming
+      +
+MLX execution
+```
+
+The goal is to consume these checkpoints **without converting them to GGUF** and **without requantizing their weights** — reading the published Safetensors shards and their MLX affine quantization parameters as they are.
+
+Nothing in this section is implemented, measured or scheduled. It is stated here so the direction is legible, not to imply progress. The F017 Rust-native runtime described above operates on the GLM-5.2 GGUF checkpoint and does not read Safetensors today.
 
 ## Performance: not the point yet
 
@@ -460,16 +523,37 @@ Those are **historical/inherited Pulsar results**, not PulsarMLX Apple benchmark
 ## Roadmap
 
 The single high-level source of truth is
-**[docs/roadmap/PULSARMLX_STRATEGY.md](docs/roadmap/PULSARMLX_STRATEGY.md)**.
+**[docs/roadmap/PULSARMLX_STRATEGY.md](docs/roadmap/PULSARMLX_STRATEGY.md)**;
+per-model boundaries live in [model targets](docs/roadmap/MODEL_TARGETS.md).
 
-1. Map each target's numerical semantics and qualify synthetic composition.
-2. Earn independent model-specific numerical evidence at the appropriate real boundary.
-3. Measure memory pressure, storage traffic, cache behavior and decoding performance.
-4. Integrate a usable CLI/serving surface and evaluate task-level quality.
+**This is a roadmap, not a claim of completion.** Items below the line that
+separates done from planned have not been started. Nothing here is execution
+authorization.
 
-These are roadmap stages, not execution authorization. Studio F017 reference and
-instrumentation work and MacBook Flash bring-up are independent tracks; neither
-implies a distributed inference system. See [model targets](docs/roadmap/MODEL_TARGETS.md).
+```text
+Qwen Apple MLX baseline                        ✅ verified
+        ↓
+GLM-5.2 research execution                     ✅ committed ladder C01–C11
+        ↓
+F017 Rust-native GLM-5.2                       ✅ one token on the real checkpoint; multi-token pending
+        ↓
+GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
+        ↓
+Native Safetensors + MLX affine quantization   🗺️ planned, not started
+        ↓
+Native GLM-5.3 mixed 4/8                       🗺️ planned, not started
+        ↓
+Native GLM-5.3-Flash mixed 4/8                 🗺️ planned, not started
+        ↓
+Residency / caching / prefetch optimization    🗺️ planned
+        ↓
+KV / state optimization                        🗺️ planned
+        ↓
+Serving + broader hardware qualification       🗺️ planned
+```
+
+Studio F017 reference and instrumentation work and MacBook Flash bring-up are
+independent tracks; neither implies a distributed inference system.
 
 ## License & attribution
 
