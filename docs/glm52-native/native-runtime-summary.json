@@ -115,13 +115,13 @@
  "not_claimed": [
   "answer quality on any task",
   "any throughput figure",
-  "any tokens-per-second figure",
   "general quality",
   "indexer behaviour beyond its top-k budget",
-  "multi-token generation on the real checkpoint",
   "production readiness",
+  "qualified multi-token generation on the real checkpoint",
   "real-checkpoint multi-token agreement",
-  "the rope pairing of the real checkpoint"
+  "the rope pairing of the real checkpoint",
+  "tokens/sec as a runtime capability"
  ],
  "one_token_real_checkpoint": {
   "attempt": "F017-NATIVE-BOUNDED-P1-ATTEMPT-2",

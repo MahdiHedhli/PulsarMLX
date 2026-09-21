@@ -14,6 +14,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -179,8 +180,8 @@ def build() -> dict:
             "evidence": binding(CONTRACT),
         },
         "not_claimed": sorted(set(contract["not_claimed"]) | {
-            "multi-token generation on the real checkpoint",
-            "any tokens-per-second figure",
+            "qualified multi-token generation on the real checkpoint",
+            "tokens/sec as a runtime capability",
             "answer quality on any task",
             "production readiness",
         }),
@@ -192,35 +193,134 @@ def serialize(document: dict) -> str:
     return json.dumps(document, indent=1, sort_keys=True) + "\n"
 
 
-def markdown_claims(document: dict) -> list[tuple[str, str]]:
-    """Figures the prose status document must state, and where they come from.
+BEGIN = "<!-- generated:begin f017-native-status-figures -->"
+END = "<!-- generated:end f017-native-status-figures -->"
+_COMMENT = re.compile(r"<!--.*?-->", re.S)
+_FENCE = re.compile(r"```.*?```", re.S)
 
-    The status document is prose, not a rendered template, but the README and the
-    document itself say every number in it comes from this generator. That was
-    only true of the JSON: `--check` compared the JSON and never looked at the
-    Markdown, so the two drifted -- the document claimed 29 unchanged / 7 drifted
-    bodies while the regenerated measurement said 28 / 8. Rather than drop the
-    assurance, the load-bearing figures are checked here, so a future measurement
-    refresh that leaves the prose behind fails CI instead of publishing a
-    contradiction.
+
+def figures(document: dict) -> list[dict]:
+    """Every load-bearing figure, its generated value, and how prose states it.
+
+    `pattern` must match wherever the prose states the figure. `--check`
+    requires at least one match and requires *every* match to equal `value`, so
+    a second, contradicting statement elsewhere in the document is a failure
+    rather than something the first match hides.
     """
     measurement = document["active_source_measurement"]
+    one_token = document["one_token_real_checkpoint"]
+    reconciliation = document["checkpoint_free_reconciliation"]
+    b1 = document["text_generation_real_checkpoint"]
+    b2 = document["chat_template_generation_real_checkpoint"]
     unchanged = measurement["measured_paths"] - measurement["drifted_and_reviewed"]
     return [
-        (f'{unchanged} of {measurement["measured_paths"]} measured bodies are unchanged',
-         "active_source_measurement.measured_paths - .drifted_and_reviewed"),
-        (f'{measurement["drifted_and_reviewed"]} drifted',
-         "active_source_measurement.drifted_and_reviewed"),
+        dict(name="measured bodies unchanged", value=str(unchanged),
+             pattern=r"(\d+) of %d measured bodies are unchanged" % measurement["measured_paths"]),
+        dict(name="measured bodies drifted", value=str(measurement["drifted_and_reviewed"]),
+             pattern=r"(\d+) drifted"),
+        dict(name="produced token, real checkpoint", value=str(one_token["produced_token"]),
+             pattern=r"token \*\*(\d{4,})\*\*"),
+        dict(name="decoder values per seed", value=f'{reconciliation["decoder_differential_values_per_seed"]:,}',
+             pattern=r"\*\*([\d,]{5,})\*\* values per seed"),
+        dict(name="Stage B1 generated tokens", value=str(b1["generated_token_count"]),
+             pattern=r"Stage B1 \((\w+) generated tokens\)", words=True),
+        dict(name="Stage B2 positions executed", value=str(b2["positions_executed"]),
+             pattern=r"Stage B2's chat-template run over (\d+) positions"),
     ]
 
 
+_WORDS = {"1": "one", "2": "two", "3": "three", "4": "four", "5": "five",
+          "6": "six", "7": "seven", "8": "eight", "9": "nine"}
+
+
+def _expected_forms(figure: dict) -> set[str]:
+    forms = {figure["value"]}
+    if figure.get("words") and figure["value"] in _WORDS:
+        forms.add(_WORDS[figure["value"]])
+    return forms
+
+
+def render_block(document: dict) -> str:
+    """The generated figures block, the only part of the document this tool owns."""
+    measurement = document["active_source_measurement"]
+    one_token = document["one_token_real_checkpoint"]
+    reconciliation = document["checkpoint_free_reconciliation"]
+    temporal = document["temporal_multi_position"]
+    stage_a = document["temporal_multi_position_real_checkpoint"]
+    b1 = document["text_generation_real_checkpoint"]
+    b2 = document["chat_template_generation_real_checkpoint"]
+    rows = [
+        ("Measured bodies unchanged / drifted",
+         f'{measurement["measured_paths"] - measurement["drifted_and_reviewed"]} / '
+         f'{measurement["drifted_and_reviewed"]} of {measurement["measured_paths"]}'),
+        ("Produced token, real checkpoint (attempt 2)", str(one_token["produced_token"])),
+        ("Decoder differential values per seed",
+         f'{reconciliation["decoder_differential_values_per_seed"]:,}'),
+        ("Decoder differential max ULP", str(reconciliation["decoder_differential_max_ulp"])),
+        ("Temporal graph cases (synthetic)", f'{temporal["cases_passed"]}/{temporal["cases"]}'),
+        ("Stage A positions, real checkpoint", str(stage_a["positions_executed"])),
+        ("Stage A later positions", stage_a["later_positions"]),
+        ("Stage B1 generated tokens", str(b1["generated_token_count"])),
+        ("Stage B2 positions / prompt tokens",
+         f'{b2["positions_executed"]} / {b2["prompt_tokens"]}'),
+        ("Measured decode rate, cold uncached weight path",
+         f'{b1["decode_tokens_per_second"]:.4f} tok/s (Stage B1), '
+         f'{b2["decode_tokens_per_second"]:.4f} tok/s (Stage B2) — '
+         "**measured, not a runtime capability**"),
+    ]
+    body = "\n".join(f"| {label} | {value} |" for label, value in rows)
+    return (f"{BEGIN}\n"
+            "<!-- Generated by scripts/research/generate_f017_native_status_v1.py. Do not edit by hand. -->\n\n"
+            "| Figure | Value |\n| --- | --- |\n" + body + "\n\n"
+            "Every figure above is emitted from the evidence records. The decode rates are\n"
+            "measured on a cold, uncached weight path and are **not** a throughput claim:\n"
+            "`not_claimed` names *qualified multi-token generation on the real checkpoint*\n"
+            "and *tokens/sec as a runtime capability*, which is what remains unclaimed.\n\n"
+            f"{END}")
+
+
+def _prose(markdown: str) -> str:
+    """The document minus generated blocks, HTML comments and code fences.
+
+    A figure hidden in a comment must not satisfy the scan, and a contradicting
+    figure stated in prose must not be excused by one stated in a comment.
+    """
+    start = markdown.find(BEGIN)
+    if start != -1:
+        stop = markdown.find(END, start)
+        if stop != -1:
+            markdown = markdown[:start] + markdown[stop + len(END):]
+    return _FENCE.sub(" ", _COMMENT.sub(" ", markdown))
+
+
 def verify_markdown(document: dict) -> list[str]:
-    """Return the claims the status document fails to state; empty means agreement."""
+    """Return every disagreement between the document and the generated figures."""
     if not STATUS_DOC.is_file():
         return [f"missing {STATUS_DOC.relative_to(ROOT)}"]
-    prose = STATUS_DOC.read_text()
-    return [f"{claim!r} (from {source})" for claim, source in markdown_claims(document)
-            if claim not in prose]
+    markdown = STATUS_DOC.read_text()
+    problems = []
+
+    block = render_block(document)
+    start = markdown.find(BEGIN)
+    stop = markdown.find(END)
+    if start == -1 or stop == -1:
+        problems.append("the generated figures block is missing")
+    elif markdown[start:stop + len(END)] != block:
+        problems.append("the generated figures block does not match the generator")
+
+    prose = _prose(markdown)
+    for figure in figures(document):
+        found = re.findall(figure["pattern"], prose)
+        if not found:
+            problems.append(f'{figure["name"]}: the document never states it')
+            continue
+        allowed = _expected_forms(figure)
+        wrong = sorted({f for f in found if f not in allowed})
+        if wrong:
+            problems.append(
+                f'{figure["name"]}: states {", ".join(wrong)} where the evidence says '
+                f'{figure["value"]}')
+    return problems
 
 
 def main(argv=None) -> int:
@@ -235,11 +335,22 @@ def main(argv=None) -> int:
             return 1
         stale = verify_markdown(json.loads(raw))
         if stale:
-            print("native runtime status drift: "
-                  + str(STATUS_DOC.relative_to(ROOT))
-                  + " does not state " + "; ".join(stale), file=sys.stderr)
+            print("native runtime status drift in "
+                  + str(STATUS_DOC.relative_to(ROOT)) + ": " + "; ".join(stale),
+                  file=sys.stderr)
             return 1
     else:
+        document = json.loads(raw)
+        if STATUS_DOC.is_file():
+            markdown = STATUS_DOC.read_text()
+            block = render_block(document)
+            start = markdown.find(BEGIN)
+            stop = markdown.find(END)
+            if start != -1 and stop != -1:
+                markdown = markdown[:start] + block + markdown[stop + len(END):]
+            else:
+                markdown = markdown.rstrip("\n") + "\n\n## Generated figures\n\n" + block + "\n"
+            STATUS_DOC.write_text(markdown)
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(raw)
     return 0
