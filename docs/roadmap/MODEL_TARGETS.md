@@ -9,7 +9,7 @@ not substitutes for qualifying a new model.
 | --- | --- | --- |
 | GLM-5.2 IQ2_XXS | Large-model correctness reference on the 128 GB Mac Studio | Sequence 43: two independent 79-layer oracles. Prospective instrumentation is separate; full performance and dogfood are not qualified. |
 | GLM-5.3 | Full-scale model-family target | No exact PulsarMLX quantized artifact is ratified here. Numerical compatibility and performance remain to be qualified. |
-| `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` | Primary practical-usability target on the 64 GB M2 Max MacBook Pro with external NVMe; later 128 GB Studio evaluation | Model-specific source mapping and bounded synthetic component work. No PulsarMLX full-model correctness, sustained decoding or dogfood claim. |
+| `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` | Primary practical-usability target on the 64 GB M2 Max MacBook Pro with external NVMe; later 128 GB Studio evaluation | **Superseded by the 2026-09-20 consolidation — see *Current direction* above.** The unpruned model now has a measured paged/persistent serving candidate (`971db9c1`) on the 128 GB Studio: 120/120 token-identical task pairs against the fresh-process paged reference, 70e9 admitted as the expert-cache ceiling, decode I/O characterised. Still not claimed: PulsarMLX full-model correctness qualification, sustained decoding, dogfood, and a 6 h soak at 70e9. This track is the Python/MLX research path, not the Rust-native runtime. |
 
 ## Current direction (2026-09-20)
 
@@ -38,7 +38,9 @@ Qwen Apple MLX baseline                        ✅ verified
         ↓
 GLM-5.2 research execution                     ✅ committed ladder C01–C11
         ↓
-F017 Rust-native GLM-5.2                       ✅ one token on the real checkpoint; multi-token pending
+F017 Rust-native GLM-5.2                       ✅ one token qualified on the real checkpoint; Stage A positions 1-7
+                                               and Stage B1 text generation executed and measured, not qualified;
+                                               formal closeout pending human approval
         ↓
 GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
         ↓

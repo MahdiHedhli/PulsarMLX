@@ -23,7 +23,7 @@ between them is load-bearing:
 | Track | What it is | Status |
 | --- | --- | --- |
 | Qwen3-30B-A3B Q8_0 | the frozen Apple MLX research baseline | ✅ verified, frozen |
-| GLM-5.2 | Python/NumPy research ladder **and** the F017 Rust-native runtime — two different things | ✅ ladder C01–C11; ✅ one native token on the real checkpoint, multi-token pending ([status](../architecture/f017-native-runtime-status.md)) |
+| GLM-5.2 | Python/NumPy research ladder **and** the F017 Rust-native runtime — two different things | ✅ ladder C01–C11; ✅ one native token **qualified** on the real checkpoint; Stage A positions 1–7 and Stage B1 text generation 📏 measured, not qualified; formal closeout pending ([status](../architecture/f017-native-runtime-status.md)) |
 | GLM-5.3-Flash | Python/MLX paged expert-residency research | 🧪 measured candidate `971db9c1`; **not** the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
 
 The next major target is **native ingestion of MLX mixed-precision checkpoints**

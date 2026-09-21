@@ -545,7 +545,7 @@ Qwen Apple MLX baseline                        ✅ verified
         ↓
 GLM-5.2 research execution                     ✅ committed ladder C01–C11
         ↓
-F017 Rust-native GLM-5.2                       ✅ one token on the real checkpoint; multi-token pending
+F017 Rust-native GLM-5.2                       ✅ one token qualified; Stage A 1-7 and Stage B1 measured, not qualified
         ↓
 GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
         ↓

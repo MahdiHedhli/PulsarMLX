@@ -18,6 +18,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "docs/glm52-native/native-runtime-summary.json"
+STATUS_DOC = ROOT / "docs/architecture/f017-native-runtime-status.md"
 EVIDENCE = ROOT / "docs/architecture/reviews/evidence"
 
 ATTEMPT_2 = EVIDENCE / "f017-native-bounded-p1-real-attempt-02-execution-evidence-v1.json"
@@ -191,6 +192,37 @@ def serialize(document: dict) -> str:
     return json.dumps(document, indent=1, sort_keys=True) + "\n"
 
 
+def markdown_claims(document: dict) -> list[tuple[str, str]]:
+    """Figures the prose status document must state, and where they come from.
+
+    The status document is prose, not a rendered template, but the README and the
+    document itself say every number in it comes from this generator. That was
+    only true of the JSON: `--check` compared the JSON and never looked at the
+    Markdown, so the two drifted -- the document claimed 29 unchanged / 7 drifted
+    bodies while the regenerated measurement said 28 / 8. Rather than drop the
+    assurance, the load-bearing figures are checked here, so a future measurement
+    refresh that leaves the prose behind fails CI instead of publishing a
+    contradiction.
+    """
+    measurement = document["active_source_measurement"]
+    unchanged = measurement["measured_paths"] - measurement["drifted_and_reviewed"]
+    return [
+        (f'{unchanged} of {measurement["measured_paths"]} measured bodies are unchanged',
+         "active_source_measurement.measured_paths - .drifted_and_reviewed"),
+        (f'{measurement["drifted_and_reviewed"]} drifted',
+         "active_source_measurement.drifted_and_reviewed"),
+    ]
+
+
+def verify_markdown(document: dict) -> list[str]:
+    """Return the claims the status document fails to state; empty means agreement."""
+    if not STATUS_DOC.is_file():
+        return [f"missing {STATUS_DOC.relative_to(ROOT)}"]
+    prose = STATUS_DOC.read_text()
+    return [f"{claim!r} (from {source})" for claim, source in markdown_claims(document)
+            if claim not in prose]
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -200,6 +232,12 @@ def main(argv=None) -> int:
         if not OUTPUT.is_file() or OUTPUT.read_text() != raw:
             print("native runtime status drift: regenerate docs/glm52-native/native-runtime-summary.json",
                   file=sys.stderr)
+            return 1
+        stale = verify_markdown(json.loads(raw))
+        if stale:
+            print("native runtime status drift: "
+                  + str(STATUS_DOC.relative_to(ROOT))
+                  + " does not state " + "; ".join(stale), file=sys.stderr)
             return 1
     else:
         OUTPUT.parent.mkdir(parents=True, exist_ok=True)
