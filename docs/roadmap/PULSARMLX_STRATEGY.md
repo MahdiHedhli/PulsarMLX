@@ -68,7 +68,7 @@ them. See the [publication scope](../research/f017/read-observation-publication-
 
 The following Feature 016 records are historical authorities, not new expected-token
 predicates or active-run instructions. The C01–C11 research ladder is complete and frozen at
-[`v0.3.0-glm52-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.3.0-glm52-e2e-research), including the golden generated sequence
+[`v0.3.0-glm52-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/tree/v0.3.0-glm52-e2e-research), including the golden generated sequence
 `[21615, 220, 16, 13, 16, 16, 15, 15]`.
 
 Feature 016's vectorized reference path reproduced the complete frozen
