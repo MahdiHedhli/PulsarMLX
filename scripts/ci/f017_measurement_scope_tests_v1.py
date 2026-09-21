@@ -38,84 +38,121 @@ def run(work_dir, code_view):
     before=(view/'scope-inputs/workflow-before.yml').read_bytes()
     current_workflow=(view/'scope-inputs/workflow-current.yml').read_bytes()
     native_workflow=(view/'scope-inputs/workflow-native.yml').read_bytes()
-    def inventory(cur=None,base=None,nat=None):
-        return scope.verify_workflow_inventory(base or before,cur or current_workflow,nat or native_workflow)
+    resolution_workflow=(view/'scope-inputs/workflow-resolution.yml').read_bytes()
+    def inventory(cur=None,base=None,nat=None,res=None):
+        return scope.verify_workflow_inventory(base or before,cur or current_workflow,
+                                               nat or native_workflow,res or resolution_workflow)
     assert inventory()['both_legs_required']
     rejection('missing old workflow source','WORKFLOW_ORIGINAL_IDENTITY',lambda:inventory(base=before+b'\n'))
     rejection('missing native workflow source','WORKFLOW_NATIVE_IDENTITY',lambda:inventory(nat=native_workflow+b'\n'))
-    rejection('missing current primary leg','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:inventory(current_workflow.replace(scope.NEW_COMMANDS[1].encode(),b':')))
-    rejection('missing unrelated mandatory check','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:inventory(current_workflow.replace(b'validate_f017_result_authority_v11.py',b'NOT_RUN.py')))
-    rejection('current validators moved to historical context','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:inventory(current_workflow.replace(b'validate_f017_v11_execution_authority_v1.py',b'old/validate_f017_v11_execution_authority_v1.py')))
-    rejection('masked command error','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',lambda:inventory(current_workflow.replace(scope.NEW_COMMANDS[0].encode(),scope.NEW_COMMANDS[0].encode()+b' || true')))
+    rejection('missing resolution workflow source','WORKFLOW_RESOLUTION_IDENTITY',lambda:inventory(res=resolution_workflow+b'\n'))
 
-    # --- two-lineage construction: the lineages must themselves agree ---
     text=current_workflow.decode()
-    steps={s['name']:s for s in scope._steps(text) if s['name']}
-    native_steps={s['name']:s for s in scope._steps(native_workflow.decode()) if s['name']}
+    res_text=resolution_workflow.decode()
+    required=[s for s in scope._steps(res_text) if scope._is_required('\n'.join(s['lines']))]
+    assert len(required)==10,len(required)
+    target=[s for s in required if s['name']=='Qualify corrected oracle historical and active authority split'][0]
+    block='\n'.join(target['lines'])
+    assert text.count(block)==1
+    def swap(new_block):
+        return text.replace(block,new_block,1).encode()
+
+    # --- lineage construction: the resolution contains the qualify lineage in order ---
     expected_steps={s['name']:s for s in scope._steps(
         before.decode().replace(scope.OLD_COMMAND,('\n          ').join(scope.NEW_COMMANDS))) if s['name']}
-    differing=[n for n,s in expected_steps.items()
-               if scope._is_required('\n'.join(s['lines']))
-               and [scope._normalise(l) for l in s['lines']]!=[scope._normalise(l) for l in steps[n]['lines']]]
-    assert len(differing)==1,differing
-    only=differing[0]
-    # The two lineages must agree on everything except the sanctioned substitution
-    # itself: NEW_COMMANDS exist only on the qualify side, because the native
-    # workflow never carried OLD_COMMAND and so has neither form of it. Every
-    # other expected line must still appear in the native block, in order.
     substituted={scope._normalise(c) for c in scope.NEW_COMMANDS}
-    shared=[scope._normalise(l) for l in expected_steps[only]['lines']
-            if scope._normalise(l) not in substituted]
-    native_lines=[scope._normalise(l) for l in native_steps[only]['lines']]
-    assert substituted.isdisjoint(native_lines),only
-    assert scope._ordered_subset(shared,native_lines),only
-    results.append(dict(case='two lineages agree on the one differing required step',
-                        result='CONSTRUCTION_VERIFIED',
-                        diagnostic=only+' (native adds only; shared lines in order)'))
+    for s in required:
+        e=expected_steps.get(s['name'])
+        if e is None: continue
+        assert scope._ordered_subset([scope._normalise(l) for l in e['lines']],
+                                     [scope._normalise(l) for l in s['lines']]),s['name']
+    results.append(dict(case='resolution contains the qualify lineage in order',
+                        result='CONSTRUCTION_VERIFIED',diagnostic='%d required steps'%len(required)))
 
-    # --- Astra's demonstrated bypasses, now rejected ---
-    required_name='Qualify corrected oracle historical and active authority split'
-    marker='      - name: '+required_name+'\n        run: |\n'
-    assert text.count(marker)==1
-    def mutate(new_head):
-        return text.replace(marker,new_head,1).encode()
+    # --- Astra round 2: composing allowed lines no longer helps ---
+    wrapper_open='          cleanup_v6_historical_worktree() {'
+    wrapper_close='          }'
+    assert wrapper_open in block and wrapper_close in block
+    lines=target['lines']
+    head=lines[:2]; body=lines[2:]
+    wrapped='\n'.join(head+[wrapper_open]+body+[wrapper_close])
+    rejection('required step body wrapped in an uncalled function','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(swap(wrapped)))
+    rejection('trailing backslash changed on a set line','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(swap('\n'.join(l+' \\' if l.strip().startswith('set ') else l for l in lines))))
+
+    # --- execution redirected from outside the step ---
+    job_head='  apple-mlx-small-fixtures:\n'
+    assert text.count(job_head)==1
+    def job_insert(extra):
+        return text.replace(job_head,job_head+extra,1).encode()
+    rejection('job-level defaults.run.shell replaces execution','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(job_insert('    defaults:\n      run:\n        shell: /usr/bin/true {0}\n')))
+    rejection('job disabled with if: false','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(job_insert('    if: false\n')))
+    rejection('job made non-fatal','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(job_insert('    continue-on-error: true\n')))
+    rejection('job given a timeout','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(job_insert('    timeout-minutes: 1\n')))
+    jobs_head='jobs:\n'
+    assert text.count(jobs_head)==1
+    rejection('workflow-level defaults.run.shell replaces execution','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(jobs_head,'defaults:\n  run:\n    shell: /usr/bin/true {0}\n'+jobs_head,1).encode()))
+    rejection('workflow-level env injected','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(jobs_head,'env:\n  PYTHONOPTIMIZE: "1"\n'+jobs_head,1).encode()))
+
+    # --- the round-5 bypasses stay rejected ---
+    name_line=lines[0]
     rejection('required step disabled with if: false','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(mutate('      - name: '+required_name+'\n        if: false\n        run: |\n')))
+              lambda:inventory(swap('\n'.join([name_line,'        if: false']+lines[1:]))))
     rejection('required step made non-fatal','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(mutate('      - name: '+required_name+'\n        continue-on-error: true\n        run: |\n')))
+              lambda:inventory(swap('\n'.join([name_line,'        continue-on-error: true']+lines[1:]))))
     rejection('required step given a timeout','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(mutate('      - name: '+required_name+'\n        timeout-minutes: 1\n        run: |\n')))
+              lambda:inventory(swap('\n'.join([name_line,'        timeout-minutes: 1']+lines[1:]))))
     rejection('errexit disabled inside a required step','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(mutate(marker+'          set +e\n')))
+              lambda:inventory(swap('\n'.join(lines[:2]+['          set +e']+lines[2:]))))
     rejection('required step short-circuited with exit 0','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(mutate(marker+'          exit 0\n')))
-    assertion=b'          assert qualification["unexpected_passes"] == 0\n'
-    assert current_workflow.count(assertion)>=1
+              lambda:inventory(swap('\n'.join(lines[:2]+['          exit 0']+lines[2:]))))
+    assertion='          assert qualification["unexpected_passes"] == 0'
+    holder=[s for s in required if assertion in '\n'.join(s['lines'])][0]
+    hblock='\n'.join(holder['lines'])
+    assert text.count(hblock)==1
+    def hswap(new_block):
+        return text.replace(hblock,new_block,1).encode()
     rejection('result assertion deleted','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(current_workflow.replace(assertion,b'',1)))
+              lambda:inventory(hswap(hblock.replace(assertion+'\n','',1))))
     rejection('result assertion weakened','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(current_workflow.replace(assertion,assertion.replace(b'== 0',b'>= 0'),1)))
-    continuation=b'            scripts/research/tests/test_f017_result_envelope_v11.py \\\n'
-    assert current_workflow.count(continuation)==1
+              lambda:inventory(hswap(hblock.replace(assertion,assertion.replace('== 0','>= 0'),1))))
+    rejection('assertion commented out','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(hswap(hblock.replace(assertion,'          # '+assertion.strip(),1))))
+    continuation='            scripts/research/tests/test_f017_result_envelope_v11.py \\'
+    assert continuation in block
     rejection('continuation line masked','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(current_workflow.replace(continuation,continuation.rstrip(b'\\\n')+b' || true \\\n',1)))
-    rejection('assertion reordered before its setup','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
-              lambda:inventory(current_workflow.replace(assertion,b'',1).replace(marker.encode(),marker.encode()+assertion,1)))
+              lambda:inventory(swap(block.replace(continuation,continuation[:-2]+' || true \\',1))))
+    rejection('missing current primary leg','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(current_workflow.replace(scope.NEW_COMMANDS[1].encode(),b':')))
+    rejection('missing unrelated mandatory check','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(current_workflow.replace(b'validate_f017_result_authority_v11.py',b'NOT_RUN.py')))
+    rejection('current validators moved to historical context','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(current_workflow.replace(b'validate_f017_v11_execution_authority_v1.py',b'old/validate_f017_v11_execution_authority_v1.py')))
+    rejection('masked command error','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(current_workflow.replace(scope.NEW_COMMANDS[0].encode(),scope.NEW_COMMANDS[0].encode()+b' || true')))
 
-    # --- context and ordering ---
-    required_names=[n for n,s in expected_steps.items() if scope._is_required('\n'.join(s['lines']))]
-    first_block='\n'.join(steps[required_names[0]]['lines'])
-    moved=(text.replace(first_block+'\n','',1).rstrip('\n')+'\n'
-           +'  relocated-job:\n    runs-on: macos-15\n    steps:\n'+first_block+'\n')
+    # --- context, ordering and decoys ---
+    moved=(text.replace(block+'\n','',1).rstrip('\n')+'\n'
+           +'  relocated-job:\n    runs-on: macos-15\n    steps:\n'+block+'\n')
     rejection('required step moved to another job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(moved.encode()))
-    a_block='\n'.join(steps[required_names[0]]['lines'])
-    b_block='\n'.join(steps[required_names[1]]['lines'])
-    swapped=text.replace(a_block,'\x00PLACEHOLDER\x00',1).replace(b_block,a_block,1).replace('\x00PLACEHOLDER\x00',b_block,1)
+    second=[s for s in required if s['name']!=target['name']][0]
+    b2='\n'.join(second['lines']); assert text.count(b2)==1
+    swapped=text.replace(block,'\x00P\x00',1).replace(b2,block,1).replace('\x00P\x00',b2,1)
     rejection('required steps reordered','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(swapped.encode()))
+    duplicate=(text.rstrip('\n')+'\n  decoy-job:\n    runs-on: macos-15\n    steps:\n'+block+'\n')
+    rejection('required step name duplicated in a second job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(duplicate.encode()))
 
-    # --- still permitted: additive steps and non-required changes ---
+    # --- still permitted ---
     unrelated='      - name: Validate independent Feature 017 oracle\n'
     assert text.count(unrelated)==1
     added=('      - name: Unrelated added step\n        run: |\n'

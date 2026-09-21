@@ -30,6 +30,7 @@ GENERATOR = 'scripts/research/generate_f017_v11_measurement_v1.py'
 HISTORICAL = 'f35d341110c67377200ad353ab56a3cf38615a73'
 SOURCE_BASE = '6f59d9db93e92afed142b543a0e2fc19e0362bb4'
 NATIVE_BASE = '44c1b34eaec4768933f807ea6406d9dcb97f00e9'
+RESOLUTION_BASE = '9e145b090ad2a632bdde228f9078f1a6484eb2fb'
 LIMIT = 32768
 def need(ok, label):
     if not ok: raise ValueError(label)
@@ -140,6 +141,7 @@ def main():
     # The scope doctor bounds required F017 steps to two frozen lineages, so the
     # sealed view needs the native-lineage workflow as well as the qualify one.
     native_workflow=git('show',NATIVE_BASE+':.github/workflows/macos.yml')
+    resolution_workflow=git('show',RESOLUTION_BASE+':.github/workflows/macos.yml')
     # Both original-generator claims completed above as trusted preparation.
     # The remaining eight fixture groups never need or permit Git execution.
     cases=('CI_SCOPE_TESTS','BASIC_SUCCESSOR','WRAPPER_SUCCESSOR','FAULTS_SUCCESSOR','INTEGRATION','HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL','INTEGRATION')
@@ -157,6 +159,7 @@ def main():
             bodies['scope-inputs/workflow-before.yml']=base_workflow
             bodies['scope-inputs/workflow-current.yml']=(SOURCE/'.github/workflows/macos.yml').read_bytes()
             bodies['scope-inputs/workflow-native.yml']=native_workflow
+            bodies['scope-inputs/workflow-resolution.yml']=resolution_workflow
         if case_id in ('HISTORICAL_DRIFT_CONTROL','ACTIVE_CENSUS_CONTROL'):
             target='scripts/research/'+('f017_corrected_oracle_primary_target_source_v10.py' if case_id=='HISTORICAL_DRIFT_CONTROL' else 'f017_primary_observed_descriptor_source_v1.py')
             bodies[target]+=b'\n'

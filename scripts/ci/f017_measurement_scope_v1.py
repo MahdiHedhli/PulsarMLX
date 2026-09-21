@@ -32,6 +32,19 @@ WORKFLOW_BASE_SHA = "3b18be9762f19a8115f311080f6ebfa906a697e889a9c4b7c3fb9c0c790
 # change to a mandatory step should require.
 NATIVE_BASE = "44c1b34eaec4768933f807ea6406d9dcb97f00e9"
 NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426acbdb49c0d"
+# The resolution: the merge commit where the qualify and native lineages were
+# reconciled. Required F017 steps are frozen at these exact bytes. Line-level
+# rules were shown insufficient -- allowed lines can be composed into a function
+# definition that swallows the body, and execution can be redirected from above
+# the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
+# the whole step block, its job's execution keys and the workflow's own defaults
+# are compared byte for byte instead.
+RESOLUTION_BASE = "9e145b090ad2a632bdde228f9078f1a6484eb2fb"
+RESOLUTION_WORKFLOW_SHA256 = "4e132d2c07b1aafbefb96fc7d97f5dcbd06050ed2085c6d6aabb1b89b21f8a80"
+# Everything that decides whether, where and how a step runs.
+JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
+                      "timeout-minutes", "strategy", "container", "services")
+WORKFLOW_EXECUTION_KEYS = ("defaults", "env")
 OLD_COMMAND = ".venv/bin/python scripts/research/generate_f017_v11_measurement_v1.py --check"
 NEW_COMMANDS = (
     ".venv/bin/python scripts/ci/f017_measurement_scope_v1.py --check",
@@ -234,75 +247,111 @@ def _is_required(block_text):
     return any(command in block_text for command in NEW_COMMANDS)
 
 
-def verify_workflow_inventory(original, current, native):
-    """Bound every required F017 step to its two frozen lineages.
+def _key_block(lines, indent, keys):
+    """The named mapping keys at `indent`, verbatim, in file order.
 
-    The guarantee is that each mandatory F017 check remains a separate,
-    unaltered invocation in its existing context. Whole-file byte equality
-    enforced that but forbade any unrelated addition, so it could not survive
-    integration with another track's CI. A line inventory survived integration
-    but could not see step-level gating: `if: false`, `continue-on-error: true`,
-    a deleted or weakened assertion, an inserted `set +e` or `exit 0`, or
-    `|| true` on a continuation line all passed it.
+    A key that is absent stays absent, so a step or job cannot acquire one.
+    """
+    pad = " " * indent
+    captured = []
+    active = False
+    for line in lines:
+        if line.startswith(pad) and not line.startswith(pad + " ") and line.strip():
+            entry = line.strip()
+            active = any(entry == k + ":" or entry.startswith(k + ": ") for k in keys)
+            if active:
+                captured.append(line)
+        elif active and (not line.strip() or line.startswith(pad + " ")):
+            captured.append(line)
+        elif line.strip():
+            active = False
+    return "\n".join(captured)
 
-    A required step is therefore bounded from both sides. Every line the qualify
-    lineage expects must still be there, byte-identical and in order; and every
-    line actually present must come from one of the two frozen lineages, so
-    nothing invented can live inside a mandatory step. Gating keys and the
-    enclosing job's execution context must match the qualify lineage exactly.
-    Additive steps, and any change to a non-required step, remain unconstrained.
+
+def _job_lines(text, job):
+    """Every line of one job, from its key to the next job or top-level key."""
+    lines = text.split("\n")
+    out = []
+    active = False
+    for line in lines:
+        key = _JOB_KEY.match(line)
+        if key:
+            if active:
+                break
+            active = key.group(1) == job
+            continue
+        if active:
+            if line.strip() and not line.startswith("  "):
+                break
+            out.append(line)
+    return out
+
+
+def verify_workflow_inventory(original, current, native, resolution):
+    """Freeze every required F017 step at the consolidation resolution.
+
+    Line-level rules are exhausted. An ordered-subsequence plus set-membership
+    check over allowed lines still permits *composing* them: the existing
+    `cleanup_v6_historical_worktree() {` and its `}` can be relocated to wrap a
+    step's whole body in a function that is never called, so every required line
+    is present, in order, from a frozen lineage -- and nothing runs. Execution can
+    also be redirected from outside the step entirely, by a job- or
+    workflow-level `defaults.run.shell`, a job `if:`, or a job
+    `continue-on-error:`, none of which appear inside the step at all.
+
+    So the scope is narrowed and the comparison is made absolute. A required step
+    is byte-identical to the resolution commit, in the same job, in the same
+    order, and its name occurs exactly once. The job's execution keys and the
+    workflow's own defaults are byte-identical too, and a key absent in the
+    resolution must stay absent. Steps that are not required, and steps added
+    anywhere, remain unconstrained.
+
+    The consequence is deliberate: a required F017 step can no longer be edited
+    at all without advancing `RESOLUTION_BASE` in the same commit, which is the
+    review point a change to a mandatory qualification step should have. The
+    qualify and native identities are retained as lineage provenance.
     """
     require(digest(original) == WORKFLOW_BASE_SHA, "WORKFLOW_ORIGINAL_IDENTITY")
     require(digest(native) == NATIVE_WORKFLOW_SHA256, "WORKFLOW_NATIVE_IDENTITY")
+    require(digest(resolution) == RESOLUTION_WORKFLOW_SHA256, "WORKFLOW_RESOLUTION_IDENTITY")
     before = original.decode()
     require(before.count(OLD_COMMAND) == 1, "WORKFLOW_OLD_CHECK_CENSUS")
-    replacement = ("\n          ").join(NEW_COMMANDS)
-    expected = before.replace(OLD_COMMAND, replacement)
 
-    native_text = native.decode()
-    native_substituted = native_text.count(OLD_COMMAND) == 1
-    if native_substituted:
-        native_text = native_text.replace(OLD_COMMAND, replacement)
-
+    resolution_text = resolution.decode()
     current_text = current.decode()
-    expected_steps = _steps(expected)
+    resolution_steps = _steps(resolution_text)
     current_steps = _steps(current_text)
-    native_steps = {s["name"]: s for s in _steps(native_text) if s["name"]}
-    current_by_name = {}
-    for step in current_steps:
-        current_by_name.setdefault(step["name"], step)
 
-    required = [s for s in expected_steps if _is_required("\n".join(s["lines"]))]
+    required = [s for s in resolution_steps if _is_required("\n".join(s["lines"]))]
     require(required, "F017_REQUIRED_STEP_CENSUS")
 
-    positions = []
-    for step in required:
-        name = step["name"]
-        current_step = current_by_name.get(name)
-        require(current_step is not None, "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+    by_name = {}
+    for step in current_steps:
+        by_name.setdefault(step["name"], []).append(step)
 
-        expected_lines = [_normalise(line) for line in step["lines"]]
-        current_lines = [_normalise(line) for line in current_step["lines"]]
-        # (a) nothing the qualify lineage requires may be dropped, altered or reordered.
-        require(_ordered_subset(expected_lines, current_lines),
+    positions = []
+    frozen_jobs = []
+    for step in required:
+        matches = by_name.get(step["name"], [])
+        # A second step of the same name would let a decoy satisfy the freeze.
+        require(len(matches) == 1, "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        current_step = matches[0]
+        require(current_step["lines"] == step["lines"],
                 "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        # (b) nothing from outside the two frozen lineages may appear inside the step.
-        native_step = native_steps.get(name)
-        permitted = set(expected_lines)
-        if native_step is not None:
-            permitted |= {_normalise(line) for line in native_step["lines"]}
-        require(all(line in permitted for line in current_lines),
-                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        # (c) execution gating may not change or be acquired.
-        require(_gating(current_step["lines"]) == _gating(step["lines"]),
-                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        # (d) same job, same execution context, same relative order.
-        require(current_step["job"] == step["job"], "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
-        require(_job_context(current_text, current_step["job"])
-                == _job_context(expected, step["job"]),
+        require(current_step["job"] == step["job"],
                 "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
         positions.append(current_steps.index(current_step))
+        if step["job"] not in frozen_jobs:
+            frozen_jobs.append(step["job"])
     require(positions == sorted(positions), "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+
+    for job in frozen_jobs:
+        require(_key_block(_job_lines(current_text, job), 4, JOB_EXECUTION_KEYS)
+                == _key_block(_job_lines(resolution_text, job), 4, JOB_EXECUTION_KEYS),
+                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+    require(_key_block(current_text.split("\n"), 0, WORKFLOW_EXECUTION_KEYS)
+            == _key_block(resolution_text.split("\n"), 0, WORKFLOW_EXECUTION_KEYS),
+            "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
 
     checks = re.findall(_SCRIPT_REFERENCE, before)
     f017_checks = [p for p in checks if 'f017' in PurePosixPath(p).name.lower()]
@@ -310,9 +359,9 @@ def verify_workflow_inventory(original, current, native):
     return dict(result="PASS", original_script_references=len(checks), f017_script_references=len(f017_checks), relocated_checks=1,
                 unchanged_other_f017_checks=len(f017_checks)-1, historical_context="EXACT_F35D_OBJECTS",
                 current_context="CURRENT_CHECKOUT", both_legs_required=True,
-                required_steps=len(required),
-                native_lineage_substituted=native_substituted,
-                additive_steps=len(current_steps)-len(_steps(expected)))
+                required_steps=len(required), frozen_jobs=len(frozen_jobs),
+                frozen_at=RESOLUTION_BASE,
+                additive_steps=len(current_steps)-len(resolution_steps))
 
 
 def read_current(relative):
@@ -344,7 +393,8 @@ def check():
     historical = verify_historical(record, generator, HISTORICAL_HEAD, tree, objects)
     inventory = verify_workflow_inventory(git("show", SOURCE_BASE + ":.github/workflows/macos.yml"),
                                           read_current(".github/workflows/macos.yml"),
-                                          git("show", NATIVE_BASE + ":.github/workflows/macos.yml"))
+                                          git("show", NATIVE_BASE + ":.github/workflows/macos.yml"),
+                                          git("show", RESOLUTION_BASE + ":.github/workflows/macos.yml"))
     return dict(historical=historical, invocation_inventory=inventory,
                 current_behavior="SEPARATE_MANDATORY_CONFINED_PRIMARY_AND_EXISTING_CURRENT_WORKFLOW_CHECKS",
                 live_authority_created=False, result="PASS")

@@ -205,3 +205,44 @@ editing the workflow alone. Any such change must advance a lineage constant
 (`SOURCE_BASE`/`WORKFLOW_BASE_SHA` or `NATIVE_BASE`/`NATIVE_WORKFLOW_SHA256`)
 deliberately, which is exactly the review point a change to a mandatory
 qualification step should require.
+
+### 2026-09-21 amendment 2 — required steps frozen at the consolidation resolution
+
+Nothing above this heading is changed.
+
+The two-lineage line bound recorded above was still bypassable, and the reason is
+structural: any rule expressed over *allowed lines* can be defeated by
+**composing** them. Adversarial review demonstrated it — the existing
+`cleanup_v6_historical_worktree() {` and its `}` were relocated to wrap a required
+step's entire body in a function that is never called. Every required line was
+present, in order, from a frozen lineage; the YAML parsed; the shell exited 0; and
+none of the enclosed checks ran. Execution could also be redirected from *outside*
+the step, where no line-level rule looks at all: a job- or workflow-level
+`defaults.run.shell: /usr/bin/true {0}`, a job `if: false`, a job
+`continue-on-error: true`, or an injected workflow `env:`.
+
+Line-level rules are therefore abandoned in favour of a **scoped byte-freeze**.
+Required F017 steps are frozen at `RESOLUTION_BASE` = `9e145b09`, the merge
+commit where the qualify and native lineages were reconciled, pinned by
+`RESOLUTION_WORKFLOW_SHA256` and asserted as `WORKFLOW_RESOLUTION_IDENTITY`:
+
+* each required step's **entire block is byte-identical** to that commit, in the
+  same job, with required-step order preserved, and its name may not occur twice
+  in the workflow — a duplicate elsewhere cannot stand in for it;
+* for every job containing a required step, `runs-on`, `env`, `if`,
+  `continue-on-error`, `defaults`, `timeout-minutes`, `strategy`, `container` and
+  `services` are byte-identical, and a key absent in the resolution must stay
+  absent;
+* the workflow's own top-level `defaults:` and `env:` are byte-identical or
+  absent as in the resolution.
+
+The qualify (`6f59d9db`) and native (`44c1b34e`) identities are retained as
+lineage provenance, and the tests still verify that the resolution's required
+blocks contain the qualify lineage in order, so the freeze is anchored to a
+reconciliation rather than to an arbitrary snapshot.
+
+**Consequence, deliberately stronger than before:** a required F017 step can no
+longer be edited *at all* — not even additively — without advancing
+`RESOLUTION_BASE` and `RESOLUTION_WORKFLOW_SHA256` in the same commit. That is
+the review point a change to a mandatory qualification step should have. Steps
+that are not required, and steps added anywhere, remain unconstrained.
