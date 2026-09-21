@@ -209,6 +209,46 @@ def test_ordinary_entry_point_is_isolated_from_interfering_git_configuration(tmp
     ) == old
 
 
+def test_private_context_entry_point_is_isolated_too(tmp_path):
+    """The private-context branch must not reach the checkout's configuration.
+
+    It used to set `GIT_COMMON_DIR` to the checkout, and Git reads that
+    repository's `.git/config` when it does, so an `includeIf.gitdir` include or
+    an alias there still applied. The context's objects now arrive through the
+    isolated store's alternates instead, so the read owes the checkout nothing.
+    """
+    repository, historical, old, _current = _make_git_repository(tmp_path)
+    isolated_git, common_git = sandbox_runner._prepare_historical_git_context(
+        repository, tmp_path)
+
+    included = tmp_path / "private-include.config"
+    included.write_text("[core]\n\tpager = /bin/false\n", encoding="utf-8")
+    local_config = repository / ".git" / "config"
+    local_config.write_text(
+        local_config.read_text(encoding="utf-8")
+        + "[alias]\n\tshow = !echo TAMPERED\n"
+        + f'[includeIf "gitdir:{repository}/.git"]\n\tpath = {included}\n',
+        encoding="utf-8",
+    )
+
+    base = dict(os.environ)
+    base["TMPDIR"] = str(tmp_path)
+    base.update({"GIT_TRACE_SETUP": "1", "GIT_TRACE": "1"})
+    environment = sandbox_runner._historical_git_context_environment(
+        base, isolated_git=isolated_git, common_git=common_git, work_tree=repository)
+
+    assert read_historical_blob(
+        repository, historical, "source.py", environment=environment) == old
+
+    # Git must report no configuration originating from the checkout.
+    child = historical_preflight._git_subprocess_environment(repository, environment)
+    listed = subprocess.run(
+        ["git", "config", "--show-origin", "--name-only", "--list"],
+        env=child, cwd=repository, capture_output=True, text=True, check=False)
+    assert str(repository / ".git" / "config") not in listed.stdout
+    assert "TAMPERED" not in listed.stdout
+
+
 def test_ordinary_entry_point_is_isolated_from_local_config_and_tracing(tmp_path):
     """Repository-LOCAL configuration and Git tracing must not reach the read.
 
@@ -373,9 +413,15 @@ def test_historical_context_is_complete_and_native_locators_are_per_read(tmp_pat
     )
 
     child = historical_preflight._git_subprocess_environment(repository, environment)
-    assert child["GIT_DIR"] == str(isolated_git)
-    assert child["GIT_COMMON_DIR"] == str(common_git)
-    assert child["GIT_WORK_TREE"] == str(repository)
+    # The private context is still validated, but it is no longer handed to Git as
+    # a locator: GIT_COMMON_DIR pointing at the checkout made the checkout's own
+    # .git/config apply again. Its objects reach the child through the isolated
+    # store's alternates instead, so the child must name that store and must not
+    # name the checkout at all.
+    assert child["GIT_DIR"] not in (str(isolated_git), str(repository / ".git"))
+    assert Path(child["GIT_DIR"], "objects", "info", "alternates").is_file()
+    assert "GIT_COMMON_DIR" not in child
+    assert "GIT_WORK_TREE" not in child
     assert not set(child) & historical_preflight._HISTORICAL_GIT_CONTEXT_VARIABLES
     assert child["GIT_CONFIG_GLOBAL"] == "/dev/null"
     assert child["GIT_CONFIG_NOSYSTEM"] == "1"

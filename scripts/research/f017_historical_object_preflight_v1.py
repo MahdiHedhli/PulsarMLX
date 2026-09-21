@@ -137,14 +137,16 @@ def _git_subprocess_environment(
     })
     context = _historical_git_context(root, environment)
     if context is not None:
-        isolated_git, common_git, work_tree = context
-        child.update({
-            "GIT_DIR": str(isolated_git),
-            "GIT_COMMON_DIR": str(common_git),
-            "GIT_WORK_TREE": str(work_tree),
-        })
+        # The private context is still validated exactly as before, but it is not
+        # handed to Git as a locator: pointing GIT_COMMON_DIR at the checkout made
+        # the checkout's own .git/config apply again, which is the whole exposure
+        # this isolation exists to close. Its object directory is added to an
+        # isolated bare store through alternates instead, so the same objects are
+        # visible with none of the configuration.
+        isolated_git, common_git, _work_tree = context
+        child["GIT_DIR"] = _isolated_store(
+            root, extra_objects=(isolated_git / "objects", common_git / "objects"))
     else:
-        # No caller-supplied context: build our own isolated bare repository.
         child["GIT_DIR"] = _isolated_store(root)
     return child
 
@@ -152,7 +154,7 @@ def _git_subprocess_environment(
 _ISOLATED_STORES: dict[str, str] = {}
 
 
-def _isolated_store(root: Path) -> str:
+def _isolated_store(root: Path, extra_objects: tuple = ()) -> str:
     """A bare repository whose only content is an alternates link to `root`.
 
     Suppressing global and system configuration does not suppress the
@@ -166,7 +168,7 @@ def _isolated_store(root: Path) -> str:
     Resolved without running Git, because the configuration that would break the
     read is exactly the configuration `git rev-parse` would consult.
     """
-    key = str(root)
+    key = "\0".join([str(root)] + sorted(str(path) for path in extra_objects))
     cached = _ISOLATED_STORES.get(key)
     if cached is not None and Path(cached).is_dir():
         return cached
@@ -185,7 +187,16 @@ def _isolated_store(root: Path) -> str:
         raise HistoricalObjectLookupError("historical Git object store") from exc
     info = Path(directory) / "objects" / "info"
     info.mkdir(parents=True, exist_ok=True)
-    (info / "alternates").write_text(f"{objects.resolve()}\n")
+    alternates = [objects.resolve()]
+    for path in extra_objects:
+        try:
+            resolved = Path(path).resolve(strict=True)
+        except OSError:
+            continue
+        if resolved.is_dir() and resolved not in alternates:
+            alternates.append(resolved)
+    (info / "alternates").write_text(
+        "".join(f"{path}\n" for path in alternates))
     _ISOLATED_STORES[key] = directory
     return directory
 
