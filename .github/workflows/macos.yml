@@ -951,18 +951,26 @@ jobs:
             -p test_iq2_xxs_numpy.py \
             -v
           test -z "$PULSARMLX_MODEL_GGUF"
+      # These two modules import the pinned MLX *wheel*, which ships its own
+      # libmlx. DYLD_LIBRARY_PATH points at the source-built MLX the F017 native
+      # runtime is qualified against, and that build does not export every symbol
+      # the wheel's extension binds, so the wheel cannot load under it. The wheel
+      # is dropped for these commands exactly as the worker-contract, router,
+      # device-smoke and fixture steps below already do; DYLD_LIBRARY_PATH stays
+      # set for the job, so the value retained_qualification.rs asserts is
+      # unchanged.
       - name: Qualify GLM-5.3-Flash dense-FFN caller (synthetic, pinned MLX)
         run: |
           test -z "$PULSARMLX_MODEL_GGUF"
           mkdir -p "$RUNNER_TEMP/flash-ffn-tmp"
           for flags in "-I -B" "-I -B -O"; do
-            TMPDIR="$RUNNER_TEMP/flash-ffn-tmp" .venv/bin/python $flags \
+            env -u DYLD_LIBRARY_PATH TMPDIR="$RUNNER_TEMP/flash-ffn-tmp" .venv/bin/python $flags \
               scripts/research/tests/test_glm53_flash_decoder_ffn.py \
               > "$RUNNER_TEMP/flash-ffn-$(echo $flags | tr -d ' -').stdout"
           done
           .venv/bin/python -I -B scripts/research/glm53_flash/decoder_ffn/regenerate_provenance.py --check
           for flags in "-I -B" "-I -B -O"; do
-            TMPDIR="$RUNNER_TEMP/flash-ffn-tmp" .venv/bin/python $flags \
+            env -u DYLD_LIBRARY_PATH TMPDIR="$RUNNER_TEMP/flash-ffn-tmp" .venv/bin/python $flags \
               scripts/research/tests/test_glm53_flash_decoder_ffn_compile.py \
               > "$RUNNER_TEMP/flash-ffn-compile-$(echo $flags | tr -d ' -').stdout"
           done
