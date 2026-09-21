@@ -1,9 +1,9 @@
 {
  "active_source_measurement": {
-  "drifted_and_reviewed": 7,
+  "drifted_and_reviewed": 8,
   "evidence": {
    "path": "docs/architecture/reviews/evidence/f017-v11-result-envelope-implementation-measurement-v9.json",
-   "sha256": "5f102e096fdf4081f681354effa4a4cc4fd8da548833aa6d7bb787bed29471d6"
+   "sha256": "9404b33ef2dd323bdcf176b075f1b0818b919fb2c6f511d74f38026e82c17241"
   },
   "measured_paths": 36,
   "numerical_authority_unchanged": [
@@ -12,7 +12,7 @@
   ],
   "schema": "pulsarmlx.f017.v11-result-envelope-implementation-measurement/9.0.0",
   "state": "DONE",
-  "unchanged_since_predecessor": 29
+  "unchanged_since_predecessor": 28
  },
  "chat_template_generation_real_checkpoint": null,
  "checkpoint_free_reconciliation": {
