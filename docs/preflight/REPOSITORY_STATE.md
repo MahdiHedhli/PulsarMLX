@@ -11,7 +11,7 @@ performed.
 
 | Item | Observed state |
 | --- | --- |
-| Working directory | `/Users/mhedhli/Documents/Coding/PulsarMLX` |
+| Working directory | `~/Documents/Coding/PulsarMLX` |
 | Branch | `main` |
 | HEAD | `12c2406` (`build: establish macOS workspace baseline`) |
 | Tracked upstream | `origin/main` at `183a54b` |

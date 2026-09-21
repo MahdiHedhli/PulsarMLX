@@ -11,7 +11,7 @@ intentionally omitted.
 
 | Item | Observed value | Evidence |
 | --- | --- | --- |
-| Working directory | `/Users/mhedhli/Documents/Coding/PulsarMLX` | `pwd` |
+| Working directory | `~/Documents/Coding/PulsarMLX` | `pwd` |
 | Operating system | macOS 26.0, build 25A354 | `sw_vers` |
 | Machine | Mac Studio, Apple M1 Ultra | filtered `system_profiler SPHardwareDataType` |
 | Shell architecture | native `arm64`; not translated by Rosetta | `uname -m`, `arch`, `sysctl -in sysctl.proc_translated` |

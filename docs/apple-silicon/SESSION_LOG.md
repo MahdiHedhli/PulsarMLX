@@ -12,7 +12,7 @@ stop point is before any MLX backend implementation.
 The session began with read-only diagnostics before any installation or file
 modification. The audit recorded:
 
-- workspace: `/Users/mhedhli/Documents/Coding/PulsarMLX`;
+- workspace: `~/Documents/Coding/PulsarMLX`;
 - host: macOS 26.0 build 25A354 on a native arm64 Mac Studio with Apple M1
   Ultra and 128 GiB unified memory;
 - storage: 1.8 TiB filesystem, 1.6 TiB used, 210 GiB available (89% full);

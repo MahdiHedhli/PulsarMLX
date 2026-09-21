@@ -22,7 +22,7 @@ The read-only host snapshot was captured before installation or modification:
 
 | Item | Observed result |
 | --- | --- |
-| Working directory | `/Users/mhedhli/Documents/Coding/PulsarMLX` |
+| Working directory | `~/Documents/Coding/PulsarMLX` |
 | Host | Mac Studio, Apple M1 Ultra, native arm64, no Rosetta translation |
 | Unified memory | 128 GiB (137,438,953,472 bytes) |
 | macOS | 26.0 build 25A354 |
@@ -283,7 +283,7 @@ session unless separately authorized.
 ## Exact continuation command
 
 ```sh
-cd /Users/mhedhli/Documents/Coding/PulsarMLX
+cd ~/Documents/Coding/PulsarMLX
 codex 'Use $speckit-implement for specs/001-apple-silicon-mlx. Start at T001, stop after the first independently validated Apple baseline/device milestone, and do not bypass any stop condition.'
 ```
 
