@@ -14,7 +14,62 @@
   "state": "DONE",
   "unchanged_since_predecessor": 29
  },
- "chat_template_generation_real_checkpoint": null,
+ "chat_template_generation_real_checkpoint": {
+  "answer_text": "**\n17 times \n",
+  "decode_tokens_per_second": 0.011174069132612732,
+  "evidence": {
+   "path": "docs/architecture/reviews/evidence/f017-native-real-stage-b2-chat-template-v1.json",
+   "sha256": "7a509ec2a1c8a2f4ee8d803a6f372aaacd7bf31965f587a80b28b18125a1195c"
+  },
+  "finish_reason": "length",
+  "generated_token_count": 4,
+  "generated_tokens": [
+   1019,
+   99419,
+   3039,
+   220
+  ],
+  "identity_verification_seconds": 701.221926833,
+  "peak_state_bytes": 4368384,
+  "position_seconds": [
+   99.86089375,
+   89.979801,
+   90.079964167,
+   87.66088525,
+   87.512658167,
+   89.098813125,
+   86.714015459,
+   87.007649583,
+   87.039520084,
+   86.789180583,
+   86.988011333,
+   87.370230625,
+   89.156580125,
+   88.006488416,
+   86.781562791,
+   86.329838041,
+   87.236477833,
+   87.218019833,
+   89.451764,
+   89.056023875,
+   88.936793666,
+   89.573979667,
+   89.692657,
+   89.205057417
+  ],
+  "positions_executed": 24,
+  "prompt_mode": "CHAT_TEMPLATE",
+  "prompt_tokens": 21,
+  "quality_claim": "NONE: a single short prompt with a four-token budget is not a task result",
+  "stage": "stageB2",
+  "state": "DONE",
+  "stop_token": null,
+  "stop_token_ids": [
+   154820,
+   154827,
+   154829
+  ]
+ },
  "checkpoint_free_reconciliation": {
   "decoder_differential_max_ulp": 0,
   "decoder_differential_values_per_seed": 107502,
