@@ -11,10 +11,46 @@ local-usability work. GLM-5.2 remains the established large-model correctness
 reference. The [model-target register](MODEL_TARGETS.md) separates their evidence,
 formats and hardware roles; none inherits qualification solely from a family name.
 
+## Current direction (2026-09-20)
+
+**This section is the current pointer for strategy.** Sections below that predate
+2026-09-20 are retained as written; where they disagree with this section about
+sequencing or the next target, they are historical and this section is current.
+
+The consolidated mainline now carries three tracks together, and the boundary
+between them is load-bearing:
+
+| Track | What it is | Status |
+| --- | --- | --- |
+| Qwen3-30B-A3B Q8_0 | the frozen Apple MLX research baseline | ✅ verified, frozen |
+| GLM-5.2 | Python/NumPy research ladder **and** the F017 Rust-native runtime — two different things | ✅ ladder C01–C11; ✅ one native token on the real checkpoint, multi-token pending ([status](../architecture/f017-native-runtime-status.md)) |
+| GLM-5.3-Flash | Python/MLX paged expert-residency research | 🧪 measured candidate `971db9c1`; **not** the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
+
+The next major target is **native ingestion of MLX mixed-precision checkpoints**
+— `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` and
+`PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit` — as the composition *native Rust
+runtime + Safetensors checkpoint ingestion + MLX affine quantization + PulsarMLX
+expert residency/streaming + MLX execution*, consuming them **without converting
+to GGUF** and **without requantizing weights**. This is **planned, not
+implemented, not started**.
+
+Sequence (a roadmap, not a completion claim):
+
+```text
+Qwen Apple MLX baseline → GLM-5.2 research execution → F017 Rust-native GLM-5.2
+  → GLM-5.3-Flash paged research → Native Safetensors + MLX affine quantization
+  → Native GLM-5.3 mixed 4/8 → Native GLM-5.3-Flash mixed 4/8
+  → Residency / caching / prefetch optimization → KV / state optimization
+  → Serving + broader hardware qualification
+```
+
+Everything from *Native Safetensors + MLX affine quantization* onward has not
+been started. The full register is in [model targets](MODEL_TARGETS.md).
+
 ## Current verified boundary
 
 This section names only committed evidence. The Qwen research baseline is
-frozen at [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/releases/tag/v0.2.0-qwen30b-e2e-research): a real Qwen3-30B-A3B Q8_0 checkpoint was exercised through all 48 layers, full-vocabulary logits, matching greedy decode, and bounded generation. Its exact scopes and caveats remain in the [Qwen claims ledgers](../research/).
+frozen at [`v0.2.0-qwen30b-e2e-research`](https://github.com/MahdiHedhli/PulsarMLX/tree/v0.2.0-qwen30b-e2e-research): a real Qwen3-30B-A3B Q8_0 checkpoint was exercised through all 48 layers, full-vocabulary logits, matching greedy decode, and bounded generation. Its exact scopes and caveats remain in the [Qwen claims ledgers](../research/).
 
 The GLM-5.2 research checkpoint is the six-shard Unsloth UD-IQ2_XXS artifact
 bound by [`glm52-checkpoint.json`](../validation/glm52-checkpoint.json) and

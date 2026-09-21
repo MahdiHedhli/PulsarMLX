@@ -11,6 +11,56 @@ not substitutes for qualifying a new model.
 | GLM-5.3 | Full-scale model-family target | No exact PulsarMLX quantized artifact is ratified here. Numerical compatibility and performance remain to be qualified. |
 | `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` | Primary practical-usability target on the 64 GB M2 Max MacBook Pro with external NVMe; later 128 GB Studio evaluation | Model-specific source mapping and bounded synthetic component work. No PulsarMLX full-model correctness, sustained decoding or dogfood claim. |
 
+## Current direction (2026-09-20)
+
+This section is the current pointer for target selection. Sections below it that
+predate 2026-09-20 remain as written; where they disagree with this section about
+*what comes next*, this section is current and they are historical.
+
+The consolidated mainline now carries the F017 Rust-native GLM-5.2 runtime, the
+GLM-5.3-Flash paged research track and the Qwen baseline together. The next major
+target is **native ingestion of MLX mixed-precision checkpoints**:
+
+| Planned target checkpoint | Status |
+| --- | --- |
+| `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` | **Planned. Not implemented. Not started.** |
+| `PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit` | **Planned. Not implemented. Not started.** |
+
+The planned capability is the composition *native Rust runtime + Safetensors
+checkpoint ingestion + MLX affine quantization + PulsarMLX expert
+residency/streaming + MLX execution*, consuming those checkpoints **without
+converting them to GGUF** and **without requantizing their weights**.
+
+Sequence (a roadmap, not a completion claim):
+
+```text
+Qwen Apple MLX baseline                        ✅ verified
+        ↓
+GLM-5.2 research execution                     ✅ committed ladder C01–C11
+        ↓
+F017 Rust-native GLM-5.2                       ✅ one token on the real checkpoint; multi-token pending
+        ↓
+GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
+        ↓
+Native Safetensors + MLX affine quantization   🗺️ planned, not started
+        ↓
+Native GLM-5.3 mixed 4/8                       🗺️ planned, not started
+        ↓
+Native GLM-5.3-Flash mixed 4/8                 🗺️ planned, not started
+        ↓
+Residency / caching / prefetch optimization    🗺️ planned
+        ↓
+KV / state optimization                        🗺️ planned
+        ↓
+Serving + broader hardware qualification       🗺️ planned
+```
+
+Current Flash evidence boundary is unchanged by this direction: the paged
+persistent-serving work is Python/MLX research
+([results](../glm53-flash/persistent-serving-results.md), candidate `971db9c1`,
+expert-cache budget 60e9 with **70e9 admitted as the ceiling**), not the native
+runtime, and a 6 h soak at 70e9 has not been completed.
+
 ## GLM-5.2 reference evidence
 
 The [commit-pinned Sequence 43 record](https://github.com/MahdiHedhli/PulsarMLX/blob/c23e58ec87c7e73a23cf37ac64aa4dee6c45896f/docs/architecture/reviews/evidence/f017-event06-v12-sequence43-terminal-success-evidence-v1.json)
