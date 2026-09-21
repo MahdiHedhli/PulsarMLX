@@ -20,6 +20,116 @@ class StrictJsonTests(unittest.TestCase):
 
 
 class EvidenceIntegrationTests(unittest.TestCase):
+    def test_document_rename_passes_and_both_sides_validated(self):
+        (self.root / "docs").mkdir()
+        self.git("mv", "README.md", "docs/guide.md")
+        self.git("commit", "-qm", "rename documentation")
+        result = self.validate(self.base, self.git("rev-parse", "HEAD"))
+        self.assertEqual(result["mode"], "DOCS_ONLY")
+        self.assertEqual(result["documentation_file_count"], 2)
+        self.assertEqual(result["total_changed_bytes"], len(b"authority\n"))
+        self.assertFalse(result["append_only"])
+
+    def test_document_evidence_rename_cannot_change_semantics(self):
+        path = "docs/architecture/reviews/evidence/doc.md"
+        (self.root / path).parent.mkdir(parents=True)
+        self.git("mv", "README.md", path)
+        self.git("commit", "-qm", "rename docs to evidence")
+        head = self.git("rev-parse", "HEAD")
+        with self.assertRaises(ValidationError):
+            self.validate(self.base, head)
+        self.git("mv", path, "README.md")
+        self.git("commit", "-qm", "rename evidence to docs")
+        with self.assertRaises(ValidationError):
+            self.validate(head, self.git("rev-parse", "HEAD"))
+
+    def test_removing_historical_document_marker_passes(self):
+        (self.root / "README.md").write_text("-----BEGIN PRIVATE KEY-----\n")
+        self.git("add", "README.md")
+        self.git("commit", "-qm", "synthetic historical marker")
+        old = self.git("rev-parse", "HEAD")
+        result = self.validate(old, self.modify_docs())
+        self.assertEqual(result["total_changed_bytes"], len(b"updated documentation\n"))
+
+    def git(self, *args):
+        return subprocess.check_output(["git", *args], cwd=self.root, text=True).strip()
+
+    def validate(self, base, head):
+        return validate_change(self.root, base=base, head=head, branch="feat/test", run_attempt1=False)
+
+    def modify_docs(self):
+        (self.root / "README.md").write_text("updated documentation\n")
+        self.git("add", "README.md")
+        self.git("commit", "-qm", "docs")
+        return self.git("rev-parse", "HEAD")
+
+    def test_docs_only_checks_without_evidence(self):
+        result = self.validate(self.base, self.modify_docs())
+        self.assertEqual(result["mode"], "DOCS_ONLY")
+        self.assertEqual(result["documentation_file_count"], 1)
+        self.assertEqual(result["evidence_file_count"], 0)
+
+    def test_mixed_docs_and_valid_evidence(self):
+        self.commit_evidence('{"schema":"test"}\n')
+        result = self.validate(self.base, self.modify_docs())
+        self.assertEqual(result["mode"], "EVIDENCE_ONLY")
+        self.assertEqual(result["documentation_file_count"], 1)
+        self.assertEqual(result["evidence_file_count"], 1)
+        self.assertTrue(result["evidence_append_only"])
+
+    def test_docs_cannot_hide_unresolved_binding(self):
+        self.commit_evidence(json.dumps({"path": "missing.json", "sha256": "0" * 64}) + "\n")
+        with self.assertRaises(ValidationError):
+            self.validate(self.base, self.modify_docs())
+
+    def test_docs_cannot_hide_duplicate_evidence_key(self):
+        self.commit_evidence('{"a":1,"a":2}\n')
+        with self.assertRaises(ValidationError):
+            self.validate(self.base, self.modify_docs())
+
+    def test_docs_do_not_exempt_evidence_edit_delete_or_rename(self):
+        first = self.commit_evidence('{}\n')
+        path = "docs/architecture/reviews/evidence/result.json"
+        (self.root / path).write_text('{"changed":true}\n')
+        self.git("add", path)
+        self.git("commit", "-qm", "edit evidence")
+        edited = self.modify_docs()
+        with self.assertRaises(ValidationError):
+            self.validate(first, edited)
+        other = "docs/architecture/reviews/evidence/renamed.json"
+        self.git("mv", path, other)
+        self.git("commit", "-qm", "rename evidence")
+        renamed = self.git("rev-parse", "HEAD")
+        with self.assertRaises(ValidationError):
+            self.validate(edited, renamed)
+        self.git("rm", other)
+        self.git("commit", "-qm", "delete evidence")
+        with self.assertRaises(ValidationError):
+            self.validate(renamed, self.git("rev-parse", "HEAD"))
+
+    def test_executable_and_symlink_evidence_fail_cheaply(self):
+        first = self.commit_evidence('{}\n')
+        path = "docs/architecture/reviews/evidence/result.json"
+        (self.root / path).chmod(0o755)
+        self.git("add", path)
+        self.git("commit", "-qm", "executable evidence")
+        with self.assertRaises(ValidationError):
+            self.validate(self.base, self.git("rev-parse", "HEAD"))
+        link = self.root / "docs/architecture/reviews/evidence/link.json"
+        link.symlink_to("result.json")
+        self.git("add", str(link.relative_to(self.root)))
+        self.git("commit", "-qm", "symlink evidence")
+        with self.assertRaises(ValidationError):
+            self.validate(first, self.git("rev-parse", "HEAD"))
+
+    def test_document_credentials_are_checked_in_mixed_diff(self):
+        self.commit_evidence('{}\n')
+        (self.root / "README.md").write_text("-----BEGIN PRIVATE KEY-----\n")
+        self.git("add", "README.md")
+        self.git("commit", "-qm", "synthetic credential marker")
+        with self.assertRaises(ValidationError):
+            self.validate(self.base, self.git("rev-parse", "HEAD"))
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)

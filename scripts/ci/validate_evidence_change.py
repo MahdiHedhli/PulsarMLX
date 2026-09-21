@@ -12,7 +12,9 @@ import subprocess
 import sys
 from typing import Any, Iterable
 
-from scripts.ci.classify_ci_change import EVIDENCE_ONLY, changed_paths, classify_paths
+from scripts.ci.classify_ci_change import (
+    DOCS_ONLY, EVIDENCE_ONLY, changed_entries, classify_change, path_class,
+)
 
 
 EVIDENCE_PREFIX = "docs/architecture/reviews/evidence/"
@@ -58,13 +60,17 @@ def _git(repository: Path, *arguments: str, binary: bool = False):
 
 
 def _diff_rows(repository: Path, base: str, head: str) -> list[tuple[str, str]]:
-    output = _git(repository, "diff", "--name-status", "--find-renames", base, head)
     rows: list[tuple[str, str]] = []
-    for line in output.splitlines():
-        fields = line.split("\t")
-        if len(fields) != 2:
-            raise ValidationError(f"renames/copies and malformed rows prohibited: {line!r}")
-        rows.append((fields[0], fields[1]))
+    for row in changed_entries(repository, base, head):
+        if row["status"].startswith("R") and len(row["paths"]) == 2:
+            old, new = row["paths"]
+            if path_class(old) == path_class(new) == DOCS_ONLY:
+                # Validate both sides as documentation, never as evidence.
+                rows.extend((("D", old), ("A", new)))
+                continue
+        if len(row["paths"]) != 1 or row["status"].startswith(("R", "C")):
+            raise ValidationError("renames/copies prohibited on the cheap integrity path")
+        rows.append((row["status"], row["paths"][0]))
     return rows
 
 
@@ -182,9 +188,8 @@ def validate_change(
     repository = repository.resolve(strict=True)
     _git(repository, "cat-file", "-e", f"{base}^{{commit}}")
     _git(repository, "cat-file", "-e", f"{head}^{{commit}}")
-    paths = changed_paths(repository, base, head)
-    mode, _ = classify_paths(paths, branch=branch)
-    if mode != EVIDENCE_ONLY:
+    mode, _ = classify_change(repository, base, head, branch=branch)
+    if mode not in {EVIDENCE_ONLY, DOCS_ONLY}:
         raise ValidationError(f"evidence validator received {mode} diff")
     rows = _diff_rows(repository, base, head)
     if not rows:
@@ -202,7 +207,30 @@ def validate_change(
     json_count = 0
     binding_count = 0
     byte_count = 0
+    docs_count = 0
+    evidence_count = 0
     for status_code, path in rows:
+        if path_class(path) == DOCS_ONLY:
+            if status_code not in {"A", "M", "D"}:
+                raise ValidationError(f"unsupported documentation change: {path}")
+            # Documentation can change, but both committed sides must be ordinary
+            # non-executable files. This never relaxes evidence immutability.
+            for ref in ((head,) if status_code == "A" else
+                        (base,) if status_code == "D" else (base, head)):
+                tree = _git(repository, "ls-tree", ref, "--", path).split()
+                if len(tree) < 3 or tree[:2] != ["100644", "blob"]:
+                    raise ValidationError(f"documentation must be regular non-executable: {path}")
+            # Scan retained/new content once. A removed historical example must
+            # not make its own removal impossible on the documentation path.
+            if status_code != "D":
+                data = _committed_bytes(repository, head, path)
+                byte_count += len(data)
+                for name, pattern in CREDENTIAL_PATTERNS.items():
+                    if pattern.search(data.decode("utf-8", errors="ignore")):
+                        raise ValidationError(f"credential-shaped material ({name}) in {path}")
+            docs_count += 1
+            continue
+        evidence_count += 1
         if status_code != "A":
             raise ValidationError(f"immutable evidence must be append-only, got {status_code}: {path}")
         if not path.startswith(EVIDENCE_PREFIX):
@@ -222,22 +250,27 @@ def validate_change(
             binding_count += _walk_bindings(repository, head, document)
 
     attempt1 = None
-    if run_attempt1:
+    if run_attempt1 and evidence_count:
         from scripts.ci.validate_f017_attempt1_evidence import validate
 
         attempt1 = validate(repository)
     return {
-        "schema": "pulsarmlx.ci.evidence-change-validation/1.0.0",
+        "schema": "pulsarmlx.ci.evidence-change-validation/2.0.0",
         "result": "PASS",
         "base": base,
         "head": head,
         "branch": branch,
-        "mode": EVIDENCE_ONLY,
+        "mode": mode,
         "changed_file_count": len(rows),
+        "documentation_file_count": docs_count,
+        "evidence_file_count": evidence_count,
         "json_file_count": json_count,
         "total_changed_bytes": byte_count,
         "resolved_binding_count": binding_count,
-        "append_only": True,
+        # Whole changed-path census versus the immutable evidence subset.
+        # Documentation renames count as a deletion and an addition.
+        "append_only": all(status == "A" for status, _ in rows),
+        "evidence_append_only": True,
         "regular_non_symlink": True,
         "duplicate_keys_rejected": True,
         "credential_scan": "PASS",

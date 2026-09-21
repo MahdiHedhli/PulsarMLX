@@ -1,0 +1,61 @@
+{
+  "schema": "pulsarmlx.fixture.qwen3moe-full-graph-v1",
+  "evidence_level": "synthetic_full_graph_semantics_only",
+  "model_free": true,
+  "proves_real_checkpoint_admission": false,
+  "architecture": "qwen3moe",
+  "tensor_catalog": {
+    "entry_count": 579,
+    "global_entry_count": 3,
+    "entries_per_layer": 12,
+    "layer_count": 48,
+    "uses_checkpoint_payload_bytes": false
+  },
+  "graph": {
+    "layer_count": 48,
+    "operations_per_layer": [
+      "attention_input_rms_norm",
+      "query_projection",
+      "query_rms_norm",
+      "key_projection",
+      "key_rms_norm",
+      "value_projection",
+      "neox_rotary_embedding",
+      "grouped_query_attention",
+      "attention_output_projection",
+      "attention_residual_add",
+      "ffn_input_rms_norm",
+      "router_projection",
+      "full_softmax_top_k",
+      "expert_gate_projection",
+      "expert_up_projection",
+      "swiglu_activation",
+      "expert_down_projection",
+      "routed_expert_weighted_aggregate",
+      "ffn_residual_add"
+    ],
+    "global_operations": [
+      "token_embedding",
+      "final_rms_norm",
+      "output_projection"
+    ],
+    "attention": {
+      "head_count": 32,
+      "kv_head_count": 4,
+      "head_dimension": 128,
+      "rope": "neox"
+    },
+    "routing": {
+      "expert_count": 128,
+      "top_k": 8,
+      "normalization": "full_128_way_softmax_then_selected_probability_renormalization"
+    }
+  },
+  "exclusions": [
+    "no tensor payload bytes",
+    "no model forward",
+    "no tokenization",
+    "no logits or generation",
+    "no serving, benchmarking, qualification, or production claim"
+  ]
+}

@@ -1,21 +1,26 @@
+use backend::{
+    generate_greedy, CancellationToken, ContractError, ErrorCategory, GenerationRequest,
+    LogitsOutput, LogitsRuntime, MAX_NEW_TOKENS, MAX_PROMPT_TOKENS, MAX_TOPK,
+};
 use mlx_backend::router::{
     admit_router_tensor, compare_router_outputs, read_admitted_router_tensor_f32,
     validate_major_router_timing_series, RouterCaseScope, RouterNumericComparison, RouterOracle,
     RouterOracleFormat, RouterOutput, RouterOutputComparison, RouterTimingInstrumentationMode,
     RouterTimingObservationStatus, RouterTimingReplicationRole, RouterTimingSeries,
     RouterTimingSeriesKind, RouterTolerancePolicy, ROUTER_MAJOR_SINGLE_ROW_BENCHMARK_ID,
-    ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID, ROUTER_ORACLE_ID,
-    ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256, ROUTER_REAL_INPUT_SHA256,
-    ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
+    ROUTER_MAJOR_TWO_ROW_BENCHMARK_ID, ROUTER_ORACLE_ID, ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256,
+    ROUTER_REAL_INPUT_SHA256, ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID,
     ROUTER_TENSOR_BYTES,
 };
 use mlx_backend::{
-    frozen_qwen_model_memory_budget, inspect_external_qwen_model, validate_device_smoke,
+    frozen_qwen_model_memory_budget, inspect_external_qwen_model, parse_qwen3moe_synthetic_fixture,
+    run_qwen3moe_synthetic_generation_with_cancel_after_step, validate_device_smoke,
     CleanupOutcome, DeviceHello, DeviceProbe, ExternalModelInspection, ModelSliceRequest,
-    ModelSliceResult, RouterRequest, RouterResult, SyntheticMoeRequest, TensorFixtureRequest,
-    WorkerClient, WorkerConfig, WorkerError, WorkerTimeouts, MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID,
-    PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES, QWEN_REPOSITORY_ID, QWEN_REVISION,
-    QWEN_SHA256, ROUTER_SINGLE_ROW_CASE_ID, ROUTER_TWO_ROW_CASE_ID,
+    ModelSliceResult, Qwen3MoeSyntheticFixture, RouterRequest, RouterResult, SyntheticMoeRequest,
+    TensorFixtureRequest, WorkerClient, WorkerConfig, WorkerError, WorkerTimeouts,
+    MODEL_FILE_DESCRIPTOR, MODEL_SLICE_ID, PINNED_MLX_VERSION, QWEN_FILENAME, QWEN_FILE_BYTES,
+    QWEN_REPOSITORY_ID, QWEN_REVISION, QWEN_SHA256, ROUTER_SINGLE_ROW_CASE_ID,
+    ROUTER_TWO_ROW_CASE_ID,
 };
 use serde::de::{DeserializeOwned, Error as DeError, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -36,7 +41,31 @@ const GPU_DEVICE: &str = "gpu";
 const FIXTURE_ID: &str = "nonsymmetric-f32-matmul-v1";
 const FIXTURE_SET_ID: &str = "mlx-tensor-fixtures-v1";
 const SYNTHETIC_MOE_FIXTURE_ID: &str = "synthetic-routed-moe-v1";
+const SYNTHETIC_GENERATION_FIXTURE_PATH: &str = "fixtures/mlx/generation-v1.json";
+const SYNTHETIC_GENERATION_FIXTURE_ID: &str = "synthetic-greedy-generation-v1";
+const SYNTHETIC_GENERATION_FIXTURE_SHA256: &str =
+    "d43b528de8cdc25140efcf1be2d83daab9a86dd5768a71978842b9f5687e6052";
+const SYNTHETIC_GENERATION_EXCLUSIONS: [&str; 3] = [
+    "synthetic_fixture_only",
+    "No model, checkpoint, tokenizer, MLX device, serving, or release claim is made.",
+    "A separately authorized model adapter must supply verified logits and its own evidence.",
+];
+const QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH: &str =
+    "fixtures/mlx/qwen3moe-ffn-generation-v1.json";
+const QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_SHA256: &str =
+    "c86a460a372a1d6fdfaa0f0e743b688fd1c79e93cc88ac16981fa59d1a706d85";
+const QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS: [&str; 8] = [
+    "checkpoint payload bytes",
+    "Q8_0 decode",
+    "external path/FD/range reads",
+    "MLX execution",
+    "attention/KV/full 48-layer forward",
+    "tokenizer",
+    "serving or benchmark",
+    "checkpoint qualification or production readiness",
+];
 const MAX_MANIFEST_BYTES: usize = 1024 * 1024;
+const MAX_GENERATION_OUTPUT_BYTES: usize = 64 * 1024;
 const MAX_REFERENCE_BYTES: usize = 256 * 1024;
 const REFERENCE_RESULT_PATH: &str =
     "docs/validation/models/qwen3-30b-a3b-q8_0-reference-result.json";
@@ -147,10 +176,68 @@ const ROUTER_NEGATIVE_EXPECTATIONS: [(&str, &str, &str, &str); 7] = [
 ];
 
 fn main() {
-    if let Err(error) = run(env::args_os().skip(1).collect()) {
-        eprintln!("pulsar-mlx: {error}");
+    let arguments = env::args_os().skip(1).collect::<Vec<_>>();
+    let qwen3moe_synthetic_generation = arguments
+        .first()
+        .and_then(|value| value.to_str())
+        .is_some_and(|command| command == "qwen3moe-synthetic-generation");
+    let synthetic_generation = arguments
+        .first()
+        .and_then(|value| value.to_str())
+        .is_some_and(|command| command == "synthetic-generation");
+    if let Err(error) = run(arguments) {
+        if qwen3moe_synthetic_generation {
+            eprintln!("{}", qwen3moe_synthetic_generation_error(&error));
+        } else if synthetic_generation {
+            eprintln!("{}", synthetic_generation_error(&error));
+        } else {
+            eprintln!("pulsar-mlx: {error}");
+        }
         std::process::exit(2);
     }
+}
+
+fn qwen3moe_synthetic_generation_error(error: &str) -> String {
+    let diagnostic = ContractError::new(
+        ErrorCategory::InvalidEvidence,
+        "qwen3moe_synthetic_generation_rejected",
+        error,
+    );
+    serde_json::to_string(&json!({
+        "schema_version": 1,
+        "validation": "qwen3moe-synthetic-ffn-greedy-v1",
+        "status": "rejected",
+        "evidence_level": "synthetic_fixture_only",
+        "model_free": true,
+        "error": {
+            "code": diagnostic.code(),
+            "message": diagnostic.message(),
+        },
+        "evaluated": false,
+        "fallback_used": false,
+        "exclusions": QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+    .expect("Qwen synthetic generation rejection is JSON-serializable")
+}
+
+fn synthetic_generation_error(error: &str) -> String {
+    let diagnostic = ContractError::new(
+        ErrorCategory::InvalidEvidence,
+        "synthetic_generation_rejected",
+        error,
+    );
+    serde_json::to_string(&json!({
+        "schema_version": 1,
+        "validation": "synthetic-greedy-generation",
+        "status": "rejected",
+        "evidence_level": "synthetic_fixture_only",
+        "error": {
+            "code": diagnostic.code(),
+            "message": diagnostic.message(),
+        },
+        "exclusions": SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+    .expect("synthetic generation rejection is JSON-serializable")
 }
 
 fn run(arguments: Vec<OsString>) -> Result<(), String> {
@@ -160,6 +247,12 @@ fn run(arguments: Vec<OsString>) -> Result<(), String> {
         Some("validate-synthetic-moe") => {
             run_validate_synthetic_moe(parse_validate_synthetic_moe(arguments)?)
         }
+        Some("synthetic-generation") => {
+            run_synthetic_generation(parse_synthetic_generation(arguments)?)
+        }
+        Some("qwen3moe-synthetic-generation") => run_qwen3moe_synthetic_generation_command(
+            parse_qwen3moe_synthetic_generation(arguments)?,
+        ),
         Some("inspect-model") => {
             run_inspect_model(parse_external_model_command(arguments, "inspect-model")?)
         }
@@ -286,7 +379,7 @@ fn parse_device_smoke(arguments: Vec<OsString>) -> Result<DeviceSmokeCommand, St
 }
 
 fn usage() -> String {
-    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx inspect-router --model ABSOLUTE_EXTERNAL_GGUF --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router-fixtures --manifest fixtures/research/router-v1/manifest.json --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router --model ABSOLUTE_EXTERNAL_GGUF --oracle ABSOLUTE_EXTERNAL_JSON --evidence-dir ABSOLUTE_EXTERNAL_DIRECTORY".to_owned()
+    "usage: pulsar-mlx device-smoke --backend apple-mlx --device gpu --evidence PATH\n       pulsar-mlx validate-fixtures --manifest fixtures/mlx/manifest.json --evidence PATH\n       pulsar-mlx validate-synthetic-moe --fixture fixtures/mlx/routed-moe-v1.json --evidence PATH\n       pulsar-mlx synthetic-generation --fixture fixtures/mlx/generation-v1.json --prompt-ids ID[,ID...] --max-new-tokens N [--eos-token-id ID] [--cancel-before | --cancel-after-step N]\n       pulsar-mlx qwen3moe-synthetic-generation --fixture fixtures/mlx/qwen3moe-ffn-generation-v1.json --prompt-ids ID[,ID...] --max-new-tokens N --eos-token-id ID [--cancel-before | --cancel-after-step N]\n       pulsar-mlx inspect-model --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx validate-model-slice --model ABSOLUTE_EXTERNAL_GGUF --evidence PATH\n       pulsar-mlx inspect-router --model ABSOLUTE_EXTERNAL_GGUF --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router-fixtures --manifest fixtures/research/router-v1/manifest.json --evidence ABSOLUTE_EXTERNAL_JSON\n       pulsar-mlx validate-router --model ABSOLUTE_EXTERNAL_GGUF --oracle ABSOLUTE_EXTERNAL_JSON --evidence-dir ABSOLUTE_EXTERNAL_DIRECTORY".to_owned()
 }
 
 const ROUTER_FIXTURE_MANIFEST: &str = "fixtures/research/router-v1/manifest.json";
@@ -8588,6 +8681,330 @@ fn parse_validate_synthetic_moe(
     })
 }
 
+struct SyntheticGenerationCommand {
+    fixture: PathBuf,
+    prompt_token_ids: Vec<u32>,
+    max_new_tokens: u32,
+    eos_token_id: Option<u32>,
+    cancel_before: bool,
+    cancel_after_step: Option<u32>,
+}
+
+struct Qwen3MoeSyntheticGenerationCommand {
+    fixture: PathBuf,
+    prompt_token_ids: Vec<u32>,
+    max_new_tokens: u32,
+    eos_token_id: u32,
+    cancel_before: bool,
+    cancel_after_step: Option<u32>,
+}
+
+fn parse_qwen3moe_synthetic_generation(
+    arguments: Vec<OsString>,
+) -> Result<Qwen3MoeSyntheticGenerationCommand, String> {
+    let values = arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.first().map(String::as_str) != Some("qwen3moe-synthetic-generation") {
+        return Err(usage());
+    }
+
+    let mut fixture = None;
+    let mut prompt_token_ids = None;
+    let mut max_new_tokens = None;
+    let mut eos_token_id = None;
+    let mut cancel_before = false;
+    let mut cancel_after_step = None;
+    let mut index = 1;
+    while index < values.len() {
+        let key = values[index].as_str();
+        if key == "--cancel-before" {
+            if cancel_before {
+                return Err(usage());
+            }
+            cancel_before = true;
+            index += 1;
+            continue;
+        }
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match key {
+            "--fixture" if fixture.is_none() => fixture = Some(PathBuf::from(value)),
+            "--prompt-ids" if prompt_token_ids.is_none() => {
+                prompt_token_ids = Some(parse_prompt_token_ids(&value)?)
+            }
+            "--max-new-tokens" if max_new_tokens.is_none() => {
+                max_new_tokens = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--max-new-tokens must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--eos-token-id" if eos_token_id.is_none() => {
+                eos_token_id = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--eos-token-id must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--cancel-after-step" if cancel_after_step.is_none() => {
+                cancel_after_step = Some(value.parse::<u32>().map_err(|_| {
+                    "--cancel-after-step must be an unsigned integer".to_owned()
+                })?)
+            }
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    Ok(Qwen3MoeSyntheticGenerationCommand {
+        fixture: fixture.ok_or_else(usage)?,
+        prompt_token_ids: prompt_token_ids.ok_or_else(usage)?,
+        max_new_tokens: max_new_tokens.ok_or_else(usage)?,
+        eos_token_id: eos_token_id.ok_or_else(usage)?,
+        cancel_before,
+        cancel_after_step,
+    })
+}
+
+fn load_qwen3moe_synthetic_fixture(
+    project_root: &Path,
+    requested_path: &Path,
+) -> Result<(Qwen3MoeSyntheticFixture, String), String> {
+    if requested_path != Path::new(QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH) {
+        return Err("qwen3moe synthetic generation accepts only the committed fixture".to_owned());
+    }
+    let path = project_root.join(QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_PATH);
+    let metadata = fs::symlink_metadata(&path)
+        .map_err(|_| "the committed Qwen synthetic fixture is unavailable".to_owned())?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err(
+            "the committed Qwen synthetic fixture must be a regular non-link file".to_owned(),
+        );
+    }
+    let bytes = fs::read(&path)
+        .map_err(|_| "the committed Qwen synthetic fixture could not be read".to_owned())?;
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the Qwen synthetic fixture violates its byte bound".to_owned());
+    }
+    let sha256 = sha256_bytes(&bytes);
+    if sha256 != QWEN3MOE_SYNTHETIC_GENERATION_FIXTURE_SHA256 {
+        return Err(
+            "the committed Qwen synthetic fixture differs from its frozen whole-file identity"
+                .to_owned(),
+        );
+    }
+    let fixture = parse_qwen3moe_synthetic_fixture(&bytes)
+        .map_err(|error| format!("Qwen synthetic fixture rejected: {error}"))?;
+    Ok((fixture, sha256))
+}
+
+fn execute_qwen3moe_synthetic_generation(
+    fixture: &Qwen3MoeSyntheticFixture,
+    fixture_sha256: &str,
+    command: &Qwen3MoeSyntheticGenerationCommand,
+) -> Result<Value, String> {
+    let request = GenerationRequest::try_new(
+        command.prompt_token_ids.clone(),
+        command.max_new_tokens,
+        Some(command.eos_token_id),
+    )
+    .map_err(|error| format!("generation request rejected: {error}"))?;
+    if command.cancel_before && command.cancel_after_step.is_some() {
+        return Err("cancellation controls are mutually exclusive".to_owned());
+    }
+    if command.cancel_after_step == Some(0)
+        || command
+            .cancel_after_step
+            .is_some_and(|step| step > request.max_new_tokens())
+    {
+        return Err("cancel-after-step must name a requested generation step".to_owned());
+    }
+
+    let cancellation = CancellationToken::new();
+    if command.cancel_before {
+        cancellation.cancel();
+    }
+    let result = run_qwen3moe_synthetic_generation_with_cancel_after_step(
+        fixture,
+        &request,
+        &cancellation,
+        command.cancel_after_step,
+    )
+    .map_err(|error| format!("synthetic Qwen generation rejected: {error}"))?;
+    let steps = result
+        .steps
+        .iter()
+        .map(|step| {
+            let topk = step
+                .topk
+                .iter()
+                .map(|(token_id, score)| json!({ "token_id": token_id, "score": score }))
+                .collect::<Vec<_>>();
+            json!({
+                "step": step.step,
+                "position": step.position,
+                "normalized_input": step.normalized_input,
+                "router_logits": step.router_logits,
+                "full_softmax_probabilities": step.full_softmax_probabilities,
+                "selected_expert_ids": step.selected_expert_ids,
+                "selected_probabilities": step.selected_probabilities,
+                "normalized_selected_probabilities": step.normalized_selected_probabilities,
+                "expert_outputs": step.expert_outputs,
+                "routed_aggregate": step.routed_aggregate,
+                "residual": step.residual,
+                "logits": step.logits,
+                "topk": topk,
+                "argmax": step.argmax,
+            })
+        })
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "schema_version": 1,
+        "validation": "qwen3moe-synthetic-ffn-greedy-v1",
+        "status": "passed",
+        "evidence_level": "synthetic_fixture_only",
+        "model_free": true,
+        "fixture_identity": {
+            "fixture_id": result.fixture_id,
+            "contract_id": result.contract_id,
+            "sha256": fixture_sha256,
+        },
+        "target_dimensions": fixture.target_dimensions,
+        "execution_dimensions": fixture.execution_dimensions,
+        "operation_order": fixture.operation_order,
+        "routing": fixture.routing,
+        "request": {
+            "prompt_token_ids": result.prompt_token_ids(),
+            "max_new_tokens": request.max_new_tokens(),
+            "eos_token_id": request.eos_token_id(),
+        },
+        "prompt_token_ids": result.prompt_token_ids(),
+        "generated_token_ids": result.generated_token_ids(),
+        "full_token_ids": result.full_token_ids(),
+        "steps": steps,
+        "step_count": result.steps.len(),
+        "termination_reason": result.termination_reason().as_str(),
+        "evaluated": result.evaluated,
+        "fallback_used": result.fallback_used,
+        "exclusions": QWEN3MOE_SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+}
+
+fn run_qwen3moe_synthetic_generation_command(
+    command: Qwen3MoeSyntheticGenerationCommand,
+) -> Result<(), String> {
+    let project_root = project_root();
+    let (fixture, fixture_sha256) =
+        load_qwen3moe_synthetic_fixture(&project_root, &command.fixture)?;
+    let evidence = execute_qwen3moe_synthetic_generation(&fixture, &fixture_sha256, &command)?;
+    let encoded = serde_json::to_vec(&evidence)
+        .map_err(|_| "Qwen synthetic generation evidence could not be encoded".to_owned())?;
+    if encoded.len() > MAX_GENERATION_OUTPUT_BYTES {
+        return Err("Qwen synthetic generation evidence exceeds its output bound".to_owned());
+    }
+    println!(
+        "{}",
+        String::from_utf8(encoded)
+            .map_err(|_| "Qwen synthetic generation evidence is not UTF-8".to_owned())?
+    );
+    Ok(())
+}
+
+fn parse_synthetic_generation(
+    arguments: Vec<OsString>,
+) -> Result<SyntheticGenerationCommand, String> {
+    let values = arguments
+        .into_iter()
+        .map(|value| {
+            value
+                .into_string()
+                .map_err(|_| "command arguments must be valid UTF-8".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.first().map(String::as_str) != Some("synthetic-generation") {
+        return Err(usage());
+    }
+
+    let mut fixture = None;
+    let mut prompt_token_ids = None;
+    let mut max_new_tokens = None;
+    let mut eos_token_id = None;
+    let mut cancel_before = false;
+    let mut cancel_after_step = None;
+    let mut index = 1;
+    while index < values.len() {
+        let key = values[index].as_str();
+        if key == "--cancel-before" {
+            if cancel_before {
+                return Err(usage());
+            }
+            cancel_before = true;
+            index += 1;
+            continue;
+        }
+        let value = values.get(index + 1).ok_or_else(usage)?.to_owned();
+        match key {
+            "--fixture" if fixture.is_none() => fixture = Some(PathBuf::from(value)),
+            "--prompt-ids" if prompt_token_ids.is_none() => {
+                prompt_token_ids = Some(parse_prompt_token_ids(&value)?)
+            }
+            "--max-new-tokens" if max_new_tokens.is_none() => {
+                max_new_tokens = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--max-new-tokens must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--eos-token-id" if eos_token_id.is_none() => {
+                eos_token_id = Some(
+                    value
+                        .parse::<u32>()
+                        .map_err(|_| "--eos-token-id must be an unsigned integer".to_owned())?,
+                )
+            }
+            "--cancel-after-step" if cancel_after_step.is_none() => {
+                cancel_after_step = Some(value.parse::<u32>().map_err(|_| {
+                    "--cancel-after-step must be an unsigned integer".to_owned()
+                })?)
+            }
+            _ => return Err(usage()),
+        }
+        index += 2;
+    }
+
+    Ok(SyntheticGenerationCommand {
+        fixture: fixture.ok_or_else(usage)?,
+        prompt_token_ids: prompt_token_ids.ok_or_else(usage)?,
+        max_new_tokens: max_new_tokens.ok_or_else(usage)?,
+        eos_token_id,
+        cancel_before,
+        cancel_after_step,
+    })
+}
+
+fn parse_prompt_token_ids(value: &str) -> Result<Vec<u32>, String> {
+    if value.is_empty() {
+        return Err("--prompt-ids must contain at least one token ID".to_owned());
+    }
+    let values = value
+        .split(',')
+        .map(|token| {
+            token
+                .parse::<u32>()
+                .map_err(|_| "--prompt-ids must be comma-separated unsigned integers".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    if values.is_empty() || values.len() > MAX_PROMPT_TOKENS {
+        return Err("--prompt-ids exceeds the bounded prompt length".to_owned());
+    }
+    Ok(values)
+}
+
 #[derive(Debug, Deserialize)]
 struct FixtureManifestIndex {
     schema_version: u32,
@@ -8918,6 +9335,255 @@ fn execute_synthetic_moe(client: &mut WorkerClient) -> Result<Value, String> {
             "Only dense float32 expert matrices and the committed two-token route were evaluated."
         ]
     }))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GenerationFixture {
+    schema_version: u32,
+    fixture_id: String,
+    fixture_kind: String,
+    evidence_level: String,
+    prompt_token_ids: Vec<u32>,
+    max_new_tokens: u32,
+    eos_token_id: Option<u32>,
+    steps: Vec<GenerationFixtureStep>,
+    exclusions: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GenerationFixtureStep {
+    position: u64,
+    topk: Vec<GenerationFixtureLogit>,
+    argmax: u32,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GenerationFixtureLogit {
+    token_id: u32,
+    score: f32,
+}
+
+fn load_generation_fixture(
+    project_root: &Path,
+    requested_path: &Path,
+) -> Result<(GenerationFixture, String), String> {
+    if requested_path != Path::new(SYNTHETIC_GENERATION_FIXTURE_PATH) {
+        return Err("synthetic generation accepts only the committed fixture".to_owned());
+    }
+    let path = project_root.join(SYNTHETIC_GENERATION_FIXTURE_PATH);
+    let metadata = fs::symlink_metadata(&path)
+        .map_err(|_| "the committed synthetic generation fixture is unavailable".to_owned())?;
+    if metadata.file_type().is_symlink() || !metadata.is_file() {
+        return Err("the committed generation fixture must be a regular non-link file".to_owned());
+    }
+    let bytes = fs::read(&path)
+        .map_err(|_| "the committed synthetic generation fixture could not be read".to_owned())?;
+    if bytes.is_empty() || bytes.len() > MAX_MANIFEST_BYTES {
+        return Err("the synthetic generation fixture violates its byte bound".to_owned());
+    }
+    if sha256_bytes(&bytes) != SYNTHETIC_GENERATION_FIXTURE_SHA256 {
+        return Err(
+            "the committed synthetic generation fixture differs from its frozen whole-file identity"
+                .to_owned(),
+        );
+    }
+    let fixture: GenerationFixture = parse_unique_json(&bytes, "synthetic generation fixture")?;
+    validate_generation_fixture(&fixture)?;
+    Ok((fixture, sha256_bytes(&bytes)))
+}
+
+fn validate_generation_fixture(fixture: &GenerationFixture) -> Result<(), String> {
+    if fixture.schema_version != 1
+        || fixture.fixture_id != SYNTHETIC_GENERATION_FIXTURE_ID
+        || fixture.fixture_kind != "synthetic"
+        || fixture.evidence_level != "synthetic_fixture_only"
+        || fixture.prompt_token_ids.is_empty()
+        || fixture.prompt_token_ids.len() > MAX_PROMPT_TOKENS
+        || fixture.max_new_tokens == 0
+        || fixture.max_new_tokens > MAX_NEW_TOKENS
+        || fixture.steps.len() != fixture.max_new_tokens as usize
+        || fixture.eos_token_id != Some(0)
+        || fixture.exclusions
+            != SYNTHETIC_GENERATION_EXCLUSIONS
+                .iter()
+                .map(|value| (*value).to_owned())
+                .collect::<Vec<_>>()
+    {
+        return Err("the synthetic generation fixture identity or bounds are not admitted".to_owned());
+    }
+
+    let prompt_length = u64::try_from(fixture.prompt_token_ids.len())
+        .map_err(|_| "the synthetic generation prompt length is not representable".to_owned())?;
+    for (index, step) in fixture.steps.iter().enumerate() {
+        let step_number = u64::try_from(index + 1)
+            .map_err(|_| "the synthetic generation step index is not representable".to_owned())?;
+        let expected_position = prompt_length
+            .checked_add(step_number)
+            .ok_or_else(|| "the synthetic generation position overflows".to_owned())?;
+        if step.position != expected_position || step.topk.is_empty() || step.topk.len() > MAX_TOPK {
+            return Err("the synthetic generation fixture has invalid step bounds".to_owned());
+        }
+        let mut seen = BTreeSet::new();
+        let mut selected = None;
+        for logit in &step.topk {
+            if !logit.score.is_finite() || !seen.insert(logit.token_id) {
+                return Err("the synthetic generation fixture has invalid logits".to_owned());
+            }
+            if selected.is_none_or(|(token_id, score)| {
+                logit.score > score || (logit.score == score && logit.token_id < token_id)
+            }) {
+                selected = Some((logit.token_id, logit.score));
+            }
+        }
+        if selected.map(|(token_id, _)| token_id) != Some(step.argmax) {
+            return Err(
+                "the synthetic generation fixture violates its deterministic argmax rule"
+                    .to_owned(),
+            );
+        }
+    }
+    Ok(())
+}
+
+struct SyntheticGenerationRuntime {
+    steps: Vec<LogitsOutput>,
+    next: usize,
+    cancel_after_step: Option<u32>,
+}
+
+impl LogitsRuntime for SyntheticGenerationRuntime {
+    fn logits(&mut self, cancellation: &CancellationToken) -> Result<LogitsOutput, ContractError> {
+        let output = self.steps.get(self.next).cloned().ok_or_else(|| {
+            ContractError::new(
+                ErrorCategory::InvalidStateTransition,
+                "missing_logits_step",
+                "synthetic fixture has no logits for the requested step",
+            )
+        })?;
+        self.next += 1;
+        if self.cancel_after_step == Some(self.next as u32) {
+            cancellation.cancel();
+        }
+        Ok(output)
+    }
+}
+
+fn synthetic_generation_runtime(
+    fixture: &GenerationFixture,
+    cancel_after_step: Option<u32>,
+) -> SyntheticGenerationRuntime {
+    let steps = fixture
+        .steps
+        .iter()
+        .map(|step| LogitsOutput {
+            topk: step
+                .topk
+                .iter()
+                .map(|logit| (logit.token_id, logit.score))
+                .collect(),
+            argmax: step.argmax,
+        })
+        .collect();
+    SyntheticGenerationRuntime {
+        steps,
+        next: 0,
+        cancel_after_step,
+    }
+}
+
+fn execute_synthetic_generation(
+    fixture: &GenerationFixture,
+    fixture_sha256: &str,
+    command: &SyntheticGenerationCommand,
+) -> Result<Value, String> {
+    let request = GenerationRequest::try_new(
+        command.prompt_token_ids.clone(),
+        command.max_new_tokens,
+        command.eos_token_id,
+    )
+    .map_err(|error| format!("generation request rejected: {error}"))?;
+    if request.eos_token_id() != fixture.eos_token_id {
+        return Err("generation request EOS token must match the committed fixture".to_owned());
+    }
+    if request.prompt_token_ids() != fixture.prompt_token_ids
+        || request.max_new_tokens() > fixture.max_new_tokens
+    {
+        return Err(
+            "generation request does not match the committed fixture bounds or prompt".to_owned(),
+        );
+    }
+    if command.cancel_before && command.cancel_after_step.is_some() {
+        return Err("cancellation controls are mutually exclusive".to_owned());
+    }
+    if command.cancel_after_step == Some(0)
+        || command
+            .cancel_after_step
+            .is_some_and(|step| step > request.max_new_tokens())
+    {
+        return Err("cancel-after-step must name a requested generation step".to_owned());
+    }
+
+    let cancellation = CancellationToken::new();
+    if command.cancel_before {
+        cancellation.cancel();
+    }
+    let mut runtime = synthetic_generation_runtime(fixture, command.cancel_after_step);
+    let result = generate_greedy(&mut runtime, &request, &cancellation)
+        .map_err(|error| format!("synthetic generation rejected: {error}"))?;
+    let steps = result
+        .steps()
+        .iter()
+        .map(|step| {
+            json!({
+                "step": step.step(),
+                "position": step.position(),
+                "token_id": step.token_id(),
+            })
+        })
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "schema_version": 1,
+        "validation": "synthetic-greedy-generation",
+        "status": "passed",
+        "evidence_level": "synthetic_fixture_only",
+        "fixture_identity": {
+            "path": SYNTHETIC_GENERATION_FIXTURE_PATH,
+            "fixture_id": fixture.fixture_id,
+            "sha256": fixture_sha256,
+        },
+        "request": {
+            "prompt_token_ids": result.prompt_token_ids(),
+            "max_new_tokens": request.max_new_tokens(),
+            "eos_token_id": request.eos_token_id(),
+        },
+        "prompt_token_ids": result.prompt_token_ids(),
+        "generated_token_ids": result.generated_token_ids(),
+        "full_token_ids": result.full_token_ids(),
+        "steps": steps,
+        "step_count": result.step_count(),
+        "termination_reason": result.termination_reason().as_str(),
+        "exclusions": SYNTHETIC_GENERATION_EXCLUSIONS,
+    }))
+}
+
+fn run_synthetic_generation(command: SyntheticGenerationCommand) -> Result<(), String> {
+    let project_root = project_root();
+    let (fixture, fixture_sha256) = load_generation_fixture(&project_root, &command.fixture)?;
+    let evidence = execute_synthetic_generation(&fixture, &fixture_sha256, &command)?;
+    let encoded = serde_json::to_vec(&evidence)
+        .map_err(|_| "synthetic generation evidence could not be encoded".to_owned())?;
+    if encoded.len() > MAX_GENERATION_OUTPUT_BYTES {
+        return Err("synthetic generation evidence exceeds its output bound".to_owned());
+    }
+    println!(
+        "{}",
+        String::from_utf8(encoded)
+            .map_err(|_| "synthetic generation evidence is not UTF-8".to_owned())?
+    );
+    Ok(())
 }
 
 #[derive(Debug, Deserialize)]
@@ -13042,6 +13708,142 @@ mod tests {
             let private = json!({"nested": [{"model": private_path}]});
             assert!(ensure_no_private_paths(&private).is_err());
         }
+    }
+
+    #[test]
+    fn synthetic_generation_fixture_execution_emits_bounded_public_schema() {
+        let command = SyntheticGenerationCommand {
+            fixture: PathBuf::from(SYNTHETIC_GENERATION_FIXTURE_PATH),
+            prompt_token_ids: vec![1, 2],
+            max_new_tokens: 3,
+            eos_token_id: Some(0),
+            cancel_before: false,
+            cancel_after_step: None,
+        };
+        let (fixture, fixture_sha256) =
+            load_generation_fixture(&project_root(), &command.fixture).expect("fixture loads");
+        let evidence = execute_synthetic_generation(&fixture, &fixture_sha256, &command)
+            .expect("synthetic generation executes");
+        let encoded = serde_json::to_vec(&evidence).expect("evidence encodes");
+
+        assert!(encoded.len() <= MAX_GENERATION_OUTPUT_BYTES);
+        assert_eq!(evidence["status"], "passed");
+        assert_eq!(evidence["evidence_level"], "synthetic_fixture_only");
+        assert_eq!(evidence["generated_token_ids"], json!([7, 9, 0]));
+        assert_eq!(evidence["full_token_ids"], json!([1, 2, 7, 9, 0]));
+        assert_eq!(evidence["step_count"], 3);
+        assert_eq!(evidence["termination_reason"], "eos_token");
+        assert_eq!(evidence["exclusions"][0], "synthetic_fixture_only");
+        assert!(evidence.get("model").is_none());
+        assert!(evidence.get("device").is_none());
+        assert!(evidence.get("server").is_none());
+    }
+
+    #[test]
+    fn synthetic_generation_rejects_malformed_requests_fixture_and_cancellation() {
+        let command = SyntheticGenerationCommand {
+            fixture: PathBuf::from(SYNTHETIC_GENERATION_FIXTURE_PATH),
+            prompt_token_ids: vec![1, 2],
+            max_new_tokens: MAX_NEW_TOKENS + 1,
+            eos_token_id: Some(0),
+            cancel_before: false,
+            cancel_after_step: None,
+        };
+        let (mut fixture, fixture_sha256) =
+            load_generation_fixture(&project_root(), &command.fixture).expect("fixture loads");
+        assert!(execute_synthetic_generation(&fixture, &fixture_sha256, &command)
+            .expect_err("over-limit request is rejected")
+            .contains("generation request rejected"));
+
+        fixture.steps[0].argmax = 8;
+        assert!(validate_generation_fixture(&fixture).is_err());
+
+        let mut cancel_before = command;
+        cancel_before.max_new_tokens = 3;
+        cancel_before.cancel_before = true;
+        assert!(execute_synthetic_generation(
+            &fixture,
+            &fixture_sha256,
+            &cancel_before
+        )
+        .expect_err("cancel-before request is rejected")
+        .contains("cancelled"));
+
+        fixture.steps[0].argmax = 7;
+        let cancel_during = SyntheticGenerationCommand {
+            cancel_before: false,
+            cancel_after_step: Some(1),
+            ..cancel_before
+        };
+        assert!(execute_synthetic_generation(&fixture, &fixture_sha256, &cancel_during)
+            .expect_err("mid-generation cancellation is rejected")
+            .contains("cancelled"));
+    }
+
+    #[test]
+    fn synthetic_generation_rejects_same_path_modified_fixture_before_parsing() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock")
+            .as_nanos();
+        let root = env::temp_dir().join(format!(
+            "pulsarmlx-generation-fixture-digest-{}-{nonce}",
+            std::process::id()
+        ));
+        let fixture_path = root.join(SYNTHETIC_GENERATION_FIXTURE_PATH);
+        fs::create_dir_all(fixture_path.parent().expect("fixture parent"))
+            .expect("create fixture parent");
+        let mut bytes = fs::read(project_root().join(SYNTHETIC_GENERATION_FIXTURE_PATH))
+            .expect("read committed fixture");
+        let mutation_index = bytes.len() / 2;
+        bytes[mutation_index] ^= 1;
+        fs::write(&fixture_path, bytes).expect("write mutated fixture");
+
+        let error = load_generation_fixture(&root, Path::new(SYNTHETIC_GENERATION_FIXTURE_PATH))
+            .expect_err("same-path modified fixture must be rejected");
+        assert!(error.contains("whole-file identity"));
+
+        fs::remove_file(fixture_path).expect("remove mutated fixture");
+        fs::remove_dir(root.join("fixtures/mlx")).expect("remove fixture directory");
+        fs::remove_dir(root.join("fixtures")).expect("remove fixtures directory");
+        fs::remove_dir(root).expect("remove fixture root");
+    }
+
+    #[test]
+    fn synthetic_generation_rejects_omitted_or_mismatched_eos() {
+        let (fixture, fixture_sha256) = load_generation_fixture(
+            &project_root(),
+            Path::new(SYNTHETIC_GENERATION_FIXTURE_PATH),
+        )
+        .expect("fixture loads");
+        for eos_token_id in [None, Some(9_u32)] {
+            let command = SyntheticGenerationCommand {
+                fixture: PathBuf::from(SYNTHETIC_GENERATION_FIXTURE_PATH),
+                prompt_token_ids: vec![1, 2],
+                max_new_tokens: 3,
+                eos_token_id,
+                cancel_before: false,
+                cancel_after_step: None,
+            };
+            assert!(
+                execute_synthetic_generation(&fixture, &fixture_sha256, &command)
+                    .expect_err("omitted or mismatched EOS must be rejected")
+                    .contains("EOS token")
+            );
+        }
+    }
+
+    #[test]
+    fn synthetic_generation_rejection_output_is_bounded_and_public_labeled() {
+        let encoded = synthetic_generation_error(&"/Users/private/model.gguf ".repeat(1000));
+        let value: Value = serde_json::from_str(&encoded).expect("structured rejection JSON");
+        assert!(encoded.len() <= MAX_GENERATION_OUTPUT_BYTES);
+        assert_eq!(value["status"], "rejected");
+        assert_eq!(value["evidence_level"], "synthetic_fixture_only");
+        assert_eq!(value["exclusions"][0], "synthetic_fixture_only");
+        assert!(!encoded.contains("/Users/private"));
     }
 
     #[test]

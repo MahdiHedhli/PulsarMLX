@@ -7,8 +7,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import subprocess
-import tempfile
 
 from generate_f017_event06_authority_dag_v2 import (
     AUTHORITY_DISPOSITION,
@@ -16,87 +14,20 @@ from generate_f017_event06_authority_dag_v2 import (
     HISTORICAL_DAG_SHA256,
     build,
 )
+from f017_historical_object_preflight_v1 import read_historical_blob
 
 ROOT = Path(__file__).resolve().parents[2]
 DAG = ROOT / "specs/017-rust-native-inference-runtime/contracts/f017-event06-v12-authority-dag-v2.json"
 
 
-_HERMETIC_GIT_DIR: str | None = None
-
-
-def _hermetic_git_dir() -> str:
-    """A bare repository whose only content is an alternates link to this
-    checkout's object store.
-
-    Reading an immutable historical blob must not depend on ambient Git
-    configuration. On a GitHub macOS runner the checkout writes an
-    `includeIf.gitdir` entry into the repository's LOCAL config pointing at a
-    temporary credentials file, and reading that file fails with
-    "Operation not permitted", so every `git show` in the checkout exits 128.
-    A clean bare repository has no such config, and alternates give it the
-    same objects, so the read is both hermetic and identical.
-    """
-    global _HERMETIC_GIT_DIR
-    if _HERMETIC_GIT_DIR is not None:
-        return _HERMETIC_GIT_DIR
-    # Resolved without running git: the checkout whose object store we want is
-    # exactly the one whose configuration is unreadable, so asking git where it
-    # lives would fail for the same reason the read did.
-    marker = ROOT / ".git"
-    if marker.is_dir():
-        objects = (marker / "objects").resolve()
-    else:
-        text = marker.read_text().strip()
-        if not text.startswith("gitdir:"):
-            raise ValueError("unrecognised .git marker")
-        worktree = Path(text.split(":", 1)[1].strip())
-        if not worktree.is_absolute():
-            worktree = (ROOT / worktree).resolve()
-        commondir = worktree / "commondir"
-        common = (worktree / commondir.read_text().strip()).resolve() \
-            if commondir.is_file() else worktree.parent.parent
-        objects = (common / "objects").resolve()
-    if not objects.is_dir():
-        raise ValueError(f"object store not found: {objects}")
-    directory = tempfile.mkdtemp(prefix="f017-historical-objects-")
-    subprocess.run(["git", "init", "--bare", "--quiet", directory], check=True,
-                   capture_output=True)
-    info = Path(directory) / "objects" / "info"
-    info.mkdir(parents=True, exist_ok=True)
-    (info / "alternates").write_text(f"{objects}\n")
-    _HERMETIC_GIT_DIR = directory
-    return directory
-
-
 def _historical_bytes(relative_path: str) -> bytes:
     """Read one exact repository blob from the DAG's historical commit."""
-    if (
-        type(relative_path) is not str
-        or relative_path.startswith("/")
-        or "\\" in relative_path
-        or any(part in {"", ".", ".."} for part in Path(relative_path).parts)
-    ):
-        raise ValueError("historical repository path")
-    completed = subprocess.run(
-        ["git", f"--git-dir={_hermetic_git_dir()}", "show",
-         f"{HISTORICAL_DAG_COMMIT}:{relative_path}"],
-        check=False,
-        capture_output=True,
-        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-             "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
-             "GIT_TERMINAL_PROMPT": "0", "HOME": _hermetic_git_dir()},
+    return read_historical_blob(
+        ROOT,
+        HISTORICAL_DAG_COMMIT,
+        relative_path,
+        environment=os.environ,
     )
-    if completed.returncode != 0 or completed.stderr:
-        # Fail closed, but say why: a bare "historical repository blob" gives
-        # a reader nothing to act on, and this check treats any stderr byte as
-        # fatal, including a warning from an environment git.
-        detail = completed.stderr.decode("utf-8", "replace").strip()
-        raise ValueError(
-            f"historical repository blob: {relative_path} "
-            f"(git show {HISTORICAL_DAG_COMMIT}:{relative_path} exited "
-            f"{completed.returncode}; stderr: {detail!r})"
-        )
-    return completed.stdout
 
 
 def _symbols(raw: bytes) -> set[str]:

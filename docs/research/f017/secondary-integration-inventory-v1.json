@@ -1,0 +1,908 @@
+{
+  "rows": [
+    {
+      "current_base_sha256": "57d407d827c27a5228916805b437e8d2386cd596c271d3e941f64d9f512e9ab7",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "8568c1d6d5b70d2f786b35faa51363ba5e22f7c8",
+      "original_logical_path": "scripts/research/f017_accounting_root_continuity_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_accounting_root_continuity_v1.py",
+      "original_sha256": "57d407d827c27a5228916805b437e8d2386cd596c271d3e941f64d9f512e9ab7",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_accounting_root_continuity_v1.py"
+    },
+    {
+      "current_base_sha256": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "2d2b2fe932ee0564142ad7f42dffcb1681677773",
+      "original_logical_path": "scripts/research/f017_binary_comparison_authority_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_binary_comparison_authority_v11.py",
+      "original_sha256": "10235d8482aa66a318d7e97b7d3b9fbf27859a732cf67bf29d9cbcd19596e352",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_binary_comparison_authority_v11.py"
+    },
+    {
+      "current_base_sha256": "60ad48f765b0a9924fb534204b6d85eecc975d6624110ca4f9a5133136f931fa",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "e12d4c2f69525a162394bddf0a43cfd43fa0a676",
+      "original_logical_path": "scripts/research/f017_bounded_artifact_decode_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_bounded_artifact_decode_v1.py",
+      "original_sha256": "60ad48f765b0a9924fb534204b6d85eecc975d6624110ca4f9a5133136f931fa",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_bounded_artifact_decode_v1.py"
+    },
+    {
+      "current_base_sha256": "7faa1d292c61257024e8aa1e4b337f395cea4c3e4e2dafa476661aeb9dc3872d",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "2209c20117cc5fbac9d35e27e3b65206bee30bdc",
+      "original_logical_path": "scripts/research/f017_canonical_serialization_v10.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_canonical_serialization_v10.py",
+      "original_sha256": "7faa1d292c61257024e8aa1e4b337f395cea4c3e4e2dafa476661aeb9dc3872d",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_canonical_serialization_v10.py"
+    },
+    {
+      "current_base_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "c1a9fc543bd7b888d4d33d157ebf9bbd48813a2c",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py",
+      "original_sha256": "e3670b22ac71bad7523efe1e47b00f2345d1f103d2af8f7592e2f3f8c793a791",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v2.py"
+    },
+    {
+      "current_base_sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "4355a838197e9d76a0464a2f9ec7d6accac17aef",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py",
+      "original_sha256": "c1b6b95cf2a597453aeecc43bf1d5c6df5b8488a6ac522bd01771af7b4d0e7d3",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_corrected_oracle_secondary_numerics_v3.py"
+    },
+    {
+      "current_base_sha256": "421e3c9c414257527cc20b43906326323bc22d8fc65be3e195048957f40a21b8",
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "d9861f17876d613f26c4df464821e4a15187b594",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_secondary_target_source_v10.py",
+      "original_sha256": "ae8dbdd5c58fdc61d890f2b0c7c41f9b83d053d406cb2c9d1a63483ee0882dd5",
+      "reason": "Prospective secondary successor named before editing; final source binding awaits candidate commit.",
+      "status": "STILL_UNKNOWN",
+      "successor_path": "scripts/research/f017_secondary_descriptor_source_v1.py"
+    },
+    {
+      "current_base_sha256": "fddf87e77309f7267ef1b48db152130d5a1387bedcf5ba567a73f923788f8dd4",
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "68e358d7edb2d60e436249e4d0d48b75c0e3a658",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_secondary_target_source_v11.py",
+      "original_sha256": "16f2303bca2d787dd97f8c8ff73aad1c87350db198d5954af6d6bae2f74dfc72",
+      "reason": "Prospective secondary successor named before editing; final source binding awaits candidate commit.",
+      "status": "STILL_UNKNOWN",
+      "successor_path": "scripts/research/f017_secondary_read_observation_factory_v1.py"
+    },
+    {
+      "current_base_sha256": "97e640e1e0fa4da36e7aed407c612ea991681422316f527a585e7c70eb6c8c55",
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "98c4e347091fef8db927812394be6feacb3c99a8",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+      "original_sha256": "9a6a6c7f85cef55596900eb8d285edd25481433a5057fdbf9fac86671f21332d",
+      "reason": "Prospective secondary successor named before editing; final source binding awaits candidate commit.",
+      "status": "STILL_UNKNOWN",
+      "successor_path": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py"
+    },
+    {
+      "current_base_sha256": "9cf85bc57548a9d2fd176cb3d02acf2bc88aba5c136a2c747ac386c535003ae2",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "010e08044fe8eb169fd8a179a7a2c3586a824f7a",
+      "original_logical_path": "scripts/research/f017_descriptor_lease_manager_v10.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_descriptor_lease_manager_v10.py",
+      "original_sha256": "9cf85bc57548a9d2fd176cb3d02acf2bc88aba5c136a2c747ac386c535003ae2",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_descriptor_lease_manager_v10.py"
+    },
+    {
+      "current_base_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "762375596e29ffea73a284fd721b5832daaf1753",
+      "original_logical_path": "scripts/research/f017_oracle_primary_decoders.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_oracle_primary_decoders.py",
+      "original_sha256": "60a4b4e7d973edc41383e20d6d3413d4f658bf4a34dc9132529a6c702b44e11e",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_oracle_primary_decoders.py"
+    },
+    {
+      "current_base_sha256": "d82af8629c8ad989baa760c13cea94a7e42bd3628aa6a5e24a6795dc33fa4ae4",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "9bc6d6ad25cba86d8e610b5200994c9f5cd3680f",
+      "original_logical_path": "scripts/research/f017_result_artifacts_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_result_artifacts_v11.py",
+      "original_sha256": "d82af8629c8ad989baa760c13cea94a7e42bd3628aa6a5e24a6795dc33fa4ae4",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_result_artifacts_v11.py"
+    },
+    {
+      "current_base_sha256": "f1388876fa24d4f93d6cd0732c6648584177b353c2bd1f37f6a02d3b3e948a3a",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "61753c4d55ad442884c44f5828c1d1848bf8063d",
+      "original_logical_path": "scripts/research/f017_result_bundle_authority_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_result_bundle_authority_v11.py",
+      "original_sha256": "f1388876fa24d4f93d6cd0732c6648584177b353c2bd1f37f6a02d3b3e948a3a",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_result_bundle_authority_v11.py"
+    },
+    {
+      "current_base_sha256": "8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "579da763ccdd6c376a3b69c715e96f93b5976136",
+      "original_logical_path": "scripts/research/f017_result_bundle_builder_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_result_bundle_builder_v11.py",
+      "original_sha256": "8853623824f4546e419c1b51766cf1cb39f2b8a2b61e59e25f25dba89c01c70b",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_result_bundle_builder_v11.py"
+    },
+    {
+      "current_base_sha256": "572f4f03e8e02a8f9b13ef007b06e0e727089878d1187d81a4d70afb4c3870bf",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "c9053675dd131e8aec379677d2e16693e14f3943",
+      "original_logical_path": "scripts/research/f017_result_envelope_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_result_envelope_v11.py",
+      "original_sha256": "572f4f03e8e02a8f9b13ef007b06e0e727089878d1187d81a4d70afb4c3870bf",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_result_envelope_v11.py"
+    },
+    {
+      "current_base_sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "cfa8e9ff899c157d7461c5831e23bfa6043658fe",
+      "original_logical_path": "scripts/research/f017_write_once_artifact_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_write_once_artifact_v1.py",
+      "original_sha256": "da1eeead2fceb475557456048bd8bda1f3bfdbde5c407d4ddc3c92b6ee83e768",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_write_once_artifact_v1.py"
+    },
+    {
+      "current_base_sha256": "af51990d2605e604b4c81b6d49d7efc8f213f5315489c0d31d5128dbf113e236",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "f7dee55f692e02f2a883c1302d36411586c945de",
+      "original_logical_path": "scripts/research/ggml_kquants.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/ggml_kquants.py",
+      "original_sha256": "af51990d2605e604b4c81b6d49d7efc8f213f5315489c0d31d5128dbf113e236",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/ggml_kquants.py"
+    },
+    {
+      "current_base_sha256": "7cc93aba3c0b70f64746f08f6da31d961f9cbe7ff3eeff3837dd821aba2a79ae",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "cb0cdba38abe536a6d5a49c8d15a149e09b98aeb",
+      "original_logical_path": "scripts/research/glm52_dense_primitives.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/glm52_dense_primitives.py",
+      "original_sha256": "7cc93aba3c0b70f64746f08f6da31d961f9cbe7ff3eeff3837dd821aba2a79ae",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/glm52_dense_primitives.py"
+    },
+    {
+      "current_base_sha256": "175ac5ced41973523997b60b930be62db244cae3419f9d6376eefb3c5c3b39ca",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "b98a26314143d895fddd03b6713631a062fdab89",
+      "original_logical_path": "scripts/research/glm52_gguf_catalog.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/glm52_gguf_catalog.py",
+      "original_sha256": "175ac5ced41973523997b60b930be62db244cae3419f9d6376eefb3c5c3b39ca",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/glm52_gguf_catalog.py"
+    },
+    {
+      "current_base_sha256": "ff36e169a823d861ba7cf7369a39b5176279acd552866e1fd78c318a1fb91e87",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "91432f795a48a00a87015db89d1865a21c945ebb",
+      "original_logical_path": "scripts/research/glm52_tensor_store.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/glm52_tensor_store.py",
+      "original_sha256": "ff36e169a823d861ba7cf7369a39b5176279acd552866e1fd78c318a1fb91e87",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/glm52_tensor_store.py"
+    },
+    {
+      "current_base_sha256": "06f1e2366e73a5c5e01ba89a2c3abfc4d4b872e45cc7a7c2e5ef900886a36483",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "e1b225e0aa196e0657c039144d4689d3100ba2fb",
+      "original_logical_path": "scripts/research/iq2_s_dequant.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq2_s_dequant.py",
+      "original_sha256": "06f1e2366e73a5c5e01ba89a2c3abfc4d4b872e45cc7a7c2e5ef900886a36483",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq2_s_dequant.py"
+    },
+    {
+      "current_base_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "249042e5191bf328f2567319c37b324408fcd0c9",
+      "original_logical_path": "scripts/research/iq2_xxs_dequant.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq2_xxs_dequant.py",
+      "original_sha256": "9de6b59ce7fa3633e9fc521100badf4f5da2dd37bde037be88e8022904615761",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq2_xxs_dequant.py"
+    },
+    {
+      "current_base_sha256": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "2c980f8fc39bf0546a9f1d0eef9a5ac6365ae686",
+      "original_logical_path": "scripts/research/iq2_xxs_tables.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq2_xxs_tables.py",
+      "original_sha256": "050b2ed26afbe6f15abf1dcd3789d6cddd93cee4ce87e8b13e86cf3f503aa756",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq2_xxs_tables.py"
+    },
+    {
+      "current_base_sha256": "93e979548ba6e973f504643715708f6cfcb528f777a338d41e8b3c4e2bf78de5",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "632dae0ef4a05fcbd37b3ba9ecf5b8b0553cdbbe",
+      "original_logical_path": "scripts/research/iq3_xxs_dequant.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq3_xxs_dequant.py",
+      "original_sha256": "93e979548ba6e973f504643715708f6cfcb528f777a338d41e8b3c4e2bf78de5",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq3_xxs_dequant.py"
+    },
+    {
+      "current_base_sha256": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "3e4a664e7282fb47d27c905edf423a23d5e61828",
+      "original_logical_path": "scripts/research/iq3_xxs_tables.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq3_xxs_tables.py",
+      "original_sha256": "87f01f518f954fa095b20e0ea8112a6073a4a88d394046c145052404437c5042",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq3_xxs_tables.py"
+    },
+    {
+      "current_base_sha256": "a4649747739d7ec2443b0d9fc5c92a24bf256861e2b6f3a38bea2e14d6129dfe",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "1ee75b1f4d327a73dcc7a2031c38de260b19fbf2",
+      "original_logical_path": "scripts/research/iq4_xs_dequant.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq4_xs_dequant.py",
+      "original_sha256": "a4649747739d7ec2443b0d9fc5c92a24bf256861e2b6f3a38bea2e14d6129dfe",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq4_xs_dequant.py"
+    },
+    {
+      "current_base_sha256": "08c0f3cf2fa33d7a51109959d773f2ae21f282c166b848d154903ce51f38d83e",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "fef60cb38af67dc14c4eb5c0663023a37615f158",
+      "original_logical_path": "scripts/research/iq_extra_tables.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/iq_extra_tables.py",
+      "original_sha256": "08c0f3cf2fa33d7a51109959d773f2ae21f282c166b848d154903ce51f38d83e",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/iq_extra_tables.py"
+    },
+    {
+      "current_base_sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "8571492b0c516df53fa1e36bc8d5d68c2dc981f8",
+      "original_logical_path": "scripts/research/qualify_f017_quantization_matrix_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/qualify_f017_quantization_matrix_v1.py",
+      "original_sha256": "ffa0f9af19d01177af83825425aeaee09d6bc0b15f17bf7897ce4b4455c00d53",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/qualify_f017_quantization_matrix_v1.py"
+    },
+    {
+      "current_base_sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "57d3812b67fe1587ae9a733672886f29575a1dc6",
+      "original_logical_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json",
+      "original_sha256": "a9037a42a476092bdc0f870a7e0b6162a1df0abbe5b0663218e82f931676846a",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "specs/017-rust-native-inference-runtime/contracts/f017-corrected-full-checkpoint-oracle-geometry-v1.json"
+    },
+    {
+      "current_base_sha256": "ceab082d593a22fc30f76e67947b1819809edf0be488476f7affa326f5e744f4",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "cd488a84eb12ee8aa0aea9bbd3b0bcb3330c3a96",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py",
+      "original_sha256": "752fd55ba1ad641e3ab26b545e983a6bf798032d75a916e83e6c8fc2f701d28b",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_corrected_oracle_primary_target_source_v10.py"
+    },
+    {
+      "current_base_sha256": "33e6473aff9ba468b0614d5f06261c8995bf4ac609f9b61e59c6238b9cd99f74",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "31ba4102aa3746f29fbe340c4840acc6b6e70c7f",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py",
+      "original_sha256": "2dec696bf2892928664780ba2438167c73ff579b47ad05ada48780355673b57e",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_corrected_oracle_primary_target_source_v11.py"
+    },
+    {
+      "current_base_sha256": "515b23b0ac4fd382b9f4a75d01b4bbabe079020e17834347d6c1cfa2d7529133",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": true,
+      "original_git_blob": "c769dfe6f2d301201052763dbfa48c37ab5ff403",
+      "original_logical_path": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+      "original_sha256": "515b23b0ac4fd382b9f4a75d01b4bbabe079020e17834347d6c1cfa2d7529133",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_corrected_oracle_primary_wrapper_v11.py"
+    },
+    {
+      "current_base_sha256": "16165f7dfb1060d72d79545e9986d439229b80691f4cc34ccebf66661724d5ec",
+      "dependencies": [
+        "unchanged current dependency"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "b312978d65509fab04a6415af48419ead300c741",
+      "original_logical_path": "scripts/research/f017_primary_read_observation_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_primary_read_observation_v1.py",
+      "original_sha256": "f12b3908db48a51cd23ed564cd5da954cd08f8168a3a178a311cc3fd140e4e02",
+      "reason": "Bound to exact current base; historical bytes retained without replacing current primary/dependency bytes.",
+      "status": "BOUND_CURRENT",
+      "successor_path": "scripts/research/f017_primary_read_observation_v1.py"
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "6ebbc9cad219ab02b8cd0ee1819638e90a2f8928",
+      "original_logical_path": "scripts/research/f017_secondary_read_observation_v1.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "scripts/research/f017_secondary_read_observation_v1.py",
+      "original_sha256": "0411e47871355d274e599b18fb028d03d41cfde9758a8b7de7855508f1b15093",
+      "reason": "Prospective secondary successor named before editing; final source binding awaits candidate commit.",
+      "status": "STILL_UNKNOWN",
+      "successor_path": "scripts/research/f017_secondary_read_observation_v1.py"
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "3c723746e47eab9b81d06d76d019ed58c837d943",
+      "original_logical_path": "qualification/secondary_suite55.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "f73b57f2a6455b24e931e92d0ea935a512c301688fe1e31e3083667852caf544",
+      "reason": "Descriptor-only cases replace its relevant count/prefix coverage; numerical cases remain NOT_QUALIFIED.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "558de6accfc238f5823381415a9b1c341664ca0f",
+      "original_logical_path": "qualification/secondary_smoke55_expected.json",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "398df515d8767eb7f13d56a271e31f03746be4a52db70d931c314958056751a4",
+      "reason": "Historical numerical expectations are outside the descriptor-only claim; no token expectation imported.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "e04bd53c8acb972920d4b6ecb168cfd984f89895",
+      "original_logical_path": "qualification/secondary_qualification55.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "6a7a4917bb1ed82e79e9476dadcdf3c67ee6330a6da17c25892833bbce490081",
+      "reason": "New bounded secondary fixture controller replaces historical launch orchestration; old helper is never executed.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "bf2d9f8ffeefc8084a2081057ca38a02e722d743",
+      "original_logical_path": "qualification/secondary_qualification55_oracle.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "5600539392030b5657f4b1b86a78e979b961b7b6c06fae8bc9f6f115c8916ee9",
+      "reason": "Independent new transcript reducer replaces descriptor-counter expectations; old numerical oracle is not rerun.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "785946a8d2c0d969f4b3e1c67d39a84243bdc89b",
+      "original_logical_path": "qualification/secondary_qualification55_faults.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "2ce6a9b3243e39ad0b76978eb9e44915d2eddf906c0473285a90ceae9356c8f6",
+      "reason": "New finite producer/readback edge tests replace the supported prefix fault subset; broader historical cases remain historical.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "f4bf4c675ff1d2971693f0e54a4fd814d9fd04c0",
+      "original_logical_path": "qualification/secondary_qualification55_mutations.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "07ca4594226525b2d9a1db524587b9d60448afac69b6fcf4c6387f0dee6e4c97",
+      "reason": "New precisely localized mutants with restored controls replace descriptor-only mutation checks.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "ba900bb70478b3b6d5208185b6d1300d33751dfb",
+      "original_logical_path": "qualification/secondary_qualification55_expected_v2.json",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "1787c80724ce2a3fd35a04644f2e9b4277ebf024e2d17c3c2b0227ac30b6c37c",
+      "reason": "Expected counters now derive from separately recorded byte/outcome transcripts; no authored totals or numerical expectations imported.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "3fe22ee6ef13ac1a10719efbfe81227c986589a3",
+      "original_logical_path": "qualification/secondary_qualification55_common.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "e34ceeb36966daa81ecabdca3324766fd4050adae122d40fb0092175841857a1",
+      "reason": "New owned synthetic descriptors and fixed source census replace required fixture setup; NumPy/native setup is excluded.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    },
+    {
+      "current_base_sha256": null,
+      "dependencies": [
+        "descriptor-only secondary integration"
+      ],
+      "evidence": {
+        "current_base": "6778925041ff71dd9b9613fb3f18bbd1198f6c3e",
+        "current_tree": "836c2fdb2754c93379e4149ea41a49eca4d80f5d",
+        "finite_inventory_sha256": "f36ad9198ac783a76dbb6c55ade63ae4105de97df67aae55f87cae231c683978",
+        "source_view_manifest_sha256": "424be15108b7643498428c1a40f0fe05a5aaa71ac6b5a818edfc33d732df0b1a"
+      },
+      "matches_current_base": false,
+      "original_git_blob": "189a2cf903f9ec7a2c9d28263b6b62014a6c275a",
+      "original_logical_path": "qualification/secondary_custody56.py",
+      "original_logical_view": "successor-b07",
+      "original_repository_binding": "UNKNOWN",
+      "original_sha256": "2d2a9720d8093a602b8c42442373ed37f45a5924177ccb453b194d0ce1b73118",
+      "reason": "Current graph custody records and Git bundle replace task-specific historical storage orchestration; retained old resources untouched.",
+      "status": "RETIRED_WITH_REASON",
+      "successor_path": null
+    }
+  ],
+  "schema": "pulsarmlx.secondary-integration-inventory/1"
+}

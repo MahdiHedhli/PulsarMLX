@@ -1,0 +1,22 @@
+{
+  "census_is_live_registry_or_package_module": false,
+  "census_path": "scripts/research/f017_secondary_read_observation_inputs_v1.py",
+  "frozen_historical_V10_and_primary_production_bytes_unchanged": true,
+  "only_existing_executable_edited": "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+  "paths": [
+    "scripts/research/f017_secondary_descriptor_source_v1.py",
+    "scripts/research/f017_secondary_read_observation_factory_v1.py",
+    "scripts/research/f017_secondary_read_observation_v1.py",
+    "scripts/research/f017_secondary_read_observation_prefix_v1.py",
+    "scripts/research/f017_secondary_read_observation_inputs_v1.py",
+    "scripts/research/f017_corrected_oracle_secondary_wrapper_v11.py",
+    "scripts/research/tests/f017_secondary_integration/secondary_cases_v1.py",
+    "scripts/research/tests/f017_secondary_integration/secondary_oracle_v1.py",
+    "scripts/research/tests/f017_secondary_integration/secondary_confined_runner_v1.py",
+    "docs/research/f017/secondary-integration-inventory-v1.json",
+    "docs/research/f017/secondary-integration-predeclaration-v1.json",
+    "docs/research/f017/secondary-integration-touched-paths-v1.json",
+    "docs/research/f017/secondary-read-observation-status.md"
+  ],
+  "schema": "pulsarmlx.secondary-integration-touched-paths/1"
+}

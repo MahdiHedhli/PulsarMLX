@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "fixture_id": "synthetic-greedy-generation-v1",
+  "fixture_kind": "synthetic",
+  "evidence_level": "synthetic_fixture_only",
+  "prompt_token_ids": [1, 2],
+  "max_new_tokens": 3,
+  "eos_token_id": 0,
+  "steps": [
+    {
+      "position": 3,
+      "topk": [
+        {"token_id": 8, "score": 0.9},
+        {"token_id": 7, "score": 0.9},
+        {"token_id": 9, "score": 0.1}
+      ],
+      "argmax": 7
+    },
+    {
+      "position": 4,
+      "topk": [
+        {"token_id": 9, "score": 1.0},
+        {"token_id": 8, "score": 0.5}
+      ],
+      "argmax": 9
+    },
+    {
+      "position": 5,
+      "topk": [
+        {"token_id": 0, "score": 2.0},
+        {"token_id": 9, "score": 1.0}
+      ],
+      "argmax": 0
+    }
+  ],
+  "exclusions": [
+    "synthetic_fixture_only",
+    "No model, checkpoint, tokenizer, MLX device, serving, or release claim is made.",
+    "A separately authorized model adapter must supply verified logits and its own evidence."
+  ]
+}
