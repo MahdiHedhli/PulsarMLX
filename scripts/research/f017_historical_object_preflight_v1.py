@@ -100,10 +100,34 @@ def _historical_git_context(
 def _git_subprocess_environment(
     root: Path, environment: Mapping[str, str]
 ) -> dict[str, str]:
-    """Apply historical locators only to this one Git subprocess."""
+    """Apply historical locators only to this one Git subprocess.
+
+    Isolation is unconditional. Reading an immutable historical blob must not
+    depend on ambient Git configuration: a global or system config -- an
+    `includeIf.gitdir` include, a rewritten alias, a pager or a credential
+    helper -- can change what `git show` prints or make it exit non-zero, and
+    this module treats any stderr byte as fatal. The global and system config
+    sources, and environment-injected `GIT_CONFIG_*` settings, are therefore
+    pinned closed for this one child whether or not the caller supplied the
+    private historical context below, and the native locators are dropped before
+    the caller-validated ones are re-applied. Variables that select *which
+    objects exist*, such as `GIT_OBJECT_DIRECTORY`, are deliberately left alone:
+    they are part of the read the caller asked for, and the suite uses one as a
+    negative control to prove this reader fails closed.
+    """
     child = dict(environment)
     for name in _NATIVE_GIT_LOCATOR_VARIABLES | _HISTORICAL_GIT_CONTEXT_VARIABLES:
         child.pop(name, None)
+    # Environment-injected configuration is the same hazard as a config file.
+    for name in [key for key in child if key.startswith("GIT_CONFIG_")]:
+        child.pop(name, None)
+    child.update({
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_PAGER": "cat",
+    })
     context = _historical_git_context(root, environment)
     if context is not None:
         isolated_git, common_git, work_tree = context

@@ -167,6 +167,48 @@ def test_object_store_visibility_denial_fails_closed(tmp_path):
     assert envelope["commands"]["show"]["stderr_bytes"] > 0
 
 
+def test_ordinary_entry_point_is_isolated_from_interfering_git_configuration(tmp_path):
+    """The plain `read_historical_blob` path must ignore ambient Git configuration.
+
+    Without the private historical context the reader used to inherit the caller's
+    environment wholesale, so a global config -- an `includeIf.gitdir` include, a
+    rewritten alias, a pager -- could change what `git show` prints or make it emit
+    stderr, which this module treats as fatal. Isolation is now unconditional; this
+    asserts the ordinary entry point returns the same bytes either way.
+    """
+    repository, historical, old, _current = _make_git_repository(tmp_path)
+
+    clean = read_historical_blob(repository, historical, "source.py")
+    assert clean == old
+
+    hostile_home = tmp_path / "hostile-home"
+    hostile_home.mkdir()
+    included = tmp_path / "included.config"
+    included.write_text("[core]\n\tpager = false\n", encoding="utf-8")
+    (hostile_home / ".gitconfig").write_text(
+        "[alias]\n"
+        "\tshow = !echo TAMPERED\n"
+        "[core]\n"
+        "\tpager = /bin/false\n"
+        f"[includeIf \"gitdir:{repository}/.git\"]\n"
+        f"\tpath = {included}\n",
+        encoding="utf-8",
+    )
+    interfering = dict(os.environ)
+    interfering.update({
+        "HOME": str(hostile_home),
+        "GIT_PAGER": "/bin/false",
+        "GIT_DIR": str(tmp_path / "does-not-exist.git"),
+        "GIT_WORK_TREE": str(tmp_path / "also-missing"),
+    })
+    interfering.pop("GIT_CONFIG_NOSYSTEM", None)
+    interfering.pop("GIT_CONFIG_GLOBAL", None)
+
+    assert read_historical_blob(
+        repository, historical, "source.py", environment=interfering
+    ) == old
+
+
 def test_sandbox_context_ignores_local_credential_include_without_widening_reads():
     if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").is_file():
         pytest.skip("the sandbox custody regression is macOS /usr/bin/sandbox-exec specific")
