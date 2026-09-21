@@ -150,6 +150,10 @@ jobs:
               > "$RUNNER_TEMP/flash-stop-policy-$(echo $flags | tr -d ' -').stdout"
             .venv/bin/python $flags scripts/research/tests/test_glm53_flash_serve_offload.py \
               > "$RUNNER_TEMP/flash-serve-offload-$(echo $flags | tr -d ' -').stdout"
+            PULSAR_REPLAY_TEST=1 .venv/bin/python $flags scripts/research/tests/test_glm53_flash_stream_prefill.py \
+              > "$RUNNER_TEMP/flash-stream-prefill-$(echo $flags | tr -d ' -').stdout"
+            PULSAR_REPLAY_TEST=1 .venv/bin/python $flags scripts/research/tests/test_glm53_flash_stream_prefill_policy.py \
+              > "$RUNNER_TEMP/flash-stream-prefill-policy-$(echo $flags | tr -d ' -').stdout"
           done
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test bounded worker contract

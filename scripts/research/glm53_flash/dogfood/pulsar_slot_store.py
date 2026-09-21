@@ -55,6 +55,18 @@ graph-21 LFU-with-decay policy over the slots (per-layer capacity C = budget / l
     bulk_reads, coalesced_ranges and chunks_read so a qualification can assert that a branch ran, not only that the
     values matched; read_chunk_bytes is a constructor argument (default 64 MiB).
 
+  * item 1 (streaming prefill): with prefill_mode='stream' a call carrying more than one token does not go through the
+    slots at all. Per wave the experts are read as merged ranges (the same F_NOCACHE page-aligned pool reads) into
+    TRANSIENT stacked (len(wave), ...) tensors, the same three gather_qmm launches run over them with each (token, k)'s
+    position INSIDE THE WAVE as rhs_indices (the plain gather kernel below SORTED_GATHER_MIN_EXPERTS - see that
+    constant), the wave is evaluated and its transients dropped, and the allocator cache
+    is cleared once per layer call. The slot map, the free list, the reservations and the hit/miss accounting are
+    untouched; only the LFU counts advance (count_only), so decode's victim choice stays informed. Decode (1-token
+    calls) is unchanged and takes the slots as before, and a stream prefill is bit-identical to a store prefill (the
+    same bytes through the same kernels, same masking and accumulation across waves) - what changes is that prefill no
+    longer evicts the store's residents and no longer pays the fill transient. Contiguous layouts only; stream_waves,
+    stream_experts, stream_requested_bytes and stream_overread_bytes account for it separately in stats().
+
 Quantized experts only (weight/scales/biases per projection, as repack writes them for a quantized build).
 """
 from __future__ import annotations
@@ -66,6 +78,11 @@ from typing import Optional
 
 import numpy as np
 
+# MLX 0.32.2 hazard (measured, item 1): mx.gather_qmm(..., sorted_indices=True) disagrees with the plain kernel -
+# grossly, not by rounding - as soon as the gathered stack has FEWER THAN 64 experts; at 64 and above the two agree
+# bit for bit. The slot path never meets it (its stack is `capacity` rows, 100 in the accepted configuration), but a
+# streaming wave can be short, so the stream path takes the plain kernel below this floor.
+SORTED_GATHER_MIN_EXPERTS = 64
 _PROJS = ("gate_proj", "up_proj", "down_proj")
 _PARTS = ("weight", "scales", "biases")
 WARM_STATE = "pulsar-slot-warm-state.json"
@@ -262,7 +279,7 @@ class PulsarSlotStore:
     def __init__(self, offload_dir: str, expert_cache_bytes: int, kv_reserve_bytes: int = 0, decay: float = 0.5,
                  decay_every: int = 4096, warm_start: bool = True, capacity_per_layer: Optional[int] = None, read_workers: int = 8,
                  bulk_min: int = 4, cache_clear_threshold_bytes: Optional[int] = 2 << 30, coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20,
-                 write_mode: str = "stack"):
+                 write_mode: str = "stack", prefill_mode: str = "store"):
         import mlx.core as mx
         from concurrent.futures import ThreadPoolExecutor
 
@@ -303,6 +320,17 @@ class PulsarSlotStore:
             raise ValueError(f"WRITE_MODE {write_mode!r}")
         self.write_mode = write_mode
         self.layout = idx.get("layout", "hash-ordered")
+        # prefill_mode (item 1): 'store' = every call fills slots (the baseline); 'stream' = a multi-token call reads its
+        # experts into transient stacked tensors instead, leaving the slots to decode. Merged ranges need the contiguous
+        # layout, so the mode is refused up front rather than at the first prefill.
+        if prefill_mode not in ("store", "stream"):
+            raise ValueError(f"PREFILL_MODE {prefill_mode!r}")
+        if prefill_mode == "stream" and self.layout != "expert-contiguous/1":
+            raise ValueError(f"STREAM_PREFILL_REQUIRES_CONTIGUOUS_LAYOUT: layout {self.layout!r}")
+        self.prefill_mode = prefill_mode
+        self._stream_waves = self._stream_experts = 0
+        self._stream_requested_bytes = self._stream_overread_bytes = 0
+        self._observed_accesses = 0   # experts counted by count_only (observation); NOT hits, misses or admissions
         self._coalesced_ranges = self._chunks_read = self._pool_reads = 0
         # byte accounting (graph 33): logical = misses x expert bytes (what the model admitted; `read_bytes` is its alias and
         # NOT a physical I/O counter); requested = bytes asked of the file by the cold paths (merged ranges incl. their
@@ -392,6 +420,57 @@ class PulsarSlotStore:
             L.pending[j] = s                                                  # reserved, published by fill on success
             reads.append((j, s))
         return reads
+
+    def count_only(self, lid: int, wave) -> None:
+        """OBSERVATION, not admission (correction 1): the policy half of touch_wave and nothing else. Every expert of
+        the wave is counted once, in wave order, through the same `_count` - so the global `_accesses` ordinal advances
+        by one per expert and the decay fires on exactly the same `_accesses % decay_every == 0` boundaries with the
+        same factor as it would have under touch_wave. An LFU victim chosen later during decode therefore still sees
+        what prefill asked for.
+
+        Nothing else is read or written: no slot_of / pending / free / expert_to_slot / slot tensor mutation, no hit,
+        miss, eviction, reservation or read admission. The observation is recorded ONLY in the counters that are
+        distinct from the admission counters: `observed_accesses` here, `stream_waves` / `stream_experts` and the
+        stream byte counters in stream_wave. `_waves` and `trace` belong to the slot path and stay untouched."""
+        self._usable()
+        for j in wave:
+            self._count((lid, j))
+        self._observed_accesses += len(wave)
+
+    def stream_wave(self, lid: int, wave) -> dict:
+        """One wave of a streaming prefill: read the wave's experts as merged ranges and return TRANSIENT stacked
+        tensors {proj: [W, S, B]} of shape (len(wave), ...) - the same shape the slot tensors have, so the caller's
+        gather_qmm launches are unchanged apart from the index space (position in the wave, not slot). The store keeps
+        no reference: the caller drops them. `wave` must be sorted (the stack is in wave order)."""
+        import mlx.core as mx
+
+        self._usable()
+        f = self._file(lid); f._open()
+        if not f.contiguous:
+            raise ValueError(f"STREAM_PREFILL_REQUIRES_CONTIGUOUS_LAYOUT: layer {lid}")
+        self.count_only(lid, wave)
+        self._stream_waves += 1; self._stream_experts += len(wave)
+        runs = f.merged_ranges(wave, self.coalesce_gap_experts)
+        align = [0]
+        bufs, _pieces = f.read_ranges_np([(lo, hi) for lo, hi, _ in runs], pool=self._pool, chunk=self.read_chunk_bytes, alignment=align)
+        self._alignment_overread_bytes += align[0]
+        arrays = {}
+        for (lo, hi, js), buf in zip(runs, bufs):
+            for j in js:
+                for p in _PROJS:
+                    for k in _PARTS:
+                        n = f"e{j}.{p}.{k}"
+                        if n in f.entries:
+                            arrays[n] = f.to_mx(n, f.slice_np(buf, lo, n))
+            self._stream_requested_bytes += hi - lo
+            exact = sum(f.expert_range(j)[1] - f.expert_range(j)[0] for j in js)
+            self._stream_overread_bytes += (hi - lo) - exact
+        # mx.stack over the wave's arrays, not a numpy stack + one mx.array: measured on the MacBook (uint32, the
+        # weight shape that dominates), 100 experts 32 ms vs 56 ms and 288 experts 43 ms vs 141 ms.
+        tensors = {p: [mx.stack([arrays[f"e{j}.{p}.{k}"] for j in wave]) if len(wave) > 1 else arrays[f"e{wave[0]}.{p}.{k}"][None]
+                       for k in _PARTS] for p in _PROJS}
+        mx.eval([t for parts in tensors.values() for t in parts])
+        return tensors
 
     def fill(self, lid: int, reads) -> None:
         """Materialize the reserved experts, write them into their slots (one scatter per (projection, part)), then
@@ -536,7 +615,8 @@ class PulsarSlotStore:
                 "hit_rate": (self._hits / total) if total else None, "fill_failures": self._fill_failures, "poisoned": self.poisoned,
                 "read_bytes": self._read_bytes, "logical_admitted_bytes": self._read_bytes, "requested_read_bytes": self._requested_read_bytes, "overread_bytes": self._overread_bytes, "hot_copy_bytes": self._hot_copy_bytes, "alignment_overread_bytes": self._alignment_overread_bytes,
                 "hot_reads": self._hot_reads, "cold_reads": self._cold_reads, "bulk_reads": self._bulk_reads, "pool_reads": self._pool_reads, "coalesced_ranges": self._coalesced_ranges, "chunks_read": self._chunks_read, "read_chunk_bytes": self.read_chunk_bytes,
-                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "logical_resets": getattr(self, "_logical_resets", 0), "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
+                "waves": self._waves, "sorted_gathers": self._sorted_gathers, "write_mode": self.write_mode, "prefill_mode": self.prefill_mode,
+                "stream_waves": self._stream_waves, "stream_experts": self._stream_experts, "stream_requested_bytes": self._stream_requested_bytes, "stream_overread_bytes": self._stream_overread_bytes, "observed_accesses": self._observed_accesses, "logical_resets": getattr(self, "_logical_resets", 0), "layout": self.layout, "cache_clears": self._cache_clears, "warm_admitted": self._warm_admitted,
                 "decay": self.decay, "decay_every": self.decay_every, "accesses": self._accesses}
 
     # --- warm state -----------------------------------------------------------------------------
@@ -580,21 +660,24 @@ class PulsarSwitchGLU:
         self.activation = activation
         self.training = False
 
-    def _gather(self, x, proj, quant, slots, sorted_indices):
+    def _gather(self, x, proj, quant, slots, sorted_indices, tensors=None):
         import mlx.core as mx
 
-        W, S, B = self.store.tensors(self.layer_id)[proj]
+        W, S, B = (self.store.tensors(self.layer_id) if tensors is None else tensors)[proj]
         group_size, bits, mode = quant
         return mx.gather_qmm(x, W, S, B, rhs_indices=slots, transpose=True, group_size=group_size, bits=bits, mode=mode, sorted_indices=sorted_indices)
 
-    def _experts(self, x, slots):
-        """SwitchGLU's forward over slot indices, with its sort/unsort (mlx_vlm.models.switch_layers._gather_sort /
+    def _experts(self, x, slots, tensors=None, allow_sort: bool = True):
+        """SwitchGLU's forward over slot indices (or, when `tensors` is given, over a streaming prefill's transient
+        stack, where `slots` is the position inside the wave), with its sort/unsort (mlx_vlm.models.switch_layers._gather_sort /
         _scatter_unsort, inlined so the module has no mlx-vlm import: sort the flattened (token, k) pairs by slot,
         gather the matching rows, run the three grouped matmuls with sorted_indices, and undo the permutation)."""
         import mlx.core as mx
 
         x = mx.expand_dims(x, (-2, -3))
         do_sort = slots.size >= 64
+        if not allow_sort:                                  # a stack under SORTED_GATHER_MIN_EXPERTS: the plain kernel
+            do_sort = False
         idx, inv_order = slots, None
         if do_sort:
             self.store._sorted_gathers += 1
@@ -603,15 +686,57 @@ class PulsarSwitchGLU:
             order = mx.argsort(flat)
             inv_order = mx.argsort(order)
             x, idx = x.flatten(0, -3)[order // M], flat[order]
-        x_up = self._gather(x, "up_proj", self.up_quant, idx, do_sort)
-        x_gate = self._gather(x, "gate_proj", self.gate_quant, idx, do_sort)
+        x_up = self._gather(x, "up_proj", self.up_quant, idx, do_sort, tensors=tensors)
+        x_gate = self._gather(x, "gate_proj", self.gate_quant, idx, do_sort, tensors=tensors)
         h = self.activation(x_up, x_gate) if self.activation is not None else (mx.sigmoid(x_gate) * x_gate * x_up)
-        y = self._gather(h, "down_proj", self.down_quant, idx, do_sort)
+        y = self._gather(h, "down_proj", self.down_quant, idx, do_sort, tensors=tensors)
         if do_sort:
             y = mx.unflatten(y[inv_order], 0, slots.shape)
         return y.squeeze(-2)
 
+    def _stream_prefill(self, x, idx_host, waves):
+        """Prefill outside the store: per wave, transient stacked tensors from stream_wave, the same three gather_qmm
+        launches over them with each (token, k)'s position in the wave as rhs_indices (np.searchsorted on the sorted
+        wave; entries outside the wave are masked exactly as the multi-wave slot path masks them), the wave evaluated
+        so its transients die before the next one is read, and one mx.clear_cache() per layer call so the allocator
+        does not carry 42 layers' wave temporaries. Bit-identical to the slot path: same bytes, and the single-wave
+        case skips the mask multiply just as the slot path does. A wave shorter than SORTED_GATHER_MIN_EXPERTS takes
+        the plain gather kernel, because MLX's sorted-index kernel does not agree with it on a short stack (measured
+        on the Studio: the trailing wave of every multi-wave layer differed on every one of its rows)."""
+        import mlx.core as mx
+
+        lid, store = self.layer_id, self.store
+        single = len(waves) == 1
+        out = None
+        for wave in waves:
+            w = np.array(wave, dtype=idx_host.dtype)
+            pos = np.searchsorted(w, idx_host).astype(np.int32)   # the expert's row in this wave's stack (as slots_for returns int32)
+            tensors = store.stream_wave(lid, wave)
+            allow_sort = len(wave) >= SORTED_GATHER_MIN_EXPERTS
+            if single:
+                out = self._experts(x, mx.array(pos), tensors=tensors, allow_sort=allow_sort)
+            else:
+                in_wave = np.isin(idx_host, w)
+                y = self._experts(x, mx.array(np.where(in_wave, pos, 0)), tensors=tensors, allow_sort=allow_sort) * mx.array(in_wave)[..., None].astype(x.dtype)
+                out = y if out is None else out + y
+            mx.eval(out)                                    # the gathers must run before the wave's transients are dropped
+            del tensors
+        mx.clear_cache()
+        return out
+
     def __call__(self, x, indices):
+        """DISPATCH RULE (correction 4), stated by token count of THIS call, not by "phase":
+
+          n = int(np.prod(idx_host.shape[:-1]))   # the call's (batch x tokens) count; the last axis is k
+          n > 1 and store.prefill_mode == 'stream'  ->  STREAM path: transient wave tensors, counts observed,
+                                                        slots untouched (nothing is admitted or evicted)
+          otherwise                                 ->  SLOT path: touch_wave + fill, exactly the baseline
+
+        So it is NOT true that "every prefill is streamed". A prefill chunk of exactly ONE token takes the SLOT path
+        and fills slots like any decode step - which is how a prompt of length k * prefill_step_size + 1 behaves: its
+        k full chunks stream, and its one-token remainder fills. A one-token prompt never streams at all. This is also
+        why a streamed prefill still leaves a few hundred experts resident in a real run: the remainder chunk admitted
+        them. With prefill_mode == 'store' (the default) every call takes the slot path, byte-for-byte as before."""
         import mlx.core as mx
 
         lid, store = self.layer_id, self.store
@@ -619,6 +744,8 @@ class PulsarSwitchGLU:
         uniq = sorted(int(j) for j in np.unique(idx_host))
         C = store.capacity
         waves = [uniq[i:i + C] for i in range(0, len(uniq), C)]
+        if store.prefill_mode == "stream" and int(np.prod(idx_host.shape[:-1])) > 1:
+            return self._stream_prefill(x, idx_host, waves)   # more than one token in the call: a prefill chunk
         if len(waves) == 1:
             store.fill(lid, store.touch_wave(lid, waves[0]))
             return self._experts(x, store.slots_for(lid, idx_host))
@@ -633,7 +760,7 @@ class PulsarSwitchGLU:
 
 
 def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start: bool = True, decay: float = 0.5, decay_every: int = 4096, read_workers: int = 8,
-                      coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, write_mode: str = "stack"):
+                      coalesce_gap_experts: int = 2, read_chunk_bytes: int = 64 << 20, write_mode: str = "stack", prefill_mode: str = "store"):
     """After mlx_vlm.moe_offload.patch_model has swapped every MoE layer's switch_mlp for an OffloadedSwitchGLU (which
     drops the resident expert parameters and computes the byte budget), replace each with a PulsarSwitchGLU over one
     shared PulsarSlotStore, reusing the upstream module's quant triples and activation."""
@@ -641,7 +768,7 @@ def patch_model_slots(model, offload_dir: str, expert_cache_gb=None, warm_start:
 
     upstream = patch_model(model, offload_dir, expert_cache_gb=expert_cache_gb)
     store = PulsarSlotStore(offload_dir, upstream._budget, 0, decay=decay, decay_every=decay_every, warm_start=warm_start, read_workers=read_workers,
-                            coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes, write_mode=write_mode)
+                            coalesce_gap_experts=coalesce_gap_experts, read_chunk_bytes=read_chunk_bytes, write_mode=write_mode, prefill_mode=prefill_mode)
     patched = 0
     for layer in model.language_model.model.layers:
         switch = getattr(getattr(layer, "mlp", None), "switch_mlp", None)
