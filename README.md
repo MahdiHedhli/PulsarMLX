@@ -262,8 +262,8 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | Bounded generation | ✅ Verified |
 | Architecture CPU oracle | ✅ Verified |
 | Evidence / claims / reviewer indexes | ✅ Verified |
-| Optimized MLX-only generation | 🚧 |
-| KV-cached decode | 🚧 |
+| Optimized MLX-only generation | 🗺️ Planned |
+| KV-cached decode | 🗺️ Planned |
 | GLM-5.2 full stack (research ladder) | ✅ C01–C11 committed (Python/NumPy reference path) |
 | GLM-5.2 Rust-native one token (real checkpoint) | ✅ Verified — token 154820, [F017 status](docs/architecture/f017-native-runtime-status.md) |
 | GLM-5.2 Rust-native multi-position decode | ✅ Verified **on synthetic fixtures** against an independent reference. On the real checkpoint only **position 0** is verified — it reproduces the banked one-token receipt bit for bit; **positions 1–7 are 📏 measured, not qualified** |
@@ -274,7 +274,7 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | GLM-5.3-Flash unpruned paged/persistent serving (research) | 📏 Measured candidate `971db9c1` (Python/MLX); identity against the fresh-process paged reference is ✅ verified — see [results](docs/glm53-flash/persistent-serving-results.md) |
 | GLM-5.3-Flash expert-cache budget | ✅ **70e9 is the admitted ceiling and the recommended server configuration** on the 128 GB host; the paged reference script's `--max-expert-cache-bytes` default remains 60e9. 80e9 is **not admitted** on a 128 GB host |
 | OpenAI-style **synthetic** serving crate | ❌ **Not on main.** Branch-only on `feat/openai-serving`; its own gate is red at head (run `35086336439`). Protocol/lifecycle harness only — **serves no model** |
-| OpenAI-compatible serving of a real model on Apple | 🚧 (Linux `pulsar-serve` exists upstream; macOS path not claimed) |
+| OpenAI-compatible serving of a real model on Apple | 🗺️ Planned — Linux `pulsar-serve` exists upstream; the macOS path is **not implemented** and not claimed |
 | Native Safetensors / MLX affine-quantized checkpoint ingestion | 🗺️ Planned, not started |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
@@ -361,7 +361,7 @@ The answer goes to stdout and one diagnostics object to stderr.
 
 | Not done | Status |
 | --- | --- |
-| Text generation on the real checkpoint | **In progress.** Stage A (teacher-forced positions) is done; the text stages run under the same approval. |
+| Text generation on the real checkpoint | 📏 **Measured, not qualified.** Stage A (teacher-forced positions), Stage B1 (four generated tokens) and Stage B2 (the GLM chat template end to end) have all executed under the same approval. What is outstanding is qualification, not execution: no independent multi-token oracle exists for this checkpoint, so nothing past attempt 2's position 0 is qualified, and the formal Feature 017 closeout still awaits its human approval. |
 | Performance baseline | **First real numbers, not a baseline.** No tokens-per-second figure is published: a teacher-forced ladder is not a decode rate. |
 | Answer quality | **Not claimed, and B1 is not evidence of it.** Four tokens of raw-text continuation from a 2-bit quantisation is not a task result. |
 | The checkpoint's RoPE pairing | **Declared, not validated.** B1 is consistent with `NeoxHalfSplit`, not proof of it; it is settled by the first approved multi-token run. |
@@ -549,7 +549,7 @@ GLM-5.2 research execution                     ✅ committed ladder C01–C11
         ↓
 F017 Rust-native GLM-5.2                       ✅ one token qualified; Stage A 1-7 and Stage B1 measured, not qualified
         ↓
-GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
+GLM-5.3-Flash paged research                   📏 measured candidate (Python/MLX)
         ↓
 Native Safetensors + MLX affine quantization   🗺️ planned, not started
         ↓
