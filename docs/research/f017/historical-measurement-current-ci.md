@@ -155,3 +155,53 @@ of the above: the five pre-existing rejections keep their labels, and four cases
 were added — an unrelated added check is accepted as additive, a duplicated
 expected invocation is accepted, a relocated invocation is rejected, and a
 reordered pair is rejected.
+
+### 2026-09-21 amendment — required steps bounded by two frozen lineages
+
+Nothing above this heading is changed.
+
+Adversarial review showed the invocation inventory described above was still too
+weak. It compared individual script-bearing lines, so it could not see step-level
+execution gating, and it returned PASS after each of: `if: false` on a required
+step, `continue-on-error: true`, deleting a result assertion, weakening
+`unexpected_passes == 0`, and appending `|| true` to a *continuation* line, which
+carries no script reference and was therefore never inventoried. Requiring only
+that the expected lines still be present, in order, would additionally have
+admitted an *inserted* line — `set +e`, `exit 0`, or a re-assignment placed
+before an assertion.
+
+A **required step** is now bounded from both sides. Required steps are the steps
+in `expected` whose block references a script whose basename contains `f017`,
+plus the confined primary leg. For each of them:
+
+* every line of the `expected` block must appear byte-identical and in order —
+  so nothing mandatory can be dropped, rewritten, masked or reordered;
+* **every line actually present must come from one of two frozen lineages** —
+  the qualify workflow at `6f59d9db` or the native workflow at `44c1b34e` — so
+  no invented line can live inside a mandatory step, which is what closes the
+  inserted-line hole;
+* the gating keys `if:`, `continue-on-error:`, `timeout-minutes:`, `shell:` and a
+  step-level `env:` must be byte-identical to `expected` and may not be acquired;
+* the enclosing job must be the same, its `runs-on:` and job-level `env:` must be
+  byte-identical, and required steps must keep their relative order.
+
+Both lineage workflows are pinned by sha256 (`WORKFLOW_ORIGINAL_IDENTITY`,
+`WORKFLOW_NATIVE_IDENTITY`). Both are historical commits already in this
+history, so neither can drift. Steps that are not required, and steps added
+anywhere, remain unconstrained by this doctor.
+
+The two lineages are why the consolidated tree passes at all: exactly one
+required step, *Qualify corrected oracle historical and active authority split*,
+differs from the qualify lineage, because the native lineage **appended** F017
+qualification to it — extra `cargo build` binaries, `cargo test --test temporal
+--test session`, the native CLI and temporal differential qualifications each
+compared against banked evidence, one further pytest file, and two `--check`
+invocations. Nothing was removed, masked or reordered, and the tests assert that
+the native block contains every expected line in order, so the two lineages are
+consistent rather than merely both allowed.
+
+**Consequence for future work:** a required F017 step can no longer be changed by
+editing the workflow alone. Any such change must advance a lineage constant
+(`SOURCE_BASE`/`WORKFLOW_BASE_SHA` or `NATIVE_BASE`/`NATIVE_WORKFLOW_SHA256`)
+deliberately, which is exactly the review point a change to a mandatory
+qualification step should require.

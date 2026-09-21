@@ -24,6 +24,14 @@ RECORD_SHA = "c529221a53a338dfe57d65f855f1b9d9b11e0b0251562f84067a65a0538a6414"
 GENERATOR_SHA = "ead39c8a8e1f8be4e0dbcd42121beaf58470dbf7dbcb4d93bcc83ef0f8527ef0"
 SOURCE_BASE = "6f59d9db93e92afed142b543a0e2fc19e0362bb4"
 WORKFLOW_BASE_SHA = "3b18be9762f19a8115f311080f6ebfa906a697e889a9c4b7c3fb9c0c790ee68a"
+# The second frozen lineage. A required F017 step in the consolidated tree may
+# only contain lines that one of the two historical workflows already contained:
+# the qualify line above, and the native line here. Both are historical commits
+# already in this history and neither will ever change; advancing either is a
+# deliberate edit to these constants, which is exactly the review point that a
+# change to a mandatory step should require.
+NATIVE_BASE = "44c1b34eaec4768933f807ea6406d9dcb97f00e9"
+NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426acbdb49c0d"
 OLD_COMMAND = ".venv/bin/python scripts/research/generate_f017_v11_measurement_v1.py --check"
 NEW_COMMANDS = (
     ".venv/bin/python scripts/ci/f017_measurement_scope_v1.py --check",
@@ -118,88 +126,183 @@ def verify_historical(record_raw, generator_raw, head, tree, objects):
 
 _SCRIPT_REFERENCE = re.compile(r"scripts/(?:research|ci)/[\w./-]+\.py")
 _JOB_KEY = re.compile(r"^  ([A-Za-z0-9_-]+):\s*$")
-_BLOCK_SCALAR = re.compile(r"^(\s*)[^\s#][^:]*:\s*[|>][-+0-9]*\s*$")
+_STEP_START = re.compile(r"^      - ")
+_STEP_NAME = re.compile(r"^      - name:\s*(.*?)\s*$")
+_GATING_KEYS = ("if:", "continue-on-error:", "timeout-minutes:", "shell:", "env:")
 
 
-def _invocation_lines(text):
-    """Every workflow line that invokes a repository check, with its job.
+def _normalise(line):
+    """A workflow line's identity.
 
-    An invocation is the ENTIRE whitespace-stripped line, so the interpreter,
-    its flags, the arguments and any trailing shell are all part of the identity:
-    appending `|| true`, adding a redirect or changing the command's context on
-    the same line all produce a different invocation.
-
-    The single exception is a trailing backslash, which is line-joining
-    punctuation rather than part of the command: when an argument is appended to
-    a multi-line command, the previously final argument gains a `\\` without
-    itself changing. Normalising it keeps that addition additive -- the appended
-    argument is inventoried as its own line when it references a check -- while
-    leaving every other trailing text, `|| true` included, identity-bearing.
-
-    The job is the `jobs.<name>` key the line sits under, which is what makes a
-    check moved to a different job (and therefore a different environment)
-    detectable. Job keys are only recognised outside block scalars, so a `run: |`
-    body can never be mistaken for one; the invocations themselves live inside
-    those bodies and are still collected.
+    Whitespace and a trailing backslash are punctuation: the backslash joins
+    lines, so appending an argument to a multi-line command changes the joined
+    line without changing the command that was already there. Everything else --
+    the interpreter, flags, arguments, redirects and any trailing shell -- is
+    identity-bearing, so `|| true` or a rewritten assertion is a different line.
     """
-    rows = []
+    stripped = line.strip()
+    return stripped[:-1].rstrip() if stripped.endswith("\\") else stripped
+
+
+def _steps(text):
+    """Every step block in the workflow, with the job it sits under."""
+    lines = text.split("\n")
+    steps = []
     job = None
-    block_indent = None
-    for raw in text.split("\n"):
-        stripped = raw.strip()
-        indent = len(raw) - len(raw.lstrip(" "))
-        if block_indent is not None and stripped and indent <= block_indent:
-            block_indent = None
-        if block_indent is None:
-            key = _JOB_KEY.match(raw)
-            if key:
-                job = key.group(1)
-            block = _BLOCK_SCALAR.match(raw)
-            if block:
-                block_indent = len(block.group(1))
-        if stripped and _SCRIPT_REFERENCE.search(stripped):
-            if stripped.endswith("\\"):
-                stripped = stripped[:-1].rstrip()
-            rows.append((stripped, job))
-    return rows
+    index = 0
+    while index < len(lines):
+        key = _JOB_KEY.match(lines[index])
+        if key:
+            job = key.group(1)
+        if _STEP_START.match(lines[index]):
+            end = index + 1
+            while end < len(lines) and not _STEP_START.match(lines[end]) and not (
+                lines[end].strip() and not lines[end].startswith("       ")
+            ):
+                end += 1
+            block = lines[index:end]
+            name = _STEP_NAME.match(block[0])
+            steps.append({"job": job, "name": name.group(1) if name else None,
+                          "lines": block})
+            index = end
+            continue
+        index += 1
+    return steps
 
 
-def _ordered_subsequence(expected_rows, current_rows):
-    """Greedy ordered match; returns the matched indices or None on the first miss."""
-    matched = []
+def _gating(block):
+    """The step's execution-gating keys, verbatim, in file order.
+
+    `if:`, `continue-on-error:`, `timeout-minutes:`, `shell:` and a step-level
+    `env:` block decide whether and how the step runs at all, so a required step
+    may neither change them nor acquire one it did not have.
+    """
+    captured = []
+    inside_env = False
+    for line in block[1:]:
+        if line.startswith("        ") and not line.startswith("         "):
+            inside_env = False
+            key = line.strip()
+            if any(key.startswith(name) for name in _GATING_KEYS):
+                captured.append(line)
+                inside_env = key.startswith("env:")
+        elif inside_env:
+            captured.append(line)
+    return "\n".join(captured)
+
+
+def _job_context(text, job):
+    """The job's `runs-on:` line and job-level `env:` block, verbatim."""
+    lines = text.split("\n")
+    captured = []
+    active = False
+    inside_env = False
+    for line in lines:
+        key = _JOB_KEY.match(line)
+        if key:
+            active = key.group(1) == job
+            inside_env = False
+            continue
+        if not active:
+            continue
+        if line.startswith("    ") and not line.startswith("     "):
+            inside_env = False
+            entry = line.strip()
+            if entry.startswith("runs-on:") or entry.startswith("env:"):
+                captured.append(line)
+                inside_env = entry.startswith("env:")
+        elif inside_env:
+            captured.append(line)
+    return "\n".join(captured)
+
+
+def _ordered_subset(expected_lines, current_lines):
     cursor = 0
-    for row in expected_rows:
-        while cursor < len(current_rows) and current_rows[cursor] != row:
+    for line in expected_lines:
+        while cursor < len(current_lines) and current_lines[cursor] != line:
             cursor += 1
-        if cursor == len(current_rows):
-            return None
-        matched.append(cursor)
+        if cursor == len(current_lines):
+            return False
         cursor += 1
-    return matched
+    return True
 
 
-def verify_workflow_inventory(original, current):
-    """Every expected check is still a separate, unaltered, in-context invocation.
+def _is_required(block_text):
+    for path in _SCRIPT_REFERENCE.findall(block_text):
+        if "f017" in path.rsplit("/", 1)[-1].lower():
+            return True
+    return any(command in block_text for command in NEW_COMMANDS)
 
-    The guarantee this doctor exists to give is that no F017 check was dropped,
-    edited, masked or relocated. It used to enforce that by requiring the whole
-    workflow file to equal the frozen base byte for byte, which also forbade any
-    unrelated addition and so could not survive integration with another track's
-    CI. The inventory below keeps the guarantee and drops the over-reach: the
-    expected invocations must appear in `current` with identical text, in the
-    same relative order, the same number of times, and under the same job.
-    Additional steps and additional invocations elsewhere are permitted.
+
+def verify_workflow_inventory(original, current, native):
+    """Bound every required F017 step to its two frozen lineages.
+
+    The guarantee is that each mandatory F017 check remains a separate,
+    unaltered invocation in its existing context. Whole-file byte equality
+    enforced that but forbade any unrelated addition, so it could not survive
+    integration with another track's CI. A line inventory survived integration
+    but could not see step-level gating: `if: false`, `continue-on-error: true`,
+    a deleted or weakened assertion, an inserted `set +e` or `exit 0`, or
+    `|| true` on a continuation line all passed it.
+
+    A required step is therefore bounded from both sides. Every line the qualify
+    lineage expects must still be there, byte-identical and in order; and every
+    line actually present must come from one of the two frozen lineages, so
+    nothing invented can live inside a mandatory step. Gating keys and the
+    enclosing job's execution context must match the qualify lineage exactly.
+    Additive steps, and any change to a non-required step, remain unconstrained.
     """
     require(digest(original) == WORKFLOW_BASE_SHA, "WORKFLOW_ORIGINAL_IDENTITY")
+    require(digest(native) == NATIVE_WORKFLOW_SHA256, "WORKFLOW_NATIVE_IDENTITY")
     before = original.decode()
     require(before.count(OLD_COMMAND) == 1, "WORKFLOW_OLD_CHECK_CENSUS")
     replacement = ("\n          ").join(NEW_COMMANDS)
     expected = before.replace(OLD_COMMAND, replacement)
 
-    expected_rows = _invocation_lines(expected)
-    current_rows = _invocation_lines(current.decode())
-    require(_ordered_subsequence(expected_rows, current_rows) is not None,
-            "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+    native_text = native.decode()
+    native_substituted = native_text.count(OLD_COMMAND) == 1
+    if native_substituted:
+        native_text = native_text.replace(OLD_COMMAND, replacement)
+
+    current_text = current.decode()
+    expected_steps = _steps(expected)
+    current_steps = _steps(current_text)
+    native_steps = {s["name"]: s for s in _steps(native_text) if s["name"]}
+    current_by_name = {}
+    for step in current_steps:
+        current_by_name.setdefault(step["name"], step)
+
+    required = [s for s in expected_steps if _is_required("\n".join(s["lines"]))]
+    require(required, "F017_REQUIRED_STEP_CENSUS")
+
+    positions = []
+    for step in required:
+        name = step["name"]
+        current_step = current_by_name.get(name)
+        require(current_step is not None, "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+
+        expected_lines = [_normalise(line) for line in step["lines"]]
+        current_lines = [_normalise(line) for line in current_step["lines"]]
+        # (a) nothing the qualify lineage requires may be dropped, altered or reordered.
+        require(_ordered_subset(expected_lines, current_lines),
+                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        # (b) nothing from outside the two frozen lineages may appear inside the step.
+        native_step = native_steps.get(name)
+        permitted = set(expected_lines)
+        if native_step is not None:
+            permitted |= {_normalise(line) for line in native_step["lines"]}
+        require(all(line in permitted for line in current_lines),
+                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        # (c) execution gating may not change or be acquired.
+        require(_gating(current_step["lines"]) == _gating(step["lines"]),
+                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        # (d) same job, same execution context, same relative order.
+        require(current_step["job"] == step["job"], "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        require(_job_context(current_text, current_step["job"])
+                == _job_context(expected, step["job"]),
+                "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
+        positions.append(current_steps.index(current_step))
+    require(positions == sorted(positions), "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")
 
     checks = re.findall(_SCRIPT_REFERENCE, before)
     f017_checks = [p for p in checks if 'f017' in PurePosixPath(p).name.lower()]
@@ -207,8 +310,9 @@ def verify_workflow_inventory(original, current):
     return dict(result="PASS", original_script_references=len(checks), f017_script_references=len(f017_checks), relocated_checks=1,
                 unchanged_other_f017_checks=len(f017_checks)-1, historical_context="EXACT_F35D_OBJECTS",
                 current_context="CURRENT_CHECKOUT", both_legs_required=True,
-                required_invocations=len(expected_rows),
-                additive_invocations=len(current_rows)-len(expected_rows))
+                required_steps=len(required),
+                native_lineage_substituted=native_substituted,
+                additive_steps=len(current_steps)-len(_steps(expected)))
 
 
 def read_current(relative):
@@ -239,7 +343,8 @@ def check():
                    git("show", HISTORICAL_HEAD + ":" + p)) for p in paths}
     historical = verify_historical(record, generator, HISTORICAL_HEAD, tree, objects)
     inventory = verify_workflow_inventory(git("show", SOURCE_BASE + ":.github/workflows/macos.yml"),
-                                          read_current(".github/workflows/macos.yml"))
+                                          read_current(".github/workflows/macos.yml"),
+                                          git("show", NATIVE_BASE + ":.github/workflows/macos.yml"))
     return dict(historical=historical, invocation_inventory=inventory,
                 current_behavior="SEPARATE_MANDATORY_CONFINED_PRIMARY_AND_EXISTING_CURRENT_WORKFLOW_CHECKS",
                 live_authority_created=False, result="PASS")
