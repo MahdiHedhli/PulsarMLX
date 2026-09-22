@@ -271,7 +271,7 @@ fn the_root_itself_may_not_be_reached_through_a_symlink_that_moves() {
     std::fs::rename(scratch.path(), &moved).unwrap();
     let tensor = checkpoint.catalog().get("a").unwrap().clone();
     let mut out = [0u8; 8];
-    checkpoint.read_tensor_bytes(&tensor, &mut out).unwrap();
+    checkpoint.read_tensor_bytes("a", &mut out).unwrap();
     assert_eq!(u32::from_le_bytes(out[4..8].try_into().unwrap()), 2);
     assert_eq!(tensor.byte_len, 8);
     std::fs::rename(&moved, scratch.path()).unwrap();
@@ -322,30 +322,30 @@ fn reads_are_bounded_and_correct() {
     let scratch = Scratch::new("reads");
     scratch.write("model.safetensors", &simple_shard());
     let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
-    let a = checkpoint.catalog().get("a").unwrap().clone();
+    assert_eq!(checkpoint.catalog().get("a").unwrap().byte_len, 8);
 
     let mut whole = [0u8; 8];
-    checkpoint.read_tensor_bytes(&a, &mut whole).unwrap();
+    checkpoint.read_tensor_bytes("a", &mut whole).unwrap();
     assert_eq!(u32::from_le_bytes(whole[0..4].try_into().unwrap()), 1);
     assert_eq!(u32::from_le_bytes(whole[4..8].try_into().unwrap()), 2);
 
     let mut second = [0u8; 4];
-    checkpoint.read_range(&a, 4, 4, &mut second).unwrap();
+    checkpoint.read_range("a", 4, 4, &mut second).unwrap();
     assert_eq!(u32::from_le_bytes(second), 2);
 
     let mut too_much = [0u8; 9];
     assert!(matches!(
-        checkpoint.read_range(&a, 0, 9, &mut too_much),
+        checkpoint.read_range("a", 0, 9, &mut too_much),
         Err(CatalogError::RangeOutOfBounds { .. })
     ));
     let mut one = [0u8; 1];
     assert!(matches!(
-        checkpoint.read_range(&a, u64::MAX, 1, &mut one),
+        checkpoint.read_range("a", u64::MAX, 1, &mut one),
         Err(CatalogError::RangeOutOfBounds { .. })
     ));
     let mut wrong = [0u8; 3];
     assert!(matches!(
-        checkpoint.read_range(&a, 0, 4, &mut wrong),
+        checkpoint.read_range("a", 0, 4, &mut wrong),
         Err(CatalogError::DestinationLengthMismatch { .. })
     ));
 }

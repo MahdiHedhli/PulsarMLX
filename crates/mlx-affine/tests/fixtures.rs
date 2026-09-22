@@ -116,9 +116,9 @@ fn the_same_parser_describes_a_uniform_and_a_mixed_checkpoint() {
     let ModuleKind::Quantized(experts) = &mixed_census["block.2.experts"] else {
         panic!("expected a triple")
     };
-    assert_eq!(experts.leading, vec![3]);
-    assert_eq!(experts.out_features, 4);
-    assert_eq!(experts.in_features, 128);
+    assert_eq!(experts.leading(), vec![3]);
+    assert_eq!(experts.out_features(), 4);
+    assert_eq!(experts.in_features(), 128);
     let first = experts.expert_slice(&[0]).unwrap();
     let last = experts.expert_slice(&[2]).unwrap();
     assert_eq!(last.weight.begin - first.weight.begin, 2 * first.weight.len);
@@ -173,24 +173,24 @@ fn r3_reproduces_the_reference_expectations_of_every_positive_fixture() {
             let columns = case["columns"].as_u64().unwrap() as usize;
             assert_eq!(
                 case["bits"].as_u64().unwrap() as u32,
-                triple.spec.bits.get()
+                triple.spec().bits.get()
             );
             assert_eq!(
                 case["group_size"].as_u64().unwrap() as u32,
-                triple.spec.group_size.get()
+                triple.spec().group_size.get()
             );
 
-            let mut weight = vec![0u8; triple.weight.byte_len as usize];
+            let mut weight = vec![0u8; triple.weight().byte_len as usize];
             checkpoint
-                .read_tensor_bytes(&triple.weight, &mut weight)
+                .read_tensor_bytes(&triple.weight().name, &mut weight)
                 .unwrap();
-            let mut scales = vec![0u8; triple.scales.byte_len as usize];
+            let mut scales = vec![0u8; triple.scales().byte_len as usize];
             checkpoint
-                .read_tensor_bytes(&triple.scales, &mut scales)
+                .read_tensor_bytes(&triple.scales().name, &mut scales)
                 .unwrap();
-            let mut biases = vec![0u8; triple.biases.byte_len as usize];
+            let mut biases = vec![0u8; triple.biases().byte_len as usize];
             checkpoint
-                .read_tensor_bytes(&triple.biases, &mut biases)
+                .read_tensor_bytes(&triple.biases().name, &mut biases)
                 .unwrap();
 
             let words = words_from_bytes(&weight).unwrap();
@@ -200,7 +200,7 @@ fn r3_reproduces_the_reference_expectations_of_every_positive_fixture() {
                 &scales,
                 &biases,
                 triple.scale_dtype(),
-                triple.spec,
+                triple.spec(),
                 rows,
                 &mut out,
             )
@@ -236,9 +236,9 @@ fn an_expert_slice_reads_the_same_bytes_as_the_whole_tensor() {
     else {
         panic!("expected a triple")
     };
-    let mut whole = vec![0u8; triple.weight.byte_len as usize];
+    let mut whole = vec![0u8; triple.weight().byte_len as usize];
     checkpoint
-        .read_tensor_bytes(&triple.weight, &mut whole)
+        .read_tensor_bytes(&triple.weight().name, &mut whole)
         .unwrap();
 
     for expert in 0..3u64 {
@@ -246,8 +246,8 @@ fn an_expert_slice_reads_the_same_bytes_as_the_whole_tensor() {
         let mut plane = vec![0u8; slice.weight.len as usize];
         checkpoint
             .read_range(
-                &triple.weight,
-                slice.weight.begin - triple.weight.data_begin,
+                &triple.weight().name,
+                slice.weight.begin - triple.weight().data_begin,
                 slice.weight.len,
                 &mut plane,
             )
@@ -260,8 +260,8 @@ fn an_expert_slice_reads_the_same_bytes_as_the_whole_tensor() {
         let mut row_bytes = vec![0u8; row.weight.len as usize];
         checkpoint
             .read_range(
-                &triple.weight,
-                row.weight.begin - triple.weight.data_begin,
+                &triple.weight().name,
+                row.weight.begin - triple.weight().data_begin,
                 row.weight.len,
                 &mut row_bytes,
             )

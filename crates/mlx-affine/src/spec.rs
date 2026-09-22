@@ -152,6 +152,9 @@ fn integer(object: &Map<String, Value>, key: &str) -> Option<std::result::Result
     })
 }
 
+/// The only members a specification object may carry.
+const SPEC_MEMBERS: [&str; 3] = [BITS_KEY, GROUP_KEY, MODE_KEY];
+
 fn spec_from_object(object: &Map<String, Value>, inherited_mode: Mode) -> Result<QuantSpec> {
     let bits = match integer(object, BITS_KEY) {
         None => {
@@ -297,6 +300,17 @@ impl QuantizationConfig {
                             "value {entry} is not an object carrying bits and group_size"
                         ),
                     })?;
+            // An override carrying a member this crate never reads is a
+            // configuration whose author believed it said something that was
+            // never looked at. Refuse it rather than honour the rest.
+            for member in nested.keys() {
+                if !SPEC_MEMBERS.contains(&member.as_str()) {
+                    return Err(AffineError::UnsupportedOverrideValue {
+                        module: key.clone(),
+                        detail: format!("unknown override member {member:?}"),
+                    });
+                }
+            }
             let spec = match spec_from_object(nested, mode) {
                 Ok(spec) => spec,
                 Err(AffineError::MissingDefaultSpec { detail }) => {

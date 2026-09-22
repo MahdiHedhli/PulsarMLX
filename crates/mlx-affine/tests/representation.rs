@@ -3,7 +3,8 @@
 
 use mlx_affine::module::{module_paths, resolved_spec};
 use mlx_affine::{
-    classify_module, AffineError, Bits, GroupSize, Mode, ModuleKind, QuantSpec, QuantizationConfig,
+    classify_module, AffineError, AffineTriple, Bits, GroupSize, Mode, ModuleKind, QuantSpec,
+    QuantizationConfig,
 };
 use safetensors_catalog::{compose_shard, Checkpoint};
 
@@ -200,10 +201,10 @@ fn a_complete_triple_resolves_to_the_default() {
     let ModuleKind::Quantized(triple) = kind else {
         panic!("expected a triple")
     };
-    assert_eq!(triple.spec, spec(4, 64));
-    assert_eq!(triple.out_features, 8);
-    assert_eq!(triple.in_features, 64);
-    assert!(triple.leading.is_empty());
+    assert_eq!(triple.spec(), spec(4, 64));
+    assert_eq!(triple.out_features(), 8);
+    assert_eq!(triple.in_features(), 64);
+    assert!(triple.leading().is_empty());
 }
 
 #[test]
@@ -408,12 +409,12 @@ fn expert_and_row_slices_are_checked_arithmetic() {
     else {
         panic!("expected a triple")
     };
-    assert_eq!(triple.leading, vec![3]);
-    assert_eq!(triple.out_features, 4);
-    assert_eq!(triple.in_features, 128);
+    assert_eq!(triple.leading(), vec![3]);
+    assert_eq!(triple.out_features(), 4);
+    assert_eq!(triple.in_features(), 128);
 
-    let weight_base = triple.weight.data_begin;
-    let scales_base = triple.scales.data_begin;
+    let weight_base = triple.weight().data_begin;
+    let scales_base = triple.scales().data_begin;
     let plane_weight_bytes = 4 * 16 * 4;
     let plane_metadata_bytes = 4 * 2 * 2;
 
@@ -437,7 +438,7 @@ fn expert_and_row_slices_are_checked_arithmetic() {
     assert_eq!(row.scales.len, 2 * 2);
     assert_eq!(
         row.biases.begin,
-        triple.biases.data_begin + 2 * plane_metadata_bytes + 3 * 4
+        triple.biases().data_begin + 2 * plane_metadata_bytes + 3 * 4
     );
 
     assert!(matches!(
@@ -471,11 +472,11 @@ fn slicing_a_plain_matrix_takes_an_empty_index_path() {
     else {
         panic!("expected a triple")
     };
-    assert_eq!(triple.in_features, 64);
+    assert_eq!(triple.in_features(), 64);
     let whole = triple.expert_slice(&[]).unwrap();
-    assert_eq!(whole.weight.begin, triple.weight.data_begin);
-    assert_eq!(whole.weight.len, triple.weight.byte_len);
-    assert_eq!(whole.scales.len, triple.scales.byte_len);
+    assert_eq!(whole.weight.begin, triple.weight().data_begin);
+    assert_eq!(whole.weight.len, triple.weight().byte_len);
+    assert_eq!(whole.scales.len, triple.scales().byte_len);
 }
 
 #[test]
@@ -488,4 +489,123 @@ fn a_huge_leading_extent_overflows_before_it_is_used() {
     assert_eq!(Bits::Eight.codes_per_word(), 4);
     assert_eq!(Bits::Four.max_code(), 15);
     assert_eq!(Bits::Eight.max_code(), 255);
+}
+
+// --- fail-closed holes Astra found (Round 2, finding 3) -------------------
+
+#[test]
+fn an_override_carrying_an_unknown_member_is_refused() {
+    // Silently ignoring a member means accepting a configuration whose author
+    // believed it said something this code never read.
+    let json = r#"{"quantization":{"group_size":64,"bits":4,
+                    "m":{"group_size":64,"bits":8,"scheme":"nf4"}}}"#;
+    match QuantizationConfig::from_config_json(json) {
+        Err(AffineError::UnsupportedOverrideValue { module, detail }) => {
+            assert_eq!(module, "m");
+            assert!(detail.contains("scheme"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn an_override_that_matches_no_module_is_refused_by_whole_catalog_validation() {
+    // classify_module only ever visits paths the catalog already has, so it
+    // cannot see this; closing the override set is a whole-catalog job.
+    let catalog = catalog_of(&[
+        ("m.weight", "U32", &[4, 8]),
+        ("m.scales", "BF16", &[4, 1]),
+        ("m.biases", "BF16", &[4, 1]),
+    ]);
+    let config = QuantizationConfig::new(spec(4, 64)).with_override("ghost", spec(8, 64));
+    // Per module: nothing wrong, because `ghost` is never visited.
+    assert!(classify_module(catalog.catalog(), Some(&config), "m").is_ok());
+    // Whole catalog: refused, naming the override that resolves to nothing.
+    match mlx_affine::validate_catalog(catalog.catalog(), Some(&config)) {
+        Err(AffineError::UnresolvedOverride { module }) => assert_eq!(module, "ghost"),
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn an_override_for_an_unquantized_module_does_not_count_as_resolved() {
+    let catalog = catalog_of(&[("m.weight", "BF16", &[4, 8])]);
+    let config = QuantizationConfig::new(spec(4, 64)).with_override("m", spec(8, 64));
+    // `m` exists but is unquantized, so the override still resolves to no
+    // quantized module. The per-module refusal comes first.
+    let kinds = mlx_affine::classify_all(catalog.catalog(), Some(&config));
+    assert!(kinds
+        .iter()
+        .any(|(_, kind)| matches!(kind, Err(AffineError::OverrideWithoutScales { .. }))));
+}
+
+#[test]
+fn a_triple_can_only_be_built_through_its_validating_constructor() {
+    // The fields are private, so the arithmetic methods' premise -- that the
+    // fields agree with each other -- cannot be broken from outside.
+    let catalog = catalog_of(&[
+        ("m.weight", "U32", &[4, 8]),
+        ("m.scales", "U16", &[4, 1]),
+        ("m.biases", "U16", &[4, 1]),
+    ]);
+    let weight = catalog.catalog().get("m.weight").unwrap().clone();
+    let scales = catalog.catalog().get("m.scales").unwrap().clone();
+    let biases = catalog.catalog().get("m.biases").unwrap().clone();
+    // An unsupported metadata dtype is refused, never silently taken as F32.
+    match AffineTriple::new("m", weight, scales, biases, spec(4, 64)) {
+        Err(AffineError::ScalesBiasesMismatch { module, detail }) => {
+            assert_eq!(module, "m");
+            assert!(detail.contains("F16"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_constructed_triple_refuses_a_non_u32_weight_and_mismatched_metadata() {
+    let catalog = catalog_of(&[
+        ("m.weight", "BF16", &[4, 8]),
+        ("m.scales", "BF16", &[4, 1]),
+        ("m.biases", "BF16", &[4, 1]),
+        ("n.scales", "BF16", &[4, 2]),
+    ]);
+    let weight = catalog.catalog().get("m.weight").unwrap().clone();
+    let scales = catalog.catalog().get("m.scales").unwrap().clone();
+    let biases = catalog.catalog().get("m.biases").unwrap().clone();
+    let wide = catalog.catalog().get("n.scales").unwrap().clone();
+    assert!(matches!(
+        AffineTriple::new(
+            "m",
+            weight.clone(),
+            scales.clone(),
+            biases.clone(),
+            spec(4, 64)
+        ),
+        Err(AffineError::IncompleteTriple { .. })
+    ));
+    let packed = catalog_of(&[("p.weight", "U32", &[4, 8])]);
+    let packed_weight = packed.catalog().get("p.weight").unwrap().clone();
+    assert!(matches!(
+        AffineTriple::new("m", packed_weight, scales, wide, spec(4, 64)),
+        Err(AffineError::ScalesBiasesMismatch { .. })
+    ));
+}
+
+#[test]
+fn the_reference_index_arithmetic_is_checked() {
+    use mlx_affine::reference::{extract_code, ReferenceError};
+    let words = [0xFFFF_FFFFu32];
+    // At 4 bits an index of 2^62 wraps to 0 on a 64-bit release build without
+    // the checked multiply, and would return the first code.
+    assert_eq!(
+        extract_code(&words, 4, 1usize << 62),
+        Err(ReferenceError::IndexOverflow)
+    );
+    assert_eq!(
+        extract_code(&words, 4, usize::MAX),
+        Err(ReferenceError::IndexOverflow)
+    );
+    // An index that is merely past the end is Truncated, not overflow.
+    assert_eq!(extract_code(&words, 4, 8), Err(ReferenceError::Truncated));
+    assert_eq!(extract_code(&words, 4, 0), Ok(15));
 }

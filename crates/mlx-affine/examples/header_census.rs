@@ -132,14 +132,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 *specs
                     .entry(format!(
                         "{}-bit group {}",
-                        triple.spec.bits.get(),
-                        triple.spec.group_size.get()
+                        triple.spec().bits.get(),
+                        triple.spec().group_size.get()
                     ))
                     .or_default() += 1;
-                let leading = if triple.leading.is_empty() {
+                let leading = if triple.leading().is_empty() {
                     "plain".to_string()
                 } else {
-                    format!("{:?}", triple.leading)
+                    format!("{:?}", triple.leading())
                 };
                 *leading_shapes.entry(leading).or_default() += 1;
             }
@@ -176,6 +176,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let declared_total = checkpoint.index().and_then(|index| index.total_size);
+    // Checked: the aggregate can overflow even when every tensor is valid.
+    let payload_total = checkpoint.payload_bytes();
     let mut report = Map::new();
     report.insert(
         "schema".into(),
@@ -201,11 +203,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     report.insert("declared_total_size".into(), json!(declared_total));
     report.insert(
         "catalog_payload_bytes".into(),
-        json!(checkpoint.payload_bytes()),
+        json!(payload_total.as_ref().ok()),
     );
     report.insert(
         "declared_total_size_matches_catalog".into(),
-        json!(declared_total == Some(checkpoint.payload_bytes())),
+        json!(matches!(&payload_total, Ok(total) if declared_total == Some(*total))),
     );
     report.insert("dtype_census".into(), json!(dtypes));
     report.insert("resolved_specs".into(), json!(specs));

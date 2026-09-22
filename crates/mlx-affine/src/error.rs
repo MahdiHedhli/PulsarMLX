@@ -16,6 +16,10 @@ pub enum AffineError {
     MissingDefaultSpec { detail: String },
     /// `quantization` and `quantization_config` are both present and differ.
     InconsistentConfig,
+    /// The configuration carries an override for a module path that resolves
+    /// to no quantized module in the catalog. A rule nothing matches is a
+    /// statement about a checkpoint that is not the one in hand.
+    UnresolvedOverride { module: String },
     /// A per-module entry is not an object carrying `bits` and `group_size`.
     /// In particular `false`, which the upstream Python loader treats as
     /// "do not quantize", is refused rather than reinterpreted.
@@ -64,6 +68,12 @@ impl fmt::Display for AffineError {
                 write!(
                     f,
                     "quantization and quantization_config are both present and differ"
+                )
+            }
+            Self::UnresolvedOverride { module } => {
+                write!(
+                    f,
+                    "the configuration overrides {module}, which no module in the catalog matches"
                 )
             }
             Self::UnsupportedOverrideValue { module, detail } => {

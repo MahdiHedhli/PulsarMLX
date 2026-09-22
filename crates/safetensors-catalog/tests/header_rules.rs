@@ -333,11 +333,103 @@ fn a_header_only_checkpoint_refuses_reads() {
     )
     .unwrap();
     assert!(!checkpoint.is_backed_by_files());
-    let tensor = checkpoint.catalog().get("a").unwrap().clone();
+    // The catalog still describes the tensor; only reading it is refused.
+    assert_eq!(checkpoint.catalog().get("a").unwrap().byte_len, 8);
     let mut out = [0u8; 8];
     assert!(matches!(
-        checkpoint.read_tensor_bytes(&tensor, &mut out),
+        checkpoint.read_tensor_bytes("a", &mut out),
         Err(CatalogError::NoBackingFile { .. })
     ));
-    assert_eq!(checkpoint.payload_bytes(), 8);
+    assert_eq!(checkpoint.payload_bytes().unwrap(), 8);
+}
+
+// --- fail-closed holes Astra found (Round 2, finding 3) -------------------
+
+#[test]
+fn an_aggregate_payload_total_that_overflows_is_refused_not_wrapped() {
+    // Astra's example. Each shard declares one U8 tensor of shape
+    // [u32::MAX, u32::MAX]: every dimension is admissible, the product is
+    // 1.8446744e19 which still fits u64, and only the SUM of the two leaves
+    // it -- where a `sum()` would panic in debug and wrap in release.
+    let side = u64::from(u32::MAX);
+    let bytes = side * side;
+    assert!(
+        bytes.checked_add(bytes).is_none(),
+        "the premise of this test"
+    );
+    let shard = |name: &str| {
+        let json = format!(
+            r#"{{"{name}":{{"dtype":"U8","shape":[{side},{side}],"data_offsets":[0,{bytes}]}}}}"#
+        );
+        compose_shard(&json, &[])
+    };
+    let first = shard("a");
+    let second = shard("b");
+    let first_len = first.len() as u64 + bytes;
+    let second_len = second.len() as u64 + bytes;
+    let checkpoint = Checkpoint::from_headers(
+        "aggregate",
+        vec![
+            ("one.safetensors".to_string(), first_len, first),
+            ("two.safetensors".to_string(), second_len, second),
+        ],
+        Some(r#"{"weight_map":{"a":"one.safetensors","b":"two.safetensors"}}"#),
+    )
+    .unwrap();
+    assert_eq!(checkpoint.catalog().len(), 2);
+    match checkpoint.payload_bytes() {
+        Err(CatalogError::Overflow { detail, .. }) => {
+            assert!(detail.contains("aggregate"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn reads_are_addressed_by_name_and_ignore_a_caller_supplied_meta() {
+    use safetensors_catalog::{OpenMode, TensorMeta};
+    // A TensorMeta is a plain value. Before reads were name-addressed, a
+    // caller could point one at offset zero, keep a valid shard and a large
+    // enough byte_len, and read the header through the public API.
+    let directory =
+        std::env::temp_dir().join(format!("safetensors-catalog-forged-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&directory);
+    std::fs::create_dir_all(&directory).unwrap();
+    let json = r#"{"a":{"dtype":"U32","shape":[2],"data_offsets":[0,8]}}"#;
+    let mut data = Vec::new();
+    data.extend_from_slice(&7u32.to_le_bytes());
+    data.extend_from_slice(&9u32.to_le_bytes());
+    std::fs::write(
+        directory.join("model.safetensors"),
+        compose_shard(json, &data),
+    )
+    .unwrap();
+    let checkpoint = Checkpoint::open(&directory, OpenMode::Auto).unwrap();
+
+    let authoritative = checkpoint.catalog().get("a").unwrap().clone();
+    let mut honest = [0u8; 8];
+    checkpoint.read_tensor_bytes("a", &mut honest).unwrap();
+    assert_eq!(u32::from_le_bytes(honest[0..4].try_into().unwrap()), 7);
+
+    // The forged meta simply has nowhere to enter: the API takes a name.
+    let forged = TensorMeta {
+        data_begin: 0,
+        ..authoritative.clone()
+    };
+    assert_ne!(forged.data_begin, authoritative.data_begin);
+    let mut out = [0u8; 8];
+    checkpoint
+        .read_tensor_bytes(&forged.name, &mut out)
+        .unwrap();
+    assert_eq!(out, honest, "the authoritative entry decided the offset");
+
+    assert!(matches!(
+        checkpoint.read_tensor_bytes("absent", &mut out),
+        Err(CatalogError::UnknownTensor { .. })
+    ));
+    assert!(matches!(
+        checkpoint.read_range("absent", 0, 1, &mut out[..1]),
+        Err(CatalogError::UnknownTensor { .. })
+    ));
+    let _ = std::fs::remove_dir_all(&directory);
 }

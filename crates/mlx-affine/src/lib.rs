@@ -43,6 +43,7 @@ pub mod spec;
 pub use decode::{dequantize_rows, unpack_codes, ScaleDtype};
 pub use error::{AffineError, Result};
 pub use module::{
-    classify_all, classify_module, module_paths, AffineTriple, ByteSlice, ModuleKind, TripleSlice,
+    classify_all, classify_module, module_paths, validate_catalog, AffineTriple, ByteSlice,
+    ModuleKind, TripleSlice,
 };
 pub use spec::{Bits, GroupSize, Mode, QuantSpec, QuantizationConfig};

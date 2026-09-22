@@ -23,16 +23,69 @@ pub const BIASES_SUFFIX: &str = ".biases";
 /// One quantized module, fully located and fully resolved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AffineTriple {
-    pub module: String,
-    pub weight: TensorMeta,
-    pub scales: TensorMeta,
-    pub biases: TensorMeta,
-    pub spec: QuantSpec,
-    pub out_features: u64,
-    pub in_features: u64,
+    module: String,
+    weight: TensorMeta,
+    scales: TensorMeta,
+    biases: TensorMeta,
+    scale_dtype: ScaleDtype,
+    spec: QuantSpec,
+    out_features: u64,
+    in_features: u64,
     /// The dimensions in front of `[out_features, in_features]`, e.g. `[E]`
     /// for a stacked expert tensor.
-    pub leading: Vec<u64>,
+    leading: Vec<u64>,
+}
+
+impl AffineTriple {
+    /// The only way to make one.
+    ///
+    /// The fields are private because every arithmetic method on this type is
+    /// checked *given that the fields agree with each other*. Public fields
+    /// made that premise something a caller could break: an empty shape could
+    /// panic on a `last()`, and an unsupported metadata dtype silently fell
+    /// back to F32 and decoded the wrong number of bytes. Validation now
+    /// happens once, here, and the invariants hold for the value's lifetime.
+    pub fn new(
+        module: &str,
+        weight: TensorMeta,
+        scales: TensorMeta,
+        biases: TensorMeta,
+        spec: QuantSpec,
+    ) -> Result<Self> {
+        build_triple(module, &weight, &scales, &biases, spec)
+    }
+
+    pub fn module(&self) -> &str {
+        &self.module
+    }
+
+    pub fn weight(&self) -> &TensorMeta {
+        &self.weight
+    }
+
+    pub fn scales(&self) -> &TensorMeta {
+        &self.scales
+    }
+
+    pub fn biases(&self) -> &TensorMeta {
+        &self.biases
+    }
+
+    pub fn spec(&self) -> QuantSpec {
+        self.spec
+    }
+
+    pub fn out_features(&self) -> u64 {
+        self.out_features
+    }
+
+    pub fn in_features(&self) -> u64 {
+        self.in_features
+    }
+
+    pub fn leading(&self) -> &[u64] {
+        &self.leading
+    }
 }
 
 /// What a module turned out to be.
@@ -102,10 +155,11 @@ fn scale_dtype_of(module: &str, tensor: &TensorMeta) -> Result<ScaleDtype> {
 }
 
 /// The dtype the scales and biases of a triple are stored in.
+///
+/// No fallback: the dtype was admitted when the triple was built, so this is
+/// a lookup of a decided fact rather than a guess with a default.
 pub fn triple_scale_dtype(triple: &AffineTriple) -> ScaleDtype {
-    // Validated during classification; the fallback can never be reached for a
-    // triple this crate produced.
-    ScaleDtype::from_catalog(triple.scales.dtype).unwrap_or(ScaleDtype::F32)
+    triple.scale_dtype
 }
 
 /// Classify one module path against a catalog and a configuration.
@@ -223,6 +277,35 @@ fn build_triple(
     biases: &TensorMeta,
     spec: QuantSpec,
 ) -> Result<AffineTriple> {
+    // Everything the arithmetic methods later assume is decided here, once.
+    if weight.dtype != Dtype::U32 {
+        return Err(AffineError::IncompleteTriple {
+            module: module.to_string(),
+            detail: format!(
+                "a quantized weight must be U32, this one is {}",
+                weight.dtype
+            ),
+        });
+    }
+    if scales.dtype != biases.dtype {
+        return Err(AffineError::ScalesBiasesMismatch {
+            module: module.to_string(),
+            detail: format!(
+                "scales are {} and biases are {}",
+                scales.dtype, biases.dtype
+            ),
+        });
+    }
+    if scales.shape != biases.shape {
+        return Err(AffineError::ScalesBiasesMismatch {
+            module: module.to_string(),
+            detail: format!(
+                "scales are {:?} and biases are {:?}",
+                scales.shape, biases.shape
+            ),
+        });
+    }
+    let scale_dtype = scale_dtype_of(module, scales)?;
     if weight.shape.len() < 2 {
         return Err(AffineError::InconsistentOverride {
             module: module.to_string(),
@@ -289,6 +372,7 @@ fn build_triple(
         weight: weight.clone(),
         scales: scales.clone(),
         biases: biases.clone(),
+        scale_dtype,
         spec,
         out_features,
         in_features,
@@ -310,7 +394,7 @@ impl AffineTriple {
 
     /// The dtype the scales and biases are stored in.
     pub fn scale_dtype(&self) -> ScaleDtype {
-        triple_scale_dtype(self)
+        self.scale_dtype
     }
 
     fn flat_leading_index(&self, index_path: &[u64]) -> Result<u64> {
@@ -456,17 +540,55 @@ impl AffineTriple {
 }
 
 /// Classify every module path in a catalog.
+///
+/// This is a whole-catalog pass, so it also closes the configuration against
+/// the catalog: an override naming a path that resolves to no quantized module
+/// is [`AffineError::UnresolvedOverride`]. Per-module classification cannot
+/// see that, because it only ever visits paths the catalog already has --
+/// which is precisely how an override for a module that does not exist went
+/// unnoticed. A rule nothing matches is a statement about a checkpoint that is
+/// not the one in hand, and silently ignoring it is how a width ends up
+/// applied to nothing.
 pub fn classify_all(
     catalog: &Catalog,
     config: Option<&QuantizationConfig>,
 ) -> Vec<(String, Result<ModuleKind>)> {
-    module_paths(catalog)
-        .into_iter()
-        .map(|module| {
-            let kind = classify_module(catalog, config, &module);
-            (module, kind)
-        })
-        .collect()
+    let paths = module_paths(catalog);
+    let mut out: Vec<(String, Result<ModuleKind>)> = paths
+        .iter()
+        .map(|module| (module.clone(), classify_module(catalog, config, module)))
+        .collect();
+    if let Some(config) = config {
+        let quantized: BTreeSet<String> = out
+            .iter()
+            .filter(|(_, kind)| matches!(kind, Ok(ModuleKind::Quantized(_))))
+            .map(|(module, _)| module.clone())
+            .collect();
+        for module in config.overrides().keys() {
+            if !quantized.contains(module) {
+                out.push((
+                    module.clone(),
+                    Err(AffineError::UnresolvedOverride {
+                        module: module.clone(),
+                    }),
+                ));
+            }
+        }
+    }
+    out
+}
+
+/// Whole-catalog validation: every module classifies and every override
+/// resolves, or the first refusal is returned with the path it is about.
+pub fn validate_catalog(
+    catalog: &Catalog,
+    config: Option<&QuantizationConfig>,
+) -> Result<Vec<(String, ModuleKind)>> {
+    let mut out = Vec::new();
+    for (module, kind) in classify_all(catalog, config) {
+        out.push((module, kind?));
+    }
+    Ok(out)
 }
 
 /// A convenience for tests and censuses: the resolved spec of a module, as

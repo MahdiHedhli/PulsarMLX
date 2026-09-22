@@ -132,7 +132,7 @@ fn the_positive_fixtures_open_and_are_deterministic() {
     // (docs/architecture/reviews/evidence/f020-slice1-metadata-compatibility-v1.json,
     // finding F1). Turning this equality into a validated invariant would
     // reject that real, correct checkpoint.
-    assert_eq!(total, declared.payload_bytes());
+    assert_eq!(total, declared.payload_bytes().unwrap());
     assert_eq!(
         declared.catalog_digest().unwrap(),
         mixed.catalog_digest().unwrap()

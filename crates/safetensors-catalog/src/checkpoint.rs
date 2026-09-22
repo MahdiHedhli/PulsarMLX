@@ -476,12 +476,25 @@ impl Checkpoint {
     }
 
     /// The sum of every tensor's byte length.
-    pub fn payload_bytes(&self) -> u64 {
-        self.catalog
-            .tensors
-            .values()
-            .map(|tensor| tensor.byte_len)
-            .sum()
+    ///
+    /// Checked. Two header-only shards can each declare an individually valid
+    /// tensor whose lengths only overflow when added, and a `sum()` would
+    /// panic in debug and wrap in release. Neither is an answer.
+    pub fn payload_bytes(&self) -> Result<u64> {
+        let mut total: u64 = 0;
+        for (name, tensor) in self.catalog.iter() {
+            total = total
+                .checked_add(tensor.byte_len)
+                .ok_or_else(|| CatalogError::Overflow {
+                    shard: self
+                        .shard_name(tensor.shard)
+                        .unwrap_or("<shard>")
+                        .to_string(),
+                    name: name.clone(),
+                    detail: "the aggregate payload total overflows u64".to_string(),
+                })?;
+        }
+        Ok(total)
     }
 
     /// Hash every shard file. Explicit because a real shard is tens of GB.
@@ -545,13 +558,42 @@ impl Checkpoint {
         Ok(hex(&self.catalog_digest()?))
     }
 
-    /// Read a whole tensor. `out` must be exactly `tensor.byte_len` long.
-    pub fn read_tensor_bytes(&self, tensor: &TensorMeta, out: &mut [u8]) -> Result<()> {
-        self.read_range(tensor, 0, tensor.byte_len, out)
+    /// Read a whole tensor, by name. `out` must be exactly its `byte_len`.
+    ///
+    /// Reads are addressed by **name**, never by a caller-supplied
+    /// [`TensorMeta`]. A `TensorMeta` is a plain value a caller can build or
+    /// edit; accepting one meant a caller could set `data_begin` to zero,
+    /// keep a valid shard and a large enough `byte_len`, and read the header
+    /// or another tensor through the public API. The authoritative entry is
+    /// looked up here and the caller's copy is never consulted.
+    pub fn read_tensor_bytes(&self, name: &str, out: &mut [u8]) -> Result<()> {
+        let tensor = self.require(name)?;
+        self.read_bounded(tensor, 0, tensor.byte_len, out)
     }
 
-    /// Read `len` bytes starting `offset_within` bytes into the tensor.
+    /// The authoritative catalog entry for `name`.
+    fn require(&self, name: &str) -> Result<&TensorMeta> {
+        self.catalog
+            .get(name)
+            .ok_or_else(|| CatalogError::UnknownTensor {
+                name: name.to_string(),
+            })
+    }
+
+    /// Read `len` bytes starting `offset_within` bytes into the named tensor.
     pub fn read_range(
+        &self,
+        name: &str,
+        offset_within: u64,
+        len: u64,
+        out: &mut [u8],
+    ) -> Result<()> {
+        let tensor = self.require(name)?;
+        self.read_bounded(tensor, offset_within, len, out)
+    }
+
+    /// The read itself, against an entry this checkpoint owns.
+    fn read_bounded(
         &self,
         tensor: &TensorMeta,
         offset_within: u64,

@@ -59,6 +59,11 @@ pub enum ReferenceError {
     GroupSize(u32),
     Geometry(&'static str),
     Truncated,
+    /// An index computation left the range of `usize`. `extract_code` is
+    /// public, so its index is caller-supplied and must be checked: at 4 bits
+    /// an index of `2^62` wraps on a 64-bit release build and silently returns
+    /// the first code instead of refusing.
+    IndexOverflow,
 }
 
 impl core::fmt::Display for ReferenceError {
@@ -68,6 +73,7 @@ impl core::fmt::Display for ReferenceError {
             Self::GroupSize(size) => write!(f, "group size {size} is not 32, 64 or 128"),
             Self::Geometry(detail) => write!(f, "geometry: {detail}"),
             Self::Truncated => f.write_str("a bit position lies beyond the packed stream"),
+            Self::IndexOverflow => f.write_str("an index computation overflowed"),
         }
     }
 }
@@ -123,8 +129,15 @@ pub fn extract_code(words: &[u32], bits: u32, index: usize) -> Result<u32, Refer
         return Err(ReferenceError::BitWidth(bits));
     }
     let mut value: u32 = 0;
+    // Checked: `index * bits + offset` is computed from a caller-supplied
+    // index and wraps rather than refuses if left alone.
+    let base = index
+        .checked_mul(bits as usize)
+        .ok_or(ReferenceError::IndexOverflow)?;
     for offset in 0..bits {
-        let position = index * (bits as usize) + (offset as usize);
+        let position = base
+            .checked_add(offset as usize)
+            .ok_or(ReferenceError::IndexOverflow)?;
         let word = position / 32;
         if word >= words.len() {
             return Err(ReferenceError::Truncated);

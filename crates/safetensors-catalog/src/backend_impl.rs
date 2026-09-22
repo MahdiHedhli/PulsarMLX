@@ -80,7 +80,7 @@ impl TensorStore for Checkpoint {
             ));
         }
         cancellation.check()?;
-        Checkpoint::read_range(self, meta, 0, expected.range.length, destination)
+        Checkpoint::read_range(self, &tensor.name, 0, expected.range.length, destination)
             .map_err(|error| to_contract("safetensors_read_failed", error.to_string()))?;
         Ok(length)
     }
