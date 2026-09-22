@@ -11,6 +11,7 @@ members = [
     "crates/backend",
     "crates/mlx-backend",
     "crates/f017-native",
+    "crates/safetensors-catalog",
 ]
 
 [workspace.package]
