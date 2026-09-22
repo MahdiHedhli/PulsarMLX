@@ -54,7 +54,14 @@ def run(work_dir, code_view):
     unrelated_marker='      - name: Validate independent Feature 017 oracle\n'
     jobs_head='jobs:\n'
     required=[s for s in scope._steps(res_text) if scope._is_required('\n'.join(s['lines']))]
-    assert len(required)==10,len(required)
+    # Ten F017 steps plus the two F020 steps that REQUIRED_EXTRA_STEP_NAMES
+    # admits, which the advanced resolution now contains.
+    assert len(required)==12,len(required)
+    extra=[s['name'] for s in required if s['name'] in scope.REQUIRED_EXTRA_STEP_NAMES]
+    assert sorted(extra)==sorted(scope.REQUIRED_EXTRA_STEP_NAMES),extra
+    for s in required:
+        if s['name'] in scope.REQUIRED_EXTRA_STEP_NAMES:
+            assert s['job']=='apple-mlx-small-fixtures',s['job']
     target=[s for s in required if s['name']=='Qualify corrected oracle historical and active authority split'][0]
     block='\n'.join(target['lines'])
     assert text.count(block)==1

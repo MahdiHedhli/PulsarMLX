@@ -32,15 +32,20 @@ WORKFLOW_BASE_SHA = "3b18be9762f19a8115f311080f6ebfa906a697e889a9c4b7c3fb9c0c790
 # change to a mandatory step should require.
 NATIVE_BASE = "44c1b34eaec4768933f807ea6406d9dcb97f00e9"
 NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426acbdb49c0d"
-# The resolution: the merge commit where the qualify and native lineages were
-# reconciled. Required F017 steps are frozen at these exact bytes. Line-level
+# The resolution. It began as the merge commit where the qualify and native
+# lineages were reconciled (9e145b09, workflow sha256 4e132d2c...); it is now
+# advanced, deliberately and in the commit immediately after the one that added
+# the two F020 required steps, to that commit's tree. The earlier resolution's
+# required blocks are contained in this one byte for byte -- advancing the base
+# adds required steps, it never rewrites or drops one. Required steps are frozen
+# at these exact bytes. Line-level
 # rules were shown insufficient -- allowed lines can be composed into a function
 # definition that swallows the body, and execution can be redirected from above
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "9e145b090ad2a632bdde228f9078f1a6484eb2fb"
-RESOLUTION_WORKFLOW_SHA256 = "4e132d2c07b1aafbefb96fc7d97f5dcbd06050ed2085c6d6aabb1b89b21f8a80"
+RESOLUTION_BASE = "4f0ed191bd3944550cfa14076109643a15827875"
+RESOLUTION_WORKFLOW_SHA256 = "185c2183098843446d2c9ca9af6b23fe995975e41adc32347757d29fbfa02e97"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")
