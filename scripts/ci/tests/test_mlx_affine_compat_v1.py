@@ -9,12 +9,14 @@ small-fixture job.
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 from scripts.ci import mlx_affine_compat_v1 as compat
 
@@ -138,33 +140,73 @@ class StubbedRuntime(unittest.TestCase):
 
 
 class FailClosed(unittest.TestCase):
-    def run_script(self, require: bool):
+    """The rule: an unusable MLX is a failure when native execution is required.
+
+    Round 1 tested this by running the script in a subprocess and relying on
+    that interpreter not having a usable MLX -- so the moment MLX became
+    usable there, the tests would have stopped exercising the refusal they
+    name, or started failing for a reason unrelated to the rule. Astra's
+    round-2 residual. The refusal is now driven directly: `acquire_runtime` is
+    replaced with one that fails the way a real absence or refusal fails, and
+    `main` runs in process against it, so the outcome depends on the script's
+    logic and not on what happens to be installed.
+    """
+
+    def run_main(self, require: bool, failure: Exception):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
-            environment = {"PATH": "/usr/bin:/bin"}
-            if require:
-                environment["PULSAR_REQUIRE_NATIVE_MLX"] = "1"
-            result = subprocess.run(
-                [sys.executable, "-I", str(SCRIPT), "--output", str(output)],
-                cwd=str(ROOT), capture_output=True, text=True, env=environment, timeout=300,
-            )
-            return result, json.loads(output.read_text())
+            argv = ["mlx_affine_compat_v1.py", "--output", str(output)]
+            out, err = io.StringIO(), io.StringIO()
+            with mock.patch.object(compat, "REQUIRE", require), mock.patch.object(
+                compat, "acquire_runtime", side_effect=failure
+            ), mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(
+                out
+            ), contextlib.redirect_stderr(err):
+                code = compat.main()
+            return code, json.loads(output.read_text()), out.getvalue(), err.getvalue()
 
-    def test_an_unusable_mlx_is_a_failure_when_native_execution_is_required(self):
-        result, report = self.run_script(require=True)
-        self.assertNotEqual(result.returncode, 0)
+    def test_an_absent_mlx_is_a_failure_when_native_execution_is_required(self):
+        code, report, _, stderr = self.run_main(
+            True, ImportError("No module named 'mlx'")
+        )
+        self.assertEqual(code, 2)
         self.assertEqual(report["result"], "UNAVAILABLE")
         self.assertTrue(report["require_native_mlx"])
-        self.assertIn("not a skip", result.stderr)
+        self.assertIn("not a skip", stderr)
+        self.assertIn("No module named", report["detail"])
 
-    def test_an_unusable_mlx_is_still_reported_when_it_is_not_required(self):
-        result, report = self.run_script(require=False)
-        self.assertEqual(result.returncode, 0)
+    def test_an_absent_mlx_is_still_reported_when_it_is_not_required(self):
+        code, report, stdout, _ = self.run_main(
+            False, ImportError("No module named 'mlx'")
+        )
+        self.assertEqual(code, 0)
         self.assertEqual(report["result"], "UNAVAILABLE")
         self.assertFalse(report["require_native_mlx"])
-        self.assertIn("not required", result.stdout)
+        self.assertIn("not required", stdout)
         # Not required is not the same as silent.
         self.assertIn("detail", report)
+
+    def test_a_refusal_takes_the_same_path_as_an_absence(self):
+        # Metal unavailable, or a GPU selection that does not take, arrives as
+        # Refusal rather than ImportError. It is the same rule, and Round 1's
+        # subprocess form could not reach this branch at all: an interpreter
+        # without MLX never gets far enough to be refused.
+        code, report, _, stderr = self.run_main(
+            True, compat.Refusal("Metal is not available")
+        )
+        self.assertEqual(code, 2)
+        self.assertEqual(report["result"], "UNAVAILABLE")
+        self.assertEqual(report["detail"], "Metal is not available")
+        self.assertIn("not a skip", stderr)
+
+    def test_the_report_is_written_even_on_the_failing_path(self):
+        # The exit code is not the only output: CI reads the report, so a
+        # refusal that wrote nothing would be indistinguishable from a crash.
+        code, report, _, _ = self.run_main(True, compat.Refusal("synthetic"))
+        self.assertEqual(code, 2)
+        self.assertEqual(report["schema"], compat.SCHEMA)
+        self.assertEqual(report["arm"], "R2")
+        self.assertFalse(report["is_correctness_oracle"])
 
 
 class Schema(unittest.TestCase):
