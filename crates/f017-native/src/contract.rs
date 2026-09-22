@@ -167,7 +167,8 @@ pub fn contract_generation(schema: &str) -> Option<u8> {
 }
 
 pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<(), String> {
-    let generation = contract_generation(&contract.schema).ok_or("contract root authority mismatch")?;
+    let generation =
+        contract_generation(&contract.schema).ok_or("contract root authority mismatch")?;
     if (generation == 2) != contract.corrected_oracle_binding.is_none()
         || contract.status != "PREPARED_HUMAN_GATE_REQUIRED"
         || contract.branch != "feat/017-rust-native-inference-runtime"
@@ -265,9 +266,17 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
     }
     let one = &contract.one_shot;
     let (attempt_id, expected_token, receipt_schema) = if generation == 2 {
-        ("F017-NATIVE-BOUNDED-P1-ATTEMPT-1", 21615_u32, stream::RECEIPT_SCHEMA)
+        (
+            "F017-NATIVE-BOUNDED-P1-ATTEMPT-1",
+            21615_u32,
+            stream::RECEIPT_SCHEMA,
+        )
     } else {
-        (ATTEMPT_2_ID, CORRECTED_EXPECTED_TOKEN, stream::EVIDENCED_RECEIPT_SCHEMA)
+        (
+            ATTEMPT_2_ID,
+            CORRECTED_EXPECTED_TOKEN,
+            stream::EVIDENCED_RECEIPT_SCHEMA,
+        )
     };
     if generation == 3 {
         let binding = contract
@@ -275,15 +284,17 @@ pub fn validate_static(contract: &RealP1Contract, repo_root: &Path) -> Result<()
             .as_ref()
             .ok_or("corrected oracle binding missing")?;
         let path = repo_path(repo_root, binding)?;
-        let document: serde_json::Value = crate::json::parse_json_no_duplicates(
-            &fs::read(&path).map_err(|e| e.to_string())?,
-        )?;
+        let document: serde_json::Value =
+            crate::json::parse_json_no_duplicates(&fs::read(&path).map_err(|e| e.to_string())?)?;
         if document.get("attempt_id").and_then(|v| v.as_str()) != Some(ATTEMPT_2_ID)
             || document.get("expected_token").and_then(|v| v.as_u64())
                 != Some(u64::from(CORRECTED_EXPECTED_TOKEN))
             || document.get("acceptance_mode").and_then(|v| v.as_str())
                 != Some("EXACT_EXPECTED_TOKEN_STABLE")
-            || document.get("live_authorization_created").and_then(|v| v.as_bool()) != Some(false)
+            || document
+                .get("live_authorization_created")
+                .and_then(|v| v.as_bool())
+                != Some(false)
             || document
                 .pointer("/corrected_oracle_event/primary_selected_token")
                 .and_then(|v| v.as_u64())
@@ -438,10 +449,17 @@ mod tests {
     fn contract_generations_are_closed_and_attempt_2_binds_the_corrected_token() {
         assert_eq!(contract_generation(CONTRACT_SCHEMA), Some(2));
         assert_eq!(contract_generation(CONTRACT_SCHEMA_V3), Some(3));
-        assert_eq!(contract_generation("pulsarmlx.f017.native-bounded-p1-admission-contract/4.0.0"), None);
+        assert_eq!(
+            contract_generation("pulsarmlx.f017.native-bounded-p1-admission-contract/4.0.0"),
+            None
+        );
         assert_eq!(contract_generation(""), None);
         assert_eq!(CORRECTED_EXPECTED_TOKEN, 154_820);
-        assert_ne!(CORRECTED_EXPECTED_TOKEN, stream::EXPECTED_TOKEN, "attempt 2 must not reuse the defective attempt-1 expected token");
+        assert_ne!(
+            CORRECTED_EXPECTED_TOKEN,
+            stream::EXPECTED_TOKEN,
+            "attempt 2 must not reuse the defective attempt-1 expected token"
+        );
         assert_eq!(ATTEMPT_2_ID, "F017-NATIVE-BOUNDED-P1-ATTEMPT-2");
     }
     #[test]

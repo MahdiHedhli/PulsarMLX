@@ -5009,8 +5009,7 @@ fn validate_stage_process_identity(
 ) -> Result<(), String> {
     if series.process_replication_id() != stage_process_identity(batch_id) {
         return Err(
-            "router stage series does not use its orchestration-issued process identity"
-                .to_owned(),
+            "router stage series does not use its orchestration-issued process identity".to_owned(),
         );
     }
     Ok(())
@@ -5130,7 +5129,9 @@ fn parse_frozen_router_oracle(
         || bytes.len() > ROUTER_ORACLE_MAX_BYTES
         || sha256_bytes(bytes) != expected_sha256
     {
-        return Err(format!("the {label} differs from its frozen whole-file identity"));
+        return Err(format!(
+            "the {label} differs from its frozen whole-file identity"
+        ));
     }
     let value = parse_unique_json::<Value>(bytes, label)?;
     let oracle = RouterOracle::try_from_value(value).map_err(|error| error.to_string())?;
@@ -5151,7 +5152,9 @@ fn load_external_router_oracle(path: &Path) -> Result<RouterOracle, String> {
         || metadata.len() == 0
         || metadata.len() > ROUTER_ORACLE_MAX_BYTES as u64
     {
-        return Err("the external router oracle must be one bounded regular non-link file".to_owned());
+        return Err(
+            "the external router oracle must be one bounded regular non-link file".to_owned(),
+        );
     }
     let mut options = OpenOptions::new();
     options.read(true);
@@ -5188,7 +5191,8 @@ fn load_external_router_oracle(path: &Path) -> Result<RouterOracle, String> {
 fn load_public_router_oracle(root: &Path) -> Result<RouterOracle, String> {
     let root = fs::canonicalize(root)
         .map_err(|_| "the repository root could not be resolved safely".to_owned())?;
-    let bytes = read_bounded_regular_file(&root, ROUTER_PUBLIC_ORACLE_PATH, ROUTER_ORACLE_MAX_BYTES)?;
+    let bytes =
+        read_bounded_regular_file(&root, ROUTER_PUBLIC_ORACLE_PATH, ROUTER_ORACLE_MAX_BYTES)?;
     parse_frozen_router_oracle(
         &bytes,
         ROUTER_PUBLIC_ORACLE_SHA256,
@@ -5293,10 +5297,7 @@ impl RouterLiveFailure {
         self
     }
 
-    fn with_retained_correctness(
-        mut self,
-        attempt: RouterFailedCorrectnessAttempt,
-    ) -> Self {
+    fn with_retained_correctness(mut self, attempt: RouterFailedCorrectnessAttempt) -> Self {
         self.schedule_step = Some(attempt.schedule_step);
         self.retained_correctness = Some(attempt);
         self
@@ -5361,10 +5362,7 @@ trait RouterScheduleAdapter {
         plan: &RouterLiveTimingPlan,
     ) -> Result<RouterTimingSeries, RouterLiveFailure>;
 
-    fn finish_process(
-        &mut self,
-        _process_replication_id: &str,
-    ) -> Result<(), RouterLiveFailure> {
+    fn finish_process(&mut self, _process_replication_id: &str) -> Result<(), RouterLiveFailure> {
         Ok(())
     }
 }
@@ -5490,18 +5488,14 @@ fn execute_router_batch_schedule<A: RouterScheduleAdapter>(
     for case in orchestration.correctness_order() {
         for attempt_index in 0..ROUTER_CORRECTNESS_ATTEMPTS {
             let process_id = correctness_process_identity(&batch_id);
-            let attempt = match adapter.correctness_attempt(
-                &batch_id,
-                case,
-                attempt_index,
-                &process_id,
-            ) {
-                Ok(attempt) => attempt,
-                Err(failure) => {
-                    retain_live_adapter_failure(&mut orchestration, failure, true);
-                    return orchestration;
-                }
-            };
+            let attempt =
+                match adapter.correctness_attempt(&batch_id, case, attempt_index, &process_id) {
+                    Ok(attempt) => attempt,
+                    Err(failure) => {
+                        retain_live_adapter_failure(&mut orchestration, failure, true);
+                        return orchestration;
+                    }
+                };
             if orchestration
                 .record_correctness_attempt(case, attempt)
                 .is_err()
@@ -5626,7 +5620,10 @@ fn execute_router_batch_schedule<A: RouterScheduleAdapter>(
                 return orchestration;
             }
         };
-        if orchestration.record_stage_diagnostic_series(series).is_err() {
+        if orchestration
+            .record_stage_diagnostic_series(series)
+            .is_err()
+        {
             return orchestration;
         }
     }
@@ -5809,17 +5806,18 @@ impl LiveRouterScheduleAdapter {
             "started",
             json!({"model_transport": "inherited_read_only_fd_198"}),
         )?;
-        let config = self
-            .base_config
-            .clone()
-            .with_env(
-                "PULSARMLX_ROUTER_TIMING_PROFILE",
-                profile.environment_value(),
-            );
+        let config = self.base_config.clone().with_env(
+            "PULSARMLX_ROUTER_TIMING_PROFILE",
+            profile.environment_value(),
+        );
         match WorkerClient::spawn(config) {
             Ok(client) => {
                 let runtime = Self::runtime_evidence(&client);
-                if self.runtime.as_ref().is_some_and(|expected| expected != &runtime) {
+                if self
+                    .runtime
+                    .as_ref()
+                    .is_some_and(|expected| expected != &runtime)
+                {
                     let failure = RouterLiveFailure::new(
                         "runtime_version_mismatch",
                         "worker_startup",
@@ -5845,13 +5843,7 @@ impl LiveRouterScheduleAdapter {
                     return Err(failure);
                 }
                 self.runtime.get_or_insert_with(|| runtime.clone());
-                self.push_lifecycle(
-                    process_replication_id,
-                    profile,
-                    "spawn",
-                    "passed",
-                    runtime,
-                )?;
+                self.push_lifecycle(process_replication_id, profile, "spawn", "passed", runtime)?;
                 self.sessions.insert(
                     process_replication_id.to_owned(),
                     RouterLiveSession {
@@ -5880,10 +5872,7 @@ impl LiveRouterScheduleAdapter {
         }
     }
 
-    fn shutdown_process(
-        &mut self,
-        process_replication_id: &str,
-    ) -> Result<(), RouterLiveFailure> {
+    fn shutdown_process(&mut self, process_replication_id: &str) -> Result<(), RouterLiveFailure> {
         let Some(session) = self.sessions.remove(process_replication_id) else {
             return Ok(());
         };
@@ -5961,83 +5950,82 @@ impl LiveRouterScheduleAdapter {
         let process_admission = self.ensure_process(process_replication_id, profile);
         let (started_at_utc, started, request_sent, process_request_index, outcome) =
             match process_admission {
-            Ok(()) => {
-                let started_at_utc = match utc_now() {
-                    Ok(value) => value,
-                    Err(_) => {
-                        let failure = RouterLiveFailure::new(
-                        "internal_worker_error",
-                        "request_observation",
-                        "a public-safe admitted-request timestamp could not be observed",
-                        );
-                        let host_wall_duration_ns = u64::try_from(
-                            admission_started.elapsed().as_nanos(),
-                        )
-                        .unwrap_or(u64::MAX);
-                        let window = json!({
-                            "observation_id": observation_id,
-                            "batch_id": batch_id,
-                            "case_id": case.case_id(),
-                            "schedule_step": schedule_step,
-                            "source_kind": source_kind,
-                            "process_replication_id": process_replication_id,
-                            "process_state": process_state,
-                            "condition": condition,
-                            "timing_profile": profile.environment_value(),
-                            "started_at_utc": admission_started_at_utc,
-                            "completed_at_utc": admission_started_at_utc,
-                            "host_wall_duration_ns": host_wall_duration_ns,
-                            "host_monotonic_clock": "rust_std_instant",
-                            "request_sent": false,
-                            "process_request_index": null,
-                            "router_tensor_bytes_read": null,
-                            "router_tensor_cache_status": null,
-                            "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
-                            "status": "aborted",
-                            "failure": failure.orchestration_failure().evidence(),
-                            "timestamp_observation": "failed_after_spawn_before_request",
-                        });
-                        self.request_windows.push(window);
-                        self.retain_aborted_resource_record(
-                            observation_id,
-                            source_kind,
-                            process_state,
-                            condition,
-                            profile,
-                            &failure,
-                        );
-                        return Err(failure);
+                Ok(()) => {
+                    let started_at_utc = match utc_now() {
+                        Ok(value) => value,
+                        Err(_) => {
+                            let failure = RouterLiveFailure::new(
+                                "internal_worker_error",
+                                "request_observation",
+                                "a public-safe admitted-request timestamp could not be observed",
+                            );
+                            let host_wall_duration_ns =
+                                u64::try_from(admission_started.elapsed().as_nanos())
+                                    .unwrap_or(u64::MAX);
+                            let window = json!({
+                                "observation_id": observation_id,
+                                "batch_id": batch_id,
+                                "case_id": case.case_id(),
+                                "schedule_step": schedule_step,
+                                "source_kind": source_kind,
+                                "process_replication_id": process_replication_id,
+                                "process_state": process_state,
+                                "condition": condition,
+                                "timing_profile": profile.environment_value(),
+                                "started_at_utc": admission_started_at_utc,
+                                "completed_at_utc": admission_started_at_utc,
+                                "host_wall_duration_ns": host_wall_duration_ns,
+                                "host_monotonic_clock": "rust_std_instant",
+                                "request_sent": false,
+                                "process_request_index": null,
+                                "router_tensor_bytes_read": null,
+                                "router_tensor_cache_status": null,
+                                "router_tensor_bytes_semantics": "application_positional_read_not_physical_disk_io",
+                                "status": "aborted",
+                                "failure": failure.orchestration_failure().evidence(),
+                                "timestamp_observation": "failed_after_spawn_before_request",
+                            });
+                            self.request_windows.push(window);
+                            self.retain_aborted_resource_record(
+                                observation_id,
+                                source_kind,
+                                process_state,
+                                condition,
+                                profile,
+                                &failure,
+                            );
+                            return Err(failure);
+                        }
+                    };
+                    let started = Instant::now();
+                    let session = self
+                        .sessions
+                        .get_mut(process_replication_id)
+                        .expect("admitted live process is present");
+                    let process_request_index = session.completed_request_count;
+                    let outcome = session
+                        .client
+                        .run_router(request)
+                        .map_err(|error| router_worker_failure(&error, "router_execution"));
+                    if outcome.is_ok() {
+                        session.completed_request_count += 1;
                     }
-                };
-                let started = Instant::now();
-                let session = self
-                    .sessions
-                    .get_mut(process_replication_id)
-                    .expect("admitted live process is present");
-                let process_request_index = session.completed_request_count;
-                let outcome = session
-                    .client
-                    .run_router(request)
-                    .map_err(|error| router_worker_failure(&error, "router_execution"));
-                if outcome.is_ok() {
-                    session.completed_request_count += 1;
+                    (
+                        started_at_utc,
+                        started,
+                        true,
+                        Some(process_request_index),
+                        outcome,
+                    )
                 }
-                (
-                    started_at_utc,
-                    started,
-                    true,
-                    Some(process_request_index),
-                    outcome,
-                )
-            }
-            Err(failure) => (
-                admission_started_at_utc,
-                admission_started,
-                false,
-                None,
-                Err(failure),
-            ),
-        };
+                Err(failure) => (
+                    admission_started_at_utc,
+                    admission_started,
+                    false,
+                    None,
+                    Err(failure),
+                ),
+            };
         let host_wall_duration_ns = u64::try_from(started.elapsed().as_nanos()).map_err(|_| {
             RouterLiveFailure::new(
                 "resource_limit",
@@ -6049,9 +6037,9 @@ impl LiveRouterScheduleAdapter {
             Ok(value) => (value, None),
             Err(_) => {
                 let failure = RouterLiveFailure::new(
-                "internal_worker_error",
-                "request_observation",
-                "a public-safe router completion timestamp could not be observed",
+                    "internal_worker_error",
+                    "request_observation",
+                    "a public-safe router completion timestamp could not be observed",
                 );
                 (started_at_utc.clone(), Some(failure))
             }
@@ -6373,7 +6361,9 @@ fn validate_live_process_lifecycle(lifecycle: &[Value]) -> Result<(), String> {
             && events[2].0 == "shutdown"
             && matches!(events[2].1, "graceful" | "forced_termination" | "failed");
         if !valid_spawn_failure && !valid_runtime_failure && !valid_owned_process {
-            return Err("live worker lifecycle lacks an observed spawn or shutdown transition".to_owned());
+            return Err(
+                "live worker lifecycle lacks an observed spawn or shutdown transition".to_owned(),
+            );
         }
     }
     if !active_processes.is_empty() {
@@ -6390,10 +6380,9 @@ fn valid_live_utc_timestamp(value: &str) -> bool {
         && value.as_bytes().get(13) == Some(&b':')
         && value.as_bytes().get(16) == Some(&b':')
         && value.ends_with('Z')
-        && value
-            .bytes()
-            .enumerate()
-            .all(|(index, byte)| matches!(index, 4 | 7 | 10 | 13 | 16 | 19) || byte.is_ascii_digit())
+        && value.bytes().enumerate().all(|(index, byte)| {
+            matches!(index, 4 | 7 | 10 | 13 | 16 | 19) || byte.is_ascii_digit()
+        })
 }
 
 fn validate_live_request_window_join(
@@ -6406,7 +6395,9 @@ fn validate_live_request_window_join(
             .get("observation_id")
             .and_then(Value::as_str)
             .filter(|value| stable_orchestration_identifier(value))
-            .ok_or_else(|| "a live request window has an invalid observation identity".to_owned())?;
+            .ok_or_else(|| {
+                "a live request window has an invalid observation identity".to_owned()
+            })?;
         let started = window
             .get("started_at_utc")
             .and_then(Value::as_str)
@@ -6416,13 +6407,17 @@ fn validate_live_request_window_join(
             .get("completed_at_utc")
             .and_then(Value::as_str)
             .filter(|value| valid_live_utc_timestamp(value))
-            .ok_or_else(|| "a live request window has an invalid completion timestamp".to_owned())?;
+            .ok_or_else(|| {
+                "a live request window has an invalid completion timestamp".to_owned()
+            })?;
         let status = window.get("status").and_then(Value::as_str);
         let source_kind = window.get("source_kind").and_then(Value::as_str);
         let process_state = window.get("process_state").and_then(Value::as_str);
         let condition = window.get("condition").and_then(Value::as_str);
         let tensor_access = (
-            window.get("router_tensor_bytes_read").and_then(Value::as_u64),
+            window
+                .get("router_tensor_bytes_read")
+                .and_then(Value::as_u64),
             window
                 .get("router_tensor_cache_status")
                 .and_then(Value::as_str),
@@ -6454,14 +6449,16 @@ fn validate_live_request_window_join(
                 .and_then(Value::as_str)
                 != Some("application_positional_read_not_physical_disk_io")
             || (matches!(status, Some("passed" | "failed"))
-                && (window.get("process_request_index").and_then(Value::as_u64).is_none()
+                && (window
+                    .get("process_request_index")
+                    .and_then(Value::as_u64)
+                    .is_none()
                     || !matches!(
                         tensor_access,
                         (Some(ROUTER_TENSOR_BYTES), Some("read_and_cached"))
                             | (Some(0), Some("cache_hit"))
                     )))
-            || (status == Some("aborted")
-                && !matches!(tensor_access, (None, None)))
+            || (status == Some("aborted") && !matches!(tensor_access, (None, None)))
             || windows.insert(observation_id, window).is_some()
         {
             return Err("live request windows are reversed, unfinished, or duplicated".to_owned());
@@ -6473,7 +6470,9 @@ fn validate_live_request_window_join(
         .filter(|window| window.get("source_kind").and_then(Value::as_str) == Some("timing_series"))
         .count();
     if timing_windows != attempted_timing_observations.len() {
-        return Err("live timing observations and UTC request windows are not bijective".to_owned());
+        return Err(
+            "live timing observations and UTC request windows are not bijective".to_owned(),
+        );
     }
     let mut observation_ids = BTreeSet::new();
     for observation in attempted_timing_observations {
@@ -6490,16 +6489,19 @@ fn validate_live_request_window_join(
             .filter(|window| {
                 window.get("source_kind").and_then(Value::as_str) == Some("timing_series")
             })
-            .ok_or_else(|| "a live timing observation lacks its exact UTC request window".to_owned())?;
+            .ok_or_else(|| {
+                "a live timing observation lacks its exact UTC request window".to_owned()
+            })?;
         if !observation_ids.insert(observation_id)
             || window.get("status").and_then(Value::as_str) != Some(status)
             || observation.get("timing_profile") != window.get("timing_profile")
             || observation.get("started_at_utc") != window.get("started_at_utc")
             || observation.get("completed_at_utc") != window.get("completed_at_utc")
-            || observation.get("host_wall_duration_ns")
-                != window.get("host_wall_duration_ns")
+            || observation.get("host_wall_duration_ns") != window.get("host_wall_duration_ns")
         {
-            return Err("a live timing observation has a duplicate or contradictory UTC window".to_owned());
+            return Err(
+                "a live timing observation has a duplicate or contradictory UTC window".to_owned(),
+            );
         }
     }
     Ok(())
@@ -6559,7 +6561,9 @@ fn validate_live_process_request_join(
             .get(&(process.to_owned(), profile.to_owned()))
             .ok_or_else(|| "a live request lacks its exact process/profile lifecycle".to_owned())?;
         requested_processes.insert((process.to_owned(), profile.to_owned()));
-        *process_request_counts.entry(process.to_owned()).or_default() += 1;
+        *process_request_counts
+            .entry(process.to_owned())
+            .or_default() += 1;
         let request_sent = window
             .get("request_sent")
             .and_then(Value::as_bool)
@@ -6598,9 +6602,9 @@ fn validate_live_process_request_join(
             }) || (records.iter().any(|record| {
                 record.get("event").and_then(Value::as_str) == Some("spawn")
                     && record.get("outcome").and_then(Value::as_str) == Some("passed")
-            }) && records.iter().any(|record| {
-                record.get("event").and_then(Value::as_str) == Some("shutdown")
-            })))
+            }) && records
+                .iter()
+                .any(|record| record.get("event").and_then(Value::as_str) == Some("shutdown"))))
         {
             return Err("an unsent live request lacks its failed-spawn lifecycle".to_owned());
         }
@@ -6688,8 +6692,7 @@ fn validate_live_resource_join(
             || resource.get("condition") != window.get("condition")
             || resource.get("status").and_then(Value::as_str)
                 != window.get("status").and_then(Value::as_str)
-            || resource.get("router_tensor_bytes_read")
-                != window.get("router_tensor_bytes_read")
+            || resource.get("router_tensor_bytes_read") != window.get("router_tensor_bytes_read")
             || resource.get("router_tensor_cache_status")
                 != window.get("router_tensor_cache_status")
             || resource.get("router_tensor_bytes_semantics")
@@ -6727,31 +6730,33 @@ fn validate_live_resource_join(
             && resource.get("fallback_used").and_then(Value::as_bool) == Some(false)
             && evaluated == Some(true)
             && synchronized == Some(true)
-            && resource.get("monotonic_clock").and_then(Value::as_str)
-                == Some("perf_counter_ns")
+            && resource.get("monotonic_clock").and_then(Value::as_str) == Some("perf_counter_ns")
             && matches!(
                 resource.get("instrumentation_mode").and_then(Value::as_str),
                 Some("minimally_instrumented" | "stage_instrumented")
             )
             && matches!(
                 (
-                    resource.get("router_tensor_bytes_read").and_then(Value::as_u64),
+                    resource
+                        .get("router_tensor_bytes_read")
+                        .and_then(Value::as_u64),
                     resource
                         .get("router_tensor_cache_status")
                         .and_then(Value::as_str),
                 ),
-                (Some(ROUTER_TENSOR_BYTES), Some("read_and_cached"))
-                    | (Some(0), Some("cache_hit"))
+                (Some(ROUTER_TENSOR_BYTES), Some("read_and_cached")) | (Some(0), Some("cache_hit"))
             );
         let timing_retention_valid = if source_kind == "correctness_attempt" {
-            resource
-                .get("timing_stages")
-                .is_some_and(Value::is_object)
-                && resource.get("timing_stage_retention").and_then(Value::as_str)
+            resource.get("timing_stages").is_some_and(Value::is_object)
+                && resource
+                    .get("timing_stage_retention")
+                    .and_then(Value::as_str)
                     == Some("complete_in_resource_record")
         } else {
             resource.get("timing_stages").is_some_and(Value::is_null)
-                && resource.get("timing_stage_retention").and_then(Value::as_str)
+                && resource
+                    .get("timing_stage_retention")
+                    .and_then(Value::as_str)
                     == Some("complete_in_joined_raw_timing_observation")
         };
         match status {
@@ -6761,13 +6766,18 @@ fn validate_live_resource_join(
                     || !output_sha256.is_some_and(canonical_sha256)
                     || resource.get("correctness_passed").and_then(Value::as_bool) != Some(true)
                 {
-                    return Err("a passing live resource lacks its GPU correctness envelope".to_owned());
+                    return Err(
+                        "a passing live resource lacks its GPU correctness envelope".to_owned()
+                    );
                 }
                 if source_kind == "correctness_attempt" {
                     if retention != Some("hash_only_joined_correctness_attempt")
                         || !canonical_output.is_some_and(Value::is_null)
                     {
-                        return Err("a correctness resource violates joined-attempt hash retention".to_owned());
+                        return Err(
+                            "a correctness resource violates joined-attempt hash retention"
+                                .to_owned(),
+                        );
                     }
                 } else if retention != Some("hash_only_passing_timing")
                     || !canonical_output.is_some_and(Value::is_null)
@@ -6781,7 +6791,9 @@ fn validate_live_resource_join(
                     || !resource.get("failure").is_some_and(Value::is_object)
                     || resource.get("correctness_passed").and_then(Value::as_bool) == Some(true)
                 {
-                    return Err("a failed live resource lacks its evaluated failure envelope".to_owned());
+                    return Err(
+                        "a failed live resource lacks its evaluated failure envelope".to_owned(),
+                    );
                 }
                 let complete = retention == Some("complete")
                     && canonical_output.is_some_and(Value::is_object)
@@ -6804,14 +6816,18 @@ fn validate_live_resource_join(
                         != Some("not_available")
                     || output_sha256.is_some()
                     || !canonical_output.is_some_and(Value::is_null)
-                    || !resource.get("router_tensor_bytes_read").is_some_and(Value::is_null)
+                    || !resource
+                        .get("router_tensor_bytes_read")
+                        .is_some_and(Value::is_null)
                     || !resource
                         .get("router_tensor_cache_status")
                         .is_some_and(Value::is_null)
                     || retention != Some("unavailable_aborted_request")
                     || !resource.get("failure").is_some_and(Value::is_object)
                 {
-                    return Err("an aborted live resource contradicts unavailable execution".to_owned());
+                    return Err(
+                        "an aborted live resource contradicts unavailable execution".to_owned()
+                    );
                 }
             }
             _ => return Err("a live resource record has invalid status".to_owned()),
@@ -6915,7 +6931,9 @@ fn validate_live_ledger_bijection(
             "router_tensor_bytes_semantics",
         ] {
             if observation.get(field) != request.get(field) {
-                return Err("a router ledger observation contradicts its request metadata".to_owned());
+                return Err(
+                    "a router ledger observation contradicts its request metadata".to_owned(),
+                );
             }
         }
         if resource.get("source_kind") != observation.get("source_kind")
@@ -6933,10 +6951,7 @@ fn attach_live_request_metadata_to_ledgers(
     orchestration: &mut Value,
     worker_evidence: &Value,
 ) -> Result<(), String> {
-    fn attach(
-        value: &mut Value,
-        windows: &BTreeMap<String, Value>,
-    ) -> Result<(), String> {
+    fn attach(value: &mut Value, windows: &BTreeMap<String, Value>) -> Result<(), String> {
         match value {
             Value::Object(fields) => {
                 for (name, child) in fields {
@@ -6965,10 +6980,8 @@ fn attach_live_request_metadata_to_ledgers(
                                 "router_tensor_cache_status",
                                 "router_tensor_bytes_semantics",
                             ] {
-                                observation[field] = window
-                                    .get(field)
-                                    .cloned()
-                                    .ok_or_else(|| {
+                                observation[field] =
+                                    window.get(field).cloned().ok_or_else(|| {
                                         "a live request window lacks required timing metadata"
                                             .to_owned()
                                     })?;
@@ -7067,11 +7080,9 @@ impl RouterScheduleAdapter for LiveRouterScheduleAdapter {
                     "correctness_gate",
                     "the frozen CPU oracle lacks the requested real router case",
                 );
-                let canonical = output_from_worker_result_with_scope(
-                    &result,
-                    RouterCaseScope::RealCheckpoint,
-                )
-                .ok();
+                let canonical =
+                    output_from_worker_result_with_scope(&result, RouterCaseScope::RealCheckpoint)
+                        .ok();
                 let output_sha256 = canonical
                     .as_ref()
                     .and_then(|output| complete_router_output_sha256(output).ok());
@@ -7111,11 +7122,9 @@ impl RouterScheduleAdapter for LiveRouterScheduleAdapter {
                     "correctness_gate",
                     "the MLX router result could not be adapted for CPU-oracle comparison",
                 );
-                let canonical = output_from_worker_result_with_scope(
-                    &result,
-                    RouterCaseScope::RealCheckpoint,
-                )
-                .ok();
+                let canonical =
+                    output_from_worker_result_with_scope(&result, RouterCaseScope::RealCheckpoint)
+                        .ok();
                 let output_sha256 = canonical
                     .as_ref()
                     .and_then(|output| complete_router_output_sha256(output).ok());
@@ -7325,8 +7334,7 @@ impl RouterScheduleAdapter for LiveRouterScheduleAdapter {
                     }
                 }
             };
-            self.attempted_timing_observations
-                .push(observation.clone());
+            self.attempted_timing_observations.push(observation.clone());
             let passed = observation["status"] == "passed";
             observations.push(observation);
             if !passed {
@@ -7363,10 +7371,7 @@ impl RouterScheduleAdapter for LiveRouterScheduleAdapter {
         Ok(series)
     }
 
-    fn finish_process(
-        &mut self,
-        process_replication_id: &str,
-    ) -> Result<(), RouterLiveFailure> {
+    fn finish_process(&mut self, process_replication_id: &str) -> Result<(), RouterLiveFailure> {
         self.shutdown_process(process_replication_id)
     }
 }
@@ -7614,7 +7619,9 @@ fn run_validate_router_after_clean_source(
     let evidence_metadata = fs::symlink_metadata(&command.evidence_dir)
         .map_err(|_| "the router evidence directory is unavailable".to_owned())?;
     if evidence_metadata.file_type().is_symlink() || !evidence_metadata.is_dir() {
-        return Err("the router evidence destination must be a regular non-link directory".to_owned());
+        return Err(
+            "the router evidence destination must be a regular non-link directory".to_owned(),
+        );
     }
     let candidate_path = command
         .evidence_dir
@@ -7647,7 +7654,9 @@ fn run_validate_router_after_clean_source(
     let admitted_router = admit_router_tensor(router_before.descriptor(), QWEN_FILE_BYTES)
         .map_err(|error| error.to_string())?;
     if !router_before.expert_weights_norm_effective() {
-        return Err("the admitted architecture does not require selected-weight renormalization".to_owned());
+        return Err(
+            "the admitted architecture does not require selected-weight renormalization".to_owned(),
+        );
     }
     external_oracle
         .validate_artifact_binding(
@@ -7679,7 +7688,8 @@ fn run_validate_router_after_clean_source(
     let started_at_utc = utc_now()?;
     let experiment_started = Instant::now();
     let mut adapter = LiveRouterScheduleAdapter::new(base_config, external_oracle.clone());
-    let mut primary = execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
+    let mut primary =
+        execute_router_batch_schedule(RouterBenchmarkOrchestrator::new(), &mut adapter);
     if let Err(failure) = adapter.finish_batch(ROUTER_PRIMARY_BATCH_ID) {
         retain_live_adapter_failure(&mut primary, failure, false);
     }
@@ -8752,9 +8762,10 @@ fn parse_qwen3moe_synthetic_generation(
                 )
             }
             "--cancel-after-step" if cancel_after_step.is_none() => {
-                cancel_after_step = Some(value.parse::<u32>().map_err(|_| {
-                    "--cancel-after-step must be an unsigned integer".to_owned()
-                })?)
+                cancel_after_step =
+                    Some(value.parse::<u32>().map_err(|_| {
+                        "--cancel-after-step must be an unsigned integer".to_owned()
+                    })?)
             }
             _ => return Err(usage()),
         }
@@ -8968,9 +8979,10 @@ fn parse_synthetic_generation(
                 )
             }
             "--cancel-after-step" if cancel_after_step.is_none() => {
-                cancel_after_step = Some(value.parse::<u32>().map_err(|_| {
-                    "--cancel-after-step must be an unsigned integer".to_owned()
-                })?)
+                cancel_after_step =
+                    Some(value.parse::<u32>().map_err(|_| {
+                        "--cancel-after-step must be an unsigned integer".to_owned()
+                    })?)
             }
             _ => return Err(usage()),
         }
@@ -9412,7 +9424,9 @@ fn validate_generation_fixture(fixture: &GenerationFixture) -> Result<(), String
                 .map(|value| (*value).to_owned())
                 .collect::<Vec<_>>()
     {
-        return Err("the synthetic generation fixture identity or bounds are not admitted".to_owned());
+        return Err(
+            "the synthetic generation fixture identity or bounds are not admitted".to_owned(),
+        );
     }
 
     let prompt_length = u64::try_from(fixture.prompt_token_ids.len())
@@ -9423,7 +9437,8 @@ fn validate_generation_fixture(fixture: &GenerationFixture) -> Result<(), String
         let expected_position = prompt_length
             .checked_add(step_number)
             .ok_or_else(|| "the synthetic generation position overflows".to_owned())?;
-        if step.position != expected_position || step.topk.is_empty() || step.topk.len() > MAX_TOPK {
+        if step.position != expected_position || step.topk.is_empty() || step.topk.len() > MAX_TOPK
+        {
             return Err("the synthetic generation fixture has invalid step bounds".to_owned());
         }
         let mut seen = BTreeSet::new();
@@ -11086,14 +11101,12 @@ mod tests {
             let call_index = self.timing_plans.len();
             self.timing_plans.push(plan.clone());
             let series = match plan.series_kind {
-                RouterTimingSeriesKind::MajorMinimallyInstrumented => {
-                    orchestration_major_series(
-                        plan.case,
-                        plan.replication_role,
-                        &plan.process_replication_id,
-                        orchestration_hash(plan.case),
-                    )
-                }
+                RouterTimingSeriesKind::MajorMinimallyInstrumented => orchestration_major_series(
+                    plan.case,
+                    plan.replication_role,
+                    &plan.process_replication_id,
+                    orchestration_hash(plan.case),
+                ),
                 RouterTimingSeriesKind::CostlyReal
                 | RouterTimingSeriesKind::FirstProcessCostly
                 | RouterTimingSeriesKind::StageDiagnostic => {
@@ -11182,7 +11195,9 @@ mod tests {
         assert_eq!(adapter.correctness_calls.len(), 8);
         assert!(adapter.timing_plans.is_empty());
         assert_eq!(orchestration.next_step(), "failed_stop_condition");
-        let evidence = orchestration.evidence().expect("failed run remains serializable");
+        let evidence = orchestration
+            .evidence()
+            .expect("failed run remains serializable");
         assert_eq!(evidence["status"], "failed");
         assert_eq!(evidence["failure"]["code"], "comparison_failed");
         assert_eq!(evidence["timing_started"], false);
@@ -11227,7 +11242,9 @@ mod tests {
         assert_eq!(adapter.timing_plans.len(), 2);
         assert_eq!(orchestration.primary_first_process_series.len(), 1);
         assert_eq!(orchestration.next_step(), "failed_stop_condition");
-        let evidence = orchestration.evidence().expect("timing failure remains serializable");
+        let evidence = orchestration
+            .evidence()
+            .expect("timing failure remains serializable");
         assert_eq!(evidence["failure"]["code"], "evaluation_failed");
         assert_eq!(
             evidence["retained_timing"]["first_process_series"]
@@ -11385,16 +11402,13 @@ mod tests {
             .iter()
             .all(|plan| {
                 plan.schedule_step == "clean_first_process"
-                    && plan.replication_role
-                        == RouterTimingReplicationRole::CleanProcessReplication
+                    && plan.replication_role == RouterTimingReplicationRole::CleanProcessReplication
             }));
         assert_eq!(
             adapter
                 .timing_plans
                 .iter()
-                .filter(|plan| {
-                    plan.replication_role == RouterTimingReplicationRole::Primary
-                })
+                .filter(|plan| { plan.replication_role == RouterTimingReplicationRole::Primary })
                 .count(),
             16
         );
@@ -11403,8 +11417,7 @@ mod tests {
                 .timing_plans
                 .iter()
                 .filter(|plan| {
-                    plan.replication_role
-                        == RouterTimingReplicationRole::CleanProcessReplication
+                    plan.replication_role == RouterTimingReplicationRole::CleanProcessReplication
                 })
                 .count(),
             22
@@ -11439,7 +11452,10 @@ mod tests {
                 stage_process_identity(ROUTER_PRIMARY_BATCH_ID),
             ]
         );
-        assert_eq!(orchestration.next_step(), "later_batch_or_unavailable_reason");
+        assert_eq!(
+            orchestration.next_step(),
+            "later_batch_or_unavailable_reason"
+        );
         assert_eq!(
             orchestration
                 .ordered_observation_evidence()
@@ -11561,14 +11577,11 @@ mod tests {
             },
             "total_evaluated_router": {"status": "observed", "duration_ns": 1},
         });
-        correctness_resources[0]["timing_stage_retention"] =
-            json!("complete_in_resource_record");
+        correctness_resources[0]["timing_stage_retention"] = json!("complete_in_resource_record");
         validate_live_resource_join(&correctness_windows, &correctness_resources)
             .expect("correctness resource carries the producer-attested process condition");
         correctness_resources[0]["process_state"] = json!("fresh_process");
-        assert!(
-            validate_live_resource_join(&correctness_windows, &correctness_resources).is_err()
-        );
+        assert!(validate_live_resource_join(&correctness_windows, &correctness_resources).is_err());
         let mut orchestration = json!({
             "primary_batch": {"raw_observations": [{
                 "observation_id": "obs-00",
@@ -11605,11 +11618,8 @@ mod tests {
         }
         assert!(validate_live_process_lifecycle(&missing_shutdown).is_err());
 
-        let mapped = RouterLiveFailure::new(
-            "invented_failure_code",
-            "worker_startup",
-            "bounded failure",
-        );
+        let mapped =
+            RouterLiveFailure::new("invented_failure_code", "worker_startup", "bounded failure");
         assert_eq!(mapped.code, "internal_worker_error");
     }
 
@@ -12221,10 +12231,7 @@ mod tests {
             adapted_evidence["process_state"],
             ROUTER_CORRECTNESS_PROCESS_STATE
         );
-        assert_eq!(
-            adapted_evidence["condition"],
-            ROUTER_CORRECTNESS_CONDITION
-        );
+        assert_eq!(adapted_evidence["condition"], ROUTER_CORRECTNESS_CONDITION);
         let self_comparison = compare_router_outputs(
             orchestration_output(single),
             orchestration_output(single),
@@ -12810,8 +12817,7 @@ mod tests {
         assert!(first_process_series[..ROUTER_FIRST_PROCESS_REPETITIONS]
             .iter()
             .all(|series| {
-                series["replication_role"] == "primary"
-                    && series["case_id"] == single.case_id()
+                series["replication_role"] == "primary" && series["case_id"] == single.case_id()
             }));
         assert!(first_process_series
             [ROUTER_FIRST_PROCESS_REPETITIONS..ROUTER_FIRST_PROCESS_REPETITIONS * 2]
@@ -12904,9 +12910,7 @@ mod tests {
             evidence["second_batch"]["between_batch_variation_measured"],
             false
         );
-        assert!(
-            serde_json::to_vec(&evidence).unwrap().len() <= ROUTER_ORCHESTRATION_MAX_BYTES
-        );
+        assert!(serde_json::to_vec(&evidence).unwrap().len() <= ROUTER_ORCHESTRATION_MAX_BYTES);
     }
 
     #[test]
@@ -13156,12 +13160,14 @@ mod tests {
             second_first_process_series.len(),
             ROUTER_FIRST_PROCESS_REPETITIONS * 3
         );
-        assert!(second_first_process_series[..ROUTER_FIRST_PROCESS_REPETITIONS]
-            .iter()
-            .all(|series| {
-                series["replication_role"] == "primary"
-                    && series["case_id"] == OrchestratedRouterCase::TwoRow.case_id()
-            }));
+        assert!(
+            second_first_process_series[..ROUTER_FIRST_PROCESS_REPETITIONS]
+                .iter()
+                .all(|series| {
+                    series["replication_role"] == "primary"
+                        && series["case_id"] == OrchestratedRouterCase::TwoRow.case_id()
+                })
+        );
         assert!(second_first_process_series
             [ROUTER_FIRST_PROCESS_REPETITIONS..ROUTER_FIRST_PROCESS_REPETITIONS * 2]
             .iter()
@@ -13169,12 +13175,14 @@ mod tests {
                 series["replication_role"] == "clean_process_replication"
                     && series["case_id"] == OrchestratedRouterCase::TwoRow.case_id()
             }));
-        assert!(second_first_process_series[ROUTER_FIRST_PROCESS_REPETITIONS * 2..]
-            .iter()
-            .all(|series| {
-                series["replication_role"] == "clean_process_replication"
-                    && series["case_id"] == OrchestratedRouterCase::SingleRow.case_id()
-            }));
+        assert!(
+            second_first_process_series[ROUTER_FIRST_PROCESS_REPETITIONS * 2..]
+                .iter()
+                .all(|series| {
+                    series["replication_role"] == "clean_process_replication"
+                        && series["case_id"] == OrchestratedRouterCase::SingleRow.case_id()
+                })
+        );
         assert_eq!(
             evidence["second_batch"]["stage_diagnostic_series"]
                 .as_array()
@@ -13212,11 +13220,7 @@ mod tests {
         let mut ordered = Vec::new();
         collect_arrays_named(&evidence, "raw_observations", &mut ordered);
         let mut attempted_timing = Vec::new();
-        collect_arrays_named(
-            &evidence,
-            "raw_timing_observations",
-            &mut attempted_timing,
-        );
+        collect_arrays_named(&evidence, "raw_timing_observations", &mut attempted_timing);
         assert_eq!(ordered.len(), 520);
         assert_eq!(attempted_timing.len(), 460);
         let request_windows = ordered
@@ -13436,12 +13440,9 @@ mod tests {
     #[test]
     fn live_oracle_gate_binds_the_complete_public_document_before_parsing() {
         let root = fs::canonicalize(project_root()).expect("canonical project root");
-        let bytes = read_bounded_regular_file(
-            &root,
-            ROUTER_PUBLIC_ORACLE_PATH,
-            ROUTER_ORACLE_MAX_BYTES,
-        )
-        .expect("committed public oracle bytes");
+        let bytes =
+            read_bounded_regular_file(&root, ROUTER_PUBLIC_ORACLE_PATH, ROUTER_ORACLE_MAX_BYTES)
+                .expect("committed public oracle bytes");
         let oracle = parse_frozen_router_oracle(
             &bytes,
             ROUTER_PUBLIC_ORACLE_SHA256,
@@ -13751,9 +13752,11 @@ mod tests {
         };
         let (mut fixture, fixture_sha256) =
             load_generation_fixture(&project_root(), &command.fixture).expect("fixture loads");
-        assert!(execute_synthetic_generation(&fixture, &fixture_sha256, &command)
-            .expect_err("over-limit request is rejected")
-            .contains("generation request rejected"));
+        assert!(
+            execute_synthetic_generation(&fixture, &fixture_sha256, &command)
+                .expect_err("over-limit request is rejected")
+                .contains("generation request rejected")
+        );
 
         fixture.steps[0].argmax = 8;
         assert!(validate_generation_fixture(&fixture).is_err());
@@ -13761,13 +13764,11 @@ mod tests {
         let mut cancel_before = command;
         cancel_before.max_new_tokens = 3;
         cancel_before.cancel_before = true;
-        assert!(execute_synthetic_generation(
-            &fixture,
-            &fixture_sha256,
-            &cancel_before
-        )
-        .expect_err("cancel-before request is rejected")
-        .contains("cancelled"));
+        assert!(
+            execute_synthetic_generation(&fixture, &fixture_sha256, &cancel_before)
+                .expect_err("cancel-before request is rejected")
+                .contains("cancelled")
+        );
 
         fixture.steps[0].argmax = 7;
         let cancel_during = SyntheticGenerationCommand {
@@ -13775,9 +13776,11 @@ mod tests {
             cancel_after_step: Some(1),
             ..cancel_before
         };
-        assert!(execute_synthetic_generation(&fixture, &fixture_sha256, &cancel_during)
-            .expect_err("mid-generation cancellation is rejected")
-            .contains("cancelled"));
+        assert!(
+            execute_synthetic_generation(&fixture, &fixture_sha256, &cancel_during)
+                .expect_err("mid-generation cancellation is rejected")
+                .contains("cancelled")
+        );
     }
 
     #[test]

@@ -1,12 +1,13 @@
 //! Specification parsing, module classification, override resolution,
 //! consistency and slicing arithmetic -- each against its exact error variant.
 
+use mlx_affine::module::TripleSlice;
 use mlx_affine::module::{module_paths, resolved_spec};
 use mlx_affine::{
     classify_module, AffineError, AffineTriple, Bits, GroupSize, Mode, ModuleKind, QuantSpec,
     QuantizationConfig,
 };
-use safetensors_catalog::{compose_shard, Checkpoint};
+use safetensors_catalog::{compose_shard, Checkpoint, Dtype, ShardId, TensorMeta};
 
 /// One header entry: tensor name, Safetensors dtype string, shape.
 type Entry<'a> = (&'a str, &'a str, &'a [u64]);
@@ -479,58 +480,211 @@ fn slicing_a_plain_matrix_takes_an_empty_index_path() {
     assert_eq!(whole.scales.len, triple.scales().byte_len);
 }
 
+/// One inconsistency: the field it must land on, why it is one, and how to
+/// introduce it into an otherwise valid meta.
+type Inconsistency = (&'static str, &'static str, Box<dyn Fn(&mut TensorMeta)>);
+
+/// Metadata a caller hands in, with every field independently settable.
+fn handed_in(name: &str, dtype: Dtype, shape: Vec<u64>, begin: u64) -> TensorMeta {
+    let elements: u64 = shape.iter().product();
+    TensorMeta {
+        name: name.to_string(),
+        dtype,
+        elements,
+        byte_len: elements * dtype.size_bytes(),
+        shape,
+        shard: ShardId(0),
+        data_begin: begin,
+        data_end: begin + elements * dtype.size_bytes(),
+    }
+}
+
+/// A consistent trio: weight [2, 4, 8] U32, metadata [2, 4, 1] BF16.
+fn consistent_trio() -> (TensorMeta, TensorMeta, TensorMeta) {
+    (
+        handed_in("e.weight", Dtype::U32, vec![2, 4, 8], 1_024),
+        handed_in("e.scales", Dtype::Bf16, vec![2, 4, 1], 4_096),
+        handed_in("e.biases", Dtype::Bf16, vec![2, 4, 1], 8_192),
+    )
+}
+
 #[test]
-fn a_huge_leading_extent_overflows_before_it_is_used() {
-    // The Round 1 test of this name constructed no huge extent, called no
-    // slicing and asserted no Overflow; it only checked bit and group
-    // constants. This one does the thing the name claims.
-    //
-    // A catalog-built triple cannot reach here, because the header validation
-    // that produced it already bounded every product. So the triple is built
-    // through the validating constructor from metadata describing a tensor
-    // whose leading extent is u32::MAX: one plane is
-    // u32::MAX * 8 * 4 = 137,438,953,440 bytes, and the last plane starts
-    // 4,294,967,294 of those in, which is about 5.9e20 and well past u64.
-    use safetensors_catalog::{Dtype, ShardId, TensorMeta};
+fn the_constructor_refuses_every_inconsistent_metadata_field() {
+    // `AffineTriple::new` is the only way metadata that did not come from
+    // header parsing enters the arithmetic. Round 2 made the fields private
+    // and checked relative bounds and the absolute *begin*; Astra's finding 3
+    // was that nothing established the geometry those bounds are computed
+    // from, so an absolute *end* could still leave u64. Each row below is one
+    // way the metadata can fail to describe a tensor that could exist.
+    let cases: Vec<Inconsistency> = vec![
+        (
+            "shape",
+            "a rank-0 tensor has no last axis",
+            Box::new(|m: &mut TensorMeta| {
+                m.shape = Vec::new();
+                m.elements = 1;
+                m.byte_len = m.dtype.size_bytes();
+                m.data_end = m.data_begin + m.byte_len;
+            }),
+        ),
+        (
+            "elements",
+            "the count disagrees with the shape",
+            Box::new(|m: &mut TensorMeta| {
+                m.elements += 1;
+            }),
+        ),
+        (
+            "elements",
+            "the shape product is not representable",
+            Box::new(|m: &mut TensorMeta| {
+                m.shape = vec![u64::MAX, 2];
+            }),
+        ),
+        (
+            "byte_len",
+            "the length disagrees with elements x dtype",
+            Box::new(|m: &mut TensorMeta| {
+                m.byte_len += 1;
+            }),
+        ),
+        (
+            "byte_len",
+            "elements x dtype is not representable",
+            Box::new(|m: &mut TensorMeta| {
+                m.shape = vec![u64::MAX / 2];
+                m.elements = u64::MAX / 2;
+            }),
+        ),
+        (
+            "data_end",
+            "the end disagrees with begin + length",
+            Box::new(|m: &mut TensorMeta| {
+                m.data_end += 1;
+            }),
+        ),
+        (
+            "data_end",
+            "begin + length is not representable",
+            Box::new(|m: &mut TensorMeta| {
+                m.data_begin = u64::MAX;
+                m.data_end = u64::MAX;
+            }),
+        ),
+    ];
+
+    // Every one of the three tensors is validated, not only the weight.
+    for position in 0..3 {
+        for (field, why, mutate) in &cases {
+            let (mut weight, mut scales, mut biases) = consistent_trio();
+            mutate(match position {
+                0 => &mut weight,
+                1 => &mut scales,
+                _ => &mut biases,
+            });
+            let expected = ["e.weight", "e.scales", "e.biases"][position];
+            match AffineTriple::new("e", weight, scales, biases, spec(4, 64)) {
+                Err(AffineError::InvalidTensorMeta {
+                    module,
+                    tensor,
+                    field: got,
+                }) => {
+                    assert_eq!(module, "e");
+                    assert_eq!(tensor, expected, "{why}");
+                    assert_eq!(&got, field, "{why}");
+                }
+                other => panic!("{expected}: {why} must be refused, got {other:?}"),
+            }
+        }
+    }
+}
+
+#[test]
+fn the_constructor_accepts_the_consistent_trio_it_is_given() {
+    // The refusals above would be vacuous if nothing passed.
+    let (weight, scales, biases) = consistent_trio();
+    let triple = AffineTriple::new("e", weight, scales, biases, spec(4, 64))
+        .expect("a self-consistent trio is admitted");
+    assert_eq!(triple.leading(), &[2]);
+    assert_eq!(triple.out_features(), 4);
+    assert_eq!(triple.in_features(), 64);
+}
+
+#[test]
+fn a_constructor_produced_triple_cannot_slice_outside_its_tensors() {
+    // The invariant finding 3 asked for, asserted rather than argued: over
+    // every expert and every row the triple admits, each of the nine absolute
+    // ranges stays inside the [data_begin, data_end) it was derived from.
+    let (weight, scales, biases) = consistent_trio();
+    let bounds = [
+        (weight.data_begin, weight.data_end),
+        (scales.data_begin, scales.data_end),
+        (biases.data_begin, biases.data_end),
+    ];
+    let triple = AffineTriple::new("e", weight, scales, biases, spec(4, 64)).unwrap();
+
+    let check = |slice: &TripleSlice, what: &str| {
+        for (part, (begin, end)) in [&slice.weight, &slice.scales, &slice.biases]
+            .into_iter()
+            .zip(bounds)
+        {
+            let last = part
+                .begin
+                .checked_add(part.len)
+                .expect("an absolute slice end is representable");
+            assert!(
+                part.begin >= begin && last <= end,
+                "{what}: [{}, {last}) leaves [{begin}, {end})",
+                part.begin
+            );
+        }
+    };
+
+    for expert in 0..triple.leading()[0] {
+        check(&triple.expert_slice(&[expert]).unwrap(), "expert");
+        for row in 0..triple.out_features() {
+            check(&triple.row_slice(&[expert], row).unwrap(), "row");
+        }
+    }
+    // And one past the end is refused rather than clamped.
+    assert!(triple.row_slice(&[0], triple.out_features()).is_err());
+    assert!(triple.expert_slice(&[triple.leading()[0]]).is_err());
+}
+
+#[test]
+fn a_huge_leading_extent_is_refused_before_any_slice_exists() {
+    // Round 1's test of this name constructed no huge extent and asserted no
+    // Overflow. Round 2's built the triple and watched `expert_slice`
+    // overflow -- but it could only build it because the metadata claimed
+    // `elements: 0` with `byte_len: u64::MAX`, which is not a tensor. With
+    // the geometry validated, the overflow is refused one step earlier and
+    // the triple never exists: u32::MAX * u32::MAX * 8 elements is not
+    // representable, so there is nothing to slice.
     let huge = u64::from(u32::MAX);
-    let meta = |name: &str, dtype: Dtype, shape: Vec<u64>| TensorMeta {
+    // Built literally: the helper above would itself overflow computing the
+    // product, which is the point -- these numbers are not a tensor.
+    let raw = |name: &str, dtype: Dtype, shape: Vec<u64>| TensorMeta {
         name: name.to_string(),
         dtype,
         elements: 0,
-        byte_len: u64::MAX,
+        byte_len: 0,
         shape,
         shard: ShardId(0),
         data_begin: 0,
-        data_end: u64::MAX,
+        data_end: 0,
     };
-    let triple = AffineTriple::new(
-        "e",
-        meta("e.weight", Dtype::U32, vec![huge, huge, 8]),
-        meta("e.scales", Dtype::Bf16, vec![huge, huge, 1]),
-        meta("e.biases", Dtype::Bf16, vec![huge, huge, 1]),
-        spec(4, 64),
-    )
-    .expect("the shapes are individually consistent");
-    assert_eq!(triple.leading(), &[huge]);
-    assert_eq!(triple.in_features(), 64);
-
-    match triple.expert_slice(&[huge - 1]) {
-        Err(AffineError::Overflow { module, detail }) => {
-            assert_eq!(module, "e");
-            assert!(detail.contains("overflows u64"), "{detail}");
+    let weight = raw("e.weight", Dtype::U32, vec![huge, huge, 8]);
+    let scales = raw("e.scales", Dtype::Bf16, vec![huge, huge, 1]);
+    let biases = raw("e.biases", Dtype::Bf16, vec![huge, huge, 1]);
+    match AffineTriple::new("e", weight, scales, biases, spec(4, 64)) {
+        Err(AffineError::InvalidTensorMeta { tensor, field, .. }) => {
+            assert_eq!(tensor, "e.weight");
+            assert_eq!(field, "elements");
         }
-        other => panic!("expert_slice must refuse, got {other:?}"),
+        other => panic!("the huge extent must be refused, got {other:?}"),
     }
-    match triple.row_slice(&[huge - 1], 0) {
-        Err(AffineError::Overflow { .. }) => {}
-        other => panic!("row_slice must refuse, got {other:?}"),
-    }
-    // Index zero needs no multiplication, so it is refused for a different
-    // reason -- the ranges do not fit the tensor -- rather than silently
-    // succeeding.
-    assert!(triple.expert_slice(&[0]).is_ok() || triple.expert_slice(&[0]).is_err());
 
-    // And the constants the old test checked, kept because they are cheap.
+    // The constants the Round 1 test checked, kept because they are cheap.
     assert_eq!(Bits::Four.codes_per_word(), 8);
     assert_eq!(Bits::Eight.codes_per_word(), 4);
     assert_eq!(Bits::Four.max_code(), 15);

@@ -258,8 +258,15 @@ mod tests {
         }
         let mut out = vec![0.0; QK_K];
         decode_iq4_xs_matrix(&block, 1, QK_K, &mut out).unwrap();
-        let expected_low: Vec<f32> = KVALUES_IQ4NL.iter().map(|value| f32::from(*value)).collect();
-        let expected_high: Vec<f32> = KVALUES_IQ4NL.iter().rev().map(|value| f32::from(*value)).collect();
+        let expected_low: Vec<f32> = KVALUES_IQ4NL
+            .iter()
+            .map(|value| f32::from(*value))
+            .collect();
+        let expected_high: Vec<f32> = KVALUES_IQ4NL
+            .iter()
+            .rev()
+            .map(|value| f32::from(*value))
+            .collect();
         assert_eq!(&out[..16], expected_low.as_slice());
         assert_eq!(&out[16..32], expected_high.as_slice());
     }

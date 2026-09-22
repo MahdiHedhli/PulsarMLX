@@ -51,6 +51,19 @@ pub enum AffineError {
     UnknownModule { module: String },
     /// A slice index is outside the tensor's leading dimensions.
     IndexOutOfBounds { module: String, detail: String },
+    /// A `TensorMeta` handed to the public constructor does not describe a
+    /// tensor that could exist: its `elements`, `byte_len` or `data_end`
+    /// disagree with its shape and dtype, or one of those products is not
+    /// representable. Refusing here is what makes every later absolute byte
+    /// range of the triple, end included, derivable and in range -- the
+    /// arithmetic methods assume a self-consistent geometry, and nothing but
+    /// this check establishes it for metadata that did not come from the
+    /// catalog's own header parsing.
+    InvalidTensorMeta {
+        module: String,
+        tensor: String,
+        field: String,
+    },
     /// A decoder call's buffers do not match the declared geometry.
     GeometryMismatch { detail: String },
     /// A product or a result left the finite range of binary32.
@@ -132,6 +145,16 @@ impl fmt::Display for AffineError {
                 )
             }
             Self::UnknownModule { module } => write!(f, "module {module} is not in the catalog"),
+            Self::InvalidTensorMeta {
+                module,
+                tensor,
+                field,
+            } => {
+                write!(
+                    f,
+                    "{module}: the metadata for {tensor} is not self-consistent at {field}"
+                )
+            }
             Self::IndexOutOfBounds { module, detail } => {
                 write!(f, "module {module}: {detail}")
             }

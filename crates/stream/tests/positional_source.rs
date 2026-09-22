@@ -6,8 +6,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use stream::{
-    ExpertSource, OwnedSlab, PositionalRead, PositionalSource, Read, ReaderShard, ShardPath,
-    MatrixReadSpec, ReadTelemetry, SourceError,
+    ExpertSource, MatrixReadSpec, OwnedSlab, PositionalRead, PositionalSource, Read, ReadTelemetry,
+    ReaderShard, ShardPath, SourceError,
 };
 
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
@@ -648,7 +648,10 @@ fn matrix_read_honors_request_sizing_and_chunks() {
         .expect("fetch matrix in chunks");
 
     assert!(chunks.len() >= 2);
-    let chunk_rows = chunks.iter().map(|slab| slab.payload().len()).collect::<Vec<_>>();
+    let chunk_rows = chunks
+        .iter()
+        .map(|slab| slab.payload().len())
+        .collect::<Vec<_>>();
     assert_eq!(chunk_rows.iter().sum::<usize>(), 90);
     assert_eq!(telemetry.request_count, chunk_rows.len() as u64);
     assert_eq!(telemetry.requested_bytes, 90);

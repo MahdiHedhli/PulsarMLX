@@ -7,12 +7,25 @@ pub const Q6_K_BLOCK_BYTES: usize = 210;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Q6KError {
     ZeroRowWidth,
-    RowWidthNotDivisible { row_width: usize },
+    RowWidthNotDivisible {
+        row_width: usize,
+    },
     ArithmeticOverflow,
-    EncodedLengthMismatch { expected: usize, actual: usize },
-    DestinationLengthMismatch { expected: usize, actual: usize },
-    NonFiniteScale { block_index: usize },
-    NonFiniteResult { block_index: usize, element_index: usize },
+    EncodedLengthMismatch {
+        expected: usize,
+        actual: usize,
+    },
+    DestinationLengthMismatch {
+        expected: usize,
+        actual: usize,
+    },
+    NonFiniteScale {
+        block_index: usize,
+    },
+    NonFiniteResult {
+        block_index: usize,
+        element_index: usize,
+    },
 }
 
 impl fmt::Display for Q6KError {
@@ -35,7 +48,10 @@ impl fmt::Display for Q6KError {
                 "Q6_K destination length mismatch: expected {expected}, got {actual}"
             ),
             Self::NonFiniteScale { block_index } => {
-                write!(formatter, "Q6_K block {block_index} has a non-finite f16 scale")
+                write!(
+                    formatter,
+                    "Q6_K block {block_index} has a non-finite f16 scale"
+                )
             }
             Self::NonFiniteResult {
                 block_index,
@@ -72,11 +88,7 @@ fn validate_scales(encoded: &[u8]) -> Result<(), Q6KError> {
     Ok(())
 }
 
-fn decode_block(
-    block: &[u8],
-    block_index: usize,
-    output: &mut [f32],
-) -> Result<(), Q6KError> {
+fn decode_block(block: &[u8], block_index: usize, output: &mut [f32]) -> Result<(), Q6KError> {
     let ql = &block[0..128];
     let qh = &block[128..192];
     let scales = &block[192..208];

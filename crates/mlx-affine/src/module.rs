@@ -270,6 +270,52 @@ pub fn classify_module(
     }
 }
 
+/// Refuse metadata that does not describe a tensor which could exist.
+///
+/// The arithmetic methods derive absolute byte ranges as `data_begin + offset`
+/// and bound them with `byte_len`. That is only sound when `byte_len` really
+/// is the tensor's length and `data_end` really is one past its last byte, so
+/// those agreements are established here rather than assumed. Metadata that
+/// came from [`safetensors_catalog`]'s own header parsing already satisfies
+/// this; metadata handed to the public constructor by a caller does not, and
+/// that is the whole reason the constructor exists.
+///
+/// With this in place `data_begin + byte_len` is representable, so every
+/// slice end the triple can produce is representable and at most `data_end`.
+fn validate_geometry(module: &str, tensor: &TensorMeta) -> Result<()> {
+    let invalid = |field: &str| AffineError::InvalidTensorMeta {
+        module: module.to_string(),
+        tensor: tensor.name.clone(),
+        field: field.to_string(),
+    };
+    if tensor.shape.is_empty() {
+        return Err(invalid("shape"));
+    }
+    let mut elements: u64 = 1;
+    for extent in &tensor.shape {
+        elements = elements
+            .checked_mul(*extent)
+            .ok_or_else(|| invalid("elements"))?;
+    }
+    if elements != tensor.elements {
+        return Err(invalid("elements"));
+    }
+    let byte_len = elements
+        .checked_mul(tensor.dtype.size_bytes())
+        .ok_or_else(|| invalid("byte_len"))?;
+    if byte_len != tensor.byte_len {
+        return Err(invalid("byte_len"));
+    }
+    let data_end = tensor
+        .data_begin
+        .checked_add(byte_len)
+        .ok_or_else(|| invalid("data_end"))?;
+    if data_end != tensor.data_end {
+        return Err(invalid("data_end"));
+    }
+    Ok(())
+}
+
 fn build_triple(
     module: &str,
     weight: &TensorMeta,
@@ -278,6 +324,9 @@ fn build_triple(
     spec: QuantSpec,
 ) -> Result<AffineTriple> {
     // Everything the arithmetic methods later assume is decided here, once.
+    validate_geometry(module, weight)?;
+    validate_geometry(module, scales)?;
+    validate_geometry(module, biases)?;
     if weight.dtype != Dtype::U32 {
         return Err(AffineError::IncompleteTriple {
             module: module.to_string(),
@@ -451,6 +500,26 @@ impl AffineTriple {
                     module: self.module.clone(),
                     detail: "absolute slice offset overflows u64".to_string(),
                 })?;
+        // The validated geometry already implies both of these, since
+        // `data_begin + byte_len == data_end` is representable and `end` is at
+        // most `byte_len`. They are computed anyway so that the absolute end a
+        // caller receives is checked where it is produced, not only where the
+        // metadata was admitted.
+        let absolute_end = absolute
+            .checked_add(len)
+            .ok_or_else(|| AffineError::Overflow {
+                module: self.module.clone(),
+                detail: "absolute slice end overflows u64".to_string(),
+            })?;
+        if absolute_end > tensor.data_end {
+            return Err(AffineError::IndexOutOfBounds {
+                module: self.module.clone(),
+                detail: format!(
+                    "absolute slice [{absolute}, {absolute_end}) leaves the [{}, {}) of {}",
+                    tensor.data_begin, tensor.data_end, tensor.name
+                ),
+            });
+        }
         Ok(ByteSlice {
             shard: tensor.shard,
             begin: absolute,

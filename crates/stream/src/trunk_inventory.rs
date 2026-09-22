@@ -44,7 +44,10 @@ impl TrunkInventorySummary {
             return Err(format!("unexpected inventory schema {:?}", self.schema));
         }
         if self.schema_version != "1.0.0" {
-            return Err(format!("unexpected inventory schema version {:?}", self.schema_version));
+            return Err(format!(
+                "unexpected inventory schema version {:?}",
+                self.schema_version
+            ));
         }
         if self.tensor_count != AUTHORITATIVE_TENSOR_COUNT {
             return Err(format!("unexpected tensor count {}", self.tensor_count));
@@ -71,14 +74,12 @@ impl TrunkInventorySummary {
             return Err(format!("unexpected tensor records {}", self.tensors.len()));
         }
 
-        let group_compressed = self
-            .by_trunk_group
-            .iter()
-            .try_fold(0_u64, |total, group| total.checked_add(group.compressed_bytes));
-        let group_decoded = self
-            .by_trunk_group
-            .iter()
-            .try_fold(0_u64, |total, group| total.checked_add(group.decoded_f32_bytes));
+        let group_compressed = self.by_trunk_group.iter().try_fold(0_u64, |total, group| {
+            total.checked_add(group.compressed_bytes)
+        });
+        let group_decoded = self.by_trunk_group.iter().try_fold(0_u64, |total, group| {
+            total.checked_add(group.decoded_f32_bytes)
+        });
         let group_tensors = self
             .by_trunk_group
             .iter()
@@ -126,8 +127,8 @@ mod tests {
 
     #[test]
     fn authoritative_inventory_totals_are_ingested() {
-        let inventory = TrunkInventorySummary::from_json(&inventory_json())
-            .expect("inventory parses");
+        let inventory =
+            TrunkInventorySummary::from_json(&inventory_json()).expect("inventory parses");
         inventory
             .validate_authoritative()
             .expect("inventory totals remain authoritative");
@@ -140,8 +141,8 @@ mod tests {
 
     #[test]
     fn reject_inventory_total_drift() {
-        let mut inventory = TrunkInventorySummary::from_json(&inventory_json())
-            .expect("inventory parses");
+        let mut inventory =
+            TrunkInventorySummary::from_json(&inventory_json()).expect("inventory parses");
         inventory.total_decoded_f32_bytes += 1;
         assert!(inventory.validate_authoritative().is_err());
     }

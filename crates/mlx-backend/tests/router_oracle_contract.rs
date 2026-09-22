@@ -100,11 +100,21 @@ fn committed_public_oracle_closes_every_execution_identity() {
     let batch = oracle.reference(ROUTER_REAL_TWO_ROW_CASE_ID).unwrap();
     assert_eq!(single.row_count(), 1);
     assert_eq!(batch.row_count(), 2);
-    assert_eq!(single.selected_expert_ids()[0], [114, 45, 99, 46, 98, 74, 102, 65]);
-    assert_eq!(batch.selected_expert_ids()[1], [73, 95, 114, 99, 102, 46, 108, 106]);
+    assert_eq!(
+        single.selected_expert_ids()[0],
+        [114, 45, 99, 46, 98, 74, 102, 65]
+    );
+    assert_eq!(
+        batch.selected_expert_ids()[1],
+        [73, 95, 114, 99, 102, 46, 108, 106]
+    );
     assert!(oracle.reference("unregistered-router-case").is_none());
     oracle
-        .validate_artifact_binding(&frozen_descriptor(), ROUTER_MODEL_BYTES, ROUTER_MODEL_SHA256)
+        .validate_artifact_binding(
+            &frozen_descriptor(),
+            ROUTER_MODEL_BYTES,
+            ROUTER_MODEL_SHA256,
+        )
         .expect("model and tensor are immutable-bound");
     assert_eq!(
         ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256,
@@ -129,7 +139,10 @@ fn external_oracle_envelope_normalizes_to_the_same_frozen_outputs() {
 fn malformed_oracle_ids_ties_tolerances_and_hashes_fail_closed() {
     type Mutation = (&'static str, Box<dyn Fn(&mut Value)>);
     let mutations: Vec<Mutation> = vec![
-        ("unknown root field", Box::new(|value| value["extra"] = json!(true))),
+        (
+            "unknown root field",
+            Box::new(|value| value["extra"] = json!(true)),
+        ),
         (
             "case order",
             Box::new(|value| value["input"]["case_ids"][0] = json!("wrong-case")),
@@ -150,9 +163,7 @@ fn malformed_oracle_ids_ties_tolerances_and_hashes_fail_closed() {
         ),
         (
             "input hash",
-            Box::new(|value| {
-                value["input"]["canonical_f32le_sha256"] = json!("0".repeat(64))
-            }),
+            Box::new(|value| value["input"]["canonical_f32le_sha256"] = json!("0".repeat(64))),
         ),
         (
             "output hash",
@@ -190,10 +201,6 @@ fn artifact_binding_rejects_offset_hash_and_bias_drift() {
         );
     }
     assert!(oracle
-        .validate_artifact_binding(
-            &frozen_descriptor(),
-            ROUTER_MODEL_BYTES,
-            &"0".repeat(64),
-        )
+        .validate_artifact_binding(&frozen_descriptor(), ROUTER_MODEL_BYTES, &"0".repeat(64),)
         .is_err());
 }

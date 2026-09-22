@@ -70,12 +70,10 @@ pub const ROUTER_GENERATED_SINGLE_ROW_CASE_ID: &str = "generated-qwen3moe-router
 pub const ROUTER_GENERATED_TWO_ROW_CASE_ID: &str = "generated-qwen3moe-router-two-row-v1";
 
 pub const ROUTER_ORACLE_SCHEMA: &str = "pulsarmlx.research.router-oracle";
-pub const ROUTER_PUBLIC_ORACLE_SCHEMA: &str =
-    "pulsarmlx.research.router-oracle-publication";
+pub const ROUTER_PUBLIC_ORACLE_SCHEMA: &str = "pulsarmlx.research.router-oracle-publication";
 pub const ROUTER_ORACLE_SCHEMA_VERSION: &str = "1.0.0";
 pub const ROUTER_ORACLE_ID: &str = "qwen3moe-layer0-router-cpu-oracle-v1";
-pub const ROUTER_ORACLE_SOURCE_REVISION: &str =
-    "b06aa774c03dbbb624e726664b714a57d1f49815";
+pub const ROUTER_ORACLE_SOURCE_REVISION: &str = "b06aa774c03dbbb624e726664b714a57d1f49815";
 pub const ROUTER_MODEL_REPOSITORY: &str = "Qwen/Qwen3-30B-A3B-GGUF";
 pub const ROUTER_MODEL_REVISION: &str = "e4d4bafdfb96a411a163846265362aceb0b9c63a";
 pub const ROUTER_MODEL_FILENAME: &str = "Qwen3-30B-A3B-Q8_0.gguf";
@@ -171,14 +169,12 @@ impl RouterOracle {
             ][..],
         };
         oracle_exact_fields(root, expected_root, "router oracle root")?;
-        if root.get("schema_version").and_then(Value::as_str)
-            != Some(ROUTER_ORACLE_SCHEMA_VERSION)
+        if root.get("schema_version").and_then(Value::as_str) != Some(ROUTER_ORACLE_SCHEMA_VERSION)
             || root.get("status").and_then(Value::as_str) != Some("passed")
             || (format == RouterOracleFormat::ExternalCandidate
                 && root.get("oracle_id").and_then(Value::as_str) != Some(ROUTER_ORACLE_ID))
             || (format == RouterOracleFormat::PublicProjection
-                && root.get("feature_id").and_then(Value::as_str)
-                    != Some("002-qwen-router-parity"))
+                && root.get("feature_id").and_then(Value::as_str) != Some("002-qwen-router-parity"))
         {
             return Err(invalid_oracle("router oracle identity is not frozen"));
         }
@@ -256,15 +252,21 @@ fn validate_oracle_source(value: Option<&Value>) -> Result<(), ContractError> {
     let source = oracle_object_option(value, "router oracle source")?;
     oracle_exact_fields(
         source,
-        &["repository", "revision", "clean", "license", "metal", "gpu_offload"],
+        &[
+            "repository",
+            "revision",
+            "clean",
+            "license",
+            "metal",
+            "gpu_offload",
+        ],
         "router oracle source",
     )?;
     if !matches!(
         source.get("repository").and_then(Value::as_str),
         Some("https://github.com/ggml-org/llama.cpp")
             | Some("https://github.com/ggml-org/llama.cpp.git")
-    ) || source.get("revision").and_then(Value::as_str)
-        != Some(ROUTER_ORACLE_SOURCE_REVISION)
+    ) || source.get("revision").and_then(Value::as_str) != Some(ROUTER_ORACLE_SOURCE_REVISION)
         || source.get("clean").and_then(Value::as_bool) != Some(true)
         || source.get("license").and_then(Value::as_str) != Some("MIT")
         || source.get("metal").and_then(Value::as_bool) != Some(false)
@@ -296,13 +298,13 @@ fn validate_oracle_model(
                 ],
                 "public router oracle model",
             )?;
-            if model.get("repository").and_then(Value::as_str)
-                != Some(ROUTER_MODEL_REPOSITORY)
-                || model.get("revision").and_then(Value::as_str)
-                    != Some(ROUTER_MODEL_REVISION)
+            if model.get("repository").and_then(Value::as_str) != Some(ROUTER_MODEL_REPOSITORY)
+                || model.get("revision").and_then(Value::as_str) != Some(ROUTER_MODEL_REVISION)
                 || model.get("architecture").and_then(Value::as_str) != Some("qwen3moe")
             {
-                return Err(invalid_oracle("public router oracle model identity differs"));
+                return Err(invalid_oracle(
+                    "public router oracle model identity differs",
+                ));
             }
         }
         RouterOracleFormat::ExternalCandidate => {
@@ -327,14 +329,13 @@ fn validate_oracle_model(
                 "external router runtime identity",
             )?;
             if runtime.get("device").and_then(Value::as_u64).is_none()
-                || runtime.get("inode").and_then(Value::as_u64).is_none_or(|value| value == 0)
-                || runtime.get("size_bytes").and_then(Value::as_u64)
-                    != Some(ROUTER_MODEL_BYTES)
-                || runtime.get("sha256").and_then(Value::as_str)
-                    != Some(ROUTER_MODEL_SHA256)
-                || !model
-                    .get("consumer_proofs")
-                    .is_some_and(Value::is_array)
+                || runtime
+                    .get("inode")
+                    .and_then(Value::as_u64)
+                    .is_none_or(|value| value == 0)
+                || runtime.get("size_bytes").and_then(Value::as_u64) != Some(ROUTER_MODEL_BYTES)
+                || runtime.get("sha256").and_then(Value::as_str) != Some(ROUTER_MODEL_SHA256)
+                || !model.get("consumer_proofs").is_some_and(Value::is_array)
             {
                 return Err(invalid_oracle("external router runtime identity differs"));
             }
@@ -410,8 +411,7 @@ fn validate_oracle_tensor(
         || tensor.get("logical_element_count").and_then(Value::as_u64)
             != Some(ROUTER_TENSOR_ELEMENTS)
         || tensor.get(length_key).and_then(Value::as_u64) != Some(ROUTER_TENSOR_BYTES)
-        || tensor.get("encoded_sha256").and_then(Value::as_str)
-            != Some(ROUTER_TENSOR_SHA256)
+        || tensor.get("encoded_sha256").and_then(Value::as_str) != Some(ROUTER_TENSOR_SHA256)
         || tensor.get("orientation").and_then(Value::as_str) != Some(ROUTER_ORIENTATION)
     {
         return Err(invalid_oracle("router oracle tensor identity differs"));
@@ -430,13 +430,18 @@ fn validate_oracle_tensor(
                 != Some(ROUTER_TOP_K as u64)
             || tensor.get("weight_scale").and_then(Value::as_f64) != Some(1.0)
             || tensor.get("router_bias_present").and_then(Value::as_bool) != Some(false)
-            || tensor.get("correction_bias_present").and_then(Value::as_bool) != Some(false)
+            || tensor
+                .get("correction_bias_present")
+                .and_then(Value::as_bool)
+                != Some(false)
             || tensor
                 .get("selected_probability_renormalization")
                 .and_then(Value::as_bool)
                 != Some(true))
     {
-        return Err(invalid_oracle("public router oracle tensor semantics differ"));
+        return Err(invalid_oracle(
+            "public router oracle tensor semantics differ",
+        ));
     }
     Ok(())
 }
@@ -500,11 +505,9 @@ fn validate_oracle_input(value: Option<&Value>) -> Result<Vec<f32>, ContractErro
         .iter()
         .map(|row| canonical_f32le_sha256(row))
         .collect::<Result<Vec<_>, _>>()?;
-    if input.get("canonical_f32le_sha256").and_then(Value::as_str)
-        != Some(ROUTER_REAL_INPUT_SHA256)
+    if input.get("canonical_f32le_sha256").and_then(Value::as_str) != Some(ROUTER_REAL_INPUT_SHA256)
         || canonical_f32le_sha256(&flattened)? != ROUTER_REAL_INPUT_SHA256
-        || oracle_string_array(input.get("row_sha256"))?
-            != ROUTER_REAL_INPUT_ROW_SHA256
+        || oracle_string_array(input.get("row_sha256"))? != ROUTER_REAL_INPUT_ROW_SHA256
         || row_hashes
             != ROUTER_REAL_INPUT_ROW_SHA256
                 .iter()
@@ -541,7 +544,9 @@ fn validate_oracle_result(
         || result.get("cutoff_ties").and_then(Value::as_array)
             != Some(&vec![Value::Bool(false), Value::Bool(false)])
     {
-        return Err(invalid_oracle("router oracle arithmetic or cutoff-tie policy differs"));
+        return Err(invalid_oracle(
+            "router oracle arithmetic or cutoff-tie policy differs",
+        ));
     }
     let logits = oracle_f32_matrix(result.get("logits"), 2, 128, "router oracle logits")?;
     let probabilities = oracle_f32_matrix(
@@ -627,11 +632,11 @@ fn validate_oracle_result(
         ),
         ("output_bundle_sha256", ROUTER_ORACLE_OUTPUT_BUNDLE_SHA256),
     ];
-    if expected_hashes.iter().any(|(name, expected)| {
-        hashes.get(*name).and_then(Value::as_str) != Some(*expected)
-    }) || format!("{:x}", Sha256::digest(&logits_bytes)) != ROUTER_ORACLE_LOGITS_SHA256
-        || format!("{:x}", Sha256::digest(&probability_bytes))
-            != ROUTER_ORACLE_PROBABILITIES_SHA256
+    if expected_hashes
+        .iter()
+        .any(|(name, expected)| hashes.get(*name).and_then(Value::as_str) != Some(*expected))
+        || format!("{:x}", Sha256::digest(&logits_bytes)) != ROUTER_ORACLE_LOGITS_SHA256
+        || format!("{:x}", Sha256::digest(&probability_bytes)) != ROUTER_ORACLE_PROBABILITIES_SHA256
         || format!("{:x}", Sha256::digest(&ids_bytes)) != ROUTER_ORACLE_SELECTED_IDS_SHA256
         || format!("{:x}", Sha256::digest(&selected_bytes))
             != ROUTER_ORACLE_SELECTED_PROBABILITIES_SHA256
@@ -665,7 +670,10 @@ fn validate_oracle_result(
     Ok((single_row, two_row))
 }
 
-fn oracle_object<'a>(value: &'a Value, subject: &str) -> Result<&'a Map<String, Value>, ContractError> {
+fn oracle_object<'a>(
+    value: &'a Value,
+    subject: &str,
+) -> Result<&'a Map<String, Value>, ContractError> {
     value
         .as_object()
         .ok_or_else(|| invalid_oracle(format!("{subject} is not an object")))
@@ -686,7 +694,9 @@ fn oracle_exact_fields(
     subject: &str,
 ) -> Result<(), ContractError> {
     if object.len() != expected.len() || expected.iter().any(|key| !object.contains_key(*key)) {
-        return Err(invalid_oracle(format!("{subject} fields differ from the closed contract")));
+        return Err(invalid_oracle(format!(
+            "{subject} fields differ from the closed contract"
+        )));
     }
     Ok(())
 }
@@ -701,7 +711,10 @@ fn oracle_u64_array<const N: usize>(
         .ok_or_else(|| invalid_oracle("router oracle integer array shape differs"))?;
     let parsed = values
         .iter()
-        .map(|item| item.as_u64().ok_or_else(|| invalid_oracle("router oracle integer differs")))
+        .map(|item| {
+            item.as_u64()
+                .ok_or_else(|| invalid_oracle("router oracle integer differs"))
+        })
         .collect::<Result<Vec<_>, _>>()?;
     parsed
         .try_into()
@@ -713,7 +726,10 @@ fn oracle_string_array(value: Option<&Value>) -> Result<Vec<&str>, ContractError
         .and_then(Value::as_array)
         .ok_or_else(|| invalid_oracle("router oracle string array is missing"))?
         .iter()
-        .map(|item| item.as_str().ok_or_else(|| invalid_oracle("router oracle string differs")))
+        .map(|item| {
+            item.as_str()
+                .ok_or_else(|| invalid_oracle("router oracle string differs"))
+        })
         .collect()
 }
 
@@ -741,7 +757,9 @@ fn oracle_f32_matrix(
                         .ok_or_else(|| invalid_oracle(format!("{subject} value is not finite")))?;
                     let canonical = value as f32;
                     if !canonical.is_finite() || f64::from(canonical).to_bits() != value.to_bits() {
-                        return Err(invalid_oracle(format!("{subject} value is not canonical F32")));
+                        return Err(invalid_oracle(format!(
+                            "{subject} value is not canonical F32"
+                        )));
                     }
                     Ok(canonical)
                 })
@@ -766,7 +784,10 @@ fn oracle_u64_matrix(
                 .filter(|values| values.len() == columns)
                 .ok_or_else(|| invalid_oracle(format!("{subject} column count differs")))?
                 .iter()
-                .map(|item| item.as_u64().ok_or_else(|| invalid_oracle(format!("{subject} value differs"))))
+                .map(|item| {
+                    item.as_u64()
+                        .ok_or_else(|| invalid_oracle(format!("{subject} value differs")))
+                })
                 .collect()
         })
         .collect()
@@ -774,7 +795,11 @@ fn oracle_u64_matrix(
 
 fn oracle_tolerance(value: Option<&Value>, subject: &str) -> Result<(f64, f64), ContractError> {
     let tolerance = oracle_object_option(value, subject)?;
-    oracle_exact_fields(tolerance, &["absolute_tolerance", "relative_tolerance"], subject)?;
+    oracle_exact_fields(
+        tolerance,
+        &["absolute_tolerance", "relative_tolerance"],
+        subject,
+    )?;
     let absolute = tolerance
         .get("absolute_tolerance")
         .and_then(Value::as_f64)
@@ -794,7 +819,9 @@ fn oracle_flatten_rows(rows: &[Vec<f32>]) -> Vec<f32> {
 
 fn canonical_f32le_bytes(values: &[f32]) -> Result<Vec<u8>, ContractError> {
     if values.iter().any(|value| !value.is_finite()) {
-        return Err(invalid_oracle("router oracle contains a non-finite F32 value"));
+        return Err(invalid_oracle(
+            "router oracle contains a non-finite F32 value",
+        ));
     }
     Ok(values
         .iter()
@@ -1716,9 +1743,7 @@ fn validate_timing_observation(
         }
     };
     let expected_timing_profile = match series.series_kind {
-        RouterTimingSeriesKind::CostlyReal | RouterTimingSeriesKind::FirstProcessCostly => {
-            "costly"
-        }
+        RouterTimingSeriesKind::CostlyReal | RouterTimingSeriesKind::FirstProcessCostly => "costly",
         RouterTimingSeriesKind::StageDiagnostic => "stage",
         RouterTimingSeriesKind::MajorMinimallyInstrumented
         | RouterTimingSeriesKind::InexpensiveSynthetic => "minimal",

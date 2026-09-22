@@ -370,10 +370,7 @@ fn fixed_sample_policies_reject_count_overrides() {
             "clean first-process reused state",
             ("process_state", "reused_process"),
         ),
-        (
-            "clean first-process warm condition",
-            ("condition", "warm"),
-        ),
+        ("clean first-process warm condition", ("condition", "warm")),
     ] {
         let mut changed = clean_first_process.clone();
         changed[mutate.0] = json!(mutate.1);

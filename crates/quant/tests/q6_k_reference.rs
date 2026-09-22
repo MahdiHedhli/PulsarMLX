@@ -2,7 +2,11 @@ use quant::{decode_q6_k_matrix, Q6KError, Q6_K_BLOCK_BYTES};
 
 const ELEMENTS: usize = 256;
 
-fn pack_block(quants: &[i8; ELEMENTS], scale_bits: u16, scales: &[i8; 16]) -> [u8; Q6_K_BLOCK_BYTES] {
+fn pack_block(
+    quants: &[i8; ELEMENTS],
+    scale_bits: u16,
+    scales: &[i8; 16],
+) -> [u8; Q6_K_BLOCK_BYTES] {
     let mut block = [0_u8; Q6_K_BLOCK_BYTES];
     let mut ql = [0_u8; 128];
     let mut qh = [0_u8; 64];
@@ -55,8 +59,8 @@ fn matrix_decode_rejects_truncation_without_partial_output() {
     let scales = [1_i8; 16];
     let block = pack_block(&quants, 0x3c00, &scales);
     let mut decoded = [17.0_f32; ELEMENTS];
-    let error = decode_q6_k_matrix(&block[..Q6_K_BLOCK_BYTES - 1], 1, ELEMENTS, &mut decoded)
-        .unwrap_err();
+    let error =
+        decode_q6_k_matrix(&block[..Q6_K_BLOCK_BYTES - 1], 1, ELEMENTS, &mut decoded).unwrap_err();
     assert_eq!(
         error,
         Q6KError::EncodedLengthMismatch {
