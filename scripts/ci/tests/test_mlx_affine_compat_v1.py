@@ -151,6 +151,17 @@ class Schema(unittest.TestCase):
             self.skipTest("the recorded observation is not a completed run")
         self.validate_full_report(observation)
 
+    def test_the_recorded_ci_report_validates_when_one_is_supplied(self):
+        # Evidence here is append-only, so the CI run's own report is a
+        # separate file rather than an edit to the one above.
+        evidence = ROOT / "docs/architecture/reviews/evidence/f020-slice1-ci-numerics-results-v1.json"
+        if not evidence.is_file():
+            self.skipTest("no recorded CI numerics evidence in this tree")
+        recorded = json.loads(evidence.read_text())
+        self.assertFalse(recorded["r2_is_correctness_oracle"])
+        self.assertTrue(recorded["r2_ci_summary"]["fixture_manifest_matches"])
+        self.validate_full_report(recorded["r2_compatibility_observation_on_ci"])
+
 
 if __name__ == "__main__":
     unittest.main()

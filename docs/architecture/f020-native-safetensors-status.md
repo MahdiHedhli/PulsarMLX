@@ -117,8 +117,15 @@ pinned MLX 0.32.0 and mlx-metal 0.32.0 on `Device(gpu, 0)`, with exact codes,
 bit-identical values after rounding and a maximum absolute difference of 0.0 —
 and against a fixture manifest whose sha256 matches the tree. The full CI
 environment and report are in
-[the numerics evidence](reviews/evidence/f020-slice1-numerics-results-v1.json)
-under `ci`.
+[the CI numerics evidence](reviews/evidence/f020-slice1-ci-numerics-results-v1.json).
+
+That is a separate file on purpose. Evidence under
+`docs/architecture/reviews/evidence/` is **append-only**: an added file may not
+later be edited. The first attempt to record the CI result appended it to
+`f020-slice1-numerics-results-v1.json` instead, and
+`scripts/ci/validate_evidence_change.py` correctly refused the push. The file
+has been restored to its as-added bytes and the CI observation lives in its own
+file.
 
 ## Next
 

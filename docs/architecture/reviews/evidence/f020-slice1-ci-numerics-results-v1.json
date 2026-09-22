@@ -1,26 +1,62 @@
 {
  "branch": "feat/020-mlx-safetensors-affine-20260922",
- "contract": "specs/020-mlx-safetensors-affine/contracts/numerics-v1.json",
- "environment_note": "The R2 environment is recorded inside r2_compatibility_observation.environment. It is the MacBook's lockfile-backed venv; CI records its own in the native small-fixture job's step output.",
- "feature": "020-mlx-safetensors-affine",
- "git_head": "785ad53a0f6b35919a1526c2f24e68808dee1d4d",
- "model_executed": false,
- "python_suites": {
-  "test_mlx_affine_compat_v1": {
-   "result": "PASS",
-   "tests": 10
+ "classification": "FULL_NATIVE",
+ "companion_evidence": "docs/architecture/reviews/evidence/f020-slice1-numerics-results-v1.json",
+ "conclusion": "success",
+ "environment_comparison": {
+  "agreement": "the same 13 quantized modules, exact codes, bit-identical values after rounding, max abs difference 0.0 on both",
+  "ci": {
+   "device": "Device(gpu, 0)",
+   "metal_available": true,
+   "mlx": "0.32.0",
+   "mlx_metal": "0.32.0",
+   "platform": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+   "python": "3.13.13"
   },
-  "test_mlx_affine_reference_v1": {
-   "result": "PASS",
-   "tests": 14
-  },
-  "test_safetensors_fixtures_v1": {
-   "result": "PASS",
-   "tests": 10
+  "local": {
+   "device": "Device(gpu, 0)",
+   "metal_available": true,
+   "mlx": "0.32.0",
+   "mlx_metal": "0.32.0",
+   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+   "python": "3.13.13"
   }
  },
- "python_tests_passed": 34,
- "r2_compatibility_observation": {
+ "feature": "020-mlx-safetensors-affine",
+ "jobs": {
+  "Apple MLX small-fixture validation": "success",
+  "Apple Silicon workspace baseline": "success",
+  "CI aggregate status": "success",
+  "Classify committed change": "success",
+  "Closed F017 branch guard": "skipped",
+  "Documentation integrity": "skipped",
+  "Evidence integrity": "skipped"
+ },
+ "model_executed": false,
+ "new_required_steps": {
+  "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)": {
+   "conclusion": "success",
+   "job": "apple-mlx-small-fixtures",
+   "step_number": 8
+  },
+  "Test MLX affine representation": {
+   "conclusion": "success",
+   "job": "apple-mlx-small-fixtures",
+   "step_number": 9
+  }
+ },
+ "r2_ci_summary": {
+  "codes_exactly_equal_everywhere": true,
+  "failures": 0,
+  "fixture_manifest_matches": true,
+  "fixture_manifest_sha256_in_tree": "7be7017ee841b5fa8db580770e7ee6522c99bb0413ebe05480790f276aea8dc3",
+  "fixture_manifest_sha256_reported_by_ci": "7be7017ee841b5fa8db580770e7ee6522c99bb0413ebe05480790f276aea8dc3",
+  "max_abs_difference": 0.0,
+  "quantized_modules_observed": 13,
+  "result": "PASS",
+  "values_bit_identical_after_rounding_everywhere": true
+ },
+ "r2_compatibility_observation_on_ci": {
   "arm": "R2",
   "cases": {
    "mixed-4-8-index-total-size-v1": [
@@ -224,12 +260,12 @@
   },
   "environment": {
    "default_device": "Device(gpu, 0)",
-   "interpreter": "/Volumes/APFS 2TB/PulsarMLX-GLM53-Flash/safetensors-20260922/slice1/wt/.venv/bin/python",
+   "interpreter": "/Users/runner/work/PulsarMLX/PulsarMLX/.venv/bin/python",
    "machine": "arm64",
    "metal_available": true,
    "mlx_metal_version": "0.32.0",
    "mlx_version": "0.32.0",
-   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+   "platform": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
    "python_version": "3.13.13"
   },
   "failures": 0,
@@ -242,115 +278,12 @@
   "statement": "A compatibility observation against the pinned upstream MLX. Correctness is defined by R1; this arm never establishes it."
  },
  "r2_is_correctness_oracle": false,
- "r3_vs_r1": {
-  "arms": {
-   "R1": [
-    "crates/mlx-affine/src/reference.rs",
-    "scripts/research/mlx_affine_reference_v1.py"
-   ],
-   "R3": [
-    "crates/mlx-affine/src/decode.rs"
-   ]
-  },
-  "checks": {
-   "C-CODES": {
-    "kind": "exact_invariant",
-    "result": "PASS",
-    "where": "12 admitted golden cases and 18 seeded randomized geometries"
-   },
-   "C-DEQUANT-HALF": {
-    "kind": "exact_invariant",
-    "result": "PASS",
-    "statement": "R3 == round_to_f32(R1), bit for bit",
-    "where": "every BF16 and F16 golden case, 18 seeded randomized geometries covering bits {4,8} x group {32,64,128} x {1,2,4} groups per row, and 13 modules of the three positive fixtures"
-   },
-   "C-DEQUANT-SINGLE": {
-    "kind": "prospectively_justified_bound",
-    "largest_observed_absolute_difference": 2.384185791015625e-07,
-    "largest_observed_ratio_to_the_product_term_alone": 0.88,
-    "note": "the first derivation of this bound was wrong under cancellation and is recorded as superseded in the contract's correction block",
-    "result": "PASS",
-    "statement": "|R3 - R1| <= 2^-24 * (|scale| * code + |R1|) * (1 + 2^-24)"
-   },
-   "C-DETERMINISM": {
-    "kind": "exact_invariant",
-    "result": "PASS"
-   },
-   "C-SHAPE": {
-    "kind": "exact_invariant",
-    "result": "PASS"
-   },
-   "C-SLICE": {
-    "kind": "exact_invariant",
-    "result": "PASS"
-   }
-  },
-  "cross_check": "the two independently written binary16 widenings agree on all 65,536 bit patterns",
-  "fail_closed_demonstration": "the golden fixture's 2-, 3- and 6-bit cases are refused by crates::spec::Bits and still decoded by the reference, so the refusal is demonstrated rather than asserted in prose",
-  "independence_enforced_by": "crates/mlx-affine/tests/independence.rs"
- },
  "real_checkpoint_payload_read": false,
  "recorded_on": "2026-09-22",
- "rust_suites": {
-  "checkpoint_open::tests/checkpoint_open.rs": {
-   "failed": 0,
-   "passed": 14,
-   "result": "OK"
-  },
-  "doc-tests::mlx_affine": {
-   "failed": 0,
-   "passed": 0,
-   "result": "OK"
-  },
-  "doc-tests::safetensors_catalog": {
-   "failed": 0,
-   "passed": 0,
-   "result": "OK"
-  },
-  "fixtures::tests/fixtures.rs": {
-   "failed": 0,
-   "passed": 4,
-   "result": "OK"
-  },
-  "header_rules::tests/header_rules.rs": {
-   "failed": 0,
-   "passed": 22,
-   "result": "OK"
-  },
-  "independence::tests/independence.rs": {
-   "failed": 0,
-   "passed": 6,
-   "result": "OK"
-  },
-  "mlx_affine::unittests src/lib.rs": {
-   "failed": 0,
-   "passed": 7,
-   "result": "OK"
-  },
-  "negative_fixtures::tests/negative_fixtures.rs": {
-   "failed": 0,
-   "passed": 2,
-   "result": "OK"
-  },
-  "numerics::tests/numerics.rs": {
-   "failed": 0,
-   "passed": 5,
-   "result": "OK"
-  },
-  "representation::tests/representation.rs": {
-   "failed": 0,
-   "passed": 23,
-   "result": "OK"
-  },
-  "safetensors_catalog::unittests src/lib.rs": {
-   "failed": 0,
-   "passed": 7,
-   "result": "OK"
-  }
- },
- "rust_tests_failed": 0,
- "rust_tests_passed": 90,
- "schema": "pulsarmlx.f020.slice1-numerics-results/1.0.0",
+ "run_head": "2d63b46e13ed7809774d95f9d751917081663328",
+ "run_id": 35739240691,
+ "schema": "pulsarmlx.f020.slice1-ci-numerics-results/1.0.0",
  "slice": 1,
- "statement": "R3 against R1 under the frozen contract, plus the R2 compatibility observation. R2 is not a correctness oracle and no result here is presented as one."
+ "statement": "The environment and result of the two F020 required CI steps, recorded as a NEW evidence file rather than as an edit to f020-slice1-numerics-results-v1.json. Evidence under this directory is append-only; the first attempt to record this by modifying that file was correctly refused by scripts/ci/validate_evidence_change.py and the file has been restored to its as-added bytes.",
+ "workflow": ".github/workflows/macos.yml"
 }
