@@ -1,0 +1,2 @@
+AffineError::DuplicateConfigKey
+The quantization object declares "bits" twice, 3 and then the admitted 4.

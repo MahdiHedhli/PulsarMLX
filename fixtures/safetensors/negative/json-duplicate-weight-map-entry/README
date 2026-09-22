@@ -1,0 +1,2 @@
+CatalogError::DuplicateKey
+The index maps one tensor name twice; the first value names a missing shard.

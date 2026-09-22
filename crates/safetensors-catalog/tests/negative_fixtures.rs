@@ -23,6 +23,7 @@ fn variant(error: &CatalogError) -> &'static str {
         CatalogError::MalformedHeader { .. } => "CatalogError::MalformedHeader",
         CatalogError::HeaderTooLarge { .. } => "CatalogError::HeaderTooLarge",
         CatalogError::InvalidJson { .. } => "CatalogError::InvalidJson",
+        CatalogError::DuplicateKey { .. } => "CatalogError::DuplicateKey",
         CatalogError::NotAnObject { .. } => "CatalogError::NotAnObject",
         CatalogError::InvalidMetadata { .. } => "CatalogError::InvalidMetadata",
         CatalogError::InvalidTensorEntry { .. } => "CatalogError::InvalidTensorEntry",
@@ -95,7 +96,7 @@ fn every_catalog_negative_fixture_is_refused_with_the_variant_it_declares() {
     // The rest are affine cases, exercised by mlx-affine's own fixture test.
     for name in &skipped {
         assert!(
-            name.starts_with("triple-") || name.starts_with("config-"),
+            name.starts_with("triple-") || name.starts_with("config-") || name.starts_with("json-"),
             "{name} declares neither a CatalogError nor an affine case"
         );
     }

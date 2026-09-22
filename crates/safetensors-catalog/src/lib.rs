@@ -38,6 +38,7 @@ pub mod dtype;
 pub mod error;
 pub mod header;
 pub mod index;
+pub mod json_guard;
 
 pub use admission::{same_object, Admitted, FileIdentity, RootDirectory};
 pub use checkpoint::{
@@ -50,3 +51,4 @@ pub use header::{
     METADATA_KEY,
 };
 pub use index::{parse_index, validate_shard_path, Index};
+pub use json_guard::{reject_duplicate_keys, reject_duplicate_keys_str, MAX_DEPTH};

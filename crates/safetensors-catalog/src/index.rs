@@ -61,6 +61,7 @@ pub fn validate_shard_path(path: &str) -> Result<()> {
 
 /// Parse `model.safetensors.index.json`.
 pub fn parse_index(json: &str) -> Result<Index> {
+    crate::json_guard::reject_duplicate_keys_str(json, "model.safetensors.index.json")?;
     let value: Value = serde_json::from_str(json).map_err(|error| CatalogError::InvalidIndex {
         detail: error.to_string(),
     })?;

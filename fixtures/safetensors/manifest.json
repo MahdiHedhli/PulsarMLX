@@ -169,8 +169,8 @@
    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
   },
   "negative/header-duplicate-tensor-name/README": {
-   "bytes": 78,
-   "sha256": "2c62373bb7838b63a2b71b86d7efc009c19a73ad9b85f5549aea4b12e45b24bd"
+   "bytes": 108,
+   "sha256": "04d93fcf3741e7922b476ccf74387ff8f6dc1539b91032345041be6e1cf54f02"
   },
   "negative/header-duplicate-tensor-name/model.safetensors": {
    "bytes": 118,
@@ -259,6 +259,46 @@
   "negative/index-symlink/README": {
    "bytes": 114,
    "sha256": "de0f8de565aa5417197b84267d8ab5604da35425b4aae6b3e124b834997fa62a"
+  },
+  "negative/json-duplicate-metadata-member/README": {
+   "bytes": 105,
+   "sha256": "5589c7fdb1017cafee8002dda71acb567fa7a96ed7fdb58e6a760619afc7511c"
+  },
+  "negative/json-duplicate-metadata-member/model.safetensors": {
+   "bytes": 109,
+   "sha256": "91d862bb54103d48cd58c61ea04b4749259874d2fed4d5fe776b94c3bdfb5df2"
+  },
+  "negative/json-duplicate-quantization-bits/README": {
+   "bytes": 106,
+   "sha256": "3c373b1cdd285007c3cfea4927ceed24014d3b665825d498ccd4d9ace2ff4f66"
+  },
+  "negative/json-duplicate-quantization-bits/config.json": {
+   "bytes": 53,
+   "sha256": "8cd3b026c6435eecff270259fb84bc05d903540f2bd67cd92db03b40687457b8"
+  },
+  "negative/json-duplicate-quantization-bits/model.safetensors": {
+   "bytes": 274,
+   "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+  },
+  "negative/json-duplicate-tensor-dtype/README": {
+   "bytes": 99,
+   "sha256": "4771fc4805e0ded3cb847ef2c5d0d0b38cd76ed3422bf84af1be3f1e2f0572cd"
+  },
+  "negative/json-duplicate-tensor-dtype/model.safetensors": {
+   "bytes": 98,
+   "sha256": "1d0e35e310b0fe3962c7f68adae24901a8557cf8a69bf2b78534ad42bd4e4077"
+  },
+  "negative/json-duplicate-weight-map-entry/README": {
+   "bytes": 104,
+   "sha256": "6cabf05e163469ab0f29519022f53874b976352f756d32fb9e984803ff08240c"
+  },
+  "negative/json-duplicate-weight-map-entry/model.safetensors": {
+   "bytes": 274,
+   "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+  },
+  "negative/json-duplicate-weight-map-entry/model.safetensors.index.json": {
+   "bytes": 142,
+   "sha256": "6cd4c60a652b5a2db44753ca7ed1213178be53a8610af8902402390a95e69f51"
   },
   "negative/layout-ambiguous-two-shards/README": {
    "bytes": 97,
@@ -446,7 +486,7 @@
   }
  },
  "generator": "scripts/research/generate_safetensors_fixtures_v1.py",
- "generator_sha256": "e34e7f8ca743456ab0d47f519d9f4611c548cc931cf0fbc534357500bd1a2eaa",
+ "generator_sha256": "0b013aa4516ed0d18abc8dc4664101db7166c205a03e6f19028201b868e4c64f",
  "mlx_was_not_run": true,
  "negative": [
   "config-dicts-differ",
@@ -471,6 +511,10 @@
   "header-unsupported-dtype",
   "index-is-a-directory",
   "index-symlink",
+  "json-duplicate-metadata-member",
+  "json-duplicate-quantization-bits",
+  "json-duplicate-tensor-dtype",
+  "json-duplicate-weight-map-entry",
   "layout-ambiguous-two-shards",
   "layout-cross-shard-mismatch",
   "layout-indexed-tensor-absent",

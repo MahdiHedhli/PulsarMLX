@@ -377,8 +377,8 @@ def negative_cases():
             b"\0")},
     )
     cases["header-duplicate-tensor-name"] = (
-        "CatalogError::DuplicateTensor",
-        "One header declares the same tensor name twice.",
+        "CatalogError::DuplicateKey",
+        "One header declares the same tensor name twice, which is a repeated JSON member.",
         {"model.safetensors": struct.pack("<Q", 108) + (
             b'{"a":{"dtype":"U8","shape":[1],"data_offsets":[0,1]},'
             b'"a":{"dtype":"U8","shape":[1],"data_offsets":[1,2]}}'
@@ -416,6 +416,43 @@ def negative_cases():
         {"model.safetensors": raw_header(
             {"a": {"dtype": "F32", "shape": [4294967295, 4294967295, 4294967295],
                    "data_offsets": [0, 4]}}, b"\0" * 4)},
+    )
+
+    # --- duplicate JSON members, at every depth (Astra finding 2) ---
+    # Each of these has two readings. In every one the LAST occurrence is
+    # perfectly valid, which is exactly why accepting it would be wrong.
+    cases["json-duplicate-tensor-dtype"] = (
+        "CatalogError::DuplicateKey",
+        'A tensor entry declares "dtype" twice; the geometry matches the second.',
+        {"model.safetensors": struct.pack("<Q", 86) + (
+            b'{"a":{"dtype":"U8","dtype":"U16","shape":[2],"data_offsets":[0,4]}}'
+        ).ljust(86, b" ") + b"\0\0\0\0"},
+    )
+    cases["json-duplicate-metadata-member"] = (
+        "CatalogError::DuplicateKey",
+        '__metadata__ declares "format" twice, first as a number and then as a string.',
+        {"model.safetensors": struct.pack("<Q", 100) + (
+            b'{"__metadata__":{"format":7,"format":"mlx"},'
+            b'"a":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}'
+        ).ljust(100, b" ") + b"\0"},
+    )
+    cases["json-duplicate-weight-map-entry"] = (
+        "CatalogError::DuplicateKey",
+        "The index maps one tensor name twice; the first value names a missing shard.",
+        {"model.safetensors": simple_shard(),
+         "model.safetensors.index.json":
+             b'{"weight_map":{"m.weight":"absent.safetensors","m.weight":"model.safetensors",'
+             b'"m.scales":"model.safetensors","m.biases":"model.safetensors"}}\n'},
+    )
+    cases["json-duplicate-quantization-bits"] = (
+        "AffineError::DuplicateConfigKey",
+        'The quantization object declares "bits" twice, 3 and then the admitted 4.',
+        {"model.safetensors": one_shard_case([
+            ("m.weight", "U32", shapes["weight"], weight),
+            ("m.scales", "BF16", shapes["metadata"], scales),
+            ("m.biases", "BF16", shapes["metadata"], biases),
+         ]),
+         "config.json": b'{"quantization":{"group_size":64,"bits":3,"bits":4}}\n'},
     )
 
     # --- layout and index ---

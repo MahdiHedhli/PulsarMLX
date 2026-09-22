@@ -135,10 +135,53 @@ fn a_duplicate_name_in_one_header_is_refused() {
         r#""a":{"dtype":"U8","shape":[1],"data_offsets":[1,2]}}"#
     );
     let (bytes, len) = shard(json, 2);
-    assert!(matches!(
-        parse_header(&bytes, len),
-        Err(CatalogError::DuplicateTensor { .. })
-    ));
+    // A repeated member inside one JSON object is a JSON-level defect at every
+    // depth, so it reports DuplicateKey with its path. DuplicateTensor now
+    // means exactly one thing: the same name in two different shards.
+    match parse_header(&bytes, len) {
+        Err(CatalogError::DuplicateKey { path }) => assert_eq!(path, "a"),
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_duplicate_member_at_any_depth_is_refused_with_its_path() {
+    // Astra's examples, in memory. Every one has a valid last occurrence,
+    // which is exactly why accepting it would be wrong.
+    let cases: [(&str, &str, usize); 3] = [
+        (
+            r#"{"a":{"dtype":"U8","dtype":"U16","shape":[2],"data_offsets":[0,4]}}"#,
+            "a.dtype",
+            4,
+        ),
+        (
+            r#"{"__metadata__":{"format":7,"format":"mlx"},"a":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#,
+            "__metadata__.format",
+            1,
+        ),
+        (
+            r#"{"a":{"dtype":"U8","shape":[1],"shape":[1],"data_offsets":[0,1]}}"#,
+            "a.shape",
+            1,
+        ),
+    ];
+    for (json, expected, data) in cases {
+        let (bytes, len) = shard(json, data);
+        match parse_header(&bytes, len) {
+            Err(CatalogError::DuplicateKey { path }) => assert_eq!(path, expected),
+            other => panic!("{json}: unexpected {other:?}"),
+        }
+    }
+}
+
+#[test]
+fn an_index_with_a_repeated_tensor_name_is_refused() {
+    match safetensors_catalog::parse_index(
+        r#"{"weight_map":{"a":"absent.safetensors","a":"model.safetensors"}}"#,
+    ) {
+        Err(CatalogError::DuplicateKey { path }) => assert_eq!(path, "weight_map.a"),
+        other => panic!("unexpected {other:?}"),
+    }
 }
 
 #[test]

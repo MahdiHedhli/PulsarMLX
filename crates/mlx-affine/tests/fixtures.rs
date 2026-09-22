@@ -280,6 +280,7 @@ fn affine_variant(error: &AffineError) -> &'static str {
         AffineError::InconsistentConfig => "AffineError::InconsistentConfig",
         AffineError::UnsupportedOverrideValue { .. } => "AffineError::UnsupportedOverrideValue",
         AffineError::InvalidConfigJson { .. } => "AffineError::InvalidConfigJson",
+        AffineError::DuplicateConfigKey { .. } => "AffineError::DuplicateConfigKey",
         AffineError::NoQuantizationConfig => "AffineError::NoQuantizationConfig",
         AffineError::IncompleteTriple { .. } => "AffineError::IncompleteTriple",
         AffineError::ScalesBiasesMismatch { .. } => "AffineError::ScalesBiasesMismatch",

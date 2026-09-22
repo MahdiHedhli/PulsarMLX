@@ -230,6 +230,20 @@ impl QuantizationConfig {
     /// is checked against the shards themselves. Admitting it would add a
     /// second, weaker source of truth.
     pub fn from_config_json(json: &str) -> Result<Self> {
+        // Duplicate members at any depth are refused before the text becomes a
+        // map: `{"bits":3,"bits":4}` has two readings, and the second being
+        // valid is not a reason to accept it. The scanner lives in
+        // `safetensors-catalog` so both crates refuse the same documents.
+        safetensors_catalog::reject_duplicate_keys_str(json, "config.json").map_err(|error| {
+            match error {
+                safetensors_catalog::CatalogError::DuplicateKey { path } => {
+                    AffineError::DuplicateConfigKey { path }
+                }
+                other => AffineError::InvalidConfigJson {
+                    detail: other.to_string(),
+                },
+            }
+        })?;
         let value: Value =
             serde_json::from_str(json).map_err(|error| AffineError::InvalidConfigJson {
                 detail: error.to_string(),

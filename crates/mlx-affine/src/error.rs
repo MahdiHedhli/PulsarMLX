@@ -22,6 +22,8 @@ pub enum AffineError {
     UnsupportedOverrideValue { module: String, detail: String },
     /// The configuration JSON is malformed.
     InvalidConfigJson { detail: String },
+    /// The configuration declares the same member twice, at any depth.
+    DuplicateConfigKey { path: String },
     /// There is no `quantization` object at all.
     NoQuantizationConfig,
     /// One or two of `weight`/`scales`/`biases` are present, or the weight is
@@ -68,6 +70,9 @@ impl fmt::Display for AffineError {
                 write!(f, "override for {module}: {detail}")
             }
             Self::InvalidConfigJson { detail } => write!(f, "invalid configuration JSON: {detail}"),
+            Self::DuplicateConfigKey { path } => {
+                write!(f, "duplicate configuration member {path:?}: two readings")
+            }
             Self::NoQuantizationConfig => write!(f, "the configuration declares no quantization"),
             Self::IncompleteTriple { module, detail } => {
                 write!(f, "module {module}: incomplete affine triple: {detail}")

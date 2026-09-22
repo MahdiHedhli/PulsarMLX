@@ -19,6 +19,9 @@ pub enum CatalogError {
     HeaderTooLarge { shard: ShardName, header_len: u64 },
     /// The header bytes are not valid JSON.
     InvalidJson { shard: ShardName, detail: String },
+    /// A JSON object declares the same member twice, at any depth. The input
+    /// has two readings and is refused rather than resolved to the last one.
+    DuplicateKey { path: String },
     /// The header JSON is valid but is not a JSON object.
     NotAnObject { shard: ShardName },
     /// `__metadata__` is present but is not a map of string to string.
@@ -116,6 +119,9 @@ impl fmt::Display for CatalogError {
                 write!(f, "{shard}: header length {header_len} exceeds the admitted maximum")
             }
             Self::InvalidJson { shard, detail } => write!(f, "{shard}: header is not JSON: {detail}"),
+            Self::DuplicateKey { path } => {
+                write!(f, "duplicate JSON member {path:?}: the document has two readings")
+            }
             Self::NotAnObject { shard } => write!(f, "{shard}: header JSON is not an object"),
             Self::InvalidMetadata { shard, detail } => {
                 write!(f, "{shard}: __metadata__ is not a string map: {detail}")

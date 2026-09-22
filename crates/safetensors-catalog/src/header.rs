@@ -289,6 +289,11 @@ pub fn parse_header_named(shard: &str, bytes: &[u8], file_len: u64) -> Result<Sh
         shard: shard.to_string(),
         detail: "header does not fit in memory on this target".to_string(),
     })?];
+    // Duplicate members are refused at every depth, before the bytes reach a
+    // deserializer that would collapse them. The `Pairs` visitor below still
+    // guards the outermost level, so the top level is checked twice rather
+    // than relying on either pass alone.
+    crate::json_guard::reject_duplicate_keys(json, shard)?;
     let pairs: Pairs = serde_json::from_slice(json).map_err(|error| {
         if error.is_data() {
             CatalogError::NotAnObject {
