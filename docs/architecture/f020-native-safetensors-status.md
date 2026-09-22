@@ -6,7 +6,7 @@ deliberately claims nothing about a real checkpoint.
 
 ## What Slice 1 qualified
 
-Two model-neutral crates, on synthetic fixtures, with no model weights, no
+Two model-neutral library crates, on synthetic fixtures, with no model weights, no
 downloads and no model execution.
 
 * **`crates/safetensors-catalog`** — Safetensors header and index parsing, a

@@ -96,9 +96,21 @@ pub fn brain_half_to_f64(bits: u16) -> f64 {
     f64::from(f32::from_bits((bits as u32) << 16))
 }
 
-/// Widen an IEEE-754 binary16 bit pattern to binary64. Exact: every binary16
-/// value is a binary64 value. Decoded by hand so that this file depends on
-/// nothing, not even a conversion intrinsic.
+/// Widen an IEEE-754 binary16 bit pattern to binary64. Decoded by hand so that
+/// this file depends on nothing, not even a conversion intrinsic.
+///
+/// Exact for every finite value, including subnormals, and for both infinities
+/// and both signed zeros.
+///
+/// **NaN is not preserved.** Every binary16 NaN, quiet or signalling, of
+/// either sign and any payload, becomes the single canonical `f64::NAN`. That
+/// is a deliberate limit rather than an oversight: this function exists to
+/// widen stored quantization metadata, NaN metadata is outside the qualified
+/// numerical domain and is refused by `dequantize_rows_half` before any
+/// comparison happens, and a reference that reproduced NaN payloads would be
+/// claiming a fidelity the contract does not ask for and does not check.
+/// `nan_is_canonicalized_and_that_is_stated` in `tests/numerics.rs` pins the
+/// behaviour so it cannot change silently.
 pub fn half_to_f64(bits: u16) -> f64 {
     let sign = if bits & 0x8000 != 0 { -1.0f64 } else { 1.0f64 };
     let exponent = ((bits >> 10) & 0x1F) as i32;

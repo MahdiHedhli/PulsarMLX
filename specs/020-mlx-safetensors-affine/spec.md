@@ -2,7 +2,9 @@
 
 **Slice 1 only.** This document states the rules the two crates implement. It
 is model-neutral throughout: no model's tensor names appear in it, because none
-appear in the crates.
+appear in the **library** crates. The example census categorizes names and
+takes its rules from a caller-supplied file outside them, so the meaning of a
+prefix is never compiled in.
 
 Governing design: the F020 Phase 0 design note v2 (2026-09-22). Numerical
 contract: `contracts/numerics-v1.json`. Catalog rules in enforcement order:

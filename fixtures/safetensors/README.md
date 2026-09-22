@@ -47,7 +47,7 @@ parser change between them.
 
 ## Negative cases
 
-There are 40 negative cases, four of which are not expressible as bytes --
+There are 44 negative cases, four of which are not expressible as bytes --
 a shard symlinked outside the root, a shard symlinked inside it, an index
 that is a symlink and an index that is a directory -- because containment is
 decided about the object a descriptor holds, not about a string. `negative/<case>/` holds a tiny checkpoint or a

@@ -28,7 +28,7 @@ use std::path::{Path, PathBuf};
 
 use mlx_affine::module::module_paths;
 use mlx_affine::{classify_module, AffineError, ModuleKind, QuantizationConfig};
-use safetensors_catalog::{Checkpoint, Dtype};
+use safetensors_catalog::Checkpoint;
 use serde_json::{json, Map, Value};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -41,8 +41,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let output = PathBuf::from(
         arguments
             .next()
-            .ok_or("usage: header_census <dir> <output.json>")?,
+            .ok_or("usage: header_census <dir> <output.json> [rules.json]")?,
     );
+    // Categorization is caller-supplied. With no rules file the census still
+    // runs and reports no groups: a name means nothing to this crate unless a
+    // caller says what it means.
+    let rules: Vec<CensusGroup> = match arguments.next() {
+        None => Vec::new(),
+        Some(path) => {
+            let text = std::fs::read_to_string(&path)?;
+            let document: Value = serde_json::from_str(&text)?;
+            document["groups"]
+                .as_array()
+                .ok_or("the rules file needs a `groups` array")?
+                .iter()
+                .map(|group| CensusGroup {
+                    name: group["name"].as_str().unwrap_or("group").to_string(),
+                    prefix: group["prefix"].as_str().unwrap_or("").to_string(),
+                    expect_unquantized_dtype: group["expect_unquantized_dtype"]
+                        .as_str()
+                        .map(str::to_string),
+                })
+                .collect()
+        }
+    };
 
     let shards: Value =
         serde_json::from_str(&std::fs::read_to_string(directory.join("shards.json"))?)?;
@@ -117,15 +139,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut refusals: BTreeMap<String, u64> = BTreeMap::new();
     let mut refusal_examples: BTreeMap<String, String> = BTreeMap::new();
     let mut leading_shapes: BTreeMap<String, u64> = BTreeMap::new();
-    let mut vision_unquantized = 0u64;
-    let mut vision_total = 0u64;
+    let mut group_modules: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_unquantized: BTreeMap<String, u64> = BTreeMap::new();
     let mut modules = 0u64;
 
     for module in module_paths(checkpoint.catalog()) {
         modules += 1;
-        let is_vision = module.starts_with("vision_model");
-        if is_vision {
-            vision_total += 1;
+        let matched: Vec<&CensusGroup> = rules
+            .iter()
+            .filter(|group| module.starts_with(&group.prefix))
+            .collect();
+        for group in &matched {
+            *group_modules.entry(group.name.clone()).or_default() += 1;
         }
         match classify_module(checkpoint.catalog(), config.as_ref(), &module) {
             Ok(ModuleKind::Quantized(triple)) => {
@@ -147,8 +172,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 *unquantized_dtypes
                     .entry(tensor.dtype.to_string())
                     .or_default() += 1;
-                if is_vision {
-                    vision_unquantized += 1;
+                for group in &matched {
+                    *group_unquantized.entry(group.name.clone()).or_default() += 1;
                 }
             }
             Err(error) => {
@@ -162,15 +187,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mut dtypes: BTreeMap<String, u64> = BTreeMap::new();
-    let mut vision_tensors = 0u64;
-    let mut vision_bytes = 0u64;
+    let mut group_tensors: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_bytes: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_surprises: BTreeMap<String, Vec<String>> = BTreeMap::new();
     for (name, tensor) in checkpoint.catalog().iter() {
         *dtypes.entry(tensor.dtype.to_string()).or_default() += 1;
-        if name.starts_with("vision_model") {
-            vision_tensors += 1;
-            vision_bytes += tensor.byte_len;
-            if tensor.dtype != Dtype::Bf16 {
-                eprintln!("header_census: vision tensor {name} is {}", tensor.dtype);
+        for group in rules.iter().filter(|group| name.starts_with(&group.prefix)) {
+            *group_tensors.entry(group.name.clone()).or_default() += 1;
+            *group_bytes.entry(group.name.clone()).or_default() += tensor.byte_len;
+            if let Some(expected) = &group.expect_unquantized_dtype {
+                if &tensor.dtype.to_string() != expected {
+                    group_surprises
+                        .entry(group.name.clone())
+                        .or_default()
+                        .push(format!("{name} is {}", tensor.dtype));
+                }
             }
         }
     }
@@ -216,12 +247,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     report.insert("refusals".into(), json!(refusals));
     report.insert("refusal_examples".into(), json!(refusal_examples));
     report.insert(
-        "vision".into(),
+        "caller_supplied_groups".into(),
         json!({
-            "tensors": vision_tensors,
-            "bytes": vision_bytes,
-            "modules": vision_total,
-            "unquantized_modules": vision_unquantized,
+            "rules": rules
+                .iter()
+                .map(|group| json!({
+                    "name": group.name,
+                    "prefix": group.prefix,
+                    "expect_unquantized_dtype": group.expect_unquantized_dtype,
+                }))
+                .collect::<Vec<_>>(),
+            "tensors": group_tensors,
+            "bytes": group_bytes,
+            "modules": group_modules,
+            "unquantized_modules": group_unquantized,
+            "dtype_surprises": group_surprises,
         }),
     );
     report.insert(
@@ -256,6 +296,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     write(&output, &Value::Object(report))?;
     println!("header_census: wrote {}", output.display());
     Ok(())
+}
+
+/// One caller-supplied categorization rule. The crate attaches no meaning to
+/// a prefix; this is only what the caller asked to be counted.
+struct CensusGroup {
+    name: String,
+    prefix: String,
+    expect_unquantized_dtype: Option<String>,
 }
 
 fn write(output: &Path, report: &Value) -> std::io::Result<()> {

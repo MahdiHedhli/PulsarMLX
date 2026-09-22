@@ -30,7 +30,11 @@
 //! # Model neutrality
 //!
 //! Module paths are opaque strings. There is no regular expression over a
-//! tensor name in this crate and no model's naming convention anywhere in it.
+//! tensor name in this **library** crate and no model's naming convention in
+//! it. The claim is about the library, not about every file in the tree:
+//! `examples/header_census.rs` categorizes names, and it takes those rules
+//! from a caller-supplied JSON file that lives above these crates, so the
+//! meaning of a prefix stays outside.
 
 #![forbid(unsafe_code)]
 

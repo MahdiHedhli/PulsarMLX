@@ -128,12 +128,12 @@ fn the_positive_fixtures_open_and_are_deterministic() {
     let total = declared.index().unwrap().total_size.unwrap();
     // This asserts a property of the fixture's generator, not a rule of the
     // format. `metadata.total_size` is informational and the catalog
-    // constrains nothing by it -- deliberately: the real PipeNetwork Flash
-    // checkpoint declares the sum of its FILE sizes, header bytes included,
-    // which is 395,485 bytes more than the sum of its tensors
+    // constrains nothing by it -- deliberately: at least one real checkpoint
+    // declares the sum of its FILE sizes, header bytes included, which is
+    // more than the sum of its tensors
     // (docs/architecture/reviews/evidence/f020-slice1-metadata-compatibility-v1.json,
     // finding F1). Turning this equality into a validated invariant would
-    // reject that real, correct checkpoint.
+    // reject a real, correct checkpoint.
     assert_eq!(total, declared.payload_bytes().unwrap());
     assert_eq!(
         declared.catalog_digest().unwrap(),

@@ -34,9 +34,12 @@ scope**, admitted on their own terms:
    and the 4,000-line k-quant crate is untouched.
 
 3. **The format layer is model-neutral, and that is a requirement rather than a
-   preference.** `crates/safetensors-catalog` and `crates/mlx-affine` contain no
-   model's tensor names, no architecture constants and no regular expression
-   over a name. Module paths are opaque strings supplied by the caller. Any
+   preference.** The *library* crates `crates/safetensors-catalog` and
+   `crates/mlx-affine` contain no model's tensor names, no architecture
+   constants and no regular expression over a name. The example census
+   categorizes names and takes its rules from a caller-supplied file that lives
+   outside the crates, so the meaning of a prefix is never compiled in; the
+   claim is about the libraries, which is what a consumer links. Module paths are opaque strings supplied by the caller. Any
    GLM-specific mapping belongs in a layer above these crates. The synthetic
    fixtures use paths (`block.N....`) that belong to no model, and a test
    asserts that no model-specific token appears in them, so a parser cannot

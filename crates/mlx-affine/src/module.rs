@@ -3,7 +3,7 @@
 //!
 //! Module paths are **opaque strings**. Nothing here matches on a model's
 //! naming conventions, and there is no regular expression over a tensor name
-//! anywhere in this crate. The caller supplies the paths, or derives them from
+//! anywhere in this library crate. The caller supplies the paths, or derives them from
 //! the catalog with [`module_paths`], which does nothing but strip the three
 //! suffixes the format itself defines.
 

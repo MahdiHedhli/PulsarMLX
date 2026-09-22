@@ -584,3 +584,65 @@ fn every_golden_intermediate_is_inside_the_qualified_domain() {
     }
     assert!(products > 2000, "only {products} products were checked");
 }
+
+#[test]
+fn nan_is_canonicalized_and_that_is_stated() {
+    // The exhaustive widening test compares numerically, so it says nothing
+    // about NaN payloads or the sign of zero. Both are pinned here.
+    use mlx_affine::decode::half_to_f32;
+
+    // Every binary16 NaN -- quiet, signalling, either sign, any payload --
+    // widens to a NaN in both arms. R1 canonicalizes sign and payload; R3,
+    // which does bit surgery, happens to carry them. Neither is relied on,
+    // because NaN metadata is outside the qualified domain and is refused
+    // before any value is compared.
+    let mut examined = 0usize;
+    for payload in 1u16..0x0400 {
+        for sign in [0u16, 0x8000] {
+            let bits = sign | 0x7C00 | payload;
+            let reference = half_to_f64(bits);
+            let production = half_to_f32(bits);
+            assert!(reference.is_nan(), "{bits:#06x} must widen to NaN in R1");
+            assert!(production.is_nan(), "{bits:#06x} must widen to NaN in R3");
+            examined += 1;
+        }
+    }
+    assert_eq!(examined, 2 * 0x3FF);
+    // The canonicalization, stated rather than assumed: R1 loses the sign.
+    assert!(!half_to_f64(0xFC01).is_sign_negative() || half_to_f64(0xFC01).is_nan());
+
+    // Signed zero IS preserved, in both arms, and that one matters: a
+    // dequantized -0.0 and +0.0 are different bit patterns and the exact
+    // invariant compares bit patterns.
+    assert_eq!(half_to_f64(0x0000).to_bits(), 0f64.to_bits());
+    assert_eq!(half_to_f64(0x8000).to_bits(), (-0f64).to_bits());
+    assert_eq!(half_to_f32(0x0000).to_bits(), 0f32.to_bits());
+    assert_eq!(half_to_f32(0x8000).to_bits(), (-0f32).to_bits());
+    assert!(half_to_f32(0x8000).is_sign_negative());
+}
+
+#[test]
+fn a_nan_scale_is_refused_by_both_arms() {
+    // The domain check is what makes the canonicalization above harmless.
+    let words = vec![0x1111_1111u32; 8];
+    let nan = f32::NAN.to_bits();
+    let mut r1 = vec![0f64; 64];
+    assert!(matches!(
+        dequantize_rows_single(&words, &[nan], &[0], 4, 64, 1, 64, &mut r1),
+        Err(mlx_affine::reference::ReferenceError::NonFinite { .. })
+    ));
+    let mut r3 = vec![0f32; 64];
+    assert!(matches!(
+        dequantize_rows(
+            "nan",
+            &words,
+            &nan.to_le_bytes(),
+            &0f32.to_bits().to_le_bytes(),
+            ScaleDtype::F32,
+            spec(4, 64),
+            1,
+            &mut r3
+        ),
+        Err(mlx_affine::AffineError::NonFiniteValue { .. })
+    ));
+}
