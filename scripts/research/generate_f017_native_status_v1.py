@@ -208,6 +208,14 @@ _WORDS = ("zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|"
           "thirty|forty|fifty|sixty|seventy|eighty|ninety")
 _NUMBER = r"(?:\d[\d,.]*|(?:%s)(?:-(?:%s))?)" % (_WORDS, _WORDS)
 _FIGURE = re.compile(r"\b%s\b(?:\W+\w+){0,3}\W+(?:%s)\b" % (_NUMBER, _UNITS), re.I)
+# Units and labels also precede their numbers -- "positions: 24", "tokens 21" --
+# and a numeric table cell can take its unit from a heading, so the mirror of the
+# pattern above is scanned as well.
+_FIGURE_LEADING = re.compile(r"\b(?:%s)\b(?:\W+\w+){0,3}\W+%s\b" % (_UNITS, _NUMBER), re.I)
+# Scientific notation is a figure the decimal pattern does not spell.
+_SCIENTIFIC = re.compile(r"\b\d+(?:\.\d+)?[eE]-?\d+\b")
+_MARKUP = re.compile(r"<[^>]+>")
+_ENTITY = re.compile(r"&#x?([0-9A-Fa-f]+);|&[A-Za-z]+;")
 _PRODUCED_TOKEN = re.compile(r"154820")
 
 
@@ -313,14 +321,31 @@ def _outside(markdown: str) -> str:
         stop = markdown.find(END, start)
         if stop != -1:
             markdown = markdown[:start] + markdown[stop + len(END):]
-    return _FENCE.sub(" ", _COMMENT.sub(" ", markdown))
+    stripped = _FENCE.sub(" ", _COMMENT.sub(" ", markdown))
+    # Digits separated by markup or written as entities render as one number, so
+    # both are resolved before scanning rather than read as separate tokens.
+    def _entity(match):
+        code = match.group(1)
+        if code is None:
+            return " "
+        try:
+            return chr(int(code, 16 if match.group(0)[2:3].lower() == "x" else 10))
+        except ValueError:
+            return " "
+    return _MARKUP.sub("", _ENTITY.sub(_entity, stripped))
 
 
 def verify_markdown(document: dict) -> list[str]:
     """The block must be exactly ours, and nothing outside it may state a figure."""
     if not STATUS_DOC.is_file():
         return [f"missing {STATUS_DOC.relative_to(ROOT)}"]
-    markdown = STATUS_DOC.read_text()
+    # Bytes, not text: read_text() applies universal-newline translation, which
+    # would normalise a CRLF block into a match. The block must be exactly ours.
+    raw = STATUS_DOC.read_bytes()
+    try:
+        markdown = raw.decode("utf-8", "strict")
+    except UnicodeDecodeError:
+        return ["the status document is not valid UTF-8"]
     problems = []
 
     if markdown.count(BEGIN) != 1 or markdown.count(END) != 1:
@@ -331,12 +356,17 @@ def verify_markdown(document: dict) -> list[str]:
     if start > stop:
         problems.append("the generated block markers are inverted")
         return problems
-    if markdown[start:stop + len(END)] != render_block(document):
-        problems.append("the generated block does not match the generator")
+    block_bytes = raw[raw.find(BEGIN.encode()):raw.find(END.encode()) + len(END.encode())]
+    if block_bytes != render_block(document).encode("utf-8"):
+        problems.append("the generated block does not match the generator byte for byte")
 
     outside = _outside(markdown)
-    for match in _FIGURE.finditer(outside):
-        problems.append(f"figure stated outside the generated block: {match.group(0)!r}")
+    for pattern, label in ((_FIGURE, "figure"),
+                           (_FIGURE_LEADING, "figure (unit before the number)"),
+                           (_SCIENTIFIC, "figure (scientific notation)")):
+        for match in pattern.finditer(outside):
+            problems.append(
+                f"{label} stated outside the generated block: {match.group(0)!r}")
     if _PRODUCED_TOKEN.search(outside):
         problems.append("the produced token is stated outside the generated block")
     return problems

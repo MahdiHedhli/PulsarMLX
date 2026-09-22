@@ -76,6 +76,39 @@ class StatusMarkdownVerification(unittest.TestCase):
         self._append(status.BEGIN + "\n| Stage B1 | 99 tokens |\n" + status.END)
         self.assertEqual(self._check(), 1)
 
+    # --- pattern classes added after the conformance audit ---
+    def test_unit_preceding_its_number_fails(self):
+        self._append("The ladder reported positions: 24 for that stage.")
+        self.assertEqual(self._check(), 1)
+
+    def test_unit_preceding_its_number_without_punctuation_fails(self):
+        self._append("It consumed tokens 21 in the prompt.")
+        self.assertEqual(self._check(), 1)
+
+    def test_scientific_notation_fails(self):
+        self._append("The differential stayed under 1.5e-7 throughout.")
+        self.assertEqual(self._check(), 1)
+
+    def test_digits_split_by_markup_fail(self):
+        self._append("The produced token was 15<span>48</span>20 exactly.")
+        self.assertEqual(self._check(), 1)
+
+    def test_digits_written_as_html_entities_fail(self):
+        self._append("The count was &#50;&#52; positions.")
+        self.assertEqual(self._check(), 1)
+
+    def test_crlf_in_the_block_fails_the_byte_comparison(self):
+        start = self.original.find(status.BEGIN)
+        stop = self.original.find(status.END) + len(status.END)
+        block = self.original[start:stop].replace("\n", "\r\n")
+        status.STATUS_DOC.write_bytes(
+            (self.original[:start] + block + self.original[stop:]).encode("utf-8"))
+        self.assertEqual(self._check(), 1)
+
+    def test_inline_code_and_table_cells_are_scanned(self):
+        self._append("| stage | `99 positions` |")
+        self.assertEqual(self._check(), 1)
+
     def test_a_missing_generated_block_fails(self):
         start = self.original.find(status.BEGIN)
         stop = self.original.find(status.END) + len(status.END)

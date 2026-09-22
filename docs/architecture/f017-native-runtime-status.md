@@ -9,10 +9,30 @@ Machine-readable form: [`docs/glm52-native/native-runtime-summary.json`](../glm5
 generated from the evidence records by
 `scripts/research/generate_f017_native_status_v1.py` and checked in CI.
 
-**Every figure in this document lives in the generated block below.** The prose
-outside it is deliberately figure-free, and `--check` fails if a number or a
-number-word attached to a unit appears anywhere outside that block — so there is
-no second place a figure can drift from the evidence it came from.
+**Every figure in this document lives in the generated block below**, and the
+prose outside it is kept figure-free. `--check` enforces that mechanically. The
+enforcement is a defined set of pattern classes, not a universal guarantee:
+
+```text
+Outside the generated block, --check rejects
+  1. a number, or a number-word from zero to ninety-nine, within three words of
+     one of these units:
+       ULP  token(s)  position(s)  tok/s  tokens/s  value(s)  seed(s)
+       format(s)  "of 36"  unchanged  drifted  bodies  B  GiB  MB  s
+  2. the same, mirrored: one of those units within three words before a number
+  3. scientific notation, e.g. 1.5e-7
+  4. the literal produced token
+
+Before scanning: HTML comments and fenced code blocks are removed; inline code
+and table cells are NOT removed; markup between digits is stripped and HTML
+entities are resolved, so a figure cannot be split across them.
+
+The block itself: read as bytes and compared byte for byte, so a newline change
+cannot be normalised away, and exactly one begin/end marker pair must exist.
+```
+
+A figure written outside those classes would not be caught. That is the reason
+the block, rather than the prose, is where figures belong.
 
 ## Current state
 
@@ -88,8 +108,8 @@ and nothing else, must not be a symlink, and is opened read-only.
 ## What this runtime is and is not
 
 It is a correct, bounded, stateful decoder with an honest interface. On the real
-checkpoint exactly one result is **qualified**: the position-zero receipt banked
-by the consumed attempt, which the temporal path reproduces bit for bit. It has since *executed* considerably
+checkpoint exactly one result is **qualified**: the receipt banked by the consumed
+attempt, which the temporal path reproduces bit for bit. It has since *executed* considerably
 more than that, and those executions are **measured**, not qualified: the table
 above gives each stage its category and says so in the same row.
 
