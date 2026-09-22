@@ -300,6 +300,46 @@ fn render_prompt(
     Ok((ids, stops, "CHAT_TEMPLATE"))
 }
 
+
+/// Re-execute every prefix from a fresh state and compare logits digests with
+/// the cached run.
+///
+/// This must use the same backend as the cached generation. Running it on the
+/// scalar CPU path while the cached run used MLX compares two arithmetics, not
+/// two cache strategies, and reports a disagreement that means nothing.
+fn compare_no_cache(
+    checkpoint: &mut f017_native::loader::SecureCheckpoint,
+    backend: &mut impl f017_native::model::MatvecBackend,
+    config: &TemporalConfig,
+    prompt: &[u32],
+    cached: &[String],
+) -> Result<serde_json::Value, String> {
+    let mut rows = Vec::new();
+    let mut mismatches = 0usize;
+    for length in 1..=prompt.len().min(cached.len()) {
+        let (_, logits) = execute_prefix_no_cache(checkpoint, backend, config, &prompt[..length])?;
+        let recomputed = logits_sha256(&logits);
+        let agrees = recomputed == cached[length - 1];
+        if !agrees {
+            mismatches += 1;
+        }
+        rows.push(json!({
+            "position": length - 1,
+            "cached_logits_sha256": cached[length - 1],
+            "recomputed_logits_sha256": recomputed,
+            "agrees": agrees,
+        }));
+    }
+    Ok(json!({
+        "method": "each prefix re-executed from a fresh SequenceState on the same backend as the cached run",
+        "positions_compared": rows.len(),
+        "mismatches": mismatches,
+        "result": if mismatches == 0 { "AGREE" } else { "DISAGREE" },
+        "meaning": "an implementation that cannot hold a cache reproduces the cached path's logits exactly",
+        "positions": rows,
+    }))
+}
+
 fn run() -> Result<i32, (i32, String)> {
     unsafe {
         libc::signal(
@@ -381,8 +421,9 @@ fn run() -> Result<i32, (i32, String)> {
             let _ = stdout.flush();
         }
     };
+    let mut comparison: Option<serde_json::Value> = None;
     let outcome = if arguments.cpu {
-        generate(
+        let produced = generate(
             &mut checkpoint,
             &mut ScalarBackend,
             &config,
@@ -393,7 +434,17 @@ fn run() -> Result<i32, (i32, String)> {
             &mut text,
             &mut sink,
             &CANCELLED,
-        )
+        );
+        if arguments.compare_no_cache {
+            if let Ok(ref outcome) = produced {
+                comparison = Some(
+                    compare_no_cache(&mut checkpoint, &mut ScalarBackend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
+                );
+            }
+        }
+        produced
     } else {
         let context = stream::MlxContext::new(stream::MlxDevice::Gpu, stream::MlxStreamMode::Owned)
             .map_err(|error| (4, error))?;
@@ -410,48 +461,21 @@ fn run() -> Result<i32, (i32, String)> {
             &mut sink,
             &CANCELLED,
         );
+        if arguments.compare_no_cache {
+            if let Ok(ref outcome) = result {
+                comparison = Some(
+                    compare_no_cache(&mut checkpoint, &mut backend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
+                );
+            }
+        }
         context.synchronize().map_err(|error| (4, error))?;
         result
     }
     .map_err(|error| (4, error))?;
-
-    if arguments.compare_no_cache {
-        // An independent check on the retained cache, using real weights and
-        // no oracle: recompute each prefix from a fresh state, which cannot
-        // carry a stale or misordered history, and compare logits digests
-        // position by position. Costs n(n+1)/2 extra forward passes.
-        let cached = outcome.position_logits_sha256.clone();
-        let mut rows = Vec::new();
-        let mut mismatches = 0usize;
-        let mut backend = ScalarBackend;
-        for length in 1..=prompt.len().min(cached.len()) {
-            let (_, logits) = execute_prefix_no_cache(
-                &mut checkpoint,
-                &mut backend,
-                &config,
-                &prompt[..length],
-            )
-            .map_err(|error| (4, error))?;
-            let recomputed = logits_sha256(&logits);
-            let agrees = recomputed == cached[length - 1];
-            if !agrees {
-                mismatches += 1;
-            }
-            rows.push(json!({
-                "position": length - 1,
-                "cached_logits_sha256": cached[length - 1],
-                "recomputed_logits_sha256": recomputed,
-                "agrees": agrees,
-            }));
-        }
-        diagnostics["no_cache_comparison"] = json!({
-            "method": "each prefix re-executed from a fresh SequenceState; the cached run kept one state throughout",
-            "positions_compared": rows.len(),
-            "mismatches": mismatches,
-            "result": if mismatches == 0 { "AGREE" } else { "DISAGREE" },
-            "meaning": "an implementation that cannot hold a cache reproduces the cached path's logits exactly",
-            "positions": rows,
-        });
+    if let Some(value) = comparison {
+        diagnostics["no_cache_comparison"] = value;
     }
 
     let cleanup_start = Instant::now();
