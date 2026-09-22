@@ -50,6 +50,19 @@ NEW_COMMANDS = (
     ".venv/bin/python scripts/ci/f017_measurement_scope_v1.py --check",
     ".venv/bin/python -I -S -B scripts/research/tests/f017_primary_confined_ci_v1.py",
 )
+# Steps that are required although no script they name has `f017` in its
+# basename. The basename rule was a proxy for "this step is mandatory", and it
+# stops being one as soon as a successor feature owns a mandatory gate: F020's
+# native affine qualification must run, and naming its script `f017_...` to get
+# that would be a lie about what the script is. So the selector is extended
+# with an explicit, reviewable list of step NAMES. Adding a name here makes
+# that step frozen at the resolution exactly like an F017 step, which is why
+# the list is short, spelled in full, and moves only together with a deliberate
+# advance of RESOLUTION_BASE and RESOLUTION_WORKFLOW_SHA256.
+REQUIRED_EXTRA_STEP_NAMES = (
+    "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)",
+    "Test MLX affine representation",
+)
 
 
 def require(ok, label):
@@ -241,6 +254,10 @@ def _ordered_subset(expected_lines, current_lines):
 
 
 def _is_required(block_text):
+    first = block_text.split("\n", 1)[0]
+    name = _STEP_NAME.match(first)
+    if name and name.group(1) in REQUIRED_EXTRA_STEP_NAMES:
+        return True
     for path in _SCRIPT_REFERENCE.findall(block_text):
         if "f017" in path.rsplit("/", 1)[-1].lower():
             return True

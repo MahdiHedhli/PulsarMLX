@@ -226,6 +226,20 @@ jobs:
           assert version("mlx-metal") == "0.32.0"
           assert version("numpy") == "2.4.5"
           PY
+      # F020 slice 1. The compatibility script is the R2 arm: it observes
+      # whether the committed affine representation agrees with the pinned
+      # upstream MLX, and it is never the correctness oracle, which is R1.
+      # PULSAR_REQUIRE_NATIVE_MLX=1 is already set at job level and is repeated
+      # here so the fail-closed rule is visible at the call site: an unusable
+      # MLX or an unavailable Metal is a failure, not a skip.
+      - name: Qualify MLX affine compatibility (synthetic, pinned MLX wheel)
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          env -u DYLD_LIBRARY_PATH PULSAR_REQUIRE_NATIVE_MLX=1 .venv/bin/python scripts/ci/mlx_affine_compat_v1.py --output "$RUNNER_TEMP/mlx-affine-compat.json"
+          cat "$RUNNER_TEMP/mlx-affine-compat.json"
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Test MLX affine representation
+        run: cargo test -p mlx-affine -p safetensors-catalog --no-fail-fast
       - name: Build exact native F017 producer targets
         run: cargo build -p f017-native --release --all-targets
       - name: Test exact native F017 producer targets
