@@ -238,9 +238,16 @@ fn a_range_beyond_the_data_section_is_refused() {
 fn a_reversed_range_is_refused() {
     let json = r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[8,4]}}"#;
     let (bytes, len) = shard(json, 16);
+    // The exact offsets, not merely the variant: the same fixture is
+    // committed as negative/header-reversed-range and asserted there too.
     assert!(matches!(
         parse_header(&bytes, len),
-        Err(CatalogError::InvalidRange { .. })
+        Err(CatalogError::InvalidRange {
+            begin: 8,
+            end: 4,
+            data_len: 16,
+            ..
+        })
     ));
 }
 

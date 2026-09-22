@@ -184,3 +184,35 @@ fn the_committed_escaped_key_fixtures_carry_the_decoded_path() {
         other => panic!("expected a refusal, got {other:?}"),
     }
 }
+
+#[test]
+fn the_committed_layout_and_range_fixtures_carry_their_fields() {
+    // Round 2 covered both of these only by building them inside a test.
+    // Committed, they are part of the corpus a reader can inspect -- and the
+    // fields, not only the variant, are asserted here.
+    let root = fixtures();
+
+    match Checkpoint::open(
+        &root.join("layout-cross-shard-duplicate-name"),
+        OpenMode::Auto,
+    ) {
+        Err(CatalogError::DuplicateTensor {
+            name,
+            first,
+            second,
+        }) => {
+            assert_eq!(name, "b");
+            assert_eq!(first, "two.safetensors");
+            assert_eq!(second, "one.safetensors");
+        }
+        other => panic!("expected the duplicated name and both shards, got {other:?}"),
+    }
+
+    match Checkpoint::open(&root.join("header-reversed-range"), OpenMode::Auto) {
+        Err(CatalogError::InvalidRange { begin, end, .. }) => {
+            assert_eq!(begin, 8);
+            assert_eq!(end, 4);
+        }
+        other => panic!("expected the reversed offsets, got {other:?}"),
+    }
+}

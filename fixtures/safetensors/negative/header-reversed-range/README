@@ -1,0 +1,2 @@
+CatalogError::InvalidRange
+A tensor declares data_offsets [8, 4]: the end precedes the beginning.

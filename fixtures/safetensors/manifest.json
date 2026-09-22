@@ -244,6 +244,14 @@
    "bytes": 65,
    "sha256": "d9ed63010eee67ccf1b694581f4c79da72c6229a3a287e29a0ee5f3bc1af491d"
   },
+  "negative/header-reversed-range/README": {
+   "bytes": 98,
+   "sha256": "3ad08abc2092e953902a799641dc7cce9e119c1596aeb874d8f931ef57f1137c"
+  },
+  "negative/header-reversed-range/model.safetensors": {
+   "bytes": 77,
+   "sha256": "ca6f1e7c6dbba788ea08102b92a09cb2583161e84a7e36c35374dba687871f96"
+  },
   "negative/header-shape-overflow/README": {
    "bytes": 120,
    "sha256": "fa9f3f20a499214613c2c6855de7866540c1a2486982d1f644af7969c106cb7e"
@@ -371,6 +379,22 @@
   "negative/layout-ambiguous-two-shards/b.safetensors": {
    "bytes": 72,
    "sha256": "ea63512e433dd3a5a82888593bf837013ca05f0b3dbcf97cbe1ab8e518f30c30"
+  },
+  "negative/layout-cross-shard-duplicate-name/README": {
+   "bytes": 106,
+   "sha256": "267967a78b5510dbbb1255856996751f1698ffa95144e278fe79243922514356"
+  },
+  "negative/layout-cross-shard-duplicate-name/model.safetensors.index.json": {
+   "bytes": 75,
+   "sha256": "8b4b0d60b706c6c620f9053ffe8f282defa575d7630e0c381715755d4717bcd5"
+  },
+  "negative/layout-cross-shard-duplicate-name/one.safetensors": {
+   "bytes": 121,
+   "sha256": "beaf91b3d9fb449a091d12507c6de534480932c175ba319d3d36fd3c948e221a"
+  },
+  "negative/layout-cross-shard-duplicate-name/two.safetensors": {
+   "bytes": 65,
+   "sha256": "3f38d50fd4aa27220c471a0956bc02329a0d1dde934237204067ef606da90e6f"
   },
   "negative/layout-cross-shard-mismatch/README": {
    "bytes": 91,
@@ -546,7 +570,7 @@
   }
  },
  "generator": "scripts/research/generate_safetensors_fixtures_v1.py",
- "generator_sha256": "82202f5e5bdf0d73db6045d77601a087f43c8fbc15ac99a3e2b9db5d5fb8c497",
+ "generator_sha256": "7f02eb1e5f4b2b5fb2c496951c61e2f827f260b432ff4d75fbdcf49f01f2fc1f",
  "mlx_was_not_run": true,
  "negative": [
   "config-dicts-differ",
@@ -567,6 +591,7 @@
   "header-not-an-object",
   "header-overlapping-ranges",
   "header-range-beyond-data",
+  "header-reversed-range",
   "header-shape-overflow",
   "header-trailing-uncovered-bytes",
   "header-truncated-length-prefix",
@@ -582,6 +607,7 @@
   "json-lone-surrogate-tensor-name",
   "json-surrogate-pair-duplicate-metadata",
   "layout-ambiguous-two-shards",
+  "layout-cross-shard-duplicate-name",
   "layout-cross-shard-mismatch",
   "layout-indexed-tensor-absent",
   "layout-missing-shard",

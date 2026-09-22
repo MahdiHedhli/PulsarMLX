@@ -527,6 +527,16 @@ def negative_cases():
          "config.json": b'{"quantization":{"group_size":64,"bits":3,"bits":4}}\n'},
     )
 
+    # A reversed range: end before begin. Round 2 covered this only in memory
+    # through parse_header (Astra round-2 residual).
+    cases["header-reversed-range"] = (
+        "CatalogError::InvalidRange",
+        "A tensor declares data_offsets [8, 4]: the end precedes the beginning.",
+        {"model.safetensors": (lambda header: struct.pack("<Q", len(header)) + header + b"\0" * 16)(
+            b'{"a":{"dtype":"U8","shape":[4],"data_offsets":[8,4]}}'
+        )},
+    )
+
     # --- one name, two spellings (Astra round-2 finding 2) ---
     # The duplicate cases above all repeat a member byte for byte, so they are
     # caught by any comparison at all. These three are caught only by a
@@ -606,6 +616,21 @@ def negative_cases():
                              "y.weight": "model-00001.safetensors"}},
              sort_keys=True, indent=1).encode() + b"\n"},
     )
+    # Two shards both holding "b", with an index that places it in only one
+    # of them. Round 2 covered this generated inside a test; committed here so
+    # the corpus itself carries it (Astra round-2 residual).
+    dup_one = one_shard_case([("a", "U8", [4], b"\0\1\2\3"), ("b", "U8", [4], b"\4\5\6\7")])
+    dup_two = one_shard_case([("b", "U8", [4], b"\x08\x09\x0a\x0b")])
+    cases["layout-cross-shard-duplicate-name"] = (
+        "CatalogError::DuplicateTensor",
+        'Shard one and shard two both declare "b"; the index places it in shard two.',
+        {"one.safetensors": dup_one,
+         "two.safetensors": dup_two,
+         "model.safetensors.index.json": json.dumps(
+             {"weight_map": {"a": "one.safetensors", "b": "two.safetensors"}},
+             sort_keys=True, indent=1).encode() + b"\n"},
+    )
+
     cases["layout-ambiguous-two-shards"] = (
         "CatalogError::AmbiguousLayout",
         "No index and two candidate shards, so the layout is not decidable.",
