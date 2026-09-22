@@ -51,13 +51,12 @@ fn main() -> Result<(), String> {
     if args.len() != 3 {
         return Err("usage: f017-native-decoder-differential CASES_JSON OUT_JSON".into());
     }
-    let cases: Cases = serde_json::from_slice(&fs::read(&args[1]).map_err(|e| e.to_string())?)
-        .map_err(|e| e.to_string())?;
+    let cases: Cases =
+        serde_json::from_slice(&fs::read(&args[1]).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     let mut out = Vec::with_capacity(cases.cases.len());
     for c in cases.cases {
         let bytes = unhex(&c.bytes_hex)?;
-        let decoded =
-            decode_packed_matrix_for_qualification(&c.format, c.type_id, &bytes, c.rows, c.columns);
+        let decoded = decode_packed_matrix_for_qualification(&c.format, c.type_id, &bytes, c.rows, c.columns);
         out.push(match decoded {
             Ok(values) => {
                 let mut hex = String::with_capacity(values.len() * 8);
@@ -66,32 +65,12 @@ fn main() -> Result<(), String> {
                         hex.push_str(&format!("{b:02x}"));
                     }
                 }
-                Decoded {
-                    id: c.id,
-                    format: c.format,
-                    rows: c.rows,
-                    columns: c.columns,
-                    result: "OK".into(),
-                    values_f32le_hex: Some(hex),
-                    error: None,
-                }
+                Decoded { id: c.id, format: c.format, rows: c.rows, columns: c.columns, result: "OK".into(), values_f32le_hex: Some(hex), error: None }
             }
-            Err(e) => Decoded {
-                id: c.id,
-                format: c.format,
-                rows: c.rows,
-                columns: c.columns,
-                result: "ERROR".into(),
-                values_f32le_hex: None,
-                error: Some(e),
-            },
+            Err(e) => Decoded { id: c.id, format: c.format, rows: c.rows, columns: c.columns, result: "ERROR".into(), values_f32le_hex: None, error: Some(e) },
         });
     }
     let body = serde_json::json!({"schema": "pulsarmlx.f017.decoder-differential-producer/1.0.0", "producer": "f017-native decode_packed_matrix_for_qualification", "decoded": out});
-    fs::write(
-        &args[2],
-        serde_json::to_vec_pretty(&body).map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
+    fs::write(&args[2], serde_json::to_vec_pretty(&body).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     Ok(())
 }

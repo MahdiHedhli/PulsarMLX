@@ -4,6 +4,10 @@
 //! `--execute`. Execution requires a wrapper-owned durable attempt record at a
 //! fixed contract path; this binary has no checkpoint or shard interface.
 
+use stream::f017_apple_serial_f32::{
+    run_apple_serial_f32, AppleGraphError, AppleLayerInputs, AppleLayerMatrices, CaptureSink,
+    DenseMatrix, ExpertMatrices, ProjectionBackend,
+};
 use f017_native::retained::{
     load_grant, load_package, GrantedInputs, RetainedPackage as Package, TensorSpec,
 };
@@ -14,10 +18,6 @@ use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::fs::{MetadataExt, OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
-use stream::f017_apple_serial_f32::{
-    run_apple_serial_f32, AppleGraphError, AppleLayerInputs, AppleLayerMatrices, CaptureSink,
-    DenseMatrix, ExpertMatrices, ProjectionBackend,
-};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct CaptureRow {
@@ -91,11 +91,9 @@ fn runtime_preflight(package: &Package) -> Result<(), String> {
         || sha_file(&libmlxc)? != package.runtime.libmlxc_sha256
         || package.runtime.mlx_version != "0.31.2"
         || package.runtime.mlx_c_version != "0.6.0"
-        || package
-            .runtime
-            .thread_limits
-            .iter()
-            .any(|(name, expected)| expected != "1" || std::env::var(name).as_deref() != Ok("1"))
+        || package.runtime.thread_limits.iter().any(|(name, expected)| {
+            expected != "1" || std::env::var(name).as_deref() != Ok("1")
+        })
     {
         return Err("PINNED_RUNTIME_OR_MACHINE_IDENTITY".into());
     }
@@ -229,11 +227,7 @@ fn tensor<'a>(package: &'a Package, role: &str) -> Result<&'a TensorSpec, String
         .ok_or_else(|| format!("MISSING_TENSOR: {role}"))
 }
 
-fn matrix(
-    package: &Package,
-    granted: &mut GrantedInputs,
-    role: &str,
-) -> Result<DenseMatrix, String> {
+fn matrix(package: &Package, granted: &mut GrantedInputs, role: &str) -> Result<DenseMatrix, String> {
     let spec = tensor(package, role)?;
     if spec.shape.len() < 2 {
         return Err(format!("MATRIX_SHAPE: {role}"));
@@ -480,9 +474,7 @@ fn execute_one(arguments: &[String], capture_root: PathBuf) -> Result<(), String
     validate_package(&package)?;
     let mut granted = GrantedInputs::validate(grant, &package)?;
     if arguments.iter().any(|v| v == "--preflight-only") {
-        println!(
-            "NATIVE_RETAINED_GRANT_AND_PACKAGE_SCHEMA_RESOLVED_NO_RETAINED_READ_NO_ARITHMETIC"
-        );
+        println!("NATIVE_RETAINED_GRANT_AND_PACKAGE_SCHEMA_RESOLVED_NO_RETAINED_READ_NO_ARITHMETIC");
         return Ok(());
     }
     if !arguments.iter().any(|v| v == "--execute") {
@@ -543,7 +535,9 @@ fn execute_one(arguments: &[String], capture_root: PathBuf) -> Result<(), String
         return Err("RETAINED_READ_RECEIPT_CENSUS".into());
     }
     fs::create_dir(&capture_root).map_err(|e| format!("CAPTURE_ROOT: {e}"))?;
-    fsync_directory(capture_root.parent().ok_or("CAPTURE_ROOT_PARENT")?)?;
+    fsync_directory(
+        capture_root.parent().ok_or("CAPTURE_ROOT_PARENT")?,
+    )?;
     let receipts = serde_json::to_vec_pretty(&serde_json::json!({
         "schema":"pulsarmlx.f017.native-retained-read-receipt-census/1.0.0",
         "grant_id":granted.grant().grant_id,
@@ -553,8 +547,7 @@ fn execute_one(arguments: &[String], capture_root: PathBuf) -> Result<(), String
         "original_checkpoint_reads":0,
         "original_checkpoint_shard_opens":0,
         "reads":granted.receipts(),
-    }))
-    .map_err(|e| format!("RECEIPT_JSON:{e}"))?;
+    })).map_err(|e| format!("RECEIPT_JSON:{e}"))?;
     publish_bytes(&capture_root.join("retained-read-receipts.json"), &receipts)?;
     let mut capture = DirectoryCapture {
         root: capture_root.clone(),
@@ -631,10 +624,7 @@ fn verify_worker_owner(arguments: &[String]) -> Result<(Package, PathBuf), Strin
     {
         return Err("WORKER_OWNER_MISMATCH".into());
     }
-    Ok((
-        package,
-        grant.allowed_output_root.join(format!("fresh-{run:02}")),
-    ))
+    Ok((package, grant.allowed_output_root.join(format!("fresh-{run:02}"))))
 }
 
 fn capture_manifest(path: &Path) -> Result<CaptureManifest, String> {
@@ -711,12 +701,9 @@ fn terminalize_batch(
     state: &str,
     repeat_result_sha256: Option<&str>,
 ) -> Result<(), String> {
-    let owner_bytes = open_once(
-        &attempt_root.join("owner.json"),
-        &sha_bytes(
-            &fs::read(attempt_root.join("owner.json")).map_err(|e| format!("OWNER_READ:{e}"))?,
-        ),
-    )?;
+    let owner_bytes = open_once(&attempt_root.join("owner.json"), &sha_bytes(
+        &fs::read(attempt_root.join("owner.json")).map_err(|e| format!("OWNER_READ:{e}"))?,
+    ))?;
     let observed: QualificationOwner = f017_native::json::parse_json_no_duplicates(&owner_bytes)?;
     if observed.owner_pid != owner.owner_pid
         || observed.ownership_nonce != owner.ownership_nonce
@@ -734,12 +721,7 @@ fn terminalize_batch(
                     &fs::read(&receipt_path).map_err(|e| format!("TERMINAL_RECEIPT_READ:{e}"))?,
                 )?;
                 receipt_count = receipt_count
-                    .checked_add(
-                        receipt
-                            .get("actual_count")
-                            .and_then(|v| v.as_u64())
-                            .ok_or("TERMINAL_RECEIPT_COUNT")? as u32,
-                    )
+                    .checked_add(receipt.get("actual_count").and_then(|v| v.as_u64()).ok_or("TERMINAL_RECEIPT_COUNT")? as u32)
                     .ok_or("TERMINAL_RECEIPT_OVERFLOW")?;
             }
         }
@@ -772,35 +754,15 @@ fn execute_batch(arguments: &[String]) -> Result<(), String> {
         return Err("QUALIFICATION_EVENT_ALREADY_CONSUMED_OR_PARTIAL".into());
     }
     fs::create_dir(&package.fixed_attempt_root).map_err(|e| format!("ATTEMPT_ROOT:{e}"))?;
-    fs::set_permissions(
-        &package.fixed_attempt_root,
-        fs::Permissions::from_mode(0o700),
-    )
-    .map_err(|e| format!("ATTEMPT_MODE:{e}"))?;
-    fsync_directory(
-        package
-            .fixed_attempt_root
-            .parent()
-            .ok_or("ATTEMPT_PARENT")?,
-    )?;
+    fs::set_permissions(&package.fixed_attempt_root, fs::Permissions::from_mode(0o700))
+        .map_err(|e| format!("ATTEMPT_MODE:{e}"))?;
+    fsync_directory(package.fixed_attempt_root.parent().ok_or("ATTEMPT_PARENT")?)?;
     let owner_pid = std::process::id();
-    let nonce = format!(
-        "{}-{owner_pid}-{}",
-        grant.grant_id,
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|_| "CLOCK")?
-            .as_nanos()
-    );
+    let nonce = format!("{}-{owner_pid}-{}", grant.grant_id, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|_| "CLOCK")?.as_nanos());
     let owner = qualification_owner(&grant.grant_id, owner_pid, nonce.clone(), "CONSUMING");
     let owner_bytes = serde_json::to_vec_pretty(&owner).map_err(|e| format!("OWNER_JSON:{e}"))?;
     let owner_sha = publish_bytes(&package.fixed_attempt_root.join("owner.json"), &owner_bytes)?;
-    publish_bytes(
-        &package
-            .fixed_attempt_root
-            .join("durable-attempt-start.json"),
-        &owner_bytes,
-    )?;
+    publish_bytes(&package.fixed_attempt_root.join("durable-attempt-start.json"), &owner_bytes)?;
     fs::create_dir(&grant.allowed_output_root).map_err(|e| format!("OUTPUT_ROOT:{e}"))?;
     fsync_directory(grant.allowed_output_root.parent().ok_or("OUTPUT_PARENT")?)?;
 
@@ -808,51 +770,26 @@ fn execute_batch(arguments: &[String]) -> Result<(), String> {
     worker_arguments.push("--execute".into());
     let outcome = (|| {
         for run in 0..10 {
-            execute_one(
-                &worker_arguments,
-                grant.allowed_output_root.join(format!("same-{run:02}")),
-            )?;
+            execute_one(&worker_arguments, grant.allowed_output_root.join(format!("same-{run:02}")))?;
         }
         let executable = std::env::current_exe().map_err(|e| format!("CURRENT_EXE:{e}"))?;
         for run in 0..10 {
             let status = std::process::Command::new(&executable)
-                .arg("--package")
-                .arg(argument_value(arguments, "--package")?)
-                .arg("--grant")
-                .arg(argument_value(arguments, "--grant")?)
-                .arg("--fresh-worker")
-                .arg("--run")
-                .arg(run.to_string())
+                .arg("--package").arg(argument_value(arguments, "--package")?)
+                .arg("--grant").arg(argument_value(arguments, "--grant")?)
+                .arg("--fresh-worker").arg("--run").arg(run.to_string())
                 .env("PULSARMLX_F017_QUALIFICATION_OWNER_SHA256", &owner_sha)
-                .env(
-                    "PULSARMLX_F017_QUALIFICATION_OWNER_PID",
-                    owner_pid.to_string(),
-                )
+                .env("PULSARMLX_F017_QUALIFICATION_OWNER_PID", owner_pid.to_string())
                 .env("PULSARMLX_F017_QUALIFICATION_OWNER_NONCE", &nonce)
-                .status()
-                .map_err(|e| format!("FRESH_PROCESS:{e}"))?;
-            if !status.success() {
-                return Err(format!("FRESH_PROCESS_EXIT:{run}:{status}"));
-            }
+                .status().map_err(|e| format!("FRESH_PROCESS:{e}"))?;
+            if !status.success() { return Err(format!("FRESH_PROCESS_EXIT:{run}:{status}")); }
         }
         bank_batch_result(&grant.allowed_output_root, &owner)
     })();
     match outcome {
-        Ok(result_sha) => terminalize_batch(
-            &package.fixed_attempt_root,
-            &grant.allowed_output_root,
-            &owner,
-            "COMPLETE",
-            Some(&result_sha),
-        ),
+        Ok(result_sha) => terminalize_batch(&package.fixed_attempt_root, &grant.allowed_output_root, &owner, "COMPLETE", Some(&result_sha)),
         Err(error) => {
-            let terminal = terminalize_batch(
-                &package.fixed_attempt_root,
-                &grant.allowed_output_root,
-                &owner,
-                "TERMINAL_FAILURE",
-                None,
-            );
+            let terminal = terminalize_batch(&package.fixed_attempt_root, &grant.allowed_output_root, &owner, "TERMINAL_FAILURE", None);
             terminal.and(Err(error))
         }
     }
@@ -893,32 +830,21 @@ mod tests {
     fn seed_run(root: &Path, family: &str, run: usize) {
         let run_root = root.join(format!("{family}-{run:02}"));
         fs::create_dir(&run_root).unwrap();
-        let stages = (0..34)
-            .map(|ordinal| CaptureRow {
-                ordinal,
-                stage_id: format!("stage-{ordinal:02}"),
-                shape: vec![1],
-                dtype: "little-endian-f32".into(),
-                byte_length: 4,
-                sha256: format!("{ordinal:064x}"),
-                path: format!("{ordinal:02}.f32le"),
-                direct_production_copy: true,
-            })
-            .collect::<Vec<_>>();
-        fs::write(
-            run_root.join("capture-manifest.json"),
-            serde_json::to_vec(&serde_json::json!({
-                "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-manifest",
-                "schema_version":"1.0.0","stages":stages,"s2_sha256":"f".repeat(64)
-            }))
-            .unwrap(),
-        )
-        .unwrap();
-        fs::write(
-            run_root.join("retained-read-receipts.json"),
-            br#"{"actual_count":40}"#,
-        )
-        .unwrap();
+        let stages = (0..34).map(|ordinal| CaptureRow {
+            ordinal,
+            stage_id: format!("stage-{ordinal:02}"),
+            shape: vec![1],
+            dtype: "little-endian-f32".into(),
+            byte_length: 4,
+            sha256: format!("{ordinal:064x}"),
+            path: format!("{ordinal:02}.f32le"),
+            direct_production_copy: true,
+        }).collect::<Vec<_>>();
+        fs::write(run_root.join("capture-manifest.json"), serde_json::to_vec(&serde_json::json!({
+            "schema":"pulsarmlx.f017.apple-production-serial-f32-capture-manifest",
+            "schema_version":"1.0.0","stages":stages,"s2_sha256":"f".repeat(64)
+        })).unwrap()).unwrap();
+        fs::write(run_root.join("retained-read-receipts.json"), br#"{"actual_count":40}"#).unwrap();
     }
 
     #[test]
@@ -926,27 +852,17 @@ mod tests {
         let root = test_root("repeat-batch");
         fs::create_dir(&root).unwrap();
         for family in ["same", "fresh"] {
-            for run in 0..10 {
-                seed_run(&root, family, run);
-            }
+            for run in 0..10 { seed_run(&root, family, run); }
         }
         let owner = qualification_owner("event", 1, "nonce".into(), "CONSUMING");
         assert!(bank_batch_result(&root, &owner).is_ok());
-        fs::set_permissions(
-            root.join("repeat-result.json"),
-            fs::Permissions::from_mode(0o600),
-        )
-        .unwrap();
+        fs::set_permissions(root.join("repeat-result.json"), fs::Permissions::from_mode(0o600)).unwrap();
         fs::remove_file(root.join("repeat-result.json")).unwrap();
         let changed = root.join("fresh-09/capture-manifest.json");
-        let mut manifest: serde_json::Value =
-            serde_json::from_slice(&fs::read(&changed).unwrap()).unwrap();
+        let mut manifest: serde_json::Value = serde_json::from_slice(&fs::read(&changed).unwrap()).unwrap();
         manifest["stages"][7]["sha256"] = serde_json::Value::String("e".repeat(64));
         fs::write(&changed, serde_json::to_vec(&manifest).unwrap()).unwrap();
-        assert_eq!(
-            bank_batch_result(&root, &owner).unwrap_err(),
-            "D3_5_EARLIEST_DIVERGENCE:stage-07"
-        );
+        assert_eq!(bank_batch_result(&root, &owner).unwrap_err(), "D3_5_EARLIEST_DIVERGENCE:stage-07");
         fs::remove_dir_all(&root).unwrap();
     }
 }

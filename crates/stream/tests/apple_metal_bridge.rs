@@ -1,6 +1,8 @@
 #![cfg(target_os = "macos")]
 
-use stream::{MetalBridge, StableSlabAllocator, StableSlabConfig, ZeroingPolicy};
+use stream::{
+    MetalBridge, StableSlabAllocator, StableSlabConfig, ZeroingPolicy,
+};
 
 #[test]
 fn page_aligned_slab_is_registered_once_and_reused_for_metal_checksum() {
@@ -23,18 +25,8 @@ fn page_aligned_slab_is_registered_once_and_reused_for_metal_checksum() {
     assert_eq!(address % 4096, 0);
 
     let bridge = MetalBridge::new().expect("Metal context and checksum pipeline");
-    let registration = bridge
-        .register(&slab)
-        .expect("zero-copy Metal registration");
+    let registration = bridge.register(&slab).expect("zero-copy Metal registration");
     assert_eq!(MetalBridge::registered_address(&registration), address);
-    assert_eq!(
-        bridge.checksum(&registration).expect("Metal checksum"),
-        expected
-    );
-    assert_eq!(
-        bridge
-            .checksum(&registration)
-            .expect("Metal checksum reuse"),
-        expected
-    );
+    assert_eq!(bridge.checksum(&registration).expect("Metal checksum"), expected);
+    assert_eq!(bridge.checksum(&registration).expect("Metal checksum reuse"), expected);
 }

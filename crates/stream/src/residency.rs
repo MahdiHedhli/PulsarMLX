@@ -29,7 +29,9 @@ impl ResidencyOptionId {
             Self::BDecodedAllTrunk => "decoded_f32_all_trunk_residency",
             Self::CDecodedAttentionMlaOnly => "decoded_attention_mla_only_residency",
             Self::DDecodedOutputHeadOnly => "decoded_output_head_only_residency",
-            Self::EDecodedHotSubset => "decoded_hot_subset_candidate_output_head_plus_router_norms",
+            Self::EDecodedHotSubset => {
+                "decoded_hot_subset_candidate_output_head_plus_router_norms"
+            }
             Self::FCompressedAllPlusDecodedHot => "compressed_all_trunk_plus_decoded_hot_subset",
         }
     }
@@ -193,10 +195,7 @@ pub struct ResidencySlot {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResidencyTransitionError {
-    InvalidTransition {
-        from: SlotLifecycle,
-        to: SlotLifecycle,
-    },
+    InvalidTransition { from: SlotLifecycle, to: SlotLifecycle },
 }
 
 impl ResidencySlot {

@@ -117,8 +117,9 @@ fn parse_arguments() -> Result<Arguments, String> {
             }
             "--prompt-file" => {
                 let path = value()?;
-                arguments.prompt =
-                    Some(std::fs::read_to_string(&path).map_err(|e| format!("{path}: {e}"))?);
+                arguments.prompt = Some(
+                    std::fs::read_to_string(&path).map_err(|e| format!("{path}: {e}"))?,
+                );
                 prompt_sources += 1;
             }
             "--prompt-stdin" => {
@@ -276,11 +277,7 @@ fn render_prompt(
         let markers = ChatMarkers::resolve(tokenizer).ok();
         let stops = markers
             .as_ref()
-            .map(|m| {
-                (0..tokenizer.n_vocab() as u32)
-                    .filter(|id| m.is_stop(*id))
-                    .collect()
-            })
+            .map(|m| (0..tokenizer.n_vocab() as u32).filter(|id| m.is_stop(*id)).collect())
             .unwrap_or_default();
         return Ok((tokens.clone(), stops, "RAW_TOKEN_DIAGNOSTIC"));
     }
@@ -302,6 +299,7 @@ fn render_prompt(
         .collect::<Vec<_>>();
     Ok((ids, stops, "CHAT_TEMPLATE"))
 }
+
 
 /// Re-execute every prefix from a fresh state and compare logits digests with
 /// the cached run.
@@ -440,14 +438,9 @@ fn run() -> Result<i32, (i32, String)> {
         if arguments.compare_no_cache {
             if let Ok(ref outcome) = produced {
                 comparison = Some(
-                    compare_no_cache(
-                        &mut checkpoint,
-                        &mut ScalarBackend,
-                        &config,
-                        &prompt,
-                        &outcome.position_logits_sha256,
-                    )
-                    .map_err(|error| (4, error))?,
+                    compare_no_cache(&mut checkpoint, &mut ScalarBackend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
                 );
             }
         }
@@ -471,14 +464,9 @@ fn run() -> Result<i32, (i32, String)> {
         if arguments.compare_no_cache {
             if let Ok(ref outcome) = result {
                 comparison = Some(
-                    compare_no_cache(
-                        &mut checkpoint,
-                        &mut backend,
-                        &config,
-                        &prompt,
-                        &outcome.position_logits_sha256,
-                    )
-                    .map_err(|error| (4, error))?,
+                    compare_no_cache(&mut checkpoint, &mut backend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
                 );
             }
         }

@@ -3,7 +3,8 @@
 use crate::model::{QWEN_ENCODED_SLICE_BYTES, QWEN_FILE_BYTES};
 use crate::router::{
     canonical_f32le_sha256, ROUTER_EXPERT_COUNT, ROUTER_HIDDEN_WIDTH, ROUTER_MAX_ROWS,
-    ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID, ROUTER_TENSOR_BYTES, ROUTER_TOP_K,
+    ROUTER_REAL_SINGLE_ROW_CASE_ID, ROUTER_REAL_TWO_ROW_CASE_ID, ROUTER_TOP_K,
+    ROUTER_TENSOR_BYTES,
 };
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -2436,9 +2437,7 @@ fn validate_router_execution_timing(timing: &RouterExecutionTiming) -> Result<()
 
     let exact_stage_set = |expected: &[&str]| {
         timing.stages.len() == expected.len()
-            && expected
-                .iter()
-                .all(|name| timing.stages.contains_key(*name))
+            && expected.iter().all(|name| timing.stages.contains_key(*name))
     };
     let profile_is_valid = match timing.instrumentation_mode {
         RouterInstrumentationMode::MinimallyInstrumented => {
@@ -2539,11 +2538,13 @@ fn validate_router_execution_timing(timing: &RouterExecutionTiming) -> Result<()
         };
         let storage_pair_is_valid = (positive_observed("file_io")
             && positive_observed("storage_validation_f32_decode"))
-            || (canonical_unavailable("file_io", "validated_router_tensor_cache_hit_no_file_read")
-                && canonical_unavailable(
-                    "storage_validation_f32_decode",
-                    "validated_router_tensor_cache_hit_no_decode",
-                ));
+            || (canonical_unavailable(
+                "file_io",
+                "validated_router_tensor_cache_hit_no_file_read",
+            ) && canonical_unavailable(
+                "storage_validation_f32_decode",
+                "validated_router_tensor_cache_hit_no_decode",
+            ));
         if !canonical_unavailable(
             "setup_admission",
             "host_admission_completed_outside_router_timing",
@@ -2633,16 +2634,14 @@ fn validate_router_result(
         || result.synchronized != result.timing.synchronized
         || !match request.router_case_id.as_str() {
             ROUTER_REAL_SINGLE_ROW_CASE_ID | ROUTER_REAL_TWO_ROW_CASE_ID => matches!(
-                (
-                    result.router_tensor_bytes_read,
-                    result.router_tensor_cache_status
-                ),
+                (result.router_tensor_bytes_read, result.router_tensor_cache_status),
                 (ROUTER_TENSOR_BYTES, RouterTensorCacheStatus::ReadAndCached)
                     | (0, RouterTensorCacheStatus::CacheHit)
             ),
             _ => {
                 result.router_tensor_bytes_read == 0
-                    && result.router_tensor_cache_status == RouterTensorCacheStatus::NotApplicable
+                    && result.router_tensor_cache_status
+                        == RouterTensorCacheStatus::NotApplicable
             }
         }
         || !result.passed

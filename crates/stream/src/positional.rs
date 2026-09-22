@@ -166,16 +166,15 @@ impl PositionalSource {
         max_request_bytes: u64,
         telemetry: &mut ReadTelemetry,
     ) -> Result<Vec<OwnedSlab>, SourceError> {
-        let row_bytes =
-            usize::try_from(spec.row_bytes).map_err(|_| SourceError::MatrixParameterTooLarge {
+        let row_bytes = usize::try_from(spec.row_bytes)
+            .map_err(|_| SourceError::MatrixParameterTooLarge {
                 rows: spec.rows,
                 row_bytes: spec.row_bytes,
             })?;
-        let rows =
-            usize::try_from(spec.rows).map_err(|_| SourceError::MatrixParameterTooLarge {
-                rows: spec.rows,
-                row_bytes: spec.row_bytes,
-            })?;
+        let rows = usize::try_from(spec.rows).map_err(|_| SourceError::MatrixParameterTooLarge {
+            rows: spec.rows,
+            row_bytes: spec.row_bytes,
+        })?;
         if row_bytes == 0 || rows == 0 {
             return Err(SourceError::ZeroLengthMatrix {
                 tensor_offset: spec.tensor_offset,
@@ -193,11 +192,9 @@ impl PositionalSource {
         let max_request_bytes = if max_request_bytes == 0 {
             total_bytes
         } else {
-            usize::try_from(max_request_bytes).map_err(|_| {
-                SourceError::MatrixParameterTooLarge {
-                    rows: spec.rows,
-                    row_bytes: spec.row_bytes,
-                }
+            usize::try_from(max_request_bytes).map_err(|_| SourceError::MatrixParameterTooLarge {
+                rows: spec.rows,
+                row_bytes: spec.row_bytes,
             })?
         };
 
@@ -214,13 +211,12 @@ impl PositionalSource {
 
         while remaining_rows > 0 {
             let chunk_rows = remaining_rows.min(max_rows);
-            let chunk_bytes =
-                chunk_rows
-                    .checked_mul(row_bytes)
-                    .ok_or(SourceError::MatrixParameterTooLarge {
-                        rows: chunk_rows as u64,
-                        row_bytes: spec.row_bytes,
-                    })?;
+            let chunk_bytes = chunk_rows
+                .checked_mul(row_bytes)
+                .ok_or(SourceError::MatrixParameterTooLarge {
+                    rows: chunk_rows as u64,
+                    row_bytes: spec.row_bytes,
+                })?;
             if chunk_bytes == 0 {
                 return Err(SourceError::ZeroLengthMatrix {
                     tensor_offset: spec.tensor_offset,
@@ -235,18 +231,17 @@ impl PositionalSource {
                 telemetry,
             )?);
             remaining_rows -= chunk_rows;
-            let chunk_offset =
-                u64::try_from(chunk_bytes).map_err(|_| SourceError::MatrixParameterTooLarge {
+            let chunk_offset = u64::try_from(chunk_bytes)
+                .map_err(|_| SourceError::MatrixParameterTooLarge {
                     rows: chunk_rows as u64,
                     row_bytes: spec.row_bytes,
                 })?;
-            offset =
-                offset
-                    .checked_add(chunk_offset)
-                    .ok_or(SourceError::MatrixParameterTooLarge {
-                        rows: chunk_rows as u64,
-                        row_bytes: spec.row_bytes,
-                    })?;
+            offset = offset
+                .checked_add(chunk_offset)
+                .ok_or(SourceError::MatrixParameterTooLarge {
+                    rows: chunk_rows as u64,
+                    row_bytes: spec.row_bytes,
+                })?;
         }
         Ok(out)
     }

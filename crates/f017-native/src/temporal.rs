@@ -182,6 +182,7 @@ impl SequenceState {
     }
 }
 
+
 // The frozen one-token producer in `model` is sha-bound by the consumed
 // attempt-2 admission contract, so this successor carries its own copies of
 // the elementwise helpers instead of editing that file. They are held to the
@@ -340,13 +341,11 @@ fn feed_forward(
         )?,
         fx,
     )?;
-    let bias = source.vector(&format!("blk.{layer}.exp_probs_b.bias"), model.expert_count)?;
-    let (ids, weights) = route(
-        &logits,
-        &bias,
-        model.expert_top_k,
-        model.expert_weight_scale,
+    let bias = source.vector(
+        &format!("blk.{layer}.exp_probs_b.bias"),
+        model.expert_count,
     )?;
+    let (ids, weights) = route(&logits, &bias, model.expert_top_k, model.expert_weight_scale)?;
     let mut acc = vec![0.0_f32; model.hidden];
     for (&id, &weight) in ids.iter().zip(&weights) {
         let part = swiglu(
@@ -587,8 +586,7 @@ fn execute_position_inner(
         return Err("context exceeds the indexer top-k budget".into());
     }
     let embedding = source.matrix("token_embd.weight", model.vocab, model.hidden)?;
-    let mut x = embedding.values
-        [token as usize * model.hidden..(token as usize + 1) * model.hidden]
+    let mut x = embedding.values[token as usize * model.hidden..(token as usize + 1) * model.hidden]
         .to_vec();
     for layer in 0..model.layer_count {
         let attn_norm = source.vector(&format!("blk.{layer}.attn_norm.weight"), model.hidden)?;
@@ -628,7 +626,10 @@ fn execute_position_inner(
         )?;
         let kvn = rms_norm(
             &kv[..model.kv_rank],
-            &source.vector(&format!("blk.{layer}.attn_kv_a_norm.weight"), model.kv_rank)?,
+            &source.vector(
+                &format!("blk.{layer}.attn_kv_a_norm.weight"),
+                model.kv_rank,
+            )?,
             model.rms_epsilon,
         )?;
         let mut rope_key = kv[model.kv_rank..].to_vec();
@@ -641,14 +642,12 @@ fn execute_position_inner(
         // The current token is visible to its own query: append before the
         // softmax, never after.
         state.append(layer, &kvn, &rope_key)?;
-        let attention = attention_for_layer(
-            source, backend, config, state, observer, layer, position, &q,
-        )?;
+        let attention =
+            attention_for_layer(source, backend, config, state, observer, layer, position, &q)?;
         x = residual(&x, &attention.output)?;
         let ffn_norm = source.vector(&format!("blk.{layer}.ffn_norm.weight"), model.hidden)?;
         let fx = rms_norm(&x, &ffn_norm, model.rms_epsilon)?;
-        let (ffn, selected_ids, routing_weights) =
-            feed_forward(source, backend, model, layer, &fx)?;
+        let (ffn, selected_ids, routing_weights) = feed_forward(source, backend, model, layer, &fx)?;
         observer.routing(layer, position, &selected_ids, &routing_weights)?;
         x = residual(&x, &ffn)?;
     }
@@ -738,9 +737,7 @@ pub struct TemporalSource {
 }
 
 impl TemporalSource {
-    pub fn from_fixture(
-        fixture: TemporalFixture,
-    ) -> Result<(Self, TemporalConfig, Vec<u32>), String> {
+    pub fn from_fixture(fixture: TemporalFixture) -> Result<(Self, TemporalConfig, Vec<u32>), String> {
         if fixture.schema != TEMPORAL_FIXTURE_SCHEMA
             || !TEMPORAL_FIXTURE_SEEDS.contains(&fixture.seed)
         {

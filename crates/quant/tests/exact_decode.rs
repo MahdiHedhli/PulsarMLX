@@ -33,8 +33,13 @@ fn matrix_decode_matches_independent_f32_bit_reference() {
 fn matrix_decode_rejects_truncation_without_partial_output() {
     let full = block(0x3c00, [1; BLOCK_ELEMENTS]);
     let mut decoded = [17.0_f32; 2 * BLOCK_ELEMENTS];
-    let error =
-        decode_q8_0_matrix(&full[..full.len() - 1], 2, BLOCK_ELEMENTS, &mut decoded).unwrap_err();
+    let error = decode_q8_0_matrix(
+        &full[..full.len() - 1],
+        2,
+        BLOCK_ELEMENTS,
+        &mut decoded,
+    )
+    .unwrap_err();
     assert_eq!(
         error,
         Q8_0Error::EncodedLengthMismatch {

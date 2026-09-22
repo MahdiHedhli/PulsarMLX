@@ -45,10 +45,7 @@ const ERROR_CAPACITY: usize = 512;
 
 fn bridge_error(status: i32, buffer: &[i8; ERROR_CAPACITY]) -> String {
     let message = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-    format!(
-        "Metal bridge status {status}: {}",
-        message.to_string_lossy()
-    )
+    format!("Metal bridge status {status}: {}", message.to_string_lossy())
 }
 
 pub struct MetalBridge {
@@ -64,8 +61,9 @@ impl MetalBridge {
     pub fn new() -> Result<Self, String> {
         let mut raw = ptr::null_mut();
         let mut error = [0_i8; ERROR_CAPACITY];
-        let status =
-            unsafe { pulsar_metal_context_create(&mut raw, error.as_mut_ptr(), ERROR_CAPACITY) };
+        let status = unsafe {
+            pulsar_metal_context_create(&mut raw, error.as_mut_ptr(), ERROR_CAPACITY)
+        };
         if status != 0 || raw.is_null() {
             return Err(bridge_error(status, &error));
         }

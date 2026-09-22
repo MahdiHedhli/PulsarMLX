@@ -77,10 +77,7 @@ mod tests {
         let inventory = inventory();
         let classes = observed_slot_classes(&inventory).expect("slot classes derive");
         assert!(!classes.is_empty());
-        assert_eq!(
-            classes.iter().map(|class| class.tensor_count).sum::<u64>(),
-            2_706
-        );
+        assert_eq!(classes.iter().map(|class| class.tensor_count).sum::<u64>(), 2_706);
 
         for class in &classes {
             assert!(class.slot_size_bytes > 0);
@@ -88,12 +85,8 @@ mod tests {
                 tensor.trunk_group == class.trunk_group
                     && tensor.quantization == class.quantization
                     && match class.encoding {
-                        SlotEncoding::Compressed => {
-                            tensor.compressed_bytes == class.slot_size_bytes
-                        }
-                        SlotEncoding::DecodedF32 => {
-                            tensor.decoded_f32_bytes == class.slot_size_bytes
-                        }
+                        SlotEncoding::Compressed => tensor.compressed_bytes == class.slot_size_bytes,
+                        SlotEncoding::DecodedF32 => tensor.decoded_f32_bytes == class.slot_size_bytes,
                     }
             }));
         }

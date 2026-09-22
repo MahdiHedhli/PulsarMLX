@@ -93,10 +93,7 @@ impl fmt::Display for SlabAllocatorError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidAlignment { alignment } => {
-                write!(
-                    formatter,
-                    "alignment {alignment} is invalid (must be power-of-two)"
-                )
+                write!(formatter, "alignment {alignment} is invalid (must be power-of-two)")
             }
             Self::InvalidSlotSize { slot_size } => {
                 write!(formatter, "slot size {slot_size} must be > 0")
@@ -121,7 +118,9 @@ impl fmt::Display for SlabAllocatorError {
                 write!(
                     formatter,
                     "slot id {:?} mapped to {} but allocator has {} slots",
-                    id, expected, actual,
+                    id,
+                    expected,
+                    actual,
                 )
             }
         }
@@ -157,6 +156,7 @@ impl SlotAllocation {
         // Safety: `ptr` is valid for writes by construction.
         unsafe { ptr::write_bytes(self.ptr.as_ptr(), 0, self.cap) }
     }
+
 }
 
 impl Drop for SlotAllocation {
@@ -165,8 +165,7 @@ impl Drop for SlotAllocation {
         unsafe {
             dealloc(
                 self.ptr.as_ptr(),
-                Layout::from_size_align(self.cap, self.align)
-                    .expect("layout validated on allocation"),
+                Layout::from_size_align(self.cap, self.align).expect("layout validated on allocation"),
             )
         }
     }
@@ -208,13 +207,11 @@ impl StableSlabAllocatorInner {
     }
 
     fn validate_id(&self, id: SlotId) -> Result<usize, SlabAllocatorError> {
-        let index =
-            id.0.try_into()
-                .map_err(|_| SlabAllocatorError::InternalSlotMismatch {
-                    id,
-                    expected: self.slots.len(),
-                    actual: self.slots.len(),
-                })?;
+        let index = id.0.try_into().map_err(|_| SlabAllocatorError::InternalSlotMismatch {
+            id,
+            expected: self.slots.len(),
+            actual: self.slots.len(),
+        })?;
         if index >= self.slots.len() {
             return Err(SlabAllocatorError::InternalSlotMismatch {
                 id,
@@ -321,11 +318,11 @@ impl StableSlabAllocator {
         })
     }
 
-    fn with_inner<R>(&self, op: impl FnOnce(&mut StableSlabAllocatorInner) -> R) -> R {
-        let mut inner = self
-            .inner
-            .lock()
-            .expect("stable slab allocator mutex poisoned");
+    fn with_inner<R>(
+        &self,
+        op: impl FnOnce(&mut StableSlabAllocatorInner) -> R,
+    ) -> R {
+        let mut inner = self.inner.lock().expect("stable slab allocator mutex poisoned");
         op(&mut inner)
     }
 
@@ -372,8 +369,8 @@ impl StableSlabAllocator {
                 });
             };
 
-            let index =
-                usize::try_from(id.0).map_err(|_| SlabAllocatorError::AllocationPressure {
+            let index = usize::try_from(id.0)
+                .map_err(|_| SlabAllocatorError::AllocationPressure {
                     requested_slots: inner.slots.len() + 1,
                     max_slots: inner.config.max_slots,
                 })?;
@@ -499,9 +496,8 @@ mod tests {
 
     #[test]
     fn errors_cleanly_on_allocation_pressure() {
-        let allocator =
-            StableSlabAllocator::new(StableSlabConfig::new(64, 4096, 1, ZeroingPolicy::NoZero))
-                .expect("allocator");
+        let allocator = StableSlabAllocator::new(StableSlabConfig::new(64, 4096, 1, ZeroingPolicy::NoZero))
+            .expect("allocator");
         let _first = allocator.acquire().expect("bounded slot");
 
         match allocator.acquire() {

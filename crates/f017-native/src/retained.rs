@@ -10,18 +10,12 @@ use std::path::{Path, PathBuf};
 pub const CONSUMER_ID: &str = "F017-NATIVE-REPRESENTATIVE-LAYER3-QUALIFICATION-1";
 pub const GRANT_SCHEMA: &str = "pulsarmlx.f017.native-retained-reuse-grant/1.0.0";
 pub const PACKAGE_SCHEMA: &str = "pulsarmlx.f017.apple-production-serial-f32-package";
-pub const EXPECTED_GRANT_SHA256: &str =
-    "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28";
-pub const EXPECTED_PACKAGE_SHA256: &str =
-    "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f";
-pub const EXPECTED_D0_SHA256: &str =
-    "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9";
-pub const EXPECTED_LEDGER_SHA256: &str =
-    "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e";
-pub const HISTORICAL_PACKAGE_ROOT_SHA256: &str =
-    "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6";
-pub const EXPECTED_PACKAGE_ROOT_SHA256: &str =
-    "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c";
+pub const EXPECTED_GRANT_SHA256: &str = "b22a11c829000fd9d333a62a662dd1b274a9a710aa4ccd6afb8f7df789dc9b28";
+pub const EXPECTED_PACKAGE_SHA256: &str = "a2fc41cda5f2dbf9f2ea2f9f930569cf24fd6b51766260766ed63ce45cc03e7f";
+pub const EXPECTED_D0_SHA256: &str = "cc62cdc7550e3a25f55de783e9eb7c68f6cf03d0eafb944a86dc8a2a60007fb9";
+pub const EXPECTED_LEDGER_SHA256: &str = "aa98f5cc7f1cfae1eb49a9bc64dbefec1d6ef9ccae1504a1aa8879a8edf22e3e";
+pub const HISTORICAL_PACKAGE_ROOT_SHA256: &str = "564a33aee801b4a44e23f3a9b370e1a2ce040dda521dadc4ac54dbfd29045be6";
+pub const EXPECTED_PACKAGE_ROOT_SHA256: &str = "03ccbb1be96073bfe051ba8950ec4e16a3824b998c041dfcac7e209ede66151c";
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -166,27 +160,21 @@ pub fn load_package(path: &Path) -> Result<RetainedPackage, String> {
 }
 
 fn package_root(grant: &RetainedReuseGrant) -> Result<String, String> {
-    let descriptors = grant
-        .allowed_reads
-        .iter()
-        .map(|row| {
-            serde_json::json!({
-                "ordinal": row.ordinal,
-                "canonical_tensor_id": row.canonical_tensor_id,
-                "role": row.role,
-                "destination_relative_path": row.destination_relative_path,
-                "sha256": row.sha256,
-                "byte_count": row.byte_count,
-                "encoding": row.encoding,
-                "shape": row.shape,
-                "quantization": row.quantization,
-                "decoder_binding": row.decoder_binding,
-                "source_authority_path": row.source_authority_path,
-                "source_authority_sha256": row.source_authority_sha256,
-                "source_result_event": row.source_result_event,
-            })
-        })
-        .collect::<Vec<_>>();
+    let descriptors = grant.allowed_reads.iter().map(|row| serde_json::json!({
+        "ordinal": row.ordinal,
+        "canonical_tensor_id": row.canonical_tensor_id,
+        "role": row.role,
+        "destination_relative_path": row.destination_relative_path,
+        "sha256": row.sha256,
+        "byte_count": row.byte_count,
+        "encoding": row.encoding,
+        "shape": row.shape,
+        "quantization": row.quantization,
+        "decoder_binding": row.decoder_binding,
+        "source_authority_path": row.source_authority_path,
+        "source_authority_sha256": row.source_authority_sha256,
+        "source_result_event": row.source_result_event,
+    })).collect::<Vec<_>>();
     let value = serde_json::json!({
         "schema":"pulsarmlx.f017.apple-production-serial-f32-retained-package-root",
         "schema_version":"1.0.0",
@@ -219,8 +207,7 @@ impl GrantedInputs {
             || grant.historical_package_root_sha256 != HISTORICAL_PACKAGE_ROOT_SHA256
             || grant.package_root_sha256 != EXPECTED_PACKAGE_ROOT_SHA256
             || package_root(&grant)? != EXPECTED_PACKAGE_ROOT_SHA256
-            || grant.terminal_semantics
-                != "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE"
+            || grant.terminal_semantics != "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE"
             || grant.allowed_reads.len() != 40
             || grant.tensor_count != 40
             || package.tensors.len() != 40
@@ -254,9 +241,7 @@ impl GrantedInputs {
             {
                 return Err(format!("GRANT_PACKAGE_MISMATCH:{}", read.role));
             }
-            total = total
-                .checked_add(read.byte_count)
-                .ok_or("GRANT_TOTAL_OVERFLOW")?;
+            total = total.checked_add(read.byte_count).ok_or("GRANT_TOTAL_OVERFLOW")?;
             by_role.insert(read.role.clone(), read.clone());
         }
         if total != grant.total_bytes || roles.len() != package.tensors.len() {
@@ -310,7 +295,9 @@ impl GrantedInputs {
         file.read_to_end(&mut readback)
             .map_err(|e| format!("READBACK_BYTES:{e}"))?;
         let after = file.metadata().map_err(|e| format!("READ_AFTER:{e}"))?;
-        if opened.dev() != after.dev() || opened.ino() != after.ino() || opened.len() != after.len()
+        if opened.dev() != after.dev()
+            || opened.ino() != after.ino()
+            || opened.len() != after.len()
         {
             return Err(format!("READ_AFTER_IDENTITY:{role}"));
         }
@@ -345,11 +332,7 @@ impl GrantedInputs {
     pub fn complete_census(&self) -> bool {
         self.receipts.len() == 40
             && self.consumed_roles.len() == 40
-            && self
-                .receipts
-                .iter()
-                .map(|row| row.ordinal)
-                .collect::<BTreeSet<_>>()
+            && self.receipts.iter().map(|row| row.ordinal).collect::<BTreeSet<_>>()
                 == (0..40).collect::<BTreeSet<_>>()
     }
 
@@ -365,32 +348,17 @@ mod tests {
 
     fn fake_grant() -> RetainedReuseGrant {
         RetainedReuseGrant {
-            schema: GRANT_SCHEMA.into(),
-            grant_id: "g".into(),
-            consumer_id: CONSUMER_ID.into(),
-            consumer_source_path: "x".into(),
-            consumer_source_sha256: "0".repeat(64),
-            d0_sha256: "1".repeat(64),
-            historical_master_ledger_sha256: "2".repeat(64),
+            schema: GRANT_SCHEMA.into(), grant_id: "g".into(), consumer_id: CONSUMER_ID.into(),
+            consumer_source_path: "x".into(), consumer_source_sha256: "0".repeat(64),
+            d0_sha256: "1".repeat(64), historical_master_ledger_sha256: "2".repeat(64),
             historical_package_root_sha256: "3".repeat(64),
-            package_root_sha256: "3".repeat(64),
-            tensor_count: 40,
-            total_bytes: 0,
-            attempts: 1,
-            qualification_runs: 20,
-            same_process_runs: 10,
-            fresh_process_runs: 10,
-            stages_per_run: 34,
-            retained_reads_per_run: 40,
-            expected_retained_read_receipts: 800,
-            checkpoint_fallback: false,
-            original_checkpoint_reads: 0,
-            original_checkpoint_shard_opens: 0,
-            historical_payload_ledger_delta: 0,
-            terminal_semantics: "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE"
-                .into(),
-            allowed_output_root: PathBuf::from("/tmp/out"),
-            allowed_reads: vec![],
+            package_root_sha256: "3".repeat(64), tensor_count: 40, total_bytes: 0,
+            attempts: 1, qualification_runs:20, same_process_runs:10, fresh_process_runs:10,
+            stages_per_run:34, retained_reads_per_run:40, expected_retained_read_receipts:800,
+            checkpoint_fallback: false, original_checkpoint_reads: 0,
+            original_checkpoint_shard_opens: 0, historical_payload_ledger_delta: 0,
+            terminal_semantics: "ONE_ATTEMPT_NO_RETRY_NO_RESUME_COMPLETE_OR_TERMINAL_FAILURE".into(),
+            allowed_output_root: PathBuf::from("/tmp/out"), allowed_reads: vec![],
         }
     }
 
@@ -398,33 +366,13 @@ mod tests {
     fn grant_requires_exact_closed_census() {
         let grant = fake_grant();
         let package = RetainedPackage {
-            schema: PACKAGE_SCHEMA.into(),
-            schema_version: "1.0.0".into(),
-            graph_version: "g".into(),
-            execution_code_head: "h".into(),
-            fixed_attempt_root: "/tmp/a".into(),
-            fixed_capture_root: "/tmp/c".into(),
-            tensors: BTreeMap::new(),
-            position: 0,
-            rope_base: 1.0,
-            attention_scale: 1.0,
-            expert_weight_scale: 1.0,
-            heads: 1,
-            qk_nope: 1,
-            qk_rope: 1,
-            kv_lora: 1,
-            value_dim: 1,
-            routed_expert_ids: vec![],
-            runtime: RuntimeSpec {
-                device: "d".into(),
-                mlx_version: "m".into(),
-                mlx_c_version: "c".into(),
-                libmlx_sha256: "l".into(),
-                libmlxc_sha256: "x".into(),
-                backend: "b".into(),
-                thread_limits: BTreeMap::new(),
-            },
-            checkpoint_paths: vec![],
+            schema: PACKAGE_SCHEMA.into(), schema_version: "1.0.0".into(), graph_version: "g".into(),
+            execution_code_head: "h".into(), fixed_attempt_root: "/tmp/a".into(), fixed_capture_root: "/tmp/c".into(),
+            tensors: BTreeMap::new(), position: 0, rope_base: 1.0, attention_scale: 1.0,
+            expert_weight_scale: 1.0, heads: 1, qk_nope: 1, qk_rope: 1, kv_lora: 1,
+            value_dim: 1, routed_expert_ids: vec![], runtime: RuntimeSpec { device:"d".into(),
+            mlx_version:"m".into(), mlx_c_version:"c".into(), libmlx_sha256:"l".into(),
+            libmlxc_sha256:"x".into(), backend:"b".into(), thread_limits:BTreeMap::new() }, checkpoint_paths: vec![],
         };
         assert!(GrantedInputs::validate(grant, &package).is_err());
     }
@@ -437,22 +385,11 @@ mod tests {
         fs::write(&path, b"retained").unwrap();
         fs::set_permissions(&path, fs::Permissions::from_mode(0o400)).unwrap();
         let allowed = AllowedRead {
-            ordinal: 0,
-            role: "r".into(),
-            canonical_tensor_id: "x".into(),
-            destination_relative_path: "tensors/x".into(),
-            path: path.clone(),
-            byte_count: 8,
-            sha256: sha256_bytes(b"retained"),
-            encoding: "RAW".into(),
-            quantization: "NONE".into(),
-            decoder_binding: "RAW".into(),
-            shape: vec![8],
-            source_branch: "feat/017-real-checkpoint-runner".into(),
-            source_commit: "0".repeat(40),
-            source_authority_path: "x".into(),
-            source_authority_sha256: "0".repeat(64),
-            source_result_event: "x".into(),
+            ordinal:0, role:"r".into(), canonical_tensor_id:"x".into(), destination_relative_path:"tensors/x".into(),
+            path:path.clone(), byte_count:8, sha256:sha256_bytes(b"retained"), encoding:"RAW".into(),
+            quantization:"NONE".into(), decoder_binding:"RAW".into(), shape:vec![8],
+            source_branch:"feat/017-real-checkpoint-runner".into(), source_commit:"0".repeat(40),
+            source_authority_path:"x".into(), source_authority_sha256:"0".repeat(64), source_result_event:"x".into(),
         };
         let mut inputs = GrantedInputs {
             grant: fake_grant(),
@@ -461,10 +398,7 @@ mod tests {
             consumed_roles: BTreeSet::new(),
         };
         assert_eq!(inputs.read("r").unwrap(), b"retained");
-        assert_eq!(
-            inputs.receipts[0].expected_sha256,
-            inputs.receipts[0].after_sha256
-        );
+        assert_eq!(inputs.receipts[0].expected_sha256, inputs.receipts[0].after_sha256);
         assert_eq!(inputs.read("r").unwrap_err(), "DUPLICATE_RETAINED_READ:r");
         fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
         fs::remove_file(&path).unwrap();
