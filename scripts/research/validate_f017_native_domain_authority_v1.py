@@ -101,6 +101,18 @@ def _archive_tags(repo: Path, branch: str) -> dict[str, str]:
     return {ref: peeled.get(ref, object_id) for ref, object_id in direct.items()}
 
 
+def _remote_publishes_branch(repo: Path, branch: str) -> bool:
+    """Whether origin still publishes `branch` right now.
+
+    A remote-tracking ref is a cache of the last fetch, not a statement about
+    the remote: `origin/<branch>` survives in a working copy that has not
+    pruned, long after the branch was deleted. Asking origin directly is what
+    makes "currently published" mean currently.
+    """
+    listing = _git(repo, "ls-remote", "--heads", "origin", f"refs/heads/{branch}")
+    return any(line.strip() for line in listing.decode("utf-8").splitlines())
+
+
 def _published_history_ref(repo: Path, branch: str, head: str) -> str:
     """Resolve the published ref that must still contain the pinned `head`.
 
@@ -108,7 +120,9 @@ def _published_history_ref(repo: Path, branch: str, head: str) -> str:
     forever-current tip of the closed branch. CI-policy/evidence commits may
     advance that branch without superseding the pinned numerical authority.
     Require the pinned object to exist and remain in the remote history: on the
-    branch itself while origin still publishes it, and otherwise in *every*
+    branch itself while origin still publishes it -- which is established by
+    asking origin, not by the presence of a remote-tracking ref -- and
+    otherwise in *every*
     archive tag that retired it, because once the branch ref is gone those tags
     are the published remote history bound to that branch name. Requiring all
     of them keeps a later, shallower snapshot from admitting a head that an
@@ -116,7 +130,12 @@ def _published_history_ref(repo: Path, branch: str, head: str) -> str:
     """
     _git(repo, "cat-file", "-e", f"{head}^{{commit}}")
     remote_ref = f"origin/{branch}"
-    if _ref_exists(repo, remote_ref):
+    # Both conditions, not either: the local ref says the branch was reachable
+    # at the last fetch, and origin says it is reachable now. A stale
+    # remote-tracking ref would otherwise satisfy the check by itself and skip
+    # the archive enumeration entirely -- accepting, on the strength of a
+    # cache, a branch the remote no longer publishes.
+    if _ref_exists(repo, remote_ref) and _remote_publishes_branch(repo, branch):
         candidates = {remote_ref: remote_ref}
     else:
         candidates = _archive_tags(repo, branch)
