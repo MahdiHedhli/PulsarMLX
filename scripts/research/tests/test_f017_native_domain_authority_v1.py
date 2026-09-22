@@ -11,6 +11,7 @@ from pathlib import Path
 from scripts.research.validate_f017_native_domain_authority_v1 import (
     AuthorityError,
     _published_history_ref,
+    _remote_publishes_branch,
     validate,
 )
 
@@ -150,6 +151,20 @@ class PublishedHistoryRefTests(unittest.TestCase):
         _git(self.work, "push", "origin", "--delete", BRANCH)
         _git(self.clone, "update-ref", "-d", f"refs/remotes/origin/{BRANCH}")
 
+    def _retire_branch_without_pruning(self) -> None:
+        """Delete the branch on origin but leave the clone's cached ref.
+
+        This is the ordinary state of a working copy that has fetched without
+        --prune since the close-out: the remote-tracking ref is still there
+        and still resolves, and it is a cache, not a statement about origin.
+        """
+        _git(self.work, "push", "origin", "--delete", BRANCH)
+        self.assertEqual(
+            _git(self.clone, "rev-parse", "--verify", f"refs/remotes/origin/{BRANCH}"),
+            self.tip,
+            "the premise: the clone still holds the stale remote-tracking ref",
+        )
+
     def _resolve(self) -> str:
         return _published_history_ref(self.clone, BRANCH, self.pinned)
 
@@ -186,6 +201,42 @@ class PublishedHistoryRefTests(unittest.TestCase):
         with self.assertRaises(AuthorityError) as caught:
             self._resolve()
         self.assertEqual(str(caught.exception), LEFT_REMOTE_HISTORY)
+
+    def test_a_stale_remote_tracking_ref_does_not_stand_in_for_the_branch(self) -> None:
+        # The shortcut accepted origin/<branch> on the strength of the local
+        # ref alone, so a working copy that had not pruned since the close-out
+        # skipped the archive enumeration entirely and passed on a cache.
+        # Now the branch is used only while origin actually publishes it, so
+        # this resolves to the tag instead.
+        self._tag(ARCHIVE_TAG, self.tip)
+        self._retire_branch_without_pruning()
+        self.assertEqual(self._resolve(), f"refs/tags/{ARCHIVE_TAG}")
+
+    def test_a_stale_ref_with_no_archive_tag_is_refused(self) -> None:
+        # And it cannot rescue a close-out that published no tag: the stale
+        # ref resolves locally, origin does not publish it, and there is
+        # nothing else, so this is the original refusal.
+        self._retire_branch_without_pruning()
+        with self.assertRaises(AuthorityError) as caught:
+            self._resolve()
+        self.assertEqual(str(caught.exception), LEFT_REMOTE_HISTORY)
+
+    def test_a_stale_ref_does_not_excuse_an_archive_tag_without_the_head(self) -> None:
+        # The tag is enumerated and checked on its own terms; the stale ref
+        # neither substitutes for it nor softens it.
+        self._tag(ARCHIVE_TAG, self.without_pin)
+        self._retire_branch_without_pruning()
+        with self.assertRaises(AuthorityError) as caught:
+            self._resolve()
+        self.assertEqual(str(caught.exception), LEFT_REMOTE_HISTORY)
+
+    def test_a_live_branch_is_confirmed_against_origin_not_only_locally(self) -> None:
+        # The unchanged path, stated as what it now means: the clone's ref
+        # resolves AND origin still lists the branch.
+        self.assertTrue(_remote_publishes_branch(self.clone, BRANCH))
+        self.assertEqual(self._resolve(), f"origin/{BRANCH}")
+        self._retire_branch_without_pruning()
+        self.assertFalse(_remote_publishes_branch(self.clone, BRANCH))
 
     def test_unrelated_archive_tag_does_not_qualify(self) -> None:
         self._tag(f"archive/2026-09-21/{BRANCH}-other", self.without_pin)
