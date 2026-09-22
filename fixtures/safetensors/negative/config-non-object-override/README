@@ -1,0 +1,2 @@
+AffineError::UnsupportedOverrideValue
+An override is the boolean false; the upstream loader's False semantics are not admitted.

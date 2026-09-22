@@ -1,0 +1,2 @@
+CatalogError::OverlappingRanges
+Two tensors in one shard claim overlapping byte ranges.

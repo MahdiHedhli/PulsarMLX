@@ -1,0 +1,2 @@
+CatalogError::Overflow
+Three dimensions of u32::MAX each: every dimension is admissible and only the product overflows.

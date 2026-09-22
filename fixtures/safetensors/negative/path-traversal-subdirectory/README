@@ -1,0 +1,2 @@
+CatalogError::InvalidShardPath
+The weight_map names 'sub/escape.safetensors', which is not a plain file name inside the root.

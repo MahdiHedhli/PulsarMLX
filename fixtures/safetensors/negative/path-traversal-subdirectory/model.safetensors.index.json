@@ -1,0 +1,5 @@
+{
+ "weight_map": {
+  "m.weight": "sub/escape.safetensors"
+ }
+}

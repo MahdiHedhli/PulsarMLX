@@ -1,0 +1,2 @@
+CatalogError::UnsupportedDtype
+The dtype string is not a standard Safetensors dtype.

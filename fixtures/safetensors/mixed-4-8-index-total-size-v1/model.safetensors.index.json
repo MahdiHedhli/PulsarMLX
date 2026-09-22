@@ -1,0 +1,24 @@
+{
+ "metadata": {
+  "total_size": 3544
+ },
+ "weight_map": {
+  "block.0.down.biases": "model-00001.safetensors",
+  "block.0.down.scales": "model-00001.safetensors",
+  "block.0.down.weight": "model-00001.safetensors",
+  "block.0.gate.biases": "model-00001.safetensors",
+  "block.0.gate.scales": "model-00001.safetensors",
+  "block.0.gate.weight": "model-00001.safetensors",
+  "block.0.up.biases": "model-00001.safetensors",
+  "block.0.up.scales": "model-00001.safetensors",
+  "block.0.up.weight": "model-00001.safetensors",
+  "block.1.attn.biases": "model-00002.safetensors",
+  "block.1.attn.scales": "model-00002.safetensors",
+  "block.1.attn.weight": "model-00002.safetensors",
+  "block.1.router.correction": "model-00002.safetensors",
+  "block.1.router.weight": "model-00002.safetensors",
+  "block.2.experts.biases": "model-00003.safetensors",
+  "block.2.experts.scales": "model-00003.safetensors",
+  "block.2.experts.weight": "model-00003.safetensors"
+ }
+}

@@ -1,0 +1,7 @@
+{
+ "model_type": "synthetic-uniform",
+ "quantization": {
+  "bits": 4,
+  "group_size": 64
+ }
+}

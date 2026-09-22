@@ -1,0 +1,2 @@
+CatalogError::UnindexedTensor
+A shard holds a tensor the index does not map: no silent extras.

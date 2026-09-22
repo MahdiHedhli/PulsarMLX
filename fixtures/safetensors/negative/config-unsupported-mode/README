@@ -1,0 +1,2 @@
+AffineError::UnsupportedQuantization
+The configuration declares mode mxfp4; only affine is implemented.

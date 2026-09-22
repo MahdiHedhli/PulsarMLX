@@ -1,0 +1,2 @@
+AffineError::UnsupportedQuantization
+The configuration asks for group_size 256, which MLX affine does not define.

@@ -1,0 +1,2 @@
+CatalogError::MissingTensorInShard
+The index maps a tensor to a shard whose header does not contain it.

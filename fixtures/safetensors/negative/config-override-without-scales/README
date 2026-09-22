@@ -1,0 +1,2 @@
+AffineError::OverrideWithoutScales
+A module carries an explicit override but has no .scales tensor.

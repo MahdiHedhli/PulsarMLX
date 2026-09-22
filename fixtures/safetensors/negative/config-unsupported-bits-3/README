@@ -1,0 +1,2 @@
+AffineError::UnsupportedQuantization
+The configuration asks for 3 bits, which this crate does not implement.

@@ -1,0 +1,2 @@
+CatalogError::DuplicateTensor
+One header declares the same tensor name twice.

@@ -1,0 +1,2 @@
+AffineError::AmbiguousQuantization
+The shards say quantized and config.json declares no quantization object.

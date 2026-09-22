@@ -1,0 +1,2 @@
+AffineError::ScalesBiasesMismatch
+Scales and biases have different shapes.

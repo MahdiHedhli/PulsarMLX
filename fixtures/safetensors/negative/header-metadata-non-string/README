@@ -1,0 +1,2 @@
+CatalogError::InvalidMetadata
+__metadata__ carries a non-string value.

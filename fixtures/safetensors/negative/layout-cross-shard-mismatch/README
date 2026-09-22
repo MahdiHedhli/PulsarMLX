@@ -1,0 +1,2 @@
+CatalogError::MissingTensorInShard
+The index says x lives in shard A; it lives in shard B.

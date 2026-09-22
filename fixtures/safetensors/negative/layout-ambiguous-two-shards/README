@@ -1,0 +1,2 @@
+CatalogError::AmbiguousLayout
+No index and two candidate shards, so the layout is not decidable.

@@ -1,0 +1,2 @@
+CatalogError::NotAnObject
+The header JSON parses but is an array, not an object.
