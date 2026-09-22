@@ -678,6 +678,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-affine"
+version = "0.1.0"
+dependencies = [
+ "safetensors-catalog",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "mlx-backend"
 version = "0.1.0"
 dependencies = [
