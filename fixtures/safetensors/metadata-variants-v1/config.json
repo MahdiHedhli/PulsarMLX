@@ -1,0 +1,15 @@
+{
+ "model_type": "synthetic-metadata-variants",
+ "quantization": {
+  "bits": 4,
+  "block.2.half_eight": {
+   "bits": 8,
+   "group_size": 64
+  },
+  "block.3.single_group128": {
+   "bits": 8,
+   "group_size": 128
+  },
+  "group_size": 128
+ }
+}

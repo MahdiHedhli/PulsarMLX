@@ -64,6 +64,79 @@ class Resolution(unittest.TestCase):
         self.assertIsNone(compat.resolve_spec({}, "m.plain", True))
 
 
+class StubbedRuntime(unittest.TestCase):
+    """Both refusal branches, driven by an injected stub.
+
+    Round 1 tested these by relying on the test interpreter not having MLX
+    installed. That is an accident of the environment, not a test: it passes
+    for the wrong reason wherever MLX happens to be absent and stops testing
+    anything wherever it is present. Injecting a loader makes both branches
+    deterministic on any machine.
+    """
+
+    class Device:
+        def __init__(self, name):
+            self.name = name
+
+        def __eq__(self, other):
+            return isinstance(other, type(self)) and other.name == self.name
+
+        def __repr__(self):
+            return f"Device({self.name})"
+
+    def stub_mlx(self, metal_available=True, selection_sticks=True):
+        test = self
+
+        class Metal:
+            @staticmethod
+            def is_available():
+                return metal_available
+
+        class Mx:
+            metal = Metal
+            gpu = test.Device("gpu")
+            cpu = test.Device("cpu")
+
+            def __init__(self):
+                self.selected = test.Device("cpu")
+
+            def set_default_device(self, device):
+                self.selected = device if selection_sticks else test.Device("cpu")
+
+            def default_device(self):
+                return self.selected
+
+        return Mx()
+
+    def test_an_absent_mlx_raises_rather_than_returning_a_runtime(self):
+        def loader():
+            raise ImportError("No module named 'mlx'")
+
+        with self.assertRaises(ImportError):
+            compat.acquire_runtime(loader)
+
+    def test_unavailable_metal_is_refused(self):
+        mx = self.stub_mlx(metal_available=False)
+        with self.assertRaises(compat.Refusal) as caught:
+            compat.acquire_runtime(lambda: (mx, None, "0.32.0", "0.32.0"))
+        self.assertIn("Metal is not available", str(caught.exception))
+
+    def test_the_gpu_is_selected_explicitly_and_the_selection_is_asserted(self):
+        mx = self.stub_mlx()
+        self.assertEqual(mx.default_device(), mx.cpu, "the stub starts on the CPU")
+        _, _, version, _ = compat.acquire_runtime(lambda: (mx, None, "0.32.0", "0.32.0"))
+        self.assertEqual(version, "0.32.0")
+        self.assertEqual(mx.default_device(), mx.gpu, "the GPU must be selected")
+
+    def test_a_selection_that_does_not_take_is_refused(self):
+        # Metal available and set_default_device silently ignored: the run
+        # would otherwise proceed on the CPU while reporting a GPU claim.
+        mx = self.stub_mlx(selection_sticks=False)
+        with self.assertRaises(compat.Refusal) as caught:
+            compat.acquire_runtime(lambda: (mx, None, "0.32.0", "0.32.0"))
+        self.assertIn("after selecting the GPU", str(caught.exception))
+
+
 class FailClosed(unittest.TestCase):
     def run_script(self, require: bool):
         with tempfile.TemporaryDirectory() as directory:
@@ -107,7 +180,7 @@ class Schema(unittest.TestCase):
             }
             compat.unavailable(output, report, "synthetic")
             written = json.loads(output.read_text())
-        self.assertEqual(written["schema"], "pulsarmlx.f020.mlx-affine-compatibility/1.0.0")
+        self.assertEqual(written["schema"], "pulsarmlx.f020.mlx-affine-compatibility/2.0.0")
         self.assertEqual(written["arm"], "R2")
         self.assertFalse(written["is_correctness_oracle"])
         self.assertEqual(written["result"], "UNAVAILABLE")
@@ -119,14 +192,44 @@ class Schema(unittest.TestCase):
         self.assertIn('"is_correctness_oracle": False', text)
 
     def validate_full_report(self, report):
-        """The shape a PASS report must have; used on a real run's output."""
-        self.assertEqual(report["schema"], compat.SCHEMA)
+        """The shape a PASS report must have; used on a real run's output.
+
+        A Round 1 report is a valid 1.0.0 document and is not edited, so the
+        fields 2.0.0 added are required only of 2.0.0 reports.
+        """
+        current = report["schema"] == compat.SCHEMA
+        self.assertIn(
+            report["schema"],
+            {compat.SCHEMA, "pulsarmlx.f020.mlx-affine-compatibility/1.0.0"},
+        )
         self.assertEqual(report["arm"], "R2")
         self.assertFalse(report["is_correctness_oracle"])
         self.assertIn(report["result"], {"PASS", "FAIL"})
-        self.assertEqual(REQUIRED_ENVIRONMENT_KEYS, set(report["environment"]))
+        self.assertTrue(
+            REQUIRED_ENVIRONMENT_KEYS.issubset(set(report["environment"])),
+            set(report["environment"]),
+        )
+        if current:
+            self.assertTrue(report["environment"]["gpu_explicitly_selected"])
         self.assertGreater(report["quantized_modules_observed"], 0)
+        if not current:
+            # A 1.0.0 report describes the corpus of its own round.
+            self.assertTrue(set(report["cases"]))
+            return
         self.assertEqual(set(report["cases"]), set(compat.POSITIVES))
+        # The observation must cover every metadata width and group size the
+        # representation admits, not only the ones the first fixtures used.
+        combinations = {
+            (entry["bits"], entry["group_size"], entry["metadata_dtype"])
+            for entries in report["cases"].values()
+            for entry in entries
+            if entry["kind"] == "quantized"
+        }
+        self.assertEqual(
+            {dtype for _b, _g, dtype in combinations}, {"BF16", "F16", "F32"}
+        )
+        self.assertEqual({group for _b, group, _d in combinations}, {32, 64, 128})
+        self.assertEqual({bits for bits, _g, _d in combinations}, {4, 8})
         for entries in report["cases"].values():
             for entry in entries:
                 self.assertIn("module", entry)

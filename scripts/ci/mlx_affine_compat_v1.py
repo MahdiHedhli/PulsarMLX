@@ -40,8 +40,18 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "fixtures/safetensors"
-POSITIVES = ("uniform-affine-v1", "mixed-4-8-v1", "mixed-4-8-index-total-size-v1")
-SCHEMA = "pulsarmlx.f020.mlx-affine-compatibility/1.0.0"
+POSITIVES = (
+    "uniform-affine-v1",
+    "mixed-4-8-v1",
+    "mixed-4-8-index-total-size-v1",
+    "metadata-variants-v1",
+)
+# 2.0.0 changed the report shape: codes are compared as finite floats rather
+# than truncated integers, bit identity is a bit-pattern comparison, the GPU is
+# selected explicitly and recorded, and the corpus covers every admitted
+# metadata width and group size. Round 1 reports remain valid 1.0.0 documents
+# and are not edited.
+SCHEMA = "pulsarmlx.f020.mlx-affine-compatibility/2.0.0"
 REQUIRE = os.environ.get("PULSAR_REQUIRE_NATIVE_MLX") == "1"
 
 WEIGHT_SUFFIX = ".weight"
@@ -189,19 +199,28 @@ def observe(mx, np, directory: Path):
         reference_f32 = np.array(case["dequant"], dtype=np.uint32).view(np.float32)
         reference = reference_f32.astype(np.float64).reshape(produced.shape)
 
-        # Codes: R1 recomputes them from the packed words with pure integer
-        # arithmetic in the reference module; here the fixture's own geometry
-        # is enough, since `mx.dequantize` with unit scale returns them.
-        observed_codes = np.array(codes, copy=False).astype(np.int64)
-        if observed_codes.min() < 0 or observed_codes.max() > (1 << bits) - 1:
-            raise Refusal(f"{module}: mx.dequantize returned a code outside 0..{(1 << bits) - 1}")
+        # Codes, compared as the finite floats they are returned as. Casting
+        # to int64 first TRUNCATES: a returned 1.5 becomes 1 and passes a
+        # comparison it should fail. The reference codes are widened to float
+        # instead, so a fractional value cannot survive.
+        observed_codes = np.array(codes, copy=False)
+        if not np.all(np.isfinite(observed_codes)):
+            raise Refusal(f"{module}: mx.dequantize returned a non-finite code")
         reference_codes = unpack_reference_codes(
             np.frombuffer(weight["bytes"], dtype=np.uint32),
             bits,
             case["rows"],
             case["columns"],
         )
-        codes_equal = bool(np.array_equal(observed_codes.reshape(-1), reference_codes))
+        flat_codes = observed_codes.reshape(-1)
+        codes_are_integral = bool(np.array_equal(flat_codes, np.rint(flat_codes)))
+        codes_equal = codes_are_integral and bool(
+            np.array_equal(flat_codes, reference_codes.astype(flat_codes.dtype))
+        )
+        if flat_codes.size and (
+            flat_codes.min() < 0 or flat_codes.max() > (1 << bits) - 1
+        ):
+            raise Refusal(f"{module}: mx.dequantize returned a code outside 0..{(1 << bits) - 1}")
 
         # Values: R1 rounded to the output dtype, within one ulp of it.
         output_dtype = produced.dtype
@@ -212,12 +231,14 @@ def observe(mx, np, directory: Path):
         mx.eval(difference, bound)
         within = bool(np.all(np.array(difference, copy=False) <= np.array(bound, copy=False)))
         max_difference = float(np.max(np.array(difference, copy=False)))
-        exact = bool(
-            np.array_equal(
-                np.array(produced.astype(mx.float32), copy=False),
-                np.array(rounded.astype(mx.float32), copy=False),
-            )
-        )
+        # Bit identity means identical bit patterns. A numeric array_equal
+        # says +0.0 == -0.0, which is exactly the distinction "bit-identical"
+        # is supposed to make, so the two arrays are viewed as unsigned
+        # integers of their own width and compared there.
+        viewed = mx.uint16 if output_dtype in (mx.bfloat16, mx.float16) else mx.uint32
+        produced_bits = np.array(produced.view(viewed), copy=False)
+        rounded_bits = np.array(rounded.view(viewed), copy=False)
+        exact = bool(np.array_equal(produced_bits, rounded_bits))
 
         results.append({
             "module": module,
@@ -228,6 +249,7 @@ def observe(mx, np, directory: Path):
             "output_dtype": str(output_dtype),
             "elements": int(produced.size),
             "codes_exactly_equal": codes_equal,
+            "codes_are_integral": codes_are_integral,
             "values_within_one_ulp": within,
             "values_exactly_equal_after_rounding": exact,
             "max_abs_difference": max_difference,
@@ -288,24 +310,14 @@ def main() -> int:
     }
 
     try:
-        from importlib.metadata import version
-
-        import mlx.core as mx
-        import numpy as np
-
-        mlx_version = version("mlx")
-        try:
-            metal_version = version("mlx-metal")
-        except Exception:
-            metal_version = None
-        if not mx.metal.is_available():
-            raise Refusal("Metal is not available to this MLX build")
+        mx, np, mlx_version, metal_version = acquire_runtime()
     except Refusal as refusal:
         return unavailable(args.output, report, str(refusal))
     except Exception as error:  # ImportError and anything the import raises
         return unavailable(args.output, report, f"MLX is unusable: {error!r}")
 
     report["environment"] = environment(mx, mlx_version, metal_version)
+    report["environment"]["gpu_explicitly_selected"] = True
 
     cases = {}
     failures = 0
@@ -338,6 +350,41 @@ def main() -> int:
                       ("result", "quantized_modules_observed", "failures", "environment")},
                      sort_keys=True))
     return 0 if report["result"] == "PASS" else 1
+
+
+def default_loader():
+    """Import the pinned runtime. Replaced by a stub in tests."""
+    from importlib.metadata import version
+
+    import mlx.core as mx
+    import numpy as np
+
+    try:
+        metal_version = version("mlx-metal")
+    except Exception:
+        metal_version = None
+    return mx, np, version("mlx"), metal_version
+
+
+def acquire_runtime(loader=default_loader):
+    """Load MLX, require Metal, and put the work on the GPU explicitly.
+
+    Factored out so that both refusal branches -- MLX unusable and Metal
+    unavailable -- can be exercised deterministically by injecting a stub,
+    rather than by relying on the test interpreter happening not to have MLX
+    installed. An accident is not a test.
+    """
+    mx, np, mlx_version, metal_version = loader()
+    if not mx.metal.is_available():
+        raise Refusal("Metal is not available to this MLX build")
+    # Metal being *available* is not the same as the work running on it.
+    # Select the GPU explicitly and assert the selection took, so the
+    # observation is about the device the brief names rather than whatever the
+    # default happened to be.
+    mx.set_default_device(mx.gpu)
+    if mx.default_device() != mx.gpu:
+        raise Refusal(f"the default device is {mx.default_device()} after selecting the GPU")
+    return mx, np, mlx_version, metal_version
 
 
 def unavailable(output: Path, report, detail: str) -> int:

@@ -28,8 +28,9 @@ model-specific token appears anywhere in the positive fixtures.
 | Directory | Shape |
 | --- | --- |
 | `uniform-affine-v1` | one shard, no index, three modules, all 4-bit group 64, `__metadata__` present, `config.json` with only the default |
-| `mixed-4-8-v1` | three shards and an index; default 4-bit group 64; one module overridden to 8-bit group 64 and one to 8-bit group 32; one unquantized BF16 weight; one F32 vector; one stacked three-expert tensor at 4 bits; a deliberate 24-byte gap in the first shard |
+| `mixed-4-8-v1` | three shards and an index; default 4-bit group 64; one module overridden to 8-bit group 64 and one to 8-bit group 32; one unquantized BF16 weight; one F32 vector; one stacked three-expert tensor at 4 bits. Gap-free: coverage is strict |
 | `mixed-4-8-index-total-size-v1` | the same checkpoint with `metadata.total_size` declared |
+| `metadata-variants-v1` | one shard whose metadata is F16 and F32, at group 128 as well as 64, so the R2 observation covers every admitted metadata width and group size |
 
 Each carries `expected.json`: the R1 dequantization of every quantized module,
 as binary32 bit patterns, produced by
@@ -46,7 +47,10 @@ parser change between them.
 
 ## Negative cases
 
-There are 33 negative cases. `negative/<case>/` holds a tiny checkpoint or a
+There are 40 negative cases, four of which are not expressible as bytes --
+a shard symlinked outside the root, a shard symlinked inside it, an index
+that is a symlink and an index that is a directory -- because containment is
+decided about the object a descriptor holds, not about a string. `negative/<case>/` holds a tiny checkpoint or a
 handful of header bytes and a
 `README` whose **first line is the error variant the crate must return** and
 whose second line says why. The two fixture-driven tests --
@@ -70,3 +74,17 @@ value.
 
 A separate fixture with its own provenance; see its own `README.md`. It is not
 produced by this generator and `--check` ignores it.
+
+## Round 2 additions
+
+* `metadata-variants-v1`, so the R2 compatibility observation covers F16 and
+  F32 metadata and group 128, not only the BF16 groups 32 and 64 the first
+  fixtures happened to use.
+* Non-regular-file negative cases: symlinked shards and a symlinked or
+  directory index.
+* Duplicate-JSON-member cases at four depths, each with a valid *last*
+  occurrence, which is exactly why accepting one would be wrong.
+* Gap cases, interior and trailing: coverage is now strict, so the deliberate
+  gap the mixed fixture used to carry became two negative cases and the
+  positives were regenerated gap-free.
+* A leading-whitespace header, which is valid JSON and is not the format.

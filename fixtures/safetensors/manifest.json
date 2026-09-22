@@ -1,5 +1,17 @@
 {
  "files": {
+  "metadata-variants-v1/config.json": {
+   "bytes": 241,
+   "sha256": "cfed413be185cd3d45c1e1c98fa257950e9f81c9b22013c63ecd77ab0f4178f8"
+  },
+  "metadata-variants-v1/expected.json": {
+   "bytes": 28765,
+   "sha256": "b492438a63b4adcd6d49e0bcf2d86a7f1b54e05c0f3d554b83def0958c5f9307"
+  },
+  "metadata-variants-v1/model.safetensors": {
+   "bytes": 2405,
+   "sha256": "b21f86e3d0098c65348a1ea8e3d629b58b8dd8a4b249101b5b3ae0f5b734ea5b"
+  },
   "mixed-4-8-index-total-size-v1/config.json": {
    "bytes": 210,
    "sha256": "87e3644baae859aa748473739de7b66088910ecbf69fa7b6bb38f637eabb4ebb"
@@ -510,7 +522,7 @@
   }
  },
  "generator": "scripts/research/generate_safetensors_fixtures_v1.py",
- "generator_sha256": "cb4fd251308229273ecaff095e475fb8ba9ab44598c7c3614169303ac725f09b",
+ "generator_sha256": "e9fb8ca2c5ac3e58d80f4fbbfaefc6a27f022277a7aaab66682d8a8a358a9f3a",
  "mlx_was_not_run": true,
  "negative": [
   "config-dicts-differ",
@@ -561,7 +573,8 @@
  "positive": [
   "uniform-affine-v1",
   "mixed-4-8-v1",
-  "mixed-4-8-index-total-size-v1"
+  "mixed-4-8-index-total-size-v1",
+  "metadata-variants-v1"
  ],
  "reference": "scripts/research/mlx_affine_reference_v1.py",
  "reference_sha256": "651bb5cd2e3c3ad796517852017aeebbd9c50418bc9c31ce4b8d3aebed921623",

@@ -17,6 +17,10 @@ no model, because the crates under test must not be able to recognise a name.
    positive checkpoint must tile its data buffer.
 *  `mixed-4-8-index-total-size-v1` -- the same checkpoint with
    `metadata.total_size` declared in the index.
+*  `metadata-variants-v1` -- one shard whose metadata is F16 and F32, at group
+   128 as well as 64, so the R2 compatibility observation covers every metadata
+   width and group size the representation admits rather than only the BF16
+   groups 32 and 64 the first fixtures happened to use.
 
 Each positive carries `expected.json`: the R1 dequantization of every quantized
 module, as binary32 bit patterns, produced by
@@ -176,6 +180,48 @@ def f32_vector(rng, count):
 
 
 # --- the positive checkpoints ---------------------------------------------
+
+
+def metadata_variants_checkpoint():
+    """A positive checkpoint whose metadata is F16 and F32, at group 128.
+
+    The Round 1 corpus stored BF16 metadata at groups 32 and 64 only, so the
+    R2 observation only ever saw `mx.dequantize` return bfloat16 and never
+    exercised group 128 through MLX at all. These modules close that: the
+    compatibility claim should cover every width the representation admits,
+    not only the one the first fixtures happened to use.
+    """
+    rng = Lcg(0x0020_0004)
+    expected = {}
+    builder = ShardBuilder()
+    plan = [
+        ("block.0.half", "F16", 4, 128, 4, 128),
+        ("block.1.single", "F32", 4, 128, 4, 128),
+        ("block.2.half_eight", "F16", 2, 128, 8, 64),
+        ("block.3.single_group128", "F32", 2, 256, 8, 128),
+    ]
+    for module, metadata_dtype, out_features, in_features, bits, group in plan:
+        weight, scales, biases, shapes, values = quantized_module(
+            rng, leading=[], out_features=out_features, in_features=in_features,
+            bits=bits, group=group, metadata_dtype=metadata_dtype,
+        )
+        builder.add(f"{module}.weight", "U32", shapes["weight"], weight)
+        builder.add(f"{module}.scales", metadata_dtype, shapes["metadata"], scales)
+        builder.add(f"{module}.biases", metadata_dtype, shapes["metadata"], biases)
+        expected[module] = values
+    files = {"model.safetensors": builder.build(metadata={"format": "mlx"})}
+    quantization = {"group_size": 128, "bits": 4}
+    for module, _md, _o, _i, bits, group in plan:
+        if (bits, group) != (4, 128):
+            quantization[module] = {"group_size": group, "bits": bits}
+    files["config.json"] = (
+        json.dumps({"model_type": "synthetic-metadata-variants",
+                    "quantization": quantization}, sort_keys=True, indent=1) + "\n"
+    ).encode()
+    files["expected.json"] = (
+        json.dumps({"schema": SCHEMA, "modules": expected}, sort_keys=True, indent=1) + "\n"
+    ).encode()
+    return files
 
 
 def uniform_checkpoint():
@@ -665,6 +711,7 @@ def all_files():
         ("uniform-affine-v1", uniform_checkpoint()),
         ("mixed-4-8-v1", mixed_checkpoint(total_size=False)),
         ("mixed-4-8-index-total-size-v1", mixed_checkpoint(total_size=True)),
+        ("metadata-variants-v1", metadata_variants_checkpoint()),
     ):
         for leaf, body in produced.items():
             files[f"{name}/{leaf}"] = body
@@ -704,7 +751,12 @@ def build_manifest(files):
             (ROOT / "scripts/research/mlx_affine_reference_v1.py").read_bytes()
         ).hexdigest(),
         "mlx_was_not_run": True,
-        "positive": ["uniform-affine-v1", "mixed-4-8-v1", "mixed-4-8-index-total-size-v1"],
+        "positive": [
+            "uniform-affine-v1",
+            "mixed-4-8-v1",
+            "mixed-4-8-index-total-size-v1",
+            "metadata-variants-v1",
+        ],
         "negative": sorted(list(negative_cases()) + list(special_cases())),
         "symlinks": dict(sorted(all_specials().items())),
         "files": {path: {"bytes": len(body),
