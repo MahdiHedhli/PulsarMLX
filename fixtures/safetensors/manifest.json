@@ -248,6 +248,18 @@
    "bytes": 68,
    "sha256": "eda7ceb0676f457abdf2e56e3a4889b48634c0870916b6269fc930a66edd60f8"
   },
+  "negative/index-is-a-directory/README": {
+   "bytes": 117,
+   "sha256": "936b0d98e971ae0b6571ff312dfe432b062b5cc49b495c5db80a224cbc551327"
+  },
+  "negative/index-is-a-directory/model.safetensors.index.json/.keep": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "negative/index-symlink/README": {
+   "bytes": 114,
+   "sha256": "de0f8de565aa5417197b84267d8ab5604da35425b4aae6b3e124b834997fa62a"
+  },
   "negative/layout-ambiguous-two-shards/README": {
    "bytes": 97,
    "sha256": "eff5b619b16b904b71cf3d58760f95328c2e04a5bc62465280a1d312bebc3503"
@@ -311,6 +323,18 @@
   "negative/layout-unindexed-tensor/model.safetensors.index.json": {
    "bytes": 58,
    "sha256": "2b8886f37080f38082d4a444cef853d6de4b8807b5f6076a0e6c8538b95c988c"
+  },
+  "negative/path-symlink-shard-escape/README": {
+   "bytes": 97,
+   "sha256": "aaad92b7d36bda3799e0ef031fce7db97a106a237a00042ddf094b153355b283"
+  },
+  "negative/path-symlink-shard-inside/README": {
+   "bytes": 103,
+   "sha256": "a74f663d7dc2177ddcecd563161b4cbe3a86555da500076abf11f8982d975941"
+  },
+  "negative/path-symlink-shard-inside/real.bin": {
+   "bytes": 8,
+   "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
   },
   "negative/path-traversal-absolute/README": {
    "bytes": 127,
@@ -422,7 +446,7 @@
   }
  },
  "generator": "scripts/research/generate_safetensors_fixtures_v1.py",
- "generator_sha256": "e994d99b867c4cebaffb6e8bf6cabd630291a46c4618310007ba6b547a737496",
+ "generator_sha256": "e34e7f8ca743456ab0d47f519d9f4611c548cc931cf0fbc534357500bd1a2eaa",
  "mlx_was_not_run": true,
  "negative": [
   "config-dicts-differ",
@@ -445,11 +469,15 @@
   "header-shape-overflow",
   "header-truncated-length-prefix",
   "header-unsupported-dtype",
+  "index-is-a-directory",
+  "index-symlink",
   "layout-ambiguous-two-shards",
   "layout-cross-shard-mismatch",
   "layout-indexed-tensor-absent",
   "layout-missing-shard",
   "layout-unindexed-tensor",
+  "path-symlink-shard-escape",
+  "path-symlink-shard-inside",
   "path-traversal-absolute",
   "path-traversal-parent",
   "path-traversal-subdirectory",
@@ -466,5 +494,10 @@
  ],
  "reference": "scripts/research/mlx_affine_reference_v1.py",
  "reference_sha256": "651bb5cd2e3c3ad796517852017aeebbd9c50418bc9c31ce4b8d3aebed921623",
- "schema": "pulsarmlx.f020.safetensors-fixtures/1.0.0"
+ "schema": "pulsarmlx.f020.safetensors-fixtures/1.0.0",
+ "symlinks": {
+  "negative/index-symlink/model.safetensors.index.json": "elsewhere.json",
+  "negative/path-symlink-shard-escape/model.safetensors": "../../../../etc/hosts",
+  "negative/path-symlink-shard-inside/model.safetensors": "real.bin"
+ }
 }

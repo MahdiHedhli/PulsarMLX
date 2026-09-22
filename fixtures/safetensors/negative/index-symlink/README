@@ -1,0 +1,2 @@
+CatalogError::InvalidIndex
+model.safetensors.index.json is a symbolic link, so it is refused rather than ignored.

@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
 
+use crate::admission::RootDirectory;
 use crate::dtype::Dtype;
 use crate::error::{CatalogError, Result};
 use crate::header::{parse_header_named, ShardHeader, MAX_HEADER_BYTES};
@@ -22,6 +23,10 @@ use crate::index::{parse_index, Index};
 
 /// The conventional index file name.
 pub const INDEX_FILE_NAME: &str = "model.safetensors.index.json";
+
+/// The largest index this crate will read. An index is a name map; a real
+/// eighteen-shard checkpoint declares a few hundred kilobytes of one.
+pub const MAX_INDEX_BYTES: u64 = 64 * 1024 * 1024;
 
 /// An index into a checkpoint's shard list, which is sorted by file name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -258,6 +263,12 @@ fn build_catalog(
 
 impl Checkpoint {
     /// Open a checkpoint rooted at a directory.
+    ///
+    /// Every file this reads -- the index and each shard -- is admitted
+    /// through [`RootDirectory`], which resolves single-component names
+    /// relative to an open descriptor on the canonicalized root with
+    /// `O_NOFOLLOW` and then binds the opened descriptor to that name by
+    /// comparing `(device, inode)`. A pathname is never trusted on its own.
     pub fn open(root: &Path, mode: OpenMode) -> Result<Self> {
         let metadata = std::fs::metadata(root).map_err(|error| io_error(root, &error))?;
         if !metadata.is_dir() {
@@ -270,9 +281,18 @@ impl Checkpoint {
             .canonicalize()
             .map_err(|error| io_error(root, &error))?;
 
-        let index_path = canonical_root.join(INDEX_FILE_NAME);
-        let index_exists = index_path.is_file();
-        let index = match (mode, index_exists) {
+        let directory = RootDirectory::open(&canonical_root)?;
+
+        // Absence and invalidity are different facts. An index entry that
+        // exists but is a directory, a symlink or a socket is a refusal; it
+        // must never quietly become "no index, so try single-shard mode".
+        let index_present = directory.entry_exists(INDEX_FILE_NAME)?;
+        if index_present && !directory.entry_is_regular_file(INDEX_FILE_NAME)? {
+            return Err(CatalogError::InvalidIndex {
+                detail: format!("{INDEX_FILE_NAME} exists but is not a regular file"),
+            });
+        }
+        let index = match (mode, index_present) {
             (OpenMode::RequireSingleShard, true) => {
                 return Err(CatalogError::AmbiguousLayout {
                     detail: "an index is present but a single shard was required".to_string(),
@@ -283,11 +303,7 @@ impl Checkpoint {
                     detail: format!("{INDEX_FILE_NAME} is absent"),
                 })
             }
-            (_, true) => {
-                let text = std::fs::read_to_string(&index_path)
-                    .map_err(|error| io_error(&index_path, &error))?;
-                Some(parse_index(&text)?)
-            }
+            (_, true) => Some(parse_index(&read_admitted_index(&directory)?)?),
             (_, false) => None,
         };
 
@@ -322,29 +338,9 @@ impl Checkpoint {
         let mut headers = Vec::with_capacity(shard_names.len());
         for name in &shard_names {
             crate::index::validate_shard_path(name)?;
-            let path = canonical_root.join(name);
-            let file = match File::open(&path) {
-                Ok(file) => file,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                    return Err(CatalogError::MissingShard {
-                        shard: name.clone(),
-                    })
-                }
-                Err(error) => return Err(io_error(&path, &error)),
-            };
-            let resolved = path
-                .canonicalize()
-                .map_err(|error| io_error(&path, &error))?;
-            if !resolved.starts_with(&canonical_root) {
-                return Err(CatalogError::PathEscape {
-                    shard: name.clone(),
-                    resolved: resolved.display().to_string(),
-                });
-            }
-            let file_len = file
-                .metadata()
-                .map_err(|error| io_error(&path, &error))?
-                .len();
+            let admitted = directory.open_file(name)?;
+            let file_len = admitted.len;
+            let file = admitted.file;
             let bytes = read_header_bytes(&file, name)?;
             let header = parse_header_named(name, &bytes, file_len)?;
             shards.push(ShardProvenance {
@@ -621,6 +617,32 @@ impl Checkpoint {
                 detail: error.to_string(),
             })
     }
+}
+
+/// Read the index through the same admission boundary as a shard.
+fn read_admitted_index(directory: &RootDirectory) -> Result<String> {
+    let admitted = directory.open_file(INDEX_FILE_NAME)?;
+    if admitted.len > MAX_INDEX_BYTES {
+        return Err(CatalogError::InvalidIndex {
+            detail: format!(
+                "the index is {} bytes, above the {MAX_INDEX_BYTES}-byte maximum",
+                admitted.len
+            ),
+        });
+    }
+    let length = usize::try_from(admitted.len).map_err(|_| CatalogError::InvalidIndex {
+        detail: "the index does not fit in memory on this target".to_string(),
+    })?;
+    let mut bytes = vec![0u8; length];
+    admitted
+        .file
+        .read_exact_at(&mut bytes, 0)
+        .map_err(|error| CatalogError::InvalidIndex {
+            detail: format!("cannot read the index: {error}"),
+        })?;
+    String::from_utf8(bytes).map_err(|_| CatalogError::InvalidIndex {
+        detail: "the index is not valid UTF-8".to_string(),
+    })
 }
 
 fn validate_plain_name(name: &str) -> bool {

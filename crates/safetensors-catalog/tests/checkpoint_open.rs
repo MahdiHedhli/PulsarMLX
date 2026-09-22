@@ -151,12 +151,22 @@ fn the_same_name_in_two_shards_is_refused() {
         INDEX_FILE_NAME,
         br#"{"weight_map":{"a":"one.safetensors","b":"two.safetensors"}}"#,
     );
-    let error = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap_err();
-    assert!(
-        matches!(error, CatalogError::DuplicateTensor { .. })
-            || matches!(error, CatalogError::UnindexedTensor { .. }),
-        "unexpected {error:?}"
-    );
+    // One exact variant, not a choice of two. The index maps `a` to shard one
+    // and `b` to shard two, both weight_map entries resolve, and then shard
+    // one's header is found to hold `b`, which the index places elsewhere:
+    // that is the same name in two shards.
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::DuplicateTensor {
+            name,
+            first,
+            second,
+        }) => {
+            assert_eq!(name, "b");
+            assert_eq!(first, "two.safetensors");
+            assert_eq!(second, "one.safetensors");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
 }
 
 #[test]
@@ -187,6 +197,84 @@ fn a_shard_symlinked_outside_the_root_is_refused() {
         Err(CatalogError::PathEscape { ref shard, .. }) => assert_eq!(shard, "model.safetensors"),
         other => panic!("unexpected {other:?}"),
     }
+}
+
+#[test]
+fn a_shard_that_is_a_symlink_to_a_file_inside_the_root_is_still_refused() {
+    // Containment is decided about the object a descriptor holds. A symlink is
+    // refused even when it happens to point somewhere admissible, because the
+    // thing it points at can change between the look and the open.
+    let scratch = Scratch::new("inside-link");
+    scratch.write("real.safetensors", &simple_shard());
+    std::os::unix::fs::symlink(
+        scratch.path().join("real.safetensors"),
+        scratch.path().join("model.safetensors"),
+    )
+    .unwrap();
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors"}}"#,
+    );
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::PathEscape {
+            ref shard,
+            ref resolved,
+        }) => {
+            assert_eq!(shard, "model.safetensors");
+            assert!(resolved.contains("symbolic link"), "{resolved}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn an_index_that_is_not_a_regular_file_is_refused_not_ignored() {
+    // A directory named like the index, next to exactly one valid shard. The
+    // tempting wrong answer is "no index, so single-shard mode".
+    let scratch = Scratch::new("index-dir");
+    scratch.write("model.safetensors", &simple_shard());
+    std::fs::create_dir(scratch.path().join(INDEX_FILE_NAME)).unwrap();
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::InvalidIndex { ref detail }) => {
+            assert!(detail.contains("not a regular file"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_dangling_index_symlink_is_refused_not_ignored() {
+    let scratch = Scratch::new("index-link");
+    scratch.write("model.safetensors", &simple_shard());
+    std::os::unix::fs::symlink(
+        scratch.path().join("nowhere.json"),
+        scratch.path().join(INDEX_FILE_NAME),
+    )
+    .unwrap();
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::InvalidIndex { .. })
+    ));
+}
+
+#[test]
+fn the_root_itself_may_not_be_reached_through_a_symlink_that_moves() {
+    // The root is opened with O_DIRECTORY|O_NOFOLLOW after canonicalization,
+    // so the descriptor is pinned to the directory that existed at open time.
+    let scratch = Scratch::new("root-pin");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.catalog().len(), 2);
+    // Renaming the root after the open does not invalidate what was admitted:
+    // the descriptors were bound, not the names.
+    let moved = scratch.path().with_extension("moved");
+    std::fs::rename(scratch.path(), &moved).unwrap();
+    let tensor = checkpoint.catalog().get("a").unwrap().clone();
+    let mut out = [0u8; 8];
+    checkpoint.read_tensor_bytes(&tensor, &mut out).unwrap();
+    assert_eq!(u32::from_le_bytes(out[4..8].try_into().unwrap()), 2);
+    assert_eq!(tensor.byte_len, 8);
+    std::fs::rename(&moved, scratch.path()).unwrap();
 }
 
 #[test]

@@ -25,8 +25,13 @@
 //! dtypes a consumer may accept: it parses every standard Safetensors dtype
 //! and reports its size.
 
-#![forbid(unsafe_code)]
+// `admission` needs `openat`/`fstat` to bind an opened descriptor to the
+// admitted root; every other module is `unsafe`-free and this is a `deny` so
+// that the one module which needs it must say so explicitly.
+#![deny(unsafe_code)]
 
+#[allow(unsafe_code)]
+pub mod admission;
 mod backend_impl;
 pub mod checkpoint;
 pub mod dtype;
@@ -34,6 +39,7 @@ pub mod error;
 pub mod header;
 pub mod index;
 
+pub use admission::{same_object, Admitted, FileIdentity, RootDirectory};
 pub use checkpoint::{
     hex, Catalog, Checkpoint, OpenMode, ShardId, ShardProvenance, TensorMeta, INDEX_FILE_NAME,
 };

@@ -1,0 +1,2 @@
+CatalogError::PathEscape
+The only shard is a symbolic link, even though its target is inside the root.

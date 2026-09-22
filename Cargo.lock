@@ -904,6 +904,7 @@ name = "safetensors-catalog"
 version = "0.1.0"
 dependencies = [
  "backend",
+ "libc",
  "serde",
  "serde_json",
  "sha2",

@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 import sys
@@ -307,6 +308,38 @@ DEFAULT_CONFIG = (
 ).encode()
 
 
+def special_cases():
+    """Negative cases that need a non-regular file, which bytes cannot express.
+
+    Returns name -> (variant, note, {leaf: ("symlink", target) | ("dir",)}).
+    These exist because containment has to be decided about the object a
+    descriptor holds, not about a string, and a string cannot be a symlink.
+    """
+    return {
+        "path-symlink-shard-escape": (
+            "CatalogError::PathEscape",
+            "The only shard is a symbolic link pointing outside the checkpoint root.",
+            {"model.safetensors": ("symlink", "../../../../etc/hosts")},
+        ),
+        "path-symlink-shard-inside": (
+            "CatalogError::PathEscape",
+            "The only shard is a symbolic link, even though its target is inside the root.",
+            {"real.bin": ("file", b"\x00" * 8),
+             "model.safetensors": ("symlink", "real.bin")},
+        ),
+        "index-symlink": (
+            "CatalogError::InvalidIndex",
+            "model.safetensors.index.json is a symbolic link, so it is refused rather than ignored.",
+            {"model.safetensors.index.json": ("symlink", "elsewhere.json")},
+        ),
+        "index-is-a-directory": (
+            "CatalogError::InvalidIndex",
+            "model.safetensors.index.json exists as a directory; absence and invalidity are different.",
+            {"model.safetensors.index.json/.keep": ("file", b"")},
+        ),
+    }
+
+
 def negative_cases():
     """name -> (error variant, one-line README, {file: bytes})."""
     cases = {}
@@ -578,7 +611,24 @@ def all_files():
         ).encode()
         for leaf, body in produced.items():
             files[f"negative/{case}/{leaf}"] = body
+    for case, (variant, note, produced) in special_cases().items():
+        files[f"negative/{case}/README"] = (
+            f"{variant}\n{note}\n"
+        ).encode()
+        for leaf, entry in produced.items():
+            if entry[0] == "file":
+                files[f"negative/{case}/{leaf}"] = entry[1]
     return files
+
+
+def all_specials():
+    """path -> ("symlink", target) for entries that are not regular files."""
+    specials = {}
+    for case, (_variant, _note, produced) in special_cases().items():
+        for leaf, entry in produced.items():
+            if entry[0] == "symlink":
+                specials[f"negative/{case}/{leaf}"] = entry[1]
+    return specials
 
 
 def build_manifest(files):
@@ -592,7 +642,8 @@ def build_manifest(files):
         ).hexdigest(),
         "mlx_was_not_run": True,
         "positive": ["uniform-affine-v1", "mixed-4-8-v1", "mixed-4-8-index-total-size-v1"],
-        "negative": sorted(negative_cases()),
+        "negative": sorted(list(negative_cases()) + list(special_cases())),
+        "symlinks": dict(sorted(all_specials().items())),
         "files": {path: {"bytes": len(body),
                          "sha256": hashlib.sha256(body).hexdigest()}
                   for path, body in sorted(files.items())},
@@ -608,6 +659,7 @@ def main() -> int:
         parser.error("pass exactly one of --write and --check")
 
     files = all_files()
+    specials = all_specials()
     manifest = build_manifest(files)
     encoded = (json.dumps(manifest, sort_keys=True, indent=1) + "\n").encode()
 
@@ -616,6 +668,12 @@ def main() -> int:
             target = FIXTURES / path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(body)
+        for path, destination in specials.items():
+            target = FIXTURES / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if target.is_symlink() or target.exists():
+                target.unlink()
+            target.symlink_to(destination)
         MANIFEST.write_bytes(encoded)
         print(json.dumps({"result": "WROTE", "files": len(files),
                           "bytes": sum(len(b) for b in files.values())}, sort_keys=True))
@@ -632,17 +690,23 @@ def main() -> int:
             problems.append(f"{path} is absent")
         elif target.read_bytes() != body:
             problems.append(f"{path} does not match what this generator produces")
+    for path, destination in specials.items():
+        target = FIXTURES / path
+        if not target.is_symlink():
+            problems.append(f"{path} is not a symbolic link")
+        elif os.readlink(target) != destination:
+            problems.append(f"{path} does not point at {destination}")
     # `golden-affine-dequant-v1/` has its own generator and its own
     # provenance, and the corpus README is prose, so neither is this
     # generator's output; everything else under fixtures/safetensors must be.
     existing = {
         str(path.relative_to(FIXTURES))
         for path in FIXTURES.rglob("*")
-        if path.is_file()
+        if (path.is_file() or path.is_symlink())
         and not str(path.relative_to(FIXTURES)).startswith("golden-")
         and str(path.relative_to(FIXTURES)) not in ("manifest.json", "README.md")
     }
-    for extra in sorted(existing - set(files)):
+    for extra in sorted(existing - set(files) - set(specials)):
         problems.append(f"{extra} is not produced by this generator")
     if problems:
         for problem in problems:
