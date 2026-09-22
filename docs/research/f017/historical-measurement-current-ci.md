@@ -276,11 +276,31 @@ non-required step block removed, a block carrying the comments written directly
 above it. `residual(current)` must equal `residual(resolution)` byte for byte.
 That freezes, in one comparison and with no key list to miss: the workflow header
 and its `on`, `concurrency`, `permissions`, `defaults` and `env`; every job
-header and every job-level key; every job that contains no required step
-(`classify`, `aggregate`, `evidence-integrity`, `documentation`,
-`closed-branch-guard`) in full; and every required step block. Non-required step
-blocks — the Flash steps, the Feature 002 discovery step, anything added later —
-are removed before the comparison and stay free.
+header and every job-level key **of every job, including the jobs that contain no
+required step** (`classify`, `aggregate`, `evidence-integrity`, `documentation`,
+`closed-branch-guard`); and every required step block.
+
+The rule is uniform and applies to every job equally: **everything is frozen
+except non-required step blocks.** Those blocks are removed before the comparison
+wherever they occur — in the native job, and equally in `classify` and
+`aggregate`, whose step bodies are themselves non-required and therefore free.
+An earlier wording said the jobs without required steps were frozen "in full";
+that was inaccurate, because their step bodies are removed by the same rule as
+any other non-required step. What is frozen in those jobs is their header and
+job-level keys, not their steps.
+
+**NOTE — what a static inventory cannot promise.** Non-required steps are free
+by design, and their *runtime* effects are outside this guarantee. A free step
+running earlier in the same job can write `GITHUB_ENV` or `GITHUB_PATH` and so
+change the environment or executable lookup of a later required step; can modify
+scripts, fixtures, evidence, dependencies or `.venv/bin/python` before a required
+step uses them; can fail early and cause later steps to be skipped; and can change
+routing outputs that gate dependent jobs. This workflow already relies on exactly
+that kind of preparation — the native-MLX step populates `GITHUB_ENV` and a later
+step creates the virtual environment. Byte preservation of the frozen regions
+therefore does not promise an unchanged execution *outcome*; it promises that the
+frozen text has not changed. Extending the guarantee to runtime effects would mean
+constraining non-required steps, which is the opposite of the accepted contract.
 
 **Consequence, stronger again:** *any* change to this workflow outside a
 non-required step now requires advancing `RESOLUTION_BASE` and
