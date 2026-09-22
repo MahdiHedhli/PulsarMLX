@@ -10,8 +10,10 @@ from pathlib import Path
 
 from scripts.research.validate_f017_native_domain_authority_v1 import (
     AuthorityError,
+    _advertised_branch_head,
+    _is_ancestor,
+    _object_present,
     _published_history_ref,
-    _remote_publishes_branch,
     validate,
 )
 
@@ -231,12 +233,56 @@ class PublishedHistoryRefTests(unittest.TestCase):
         self.assertEqual(str(caught.exception), LEFT_REMOTE_HISTORY)
 
     def test_a_live_branch_is_confirmed_against_origin_not_only_locally(self) -> None:
-        # The unchanged path, stated as what it now means: the clone's ref
-        # resolves AND origin still lists the branch.
-        self.assertTrue(_remote_publishes_branch(self.clone, BRANCH))
+        # The unchanged path, stated as what it now means: origin advertises
+        # the branch, and it advertises the tip the pin is an ancestor of.
+        self.assertEqual(_advertised_branch_head(self.clone, BRANCH), self.tip)
         self.assertEqual(self._resolve(), f"origin/{BRANCH}")
         self._retire_branch_without_pruning()
-        self.assertFalse(_remote_publishes_branch(self.clone, BRANCH))
+        self.assertIsNone(_advertised_branch_head(self.clone, BRANCH))
+
+    def test_a_live_branch_reset_past_the_pin_is_refused(self) -> None:
+        # The branch is still published, and the clone's cached ref still
+        # contains the pinned commit -- but origin has moved the branch onto a
+        # line that never had it. Checking the cached ref accepts this;
+        # checking the advertised id refuses it.
+        _git(self.work, "push", "--force", "origin", f"{self.without_pin}:refs/heads/{BRANCH}")
+        self.assertEqual(
+            _git(self.clone, "rev-parse", f"refs/remotes/origin/{BRANCH}"),
+            self.tip,
+            "the premise: the cache still holds the old tip",
+        )
+        self.assertEqual(_advertised_branch_head(self.clone, BRANCH), self.without_pin)
+        # The cached tip would have passed.
+        self.assertTrue(_is_ancestor(self.clone, self.pinned, self.tip))
+        with self.assertRaises(AuthorityError) as caught:
+            self._resolve()
+        self.assertEqual(str(caught.exception), LEFT_REMOTE_HISTORY)
+
+    def test_an_advertised_head_absent_locally_is_its_own_refusal(self) -> None:
+        # Origin has advanced the branch since this copy last fetched. The
+        # validator cannot judge ancestry against an object it does not have,
+        # and it does not fetch one: deciding what history to judge by would
+        # make the answer depend on when it ran. So it says exactly that,
+        # distinctly from "left remote history", which would be a false
+        # accusation here.
+        _git(self.work, "checkout", self.tip)
+        (self.work / "file.txt").write_text("after the clone\n")
+        _git(self.work, "add", "file.txt")
+        _git(self.work, "commit", "-m", "unfetched advance")
+        advanced = _git(self.work, "rev-parse", "HEAD")
+        _git(self.work, "push", "origin", f"HEAD:refs/heads/{BRANCH}")
+
+        self.assertEqual(_advertised_branch_head(self.clone, BRANCH), advanced)
+        self.assertFalse(
+            _object_present(self.clone, advanced),
+            "the premise: the clone has not fetched it",
+        )
+        with self.assertRaises(AuthorityError) as caught:
+            self._resolve()
+        self.assertEqual(
+            str(caught.exception),
+            "advertised head not present locally; fetch before validating",
+        )
 
     def test_unrelated_archive_tag_does_not_qualify(self) -> None:
         self._tag(f"archive/2026-09-21/{BRANCH}-other", self.without_pin)
