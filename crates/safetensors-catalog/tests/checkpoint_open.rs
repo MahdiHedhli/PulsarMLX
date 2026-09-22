@@ -324,31 +324,66 @@ fn the_digest_frames_every_field_by_length() {
 #[test]
 fn names_carrying_delimiters_cannot_collide_in_the_digest() {
     // Tensor names are opaque strings, so one may contain a tab or a newline.
-    // Under the earlier tab-and-newline serialization these two catalogs
-    // produced the same byte stream and therefore the same digest.
-    let build = |first: &str, second: &str| {
-        let json = format!(
-            "{{\"{first}\":{{\"dtype\":\"U8\",\"shape\":[1],\"data_offsets\":[0,1]}},\
-             \"{second}\":{{\"dtype\":\"U8\",\"shape\":[1],\"data_offsets\":[1,2]}}}}"
-        );
-        let bytes = safetensors_catalog::compose_shard(&json, &[0u8, 0u8]);
-        let file_len = bytes.len() as u64;
-        Checkpoint::from_headers(
-            "collide",
-            vec![("model.safetensors".to_string(), file_len, bytes)],
-            None,
-        )
-        .unwrap()
-        .catalog_digest()
-        .unwrap()
+    // The earlier serialization joined six fields per tensor with tabs and
+    // ended each record with a newline, which made the stream ambiguous.
+    //
+    // Round 2's test of this name used "a<TAB>b" + "c" against "a" + "b<TAB>c",
+    // which do NOT collide: the dtype, shape, shard and offset fields sit
+    // between the two names and keep the streams apart. Astra's round-2
+    // finding 3. A real collision has to swallow a whole record, so the pair
+    // below is built to do exactly that.
+    //
+    // The left catalog holds ONE tensor whose name is, literally, the first
+    // record of the right catalog followed by the right catalog's second
+    // name. Serialized without framing, the two are byte-for-byte equal.
+    const SHARD: &str = "model.safetensors";
+    let swallowing_name = format!("a\tU8\t0\t{SHARD}\t0\t0\nb");
+
+    // The old serialization, reconstructed here so the collision is
+    // demonstrated rather than asserted from memory.
+    let old_record = |name: &str, dtype: &str, shape: &str, begin: u64, end: u64| {
+        format!("{name}\t{dtype}\t{shape}\t{SHARD}\t{begin}\t{end}\n")
     };
-    // The names carry JSON \t escapes, so the decoded names really contain a
-    // tab. Under the earlier tab-and-newline serialization these two catalogs
-    // produced the same byte stream: "a<TAB>b" then "c" framed exactly as "a"
-    // then "b<TAB>c".
-    let left = build(r"a\tb", "c");
-    let right = build("a", r"b\tc");
-    assert_ne!(left, right, "length framing must keep these apart");
+    let old_left = old_record(&swallowing_name, "U8", "1", 0, 1);
+    let old_right = old_record("a", "U8", "0", 0, 0) + &old_record("b", "U8", "1", 0, 1);
+    assert_eq!(
+        old_left, old_right,
+        "the premise: these two catalogs collided under the unframed serialization"
+    );
+
+    // Both are real checkpoints. The right one carries a zero-length tensor
+    // at the boundary, which strict coverage admits; each tiles its
+    // single-byte data section.
+    let build = |entries: &str| {
+        let bytes = safetensors_catalog::compose_shard(entries, &[0u8]);
+        let file_len = bytes.len() as u64;
+        Checkpoint::from_headers("collide", vec![(SHARD.to_string(), file_len, bytes)], None)
+            .expect("both catalogs are well formed")
+    };
+    // JSON-escaped: the decoded names really do contain a tab and a newline.
+    let left = build(
+        r#"{"a\tU8\t0\tmodel.safetensors\t0\t0\nb":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#,
+    );
+    let right = build(
+        r#"{"a":{"dtype":"U8","shape":[0],"data_offsets":[0,0]},"b":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#,
+    );
+
+    // The names decoded as intended, so the collision above is the collision
+    // these catalogs would have had.
+    assert_eq!(left.catalog().len(), 1);
+    assert_eq!(right.catalog().len(), 2);
+    assert!(left.catalog().get(&swallowing_name).is_some());
+    assert!(right.catalog().get("a").is_some() && right.catalog().get("b").is_some());
+
+    // And the framed digests keep them apart.
+    let left_digest = left.catalog_digest().unwrap();
+    let right_digest = right.catalog_digest().unwrap();
+    assert_ne!(
+        left_digest, right_digest,
+        "length framing must separate catalogs the unframed form conflated"
+    );
+    // Framing separates them by the record count alone, before any field.
+    assert_ne!(left.catalog().len(), right.catalog().len());
 }
 
 #[test]

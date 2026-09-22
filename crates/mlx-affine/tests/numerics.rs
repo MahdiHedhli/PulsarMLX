@@ -625,8 +625,42 @@ fn nan_is_canonicalized_and_that_is_stated() {
         }
     }
     assert_eq!(examined, 2 * 0x3FF);
-    // The canonicalization, stated rather than assumed: R1 loses the sign.
-    assert!(!half_to_f64(0xFC01).is_sign_negative() || half_to_f64(0xFC01).is_nan());
+
+    // The canonicalization, pinned rather than asserted tautologically.
+    // Round 2 wrote `!x.is_sign_negative() || x.is_nan()`, whose right
+    // disjunct is true for every input this loop produces, so the assertion
+    // held no matter what the sign was -- Astra's round-2 finding 3. The
+    // canonical value is the positive quiet NaN with an all-zero payload.
+    const CANONICAL_NAN: u64 = 0x7FF8_0000_0000_0000;
+    assert_eq!(f64::NAN.to_bits(), CANONICAL_NAN);
+    for payload in 1u16..0x0400 {
+        for sign in [0u16, 0x8000] {
+            let widened = half_to_f64(sign | 0x7C00 | payload);
+            assert_eq!(
+                widened.to_bits(),
+                CANONICAL_NAN,
+                "half {:#06x} must widen to the canonical NaN, not {:#018x}",
+                sign | 0x7C00 | payload,
+                widened.to_bits()
+            );
+        }
+    }
+    // Which means, concretely: sign and payload are both lost. A negative
+    // signalling NaN and a positive quiet one become the same bits.
+    assert_eq!(half_to_f64(0xFC01).to_bits(), half_to_f64(0x7E00).to_bits());
+    assert!(!half_to_f64(0xFC01).is_sign_negative());
+    // The significand field is the quiet bit and nothing else: the payload
+    // carried by the binary16 input is gone.
+    assert_eq!(
+        half_to_f64(0x7C01).to_bits() & 0x000F_FFFF_FFFF_FFFF,
+        0x0008_0000_0000_0000
+    );
+    // The candidate does NOT canonicalize: it carries the sign and payload
+    // through its bit surgery. That difference is why neither is relied on,
+    // and it is asserted here so the divergence is recorded rather than
+    // discovered later.
+    assert!(half_to_f32(0xFC01).is_sign_negative());
+    assert_ne!(half_to_f32(0xFC01).to_bits(), f32::NAN.to_bits());
 
     // Signed zero IS preserved, in both arms, and that one matters: a
     // dequantized -0.0 and +0.0 are different bit patterns and the exact
