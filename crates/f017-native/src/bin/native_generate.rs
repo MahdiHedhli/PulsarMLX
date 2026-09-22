@@ -15,8 +15,8 @@
 
 use f017_native::loader::{load_plan_only, SecureCheckpoint};
 use f017_native::model::{ModelConfig, NativeMlxBackend, ScalarBackend};
-use f017_native::session::{generate, FinishReason, IncrementalText, Limits};
-use f017_native::temporal::{SequenceState, TemporalConfig};
+use f017_native::session::{generate, logits_sha256, FinishReason, IncrementalText, Limits};
+use f017_native::temporal::{execute_prefix_no_cache, RopePairing, SequenceState, TemporalConfig};
 use serde_json::json;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -50,6 +50,12 @@ usage: f017-native-generate --model DIR [options]
   --preflight-only         check identity metadata, the tokenizer and the
                            rendered prompt, then stop; no shard is rehashed
   --verify-only            rehash every shard, then stop
+  --rope-pairing P         neox-half-split (default) or interleaved; which one
+                           a GGUF conversion produced is a property of the
+                           checkpoint, so it is selectable and reported
+  --compare-no-cache       also recompute every position from a fresh state and
+                           compare logits digests, to check the retained cache
+                           against an implementation that cannot carry one
   --cpu                    scalar backend instead of the MLX GPU backend
   --help
 
@@ -67,6 +73,8 @@ struct Arguments {
     max_positions: usize,
     verify_only: bool,
     preflight_only: bool,
+    rope_pairing: RopePairing,
+    compare_no_cache: bool,
     cpu: bool,
 }
 
@@ -83,6 +91,8 @@ fn parse_arguments() -> Result<Arguments, String> {
         max_positions: 2048,
         verify_only: false,
         preflight_only: false,
+        rope_pairing: RopePairing::NeoxHalfSplit,
+        compare_no_cache: false,
         cpu: false,
     };
     let mut iterator = std::env::args().skip(1);
@@ -145,6 +155,14 @@ fn parse_arguments() -> Result<Arguments, String> {
             }
             "--verify-only" => arguments.verify_only = true,
             "--preflight-only" => arguments.preflight_only = true,
+            "--compare-no-cache" => arguments.compare_no_cache = true,
+            "--rope-pairing" => {
+                arguments.rope_pairing = match value()?.as_str() {
+                    "neox-half-split" => RopePairing::NeoxHalfSplit,
+                    "interleaved" => RopePairing::Interleaved,
+                    other => return Err(format!("unknown rope pairing {other}")),
+                }
+            }
             "--cpu" => arguments.cpu = true,
             other => return Err(format!("unknown flag {other}")),
         }
@@ -239,14 +257,14 @@ fn preflight(arguments: &Arguments) -> Result<(serde_json::Value, Tokenizer, Mod
     let identity = json!({
         "model_directory": arguments.model.display().to_string(),
         "architecture": "glm-dsa",
-        "name": gguf.arch_meta("..general.name").and_then(|v| v.as_str()).unwrap_or("GLM-5.2"),
+        "name": gguf.metadata.get("general.name").and_then(|value| value.as_str()),
         "checkpoint_set_sha256": manifest.checkpoint_set_sha256,
         "shards": manifest.files.len(),
         "total_bytes": manifest.total_bytes,
         "tensors": catalog.tensor_count,
         "vocabulary": tokenizer.n_vocab(),
         "indexer_top_k": indexer_top_k,
-        "quantization_file_type": gguf.arch_meta("..general.file_type").and_then(|v| v.as_u64()),
+        "quantization_file_type": gguf.metadata.get("general.file_type").and_then(|value| value.as_u64()),
     });
     Ok((identity, tokenizer, config))
 }
@@ -265,8 +283,11 @@ fn render_prompt(
     }
     let text = arguments.prompt.clone().unwrap_or_default();
     if !arguments.chat_template {
+        // The model's own terminals do not depend on the chat template. An
+        // empty stop set here meant a raw-text run could only ever end on
+        // max-tokens, which is what stage B1 ran into.
         let ids = tokenizer.encode(&text);
-        return Ok((ids, Vec::new(), "RAW_TEXT_NO_TEMPLATE"));
+        return Ok((ids, tokenizer.stop_ids.clone(), "RAW_TEXT_NO_TEMPLATE"));
     }
     let markers = ChatMarkers::resolve(tokenizer)
         .map_err(|error| format!("this checkpoint has no supported chat template: {error:?}"))?;
@@ -277,6 +298,46 @@ fn render_prompt(
         .filter(|id| markers.is_stop(*id))
         .collect::<Vec<_>>();
     Ok((ids, stops, "CHAT_TEMPLATE"))
+}
+
+
+/// Re-execute every prefix from a fresh state and compare logits digests with
+/// the cached run.
+///
+/// This must use the same backend as the cached generation. Running it on the
+/// scalar CPU path while the cached run used MLX compares two arithmetics, not
+/// two cache strategies, and reports a disagreement that means nothing.
+fn compare_no_cache(
+    checkpoint: &mut f017_native::loader::SecureCheckpoint,
+    backend: &mut impl f017_native::model::MatvecBackend,
+    config: &TemporalConfig,
+    prompt: &[u32],
+    cached: &[String],
+) -> Result<serde_json::Value, String> {
+    let mut rows = Vec::new();
+    let mut mismatches = 0usize;
+    for length in 1..=prompt.len().min(cached.len()) {
+        let (_, logits) = execute_prefix_no_cache(checkpoint, backend, config, &prompt[..length])?;
+        let recomputed = logits_sha256(&logits);
+        let agrees = recomputed == cached[length - 1];
+        if !agrees {
+            mismatches += 1;
+        }
+        rows.push(json!({
+            "position": length - 1,
+            "cached_logits_sha256": cached[length - 1],
+            "recomputed_logits_sha256": recomputed,
+            "agrees": agrees,
+        }));
+    }
+    Ok(json!({
+        "method": "each prefix re-executed from a fresh SequenceState on the same backend as the cached run",
+        "positions_compared": rows.len(),
+        "mismatches": mismatches,
+        "result": if mismatches == 0 { "AGREE" } else { "DISAGREE" },
+        "meaning": "an implementation that cannot hold a cache reproduces the cached path's logits exactly",
+        "positions": rows,
+    }))
 }
 
 fn run() -> Result<i32, (i32, String)> {
@@ -295,6 +356,7 @@ fn run() -> Result<i32, (i32, String)> {
     let mut config = TemporalConfig::glm52();
     config.model = model.clone();
     config.indexer_top_k = indexer_top_k;
+    config.rope_pairing = arguments.rope_pairing;
     config.max_positions = arguments.max_positions.min(indexer_top_k);
     config.validate().map_err(|error| (2, error))?;
     let limits = Limits {
@@ -359,8 +421,9 @@ fn run() -> Result<i32, (i32, String)> {
             let _ = stdout.flush();
         }
     };
+    let mut comparison: Option<serde_json::Value> = None;
     let outcome = if arguments.cpu {
-        generate(
+        let produced = generate(
             &mut checkpoint,
             &mut ScalarBackend,
             &config,
@@ -371,7 +434,17 @@ fn run() -> Result<i32, (i32, String)> {
             &mut text,
             &mut sink,
             &CANCELLED,
-        )
+        );
+        if arguments.compare_no_cache {
+            if let Ok(ref outcome) = produced {
+                comparison = Some(
+                    compare_no_cache(&mut checkpoint, &mut ScalarBackend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
+                );
+            }
+        }
+        produced
     } else {
         let context = stream::MlxContext::new(stream::MlxDevice::Gpu, stream::MlxStreamMode::Owned)
             .map_err(|error| (4, error))?;
@@ -388,10 +461,22 @@ fn run() -> Result<i32, (i32, String)> {
             &mut sink,
             &CANCELLED,
         );
+        if arguments.compare_no_cache {
+            if let Ok(ref outcome) = result {
+                comparison = Some(
+                    compare_no_cache(&mut checkpoint, &mut backend, &config, &prompt,
+                                     &outcome.position_logits_sha256)
+                        .map_err(|error| (4, error))?,
+                );
+            }
+        }
         context.synchronize().map_err(|error| (4, error))?;
         result
     }
     .map_err(|error| (4, error))?;
+    if let Some(value) = comparison {
+        diagnostics["no_cache_comparison"] = value;
+    }
 
     let cleanup_start = Instant::now();
     drop(checkpoint);
