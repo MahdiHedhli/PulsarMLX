@@ -1,0 +1,130 @@
+{
+  "schema": "pulsarmlx.f020.numerics-contract/1.0.0",
+  "feature": "020-mlx-safetensors-affine",
+  "slice": 1,
+  "frozen_on": "2026-09-22",
+  "status": "PROSPECTIVE_WITH_ONE_RECORDED_CORRECTION",
+  "prospective_statement": "Every relation, bound and acceptance criterion in this file was written before any R3 or R2 number was produced. The only observation that preceded it is that the Python R1 reproduces the seven quantized cases of the adopted golden fixture exactly; that check validated the reading of the format specification and states nothing about R3 or R2. One check, C-DEQUANT-SINGLE, was subsequently corrected: its first derivation was mathematically wrong under cancellation and is recorded, superseded and explained in that check's `correction` block rather than quietly replaced. No other threshold has moved, and no threshold here may be loosened after output is observed.",
+  "scope": {
+    "in_scope": [
+      "affine dequantization of a packed U32 weight with its scales and biases",
+      "code extraction (unpacking) from the packed little-endian u32 stream",
+      "resolution of bits, group size and mode per module",
+      "byte-range arithmetic for one plane or one row of a stacked tensor"
+    ],
+    "out_of_scope": [
+      "quantized matmul (mx.quantized_matmul) -- no contract in this slice",
+      "gathered quantized matmul (mx.gather_qmm) and its sorted_indices kernel selection -- no contract in this slice",
+      "router and top-k selection -- no contract in this slice",
+      "any full-model or multi-token comparison",
+      "any claim about a real checkpoint's payload"
+    ]
+  },
+  "references": {
+    "R1": {
+      "role": "independent correctness reference",
+      "implementations": [
+        "crates/mlx-affine/src/reference.rs (Rust, binary64, no use statements, shares nothing with crate::decode)",
+        "scripts/research/mlx_affine_reference_v1.py (Python stdlib, binary64, authored before either Rust file existed)"
+      ],
+      "establishes": "the correct interpretation of the checkpoint format and of the affine quantization",
+      "never_establishes": "performance; compatibility with any particular upstream build"
+    },
+    "R2": {
+      "role": "pinned upstream compatibility reference",
+      "implementation": "mx.dequantize at the pinned MLX wheel, driven by scripts/ci/mlx_affine_compat_v1.py",
+      "establishes": "compatibility with the selected upstream execution, including its kernel choices",
+      "never_establishes": "correctness. A defect shared by MLX and by a native path that calls MLX is invisible to an R3-vs-R2 comparison. R2 is not, and may not become, the numerical correctness oracle for this feature."
+    },
+    "R3": {
+      "role": "native candidate",
+      "implementation": "crates/mlx-affine/src/decode.rs (Rust, binary32)",
+      "establishes": "correct integration when compared against R1 under this contract",
+      "never_establishes": "anything by itself"
+    }
+  },
+  "dtypes_and_rounding": {
+    "stored_codes": "unsigned integers of `bits` width, extracted from a contiguous little-endian u32 stream, element j at bit positions [j*bits, j*bits+bits)",
+    "stored_metadata": "scales and biases in the weight's original dtype: BF16, F16 or F32",
+    "R1_intermediate_and_accumulation": "IEEE-754 binary64 throughout; conversions of BF16, F16 and F32 to binary64 are exact",
+    "R3_intermediate_and_accumulation": "IEEE-754 binary32; the stored metadata is widened to binary32 exactly",
+    "R3_expression": "out = scale_f32 * (code as f32) + bias_f32, evaluated as one multiplication followed by one addition. A fused multiply-add is forbidden: it removes the single rounding the exact invariant depends on.",
+    "rounding_mode": "round-to-nearest, ties-to-even, in both references",
+    "reduction_order": "not applicable -- dequantization has no reduction. Where a reduction later enters this feature, R1 is sequential binary64 and the MLX kernel order is recorded as unspecified and measured.",
+    "fusion_assumptions": "none in R1; none in R3"
+  },
+  "checks": [
+    {
+      "id": "C-CODES",
+      "kind": "exact_invariant",
+      "statement": "R3's unpacked codes equal R1's unpacked codes elementwise, for every admitted (bits, group_size) and every fixture.",
+      "justification": "Unpacking is integer arithmetic in both references and admits no rounding."
+    },
+    {
+      "id": "C-DEQUANT-HALF",
+      "kind": "exact_invariant",
+      "statement": "For BF16 and F16 scales and biases, R3(x) == round_to_f32(R1(x)) for every element, bit for bit, including the sign of zero.",
+      "justification": "A BF16 significand carries 8 bits and an F16 significand 11; a code is an integer in [0, 255], i.e. at most 8 bits. The product therefore needs at most 19 significand bits and is exact in binary32 as well as in binary64. The remaining operation is a single addition of two values that are exactly representable in binary32. Double rounding through binary64 is innocuous for such an addition because binary64 carries 53 significand bits and 53 >= 2*24 + 2 = 50 (Figueroa's condition). R3 therefore lands on exactly the binary32 neighbour of R1.",
+      "preconditions": [
+        "no intermediate or final value overflows to infinity in binary32",
+        "every product and sum is normal in binary32; a subnormal product would lose the exactness the argument assumes"
+      ],
+      "precondition_enforcement": "The qualification asserts the preconditions on every fixture before comparing, and a fixture that violates one is a contract failure, not a tolerated case."
+    },
+    {
+      "id": "C-DEQUANT-SINGLE",
+      "kind": "prospectively_justified_bound",
+      "statement": "For F32 scales and biases, |R3(x) - R1(x)| <= 2^-24 * (|scale| * code + |R1(x)|) * (1 + 2^-24) for every element -- half an ulp of binary32 at the magnitude of the product, plus half an ulp at the magnitude of the result, plus the second-order term.",
+      "justification": "R1 computes P = scale * code exactly in binary64 and rounds the sum P + bias once. R3 rounds twice: fl32(P) = P(1 + d1) with |d1| <= 2^-24, and then fl32(fl32(P) + bias) = (P(1 + d1) + bias)(1 + d2) with |d2| <= 2^-24. Subtracting, |R3 - R1| <= 2^-24 * |P| + 2^-24 * |R1| + 2^-48 * |P|. Every term comes from binary32's 24-bit significand; nothing is fitted to an observation.",
+      "note": "The observed error may be smaller. A smaller observation does not tighten this bound retroactively.",
+      "correction": {
+        "corrected_on": "2026-09-22",
+        "superseded_statement": "|R3 - R1| <= 1 ulp_f32(R1)",
+        "why": "The superseded form bounded the error by an ulp of the RESULT and therefore assumed no cancellation. The first rounding happens at the magnitude of the product, and when bias nearly cancels the product the result is far smaller than the product, so an ulp of the result is not an upper bound for it. Observed on the adopted golden case `experts`, where R1 gives 8.94e-8, R3 gives exactly 0, and one ulp of 8.94e-8 is 7.1e-15. This is a corrected derivation, not a loosened threshold: the superseded form was mathematically wrong for the operation it described, and the replacement is derived from the dtypes in the same way the exact invariant for half-precision metadata is.",
+        "observed_margin": "Across the golden fixture's F32-metadata cases the largest observed |R3 - R1| is 2.384e-7 and the largest ratio of that difference to 2^-24 * |product| is 0.88, i.e. the product term alone already covers every case."
+      }
+    },
+    {
+      "id": "C-R2-COMPAT",
+      "kind": "compatibility_observation",
+      "statement": "mx.dequantize's output, compared against R1 rounded to mx.dequantize's own output dtype, agrees within 1 ulp of that dtype; and mx.dequantize's implied codes equal R1's codes exactly.",
+      "not_a_correctness_oracle": true,
+      "rationale": "This records whether the native representation and the pinned upstream agree. Disagreement is a finding about compatibility. Agreement is supporting evidence and is never, on its own, evidence of correctness."
+    },
+    {
+      "id": "C-SHAPE",
+      "kind": "exact_invariant",
+      "statement": "For every classified triple, packed_cols * (32 / bits) == groups * group_size, all leading dimensions of weight, scales and biases are equal, and scales.shape == biases.shape.",
+      "justification": "This is MLX's own validate_quantized_input invariant, restated. It is integer arithmetic."
+    },
+    {
+      "id": "C-SLICE",
+      "kind": "exact_invariant",
+      "statement": "expert_slice and row_slice return byte ranges that lie inside their tensor and that a read reproduces exactly; every offset is computed with checked arithmetic and an overflow is a refusal.",
+      "justification": "Integer arithmetic."
+    },
+    {
+      "id": "C-DETERMINISM",
+      "kind": "exact_invariant",
+      "statement": "Two independent opens of the same checkpoint produce identical catalog digests.",
+      "justification": "The catalog is built from sorted shard names and sorted tensor names; nothing in it depends on directory order or on timing."
+    }
+  ],
+  "acceptance_criteria_slice_1": [
+    "A1: every standard Safetensors dtype string parses and reports its element size, and an unknown string is refused by name.",
+    "A2: every negative fixture in fixtures/safetensors/negative/ is refused with the exact error variant its README names.",
+    "A3: the same parser and the same catalog code path open both a uniform affine checkpoint and a mixed 4/8 checkpoint with per-module overrides, and classify every module correctly, with no parser change between them.",
+    "A4: C-CODES holds on every positive fixture and on seeded randomized rows.",
+    "A5: C-DEQUANT-HALF holds on every positive fixture and on seeded randomized rows.",
+    "A6: C-DEQUANT-SINGLE holds on every F32-metadata case.",
+    "A7: C-SHAPE, C-SLICE and C-DETERMINISM hold.",
+    "A8: R1 in Rust references nothing from the production decoder, checked statically by a test that reads the source file.",
+    "A9: the R2 compatibility script fails closed -- it exits non-zero when MLX cannot be imported or Metal is unavailable while PULSAR_REQUIRE_NATIVE_MLX=1 -- and records the MLX version, device, Metal availability and interpreter path in its report."
+  ],
+  "not_claimed": [
+    "no real-checkpoint Q0 qualification",
+    "no claim about quality retained versus the original BF16 or FP8 model",
+    "no performance claim of any kind",
+    "no claim that R3 and R2 agree bit for bit on any operation other than dequantization"
+  ]
+}

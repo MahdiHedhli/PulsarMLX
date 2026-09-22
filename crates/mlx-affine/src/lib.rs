@@ -7,9 +7,8 @@
 //!
 //! # Three labelled references
 //!
-//! *  **R1** -- an independent binary64 implementation written from the format
-//!    specification alone. It defines what correct means. It lands with the
-//!    qualification commit that follows this one.
+//! *  **R1** ([`reference`]) -- an independent binary64 implementation written
+//!    from the format specification alone. It defines what correct means.
 //! *  **R2** -- pinned upstream Python/MLX (`mx.dequantize`), exercised by
 //!    `scripts/ci/mlx_affine_compat_v1.py`. It establishes compatibility with
 //!    the selected upstream execution and **never** correctness: a defect
@@ -38,6 +37,7 @@
 pub mod decode;
 pub mod error;
 pub mod module;
+pub mod reference;
 pub mod spec;
 
 pub use decode::{dequantize_rows, unpack_codes, ScaleDtype};
