@@ -111,6 +111,15 @@ mechanism and both constants are recorded in
 The compatibility step fails closed: an unusable MLX or an unavailable Metal
 with `PULSAR_REQUIRE_NATIVE_MLX=1` is a failure, not a skip.
 
+Both new steps passed on their first CI run. The required step observed the
+same 13 quantized modules the MacBook did, on macOS 15.7.9 with the same
+pinned MLX 0.32.0 and mlx-metal 0.32.0 on `Device(gpu, 0)`, with exact codes,
+bit-identical values after rounding and a maximum absolute difference of 0.0 —
+and against a fixture manifest whose sha256 matches the tree. The full CI
+environment and report are in
+[the numerics evidence](reviews/evidence/f020-slice1-numerics-results-v1.json)
+under `ci`.
+
 ## Next
 
 Slice 2 is not started. The smallest honest next boundary is the real-metadata
