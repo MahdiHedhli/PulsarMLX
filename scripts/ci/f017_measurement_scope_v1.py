@@ -285,6 +285,47 @@ def _structural(text):
         yield index, line
 
 
+def decode_workflow(raw, label):
+    """Decode a workflow only if its bytes admit exactly one line structure.
+
+    Every scanner here splits on "\n". YAML also recognises a bare CR, NEL,
+    U+2028 and U+2029 as line breaks, so a file containing one of those has a
+    line structure the scanners cannot see: CR-separated structural lines would
+    sit inside what this code treats as one removable non-required step while
+    the YAML parser reads them as enclosing job structure, and the residual
+    could then omit context it claims to freeze. Rather than teach every scanner
+    YAML's full break set, the ambiguity is rejected outright, before any scan.
+
+    Non-ASCII is refused in structural lines for the same reason in a different
+    dimension: a Cyrillic look-alike is a different key to a byte comparison and
+    the same key to a reader. `run:` bodies are exempt -- they are program text,
+    not structure.
+    """
+    require(isinstance(raw, (bytes, bytearray)), "WORKFLOW_NONCANONICAL")
+    if raw.startswith(b"\xef\xbb\xbf"):
+        raise ValueError("WORKFLOW_NONCANONICAL")
+    for forbidden in (b"\r", b"\xc2\x85", b"\xe2\x80\xa8", b"\xe2\x80\xa9"):
+        if forbidden in raw:
+            raise ValueError("WORKFLOW_NONCANONICAL")
+    for byte in raw:
+        # C0 controls other than the one line break we accept; tab is rejected
+        # separately by the canonical gate so its diagnostic stays specific.
+        if byte < 0x20 and byte not in (0x09, 0x0A):
+            raise ValueError("WORKFLOW_NONCANONICAL")
+        if byte == 0x7F:
+            raise ValueError("WORKFLOW_NONCANONICAL")
+    try:
+        text = raw.decode("utf-8", "strict")
+    except UnicodeDecodeError:
+        raise ValueError("WORKFLOW_NONCANONICAL") from None
+    if "\x85" in text or "\u2028" in text or "\u2029" in text:
+        raise ValueError("WORKFLOW_NONCANONICAL")
+    for index, line in _structural(text):
+        if not line.isascii():
+            raise ValueError("WORKFLOW_NONCANONICAL")
+    return text
+
+
 def canonical_form(text):
     """Reject any YAML spelling that hides meaning from a textual comparison.
 
@@ -416,11 +457,12 @@ def verify_workflow_inventory(original, current, native, resolution):
     require(digest(original) == WORKFLOW_BASE_SHA, "WORKFLOW_ORIGINAL_IDENTITY")
     require(digest(native) == NATIVE_WORKFLOW_SHA256, "WORKFLOW_NATIVE_IDENTITY")
     require(digest(resolution) == RESOLUTION_WORKFLOW_SHA256, "WORKFLOW_RESOLUTION_IDENTITY")
-    before = original.decode()
+    before = decode_workflow(original, "qualify")
     require(before.count(OLD_COMMAND) == 1, "WORKFLOW_OLD_CHECK_CENSUS")
 
-    resolution_text = resolution.decode()
-    current_text = current.decode()
+    decode_workflow(native, "native")
+    resolution_text = decode_workflow(resolution, "resolution")
+    current_text = decode_workflow(current, "current")
     require(not canonical_form(current_text), "WORKFLOW_NONCANONICAL")
     require(residual(current_text) == residual(resolution_text),
             "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT")

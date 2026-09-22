@@ -199,6 +199,23 @@ def run(work_dir, code_view):
     rejection('a job with no required steps changed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(text.replace('  aggregate:\n','  aggregate:\n    continue-on-error: true\n',1).encode()))
 
+    # --- Astra r4b: line-break and encoding ambiguity, rejected before any scan ---
+    flash='      - name: Check GLM-5.3-Flash MoE track offline (stdlib only)\n'
+    assert text.count(flash)==1
+    fb=flash.encode()
+    for case,mutated in (
+        ('bare CR inside a non-required step', current_workflow.replace(fb,fb+b'        # x\r        y\n',1)),
+        ('CRLF line endings', current_workflow.replace(b'\n',b'\r\n')),
+        ('UTF-8 BOM', b'\xef\xbb\xbf'+current_workflow),
+        ('NEL line break', current_workflow.replace(fb,fb.replace(b'\n',b'\xc2\x85',1),1)),
+        ('U+2028 line separator', current_workflow.replace(fb,fb+b'        # a\xe2\x80\xa8b\n',1)),
+        ('U+2029 paragraph separator', current_workflow.replace(fb,fb+b'        # a\xe2\x80\xa9b\n',1)),
+        ('invalid UTF-8 byte', current_workflow.replace(fb,fb+b'        # \xff\n',1)),
+        ('C0 control in structure', current_workflow.replace(fb,fb+b'        # \x0c\n',1)),
+        ('Unicode look-alike key', text.replace(job_head,job_head+'    d\u0435faults:\n'+noop,1).encode()),
+    ):
+        rejection(case,'WORKFLOW_NONCANONICAL',lambda mutated=mutated:inventory(mutated))
+
     # --- still permitted ---
     unrelated=unrelated_marker
     assert text.count(unrelated)==1
