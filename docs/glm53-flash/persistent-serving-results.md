@@ -1,5 +1,7 @@
 # GLM-5.3-Flash unpruned persistent paged serving — results (2026-09-20)
 
+> **Research reference oracle (Python/MLX).** Not a shipping path; the native Rust runtime is the only intended Flash runtime.
+
 > **Repository note (2026-09-20).** The code these results describe is now on the default branch: the paged/serving path under [`scripts/research/glm53_flash/`](../../scripts/research/glm53_flash/), the streaming-prefill experiment (default-off, a retained negative result) in [`scripts/research/glm53_flash/dogfood/`](../../scripts/research/glm53_flash/dogfood/) with its tests `scripts/research/tests/test_glm53_flash_stream_prefill.py` and `..._stream_prefill_policy.py`, and the expert-cache ceiling as the explicit `--max-expert-cache-bytes` flag in `scripts/research/glm53_flash/dogfood/paged_reference.py` (default 60000000000). The measurements, claims and limitations below are unchanged and remain pinned to source commit `971db9c1`.
 
 Compact results of the persistent-serving research round (private graph G52–G61, 2026-09-19/20). Machine-readable values: [`persistent-serving-summary.json`](persistent-serving-summary.json); claim/source manifest: [`persistent-serving-manifest.json`](persistent-serving-manifest.json). Nothing here is a production claim; see *Scope and limitations*. The accepted expert budget was raised from 60e9 to 70e9 bytes after these runs: the tables below are the 60e9 record, and [*Expert budget 70e9 (2026-09-20)*](#expert-budget-70e9-2026-09-20) carries the newer measurements and the current recommended launch line.

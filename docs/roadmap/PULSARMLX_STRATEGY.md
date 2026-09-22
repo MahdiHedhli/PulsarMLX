@@ -26,6 +26,8 @@ between them is load-bearing:
 | GLM-5.2 | Python/NumPy research ladder **and** the F017 Rust-native runtime — two different things | ✅ ladder C01–C11; ✅ one native token **qualified** on the real checkpoint; Stage A positions 1–7 and Stage B1 text generation 📏 measured, not qualified; formal closeout pending ([status](../architecture/f017-native-runtime-status.md)) |
 | GLM-5.3-Flash | Python/MLX paged expert-residency research | 🧪 measured candidate `971db9c1`; **not** the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
 
+The Python/MLX Flash path is a research reference oracle for the native implementation, not a shipping path: the Rust-native Flash runtime is the only one PulsarMLX intends to ship.
+
 The next major target is **native ingestion of MLX mixed-precision checkpoints**
 — `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` and
 `PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit` — as the composition *native Rust
