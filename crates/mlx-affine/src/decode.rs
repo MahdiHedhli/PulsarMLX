@@ -170,7 +170,9 @@ pub fn unpack_codes(packed: &[u32], bits: Bits, out: &mut [u8]) -> Result<()> {
 /// `scales` and `biases` are the raw little-endian bytes of the stored
 /// metadata in `scale_dtype`, in row-major `[rows, columns / group_size]`
 /// order. `out.len()` fixes `columns`.
+#[allow(clippy::too_many_arguments)]
 pub fn dequantize_rows(
+    module: &str,
     packed: &[u32],
     scales: &[u8],
     biases: &[u8],
@@ -227,7 +229,23 @@ pub fn dequantize_rows(
             let scale = scale_dtype.read(&scales[at..at + element]);
             let bias = scale_dtype.read(&biases[at..at + element]);
             // One multiply, one add, no fusion. See the module comment.
-            out[row * geometry.columns + column] = scale * (code as f32) + bias;
+            let product = scale * (code as f32);
+            let value = product + bias;
+            // The qualified domain. A finite triple can still have an infinite
+            // binary32 product -- scale = max finite bf16, code = 2 -- while
+            // its binary64 value is finite. Returning an infinity there is an
+            // answer outside the domain the contract qualifies, so it is a
+            // refusal. Both the product and the result are checked, because
+            // the product is where the overflow happens and the result is
+            // where a NaN from an infinite operand would appear.
+            if !product.is_finite() || !value.is_finite() {
+                return Err(AffineError::NonFiniteValue {
+                    module: module.to_string(),
+                    row,
+                    index: column,
+                });
+            }
+            out[row * geometry.columns + column] = value;
         }
     }
     Ok(())
@@ -322,6 +340,7 @@ mod tests {
         let biases = (bias as u16).to_le_bytes().to_vec();
         let mut out = vec![0f32; 32];
         dequantize_rows(
+            "test",
             &words,
             &scales,
             &biases,
@@ -346,6 +365,7 @@ mod tests {
         let biases = (bias as u16).to_le_bytes().to_vec();
         let mut out = vec![0f32; 64];
         dequantize_rows(
+            "test",
             &words,
             &scales,
             &biases,
@@ -366,6 +386,7 @@ mod tests {
         let mut out = vec![0f32; 64];
         assert!(matches!(
             dequantize_rows(
+                "test",
                 &words,
                 &metadata,
                 &metadata,
@@ -379,6 +400,7 @@ mod tests {
         let mut ragged = vec![0f32; 63];
         assert!(matches!(
             dequantize_rows(
+                "test",
                 &words,
                 &metadata,
                 &metadata,
@@ -392,6 +414,7 @@ mod tests {
         let short = vec![0u32; 7];
         assert!(matches!(
             dequantize_rows(
+                "test",
                 &short,
                 &metadata,
                 &metadata,
@@ -405,6 +428,7 @@ mod tests {
         let wrong = vec![0u8; 4];
         assert!(matches!(
             dequantize_rows(
+                "test",
                 &words,
                 &wrong,
                 &metadata,

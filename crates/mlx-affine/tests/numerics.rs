@@ -162,6 +162,7 @@ fn r3_matches_r1_exactly_on_every_admitted_golden_case() {
                 stored_metadata(dtype, &scale_bits, &bias_bits);
             let mut r3 = vec![0f32; rows * cols];
             dequantize_rows(
+                "test",
                 &words,
                 &scale_bytes,
                 &bias_bytes,
@@ -374,6 +375,7 @@ fn r3_matches_r1_exactly_over_seeded_random_rows() {
                 let bias_bytes: Vec<u8> = bias_bits.iter().flat_map(|b| b.to_le_bytes()).collect();
                 let mut r3 = vec![0f32; rows * columns];
                 dequantize_rows(
+                    "test",
                     &words,
                     &scale_bytes,
                     &bias_bytes,
@@ -445,4 +447,140 @@ fn the_exactness_argument_is_stated_where_it_can_be_checked() {
         let widened = f32::from_bits(u32::from(raw) << 16);
         assert_eq!(widened.to_bits() & 0xFFFF, 0);
     }
+}
+
+// --- the qualified numerical domain (Round 2, Astra finding 5) ------------
+
+/// Astra's concrete case: a finite BF16 triple whose binary64 value is finite
+/// and whose binary32 product is not.
+#[test]
+fn a_finite_triple_whose_binary32_product_overflows_is_refused() {
+    let max_bf16: u16 = 0x7F7F; // the largest finite bfloat16
+    let scale = f32::from_bits(u32::from(max_bf16) << 16);
+    assert!(scale.is_finite());
+    assert!((scale * 2.0).is_infinite(), "the premise of this test");
+
+    // One row of 32 columns at 8 bits, group 32: every code is 2, the scale is
+    // the largest finite bf16 and the bias is its negation. R1 in binary64
+    // says 3.3895e38, which is finite and perfectly representable in binary32.
+    let words = vec![0x0202_0202u32; 8];
+    let scales = max_bf16.to_le_bytes().to_vec();
+    let biases = (max_bf16 | 0x8000).to_le_bytes().to_vec();
+
+    let mut r1 = vec![0f64; 32];
+    dequantize_rows_single(
+        &words,
+        &[scale.to_bits()],
+        &[(-scale).to_bits()],
+        8,
+        32,
+        1,
+        32,
+        &mut r1,
+    )
+    .unwrap();
+    assert!(r1[0].is_finite(), "R1 stays finite: {}", r1[0]);
+    assert_eq!(
+        r1[0],
+        f64::from(scale),
+        "R1's value is representable in binary32"
+    );
+
+    // R3 refuses rather than returning the infinity its product would produce.
+    let mut r3 = vec![0f32; 32];
+    match dequantize_rows(
+        "overflow",
+        &words,
+        &scales,
+        &biases,
+        ScaleDtype::Bf16,
+        spec(8, 32),
+        1,
+        &mut r3,
+    ) {
+        Err(mlx_affine::AffineError::NonFiniteValue { module, row, index }) => {
+            assert_eq!(module, "overflow");
+            assert_eq!(row, 0);
+            assert_eq!(index, 0);
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn the_reference_asserts_the_same_domain_as_the_candidate() {
+    // An infinite stored scale is outside the domain for both arms, so both
+    // refuse rather than one of them producing a number.
+    let words = vec![0x1111_1111u32; 8];
+    let infinite = f32::INFINITY.to_bits();
+    let mut r1 = vec![0f64; 64];
+    assert!(matches!(
+        dequantize_rows_single(&words, &[infinite], &[0], 4, 64, 1, 64, &mut r1),
+        Err(mlx_affine::reference::ReferenceError::NonFinite { row: 0, index: 0 })
+    ));
+
+    let mut r3 = vec![0f32; 64];
+    let scales = f32::INFINITY.to_bits().to_le_bytes().to_vec();
+    let biases = 0f32.to_bits().to_le_bytes().to_vec();
+    assert!(matches!(
+        dequantize_rows(
+            "infinite",
+            &words,
+            &scales,
+            &biases,
+            ScaleDtype::F32,
+            spec(4, 64),
+            1,
+            &mut r3
+        ),
+        Err(mlx_affine::AffineError::NonFiniteValue { .. })
+    ));
+}
+
+#[test]
+fn every_golden_intermediate_is_inside_the_qualified_domain() {
+    // Round 1 said the preconditions were asserted on every fixture. They were
+    // not: the golden test checked R1's finiteness and the randomized test
+    // checked R3's final magnitude, but no test checked every product. This
+    // one does, elementwise, for both arms.
+    let fixture = golden();
+    let mut products = 0usize;
+    for block in ["adopted", "extended"] {
+        for (name, case) in fixture[block].as_object().unwrap() {
+            let bits = case["bits"].as_u64().unwrap() as u32;
+            let group = case["group"].as_u64().unwrap() as u32;
+            let words: Vec<u32> = integers(case, "words")
+                .into_iter()
+                .map(|w| w as u32)
+                .collect();
+            let scale_bits: Vec<u32> = integers(case, "scales")
+                .into_iter()
+                .map(|w| w as u32)
+                .collect();
+            let rows = case["rows"].as_u64().unwrap() as usize;
+            let cols = case["cols"].as_u64().unwrap() as usize;
+            let groups = cols / group as usize;
+            let packed_columns = cols * bits as usize / 32;
+            for row in 0..rows {
+                let row_words = &words[row * packed_columns..(row + 1) * packed_columns];
+                for column in 0..cols {
+                    let code =
+                        mlx_affine::reference::extract_code(row_words, bits, column).unwrap();
+                    let scale = f32_bits_to_f64(scale_bits[row * groups + column / group as usize]);
+                    let product = scale * f64::from(code);
+                    assert!(
+                        product.is_finite(),
+                        "{block}/{name}[{row},{column}]: the product is not finite"
+                    );
+                    let as_f32 = product as f32;
+                    assert!(
+                        as_f32.is_finite(),
+                        "{block}/{name}[{row},{column}]: the product leaves binary32"
+                    );
+                    products += 1;
+                }
+            }
+        }
+    }
+    assert!(products > 2000, "only {products} products were checked");
 }

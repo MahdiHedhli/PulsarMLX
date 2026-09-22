@@ -196,6 +196,7 @@ fn r3_reproduces_the_reference_expectations_of_every_positive_fixture() {
             let words = words_from_bytes(&weight).unwrap();
             let mut out = vec![0f32; rows * columns];
             dequantize_rows(
+                "test",
                 &words,
                 &scales,
                 &biases,

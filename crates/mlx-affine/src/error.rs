@@ -53,6 +53,18 @@ pub enum AffineError {
     IndexOutOfBounds { module: String, detail: String },
     /// A decoder call's buffers do not match the declared geometry.
     GeometryMismatch { detail: String },
+    /// A product or a result left the finite range of binary32.
+    ///
+    /// This is the boundary of the qualified numerical domain, not a bug in
+    /// the input: `scale = max_finite_bf16, code = 2, bias = -max_finite_bf16`
+    /// is a finite triple whose binary64 value is finite and whose binary32
+    /// product is infinite. Producing an infinity there would be a silent
+    /// answer outside the domain the contract qualifies, so it is refused.
+    NonFiniteValue {
+        module: String,
+        row: usize,
+        index: usize,
+    },
 }
 
 impl fmt::Display for AffineError {
@@ -124,6 +136,11 @@ impl fmt::Display for AffineError {
                 write!(f, "module {module}: {detail}")
             }
             Self::GeometryMismatch { detail } => write!(f, "geometry mismatch: {detail}"),
+            Self::NonFiniteValue { module, row, index } => write!(
+                f,
+                "module {module}: row {row} element {index} leaves the finite binary32 range, \
+                 which is outside the qualified numerical domain"
+            ),
         }
     }
 }

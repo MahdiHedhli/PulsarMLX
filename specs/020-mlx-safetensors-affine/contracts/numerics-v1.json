@@ -3,7 +3,7 @@
   "feature": "020-mlx-safetensors-affine",
   "slice": 1,
   "frozen_on": "2026-09-22",
-  "status": "PROSPECTIVE_WITH_ONE_RECORDED_CORRECTION",
+  "status": "PROSPECTIVE_WITH_RECORDED_CORRECTIONS",
   "prospective_statement": "Every relation, bound and acceptance criterion in this file was written before any R3 or R2 number was produced. The only observation that preceded it is that the Python R1 reproduces the seven quantized cases of the adopted golden fixture exactly; that check validated the reading of the format specification and states nothing about R3 or R2. One check, C-DEQUANT-SINGLE, was subsequently corrected: its first derivation was mathematically wrong under cancellation and is recorded, superseded and explained in that check's `correction` block rather than quietly replaced. No other threshold has moved, and no threshold here may be loosened after output is observed.",
   "scope": {
     "in_scope": [
@@ -126,5 +126,53 @@
     "no claim about quality retained versus the original BF16 or FP8 model",
     "no performance claim of any kind",
     "no claim that R3 and R2 agree bit for bit on any operation other than dequantization"
+  ],
+  "appended_corrections": [
+    {
+      "id": "R2-C1",
+      "appended_on": "2026-09-22",
+      "round": 2,
+      "frozen_before_any_round_2_run": true,
+      "source": "GPT-6 Astra review of e1d7c95d, findings 5 and 6 and per-question verdict 4",
+      "nature": "append-only: nothing above this array was edited; every statement here supersedes the one it names",
+      "title": "The qualified numerical domain, and the exact form of the binary32 bound",
+      "qualified_domain": {
+        "statement": "Every check in this contract is qualified over FINITE inputs whose products and results stay inside the finite binary32 range. Outside it there is no bound and no invariant; the decoder refuses.",
+        "why_this_had_to_be_said": "A finite BF16 triple can leave the domain. scale = max finite bfloat16 (3.3895313892515355e38), code = 2, bias = -scale: R1's binary64 value is 3.3895313892515355e38, finite and exactly representable in binary32, while R3's binary32 product overflows to infinity. Round 1 stated preconditions of this shape but neither enforced them in production nor asserted them in qualification, so the decoder returned an infinity and the tests did not look.",
+        "enforcement": "crates/mlx-affine/src/decode.rs refuses with AffineError::NonFiniteValue{module,row,index} when a product or a result is not finite. crates/mlx-affine/src/reference.rs refuses with ReferenceError::NonFinite{row,index} on the same condition, so agreement between the arms is agreement about a domain both stayed inside.",
+        "qualification": "tests/numerics.rs asserts the overflow case is refused, that both arms refuse an infinite stored scale, and -- elementwise, over every golden case -- that every product is finite in binary64 and remains finite when rounded to binary32."
+      },
+      "supersedes_C-DEQUANT-SINGLE_wording": {
+        "superseded_phrase": "half an ulp of binary32 at the magnitude of the product, plus half an ulp at the magnitude of the result",
+        "why_it_was_imprecise": "The replacement bound u*(|P|+|r|)*(1+u) is a conservative form in the qualified regime, not literally a sum of two half-ulps; describing it as 'half an ULP' overstates how tight it is and hides which quantity each term is about.",
+        "exact_form": "With P = s*q, T = P + b, u = 2^-24 and y = RN32(RN32(P) + b): |y - T| <= u(1+u)|P| + u|T|. Against the binary64 reference r = RN64(T), add that reference's own rounding error: |y - r| <= u(1+u)|P| + u|T| + |r - T|.",
+        "relation_to_the_implemented_check": "The implemented assertion uses u*(|P| + |r|)*(1+u), which dominates the exact form in the qualified regime because |T| <= |r| + |r - T| and |r - T| <= 2^-53|T|. It is a conservative envelope, not an empirically fitted multiplier.",
+        "still_true": "The reason the result-ULP form fails is unchanged and stands: the first rounding happens at the magnitude of the product, and under cancellation the result is far smaller than the product."
+      },
+      "corrects_the_fma_note": {
+        "superseded_claim": "a fused multiply-add would break the exact invariant",
+        "correct_statement": "For BF16 and F16 metadata the product s*q is exact, so a fused multiply-add computes the same single rounding as a separate multiply and add: FMA does not break C-DEQUANT-HALF. The separate-rounding distinction matters for F32 metadata, where the product itself rounds and fusing would remove that first rounding and change the result.",
+        "why_the_code_still_forbids_fusion": "C-DEQUANT-SINGLE's bound is derived for two roundings. The decoder writes a multiply and an add so that one derivation covers both metadata widths rather than needing a different bound per dtype."
+      },
+      "corrects_the_subnormal_note": {
+        "superseded_claim": "a subnormal product would lose the exactness the argument assumes",
+        "correct_statement": "Subnormal BF16 or F16 products do not inherently lose exactness: multiplying a stored value by an integer code preserves the representable lattice, so the product remains exact where it is representable. The real boundary is OVERFLOW at the top of the binary32 range, not gradual underflow at the bottom, which is why the enforced domain check is finiteness."
+      },
+      "corrects_the_significand_note": {
+        "superseded_claim": "a half-precision significand and an 8-bit code multiply to at most 19 significand bits, so the product is exact in binary32",
+        "correct_statement": "The bit count is right -- at most 16 bits for BF16 times an 8-bit code and at most 19 for F16 -- and the conclusion holds ONLY while the product remains representable. F16 finite inputs cannot overflow binary32; BF16 inputs can. That is the whole of the gap this correction closes."
+      },
+      "prospective_timing": {
+        "round_1_claim": "the contract was written before any R3 or R2 number was produced",
+        "what_can_be_established": "Git cannot verify it. R3 was committed in f818d701; the Python R1, the Rust R1 and this contract first appear together in 8c0ec31c. A docstring assertion is not provenance.",
+        "round_2_position": "The Round 1 timing claim is therefore recorded as unproven rather than repeated as established. The bounds in THIS appended correction were fixed in the coordinator's Round 2 instruction before any Round 2 run, which is stated here for the record and is equally unprovable from Git alone. What is checkable is the content: every bound above is derived from the dtypes and the rounding model, and the derivation is written out so a reader can check it without trusting a timestamp."
+      },
+      "acceptance_criteria_amended": {
+        "A5": "C-DEQUANT-HALF holds on every positive fixture and on seeded randomized rows, WITHIN THE QUALIFIED DOMAIN, and inputs outside it are refused by both arms rather than producing a value.",
+        "A6": "C-DEQUANT-SINGLE holds on every F32-metadata case against the exact form above.",
+        "A10": "The decoder refuses any product or result that leaves the finite binary32 range, and qualification checks every product of every golden case rather than only the final magnitudes.",
+        "A11": "R1 and R3 are qualified against the frozen Flash research fixture glm53-flash-decoder-quantized-v1 under that fixture's own tolerances, read-only."
+      }
+    }
   ]
 }

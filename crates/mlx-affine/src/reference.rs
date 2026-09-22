@@ -59,6 +59,13 @@ pub enum ReferenceError {
     GroupSize(u32),
     Geometry(&'static str),
     Truncated,
+    /// A product or a result is not finite. The reference asserts the same
+    /// qualified domain as the candidate, so that agreement between them is
+    /// agreement about a domain both of them stayed inside.
+    NonFinite {
+        row: usize,
+        index: usize,
+    },
     /// An index computation left the range of `usize`. `extract_code` is
     /// public, so its index is caller-supplied and must be checked: at 4 bits
     /// an index of `2^62` wraps on a 64-bit release build and silently returns
@@ -73,6 +80,9 @@ impl core::fmt::Display for ReferenceError {
             Self::GroupSize(size) => write!(f, "group size {size} is not 32, 64 or 128"),
             Self::Geometry(detail) => write!(f, "geometry: {detail}"),
             Self::Truncated => f.write_str("a bit position lies beyond the packed stream"),
+            Self::NonFinite { row, index } => {
+                write!(f, "row {row} element {index} is not finite")
+            }
             Self::IndexOverflow => f.write_str("an index computation overflowed"),
         }
     }
@@ -244,7 +254,12 @@ pub fn dequantize_rows_half(
             let group = row * groups + column / (group_size as usize);
             let scale = widen(scale_bits[group]);
             let bias = widen(bias_bits[group]);
-            out[row * columns + column] = scale * f64::from(code) + bias;
+            let product = scale * f64::from(code);
+            let value = product + bias;
+            if !product.is_finite() || !value.is_finite() {
+                return Err(ReferenceError::NonFinite { row, index: column });
+            }
+            out[row * columns + column] = value;
         }
     }
     Ok(())
@@ -287,7 +302,12 @@ pub fn dequantize_rows_single(
             let group = row * groups + column / (group_size as usize);
             let scale = single_to_f64(scale_bits[group]);
             let bias = single_to_f64(bias_bits[group]);
-            out[row * columns + column] = scale * f64::from(code) + bias;
+            let product = scale * f64::from(code);
+            let value = product + bias;
+            if !product.is_finite() || !value.is_finite() {
+                return Err(ReferenceError::NonFinite { row, index: column });
+            }
+            out[row * columns + column] = value;
         }
     }
     Ok(())
