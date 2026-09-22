@@ -9,7 +9,6 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::File;
-use std::io::Read;
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
 
@@ -498,6 +497,17 @@ impl Checkpoint {
     }
 
     /// Hash every shard file. Explicit because a real shard is tens of GB.
+    ///
+    /// The bytes are read with `read_exact_at` from offset zero through the
+    /// admitted `file_len`, so the digest never depends on a shared file
+    /// position. `try_clone()` shares one: the first call consumed it, and a
+    /// second call started at end-of-file and replaced a correct digest with
+    /// the digest of the empty stream. Provenance that changes when you ask
+    /// for it twice is worse than no provenance.
+    ///
+    /// A file shorter than the length it was admitted with is
+    /// [`CatalogError::PrematureEof`] rather than a digest over what happened
+    /// to be there.
     pub fn hash_shards(&mut self) -> Result<()> {
         for (position, provenance) in self.shards.iter_mut().enumerate() {
             let file =
@@ -507,20 +517,28 @@ impl Checkpoint {
                         name: provenance.file_name.clone(),
                     })?;
             let mut hasher = Sha256::new();
-            let mut reader = file.try_clone().map_err(|error| CatalogError::Io {
-                path: provenance.file_name.clone(),
-                detail: error.to_string(),
-            })?;
             let mut buffer = vec![0u8; 1 << 20];
-            loop {
-                let read = reader.read(&mut buffer).map_err(|error| CatalogError::Io {
-                    path: provenance.file_name.clone(),
-                    detail: error.to_string(),
-                })?;
-                if read == 0 {
-                    break;
-                }
-                hasher.update(&buffer[..read]);
+            let mut at: u64 = 0;
+            while at < provenance.file_len {
+                let remaining = provenance.file_len - at;
+                let want = remaining.min(buffer.len() as u64) as usize;
+                file.read_exact_at(&mut buffer[..want], at)
+                    .map_err(|error| {
+                        if error.kind() == std::io::ErrorKind::UnexpectedEof {
+                            CatalogError::PrematureEof {
+                                shard: provenance.file_name.clone(),
+                                declared: provenance.file_len,
+                                at,
+                            }
+                        } else {
+                            CatalogError::Io {
+                                path: provenance.file_name.clone(),
+                                detail: error.to_string(),
+                            }
+                        }
+                    })?;
+                hasher.update(&buffer[..want]);
+                at += want as u64;
             }
             provenance.sha256 = Some(hasher.finalize().into());
         }

@@ -105,6 +105,13 @@ pub enum CatalogError {
     NoBackingFile { name: String },
     /// A tensor name is not in the catalog.
     UnknownTensor { name: String },
+    /// A shard ended before the length it was admitted with. The file changed
+    /// under the open, so any digest over it would describe neither version.
+    PrematureEof {
+        shard: ShardName,
+        declared: u64,
+        at: u64,
+    },
     /// The root is not a directory, or a file operation failed.
     Io { path: String, detail: String },
 }
@@ -177,6 +184,10 @@ impl fmt::Display for CatalogError {
                 write!(f, "tensor {name}: this catalog was built from headers alone and cannot read")
             }
             Self::UnknownTensor { name } => write!(f, "tensor {name} is not in the catalog"),
+            Self::PrematureEof { shard, declared, at } => write!(
+                f,
+                "{shard} was admitted as {declared} bytes but ended at {at}"
+            ),
             Self::Io { path, detail } => write!(f, "{path}: {detail}"),
         }
     }

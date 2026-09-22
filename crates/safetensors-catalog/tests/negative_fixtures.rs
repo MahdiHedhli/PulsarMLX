@@ -45,6 +45,7 @@ fn variant(error: &CatalogError) -> &'static str {
         CatalogError::DestinationLengthMismatch { .. } => "CatalogError::DestinationLengthMismatch",
         CatalogError::NoBackingFile { .. } => "CatalogError::NoBackingFile",
         CatalogError::UnknownTensor { .. } => "CatalogError::UnknownTensor",
+        CatalogError::PrematureEof { .. } => "CatalogError::PrematureEof",
         CatalogError::Io { .. } => "CatalogError::Io",
         _ => "CatalogError::<unlisted>",
     }

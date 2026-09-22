@@ -357,11 +357,62 @@ fn hashing_shards_is_explicit_and_stable() {
     scratch.write("model.safetensors", &bytes);
     let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
     assert_eq!(checkpoint.shards()[0].sha256, None);
-    checkpoint.hash_shards().unwrap();
     use sha2::{Digest, Sha256};
     let expected: [u8; 32] = Sha256::digest(&bytes).into();
-    assert_eq!(checkpoint.shards()[0].sha256, Some(expected));
+
+    // Repeated calls must agree. `try_clone()` shares a file position: the
+    // first hash consumed it and the second started at end-of-file, quietly
+    // replacing a correct digest with the digest of the empty stream. Reading
+    // by explicit offset is what makes this stable, so it is asserted three
+    // times rather than once.
+    for round in 1..=3 {
+        checkpoint.hash_shards().unwrap();
+        assert_eq!(
+            checkpoint.shards()[0].sha256,
+            Some(expected),
+            "round {round} produced a different digest"
+        );
+    }
+    let empty: [u8; 32] = Sha256::digest(b"").into();
+    assert_ne!(expected, empty, "the premise of this test");
     assert_eq!(checkpoint.shards()[0].file_len, bytes.len() as u64);
+}
+
+#[test]
+fn hashing_a_shard_that_shrank_under_the_open_is_refused() {
+    // The file is admitted at one length and then truncated. A digest over
+    // whatever is left would describe neither the admitted file nor the new
+    // one, so it is refused instead.
+    let scratch = Scratch::new("shrank");
+    let bytes = simple_shard();
+    scratch.write("model.safetensors", &bytes);
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    let declared = checkpoint.shards()[0].file_len;
+
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join("model.safetensors"))
+        .unwrap();
+    handle.set_len(declared - 4).unwrap();
+    drop(handle);
+
+    match checkpoint.hash_shards() {
+        Err(CatalogError::PrematureEof {
+            shard,
+            declared: recorded,
+            at,
+        }) => {
+            assert_eq!(shard, "model.safetensors");
+            assert_eq!(recorded, declared);
+            assert_eq!(at, 0, "the short read is reported at the offset it began");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+    assert_eq!(
+        checkpoint.shards()[0].sha256,
+        None,
+        "no digest is recorded on refusal"
+    );
 }
 
 #[test]
