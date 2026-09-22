@@ -247,16 +247,25 @@ def _is_required(block_text):
     return any(command in block_text for command in NEW_COMMANDS)
 
 
-_BLOCK_SCALAR = re.compile(r"^(\s*)[^\s#][^:]*:\s*[|>][-+0-9]*\s*$")
+# A block-scalar header may carry an indentation indicator, a chomping
+# indicator and a trailing comment; all three forms open a scalar body.
+_BLOCK_SCALAR = re.compile(r"^(\s*)[^\s#][^:]*:\s*[|>][-+0-9]*\s*(?:#.*)?$")
 _STEP_ITEM = re.compile(r"^(\s*)- (name|uses|id):")
 _QUOTED_KEY = re.compile(r"""^\s*(?:-\s+)?["'][^"']+["']\s*:""")
 _COMPLEX_KEY = re.compile(r"^\s*\?\s")
 _MERGE_KEY = re.compile(r"^\s*<<\s*:")
-_ANCHOR = re.compile(r"(?:^|\s)&[A-Za-z0-9_-]+\s*$|(?:^|\s)&[A-Za-z0-9_-]+\s")
-_ALIAS = re.compile(r":\s*\*[A-Za-z0-9_-]+\s*$|^\s*-\s*\*[A-Za-z0-9_-]+\s*$")
-_TAG = re.compile(r":\s*!!?[A-Za-z0-9_/-]+")
+# YAML anchor and alias names are any non-space, non-flow-indicator run, and an
+# alias may be followed by a comment, so the earlier `[A-Za-z0-9_-]` and
+# end-of-line forms were both too narrow. Tags include the verbatim `!<...>`
+# form as well as shorthand.
+_ANCHOR_NAME = r"[^\s\[\]{},]+"
+_ANCHOR = re.compile(r"(?:^|\s)&" + _ANCHOR_NAME)
+_ALIAS = re.compile(r"(?:^|[\s:\-])\*" + _ANCHOR_NAME)
+_TAG = re.compile(r"(?:^|\s)!(?:<[^>]*>|!?[A-Za-z0-9_/%.-]*)")
 _FLOW = re.compile(r":\s*[\[{]")
 _MAP_KEY = re.compile(r"^(\s*)(?:- )?([A-Za-z0-9_.-]+):(\s|$)")
+# `key : value` is the same key to YAML and a different string to a comparison.
+_SPACED_KEY = re.compile(r"^\s*(?:- )?[A-Za-z0-9_.-]+[ \t]+:(?:\s|$)")
 
 
 def _structural(text):
@@ -355,7 +364,8 @@ def canonical_form(text):
                                (_ANCHOR, "anchor"),
                                (_ALIAS, "alias"),
                                (_TAG, "tag"),
-                               (_FLOW, "flow collection")):
+                               (_FLOW, "flow collection"),
+                               (_SPACED_KEY, "whitespace before a mapping key's colon")):
             if pattern.search(line):
                 problems.append(f"line {index + 1}: {label}")
         four_space = re.match(r"^    ([A-Za-z0-9_.-]+):", line)
@@ -371,7 +381,16 @@ def canonical_form(text):
             jobs.append(job.group(1))
             current_job = job.group(1)
             step_names.setdefault(current_job, [])
-        name = _STEP_NAME.match(line)
+        # A step's name is its identity wherever it appears in the step and
+        # however it is quoted, so `- uses:` first or a quoted name is the same
+        # step to GitHub and must be the same step here.
+        inline = re.match(r"^\s{6,}(?:- )?name:\s*(.*?)\s*$", line)
+        name = inline if (inline and in_steps) else None
+        if name and current_job is not None:
+            value = name.group(1)
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            name = re.match(r"(?s)(.*)", value)
         if name and current_job is not None:
             if name.group(1) in step_names[current_job]:
                 problems.append(f"line {index + 1}: duplicate step name in {current_job}")

@@ -216,6 +216,42 @@ def run(work_dir, code_view):
     ):
         rejection(case,'WORKFLOW_NONCANONICAL',lambda mutated=mutated:inventory(mutated))
 
+    # --- Astra r4b: classes the earlier controls did not isolate ---
+    IF="    if: needs.classify.outputs.mode == 'FULL_NATIVE' || needs.classify.outputs.mode == 'UNKNOWN_DEFAULT_FULL'\n"
+    NEEDS="    needs: classify\n"
+    ENVBLOCK='    env:\n      PULSARMLX_MODEL_GGUF: ""\n      PULSAR_REQUIRE_NATIVE_MLX: "1"\n'
+    CONC="concurrency:\n  group: ${{ github.workflow }}-${{ github.ref }}\n  cancel-in-progress: true\n"
+    for needed in (IF,NEEDS,ENVBLOCK,CONC):
+        assert needed in text, needed[:40]
+
+    # A real anchor/alias composition: the anchor is defined in a free step and
+    # the alias is used at job level, so neither alone is a quoted-key case.
+    rejection('real anchor defined in a free step and aliased at job level','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(flash, flash.replace('\n',' &a\n',1),1)
+                                   .replace(job_head, job_head+'    defaults: *a\n',1).encode()))
+    rejection('duplicate step name with uses: first','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(flash,
+                  '      - uses: actions/checkout@v7\n        name: Check GLM-5.3-Flash MoE track offline (stdlib only)\n'+flash,1).encode()))
+    rejection('duplicate step name differently quoted','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(flash,
+                  '      - name: "Check GLM-5.3-Flash MoE track offline (stdlib only)"\n        run: |\n          true\n'+flash,1).encode()))
+    rejection('key with whitespace before its colon','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(job_head, job_head+'    defaults :\n'+noop,1).encode()))
+    rejection('block-scalar header with a trailing comment','WORKFLOW_NONCANONICAL',
+              lambda:inventory(text.replace(flash, flash+'        run: | # c\n          true\n',1).encode()))
+
+    # Replacements, not duplications: these must reach the residual comparison
+    # rather than being rejected early by the canonical gate, so the label is
+    # asserted to be the context one.
+    rejection('job if: replaced','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(IF,"    if: false\n",1).encode()))
+    rejection('job needs: replaced','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(NEEDS,"    needs: documentation\n",1).encode()))
+    rejection('job env: replaced','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(ENVBLOCK,'    env:\n      PYTHONOPTIMIZE: "1"\n',1).encode()))
+    rejection('workflow concurrency replaced','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(CONC,"concurrency:\n  group: x\n",1).encode()))
+
     # --- still permitted ---
     unrelated=unrelated_marker
     assert text.count(unrelated)==1
