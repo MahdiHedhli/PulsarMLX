@@ -527,6 +527,42 @@ def negative_cases():
          "config.json": b'{"quantization":{"group_size":64,"bits":3,"bits":4}}\n'},
     )
 
+    # --- one name, two spellings (Astra round-2 finding 2) ---
+    # The duplicate cases above all repeat a member byte for byte, so they are
+    # caught by any comparison at all. These three are caught only by a
+    # comparison that decodes \uXXXX escapes first, which is what the guard
+    # claims to do and what nothing previously exercised.
+
+    def framed(header: bytes, payload: bytes = b"") -> bytes:
+        return struct.pack("<Q", len(header)) + header + payload
+
+    cases["json-escaped-duplicate-tensor-name"] = (
+        "CatalogError::DuplicateKey",
+        'Two tensor entries whose names are "\\u006d" and "m": one member, spelled twice.',
+        {"model.safetensors": framed(
+            b'{"\\u006d":{"dtype":"U8","shape":[2],"data_offsets":[0,2]},'
+            b'"m":{"dtype":"U8","shape":[2],"data_offsets":[2,4]}}',
+            b"\0\0\0\0",
+        )},
+    )
+    cases["json-surrogate-pair-duplicate-metadata"] = (
+        "CatalogError::DuplicateKey",
+        "__metadata__ names one emoji twice, once as a surrogate pair and once literally.",
+        {"model.safetensors": framed(
+            b'{"__metadata__":{"\\ud83d\\ude00":"first","\xf0\x9f\x98\x80":"second"},'
+            b'"a":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}',
+            b"\0",
+        )},
+    )
+    cases["json-lone-surrogate-tensor-name"] = (
+        "CatalogError::InvalidJson",
+        "A tensor name is a lone high surrogate, which is not a Unicode scalar value.",
+        {"model.safetensors": framed(
+            b'{"\\ud83d":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}',
+            b"\0",
+        )},
+    )
+
     # --- layout and index ---
     cases["layout-missing-shard"] = (
         "CatalogError::MissingShard",

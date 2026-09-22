@@ -1,0 +1,2 @@
+CatalogError::DuplicateKey
+__metadata__ names one emoji twice, once as a surrogate pair and once literally.

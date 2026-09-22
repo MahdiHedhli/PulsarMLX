@@ -371,8 +371,61 @@ mod tests {
 
     #[test]
     fn escaped_and_plain_spellings_of_one_name_collide() {
-        // "a" and "a" are the same member.
-        assert_eq!(duplicate_path(r#"{"a":1,"a":2}"#), "a");
+        // Round 2's test of this name supplied {"a":1,"a":2} and so decoded
+        // nothing -- Astra's round-2 finding 2. These carry real escapes: the
+        // two members are equal only after \uXXXX decoding, so a guard that
+        // compared the raw bytes would admit every one of them.
+        assert_eq!(duplicate_path(r#"{"\u0061":1,"a":2}"#), "a");
+        assert_eq!(duplicate_path(r#"{"a":1,"\u0061":2}"#), "a");
+        assert_eq!(duplicate_path(r#"{"\u0061":1,"\u0061":2}"#), "a");
+        // Not only ASCII, and not only at the top level.
+        assert_eq!(duplicate_path(r#"{"\u00e9":1,"\u00E9":2}"#), "\u{e9}");
+        assert_eq!(
+            duplicate_path(r#"{"t":{"\u0064type":"U8","dtype":"U16"}}"#),
+            "t.dtype"
+        );
+        // The escape is decoded in the path the error reports, too.
+        assert_eq!(duplicate_path(r#"{"a":[{"\u0062":1,"b":2}]}"#), "a[0].b");
+    }
+
+    #[test]
+    fn a_surrogate_pair_equals_the_literal_character_it_spells() {
+        // U+1F600 written as a pair, then written directly.
+        assert_eq!(
+            duplicate_path("{\"\\ud83d\\ude00\":1,\"\u{1f600}\":2}"),
+            "\u{1f600}"
+        );
+        assert_eq!(
+            duplicate_path("{\"\u{1f600}\":1,\"\\uD83D\\uDE00\":2}"),
+            "\u{1f600}"
+        );
+        // A pair that spells something else does not collide with it.
+        reject_duplicate_keys_str(r#"{"\ud83d\ude00":1,"\ud83d\ude01":2}"#, "doc").unwrap();
+    }
+
+    #[test]
+    fn a_lone_surrogate_is_refused_rather_than_replaced() {
+        // Neither half of a pair is a Unicode scalar value. Substituting
+        // U+FFFD would make two different broken names equal, so the document
+        // is refused instead.
+        for text in [
+            r#"{"\ud83d":1}"#,
+            r#"{"\ude00":1}"#,
+            r#"{"\ud83d\u0061":1}"#,
+            r#"{"\ud83dx":1}"#,
+            r#"{"\ud83d\ud83d":1}"#,
+        ] {
+            match reject_duplicate_keys_str(text, "doc") {
+                Err(CatalogError::InvalidJson { shard, detail }) => {
+                    assert_eq!(shard.to_string(), "doc");
+                    assert!(
+                        detail.contains("surrogate"),
+                        "{text}: unexpected detail {detail}"
+                    );
+                }
+                other => panic!("{text} must be refused, got {other:?}"),
+            }
+        }
     }
 
     #[test]

@@ -146,3 +146,41 @@ fn the_positive_fixtures_open_and_are_deterministic() {
         mixed.catalog_digest_hex().unwrap()
     );
 }
+
+#[test]
+fn the_committed_escaped_key_fixtures_carry_the_decoded_path() {
+    // The corpus walk above asserts the variant each README declares. These
+    // three additionally assert the field inside it, because the whole point
+    // of the fixture is which name the two members turned out to share --
+    // and because, until Round 3, no committed fixture contained a \uXXXX
+    // escape at all (Astra's round-2 finding 2).
+    let root = fixtures();
+
+    match Checkpoint::open(
+        &root.join("json-escaped-duplicate-tensor-name"),
+        OpenMode::Auto,
+    ) {
+        Err(CatalogError::DuplicateKey { path }) => assert_eq!(path, "m"),
+        other => panic!("expected the decoded name, got {other:?}"),
+    }
+
+    match Checkpoint::open(
+        &root.join("json-surrogate-pair-duplicate-metadata"),
+        OpenMode::Auto,
+    ) {
+        Err(CatalogError::DuplicateKey { path }) => {
+            assert_eq!(path, "__metadata__.\u{1f600}");
+        }
+        other => panic!("expected the combined surrogate pair, got {other:?}"),
+    }
+
+    match Checkpoint::open(
+        &root.join("json-lone-surrogate-tensor-name"),
+        OpenMode::Auto,
+    ) {
+        Err(CatalogError::InvalidJson { detail, .. }) => {
+            assert!(detail.contains("lone high surrogate"), "{detail}");
+        }
+        other => panic!("expected a refusal, got {other:?}"),
+    }
+}
