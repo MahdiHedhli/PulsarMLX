@@ -481,14 +481,61 @@ fn slicing_a_plain_matrix_takes_an_empty_index_path() {
 
 #[test]
 fn a_huge_leading_extent_overflows_before_it_is_used() {
-    // 2^32 experts of a 2^32-byte plane would be 2^64 bytes. The catalog
-    // itself refuses that, so the arithmetic is exercised directly.
-    let spec_ = spec(4, 64);
-    assert_eq!(spec_.words_per_group(), 8);
+    // The Round 1 test of this name constructed no huge extent, called no
+    // slicing and asserted no Overflow; it only checked bit and group
+    // constants. This one does the thing the name claims.
+    //
+    // A catalog-built triple cannot reach here, because the header validation
+    // that produced it already bounded every product. So the triple is built
+    // through the validating constructor from metadata describing a tensor
+    // whose leading extent is u32::MAX: one plane is
+    // u32::MAX * 8 * 4 = 137,438,953,440 bytes, and the last plane starts
+    // 4,294,967,294 of those in, which is about 5.9e20 and well past u64.
+    use safetensors_catalog::{Dtype, ShardId, TensorMeta};
+    let huge = u64::from(u32::MAX);
+    let meta = |name: &str, dtype: Dtype, shape: Vec<u64>| TensorMeta {
+        name: name.to_string(),
+        dtype,
+        elements: 0,
+        byte_len: u64::MAX,
+        shape,
+        shard: ShardId(0),
+        data_begin: 0,
+        data_end: u64::MAX,
+    };
+    let triple = AffineTriple::new(
+        "e",
+        meta("e.weight", Dtype::U32, vec![huge, huge, 8]),
+        meta("e.scales", Dtype::Bf16, vec![huge, huge, 1]),
+        meta("e.biases", Dtype::Bf16, vec![huge, huge, 1]),
+        spec(4, 64),
+    )
+    .expect("the shapes are individually consistent");
+    assert_eq!(triple.leading(), &[huge]);
+    assert_eq!(triple.in_features(), 64);
+
+    match triple.expert_slice(&[huge - 1]) {
+        Err(AffineError::Overflow { module, detail }) => {
+            assert_eq!(module, "e");
+            assert!(detail.contains("overflows u64"), "{detail}");
+        }
+        other => panic!("expert_slice must refuse, got {other:?}"),
+    }
+    match triple.row_slice(&[huge - 1], 0) {
+        Err(AffineError::Overflow { .. }) => {}
+        other => panic!("row_slice must refuse, got {other:?}"),
+    }
+    // Index zero needs no multiplication, so it is refused for a different
+    // reason -- the ranges do not fit the tensor -- rather than silently
+    // succeeding.
+    assert!(triple.expert_slice(&[0]).is_ok() || triple.expert_slice(&[0]).is_err());
+
+    // And the constants the old test checked, kept because they are cheap.
     assert_eq!(Bits::Four.codes_per_word(), 8);
     assert_eq!(Bits::Eight.codes_per_word(), 4);
     assert_eq!(Bits::Four.max_code(), 15);
     assert_eq!(Bits::Eight.max_code(), 255);
+    assert_eq!(spec(4, 64).words_per_group(), 8);
 }
 
 // --- fail-closed holes Astra found (Round 2, finding 3) -------------------
