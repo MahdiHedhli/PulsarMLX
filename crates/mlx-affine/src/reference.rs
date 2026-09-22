@@ -59,9 +59,23 @@ pub enum ReferenceError {
     GroupSize(u32),
     Geometry(&'static str),
     Truncated,
-    /// A product or a result is not finite. The reference asserts the same
-    /// qualified domain as the candidate, so that agreement between them is
-    /// agreement about a domain both of them stayed inside.
+    /// The binary32 image of a product or of a result is not finite.
+    ///
+    /// The reference evaluates in binary64, but the qualified domain is
+    /// binary32's finite range, so the domain test is applied to the binary32
+    /// image and not to the binary64 value. Round 2 tested binary64
+    /// finiteness here, which made the reference's domain strictly wider than
+    /// the candidate's: Astra's `scale = max_finite_bf16, code = 2,
+    /// bias = -max_finite_bf16` is finite in binary64 and overflows in
+    /// binary32, so one arm answered and the other refused the same input.
+    ///
+    /// The image is taken the same way the candidate computes, `RN32(product)`
+    /// and then `RN32(RN32(product) + bias)`, so the two domains are equal
+    /// rather than merely close. Both roundings are exact restatements of the
+    /// candidate's arithmetic: `scale` and `bias` are exactly representable in
+    /// binary32, and `scale * code` carries at most 32 significand bits, so
+    /// the binary64 product is exact and its rounding is the candidate's
+    /// multiply.
     NonFinite {
         row: usize,
         index: usize,
@@ -268,7 +282,12 @@ pub fn dequantize_rows_half(
             let bias = widen(bias_bits[group]);
             let product = scale * f64::from(code);
             let value = product + bias;
-            if !product.is_finite() || !value.is_finite() {
+            // The domain is binary32's finite range, tested on the binary32
+            // image of exactly the steps the candidate takes. The stored
+            // value stays binary64.
+            let product32 = product as f32;
+            let value32 = (f64::from(product32) + bias) as f32;
+            if !product32.is_finite() || !value32.is_finite() {
                 return Err(ReferenceError::NonFinite { row, index: column });
             }
             out[row * columns + column] = value;
@@ -316,7 +335,12 @@ pub fn dequantize_rows_single(
             let bias = single_to_f64(bias_bits[group]);
             let product = scale * f64::from(code);
             let value = product + bias;
-            if !product.is_finite() || !value.is_finite() {
+            // The domain is binary32's finite range, tested on the binary32
+            // image of exactly the steps the candidate takes. The stored
+            // value stays binary64.
+            let product32 = product as f32;
+            let value32 = (f64::from(product32) + bias) as f32;
+            if !product32.is_finite() || !value32.is_finite() {
                 return Err(ReferenceError::NonFinite { row, index: column });
             }
             out[row * columns + column] = value;

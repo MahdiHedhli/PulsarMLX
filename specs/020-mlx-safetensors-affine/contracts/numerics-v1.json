@@ -173,6 +173,74 @@
         "A10": "The decoder refuses any product or result that leaves the finite binary32 range, and qualification checks every product of every golden case rather than only the final magnitudes.",
         "A11": "R1 and R3 are qualified against the frozen Flash research fixture glm53-flash-decoder-quantized-v1 under that fixture's own tolerances, read-only."
       }
+    },
+    {
+      "id": "R3-C1",
+      "appended_on": "2026-09-22",
+      "round": 3,
+      "source": "GPT-6 Astra verification of 485d760f, finding 5 (first of two remaining problems)",
+      "nature": "append-only: this entry supersedes the statements it names; the text it supersedes is left in place so the record of what was claimed survives",
+      "title": "The reference's domain check, stated precisely, and made equal to the candidate's",
+      "what_was_wrong": {
+        "finding": "R2-C1 claimed the reference asserts the same qualified domain as the candidate, and amended A5 was written on that basis. The reference in fact tested binary64 finiteness (reference.rs:269 and :317 at 485d760f), which is a strictly wider domain than binary32's, and the overflow regression at tests/numerics.rs:470 explicitly expected the reference to succeed where the candidate refused.",
+        "why_it_matters": "A reference whose domain is wider than the candidate's cannot witness the candidate's refusals: on that input one arm answers and the other refuses, so there is no comparison to make and the 'both arms' claim is empty exactly where it is needed."
+      },
+      "domain_check": {
+        "statement": "The reference refuses an element when RN32(scale*code) is not finite, or when RN32(RN32(scale*code) + bias) is not finite. It evaluates and stores the value in binary64; only the domain test is taken on the binary32 image.",
+        "notation": "RN32(x) is the round-to-nearest-even binary32 image of the real number x.",
+        "equality_with_the_candidate": "The two domains are equal, not merely close. The candidate computes p32 = scale32 * code32 and v32 = p32 + bias32 in binary32. scale and bias are stored as F16, BF16 or F32 and so are exactly representable in binary32. scale*code carries at most 32 significand bits (a 24-bit binary32 significand times a code of at most 8 bits), so the binary64 product is exact and RN32 of it is exactly the candidate's multiply. The second test is applied to RN32(product) + bias, which is exactly the candidate's addition. Each arm therefore refuses precisely the elements the other refuses.",
+        "what_stays_binary64": "The returned reference value is the binary64 product and sum, unrounded. The domain test does not change any value the reference produces; it changes only which inputs it answers for."
+      },
+      "supersedes": [
+        "R2-C1 qualified_domain.enforcement, where 'crates/mlx-affine/src/reference.rs refuses ... on the same condition' described an intention the code did not implement",
+        "the Round 2 wording of amended A5 insofar as it asserted a shared domain already enforced"
+      ],
+      "enforcement": "crates/mlx-affine/src/reference.rs, both dequantize_rows_half and dequantize_rows_single, refuse with ReferenceError::NonFinite{row,index} on the binary32 image test above. crates/mlx-affine/src/decode.rs is unchanged: it already refused with AffineError::NonFiniteValue{module,row,index}.",
+      "qualification": "tests/numerics.rs a_finite_triple_whose_binary32_product_overflows_is_refused_by_both_arms asserts that Astra's case is refused by BOTH arms, at the same row and index, after first asserting that the binary64 product and result are finite and that RN32 of the product is not -- so the test records why the input is interesting as well as that it is refused."
+    },
+    {
+      "id": "R3-C2",
+      "appended_on": "2026-09-22",
+      "round": 3,
+      "source": "GPT-6 Astra verification of 485d760f, finding 5 (second of two remaining problems) and ranked finding 2",
+      "nature": "append-only correction of an append-only claim",
+      "title": "Correction: existing contract text WAS edited in place, contrary to R2-C1's nature sentence",
+      "the_false_statement": {
+        "text": "append-only: nothing above this array was edited; every statement here supersedes the one it names",
+        "located_at": "appended_corrections[0].nature of this file, entry R2-C1",
+        "status": "FALSE as to its first clause. It is left in place: editing it would be one more in-place edit of contract text, which is the practice this entry exists to stop. It is superseded here."
+      },
+      "what_was_actually_edited_in_place": [
+        {
+          "commit": "c7182dc0",
+          "file": "specs/020-mlx-safetensors-affine/contracts/numerics-v1.json",
+          "change": "the top-level status field, from PROSPECTIVE_WITH_ONE_RECORDED_CORRECTION to PROSPECTIVE_WITH_RECORDED_CORRECTIONS",
+          "lines": "one line, line 6; this is the edit that directly contradicts the sentence above, which was added by the same commit"
+        },
+        {
+          "commit": "daec2639",
+          "file": "specs/020-mlx-safetensors-affine/contracts/catalog-contract.md",
+          "change": "existing rows and paragraphs were rewritten, not only appended to: row 4 became 'the first byte after the prefix is {' with MalformedHeader (row 4b was added for the JSON and duplicate-member rule); row 13's error changed from DuplicateTensor to DuplicateKey; the paragraph 'Gaps are legal and are recorded as gap_bytes, not refused' was replaced by the paragraph refusing gaps, and row 14b added; row 17 gained the regular-file and MAX_INDEX_BYTES requirements; row 20 was rewritten from canonicalized-path containment to openat/O_NOFOLLOW with (device, inode) identity; row 25 was renumbered to 25b and a new name-addressed row 25 inserted, with 24b added; and the digest serialization block was replaced, the delimiter-joined form removed and the length-framed form written in its place. A 'Round 2 amendments' section was appended at the end."
+        },
+        {
+          "commit": "daec2639",
+          "file": "specs/020-mlx-safetensors-affine/spec.md",
+          "change": "the dtype paragraph, the duplicate-name bullet, the gaps bullet and the digest serialization block were rewritten in place to match the catalog contract"
+        },
+        {
+          "commit": "daec2639",
+          "file": "fixtures/safetensors/manifest.json",
+          "change": "regenerated: three fixture byte counts and SHA-256 values changed, and generator_sha256 changed, because the generator and the positive fixtures changed. This is a generated manifest rather than contract prose, and it is regenerated with --check verifying it, but it is listed here so the census of in-place changes is complete."
+        },
+        {
+          "commit": "7635158e",
+          "file": "specs/020-mlx-safetensors-affine/spec.md",
+          "change": "the neutrality sentence was narrowed in place from 'appear in the crates' to 'appear in the library crates', with two sentences added about the caller-supplied census rules"
+        }
+      ],
+      "not_reverted_and_why": "None of these edits is reverted. Reverting would discard the corrected statements, which are the ones that are true of the code, and would itself be a further in-place rewrite. Git history preserves every prior version, and this entry names each change, so the record is complete without touching the text again.",
+      "rule_going_forward": "Contract and specification prose under specs/020-mlx-safetensors-affine/ is amended only by appending a dated entry that names what it supersedes. Existing sentences are not rewritten, renumbered or deleted, including sentences that are wrong: a wrong sentence is superseded in place of being erased. Generated artefacts such as fixtures/safetensors/manifest.json are exempt, because they are outputs of a checked generator rather than statements, and their regeneration is itself verified by --check.",
+      "scope_note": "Evidence files under docs/architecture/reviews/evidence/ are a stricter case and were never edited: Astra's finding 10 confirmed nine additions and zero modifications against 751e1ab6. This entry concerns contract and specification prose only."
     }
   ]
 }

@@ -452,9 +452,11 @@ fn the_exactness_argument_is_stated_where_it_can_be_checked() {
 // --- the qualified numerical domain (Round 2, Astra finding 5) ------------
 
 /// Astra's concrete case: a finite BF16 triple whose binary64 value is finite
-/// and whose binary32 product is not.
+/// and whose binary32 product is not. Both arms refuse it, because the
+/// qualified domain is binary32's finite range and the reference tests the
+/// binary32 image of its own binary64 arithmetic.
 #[test]
-fn a_finite_triple_whose_binary32_product_overflows_is_refused() {
+fn a_finite_triple_whose_binary32_product_overflows_is_refused_by_both_arms() {
     let max_bf16: u16 = 0x7F7F; // the largest finite bfloat16
     let scale = f32::from_bits(u32::from(max_bf16) << 16);
     assert!(scale.is_finite());
@@ -467,8 +469,23 @@ fn a_finite_triple_whose_binary32_product_overflows_is_refused() {
     let scales = max_bf16.to_le_bytes().to_vec();
     let biases = (max_bf16 | 0x8000).to_le_bytes().to_vec();
 
+    // In binary64 this input is unremarkable: the product is 6.779e38 and the
+    // result 3.3895e38, both finite and the latter exactly a binary32 value.
+    // That is precisely why Round 2's reference accepted it while the
+    // candidate refused, which is the contradiction Astra found.
+    let exact_product = f64::from(scale) * 2.0;
+    let exact_value = exact_product - f64::from(scale);
+    assert!(exact_product.is_finite() && exact_value.is_finite());
+    assert_eq!(exact_value, f64::from(scale));
+    // The domain is binary32's, so the reference refuses it too: RN32 of that
+    // finite binary64 product is infinite.
+    assert!(
+        (exact_product as f32).is_infinite(),
+        "the premise of the refusal"
+    );
+
     let mut r1 = vec![0f64; 32];
-    dequantize_rows_single(
+    match dequantize_rows_single(
         &words,
         &[scale.to_bits()],
         &[(-scale).to_bits()],
@@ -477,14 +494,14 @@ fn a_finite_triple_whose_binary32_product_overflows_is_refused() {
         1,
         32,
         &mut r1,
-    )
-    .unwrap();
-    assert!(r1[0].is_finite(), "R1 stays finite: {}", r1[0]);
-    assert_eq!(
-        r1[0],
-        f64::from(scale),
-        "R1's value is representable in binary32"
-    );
+    ) {
+        Err(mlx_affine::reference::ReferenceError::NonFinite { row, index }) => {
+            assert_eq!(row, 0);
+            assert_eq!(index, 0);
+        }
+        other => panic!("R1 must refuse the same input as R3, got {other:?}"),
+    }
+    assert_eq!(r1[0], 0.0, "a refused call writes no value");
 
     // R3 refuses rather than returning the infinity its product would produce.
     let mut r3 = vec![0f32; 32];
