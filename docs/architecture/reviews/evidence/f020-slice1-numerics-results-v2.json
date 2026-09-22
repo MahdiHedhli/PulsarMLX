@@ -1,0 +1,412 @@
+{
+ "checks": {
+  "C-CODES": "PASS",
+  "C-DEQUANT-HALF": "PASS, bit for bit, within the qualified domain",
+  "C-DEQUANT-SINGLE": "PASS against the corrected exact form",
+  "C-DETERMINISM": "PASS",
+  "C-R2-COMPAT": "observation; agreement",
+  "C-SHAPE": "PASS",
+  "C-SLICE": "PASS",
+  "NEW-domain": "PASS: a finite BF16 triple whose binary32 product overflows is refused by R3, and both arms refuse infinite and NaN metadata",
+  "NEW-flash-fixture": "PASS against glm53-flash-decoder-quantized-v1 under its own tolerances"
+ },
+ "contract": "specs/020-mlx-safetensors-affine/contracts/numerics-v1.json, including its appended_corrections",
+ "feature": "020-mlx-safetensors-affine",
+ "flash_fixture": {
+  "dequantize_tolerance": 1e-06,
+  "output_tolerance": 0.0001,
+  "weights_compared": 6144,
+  "worst_output": 6.661338147750939e-16,
+  "worst_r3_vs_r1": 1.4901161193847656e-08
+ },
+ "git_head": "7635158e806a330844e5a293818f23a104fdb87a",
+ "model_executed": false,
+ "qualified_domain_enforced": true,
+ "r2_compatibility_observation": {
+  "arm": "R2",
+  "cases": {
+   "metadata-variants-v1": [
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 128,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "F16",
+     "module": "block.0.half",
+     "output_dtype": "mlx.core.float16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 128,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "F32",
+     "module": "block.1.single",
+     "output_dtype": "mlx.core.float32",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 256,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "F16",
+     "module": "block.2.half_eight",
+     "output_dtype": "mlx.core.float16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 128,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "F32",
+     "module": "block.3.single_group128",
+     "output_dtype": "mlx.core.float32",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ],
+   "mixed-4-8-index-total-size-v1": [
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.down",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.gate",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.up",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 1024,
+     "group_size": 32,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.attn",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "kind": "unquantized",
+     "module": "block.1.router",
+     "result": "SKIPPED_UNQUANTIZED"
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 1536,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.experts",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ],
+   "mixed-4-8-v1": [
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.down",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.gate",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.up",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 1024,
+     "group_size": 32,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.attn",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "kind": "unquantized",
+     "module": "block.1.router",
+     "result": "SKIPPED_UNQUANTIZED"
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 1536,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.experts",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ],
+   "uniform-affine-v1": [
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_are_integral": true,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ]
+  },
+  "environment": {
+   "default_device": "Device(gpu, 0)",
+   "gpu_explicitly_selected": true,
+   "interpreter": "/Volumes/APFS 2TB/PulsarMLX-GLM53-Flash/safetensors-20260922/slice1/wt/.venv/bin/python",
+   "machine": "arm64",
+   "metal_available": true,
+   "mlx_metal_version": "0.32.0",
+   "mlx_version": "0.32.0",
+   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+   "python_version": "3.13.13"
+  },
+  "failures": 0,
+  "fixture_manifest_sha256": "c764b1e905f556f816c649b668f5a2f204b43d03791cd342af0ef1c4341b0542",
+  "is_correctness_oracle": false,
+  "quantized_modules_observed": 17,
+  "require_native_mlx": true,
+  "result": "PASS",
+  "schema": "pulsarmlx.f020.mlx-affine-compatibility/2.0.0",
+  "statement": "A compatibility observation against the pinned upstream MLX. Correctness is defined by R1; this arm never establishes it."
+ },
+ "r2_is_correctness_oracle": false,
+ "r2_summary": {
+  "all_bit_identical": true,
+  "all_codes_exact": true,
+  "combinations": [
+   "4-bit group 128 F16 -> float16",
+   "4-bit group 128 F32 -> float32",
+   "4-bit group 64 BF16 -> bfloat16",
+   "8-bit group 128 F32 -> float32",
+   "8-bit group 32 BF16 -> bfloat16",
+   "8-bit group 64 BF16 -> bfloat16",
+   "8-bit group 64 F16 -> float16"
+  ],
+  "failures": 0,
+  "gpu_explicitly_selected": true,
+  "max_abs_difference": 0.0,
+  "quantized_modules_observed": 17,
+  "schema": "pulsarmlx.f020.mlx-affine-compatibility/2.0.0"
+ },
+ "real_checkpoint_payload_read": false,
+ "recorded_on": "2026-09-22",
+ "round": 2,
+ "rust_suites": {
+  "checkpoint_open::tests/checkpoint_open.rs": {
+   "failed": 0,
+   "passed": 20,
+   "result": "OK"
+  },
+  "doc-tests::mlx_affine": {
+   "failed": 0,
+   "passed": 0,
+   "result": "OK"
+  },
+  "doc-tests::safetensors_catalog": {
+   "failed": 0,
+   "passed": 0,
+   "result": "OK"
+  },
+  "fixtures::tests/fixtures.rs": {
+   "failed": 0,
+   "passed": 4,
+   "result": "OK"
+  },
+  "flash_decoder_fixture::tests/flash_decoder_fixture.rs": {
+   "failed": 0,
+   "passed": 2,
+   "result": "OK"
+  },
+  "header_rules::tests/header_rules.rs": {
+   "failed": 0,
+   "passed": 27,
+   "result": "OK"
+  },
+  "independence::tests/independence.rs": {
+   "failed": 0,
+   "passed": 6,
+   "result": "OK"
+  },
+  "mlx_affine::unittests src/lib.rs": {
+   "failed": 0,
+   "passed": 7,
+   "result": "OK"
+  },
+  "negative_fixtures::tests/negative_fixtures.rs": {
+   "failed": 0,
+   "passed": 2,
+   "result": "OK"
+  },
+  "numerics::tests/numerics.rs": {
+   "failed": 0,
+   "passed": 10,
+   "result": "OK"
+  },
+  "representation::tests/representation.rs": {
+   "failed": 0,
+   "passed": 29,
+   "result": "OK"
+  },
+  "safetensors_catalog::unittests src/lib.rs": {
+   "failed": 0,
+   "passed": 16,
+   "result": "OK"
+  }
+ },
+ "rust_tests_failed": 0,
+ "rust_tests_passed": 123,
+ "schema": "pulsarmlx.f020.slice1-numerics-results/2.0.0",
+ "slice": 1,
+ "supersedes": "docs/architecture/reviews/evidence/f020-slice1-numerics-results-v1.json",
+ "why_a_new_file": "Evidence is append-only; the Round 1 file records Round 1 and is not edited."
+}

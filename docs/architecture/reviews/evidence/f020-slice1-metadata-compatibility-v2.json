@@ -1,0 +1,164 @@
+{
+ "agreement_with_round_1": {
+  "all_shards_gap_free": true,
+  "modules_at_4_bit_group_64": true,
+  "modules_at_8_bit_group_64": true,
+  "no_refusals": true,
+  "note": "The catalog digest differs from Round 1 by design: the digest is now length-framed. Every census figure is unchanged.",
+  "shard_count": true,
+  "tensor_count": true,
+  "vision_bytes": true,
+  "vision_tensors": true
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "git_head": "7635158e806a330844e5a293818f23a104fdb87a",
+ "label": "compatibility observation; not Q0; no payload read",
+ "not_claimed": [
+  "no Q0",
+  "no model executed",
+  "nothing downloaded",
+  "not a gate"
+ ],
+ "observation": {
+  "caller_supplied_groups": {
+   "bytes": {
+    "vision": 1127254016
+   },
+   "dtype_surprises": {},
+   "modules": {
+    "vision": 224
+   },
+   "rules": [
+    {
+     "expect_unquantized_dtype": "BF16",
+     "name": "vision",
+     "prefix": "vision_model"
+    }
+   ],
+   "tensors": {
+    "vision": 347
+   },
+   "unquantized_modules": {
+    "vision": 224
+   }
+  },
+  "catalog_digest_sha256": "15372d37ea651be214952c5c1748e573f3857000ed83bb5ff9a2b597377eba94",
+  "configuration": {
+   "default": {
+    "bits": 4,
+    "group_size": 64,
+    "mode": "affine"
+   },
+   "override_count": 542
+  },
+  "dtype_census": {
+   "BF16": 2040,
+   "F32": 290,
+   "U32": 668
+  },
+  "gap_bytes_per_shard": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "module_count": 1126,
+  "quantized_leading_shapes": {
+   "[288]": 126,
+   "[64]": 22,
+   "plain": 520
+  },
+  "refusals": {},
+  "resolved_specs": {
+   "4-bit group 64": 126,
+   "8-bit group 64": 542
+  },
+  "shard_count": 18,
+  "shard_metadata": [
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   }
+  ],
+  "tensor_count": 2998,
+  "unquantized_dtypes": {
+   "BF16": 458
+  }
+ },
+ "recorded_on": "2026-09-22",
+ "round": 2,
+ "rules_file": "scripts/research/glm53_flash/header_census_rules.json",
+ "schema": "pulsarmlx.f020.slice1-metadata-compatibility/2.0.0",
+ "slice": 1,
+ "statement": "Re-run over the same retained headers of the same already-verified checkpoint. No payload byte was read, nothing was downloaded, no model was executed, and the raw headers are still not committed.",
+ "strict_coverage_check": {
+  "all_eighteen_real_shards_gap_free": true,
+  "why_it_mattered": "Adopting strict coverage would have rejected this real checkpoint if any shard had a gap. It was checked before the change was made, two ways: the Round 1 recorded census and a fresh recomputation from the retained headers."
+ },
+ "supersedes": "docs/architecture/reviews/evidence/f020-slice1-metadata-compatibility-v1.json",
+ "why_a_new_file": "Evidence is append-only. This re-runs the same observation after Round 2 changed how the census is driven -- categorization now comes from a caller-supplied rules file outside the crates -- and after coverage became strict, to show both give the same answer."
+}

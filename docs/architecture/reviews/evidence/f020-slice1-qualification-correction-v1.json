@@ -1,0 +1,94 @@
+{
+ "append_only_discipline": {
+  "astra_note_10": "Astra verified that e1d7c95d restores the Round 1 numerics evidence byte for byte and that the CI observation is a separate file, and recorded that relative to the immediate parent it is still an M that the literal validator rejects, while the repair routed FULL_NATIVE and so skipped the evidence job. Round 2 adds only new files, so the same trap is not re-entered.",
+  "round_1_files_edited": 0,
+  "round_1_files_superseded_by_a_new_file": [
+   "f020-slice1-fixture-manifest-v1.json -> v2",
+   "f020-slice1-numerics-results-v1.json -> v2",
+   "f020-slice1-metadata-compatibility-v1.json -> v2"
+  ],
+  "validation_baseline": "Validated against the last accepted evidence baseline, main at 751e1ab6: git diff --name-status 751e1ab6 HEAD -- docs/architecture/reviews/evidence/ shows additions only."
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "git_head": "7635158e806a330844e5a293818f23a104fdb87a",
+ "recorded_on": "2026-09-22",
+ "reviewed_commit": "e1d7c95da5410f7d70a5ba58170f8084ba553b9d",
+ "reviewer": "GPT-6 Astra, verdict SLICE1_NEEDS_FOLLOWUP",
+ "round": 2,
+ "round_1_claims_that_overreached": [
+  {
+   "claim": "all nine acceptance criteria hold",
+   "round_2_position": "A5 and A6 are amended in the contract's appended correction to be explicit about the qualified domain. The decoder now refuses a non-finite product or result, the reference refuses the same, and a test checks every product of every golden case.",
+   "why_it_overreached": "Astra findings 5 and 6. A5 was stated without a qualified domain: a finite BF16 triple with scale = max finite bf16, code = 2 and bias = -scale has a finite binary64 value and an infinite binary32 product, and the decoder returned the infinity. A4 and A5 said preconditions were asserted on every fixture; the golden test checked R1's finiteness and the randomized test checked R3's final magnitude, and no test checked a product."
+  },
+  {
+   "claim": "the slicing arithmetic is covered by a checked-overflow test",
+   "round_2_position": "Replaced with a test that builds a u32::MAX leading extent and asserts Overflow from both expert_slice and row_slice.",
+   "why_it_overreached": "Astra finding 6. a_huge_leading_extent_overflows_before_it_is_used constructed no huge extent, called no slicing and asserted no Overflow."
+  },
+  {
+   "claim": "the governing design note's Flash fixture is covered because the research tests run",
+   "round_2_position": "crates/mlx-affine/tests/flash_decoder_fixture.rs qualifies R1 and R3 against it read-only, under the fixture's own tolerances. Recorded in f020-slice1-flash-fixture-qualification-v1.json.",
+   "why_it_overreached": "Astra finding 6. Running the Python research tests establishes things about the Python path, not about this Rust decoder. glm53-flash-decoder-quantized-v1 was never consumed by the new qualification."
+  },
+  {
+   "claim": "R2's codes were compared exactly and its values bit-identically",
+   "round_2_position": "Codes are compared as finite floats with an integrality assertion; bit identity is a bit-pattern comparison through a uint view.",
+   "why_it_overreached": "Astra finding 7. Codes were cast to int64, which truncates, so 1.5 would have passed as 1; and numeric array_equal does not distinguish signed zero, which is what bit identity is for."
+  },
+  {
+   "claim": "the crate trees are model-neutral",
+   "round_2_position": "Categorization is caller-supplied from a file outside the crates; the claim is narrowed to the library crates, which is both true and what a consumer links.",
+   "why_it_overreached": "Astra finding 8. The example census hard-coded a vision_model prefix and a BF16 expectation, and a catalog test named PipeNetwork."
+  },
+  {
+   "claim": "gaps between tensors are legal Safetensors",
+   "round_2_position": "Coverage is strict. All eighteen real shards were confirmed gap-free first, two ways, so nothing is lost.",
+   "why_it_overreached": "Astra finding 9. Upstream requires complete coverage of the data buffer; Round 1 admitted an extension and described it as the format."
+  },
+  {
+   "claim": "the contract was frozen prospectively",
+   "round_2_position": "Recorded as unproven rather than repeated. The Round 2 bounds were fixed in the coordinator's instruction before any Round 2 run, which is equally unprovable from Git and is stated as such. What is checkable is the derivation, which the contract writes out.",
+   "why_it_overreached": "Astra verdict 7. Git cannot establish it: R3 landed in f818d701 while the Python R1, the Rust R1 and the contract first appear together in 8c0ec31c. A docstring assertion is not provenance."
+  }
+ ],
+ "round_2_results": {
+  "astra_findings_closed": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "negative_fixture_count": 44,
+  "new_or_changed_refusals": [
+   "CatalogError::DuplicateKey",
+   "CatalogError::Gap",
+   "CatalogError::PrematureEof",
+   "AffineError::UnresolvedOverride",
+   "AffineError::DuplicateConfigKey",
+   "AffineError::NonFiniteValue",
+   "ReferenceError::NonFinite",
+   "ReferenceError::IndexOverflow"
+  ],
+  "python_tests": 97,
+  "r2_combinations_observed": 7,
+  "rust_tests": 123
+ },
+ "schema": "pulsarmlx.f020.slice1-qualification-correction/1.0.0",
+ "slice": 1,
+ "statement": "Round 1's qualification conclusions were broader than what Round 1 established. This file records what was claimed, what was wrong, and what Round 2 did about it. No Round 1 evidence file is edited; every Round 2 result is a new file that names the one it supersedes.",
+ "still_not_claimed": [
+  "no real-checkpoint Q0",
+  "no model execution",
+  "no quantized matmul or gather_qmm",
+  "no performance claim",
+  "no quality claim",
+  "no residency"
+ ]
+}

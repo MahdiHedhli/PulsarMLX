@@ -1,6 +1,6 @@
 # F020 native Safetensors status — current pointer
 
-**Last updated 2026-09-22. Slice 1 only.** This is a current-pointer document:
+**Last updated 2026-09-22, Round 2. Slice 1 only.** This is a current-pointer document:
 it says what is qualified today, what is not, and where to read the detail. It
 deliberately claims nothing about a real checkpoint.
 
@@ -21,7 +21,7 @@ downloads and no model execution.
   decoder. Rules:
   [`specs/020-mlx-safetensors-affine/spec.md`](../../specs/020-mlx-safetensors-affine/spec.md).
 
-**90 Rust tests and 34 Python tests**, all passing.
+**123 Rust tests and 97 Python tests**, all passing.
 [Evidence](reviews/evidence/f020-slice1-numerics-results-v1.json).
 
 ## R1, R2, R3
@@ -132,3 +132,35 @@ file.
 Slice 2 is not started. The smallest honest next boundary is the real-metadata
 census on already-verified local headers — no payload, no download — and
 nothing beyond it is authorized.
+
+## Round 2 (after the Astra review of `e1d7c95d`)
+
+The review returned `SLICE1_NEEDS_FOLLOWUP`. Ten findings, all closed. What
+changed, and what it means for the claims above.
+
+| Finding | Change |
+|---|---|
+| 1 | Containment is decided about the object a descriptor holds. The root is opened once with `O_DIRECTORY\|O_NOFOLLOW`, every shard and the index are resolved with `openat` under it with `O_NOFOLLOW`, and the opened descriptor is bound to the name by `(device, inode)`. |
+| 2 | Duplicate JSON members are refused at **any** depth, before anything becomes a map, in headers, the index and the configuration. |
+| 3 | Unknown override members, overrides that match no module, a non-regular index, unchecked aggregate totals, caller-supplied read metadata, publicly mutable triples and unchecked reference indexing are all closed. |
+| 4 | `hash_shards()` reads by explicit offset, so repeated calls agree; a shard that shrank is `PrematureEof`. |
+| 5 | The **qualified numerical domain** is stated and enforced: a non-finite product or result is refused by both arms. A finite BF16 triple whose binary32 product overflows is now a refusal, not an infinity. |
+| 6 | Real slicing-overflow coverage, and R1/R3 qualified against the frozen `glm53-flash-decoder-quantized-v1` under its own tolerances. |
+| 7 | R2 compares codes as finite floats, compares bit patterns for bit identity, selects the GPU explicitly, and covers all three metadata dtypes and all three group sizes. |
+| 8 | Census categorization is caller-supplied; the neutrality claim is narrowed to the library crates. |
+| 9 | Strict upstream coverage, the initial `{`, a length-framed digest, and "admitted dtype set". |
+| 10 | Round 1 evidence is untouched; Round 2 adds new files that name what they supersede. |
+
+**Two Round 1 conclusions were wrong and are corrected in the open.** "All
+acceptance criteria hold" overlooked the domain gap and the missing coverage;
+both are recorded in
+[the qualification correction](reviews/evidence/f020-slice1-qualification-correction-v1.json)
+with what was claimed and why it overreached. And the contract's prospective
+timing cannot be established from Git, so it is recorded as unproven rather
+than repeated.
+
+Current evidence: [fixture manifest v2](reviews/evidence/f020-slice1-fixture-manifest-v2.json),
+[numerics v2](reviews/evidence/f020-slice1-numerics-results-v2.json),
+[metadata compatibility v2](reviews/evidence/f020-slice1-metadata-compatibility-v2.json),
+[Flash fixture qualification](reviews/evidence/f020-slice1-flash-fixture-qualification-v1.json).
+The v1 files record Round 1 and are left exactly as they were added.
