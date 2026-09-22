@@ -448,6 +448,89 @@ fn hashing_shards_is_explicit_and_stable() {
 }
 
 #[test]
+fn a_failed_refresh_clears_the_digest_a_previous_call_recorded() {
+    // Astra's round-2 qualification limit on finding 4: the truncation test
+    // covered failure before any successful hash, so nothing said what
+    // happens to a digest already recorded. It is cleared. A digest that
+    // survives a failed refresh looks current and is not, and this method
+    // exists to state provenance.
+    let scratch = Scratch::new("stale");
+    let bytes = simple_shard();
+    scratch.write("model.safetensors", &bytes);
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+
+    checkpoint.hash_shards().unwrap();
+    let recorded = checkpoint.shards()[0].sha256;
+    assert!(recorded.is_some(), "the premise: a digest was recorded");
+
+    let declared = checkpoint.shards()[0].file_len;
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join("model.safetensors"))
+        .unwrap();
+    handle.set_len(declared - 4).unwrap();
+    drop(handle);
+
+    assert!(matches!(
+        checkpoint.hash_shards(),
+        Err(CatalogError::PrematureEof { .. })
+    ));
+    assert_eq!(
+        checkpoint.shards()[0].sha256,
+        None,
+        "the digest from before the failure must not survive it"
+    );
+}
+
+#[test]
+fn a_refresh_that_fails_on_one_shard_clears_them_all() {
+    // The refresh is all or nothing. Assigning shard by shard would leave the
+    // shards hashed before the failure fresh and the ones after it stale,
+    // with nothing in the error saying which is which.
+    let scratch = Scratch::new("partial");
+    scratch.write("one.safetensors", &simple_shard());
+    scratch.write("two.safetensors", &{
+        let json = concat!(
+            r#"{"c":{"dtype":"U32","shape":[2],"data_offsets":[0,8]},"#,
+            r#""d":{"dtype":"U8","shape":[1],"data_offsets":[8,9]}}"#
+        );
+        let mut data = Vec::new();
+        data.extend_from_slice(&3u32.to_le_bytes());
+        data.extend_from_slice(&4u32.to_le_bytes());
+        data.push(7);
+        compose_shard(json, &data)
+    });
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"one.safetensors","b":"one.safetensors","c":"two.safetensors","d":"two.safetensors"}}"#,
+    );
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.shards().len(), 2);
+
+    checkpoint.hash_shards().unwrap();
+    assert!(checkpoint.shards().iter().all(|s| s.sha256.is_some()));
+
+    // Truncate the SECOND shard only, so the first would hash cleanly.
+    let victim = checkpoint.shards()[1].file_name.clone();
+    let declared = checkpoint.shards()[1].file_len;
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join(&victim))
+        .unwrap();
+    handle.set_len(declared - 1).unwrap();
+    drop(handle);
+
+    match checkpoint.hash_shards() {
+        Err(CatalogError::PrematureEof { shard, .. }) => assert_eq!(shard, victim),
+        other => panic!("unexpected {other:?}"),
+    }
+    assert!(
+        checkpoint.shards().iter().all(|s| s.sha256.is_none()),
+        "a partial refresh must not leave any shard carrying a digest"
+    );
+}
+
+#[test]
 fn hashing_a_shard_that_shrank_under_the_open_is_refused() {
     // The file is admitted at one length and then truncated. A digest over
     // whatever is left would describe neither the admitted file nor the new

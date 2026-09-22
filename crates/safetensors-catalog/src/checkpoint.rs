@@ -509,7 +509,32 @@ impl Checkpoint {
     /// [`CatalogError::PrematureEof`] rather than a digest over what happened
     /// to be there.
     pub fn hash_shards(&mut self) -> Result<()> {
-        for (position, provenance) in self.shards.iter_mut().enumerate() {
+        // All or nothing. Assigning as each shard finishes would leave a
+        // failed refresh holding a mixture: the shards hashed before the
+        // failure carry fresh digests, and the ones after it carry whatever
+        // an earlier successful call recorded. Nothing in the returned error
+        // says which is which, and a stale digest that looks current is worse
+        // than an absent one -- the same reason this method never records a
+        // digest it did not just compute.
+        match self.compute_shard_digests() {
+            Ok(digests) => {
+                for (provenance, digest) in self.shards.iter_mut().zip(digests) {
+                    provenance.sha256 = Some(digest);
+                }
+                Ok(())
+            }
+            Err(error) => {
+                for provenance in self.shards.iter_mut() {
+                    provenance.sha256 = None;
+                }
+                Err(error)
+            }
+        }
+    }
+
+    fn compute_shard_digests(&self) -> Result<Vec<[u8; 32]>> {
+        let mut digests = Vec::with_capacity(self.shards.len());
+        for (position, provenance) in self.shards.iter().enumerate() {
             let file =
                 self.files[position]
                     .as_ref()
@@ -540,9 +565,9 @@ impl Checkpoint {
                 hasher.update(&buffer[..want]);
                 at += want as u64;
             }
-            provenance.sha256 = Some(hasher.finalize().into());
+            digests.push(hasher.finalize().into());
         }
-        Ok(())
+        Ok(digests)
     }
 
     /// The catalog's identity: sha256 over one **length-framed** record per
