@@ -52,6 +52,82 @@ def _resolve(document: Any, dotted: str) -> Any:
     return current
 
 
+_ARCHIVE_TAG_GLOB = "refs/tags/archive/*/{branch}"
+
+
+def _ref_exists(repo: Path, ref: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
+            cwd=repo,
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
+def _is_ancestor(repo: Path, commit: str, descendant: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, descendant],
+            cwd=repo,
+            capture_output=True,
+        ).returncode
+        == 0
+    )
+
+
+def _archive_tags(repo: Path, branch: str) -> dict[str, str]:
+    """Map every published archive tag retiring `branch` to the commit it names.
+
+    A branch is retired under the repository's documented close-out mechanism:
+    an ``archive/<date>/<branch>`` tag pushed to origin at the exact head. The
+    listing is taken from origin rather than from local refs, so a tag only
+    counts once it is genuinely published. Annotated tags are resolved through
+    their peeled ``^{}`` entry; lightweight tags name their commit directly.
+    """
+    pattern = _ARCHIVE_TAG_GLOB.format(branch=branch)
+    listing = _git(repo, "ls-remote", "--tags", "origin", pattern, f"{pattern}^{{}}")
+    direct: dict[str, str] = {}
+    peeled: dict[str, str] = {}
+    for line in listing.decode("utf-8").splitlines():
+        object_id, separator, ref = line.partition("\t")
+        if not separator:
+            continue
+        if ref.endswith("^{}"):
+            peeled[ref[: -len("^{}")]] = object_id
+        else:
+            direct[ref] = object_id
+    return {ref: peeled.get(ref, object_id) for ref, object_id in direct.items()}
+
+
+def _published_history_ref(repo: Path, branch: str, head: str) -> str:
+    """Resolve the published ref that must still contain the pinned `head`.
+
+    The contract pins an immutable historical authority commit, not the
+    forever-current tip of the closed branch. CI-policy/evidence commits may
+    advance that branch without superseding the pinned numerical authority.
+    Require the pinned object to exist and remain in the remote history: on the
+    branch itself while origin still publishes it, and otherwise in *every*
+    archive tag that retired it, because once the branch ref is gone those tags
+    are the published remote history bound to that branch name. Requiring all
+    of them keeps a later, shallower snapshot from admitting a head that an
+    earlier one already dropped.
+    """
+    _git(repo, "cat-file", "-e", f"{head}^{{commit}}")
+    remote_ref = f"origin/{branch}"
+    if _ref_exists(repo, remote_ref):
+        candidates = {remote_ref: remote_ref}
+    else:
+        candidates = _archive_tags(repo, branch)
+    if not candidates:
+        raise AuthorityError("pinned historical authority left remote history")
+    for ref, commit in sorted(candidates.items()):
+        if not _is_ancestor(repo, head, commit):
+            raise AuthorityError("pinned historical authority left remote history")
+    return ",".join(sorted(candidates))
+
+
 def validate(contract_path: Path, repo: Path) -> dict[str, Any]:
     contract_bytes = contract_path.read_bytes()
     contract = _load_json_bytes(contract_bytes, str(contract_path))
@@ -67,21 +143,7 @@ def validate(contract_path: Path, repo: Path) -> dict[str, Any]:
     if len(native["owns"]) != 5:
         raise AuthorityError("native authority inventory mismatch")
     historical = contract["historical_domain"]
-    remote_ref = f"origin/{historical['branch']}"
-    # The contract pins an immutable historical authority commit, not the
-    # forever-current tip of the closed branch. CI-policy/evidence commits may
-    # advance that branch without superseding the pinned numerical authority.
-    # Require the pinned object to exist and remain in the remote history.
-    _git(repo, "cat-file", "-e", f"{historical['head']}^{{commit}}")
-    try:
-        subprocess.run(
-            ["git", "merge-base", "--is-ancestor", historical["head"], remote_ref],
-            cwd=repo,
-            check=True,
-            capture_output=True,
-        )
-    except subprocess.CalledProcessError as exc:
-        raise AuthorityError("pinned historical authority left remote history") from exc
+    published_ref = _published_history_ref(repo, historical["branch"], historical["head"])
     required = {
         "branch", "commit", "path", "sha256", "schema", "schema_version", "semantic_role"
     }
@@ -141,6 +203,7 @@ def validate(contract_path: Path, repo: Path) -> dict[str, Any]:
         "result": "PASS",
         "contract_sha256": hashlib.sha256(contract_bytes).hexdigest(),
         "historical_head": historical["head"],
+        "published_ref": published_ref,
         "master_sha256": contract["historical_authorities"][0]["sha256"],
         "terminal_count": 175,
         "receipt_continuity": "PASS",
