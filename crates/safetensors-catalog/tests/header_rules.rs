@@ -112,10 +112,32 @@ fn an_oversized_header_is_refused_before_it_is_read() {
 
 #[test]
 fn a_non_object_header_is_refused() {
+    // The byte-level check now catches this first: the format says the object
+    // begins immediately after the prefix, so anything that does not start
+    // with '{' is refused before a parser sees it. NotAnObject remains in the
+    // vocabulary as a fallback for a document that starts with '{' and still
+    // fails to deserialize as one, which the guard makes unreachable in
+    // practice rather than impossible in principle.
     let (bytes, len) = shard("[1,2,3]", 0);
+    match parse_header(&bytes, len) {
+        Err(CatalogError::MalformedHeader { detail, .. }) => {
+            assert!(detail.contains("must begin with"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_header_with_leading_whitespace_is_refused() {
+    // Valid JSON, not valid Safetensors: admitting it means admitting a byte
+    // sequence upstream would not write and might not read.
+    let (bytes, len) = shard(
+        " {\"a\":{\"dtype\":\"U8\",\"shape\":[1],\"data_offsets\":[0,1]}}",
+        1,
+    );
     assert!(matches!(
         parse_header(&bytes, len),
-        Err(CatalogError::NotAnObject { .. })
+        Err(CatalogError::MalformedHeader { .. })
     ));
 }
 
@@ -300,21 +322,57 @@ fn a_malformed_entry_is_refused() {
 }
 
 #[test]
-fn gaps_are_allowed_and_counted() {
-    let json = concat!(
+fn the_tensors_must_tile_the_data_buffer() {
+    // Strict coverage. Upstream Safetensors requires the data buffer to be
+    // fully covered, Round 1 admitted gaps as an extension, and all eighteen
+    // shards of the real checkpoint this feature targets are gap-free, so
+    // matching the format costs nothing and removes a reading in which a
+    // truncated or mis-declared layout looks intentional.
+    let interior = concat!(
         r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[0,4]},"#,
         r#""b":{"dtype":"U8","shape":[4],"data_offsets":[12,16]}}"#
     );
-    let (bytes, len) = shard(json, 16);
+    let (bytes, len) = shard(interior, 16);
+    match parse_header(&bytes, len) {
+        Err(CatalogError::Gap { after, .. }) => assert_eq!(after, 4),
+        other => panic!("an interior gap must be refused, got {other:?}"),
+    }
+
+    // Trailing uncovered bytes are the same defect at the end.
+    let trailing = r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[0,4]}}"#;
+    let (bytes, len) = shard(trailing, 8);
+    match parse_header(&bytes, len) {
+        Err(CatalogError::Gap { after, .. }) => assert_eq!(after, 4),
+        other => panic!("trailing uncovered bytes must be refused, got {other:?}"),
+    }
+
+    // A tiled buffer passes and reports no gap.
+    let tiled = concat!(
+        r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[0,4]},"#,
+        r#""b":{"dtype":"U8","shape":[4],"data_offsets":[4,8]}}"#
+    );
+    let (bytes, len) = shard(tiled, 8);
     let header = parse_header(&bytes, len).unwrap();
-    assert_eq!(header.gap_bytes, 8);
+    assert_eq!(header.gap_bytes, 0);
+
+    // A zero-length tensor is admitted at a boundary between tensors.
+    let empty_at_boundary = concat!(
+        r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[0,4]},"#,
+        r#""z":{"dtype":"F32","shape":[0],"data_offsets":[4,4]},"#,
+        r#""b":{"dtype":"U8","shape":[4],"data_offsets":[4,8]}}"#
+    );
+    let (bytes, len) = shard(empty_at_boundary, 8);
+    let header = parse_header(&bytes, len).unwrap();
+    assert_eq!(header.tensors.len(), 3);
+    assert_eq!(header.gap_bytes, 0);
 }
 
 #[test]
 fn the_shard_name_travels_into_the_refusal() {
-    let (bytes, len) = shard("[1]", 0);
+    let json = r#"{"a":{"dtype":"U8","shape":[4],"data_offsets":[0,4]}}"#;
+    let (bytes, len) = shard(json, 8);
     match parse_header_named("model-00003.safetensors", &bytes, len) {
-        Err(CatalogError::NotAnObject { shard }) => {
+        Err(CatalogError::Gap { shard, .. }) => {
             assert_eq!(shard, "model-00003.safetensors");
         }
         other => panic!("unexpected {other:?}"),

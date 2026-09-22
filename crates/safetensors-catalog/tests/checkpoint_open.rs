@@ -291,30 +291,64 @@ fn opening_twice_produces_the_same_digest() {
 }
 
 #[test]
-fn the_digest_follows_the_declared_line_format() {
+fn the_digest_frames_every_field_by_length() {
     use sha2::{Digest, Sha256};
     let scratch = Scratch::new("digest");
     scratch.write("model.safetensors", &simple_shard());
     let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
     let a = checkpoint.catalog().get("a").unwrap();
     let b = checkpoint.catalog().get("b").unwrap();
+
     let mut hasher = Sha256::new();
-    hasher.update(
-        format!(
-            "a\tU32\t2\tmodel.safetensors\t{}\t{}\n",
-            a.data_begin, a.data_end
-        )
-        .as_bytes(),
-    );
-    hasher.update(
-        format!(
-            "b\tU8\t1\tmodel.safetensors\t{}\t{}\n",
-            b.data_begin, b.data_end
-        )
-        .as_bytes(),
-    );
+    hasher.update(2u64.to_le_bytes());
+    for (name, dtype, shape, begin, end) in [
+        ("a", "U32", "2", a.data_begin, a.data_end),
+        ("b", "U8", "1", b.data_begin, b.data_end),
+    ] {
+        for field in [
+            name.as_bytes(),
+            dtype.as_bytes(),
+            shape.as_bytes(),
+            b"model.safetensors".as_slice(),
+            begin.to_string().as_bytes(),
+            end.to_string().as_bytes(),
+        ] {
+            hasher.update((field.len() as u64).to_le_bytes());
+            hasher.update(field);
+        }
+    }
     let expected: [u8; 32] = hasher.finalize().into();
     assert_eq!(checkpoint.catalog_digest().unwrap(), expected);
+}
+
+#[test]
+fn names_carrying_delimiters_cannot_collide_in_the_digest() {
+    // Tensor names are opaque strings, so one may contain a tab or a newline.
+    // Under the earlier tab-and-newline serialization these two catalogs
+    // produced the same byte stream and therefore the same digest.
+    let build = |first: &str, second: &str| {
+        let json = format!(
+            "{{\"{first}\":{{\"dtype\":\"U8\",\"shape\":[1],\"data_offsets\":[0,1]}},\
+             \"{second}\":{{\"dtype\":\"U8\",\"shape\":[1],\"data_offsets\":[1,2]}}}}"
+        );
+        let bytes = safetensors_catalog::compose_shard(&json, &[0u8, 0u8]);
+        let file_len = bytes.len() as u64;
+        Checkpoint::from_headers(
+            "collide",
+            vec![("model.safetensors".to_string(), file_len, bytes)],
+            None,
+        )
+        .unwrap()
+        .catalog_digest()
+        .unwrap()
+    };
+    // The names carry JSON \t escapes, so the decoded names really contain a
+    // tab. Under the earlier tab-and-newline serialization these two catalogs
+    // produced the same byte stream: "a<TAB>b" then "c" framed exactly as "a"
+    // then "b<TAB>c".
+    let left = build(r"a\tb", "c");
+    let right = build("a", r"b\tc");
+    assert_ne!(left, right, "length framing must keep these apart");
 }
 
 #[test]

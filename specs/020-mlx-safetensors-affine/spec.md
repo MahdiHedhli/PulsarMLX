@@ -31,10 +31,13 @@ graph, any real-checkpoint payload claim, and any performance claim.
 
 ## 2. Dtypes
 
-Every standard Safetensors dtype string parses and reports its element size:
+Fifteen **admitted** Safetensors dtype strings parse and report an element
+size. Upstream also defines further and sub-byte types; this crate refuses
+those by name rather than guessing a size, which is the safe direction. The
+admitted set is:
 `BOOL`, `U8`, `I8`, `F8_E5M2`, `F8_E4M3` (1 byte); `I16`, `U16`, `F16`, `BF16`
-(2); `I32`, `U32`, `F32` (4); `F64`, `I64`, `U64` (8). Support at this layer
-means exactly that — parse and size. What a consumer accepts is the consumer's
+(2); `I32`, `U32`, `F32` (4); `F64`, `I64`, `U64` (8). Admission at this layer means exactly
+that — parse and size. What a consumer accepts is the consumer's
 decision: `mlx-affine` admits `U32` packed weights and `F16`, `BF16` or `F32`
 metadata and refuses the rest. An unknown dtype string is
 `CatalogError::UnsupportedDtype`, carrying the tensor name and the string.
@@ -54,11 +57,19 @@ entry is a tensor and must carry `dtype`, `shape` and `data_offsets`.
 * `end - begin` must equal `elements * dtype.size_bytes()`, computed with
   `checked_mul`; otherwise `LengthMismatch`. A zero-element tensor is admitted
   only with `begin == end`.
-* A name appearing twice in one header is `DuplicateTensor`. Duplicate JSON keys
-  are detected rather than collapsed.
-* Tensors must be pairwise non-overlapping. Gaps are legal and are recorded in
-  `ShardHeader.gap_bytes`, which is the data section's length minus the bytes
-  the tensors cover.
+* No JSON member may repeat, at any depth, in the header, the index or the
+  configuration: `DuplicateKey` with the member's dotted path. A repeated
+  name has two readings and the last one being valid is not a reason to take
+  it. `DuplicateTensor` now means exactly one thing: the same tensor name in
+  two different shards.
+* The tensors must **tile** the data section: pairwise non-overlapping and
+  leaving no uncovered byte, first to last. An uncovered offset is `Gap`.
+  Upstream requires complete coverage, all eighteen shards of the real
+  checkpoint this feature targets are gap-free, and a reader that tolerates
+  gaps cannot tell an intentional layout from a truncated one, so
+  `ShardHeader.gap_bytes` is now always zero.
+* The first byte after the length prefix must be `{`. Leading whitespace
+  parses as JSON but is not the format.
 
 ## 4. Index
 
@@ -100,13 +111,16 @@ Determinism: shards are sorted by file name, tensors by name, and nothing
 depends on directory order. `catalog_digest()` is the sha256 of one canonical
 line per tensor, in name order:
 
-```
-name\tdtype\tshape\tshard_file\tdata_begin\tdata_end\n
-```
+a record count as a little-endian `u64`, then per tensor six **length-framed**
+fields -- name, dtype, shape, shard file name, `data_begin`, `data_end` --
+each written as its byte length as a little-endian `u64` followed by its
+bytes. The shape is comma-separated decimals.
 
-with the shape written as comma-separated decimals and an empty shape as an
-empty field. Two independent opens of the same checkpoint produce the same
-digest.
+Framing rather than delimiters, because tensor names are opaque: a name
+containing a tab or a newline made a delimiter-joined serialization ambiguous,
+so two different catalogs could produce one digest. A length prefix cannot be
+forged by the content it frames. Two independent opens of the same checkpoint
+produce the same digest.
 
 ## 7. Provenance and reads
 

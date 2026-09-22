@@ -1,0 +1,2 @@
+CatalogError::MalformedHeader
+The header begins with a space before '{'; the format says the object begins immediately.

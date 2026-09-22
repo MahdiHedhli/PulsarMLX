@@ -545,11 +545,25 @@ impl Checkpoint {
         Ok(())
     }
 
-    /// The catalog's identity: sha256 over one canonical line per tensor,
-    /// `name\tdtype\tshape\tshard_file\tdata_begin\tdata_end\n`, in name
-    /// order, with the shape written as comma-separated decimals.
+    /// The catalog's identity: sha256 over one **length-framed** record per
+    /// tensor, in name order.
+    ///
+    /// Each record is `len(field) as u64 little-endian` followed by the
+    /// field's bytes, for six fields: name, dtype, shape, shard file name,
+    /// `data_begin` and `data_end`. The shape is comma-separated decimals and
+    /// the two offsets are decimal.
+    ///
+    /// Framing rather than delimiters, because tensor names are opaque. The
+    /// earlier form joined fields with tabs and records with newlines, and a
+    /// name containing a tab or a newline -- which nothing forbids -- made
+    /// the serialization ambiguous: two different catalogs could produce the
+    /// same byte stream and therefore the same digest. A length prefix cannot
+    /// be forged by the content it frames.
     pub fn catalog_digest(&self) -> Result<[u8; 32]> {
         let mut hasher = Sha256::new();
+        // The record count, so a catalog cannot be confused with a prefix of
+        // a longer one.
+        hasher.update((self.catalog.len() as u64).to_le_bytes());
         for (name, tensor) in self.catalog.iter() {
             let shape = tensor
                 .shape
@@ -558,15 +572,17 @@ impl Checkpoint {
                 .collect::<Vec<_>>()
                 .join(",");
             let shard = self.shard_name(tensor.shard)?;
-            hasher.update(
-                format!(
-                    "{name}\t{}\t{shape}\t{shard}\t{}\t{}\n",
-                    tensor.dtype.as_str(),
-                    tensor.data_begin,
-                    tensor.data_end
-                )
-                .as_bytes(),
-            );
+            for field in [
+                name.as_bytes(),
+                tensor.dtype.as_str().as_bytes(),
+                shape.as_bytes(),
+                shard.as_bytes(),
+                tensor.data_begin.to_string().as_bytes(),
+                tensor.data_end.to_string().as_bytes(),
+            ] {
+                hasher.update((field.len() as u64).to_le_bytes());
+                hasher.update(field);
+            }
         }
         Ok(hasher.finalize().into())
     }

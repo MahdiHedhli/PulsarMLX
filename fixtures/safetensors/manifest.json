@@ -9,8 +9,8 @@
    "sha256": "64a70cb8157ea0e74b29c2beea39a77108077c549b32772ad07fed26c757d827"
   },
   "mixed-4-8-index-total-size-v1/model-00001.safetensors": {
-   "bytes": 1896,
-   "sha256": "b98ebf123c255edf918dd45f1510cf9c419456a2a7512ebf0f9a30f5658da3c7"
+   "bytes": 1872,
+   "sha256": "0688c7a742a02ccc9cf2a466a351a005ee8960c72388d7078d33b55044e8eebb"
   },
   "mixed-4-8-index-total-size-v1/model-00002.safetensors": {
    "bytes": 2016,
@@ -33,8 +33,8 @@
    "sha256": "64a70cb8157ea0e74b29c2beea39a77108077c549b32772ad07fed26c757d827"
   },
   "mixed-4-8-v1/model-00001.safetensors": {
-   "bytes": 1896,
-   "sha256": "b98ebf123c255edf918dd45f1510cf9c419456a2a7512ebf0f9a30f5658da3c7"
+   "bytes": 1872,
+   "sha256": "0688c7a742a02ccc9cf2a466a351a005ee8960c72388d7078d33b55044e8eebb"
   },
   "mixed-4-8-v1/model-00002.safetensors": {
    "bytes": 2016,
@@ -176,6 +176,14 @@
    "bytes": 118,
    "sha256": "81c19dc0bc9d488912961bca097f529ad7c7ebb92d408a5cad41951d8c27dcd0"
   },
+  "negative/header-leading-whitespace/README": {
+   "bytes": 120,
+   "sha256": "f21df391971da029074bd831d72cafa9a319a83435b55d0523a4b68c15f48403"
+  },
+  "negative/header-leading-whitespace/model.safetensors": {
+   "bytes": 64,
+   "sha256": "396511035c050a51ffde37e16c9fdc853bba72d5d35edf97a42b0c25c54233f8"
+  },
   "negative/header-length-beyond-file/README": {
    "bytes": 99,
    "sha256": "a3b8350c193af960cd4a8ea6718f0095d570bebb09170340fbfd7ae0a0f5afb5"
@@ -201,8 +209,8 @@
    "sha256": "8079b57ede48d56d7822e320b9c5681be297f60668abd5d83c58af3a81c227f6"
   },
   "negative/header-not-an-object/README": {
-   "bytes": 81,
-   "sha256": "15774186c74e61234e76e43838bcda179bb975589160a495cbbaa3413d3143c8"
+   "bytes": 118,
+   "sha256": "31cb10e443271ac6489432ab29eca6d73bddabff3dfafdca8bec1523ff5ef431"
   },
   "negative/header-not-an-object/model.safetensors": {
    "bytes": 15,
@@ -232,6 +240,14 @@
    "bytes": 97,
    "sha256": "a9275105ca90438a3345207a14ea602c560b13b869a380100ed9099f96fcdf9f"
   },
+  "negative/header-trailing-uncovered-bytes/README": {
+   "bytes": 81,
+   "sha256": "d5e7e01b9668333bbf94f33ca2a50b780cb667be83eff6e8695d517f64345654"
+  },
+  "negative/header-trailing-uncovered-bytes/model.safetensors": {
+   "bytes": 69,
+   "sha256": "395188a728f67ae0fdcdd98f31e4120f4801b89695581f9ed965825973d71196"
+  },
   "negative/header-truncated-length-prefix/README": {
    "bytes": 106,
    "sha256": "e19c5d6d562f2173924081796241a41d2aad6da51308a24603d46de99ea4f7d8"
@@ -239,6 +255,14 @@
   "negative/header-truncated-length-prefix/model.safetensors": {
    "bytes": 4,
    "sha256": "097328e8c957de2428283954f6a1ee8ff7ad7def12e100a600178407f5decf24"
+  },
+  "negative/header-uncovered-gap/README": {
+   "bytes": 108,
+   "sha256": "a9a4c405380c722270f8defbcfb04ba2324cfd556329eb514e997f50032df36e"
+  },
+  "negative/header-uncovered-gap/model.safetensors": {
+   "bytes": 131,
+   "sha256": "d5145a21051335718583d7d0474398b9e059714ba6c88be1287af4a51960d946"
   },
   "negative/header-unsupported-dtype/README": {
    "bytes": 85,
@@ -486,7 +510,7 @@
   }
  },
  "generator": "scripts/research/generate_safetensors_fixtures_v1.py",
- "generator_sha256": "0b013aa4516ed0d18abc8dc4664101db7166c205a03e6f19028201b868e4c64f",
+ "generator_sha256": "cb4fd251308229273ecaff095e475fb8ba9ab44598c7c3614169303ac725f09b",
  "mlx_was_not_run": true,
  "negative": [
   "config-dicts-differ",
@@ -500,6 +524,7 @@
   "config-unsupported-group-256",
   "config-unsupported-mode",
   "header-duplicate-tensor-name",
+  "header-leading-whitespace",
   "header-length-beyond-file",
   "header-length-mismatch",
   "header-metadata-non-string",
@@ -507,7 +532,9 @@
   "header-overlapping-ranges",
   "header-range-beyond-data",
   "header-shape-overflow",
+  "header-trailing-uncovered-bytes",
   "header-truncated-length-prefix",
+  "header-uncovered-gap",
   "header-unsupported-dtype",
   "index-is-a-directory",
   "index-symlink",

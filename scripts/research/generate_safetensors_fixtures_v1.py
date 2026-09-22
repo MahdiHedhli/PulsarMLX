@@ -13,8 +13,8 @@ no model, because the crates under test must not be able to recognise a name.
 *  `mixed-4-8-v1` -- three shards and an index; default 4-bit group 64, some
    modules overridden to 8-bit group 64, one to 8-bit group 32, one
    unquantized BF16 weight, one F32 vector, one stacked three-expert tensor at
-   4 bits, `__metadata__` present, and deliberate gaps between tensors in one
-   shard.
+   4 bits and `__metadata__` present. Gap-free: coverage is strict, so a
+   positive checkpoint must tile its data buffer.
 *  `mixed-4-8-index-total-size-v1` -- the same checkpoint with
    `metadata.total_size` declared in the index.
 
@@ -68,7 +68,11 @@ class Lcg:
 
 
 class ShardBuilder:
-    """Lay tensors out back to back, optionally leaving a gap before one."""
+    """Lay tensors out back to back.
+
+    `gap_before` exists only so a NEGATIVE fixture can be built: coverage is
+    strict, so a positive checkpoint may not use it.
+    """
 
     def __init__(self) -> None:
         self.entries: list[tuple[str, str, list[int], bytes, int]] = []
@@ -230,7 +234,7 @@ def mixed_checkpoint(total_size: bool):
     # to 8-bit group 64. A gap is left in front of the third module's weight.
     place(first, "model-00001.safetensors", "block.0.gate", [], 4, 128, 4, 64, "BF16")
     place(first, "model-00001.safetensors", "block.0.up", [], 4, 128, 4, 64, "BF16")
-    place(first, "model-00001.safetensors", "block.0.down", [], 4, 128, 8, 64, "BF16", gap=24)
+    place(first, "model-00001.safetensors", "block.0.down", [], 4, 128, 8, 64, "BF16")
     overrides["block.0.down"] = {"group_size": 64, "bits": 8}
 
     # Shard 2: the module overridden to 8-bit group 32, the unquantized BF16
@@ -364,8 +368,8 @@ def negative_cases():
         {"model.safetensors": struct.pack("<Q", 4096) + b"{}"},
     )
     cases["header-not-an-object"] = (
-        "CatalogError::NotAnObject",
-        "The header JSON parses but is an array, not an object.",
+        "CatalogError::MalformedHeader",
+        "The header is an array; the format says the object begins immediately after the prefix.",
         {"model.safetensors": raw_header([1, 2, 3])},
     )
     cases["header-metadata-non-string"] = (
@@ -416,6 +420,28 @@ def negative_cases():
         {"model.safetensors": raw_header(
             {"a": {"dtype": "F32", "shape": [4294967295, 4294967295, 4294967295],
                    "data_offsets": [0, 4]}}, b"\0" * 4)},
+    )
+
+    cases["header-uncovered-gap"] = (
+        "CatalogError::Gap",
+        "A shard leaves eight bytes between two tensors; upstream requires the buffer to be tiled.",
+        {"model.safetensors": raw_header(
+            {"a": {"dtype": "U8", "shape": [4], "data_offsets": [0, 4]},
+             "b": {"dtype": "U8", "shape": [4], "data_offsets": [12, 16]}},
+            b"\0" * 16)},
+    )
+    cases["header-trailing-uncovered-bytes"] = (
+        "CatalogError::Gap",
+        "A shard declares a data section longer than its tensors cover.",
+        {"model.safetensors": raw_header(
+            {"a": {"dtype": "U8", "shape": [4], "data_offsets": [0, 4]}}, b"\0" * 8)},
+    )
+    cases["header-leading-whitespace"] = (
+        "CatalogError::MalformedHeader",
+        "The header begins with a space before '{'; the format says the object begins immediately.",
+        {"model.safetensors": struct.pack("<Q", 55) + (
+            b' {"a":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}'
+        ).ljust(55, b" ") + b"\0"},
     )
 
     # --- duplicate JSON members, at every depth (Astra finding 2) ---

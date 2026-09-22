@@ -33,6 +33,7 @@ fn variant(error: &CatalogError) -> &'static str {
         CatalogError::LengthMismatch { .. } => "CatalogError::LengthMismatch",
         CatalogError::UnsupportedDtype { .. } => "CatalogError::UnsupportedDtype",
         CatalogError::DuplicateTensor { .. } => "CatalogError::DuplicateTensor",
+        CatalogError::Gap { .. } => "CatalogError::Gap",
         CatalogError::OverlappingRanges { .. } => "CatalogError::OverlappingRanges",
         CatalogError::InvalidIndex { .. } => "CatalogError::InvalidIndex",
         CatalogError::InvalidShardPath { .. } => "CatalogError::InvalidShardPath",
@@ -119,8 +120,8 @@ fn the_positive_fixtures_open_and_are_deterministic() {
     assert_eq!(mixed.shards().len(), 3);
     assert_eq!(mixed.catalog().len(), 17);
     assert!(mixed.index().unwrap().total_size.is_none());
-    // One shard was built with a deliberate gap in front of a tensor.
-    assert_eq!(mixed.headers().iter().map(|h| h.gap_bytes).sum::<u64>(), 24);
+    // Coverage is strict, so every positive fixture tiles its data buffer.
+    assert_eq!(mixed.headers().iter().map(|h| h.gap_bytes).sum::<u64>(), 0);
 
     let declared =
         Checkpoint::open(&root.join("mixed-4-8-index-total-size-v1"), OpenMode::Auto).unwrap();

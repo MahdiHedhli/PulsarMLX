@@ -11,19 +11,22 @@
 //! Every refusal is a distinct [`CatalogError`] variant, so a test can assert
 //! which defect it found rather than that something went wrong. The whole
 //! header of every shard is validated before a byte of payload is readable:
-//! shapes are multiplied with `checked_mul`, declared ranges must lie inside
-//! the data section and must equal `product(shape) * dtype.size_bytes()`,
-//! tensors may not overlap, names may not repeat inside a shard or across
-//! shards, the index and the headers must agree in both directions, and a
-//! shard file name must be a plain name inside the root.
+//! the header must begin with `{`, shapes are multiplied with `checked_mul`,
+//! declared ranges must lie inside the data section and must equal
+//! `product(shape) * dtype.size_bytes()`, the tensors must **tile** that
+//! section with no gaps and no overlaps, no JSON member may repeat at any
+//! depth, names may not repeat across shards, the index and the headers must
+//! agree in both directions, and every file is admitted by descriptor inside
+//! the root rather than by pathname.
 //!
 //! # What it does not do
 //!
 //! It does not memory-map (reads go through `pread`; a mapped reader is a
 //! later addition behind these same accessors), it does not hash shards unless
 //! asked, and it does not dequantize. It also carries no opinion about which
-//! dtypes a consumer may accept: it parses every standard Safetensors dtype
-//! and reports its size.
+//! of the dtypes it admits a consumer may accept: it parses the fifteen
+//! admitted Safetensors dtype strings and reports their sizes, and refuses the
+//! rest -- including upstream's further and sub-byte types -- by name.
 
 // `admission` needs `openat`/`fstat` to bind an opened descriptor to the
 // admitted root; every other module is `unsafe`-free and this is a `deny` so

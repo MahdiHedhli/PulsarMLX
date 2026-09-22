@@ -120,19 +120,32 @@ class Shape(unittest.TestCase):
         )
         self.assertIn("total_size", declared["metadata"])
 
-    def test_one_shard_carries_a_deliberate_gap(self):
-        gaps = 0
-        for leaf in sorted((FIXTURES / "mixed-4-8-v1").glob("*.safetensors")):
-            body = leaf.read_bytes()
-            (length,) = struct.unpack("<Q", body[:8])
-            header = json.loads(body[8:8 + length])
-            data_length = len(body) - 8 - length
-            covered = sum(
-                entry["data_offsets"][1] - entry["data_offsets"][0]
-                for key, entry in header.items() if key != "__metadata__"
-            )
-            gaps += data_length - covered
-        self.assertEqual(gaps, 24)
+    def test_every_positive_shard_tiles_its_data_buffer(self):
+        # Coverage is strict: upstream Safetensors requires the data buffer to
+        # be fully covered, and all eighteen shards of the real checkpoint this
+        # feature targets are gap-free. A positive fixture that left a gap
+        # would be testing an extension nobody writes.
+        for name in POSITIVES:
+            for leaf in sorted((FIXTURES / name).glob("*.safetensors")):
+                body = leaf.read_bytes()
+                (length,) = struct.unpack("<Q", body[:8])
+                self.assertEqual(body[8:9], b"{", f"{leaf.name} must begin with an object")
+                header = json.loads(body[8:8 + length])
+                data_length = len(body) - 8 - length
+                spans = sorted(
+                    entry["data_offsets"]
+                    for key, entry in header.items() if key != "__metadata__"
+                )
+                cursor = 0
+                for begin, end in spans:
+                    self.assertEqual(begin, cursor, f"{leaf.name} leaves a gap at {cursor}")
+                    cursor = end
+                self.assertEqual(cursor, data_length, f"{leaf.name} has trailing bytes")
+
+    def test_the_corpus_carries_gap_negative_cases(self):
+        for case in ("header-uncovered-gap", "header-trailing-uncovered-bytes"):
+            readme = (FIXTURES / "negative" / case / "README").read_text().splitlines()
+            self.assertEqual(readme[0].strip(), "CatalogError::Gap")
 
 
 if __name__ == "__main__":

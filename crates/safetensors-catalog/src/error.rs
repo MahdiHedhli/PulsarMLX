@@ -67,6 +67,9 @@ pub enum CatalogError {
         first: ShardName,
         second: ShardName,
     },
+    /// The tensors do not tile the data buffer. Upstream Safetensors requires
+    /// complete coverage; `after` is the first uncovered offset.
+    Gap { shard: ShardName, after: u64 },
     /// Two tensors in one shard claim overlapping byte ranges.
     OverlappingRanges {
         shard: ShardName,
@@ -156,6 +159,10 @@ impl fmt::Display for CatalogError {
             Self::DuplicateTensor { name, first, second } => {
                 write!(f, "tensor {name} appears in both {first} and {second}")
             }
+            Self::Gap { shard, after } => write!(
+                f,
+                "{shard}: the data buffer is not fully covered; nothing claims offset {after}"
+            ),
             Self::OverlappingRanges { shard, first, second } => {
                 write!(f, "{shard}: tensors {first} and {second} overlap")
             }

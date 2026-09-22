@@ -43,8 +43,13 @@ pub struct ShardHeader {
     pub data_len: u64,
     pub metadata: BTreeMap<String, String>,
     pub tensors: BTreeMap<String, HeaderTensor>,
-    /// Bytes of the data section no tensor claims. Gaps are legal; they are
-    /// recorded rather than tolerated silently.
+    /// Bytes of the data section no tensor claims.
+    ///
+    /// Always zero: coverage is strict, so a header with an uncovered byte is
+    /// refused rather than recorded. The field is kept because a census that
+    /// reports it is stating a checked fact about the shard, and because a
+    /// future extension that admitted gaps would have to change this value
+    /// rather than silently reinterpret an existing one.
     pub gap_bytes: u64,
 }
 
@@ -289,6 +294,17 @@ pub fn parse_header_named(shard: &str, bytes: &[u8], file_len: u64) -> Result<Sh
         shard: shard.to_string(),
         detail: "header does not fit in memory on this target".to_string(),
     })?];
+    // The format says the header is a JSON object, so the first byte after the
+    // prefix is `{`. Leading whitespace parses as JSON but is not the format,
+    // and admitting it means admitting a byte sequence upstream would not
+    // write and might not read.
+    if json.first() != Some(&b'{') {
+        return Err(CatalogError::MalformedHeader {
+            shard: shard.to_string(),
+            detail: "the header must begin with '{' immediately after the length prefix"
+                .to_string(),
+        });
+    }
     // Duplicate members are refused at every depth, before the bytes reach a
     // deserializer that would collapse them. The `Pairs` visitor below still
     // guards the outermost level, so the top level is checked twice rather
@@ -334,7 +350,6 @@ pub fn parse_header_named(shard: &str, bytes: &[u8], file_len: u64) -> Result<Sh
 
     let mut ordered: Vec<&HeaderTensor> = tensors.values().collect();
     ordered.sort_by_key(|tensor| (tensor.begin, tensor.end, tensor.name.clone()));
-    let mut covered: u64 = 0;
     for window in ordered.windows(2) {
         let (first, second) = (window[0], window[1]);
         if first.end > second.begin {
@@ -345,10 +360,32 @@ pub fn parse_header_named(shard: &str, bytes: &[u8], file_len: u64) -> Result<Sh
             });
         }
     }
+
+    // Strict coverage. Upstream requires the tensors to tile the data buffer;
+    // a gap is not legal Safetensors, and Round 1 admitted one as an
+    // extension. Two reasons to stop: a reader that tolerates gaps cannot
+    // tell an intentional layout from a truncated or mis-declared one, and
+    // all eighteen shards of the real checkpoint this feature targets are
+    // gap-free, so nothing is lost by matching the format. Zero-length
+    // tensors are still admitted, but only at a boundary between tensors,
+    // where they name nothing that another tensor also names.
+    let mut cursor: u64 = 0;
     for tensor in &ordered {
-        covered += tensor.byte_len;
+        if tensor.begin != cursor {
+            return Err(CatalogError::Gap {
+                shard: shard.to_string(),
+                after: cursor,
+            });
+        }
+        cursor = tensor.end;
     }
-    let gap_bytes = data_len - covered;
+    if cursor != data_len {
+        return Err(CatalogError::Gap {
+            shard: shard.to_string(),
+            after: cursor,
+        });
+    }
+    let gap_bytes = 0;
 
     Ok(ShardHeader {
         header_len,

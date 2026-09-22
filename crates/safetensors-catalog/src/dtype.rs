@@ -1,4 +1,9 @@
-//! The standard Safetensors dtype strings.
+//! The **admitted** Safetensors dtype strings.
+//!
+//! Fifteen of them, listed exhaustively below. Upstream also defines further
+//! and sub-byte types; this crate refuses those by name rather than guessing a
+//! size for them, which is the safe direction. "Admitted set", not "every
+//! standard dtype": the latter claims more than the code does.
 //!
 //! Support here means exactly two things: the string parses, and its element
 //! size in bytes is known. Nothing in this crate decides what a *consumer*
@@ -7,7 +12,7 @@
 
 use std::fmt;
 
-/// Every dtype string the Safetensors format defines.
+/// Every dtype string this crate admits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Dtype {
     Bool,
@@ -83,7 +88,7 @@ impl Dtype {
         }
     }
 
-    /// Every dtype, in declaration order. Used by the exhaustiveness tests.
+    /// Every admitted dtype, in declaration order.
     pub const ALL: [Dtype; 15] = [
         Dtype::Bool,
         Dtype::U8,
