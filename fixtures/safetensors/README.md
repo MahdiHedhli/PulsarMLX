@@ -46,7 +46,8 @@ parser change between them.
 
 ## Negative cases
 
-`negative/<case>/` holds a tiny checkpoint or a handful of header bytes and a
+There are 33 negative cases. `negative/<case>/` holds a tiny checkpoint or a
+handful of header bytes and a
 `README` whose **first line is the error variant the crate must return** and
 whose second line says why. The two fixture-driven tests --
 `crates/safetensors-catalog/tests/negative_fixtures.rs` and
