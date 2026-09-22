@@ -15,8 +15,8 @@
 
 use f017_native::loader::{load_plan_only, SecureCheckpoint};
 use f017_native::model::{ModelConfig, NativeMlxBackend, ScalarBackend};
-use f017_native::session::{generate, FinishReason, IncrementalText, Limits};
-use f017_native::temporal::{SequenceState, TemporalConfig};
+use f017_native::session::{generate, logits_sha256, FinishReason, IncrementalText, Limits};
+use f017_native::temporal::{execute_prefix_no_cache, RopePairing, SequenceState, TemporalConfig};
 use serde_json::json;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -50,6 +50,12 @@ usage: f017-native-generate --model DIR [options]
   --preflight-only         check identity metadata, the tokenizer and the
                            rendered prompt, then stop; no shard is rehashed
   --verify-only            rehash every shard, then stop
+  --rope-pairing P         neox-half-split (default) or interleaved; which one
+                           a GGUF conversion produced is a property of the
+                           checkpoint, so it is selectable and reported
+  --compare-no-cache       also recompute every position from a fresh state and
+                           compare logits digests, to check the retained cache
+                           against an implementation that cannot carry one
   --cpu                    scalar backend instead of the MLX GPU backend
   --help
 
@@ -67,6 +73,8 @@ struct Arguments {
     max_positions: usize,
     verify_only: bool,
     preflight_only: bool,
+    rope_pairing: RopePairing,
+    compare_no_cache: bool,
     cpu: bool,
 }
 
@@ -83,6 +91,8 @@ fn parse_arguments() -> Result<Arguments, String> {
         max_positions: 2048,
         verify_only: false,
         preflight_only: false,
+        rope_pairing: RopePairing::NeoxHalfSplit,
+        compare_no_cache: false,
         cpu: false,
     };
     let mut iterator = std::env::args().skip(1);
@@ -145,6 +155,14 @@ fn parse_arguments() -> Result<Arguments, String> {
             }
             "--verify-only" => arguments.verify_only = true,
             "--preflight-only" => arguments.preflight_only = true,
+            "--compare-no-cache" => arguments.compare_no_cache = true,
+            "--rope-pairing" => {
+                arguments.rope_pairing = match value()?.as_str() {
+                    "neox-half-split" => RopePairing::NeoxHalfSplit,
+                    "interleaved" => RopePairing::Interleaved,
+                    other => return Err(format!("unknown rope pairing {other}")),
+                }
+            }
             "--cpu" => arguments.cpu = true,
             other => return Err(format!("unknown flag {other}")),
         }
@@ -239,14 +257,14 @@ fn preflight(arguments: &Arguments) -> Result<(serde_json::Value, Tokenizer, Mod
     let identity = json!({
         "model_directory": arguments.model.display().to_string(),
         "architecture": "glm-dsa",
-        "name": gguf.arch_meta("..general.name").and_then(|v| v.as_str()).unwrap_or("GLM-5.2"),
+        "name": gguf.metadata.get("general.name").and_then(|value| value.as_str()),
         "checkpoint_set_sha256": manifest.checkpoint_set_sha256,
         "shards": manifest.files.len(),
         "total_bytes": manifest.total_bytes,
         "tensors": catalog.tensor_count,
         "vocabulary": tokenizer.n_vocab(),
         "indexer_top_k": indexer_top_k,
-        "quantization_file_type": gguf.arch_meta("..general.file_type").and_then(|v| v.as_u64()),
+        "quantization_file_type": gguf.metadata.get("general.file_type").and_then(|value| value.as_u64()),
     });
     Ok((identity, tokenizer, config))
 }
@@ -265,8 +283,11 @@ fn render_prompt(
     }
     let text = arguments.prompt.clone().unwrap_or_default();
     if !arguments.chat_template {
+        // The model's own terminals do not depend on the chat template. An
+        // empty stop set here meant a raw-text run could only ever end on
+        // max-tokens, which is what stage B1 ran into.
         let ids = tokenizer.encode(&text);
-        return Ok((ids, Vec::new(), "RAW_TEXT_NO_TEMPLATE"));
+        return Ok((ids, tokenizer.stop_ids.clone(), "RAW_TEXT_NO_TEMPLATE"));
     }
     let markers = ChatMarkers::resolve(tokenizer)
         .map_err(|error| format!("this checkpoint has no supported chat template: {error:?}"))?;
@@ -295,6 +316,7 @@ fn run() -> Result<i32, (i32, String)> {
     let mut config = TemporalConfig::glm52();
     config.model = model.clone();
     config.indexer_top_k = indexer_top_k;
+    config.rope_pairing = arguments.rope_pairing;
     config.max_positions = arguments.max_positions.min(indexer_top_k);
     config.validate().map_err(|error| (2, error))?;
     let limits = Limits {
@@ -392,6 +414,45 @@ fn run() -> Result<i32, (i32, String)> {
         result
     }
     .map_err(|error| (4, error))?;
+
+    if arguments.compare_no_cache {
+        // An independent check on the retained cache, using real weights and
+        // no oracle: recompute each prefix from a fresh state, which cannot
+        // carry a stale or misordered history, and compare logits digests
+        // position by position. Costs n(n+1)/2 extra forward passes.
+        let cached = outcome.position_logits_sha256.clone();
+        let mut rows = Vec::new();
+        let mut mismatches = 0usize;
+        let mut backend = ScalarBackend;
+        for length in 1..=prompt.len().min(cached.len()) {
+            let (_, logits) = execute_prefix_no_cache(
+                &mut checkpoint,
+                &mut backend,
+                &config,
+                &prompt[..length],
+            )
+            .map_err(|error| (4, error))?;
+            let recomputed = logits_sha256(&logits);
+            let agrees = recomputed == cached[length - 1];
+            if !agrees {
+                mismatches += 1;
+            }
+            rows.push(json!({
+                "position": length - 1,
+                "cached_logits_sha256": cached[length - 1],
+                "recomputed_logits_sha256": recomputed,
+                "agrees": agrees,
+            }));
+        }
+        diagnostics["no_cache_comparison"] = json!({
+            "method": "each prefix re-executed from a fresh SequenceState; the cached run kept one state throughout",
+            "positions_compared": rows.len(),
+            "mismatches": mismatches,
+            "result": if mismatches == 0 { "AGREE" } else { "DISAGREE" },
+            "meaning": "an implementation that cannot hold a cache reproduces the cached path's logits exactly",
+            "positions": rows,
+        });
+    }
 
     let cleanup_start = Instant::now();
     drop(checkpoint);
