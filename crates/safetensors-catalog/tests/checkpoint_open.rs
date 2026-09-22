@@ -321,69 +321,105 @@ fn the_digest_frames_every_field_by_length() {
     assert_eq!(checkpoint.catalog_digest().unwrap(), expected);
 }
 
+/// The historical serialization: six tab-joined fields per tensor, one record
+/// per line, in name order -- rebuilt from a catalog's real contents.
+///
+/// Nothing hard-codes an offset. `data_begin` and `data_end` are absolute and
+/// include the 8-byte length prefix and the header, so they are whatever the
+/// constructed checkpoint actually says they are.
+fn historical_serialization(checkpoint: &Checkpoint) -> String {
+    let mut out = String::new();
+    for (name, tensor) in checkpoint.catalog().iter() {
+        let shape = tensor
+            .shape
+            .iter()
+            .map(u64::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        let shard = &checkpoint.shards()[tensor.shard.0 as usize].file_name;
+        out.push_str(&format!(
+            "{name}\t{}\t{shape}\t{shard}\t{}\t{}\n",
+            tensor.dtype.as_str(),
+            tensor.data_begin,
+            tensor.data_end
+        ));
+    }
+    out
+}
+
 #[test]
 fn names_carrying_delimiters_cannot_collide_in_the_digest() {
     // Tensor names are opaque strings, so one may contain a tab or a newline.
-    // The earlier serialization joined six fields per tensor with tabs and
+    // The historical serialization joined six fields per tensor with tabs and
     // ended each record with a newline, which made the stream ambiguous.
     //
-    // Round 2's test of this name used "a<TAB>b" + "c" against "a" + "b<TAB>c",
-    // which do NOT collide: the dtype, shape, shard and offset fields sit
-    // between the two names and keep the streams apart. Astra's round-2
-    // finding 3. A real collision has to swallow a whole record, so the pair
-    // below is built to do exactly that.
+    // Two earlier versions of this test did not demonstrate that. Round 2's
+    // pair did not collide at all. Round 3's collided only under fabricated
+    // offsets of 0 and 1; the real ones include the 8-byte prefix and the
+    // header, so the actual streams differed and the test would have passed
+    // against the very serialization it condemned. Astra's round-3 finding 2.
     //
-    // The left catalog holds ONE tensor whose name is, literally, the first
-    // record of the right catalog followed by the right catalog's second
-    // name. Serialized without framing, the two are byte-for-byte equal.
+    // This pair collides on its real offsets. Both headers are 105 bytes, so
+    // both catalogs place their data at absolute 113, and the left catalog's
+    // single tensor is named exactly the right catalog's first record plus
+    // the right catalog's second name -- including the literal "113"s.
     const SHARD: &str = "model.safetensors";
-    let swallowing_name = format!("a\tU8\t0\t{SHARD}\t0\t0\nb");
-
-    // The old serialization, reconstructed here so the collision is
-    // demonstrated rather than asserted from memory.
-    let old_record = |name: &str, dtype: &str, shape: &str, begin: u64, end: u64| {
-        format!("{name}\t{dtype}\t{shape}\t{SHARD}\t{begin}\t{end}\n")
-    };
-    let old_left = old_record(&swallowing_name, "U8", "1", 0, 1);
-    let old_right = old_record("a", "U8", "0", 0, 0) + &old_record("b", "U8", "1", 0, 1);
+    let right_json = concat!(
+        r#"{"a":{"dtype":"U8","shape":[0],"data_offsets":[0,0]},"#,
+        r#""b":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#
+    );
+    // 13 spaces, purely to make the two headers the same length. JSON permits
+    // them between tokens and the parsed names and offsets are unaffected.
+    let left_json = concat!(
+        r#"{"a\tU8\t0\tmodel.safetensors\t113\t113\nb":"#,
+        "             ",
+        r#"{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#
+    );
     assert_eq!(
-        old_left, old_right,
-        "the premise: these two catalogs collided under the unframed serialization"
+        left_json.len(),
+        right_json.len(),
+        "the two headers must be the same length for the offsets to coincide"
     );
 
-    // Both are real checkpoints. The right one carries a zero-length tensor
-    // at the boundary, which strict coverage admits; each tiles its
-    // single-byte data section.
-    let build = |entries: &str| {
-        let bytes = safetensors_catalog::compose_shard(entries, &[0u8]);
+    let build = |json: &str| {
+        let bytes = compose_shard(json, &[0u8]);
         let file_len = bytes.len() as u64;
         Checkpoint::from_headers("collide", vec![(SHARD.to_string(), file_len, bytes)], None)
             .expect("both catalogs are well formed")
     };
-    // JSON-escaped: the decoded names really do contain a tab and a newline.
-    let left = build(
-        r#"{"a\tU8\t0\tmodel.safetensors\t0\t0\nb":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#,
-    );
-    let right = build(
-        r#"{"a":{"dtype":"U8","shape":[0],"data_offsets":[0,0]},"b":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#,
-    );
+    let left = build(left_json);
+    let right = build(right_json);
 
-    // The names decoded as intended, so the collision above is the collision
-    // these catalogs would have had.
+    // The real offsets, asserted rather than assumed.
+    let swallowing_name = "a\tU8\t0\tmodel.safetensors\t113\t113\nb";
+    let only = left.catalog().get(swallowing_name).expect("the long name");
+    assert_eq!((only.data_begin, only.data_end), (113, 114));
+    let a = right.catalog().get("a").expect("a");
+    let b = right.catalog().get("b").expect("b");
+    assert_eq!((a.data_begin, a.data_end), (113, 113));
+    assert_eq!((b.data_begin, b.data_end), (113, 114));
     assert_eq!(left.catalog().len(), 1);
     assert_eq!(right.catalog().len(), 2);
-    assert!(left.catalog().get(&swallowing_name).is_some());
-    assert!(right.catalog().get("a").is_some() && right.catalog().get("b").is_some());
+
+    // The premise: serialized the historical way, from their own contents,
+    // these two different catalogs are the same bytes.
+    let historical_left = historical_serialization(&left);
+    let historical_right = historical_serialization(&right);
+    assert_eq!(
+        historical_left, historical_right,
+        "the premise: the historical serialization conflates these two catalogs"
+    );
+    assert_eq!(
+        historical_left,
+        "a\tU8\t0\tmodel.safetensors\t113\t113\nb\tU8\t1\tmodel.safetensors\t113\t114\n"
+    );
 
     // And the framed digests keep them apart.
-    let left_digest = left.catalog_digest().unwrap();
-    let right_digest = right.catalog_digest().unwrap();
     assert_ne!(
-        left_digest, right_digest,
-        "length framing must separate catalogs the unframed form conflated"
+        left.catalog_digest().unwrap(),
+        right.catalog_digest().unwrap(),
+        "length framing must separate catalogs the historical form conflated"
     );
-    // Framing separates them by the record count alone, before any field.
-    assert_ne!(left.catalog().len(), right.catalog().len());
 }
 
 #[test]
