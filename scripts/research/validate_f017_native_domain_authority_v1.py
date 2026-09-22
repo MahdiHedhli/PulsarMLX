@@ -55,17 +55,6 @@ def _resolve(document: Any, dotted: str) -> Any:
 _ARCHIVE_TAG_GLOB = "refs/tags/archive/*/{branch}"
 
 
-def _ref_exists(repo: Path, ref: str) -> bool:
-    return (
-        subprocess.run(
-            ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
-            cwd=repo,
-            capture_output=True,
-        ).returncode
-        == 0
-    )
-
-
 def _is_ancestor(repo: Path, commit: str, descendant: str) -> bool:
     return (
         subprocess.run(
@@ -101,16 +90,34 @@ def _archive_tags(repo: Path, branch: str) -> dict[str, str]:
     return {ref: peeled.get(ref, object_id) for ref, object_id in direct.items()}
 
 
-def _remote_publishes_branch(repo: Path, branch: str) -> bool:
-    """Whether origin still publishes `branch` right now.
+def _advertised_branch_head(repo: Path, branch: str) -> str | None:
+    """The commit id origin advertises for `branch` right now, or None.
 
     A remote-tracking ref is a cache of the last fetch, not a statement about
     the remote: `origin/<branch>` survives in a working copy that has not
-    pruned, long after the branch was deleted. Asking origin directly is what
-    makes "currently published" mean currently.
+    pruned, long after the branch was deleted, and it keeps the tip it had at
+    that fetch long after the branch was reset or recreated. Asking origin
+    gives both facts at once -- whether the branch is published, and what it
+    points at -- and only the second can answer whether the pinned commit is
+    still on it.
     """
     listing = _git(repo, "ls-remote", "--heads", "origin", f"refs/heads/{branch}")
-    return any(line.strip() for line in listing.decode("utf-8").splitlines())
+    for line in listing.decode("utf-8").splitlines():
+        object_id, separator, ref = line.partition("\t")
+        if separator and ref.strip() == f"refs/heads/{branch}":
+            return object_id.strip()
+    return None
+
+
+def _object_present(repo: Path, commit: str) -> bool:
+    return (
+        subprocess.run(
+            ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+            cwd=repo,
+            capture_output=True,
+        ).returncode
+        == 0
+    )
 
 
 def _published_history_ref(repo: Path, branch: str, head: str) -> str:
@@ -120,23 +127,31 @@ def _published_history_ref(repo: Path, branch: str, head: str) -> str:
     forever-current tip of the closed branch. CI-policy/evidence commits may
     advance that branch without superseding the pinned numerical authority.
     Require the pinned object to exist and remain in the remote history: on the
-    branch itself while origin still publishes it -- which is established by
-    asking origin, not by the presence of a remote-tracking ref -- and
-    otherwise in *every*
+    branch itself while origin still publishes it -- established by asking
+    origin for the branch's current commit id, and checked against that id
+    rather than against any local ref -- and otherwise in *every*
     archive tag that retired it, because once the branch ref is gone those tags
     are the published remote history bound to that branch name. Requiring all
     of them keeps a later, shallower snapshot from admitting a head that an
     earlier one already dropped.
     """
     _git(repo, "cat-file", "-e", f"{head}^{{commit}}")
-    remote_ref = f"origin/{branch}"
-    # Both conditions, not either: the local ref says the branch was reachable
-    # at the last fetch, and origin says it is reachable now. A stale
-    # remote-tracking ref would otherwise satisfy the check by itself and skip
-    # the archive enumeration entirely -- accepting, on the strength of a
-    # cache, a branch the remote no longer publishes.
-    if _ref_exists(repo, remote_ref) and _remote_publishes_branch(repo, branch):
-        candidates = {remote_ref: remote_ref}
+    advertised = _advertised_branch_head(repo, branch)
+    if advertised is not None:
+        # Ancestry is checked against the id origin advertises NOW, never
+        # against the cached `origin/<branch>`. A branch that was reset or
+        # force-pushed can exclude the pinned commit while the cache still
+        # contains it, and the cached form would then pass on history the
+        # remote no longer has. The archive-tag path below has always used
+        # advertised ids, so this makes the two paths agree.
+        if not _object_present(repo, advertised):
+            # Deliberately distinct, and deliberately not repaired here: a
+            # validator that fetches would be deciding what history to judge
+            # by, and the answer would depend on when it ran.
+            raise AuthorityError(
+                "advertised head not present locally; fetch before validating"
+            )
+        candidates = {f"origin/{branch}": advertised}
     else:
         candidates = _archive_tags(repo, branch)
     if not candidates:
