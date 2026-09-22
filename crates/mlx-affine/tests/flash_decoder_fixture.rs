@@ -90,6 +90,7 @@ fn r1_and_r3_agree_with_the_frozen_flash_fixture() {
 
     let mut worst_cross_check = 0f64;
     let mut worst_output = 0f64;
+    let mut worst_output_r3 = 0f64;
     let mut elements = 0usize;
 
     for head in 0..heads {
@@ -167,12 +168,18 @@ fn r1_and_r3_agree_with_the_frozen_flash_fixture() {
             elements += 1;
         }
 
-        // y = x @ W.T, in binary64 from R1's weights.
+        // y = x @ W.T, from BOTH arms' weights against the frozen
+        // expectations. Round 2 accumulated only over R1, so the candidate's
+        // weights were compared with the reference but never with the
+        // fixture -- Astra's finding 6. The accumulation is the same binary64
+        // sum in both cases, so the two margins differ only by the weights.
         for (row, activation) in x_transpose.iter().enumerate() {
             for out in 0..output_dims {
                 let mut accumulator = 0f64;
+                let mut accumulator_r3 = 0f64;
                 for (k, value) in activation.iter().enumerate() {
                     accumulator += value * r1[out * input_dims + k];
+                    accumulator_r3 += value * f64::from(r3[out * input_dims + k]);
                 }
                 let want = expected_transpose[head].as_array().unwrap()[row]
                     .as_array()
@@ -183,17 +190,25 @@ fn r1_and_r3_agree_with_the_frozen_flash_fixture() {
                 worst_output = worst_output.max(difference);
                 assert!(
                     difference <= output_tolerance,
-                    "transpose head {head} row {row} column {out}: {accumulator} vs {want}"
+                    "transpose head {head} row {row} column {out}: R1 {accumulator} vs {want}"
+                );
+                let difference_r3 = (accumulator_r3 - want).abs();
+                worst_output_r3 = worst_output_r3.max(difference_r3);
+                assert!(
+                    difference_r3 <= output_tolerance,
+                    "transpose head {head} row {row} column {out}: R3 {accumulator_r3} vs {want}"
                 );
             }
         }
 
-        // y = x @ W, the untransposed direction.
+        // y = x @ W, the untransposed direction, again from both arms.
         for (row, activation) in x_no_transpose.iter().enumerate() {
             for out in 0..input_dims {
                 let mut accumulator = 0f64;
+                let mut accumulator_r3 = 0f64;
                 for (k, value) in activation.iter().enumerate() {
                     accumulator += value * r1[k * input_dims + out];
+                    accumulator_r3 += value * f64::from(r3[k * input_dims + out]);
                 }
                 let want = expected_no_transpose[head].as_array().unwrap()[row]
                     .as_array()
@@ -204,7 +219,13 @@ fn r1_and_r3_agree_with_the_frozen_flash_fixture() {
                 worst_output = worst_output.max(difference);
                 assert!(
                     difference <= output_tolerance,
-                    "no-transpose head {head} row {row} column {out}: {accumulator} vs {want}"
+                    "no-transpose head {head} row {row} column {out}: R1 {accumulator} vs {want}"
+                );
+                let difference_r3 = (accumulator_r3 - want).abs();
+                worst_output_r3 = worst_output_r3.max(difference_r3);
+                assert!(
+                    difference_r3 <= output_tolerance,
+                    "no-transpose head {head} row {row} column {out}: R3 {accumulator_r3} vs {want}"
                 );
             }
         }
@@ -216,8 +237,16 @@ fn r1_and_r3_agree_with_the_frozen_flash_fixture() {
     // only that the tolerances were met.
     println!(
         "flash-multilinear: elements={elements} worst_cross_check={worst_cross_check:e} \
-         worst_output={worst_output:e}"
+         worst_output_r1={worst_output:e} worst_output_r3={worst_output_r3:e}"
     );
+    // The R3 margin is the larger of the two and is the one that says the
+    // candidate reproduces the frozen expectations. Asserting it is non-zero
+    // keeps the loop above from silently degenerating into the R1 loop.
+    assert!(
+        worst_output_r3 > worst_output,
+        "the two arms cannot coincide exactly"
+    );
+    assert!(worst_output_r3 <= output_tolerance);
 }
 
 #[test]
