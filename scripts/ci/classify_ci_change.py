@@ -4,6 +4,9 @@
 The classifier has no network or third-party Python dependencies.  Unknown,
 executable documentation, contract, fixture, build, and workflow changes route
 to native CI. Evidence mixed with docs stays on the strict integrity path.
+Evidence mixed with code routes native and is also reported as
+``evidence_touched``, so the evidence subset of that same range is still
+validated.
 The closed historical F017 branch refuses automatic source
 qualification and requires an explicit manual full dispatch.
 Documentation, evidence and their mixture remain cheap integrity surfaces there.
@@ -158,8 +161,11 @@ def changed_entries(repository: Path, base: str, head: str) -> list[dict]:
         if not ref or ref.startswith("-") or set(ref) == {"0"}:
             raise ClassificationError("missing or zero diff authority")
         _git("cat-file", "-e", f"{ref}^{{commit}}", cwd=repository)
+    # --ignore-submodules=none: Git otherwise honours submodule ignore settings,
+    # including a repository-controlled `.gitmodules` `ignore = all`, and would
+    # drop gitlink rows from the enumeration entirely.
     output = _git("diff", "--raw", "-z", "--no-abbrev", "--find-renames",
-                  base, head, "--", cwd=repository)
+                  "--ignore-submodules=none", base, head, "--", cwd=repository)
     fields = output.split("\0")
     if fields.pop() != "":
         raise ClassificationError("unterminated Git diff")
@@ -202,6 +208,18 @@ def classify_change(repository: Path, base: str, head: str, *, branch: str,
     return mode, rows
 
 
+def evidence_touched(repository: Path, base: str, head: str) -> bool:
+    """Whether any side of any committed change row is an evidence path.
+
+    Computed from the same raw rows as the routing mode, so additions,
+    deletions, modifications, mode and type changes, and both the old and new
+    path of a rename all count. A rename therefore cannot hide an evidence
+    deletion: its old path is an evidence path in its own right.
+    """
+    return any(path_class(p) == EVIDENCE_ONLY
+               for row in changed_entries(repository, base, head) for p in row["paths"])
+
+
 def _write_github_output(path: Path, values: dict[str, str]) -> None:
     with path.open("a", encoding="utf-8") as handle:
         for key, value in values.items():
@@ -227,6 +245,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     )
     if mode not in VALID_MODES:
         raise AssertionError(mode)
+    touched = evidence_touched(repository, arguments.base, arguments.head)
     result = {
         "schema": "pulsarmlx.ci.change-classification/1.0.0",
         "base": arguments.base,
@@ -234,6 +253,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "branch": arguments.branch,
         "requested_mode": arguments.requested_mode,
         "mode": mode,
+        "evidence_touched": touched,
         "changed_path_count": len(rows),
         "changed_paths": rows,
         "unknown_defaults_full": True,
@@ -245,7 +265,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     if arguments.github_output:
         _write_github_output(
             arguments.github_output,
-            {"mode": mode, "base": arguments.base, "head": arguments.head},
+            {"mode": mode, "base": arguments.base, "head": arguments.head,
+             "evidence_touched": "true" if touched else "false"},
         )
     sys.stdout.write(encoded)
     return 0
