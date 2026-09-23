@@ -1,0 +1,2 @@
+CatalogError::LengthMismatch
+The declared range is not shape product times dtype size.

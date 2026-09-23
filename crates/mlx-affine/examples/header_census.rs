@@ -1,0 +1,332 @@
+//! A header-only census of a checkpoint that stays where it is.
+//!
+//! `Checkpoint::from_headers` builds the catalog from header bytes alone, so a
+//! compatibility observation over a real checkpoint needs its headers and
+//! nothing else: **no payload byte is read, and the checkpoint does not move.**
+//! Reads are refused in that mode, which is what makes the claim checkable
+//! rather than promised.
+//!
+//! This is an observation tool, not a gate. It runs by hand, against a
+//! directory of header bytes that is never committed, and what it produces is
+//! labelled a compatibility observation and not a qualification.
+//!
+//! Input directory layout:
+//!
+//! ```text
+//! <dir>/shards.json                  [{ file, file_len, header_file, header_len, header_sha256 }]
+//! <dir>/headers/<shard>.header       the 8-byte prefix and the header JSON, verbatim
+//! <dir>/config.json                  the checkpoint's configuration
+//! <dir>/model.safetensors.index.json the shard index
+//! ```
+//!
+//! ```text
+//! cargo run -p mlx-affine --example header_census -- <dir> <output.json>
+//! ```
+
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
+
+use mlx_affine::module::module_paths;
+use mlx_affine::{classify_module, AffineError, ModuleKind, QuantizationConfig};
+use safetensors_catalog::Checkpoint;
+use serde_json::{json, Map, Value};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut arguments = std::env::args().skip(1);
+    let directory = PathBuf::from(
+        arguments
+            .next()
+            .ok_or("usage: header_census <dir> <output.json>")?,
+    );
+    let output = PathBuf::from(
+        arguments
+            .next()
+            .ok_or("usage: header_census <dir> <output.json> [rules.json]")?,
+    );
+    // Categorization is caller-supplied. With no rules file the census still
+    // runs and reports no groups: a name means nothing to this crate unless a
+    // caller says what it means.
+    let rules: Vec<CensusGroup> = match arguments.next() {
+        None => Vec::new(),
+        Some(path) => {
+            let text = std::fs::read_to_string(&path)?;
+            let document: Value = serde_json::from_str(&text)?;
+            document["groups"]
+                .as_array()
+                .ok_or("the rules file needs a `groups` array")?
+                .iter()
+                .map(|group| CensusGroup {
+                    name: group["name"].as_str().unwrap_or("group").to_string(),
+                    prefix: group["prefix"].as_str().unwrap_or("").to_string(),
+                    expect_unquantized_dtype: group["expect_unquantized_dtype"]
+                        .as_str()
+                        .map(str::to_string),
+                })
+                .collect()
+        }
+    };
+
+    let shards: Value =
+        serde_json::from_str(&std::fs::read_to_string(directory.join("shards.json"))?)?;
+    let mut supplied = Vec::new();
+    let mut provenance = Vec::new();
+    for entry in shards["shards"]
+        .as_array()
+        .ok_or("shards.json has no shards array")?
+    {
+        let file = entry["file"]
+            .as_str()
+            .ok_or("shard entry has no file")?
+            .to_string();
+        let file_len = entry["file_len"]
+            .as_u64()
+            .ok_or("shard entry has no file_len")?;
+        let bytes = std::fs::read(directory.join(entry["header_file"].as_str().unwrap()))?;
+        provenance.push(json!({
+            "file": file,
+            "file_len": file_len,
+            "header_len": entry["header_len"],
+            "header_sha256": entry["header_sha256"],
+            "header_bytes_supplied": bytes.len(),
+        }));
+        supplied.push((file, file_len, bytes));
+    }
+
+    let index = std::fs::read_to_string(directory.join("model.safetensors.index.json"))?;
+    let config_text = std::fs::read_to_string(directory.join("config.json"))?;
+
+    let root_name = directory
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "checkpoint".to_string());
+
+    let checkpoint = match Checkpoint::from_headers(&root_name, supplied, Some(&index)) {
+        Ok(checkpoint) => checkpoint,
+        Err(error) => {
+            // A refusal on real metadata is a finding, recorded, not hidden.
+            let report = json!({
+                "schema": "pulsarmlx.f020.metadata-compatibility/1.0.0",
+                "label": "compatibility observation; not Q0; no payload read",
+                "result": "REFUSED",
+                "refusal": error.to_string(),
+                "shards": provenance,
+            });
+            write(&output, &report)?;
+            eprintln!("header_census: the catalog refused this checkpoint: {error}");
+            return Ok(());
+        }
+    };
+
+    let config = match QuantizationConfig::from_config_json(&config_text) {
+        Ok(config) => Some(config),
+        Err(AffineError::NoQuantizationConfig) => None,
+        Err(error) => {
+            let report = json!({
+                "schema": "pulsarmlx.f020.metadata-compatibility/1.0.0",
+                "label": "compatibility observation; not Q0; no payload read",
+                "result": "REFUSED",
+                "refusal": error.to_string(),
+                "shards": provenance,
+            });
+            write(&output, &report)?;
+            eprintln!("header_census: the configuration was refused: {error}");
+            return Ok(());
+        }
+    };
+
+    let mut specs: BTreeMap<String, u64> = BTreeMap::new();
+    let mut unquantized_dtypes: BTreeMap<String, u64> = BTreeMap::new();
+    let mut refusals: BTreeMap<String, u64> = BTreeMap::new();
+    let mut refusal_examples: BTreeMap<String, String> = BTreeMap::new();
+    let mut leading_shapes: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_modules: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_unquantized: BTreeMap<String, u64> = BTreeMap::new();
+    let mut modules = 0u64;
+
+    for module in module_paths(checkpoint.catalog()) {
+        modules += 1;
+        let matched: Vec<&CensusGroup> = rules
+            .iter()
+            .filter(|group| module.starts_with(&group.prefix))
+            .collect();
+        for group in &matched {
+            *group_modules.entry(group.name.clone()).or_default() += 1;
+        }
+        match classify_module(checkpoint.catalog(), config.as_ref(), &module) {
+            Ok(ModuleKind::Quantized(triple)) => {
+                *specs
+                    .entry(format!(
+                        "{}-bit group {}",
+                        triple.spec().bits.get(),
+                        triple.spec().group_size.get()
+                    ))
+                    .or_default() += 1;
+                let leading = if triple.leading().is_empty() {
+                    "plain".to_string()
+                } else {
+                    format!("{:?}", triple.leading())
+                };
+                *leading_shapes.entry(leading).or_default() += 1;
+            }
+            Ok(ModuleKind::Unquantized(tensor)) => {
+                *unquantized_dtypes
+                    .entry(tensor.dtype.to_string())
+                    .or_default() += 1;
+                for group in &matched {
+                    *group_unquantized.entry(group.name.clone()).or_default() += 1;
+                }
+            }
+            Err(error) => {
+                let name = variant(&error);
+                *refusals.entry(name.to_string()).or_default() += 1;
+                refusal_examples
+                    .entry(name.to_string())
+                    .or_insert_with(|| format!("{module}: {error}"));
+            }
+        }
+    }
+
+    let mut dtypes: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_tensors: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_bytes: BTreeMap<String, u64> = BTreeMap::new();
+    let mut group_surprises: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    for (name, tensor) in checkpoint.catalog().iter() {
+        *dtypes.entry(tensor.dtype.to_string()).or_default() += 1;
+        for group in rules.iter().filter(|group| name.starts_with(&group.prefix)) {
+            *group_tensors.entry(group.name.clone()).or_default() += 1;
+            *group_bytes.entry(group.name.clone()).or_default() += tensor.byte_len;
+            if let Some(expected) = &group.expect_unquantized_dtype {
+                if &tensor.dtype.to_string() != expected {
+                    group_surprises
+                        .entry(group.name.clone())
+                        .or_default()
+                        .push(format!("{name} is {}", tensor.dtype));
+                }
+            }
+        }
+    }
+
+    let declared_total = checkpoint.index().and_then(|index| index.total_size);
+    // Checked: the aggregate can overflow even when every tensor is valid.
+    let payload_total = checkpoint.payload_bytes();
+    let mut report = Map::new();
+    report.insert(
+        "schema".into(),
+        json!("pulsarmlx.f020.metadata-compatibility/1.0.0"),
+    );
+    report.insert(
+        "label".into(),
+        json!("compatibility observation; not Q0; no payload read"),
+    );
+    report.insert("result".into(), json!("OBSERVED"));
+    report.insert("payload_bytes_read".into(), json!(0));
+    report.insert(
+        "reads_possible".into(),
+        json!(checkpoint.is_backed_by_files()),
+    );
+    report.insert("shard_count".into(), json!(checkpoint.shards().len()));
+    report.insert("tensor_count".into(), json!(checkpoint.catalog().len()));
+    report.insert("module_count".into(), json!(modules));
+    report.insert(
+        "catalog_digest_sha256".into(),
+        json!(checkpoint.catalog_digest_hex()?),
+    );
+    report.insert("declared_total_size".into(), json!(declared_total));
+    report.insert(
+        "catalog_payload_bytes".into(),
+        json!(payload_total.as_ref().ok()),
+    );
+    report.insert(
+        "declared_total_size_matches_catalog".into(),
+        json!(matches!(&payload_total, Ok(total) if declared_total == Some(*total))),
+    );
+    report.insert("dtype_census".into(), json!(dtypes));
+    report.insert("resolved_specs".into(), json!(specs));
+    report.insert("quantized_leading_shapes".into(), json!(leading_shapes));
+    report.insert("unquantized_dtypes".into(), json!(unquantized_dtypes));
+    report.insert("refusals".into(), json!(refusals));
+    report.insert("refusal_examples".into(), json!(refusal_examples));
+    report.insert(
+        "caller_supplied_groups".into(),
+        json!({
+            "rules": rules
+                .iter()
+                .map(|group| json!({
+                    "name": group.name,
+                    "prefix": group.prefix,
+                    "expect_unquantized_dtype": group.expect_unquantized_dtype,
+                }))
+                .collect::<Vec<_>>(),
+            "tensors": group_tensors,
+            "bytes": group_bytes,
+            "modules": group_modules,
+            "unquantized_modules": group_unquantized,
+            "dtype_surprises": group_surprises,
+        }),
+    );
+    report.insert(
+        "configuration".into(),
+        json!({
+            "default": config.as_ref().map(|c| json!({
+                "bits": c.default_spec().bits.get(),
+                "group_size": c.default_spec().group_size.get(),
+                "mode": c.default_spec().mode.as_str(),
+            })),
+            "override_count": config.as_ref().map(|c| c.overrides().len()),
+        }),
+    );
+    report.insert(
+        "gap_bytes_per_shard".into(),
+        json!(checkpoint
+            .headers()
+            .iter()
+            .map(|header| header.gap_bytes)
+            .collect::<Vec<_>>()),
+    );
+    report.insert(
+        "shard_metadata".into(),
+        json!(checkpoint
+            .headers()
+            .iter()
+            .map(|header| header.metadata.clone())
+            .collect::<Vec<_>>()),
+    );
+    report.insert("shards".into(), json!(provenance));
+
+    write(&output, &Value::Object(report))?;
+    println!("header_census: wrote {}", output.display());
+    Ok(())
+}
+
+/// One caller-supplied categorization rule. The crate attaches no meaning to
+/// a prefix; this is only what the caller asked to be counted.
+struct CensusGroup {
+    name: String,
+    prefix: String,
+    expect_unquantized_dtype: Option<String>,
+}
+
+fn write(output: &Path, report: &Value) -> std::io::Result<()> {
+    std::fs::write(output, serde_json::to_string_pretty(report).unwrap() + "\n")
+}
+
+fn variant(error: &AffineError) -> &'static str {
+    match error {
+        AffineError::UnsupportedQuantization { .. } => "UnsupportedQuantization",
+        AffineError::MissingDefaultSpec { .. } => "MissingDefaultSpec",
+        AffineError::InconsistentConfig => "InconsistentConfig",
+        AffineError::UnsupportedOverrideValue { .. } => "UnsupportedOverrideValue",
+        AffineError::InvalidConfigJson { .. } => "InvalidConfigJson",
+        AffineError::NoQuantizationConfig => "NoQuantizationConfig",
+        AffineError::IncompleteTriple { .. } => "IncompleteTriple",
+        AffineError::ScalesBiasesMismatch { .. } => "ScalesBiasesMismatch",
+        AffineError::OverrideWithoutScales { .. } => "OverrideWithoutScales",
+        AffineError::AmbiguousQuantization { .. } => "AmbiguousQuantization",
+        AffineError::InconsistentOverride { .. } => "InconsistentOverride",
+        AffineError::Overflow { .. } => "Overflow",
+        AffineError::UnknownModule { .. } => "UnknownModule",
+        AffineError::IndexOutOfBounds { .. } => "IndexOutOfBounds",
+        AffineError::GeometryMismatch { .. } => "GeometryMismatch",
+        _ => "<unlisted>",
+    }
+}

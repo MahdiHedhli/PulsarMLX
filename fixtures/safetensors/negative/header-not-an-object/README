@@ -1,0 +1,2 @@
+CatalogError::MalformedHeader
+The header is an array; the format says the object begins immediately after the prefix.

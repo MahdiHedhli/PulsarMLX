@@ -1,0 +1,66 @@
+{
+ "attribution_of_the_two_output_margins": {
+  "r1": "6.66e-16 is binary64 accumulation noise against expectations the fixture generated in binary64. It says nothing about the decoder beyond that the reference reproduces the generator.",
+  "r3": "1.07e-7 is dominated by the binary32 storage of each weight, not by the accumulation: the per-weight R3-vs-R1 difference is at most 1.49e-8, and summing 64 such terms against activations of order one lands at the observed magnitude. This is the margin that says the candidate reproduces the frozen expectations.",
+  "why_r3_must_be_the_larger": "Both accumulations are the same binary64 sum over the same activations; they differ only in the weights. R3's weights are the binary32 roundings of R1's, so the R3 margin cannot be smaller except by cancellation. The test asserts it is strictly larger, so the R3 loop cannot silently degenerate into the R1 loop."
+ },
+ "case": {
+  "fixture_id": "multilinear-4bit-g64",
+  "geometry": {
+   "bits": 4,
+   "group_size": 64,
+   "heads": 2,
+   "input_dims": 64,
+   "output_dims": 48
+  },
+  "why_this_one": "It is the case whose expectations are reachable from a decoder alone. The switch-* cases additionally need SwiGLU and routing, which Slice 1 does not implement, and the predicate case is a naming rule this crate deliberately does not implement."
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "fixture": {
+  "bytes": 1321686,
+  "modified_by_this_work": false,
+  "path": "fixtures/research/glm53-flash-decoder-quantized-v1/fixtures.json",
+  "schema_declared_by_the_fixture": "flash-quantized-fixtures/1",
+  "sha256": "bd3e318fb78ff58ccccc638c9262371b8384b220d95708d76a30fcbb0d78c29b",
+  "unchanged_since_v1": true
+ },
+ "git_head_at_record_time": "f7519ab8bb83a98140f35aff165880949669cbd7",
+ "independent_agreement": {
+  "agreement": "The two weight margins are bit-identical. The R3 output margins agree to ten significant figures; the remainder is accumulation order, since neither party fixed a summation order and binary64 addition is not associative.",
+  "astra_r1_outputs": 6.661338147750939e-16,
+  "astra_r3_outputs": 1.071072648073379e-07,
+  "astra_r3_vs_r1_weights": 1.4901161193847656e-08,
+  "source": "GPT-6 Astra's read-only recomputation of the same fixture, reported in its verification of 485d760f"
+ },
+ "recorded_on": "2026-09-22",
+ "results": {
+  "dequantize_margin_factor": 67.108864,
+  "dequantize_tolerance": 1e-06,
+  "output_margin_factor_r1": 150119987579.01654,
+  "output_margin_factor_r3": 933.6427,
+  "output_tolerance": 0.0001,
+  "outputs_compared_per_arm": 672,
+  "result": "PASS",
+  "weights_compared": 6144,
+  "worst_output_absolute_difference_from_r1_weights": 6.661338147750939e-16,
+  "worst_output_absolute_difference_from_r3_weights": 1.0710726482121569e-07,
+  "worst_r3_vs_r1_absolute_difference": 1.4901161193847656e-08
+ },
+ "round": 3,
+ "schema": "pulsarmlx.f020.slice1-flash-fixture-qualification/2.0.0",
+ "slice": 1,
+ "statement": "R1 and R3 both qualified against the frozen Flash research fixture the governing design note names for this slice, weights and expected outputs. The fixture is read only; nothing in this work writes to fixtures/research/.",
+ "supersedes": "f020-slice1-flash-fixture-qualification-v1.json, which is left byte-for-byte unchanged",
+ "test": "crates/mlx-affine/tests/flash_decoder_fixture.rs",
+ "tolerances_taken_from_the_fixture": {
+  "dequantize_cross_check": 1e-06,
+  "output": 0.0001
+ },
+ "what_this_does_not_establish": [
+  "no quantized matmul or gather_qmm claim: the matmuls are done in the test, in binary64, from each arm's dequantized weights",
+  "no claim about the Python research path, which is qualified separately and by its own tests",
+  "no real-checkpoint claim of any kind",
+  "no claim that 1.07e-7 bounds anything beyond this case at these tolerances; it is an observation, not a proved bound"
+ ],
+ "why_a_second_file": "Astra's finding 6: v1's expected-output comparison accumulated over R1's weights only, so the candidate's weights were checked against the reference but never against the fixture's own expectations. The adapter now accumulates over BOTH arms and this file records both margins. v1 is not edited; its numbers were correct for what it measured, and what it measured was less than its statement implied."
+}

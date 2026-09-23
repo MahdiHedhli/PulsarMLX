@@ -1,0 +1,625 @@
+//! Opening a real directory: layout resolution, index agreement in both
+//! directions, path containment, determinism and bounded reads.
+
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use safetensors_catalog::{compose_shard, CatalogError, Checkpoint, OpenMode, INDEX_FILE_NAME};
+
+static COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// A directory under the test temporary root, removed when the guard drops.
+struct Scratch(PathBuf);
+
+impl Scratch {
+    fn new(label: &str) -> Self {
+        let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "safetensors-catalog-{}-{}-{}",
+            std::process::id(),
+            label,
+            unique
+        ));
+        let _ = std::fs::remove_dir_all(&path);
+        std::fs::create_dir_all(&path).unwrap();
+        Self(path)
+    }
+
+    fn path(&self) -> &Path {
+        &self.0
+    }
+
+    fn write(&self, name: &str, bytes: &[u8]) {
+        std::fs::write(self.0.join(name), bytes).unwrap();
+    }
+}
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+/// One shard holding `u32` tensor `a` = [1, 2] and `u8` tensor `b` = [9].
+fn simple_shard() -> Vec<u8> {
+    let json = concat!(
+        r#"{"a":{"dtype":"U32","shape":[2],"data_offsets":[0,8]},"#,
+        r#""b":{"dtype":"U8","shape":[1],"data_offsets":[8,9]}}"#
+    );
+    let mut data = Vec::new();
+    data.extend_from_slice(&1u32.to_le_bytes());
+    data.extend_from_slice(&2u32.to_le_bytes());
+    data.push(9);
+    compose_shard(json, &data)
+}
+
+#[test]
+fn a_single_shard_directory_opens_without_an_index() {
+    let scratch = Scratch::new("single");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.catalog().len(), 2);
+    assert!(checkpoint.index().is_none());
+    assert_eq!(checkpoint.shards()[0].file_name, "model.safetensors");
+    assert_eq!(checkpoint.shards()[0].sha256, None);
+}
+
+#[test]
+fn two_shards_without_an_index_are_ambiguous() {
+    let scratch = Scratch::new("ambiguous");
+    scratch.write("a.safetensors", &simple_shard());
+    scratch.write("b.safetensors", &simple_shard());
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::AmbiguousLayout { .. })
+    ));
+}
+
+#[test]
+fn the_modes_are_enforced() {
+    let scratch = Scratch::new("modes");
+    scratch.write("model.safetensors", &simple_shard());
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::RequireIndex),
+        Err(CatalogError::AmbiguousLayout { .. })
+    ));
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors","b":"model.safetensors"}}"#,
+    );
+    assert!(Checkpoint::open(scratch.path(), OpenMode::RequireIndex).is_ok());
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::RequireSingleShard),
+        Err(CatalogError::AmbiguousLayout { .. })
+    ));
+}
+
+#[test]
+fn a_missing_shard_is_named() {
+    let scratch = Scratch::new("missing");
+    scratch.write("model.safetensors", &simple_shard());
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors","b":"model.safetensors","c":"gone.safetensors"}}"#,
+    );
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::MissingShard { ref shard }) if shard == "gone.safetensors"
+    ));
+}
+
+#[test]
+fn an_indexed_tensor_absent_from_its_shard_is_refused() {
+    let scratch = Scratch::new("absent");
+    scratch.write("model.safetensors", &simple_shard());
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors","b":"model.safetensors","c":"model.safetensors"}}"#,
+    );
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::MissingTensorInShard { ref name, .. }) if name == "c"
+    ));
+}
+
+#[test]
+fn an_unindexed_tensor_is_refused() {
+    let scratch = Scratch::new("extra");
+    scratch.write("model.safetensors", &simple_shard());
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors"}}"#,
+    );
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::UnindexedTensor { ref name, .. }) if name == "b"
+    ));
+}
+
+#[test]
+fn the_same_name_in_two_shards_is_refused() {
+    let scratch = Scratch::new("duplicate");
+    scratch.write("one.safetensors", &simple_shard());
+    scratch.write("two.safetensors", &simple_shard());
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"one.safetensors","b":"one.safetensors"}}"#,
+    );
+    // `two.safetensors` is not in the weight map at all, so it is not opened;
+    // the refusal has to come from an index that names both.
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"one.safetensors","b":"two.safetensors"}}"#,
+    );
+    // One exact variant, not a choice of two. The index maps `a` to shard one
+    // and `b` to shard two, both weight_map entries resolve, and then shard
+    // one's header is found to hold `b`, which the index places elsewhere:
+    // that is the same name in two shards.
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::DuplicateTensor {
+            name,
+            first,
+            second,
+        }) => {
+            assert_eq!(name, "b");
+            assert_eq!(first, "two.safetensors");
+            assert_eq!(second, "one.safetensors");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_traversing_shard_name_never_reaches_the_file_system() {
+    let scratch = Scratch::new("traversal");
+    scratch.write("model.safetensors", &simple_shard());
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"../outside.safetensors"}}"#,
+    );
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::InvalidShardPath { .. })
+    ));
+}
+
+#[test]
+fn a_shard_symlinked_outside_the_root_is_refused() {
+    let outside = Scratch::new("outside");
+    outside.write("real.safetensors", &simple_shard());
+    let scratch = Scratch::new("escape");
+    std::os::unix::fs::symlink(
+        outside.path().join("real.safetensors"),
+        scratch.path().join("model.safetensors"),
+    )
+    .unwrap();
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::PathEscape { ref shard, .. }) => assert_eq!(shard, "model.safetensors"),
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_shard_that_is_a_symlink_to_a_file_inside_the_root_is_still_refused() {
+    // Containment is decided about the object a descriptor holds. A symlink is
+    // refused even when it happens to point somewhere admissible, because the
+    // thing it points at can change between the look and the open.
+    let scratch = Scratch::new("inside-link");
+    scratch.write("real.safetensors", &simple_shard());
+    std::os::unix::fs::symlink(
+        scratch.path().join("real.safetensors"),
+        scratch.path().join("model.safetensors"),
+    )
+    .unwrap();
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"model.safetensors"}}"#,
+    );
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::PathEscape {
+            ref shard,
+            ref resolved,
+        }) => {
+            assert_eq!(shard, "model.safetensors");
+            assert!(resolved.contains("symbolic link"), "{resolved}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn an_index_that_is_not_a_regular_file_is_refused_not_ignored() {
+    // A directory named like the index, next to exactly one valid shard. The
+    // tempting wrong answer is "no index, so single-shard mode".
+    let scratch = Scratch::new("index-dir");
+    scratch.write("model.safetensors", &simple_shard());
+    std::fs::create_dir(scratch.path().join(INDEX_FILE_NAME)).unwrap();
+    match Checkpoint::open(scratch.path(), OpenMode::Auto) {
+        Err(CatalogError::InvalidIndex { ref detail }) => {
+            assert!(detail.contains("not a regular file"), "{detail}");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+}
+
+#[test]
+fn a_dangling_index_symlink_is_refused_not_ignored() {
+    let scratch = Scratch::new("index-link");
+    scratch.write("model.safetensors", &simple_shard());
+    std::os::unix::fs::symlink(
+        scratch.path().join("nowhere.json"),
+        scratch.path().join(INDEX_FILE_NAME),
+    )
+    .unwrap();
+    assert!(matches!(
+        Checkpoint::open(scratch.path(), OpenMode::Auto),
+        Err(CatalogError::InvalidIndex { .. })
+    ));
+}
+
+#[test]
+fn the_root_itself_may_not_be_reached_through_a_symlink_that_moves() {
+    // The root is opened with O_DIRECTORY|O_NOFOLLOW after canonicalization,
+    // so the descriptor is pinned to the directory that existed at open time.
+    let scratch = Scratch::new("root-pin");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.catalog().len(), 2);
+    // Renaming the root after the open does not invalidate what was admitted:
+    // the descriptors were bound, not the names.
+    let moved = scratch.path().with_extension("moved");
+    std::fs::rename(scratch.path(), &moved).unwrap();
+    let tensor = checkpoint.catalog().get("a").unwrap().clone();
+    let mut out = [0u8; 8];
+    checkpoint.read_tensor_bytes("a", &mut out).unwrap();
+    assert_eq!(u32::from_le_bytes(out[4..8].try_into().unwrap()), 2);
+    assert_eq!(tensor.byte_len, 8);
+    std::fs::rename(&moved, scratch.path()).unwrap();
+}
+
+#[test]
+fn opening_twice_produces_the_same_digest() {
+    let scratch = Scratch::new("determinism");
+    scratch.write("model.safetensors", &simple_shard());
+    let first = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    let second = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(
+        first.catalog_digest().unwrap(),
+        second.catalog_digest().unwrap()
+    );
+    assert_eq!(first.catalog_digest_hex().unwrap().len(), 64);
+}
+
+#[test]
+fn the_digest_frames_every_field_by_length() {
+    use sha2::{Digest, Sha256};
+    let scratch = Scratch::new("digest");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    let a = checkpoint.catalog().get("a").unwrap();
+    let b = checkpoint.catalog().get("b").unwrap();
+
+    let mut hasher = Sha256::new();
+    hasher.update(2u64.to_le_bytes());
+    for (name, dtype, shape, begin, end) in [
+        ("a", "U32", "2", a.data_begin, a.data_end),
+        ("b", "U8", "1", b.data_begin, b.data_end),
+    ] {
+        for field in [
+            name.as_bytes(),
+            dtype.as_bytes(),
+            shape.as_bytes(),
+            b"model.safetensors".as_slice(),
+            begin.to_string().as_bytes(),
+            end.to_string().as_bytes(),
+        ] {
+            hasher.update((field.len() as u64).to_le_bytes());
+            hasher.update(field);
+        }
+    }
+    let expected: [u8; 32] = hasher.finalize().into();
+    assert_eq!(checkpoint.catalog_digest().unwrap(), expected);
+}
+
+/// The historical serialization: six tab-joined fields per tensor, one record
+/// per line, in name order -- rebuilt from a catalog's real contents.
+///
+/// Nothing hard-codes an offset. `data_begin` and `data_end` are absolute and
+/// include the 8-byte length prefix and the header, so they are whatever the
+/// constructed checkpoint actually says they are.
+fn historical_serialization(checkpoint: &Checkpoint) -> String {
+    let mut out = String::new();
+    for (name, tensor) in checkpoint.catalog().iter() {
+        let shape = tensor
+            .shape
+            .iter()
+            .map(u64::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        let shard = &checkpoint.shards()[tensor.shard.0 as usize].file_name;
+        out.push_str(&format!(
+            "{name}\t{}\t{shape}\t{shard}\t{}\t{}\n",
+            tensor.dtype.as_str(),
+            tensor.data_begin,
+            tensor.data_end
+        ));
+    }
+    out
+}
+
+#[test]
+fn names_carrying_delimiters_cannot_collide_in_the_digest() {
+    // Tensor names are opaque strings, so one may contain a tab or a newline.
+    // The historical serialization joined six fields per tensor with tabs and
+    // ended each record with a newline, which made the stream ambiguous.
+    //
+    // Two earlier versions of this test did not demonstrate that. Round 2's
+    // pair did not collide at all. Round 3's collided only under fabricated
+    // offsets of 0 and 1; the real ones include the 8-byte prefix and the
+    // header, so the actual streams differed and the test would have passed
+    // against the very serialization it condemned. Astra's round-3 finding 2.
+    //
+    // This pair collides on its real offsets. Both headers are 105 bytes, so
+    // both catalogs place their data at absolute 113, and the left catalog's
+    // single tensor is named exactly the right catalog's first record plus
+    // the right catalog's second name -- including the literal "113"s.
+    const SHARD: &str = "model.safetensors";
+    let right_json = concat!(
+        r#"{"a":{"dtype":"U8","shape":[0],"data_offsets":[0,0]},"#,
+        r#""b":{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#
+    );
+    // 13 spaces, purely to make the two headers the same length. JSON permits
+    // them between tokens and the parsed names and offsets are unaffected.
+    let left_json = concat!(
+        r#"{"a\tU8\t0\tmodel.safetensors\t113\t113\nb":"#,
+        "             ",
+        r#"{"dtype":"U8","shape":[1],"data_offsets":[0,1]}}"#
+    );
+    assert_eq!(
+        left_json.len(),
+        right_json.len(),
+        "the two headers must be the same length for the offsets to coincide"
+    );
+
+    let build = |json: &str| {
+        let bytes = compose_shard(json, &[0u8]);
+        let file_len = bytes.len() as u64;
+        Checkpoint::from_headers("collide", vec![(SHARD.to_string(), file_len, bytes)], None)
+            .expect("both catalogs are well formed")
+    };
+    let left = build(left_json);
+    let right = build(right_json);
+
+    // The real offsets, asserted rather than assumed.
+    let swallowing_name = "a\tU8\t0\tmodel.safetensors\t113\t113\nb";
+    let only = left.catalog().get(swallowing_name).expect("the long name");
+    assert_eq!((only.data_begin, only.data_end), (113, 114));
+    let a = right.catalog().get("a").expect("a");
+    let b = right.catalog().get("b").expect("b");
+    assert_eq!((a.data_begin, a.data_end), (113, 113));
+    assert_eq!((b.data_begin, b.data_end), (113, 114));
+    assert_eq!(left.catalog().len(), 1);
+    assert_eq!(right.catalog().len(), 2);
+
+    // The premise: serialized the historical way, from their own contents,
+    // these two different catalogs are the same bytes.
+    let historical_left = historical_serialization(&left);
+    let historical_right = historical_serialization(&right);
+    assert_eq!(
+        historical_left, historical_right,
+        "the premise: the historical serialization conflates these two catalogs"
+    );
+    assert_eq!(
+        historical_left,
+        "a\tU8\t0\tmodel.safetensors\t113\t113\nb\tU8\t1\tmodel.safetensors\t113\t114\n"
+    );
+
+    // And the framed digests keep them apart.
+    assert_ne!(
+        left.catalog_digest().unwrap(),
+        right.catalog_digest().unwrap(),
+        "length framing must separate catalogs the historical form conflated"
+    );
+}
+
+#[test]
+fn reads_are_bounded_and_correct() {
+    let scratch = Scratch::new("reads");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.catalog().get("a").unwrap().byte_len, 8);
+
+    let mut whole = [0u8; 8];
+    checkpoint.read_tensor_bytes("a", &mut whole).unwrap();
+    assert_eq!(u32::from_le_bytes(whole[0..4].try_into().unwrap()), 1);
+    assert_eq!(u32::from_le_bytes(whole[4..8].try_into().unwrap()), 2);
+
+    let mut second = [0u8; 4];
+    checkpoint.read_range("a", 4, 4, &mut second).unwrap();
+    assert_eq!(u32::from_le_bytes(second), 2);
+
+    let mut too_much = [0u8; 9];
+    assert!(matches!(
+        checkpoint.read_range("a", 0, 9, &mut too_much),
+        Err(CatalogError::RangeOutOfBounds { .. })
+    ));
+    let mut one = [0u8; 1];
+    assert!(matches!(
+        checkpoint.read_range("a", u64::MAX, 1, &mut one),
+        Err(CatalogError::RangeOutOfBounds { .. })
+    ));
+    let mut wrong = [0u8; 3];
+    assert!(matches!(
+        checkpoint.read_range("a", 0, 4, &mut wrong),
+        Err(CatalogError::DestinationLengthMismatch { .. })
+    ));
+}
+
+#[test]
+fn hashing_shards_is_explicit_and_stable() {
+    let scratch = Scratch::new("hash");
+    let bytes = simple_shard();
+    scratch.write("model.safetensors", &bytes);
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.shards()[0].sha256, None);
+    use sha2::{Digest, Sha256};
+    let expected: [u8; 32] = Sha256::digest(&bytes).into();
+
+    // Repeated calls must agree. `try_clone()` shares a file position: the
+    // first hash consumed it and the second started at end-of-file, quietly
+    // replacing a correct digest with the digest of the empty stream. Reading
+    // by explicit offset is what makes this stable, so it is asserted three
+    // times rather than once.
+    for round in 1..=3 {
+        checkpoint.hash_shards().unwrap();
+        assert_eq!(
+            checkpoint.shards()[0].sha256,
+            Some(expected),
+            "round {round} produced a different digest"
+        );
+    }
+    let empty: [u8; 32] = Sha256::digest(b"").into();
+    assert_ne!(expected, empty, "the premise of this test");
+    assert_eq!(checkpoint.shards()[0].file_len, bytes.len() as u64);
+}
+
+#[test]
+fn a_failed_refresh_clears_the_digest_a_previous_call_recorded() {
+    // Astra's round-2 qualification limit on finding 4: the truncation test
+    // covered failure before any successful hash, so nothing said what
+    // happens to a digest already recorded. It is cleared. A digest that
+    // survives a failed refresh looks current and is not, and this method
+    // exists to state provenance.
+    let scratch = Scratch::new("stale");
+    let bytes = simple_shard();
+    scratch.write("model.safetensors", &bytes);
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+
+    checkpoint.hash_shards().unwrap();
+    let recorded = checkpoint.shards()[0].sha256;
+    assert!(recorded.is_some(), "the premise: a digest was recorded");
+
+    let declared = checkpoint.shards()[0].file_len;
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join("model.safetensors"))
+        .unwrap();
+    handle.set_len(declared - 4).unwrap();
+    drop(handle);
+
+    assert!(matches!(
+        checkpoint.hash_shards(),
+        Err(CatalogError::PrematureEof { .. })
+    ));
+    assert_eq!(
+        checkpoint.shards()[0].sha256,
+        None,
+        "the digest from before the failure must not survive it"
+    );
+}
+
+#[test]
+fn a_refresh_that_fails_on_one_shard_clears_them_all() {
+    // The refresh is all or nothing. Assigning shard by shard would leave the
+    // shards hashed before the failure fresh and the ones after it stale,
+    // with nothing in the error saying which is which.
+    let scratch = Scratch::new("partial");
+    scratch.write("one.safetensors", &simple_shard());
+    scratch.write("two.safetensors", &{
+        let json = concat!(
+            r#"{"c":{"dtype":"U32","shape":[2],"data_offsets":[0,8]},"#,
+            r#""d":{"dtype":"U8","shape":[1],"data_offsets":[8,9]}}"#
+        );
+        let mut data = Vec::new();
+        data.extend_from_slice(&3u32.to_le_bytes());
+        data.extend_from_slice(&4u32.to_le_bytes());
+        data.push(7);
+        compose_shard(json, &data)
+    });
+    scratch.write(
+        INDEX_FILE_NAME,
+        br#"{"weight_map":{"a":"one.safetensors","b":"one.safetensors","c":"two.safetensors","d":"two.safetensors"}}"#,
+    );
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    assert_eq!(checkpoint.shards().len(), 2);
+
+    checkpoint.hash_shards().unwrap();
+    assert!(checkpoint.shards().iter().all(|s| s.sha256.is_some()));
+
+    // Truncate the SECOND shard only, so the first would hash cleanly.
+    let victim = checkpoint.shards()[1].file_name.clone();
+    let declared = checkpoint.shards()[1].file_len;
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join(&victim))
+        .unwrap();
+    handle.set_len(declared - 1).unwrap();
+    drop(handle);
+
+    match checkpoint.hash_shards() {
+        Err(CatalogError::PrematureEof { shard, .. }) => assert_eq!(shard, victim),
+        other => panic!("unexpected {other:?}"),
+    }
+    assert!(
+        checkpoint.shards().iter().all(|s| s.sha256.is_none()),
+        "a partial refresh must not leave any shard carrying a digest"
+    );
+}
+
+#[test]
+fn hashing_a_shard_that_shrank_under_the_open_is_refused() {
+    // The file is admitted at one length and then truncated. A digest over
+    // whatever is left would describe neither the admitted file nor the new
+    // one, so it is refused instead.
+    let scratch = Scratch::new("shrank");
+    let bytes = simple_shard();
+    scratch.write("model.safetensors", &bytes);
+    let mut checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    let declared = checkpoint.shards()[0].file_len;
+
+    let handle = std::fs::OpenOptions::new()
+        .write(true)
+        .open(scratch.path().join("model.safetensors"))
+        .unwrap();
+    handle.set_len(declared - 4).unwrap();
+    drop(handle);
+
+    match checkpoint.hash_shards() {
+        Err(CatalogError::PrematureEof {
+            shard,
+            declared: recorded,
+            at,
+        }) => {
+            assert_eq!(shard, "model.safetensors");
+            assert_eq!(recorded, declared);
+            assert_eq!(at, 0, "the short read is reported at the offset it began");
+        }
+        other => panic!("unexpected {other:?}"),
+    }
+    assert_eq!(
+        checkpoint.shards()[0].sha256,
+        None,
+        "no digest is recorded on refusal"
+    );
+}
+
+#[test]
+fn the_backend_traits_see_the_same_bytes() {
+    use backend::runtime::{CancellationToken, TensorCatalog, TensorStore};
+    let scratch = Scratch::new("backend");
+    scratch.write("model.safetensors", &simple_shard());
+    let checkpoint = Checkpoint::open(scratch.path(), OpenMode::Auto).unwrap();
+    let runtime = TensorCatalog::tensor(&checkpoint, "a").unwrap().unwrap();
+    assert_eq!(runtime.quantization, "U32");
+    assert_eq!(runtime.shape, vec![2]);
+    assert_eq!(runtime.shard, "model.safetensors");
+    assert_eq!(runtime.range.length, 8);
+    let mut out = vec![0u8; 8];
+    let read = TensorStore::read_range(&checkpoint, &runtime, &mut out, &CancellationToken::new())
+        .unwrap();
+    assert_eq!(read, 8);
+    assert_eq!(u32::from_le_bytes(out[4..8].try_into().unwrap()), 2);
+    assert!(TensorCatalog::tensor(&checkpoint, "absent")
+        .unwrap()
+        .is_none());
+}

@@ -1,0 +1,6 @@
+{
+ "weight_map": {
+  "a": "one.safetensors",
+  "b": "two.safetensors"
+ }
+}

@@ -1,0 +1,219 @@
+{
+ "accepted_without_refusal": true,
+ "expectations_from_phase_0_W2": {
+  "config_sha256": {
+   "agrees": true,
+   "expected": "3ed164a8f60c96dc81d5742b952b7823335fa7656fe0bbcf69c7ea05a4179d1d",
+   "observed": "3ed164a8f60c96dc81d5742b952b7823335fa7656fe0bbcf69c7ea05a4179d1d"
+  },
+  "modules_at_4_bit_group_64": {
+   "agrees": true,
+   "expected": 126,
+   "observed": 126
+  },
+  "modules_at_8_bit_group_64": {
+   "agrees": true,
+   "expected": 542,
+   "observed": 542
+  },
+  "quantization_and_quantization_config_identical": {
+   "agrees": true,
+   "expected": true,
+   "observed": true
+  },
+  "shard_count": {
+   "agrees": true,
+   "expected": 18,
+   "observed": 18
+  },
+  "tensor_count": {
+   "agrees": true,
+   "expected": 2998,
+   "observed": 2998
+  },
+  "vision_tensors_unquantized": {
+   "agrees": true,
+   "expected": 347,
+   "observed": 347
+  }
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "findings": [
+  {
+   "consequence": "safetensors-catalog treats metadata.total_size as informational and constrains nothing by it, which is why this checkpoint was accepted. A future change that turned total_size into a validated invariant would reject this real, correct checkpoint. The synthetic fixture happens to declare the payload-sum convention and a test asserts that of the fixture, not of the format.",
+   "detail": "The index declares total_size = 181,923,899,861. The catalog's payload total -- the sum of every tensor's byte length -- is 181,923,504,376. The difference, 395,485 bytes, is exactly the sum of the 18 shards' 8-byte length prefixes and header JSON, and the declared figure equals the sum of the 18 file sizes exactly. This writer counts whole files, while the commonly assumed convention counts tensor payload.",
+   "id": "F1",
+   "severity": "informational",
+   "title": "metadata.total_size counts file bytes, not tensor bytes"
+  },
+  {
+   "detail": "All 1,126 module paths classified. 668 resolved to a quantized triple -- 126 at 4-bit group 64 and 542 at 8-bit group 64, which is the configuration's default and its 542 overrides exactly -- and 458 resolved to unquantized BF16 weights. There were no refusals of any kind. A raised error here would have been a finding worth reporting; there was none.",
+   "id": "F2",
+   "severity": "informational",
+   "title": "the crate raised no error on real metadata"
+  },
+  {
+   "detail": "126 quantized modules carry leading dimension [288] -- 42 MoE layers times 3 projections over 288 stacked experts -- and 22 carry leading [64], the 11 MLA layers' embed_q and unembed_out absorbed per head. The remaining 520 are plain [out, in] matrices. expert_slice's index_path arity follows from the leading dimensions and needed no special case.",
+   "id": "F3",
+   "severity": "informational",
+   "title": "the stacked-expert and per-head leading shapes are what the representation expects"
+  },
+  {
+   "detail": "Every shard's data section is fully covered by its tensors -- gap_bytes is 0 on all 18 -- and every shard carries __metadata__ = {\"format\": \"mlx\"}. The synthetic mixed fixture contains a deliberate gap anyway, because the format permits one and a parser that assumed otherwise would be wrong on a checkpoint nobody has written yet.",
+   "id": "F4",
+   "severity": "informational",
+   "title": "no gaps anywhere, and one uniform __metadata__"
+  }
+ ],
+ "git_head": "ef306c5c50f371484480de9e28d4aa83b43210a2",
+ "label": "compatibility observation; not Q0; no payload read",
+ "not_claimed": [
+  "no shard payload was read or hashed, so there is no Q0 claim",
+  "no model was executed",
+  "nothing was downloaded",
+  "this observation is not a gate and Slice 1 does not depend on it"
+ ],
+ "observation": {
+  "catalog_digest_sha256": "ada6835ea826693b0ac0f7ac8a539598cbe009303b08996ea8f56777fa67a030",
+  "configuration": {
+   "default": {
+    "bits": 4,
+    "group_size": 64,
+    "mode": "affine"
+   },
+   "override_count": 542
+  },
+  "dtype_census": {
+   "BF16": 2040,
+   "F32": 290,
+   "U32": 668
+  },
+  "gap_bytes_per_shard": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "module_count": 1126,
+  "quantized_leading_shapes": {
+   "[288]": 126,
+   "[64]": 22,
+   "plain": 520
+  },
+  "refusals": {},
+  "resolved_specs": {
+   "4-bit group 64": 126,
+   "8-bit group 64": 542
+  },
+  "shard_count": 18,
+  "shard_metadata": [
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   },
+   {
+    "format": "mlx"
+   }
+  ],
+  "tensor_count": 2998,
+  "unquantized_module_dtypes": {
+   "BF16": 458
+  },
+  "vision": {
+   "bytes": 1127254016,
+   "modules": 224,
+   "tensors": 347,
+   "unquantized_modules": 224
+  }
+ },
+ "recorded_on": "2026-09-22",
+ "result": "OBSERVED",
+ "schema": "pulsarmlx.f020.slice1-metadata-compatibility/1.0.0",
+ "slice": 1,
+ "statement": "Checkpoint::from_headers and classify_module were run over the headers of an already downloaded and independently verified checkpoint that stayed on the Studio. No payload byte was read, no model was executed, nothing was downloaded, and the raw headers are not committed. This is a compatibility observation. It is not a Q0 payload-identity qualification and it is not a gate for this slice.",
+ "subject": {
+  "bytes_transferred_approximate": 790848,
+  "config_sha256": "3ed164a8f60c96dc81d5742b952b7823335fa7656fe0bbcf69c7ea05a4179d1d",
+  "host": "Hedhli-Mac-Studio.local",
+  "index_sha256": "5e0a3768db6fb795c4846bed713785a17d336f4cc4494b4f6b28f75082314383",
+  "not_read": [
+   "any tensor payload byte"
+  ],
+  "path_on_host": "/Volumes/Promise20TB/PulsarMLX-GLM53-Flash/models/GLM-5.3-Flash-MLX-mixed-4_8bit",
+  "raw_headers_committed": false,
+  "raw_headers_location": "outside the repository, under the mission working directory",
+  "read": [
+   "config.json",
+   "model.safetensors.index.json",
+   "each shard's 8-byte length prefix and header JSON",
+   "stat sizes"
+  ],
+  "repository": "pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit",
+  "revision": "d43ea8b407ce4e9c25e6ac9baec3feab70d9f5f3"
+ },
+ "tool": {
+  "mode": "header-only; Checkpoint::is_backed_by_files() is false and every read is refused",
+  "path": "crates/mlx-affine/examples/header_census.rs"
+ }
+}

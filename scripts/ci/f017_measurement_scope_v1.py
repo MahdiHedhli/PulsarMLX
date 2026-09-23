@@ -32,15 +32,20 @@ WORKFLOW_BASE_SHA = "3b18be9762f19a8115f311080f6ebfa906a697e889a9c4b7c3fb9c0c790
 # change to a mandatory step should require.
 NATIVE_BASE = "44c1b34eaec4768933f807ea6406d9dcb97f00e9"
 NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426acbdb49c0d"
-# The resolution: the merge commit where the qualify and native lineages were
-# reconciled. Required F017 steps are frozen at these exact bytes. Line-level
+# The resolution. It began as the merge commit where the qualify and native
+# lineages were reconciled (9e145b09, workflow sha256 4e132d2c...); it is now
+# advanced, deliberately and in the commit immediately after the one that added
+# the two F020 required steps, to that commit's tree. The earlier resolution's
+# required blocks are contained in this one byte for byte -- advancing the base
+# adds required steps, it never rewrites or drops one. Required steps are frozen
+# at these exact bytes. Line-level
 # rules were shown insufficient -- allowed lines can be composed into a function
 # definition that swallows the body, and execution can be redirected from above
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "9e145b090ad2a632bdde228f9078f1a6484eb2fb"
-RESOLUTION_WORKFLOW_SHA256 = "4e132d2c07b1aafbefb96fc7d97f5dcbd06050ed2085c6d6aabb1b89b21f8a80"
+RESOLUTION_BASE = "4f0ed191bd3944550cfa14076109643a15827875"
+RESOLUTION_WORKFLOW_SHA256 = "185c2183098843446d2c9ca9af6b23fe995975e41adc32347757d29fbfa02e97"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")
@@ -49,6 +54,19 @@ OLD_COMMAND = ".venv/bin/python scripts/research/generate_f017_v11_measurement_v
 NEW_COMMANDS = (
     ".venv/bin/python scripts/ci/f017_measurement_scope_v1.py --check",
     ".venv/bin/python -I -S -B scripts/research/tests/f017_primary_confined_ci_v1.py",
+)
+# Steps that are required although no script they name has `f017` in its
+# basename. The basename rule was a proxy for "this step is mandatory", and it
+# stops being one as soon as a successor feature owns a mandatory gate: F020's
+# native affine qualification must run, and naming its script `f017_...` to get
+# that would be a lie about what the script is. So the selector is extended
+# with an explicit, reviewable list of step NAMES. Adding a name here makes
+# that step frozen at the resolution exactly like an F017 step, which is why
+# the list is short, spelled in full, and moves only together with a deliberate
+# advance of RESOLUTION_BASE and RESOLUTION_WORKFLOW_SHA256.
+REQUIRED_EXTRA_STEP_NAMES = (
+    "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)",
+    "Test MLX affine representation",
 )
 
 
@@ -241,6 +259,10 @@ def _ordered_subset(expected_lines, current_lines):
 
 
 def _is_required(block_text):
+    first = block_text.split("\n", 1)[0]
+    name = _STEP_NAME.match(first)
+    if name and name.group(1) in REQUIRED_EXTRA_STEP_NAMES:
+        return True
     for path in _SCRIPT_REFERENCE.findall(block_text):
         if "f017" in path.rsplit("/", 1)[-1].lower():
             return True

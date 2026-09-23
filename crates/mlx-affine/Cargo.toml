@@ -1,0 +1,12 @@
+[package]
+name = "mlx-affine"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Model-neutral MLX affine quantized weight representation over a Safetensors catalog."
+
+[dependencies]
+safetensors-catalog = { path = "../safetensors-catalog" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

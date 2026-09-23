@@ -678,6 +678,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-affine"
+version = "0.1.0"
+dependencies = [
+ "safetensors-catalog",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "mlx-backend"
 version = "0.1.0"
 dependencies = [
@@ -889,6 +898,17 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "safetensors-catalog"
+version = "0.1.0"
+dependencies = [
+ "backend",
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
+]
 
 [[package]]
 name = "schemars"

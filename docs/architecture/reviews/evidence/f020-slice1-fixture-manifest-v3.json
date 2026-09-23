@@ -1,0 +1,611 @@
+{
+ "census_rule": "Every file fixtures/safetensors/manifest.json lists, which is every file the generator writes. The same rule v2 used, so the diff below is a real diff and not a change of scope.",
+ "downloads_performed": false,
+ "feature": "020-mlx-safetensors-affine",
+ "git_head": "731a6572c637b3d03f4200f4fd97c356ba0a0a9b",
+ "mlx_run_to_produce_fixtures": false,
+ "model_weights_touched": false,
+ "recorded_on": "2026-09-22",
+ "round": 3,
+ "schema": "pulsarmlx.f020.slice1-fixture-manifest/3.0.0",
+ "slice": 1,
+ "supersedes": "docs/architecture/reviews/evidence/f020-slice1-fixture-manifest-v2.json",
+ "synthetic_corpus": {
+  "file_count": 142,
+  "files": {
+   "metadata-variants-v1/config.json": {
+    "bytes": 241,
+    "sha256": "cfed413be185cd3d45c1e1c98fa257950e9f81c9b22013c63ecd77ab0f4178f8"
+   },
+   "metadata-variants-v1/expected.json": {
+    "bytes": 28765,
+    "sha256": "b492438a63b4adcd6d49e0bcf2d86a7f1b54e05c0f3d554b83def0958c5f9307"
+   },
+   "metadata-variants-v1/model.safetensors": {
+    "bytes": 2405,
+    "sha256": "b21f86e3d0098c65348a1ea8e3d629b58b8dd8a4b249101b5b3ae0f5b734ea5b"
+   },
+   "mixed-4-8-index-total-size-v1/config.json": {
+    "bytes": 210,
+    "sha256": "87e3644baae859aa748473739de7b66088910ecbf69fa7b6bb38f637eabb4ebb"
+   },
+   "mixed-4-8-index-total-size-v1/expected.json": {
+    "bytes": 64927,
+    "sha256": "64a70cb8157ea0e74b29c2beea39a77108077c549b32772ad07fed26c757d827"
+   },
+   "mixed-4-8-index-total-size-v1/model-00001.safetensors": {
+    "bytes": 1872,
+    "sha256": "0688c7a742a02ccc9cf2a466a351a005ee8960c72388d7078d33b55044e8eebb"
+   },
+   "mixed-4-8-index-total-size-v1/model-00002.safetensors": {
+    "bytes": 2016,
+    "sha256": "bb729bf9d7a15822125d0b5a02546fc07f98a5c0f752695b1b105c76c6cd21cb"
+   },
+   "mixed-4-8-index-total-size-v1/model-00003.safetensors": {
+    "bytes": 1164,
+    "sha256": "bcbef395a30372de20a1b6f6bc4d0520be9d6b5bf4f81fd367de27ef30896e41"
+   },
+   "mixed-4-8-index-total-size-v1/model.safetensors.index.json": {
+    "bytes": 958,
+    "sha256": "467029b355677afebb416624278a0c74ed1602d3d57e4e5fe92257d96a1fa93c"
+   },
+   "mixed-4-8-v1/config.json": {
+    "bytes": 210,
+    "sha256": "87e3644baae859aa748473739de7b66088910ecbf69fa7b6bb38f637eabb4ebb"
+   },
+   "mixed-4-8-v1/expected.json": {
+    "bytes": 64927,
+    "sha256": "64a70cb8157ea0e74b29c2beea39a77108077c549b32772ad07fed26c757d827"
+   },
+   "mixed-4-8-v1/model-00001.safetensors": {
+    "bytes": 1872,
+    "sha256": "0688c7a742a02ccc9cf2a466a351a005ee8960c72388d7078d33b55044e8eebb"
+   },
+   "mixed-4-8-v1/model-00002.safetensors": {
+    "bytes": 2016,
+    "sha256": "bb729bf9d7a15822125d0b5a02546fc07f98a5c0f752695b1b105c76c6cd21cb"
+   },
+   "mixed-4-8-v1/model-00003.safetensors": {
+    "bytes": 1164,
+    "sha256": "bcbef395a30372de20a1b6f6bc4d0520be9d6b5bf4f81fd367de27ef30896e41"
+   },
+   "mixed-4-8-v1/model.safetensors.index.json": {
+    "bytes": 918,
+    "sha256": "69e7b03b9d9837df47fc180a6eb48e9e10b583de71ed65aeccfe7c867e29d0bd"
+   },
+   "negative/config-dicts-differ/README": {
+    "bytes": 98,
+    "sha256": "fe795e0496e208a8db6cc7854c7520d7762f147c99fa3fe6abe1be3e3b4e609a"
+   },
+   "negative/config-dicts-differ/config.json": {
+    "bytes": 120,
+    "sha256": "24ec7024711d49ccdc9bedd356e2a5227eca4d1980cda3413ea84f0a0c569018"
+   },
+   "negative/config-dicts-differ/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-inconsistent-override/README": {
+    "bytes": 89,
+    "sha256": "1b16051976ab0818aff29bfbd946735e6dc2510f990aceebe1da44fab2f9cf2b"
+   },
+   "negative/config-inconsistent-override/config.json": {
+    "bytes": 106,
+    "sha256": "cf01dfb80989232f43f69af3b4ee8c777dd8691f44192172c9fe5557cee7ea0a"
+   },
+   "negative/config-inconsistent-override/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-non-object-override/README": {
+    "bytes": 128,
+    "sha256": "24886d33bd8a4cbf9cf0d8d83c0c365c56076ecd590695ee555b7a90719b7a8e"
+   },
+   "negative/config-non-object-override/config.json": {
+    "bytes": 72,
+    "sha256": "4b2c3a4e1141a91ddde4812591dd3880950e4f8dc040cc4594fe231eb5f9bbe3"
+   },
+   "negative/config-non-object-override/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-override-without-scales/README": {
+    "bytes": 100,
+    "sha256": "de704a03b906a6bd5880806a50ad8d6b78f586680b45c346d5c65d4ef47b4108"
+   },
+   "negative/config-override-without-scales/config.json": {
+    "bytes": 106,
+    "sha256": "cf01dfb80989232f43f69af3b4ee8c777dd8691f44192172c9fe5557cee7ea0a"
+   },
+   "negative/config-override-without-scales/model.safetensors": {
+    "bytes": 137,
+    "sha256": "2a07e345d7746bbec99c41acc2ea5d192faba172f7b6f5a2c07f6fb3d498b817"
+   },
+   "negative/config-scales-without-quantization/README": {
+    "bytes": 109,
+    "sha256": "5fea9b16fb97b65fcbf0804ed49a7e40ad7a821fec4c75979a5af88513cd2bb1"
+   },
+   "negative/config-scales-without-quantization/config.json": {
+    "bytes": 31,
+    "sha256": "756a42cc16cbce2512c61643a1b5ed19745110abef25b6b4066049732183699a"
+   },
+   "negative/config-scales-without-quantization/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-unsupported-bits-3/README": {
+    "bytes": 109,
+    "sha256": "02e79ffc62846e22262d720f8b392121602b3f1426cc2c1f282480881c182a81"
+   },
+   "negative/config-unsupported-bits-3/config.json": {
+    "bytes": 58,
+    "sha256": "6d1793d70c5f27ccdfcf1aa5bb75d08912013464d96bc377c1969d3c346765c0"
+   },
+   "negative/config-unsupported-bits-3/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-unsupported-bits-6/README": {
+    "bytes": 109,
+    "sha256": "2c29dd49f91b9a5fbb3297ed4061ebf39671002141dbb69747c6169c53edb809"
+   },
+   "negative/config-unsupported-bits-6/config.json": {
+    "bytes": 58,
+    "sha256": "5c184d56f7e30e780d7621d6aaa252928b53a45e5f68b2270397e91be47c80e7"
+   },
+   "negative/config-unsupported-bits-6/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-unsupported-group-16/README": {
+    "bytes": 113,
+    "sha256": "93032e775a5eee416a4310c02b6805e0c22997737f4793a511b6e44d41acffa5"
+   },
+   "negative/config-unsupported-group-16/config.json": {
+    "bytes": 58,
+    "sha256": "5786939cb1d27e848dc604e2e8ba3b5e759617ae977e2f38ade6c77c08a8d167"
+   },
+   "negative/config-unsupported-group-16/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-unsupported-group-256/README": {
+    "bytes": 114,
+    "sha256": "4cf08574912f724b0a9549c51605e0431bb29d2ca6bfd13bd69aec07a6a5472f"
+   },
+   "negative/config-unsupported-group-256/config.json": {
+    "bytes": 59,
+    "sha256": "5028a7e078496a7b39d357813cff2f43defc356588b9547bd1ea767ebcef3e1c"
+   },
+   "negative/config-unsupported-group-256/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/config-unsupported-mode/README": {
+    "bytes": 104,
+    "sha256": "4169dbe859abd51706523fa88667bf1bf9ca9992af52522f9a360809412b4f97"
+   },
+   "negative/config-unsupported-mode/config.json": {
+    "bytes": 77,
+    "sha256": "5816bef567112897b72e44d06a1ffc7dab42363322f94f87a5fa1844b366eb9c"
+   },
+   "negative/config-unsupported-mode/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/header-duplicate-tensor-name/README": {
+    "bytes": 108,
+    "sha256": "04d93fcf3741e7922b476ccf74387ff8f6dc1539b91032345041be6e1cf54f02"
+   },
+   "negative/header-duplicate-tensor-name/model.safetensors": {
+    "bytes": 118,
+    "sha256": "81c19dc0bc9d488912961bca097f529ad7c7ebb92d408a5cad41951d8c27dcd0"
+   },
+   "negative/header-leading-whitespace/README": {
+    "bytes": 120,
+    "sha256": "f21df391971da029074bd831d72cafa9a319a83435b55d0523a4b68c15f48403"
+   },
+   "negative/header-leading-whitespace/model.safetensors": {
+    "bytes": 64,
+    "sha256": "396511035c050a51ffde37e16c9fdc853bba72d5d35edf97a42b0c25c54233f8"
+   },
+   "negative/header-length-beyond-file/README": {
+    "bytes": 99,
+    "sha256": "a3b8350c193af960cd4a8ea6718f0095d570bebb09170340fbfd7ae0a0f5afb5"
+   },
+   "negative/header-length-beyond-file/model.safetensors": {
+    "bytes": 10,
+    "sha256": "37568402fd9d6bd6b9512a44f3555c7f2503a3c96bac1af650fbef2c6db6d233"
+   },
+   "negative/header-length-mismatch/README": {
+    "bytes": 87,
+    "sha256": "1e4b892bdc7e46bfc45cf4aa2a51a6b5b10f27be9106ae1a7d3fbaa9135cf6ee"
+   },
+   "negative/header-length-mismatch/model.safetensors": {
+    "bytes": 85,
+    "sha256": "93e78035d047fb07f24cd72724841510c3e359f2b49434c08faabe1ff284bc8f"
+   },
+   "negative/header-metadata-non-string/README": {
+    "bytes": 71,
+    "sha256": "82fff17002792507289f5e1d921a18364c671c2277f1edb8d55f3b27ffbb3e3e"
+   },
+   "negative/header-metadata-non-string/model.safetensors": {
+    "bytes": 90,
+    "sha256": "8079b57ede48d56d7822e320b9c5681be297f60668abd5d83c58af3a81c227f6"
+   },
+   "negative/header-not-an-object/README": {
+    "bytes": 118,
+    "sha256": "31cb10e443271ac6489432ab29eca6d73bddabff3dfafdca8bec1523ff5ef431"
+   },
+   "negative/header-not-an-object/model.safetensors": {
+    "bytes": 15,
+    "sha256": "c84d212540e109a5919d45aa491b70dbfde7a130c81eb0bc55a5e97168ffc22c"
+   },
+   "negative/header-overlapping-ranges/README": {
+    "bytes": 88,
+    "sha256": "3257db5f5b9505b3e146c45531a81b88bab821199a9953859c1ecf987e98022d"
+   },
+   "negative/header-overlapping-ranges/model.safetensors": {
+    "bytes": 119,
+    "sha256": "3f5c353e96fd16d5e6949effab1a51f70f07995ab2e318cd3be34fec7715b0b5"
+   },
+   "negative/header-range-beyond-data/README": {
+    "bytes": 84,
+    "sha256": "c653beace1140eb6b9ebcf6c9da6b35429c4f6ca73ae7e0edddc0ffda950730c"
+   },
+   "negative/header-range-beyond-data/model.safetensors": {
+    "bytes": 65,
+    "sha256": "d9ed63010eee67ccf1b694581f4c79da72c6229a3a287e29a0ee5f3bc1af491d"
+   },
+   "negative/header-reversed-range/README": {
+    "bytes": 98,
+    "sha256": "3ad08abc2092e953902a799641dc7cce9e119c1596aeb874d8f931ef57f1137c"
+   },
+   "negative/header-reversed-range/model.safetensors": {
+    "bytes": 77,
+    "sha256": "ca6f1e7c6dbba788ea08102b92a09cb2583161e84a7e36c35374dba687871f96"
+   },
+   "negative/header-shape-overflow/README": {
+    "bytes": 120,
+    "sha256": "fa9f3f20a499214613c2c6855de7866540c1a2486982d1f644af7969c106cb7e"
+   },
+   "negative/header-shape-overflow/model.safetensors": {
+    "bytes": 97,
+    "sha256": "a9275105ca90438a3345207a14ea602c560b13b869a380100ed9099f96fcdf9f"
+   },
+   "negative/header-trailing-uncovered-bytes/README": {
+    "bytes": 81,
+    "sha256": "d5e7e01b9668333bbf94f33ca2a50b780cb667be83eff6e8695d517f64345654"
+   },
+   "negative/header-trailing-uncovered-bytes/model.safetensors": {
+    "bytes": 69,
+    "sha256": "395188a728f67ae0fdcdd98f31e4120f4801b89695581f9ed965825973d71196"
+   },
+   "negative/header-truncated-length-prefix/README": {
+    "bytes": 106,
+    "sha256": "e19c5d6d562f2173924081796241a41d2aad6da51308a24603d46de99ea4f7d8"
+   },
+   "negative/header-truncated-length-prefix/model.safetensors": {
+    "bytes": 4,
+    "sha256": "097328e8c957de2428283954f6a1ee8ff7ad7def12e100a600178407f5decf24"
+   },
+   "negative/header-uncovered-gap/README": {
+    "bytes": 108,
+    "sha256": "a9a4c405380c722270f8defbcfb04ba2324cfd556329eb514e997f50032df36e"
+   },
+   "negative/header-uncovered-gap/model.safetensors": {
+    "bytes": 131,
+    "sha256": "d5145a21051335718583d7d0474398b9e059714ba6c88be1287af4a51960d946"
+   },
+   "negative/header-unsupported-dtype/README": {
+    "bytes": 85,
+    "sha256": "758b469ea1a599b3208190f9c2510b9e75167fb9bab610f0219425359bfd269d"
+   },
+   "negative/header-unsupported-dtype/model.safetensors": {
+    "bytes": 68,
+    "sha256": "eda7ceb0676f457abdf2e56e3a4889b48634c0870916b6269fc930a66edd60f8"
+   },
+   "negative/index-is-a-directory/README": {
+    "bytes": 117,
+    "sha256": "936b0d98e971ae0b6571ff312dfe432b062b5cc49b495c5db80a224cbc551327"
+   },
+   "negative/index-is-a-directory/model.safetensors.index.json/.keep": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+   },
+   "negative/index-symlink/README": {
+    "bytes": 114,
+    "sha256": "de0f8de565aa5417197b84267d8ab5604da35425b4aae6b3e124b834997fa62a"
+   },
+   "negative/json-duplicate-metadata-member/README": {
+    "bytes": 105,
+    "sha256": "5589c7fdb1017cafee8002dda71acb567fa7a96ed7fdb58e6a760619afc7511c"
+   },
+   "negative/json-duplicate-metadata-member/model.safetensors": {
+    "bytes": 109,
+    "sha256": "91d862bb54103d48cd58c61ea04b4749259874d2fed4d5fe776b94c3bdfb5df2"
+   },
+   "negative/json-duplicate-quantization-bits/README": {
+    "bytes": 106,
+    "sha256": "3c373b1cdd285007c3cfea4927ceed24014d3b665825d498ccd4d9ace2ff4f66"
+   },
+   "negative/json-duplicate-quantization-bits/config.json": {
+    "bytes": 53,
+    "sha256": "8cd3b026c6435eecff270259fb84bc05d903540f2bd67cd92db03b40687457b8"
+   },
+   "negative/json-duplicate-quantization-bits/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/json-duplicate-tensor-dtype/README": {
+    "bytes": 99,
+    "sha256": "4771fc4805e0ded3cb847ef2c5d0d0b38cd76ed3422bf84af1be3f1e2f0572cd"
+   },
+   "negative/json-duplicate-tensor-dtype/model.safetensors": {
+    "bytes": 98,
+    "sha256": "1d0e35e310b0fe3962c7f68adae24901a8557cf8a69bf2b78534ad42bd4e4077"
+   },
+   "negative/json-duplicate-weight-map-entry/README": {
+    "bytes": 104,
+    "sha256": "6cabf05e163469ab0f29519022f53874b976352f756d32fb9e984803ff08240c"
+   },
+   "negative/json-duplicate-weight-map-entry/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/json-duplicate-weight-map-entry/model.safetensors.index.json": {
+    "bytes": 142,
+    "sha256": "6cd4c60a652b5a2db44753ca7ed1213178be53a8610af8902402390a95e69f51"
+   },
+   "negative/json-escaped-duplicate-tensor-name/README": {
+    "bytes": 107,
+    "sha256": "c1bfb0bd14580b456cd8ef86a09e6ace0f9c42f09284989e4da426f96299b33b"
+   },
+   "negative/json-escaped-duplicate-tensor-name/model.safetensors": {
+    "bytes": 122,
+    "sha256": "edee1225ae174dead97be8500229a4325df353d66da171368bd48a9731476563"
+   },
+   "negative/json-lone-surrogate-tensor-name/README": {
+    "bytes": 103,
+    "sha256": "2078a655739abee0bb430dbb40548276280f4eb9a0b5b025433757ab1d3e60f5"
+   },
+   "negative/json-lone-surrogate-tensor-name/model.safetensors": {
+    "bytes": 67,
+    "sha256": "2b102aba180fcc7989e38c2b9c316c9a00f90d9c379985558e47d6dbe8a4a0fd"
+   },
+   "negative/json-surrogate-pair-duplicate-metadata/README": {
+    "bytes": 108,
+    "sha256": "223fb5c1735b28955ef91169bee7cd437d666f7b0c520bb012b359e27a3958ab"
+   },
+   "negative/json-surrogate-pair-duplicate-metadata/model.safetensors": {
+    "bytes": 118,
+    "sha256": "f42b7407a1797cef4aace8ca09907a31101ab84ec37d1c0c95774ebc4a0e1a82"
+   },
+   "negative/layout-ambiguous-two-shards/README": {
+    "bytes": 97,
+    "sha256": "eff5b619b16b904b71cf3d58760f95328c2e04a5bc62465280a1d312bebc3503"
+   },
+   "negative/layout-ambiguous-two-shards/a.safetensors": {
+    "bytes": 72,
+    "sha256": "1fa72ef65d1a9d265616cf54c429246dd51e5a7d77130cc9f26edfe37868eabc"
+   },
+   "negative/layout-ambiguous-two-shards/b.safetensors": {
+    "bytes": 72,
+    "sha256": "ea63512e433dd3a5a82888593bf837013ca05f0b3dbcf97cbe1ab8e518f30c30"
+   },
+   "negative/layout-cross-shard-duplicate-name/README": {
+    "bytes": 106,
+    "sha256": "267967a78b5510dbbb1255856996751f1698ffa95144e278fe79243922514356"
+   },
+   "negative/layout-cross-shard-duplicate-name/model.safetensors.index.json": {
+    "bytes": 75,
+    "sha256": "8b4b0d60b706c6c620f9053ffe8f282defa575d7630e0c381715755d4717bcd5"
+   },
+   "negative/layout-cross-shard-duplicate-name/one.safetensors": {
+    "bytes": 121,
+    "sha256": "beaf91b3d9fb449a091d12507c6de534480932c175ba319d3d36fd3c948e221a"
+   },
+   "negative/layout-cross-shard-duplicate-name/two.safetensors": {
+    "bytes": 65,
+    "sha256": "3f38d50fd4aa27220c471a0956bc02329a0d1dde934237204067ef606da90e6f"
+   },
+   "negative/layout-cross-shard-mismatch/README": {
+    "bytes": 91,
+    "sha256": "9c73728d97308bb2bb45b192c3177ef06cf3333cb5a4f497346c88dd13b26039"
+   },
+   "negative/layout-cross-shard-mismatch/model-00001.safetensors": {
+    "bytes": 72,
+    "sha256": "1fa72ef65d1a9d265616cf54c429246dd51e5a7d77130cc9f26edfe37868eabc"
+   },
+   "negative/layout-cross-shard-mismatch/model-00002.safetensors": {
+    "bytes": 72,
+    "sha256": "ea63512e433dd3a5a82888593bf837013ca05f0b3dbcf97cbe1ab8e518f30c30"
+   },
+   "negative/layout-cross-shard-mismatch/model.safetensors.index.json": {
+    "bytes": 105,
+    "sha256": "cd037fcf5662c880330d8b32f0fff920d79d46cbb3edfce1e3b7545510182234"
+   },
+   "negative/layout-indexed-tensor-absent/README": {
+    "bytes": 104,
+    "sha256": "57de9f10216799362a8facc712910437dbcb84e1100fff2a92b557fe3034b7e5"
+   },
+   "negative/layout-indexed-tensor-absent/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/layout-indexed-tensor-absent/model.safetensors.index.json": {
+    "bytes": 163,
+    "sha256": "81e892773c17ad0ee7b25ba606adb5fef9e496eb3d7b2aac13303b372a65a8f0"
+   },
+   "negative/layout-missing-shard/README": {
+    "bytes": 92,
+    "sha256": "fe2f25910826965aaaf4e5c00d6e6cf6412adf6fbbf1d47684562bab45af98da"
+   },
+   "negative/layout-missing-shard/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/layout-missing-shard/model.safetensors.index.json": {
+    "bytes": 165,
+    "sha256": "9926d0039f19c7410aca436878361695afd65b87ad7606cb191c1ec33aa9de49"
+   },
+   "negative/layout-unindexed-tensor/README": {
+    "bytes": 95,
+    "sha256": "ff6c3df952d86e9715c9742702941f81117a374072a52b407c304c9d4185ae08"
+   },
+   "negative/layout-unindexed-tensor/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/layout-unindexed-tensor/model.safetensors.index.json": {
+    "bytes": 58,
+    "sha256": "2b8886f37080f38082d4a444cef853d6de4b8807b5f6076a0e6c8538b95c988c"
+   },
+   "negative/path-symlink-shard-escape/README": {
+    "bytes": 97,
+    "sha256": "aaad92b7d36bda3799e0ef031fce7db97a106a237a00042ddf094b153355b283"
+   },
+   "negative/path-symlink-shard-inside/README": {
+    "bytes": 103,
+    "sha256": "a74f663d7dc2177ddcecd563161b4cbe3a86555da500076abf11f8982d975941"
+   },
+   "negative/path-symlink-shard-inside/real.bin": {
+    "bytes": 8,
+    "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+   },
+   "negative/path-traversal-absolute/README": {
+    "bytes": 127,
+    "sha256": "d86e3c07ab59352d58dcc80420f15ff3ffc36fa4de0e3e15f58824e73c3238c4"
+   },
+   "negative/path-traversal-absolute/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/path-traversal-absolute/model.safetensors.index.json": {
+    "bytes": 64,
+    "sha256": "be4c7108213d840ab15f489f4a5ef1bd1a9d0bf8b7a76daba5407f8fdda3f689"
+   },
+   "negative/path-traversal-parent/README": {
+    "bytes": 125,
+    "sha256": "74a90ceb352c32671bd373d1c837d5876772471c3ac0d07359ae597c2eb48ef6"
+   },
+   "negative/path-traversal-parent/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/path-traversal-parent/model.safetensors.index.json": {
+    "bytes": 62,
+    "sha256": "47e315f9ee9071af68e3b37c515567cd694238f6c19a45ca6dada315269f24ac"
+   },
+   "negative/path-traversal-subdirectory/README": {
+    "bytes": 126,
+    "sha256": "2a408b5ef6dbe5367ae71390fb3d728fa8627d7d7547e91eb12f338692357d16"
+   },
+   "negative/path-traversal-subdirectory/model.safetensors": {
+    "bytes": 274,
+    "sha256": "8e023e0b202db13a47d4ab4bbc2f941bd5ac3510916dbae5784733f94e34fb78"
+   },
+   "negative/path-traversal-subdirectory/model.safetensors.index.json": {
+    "bytes": 63,
+    "sha256": "a8eed375cc2d7f425cb0f6553e812d75d1a6fcdc60d4debd2b6eb89c1f14bba1"
+   },
+   "negative/triple-biases-only/README": {
+    "bytes": 97,
+    "sha256": "eb0a5c94c3d0466dc2c04ed7274897f65b3fde94649fd95a9e2d3e6aa8e9e713"
+   },
+   "negative/triple-biases-only/config.json": {
+    "bytes": 58,
+    "sha256": "6ef0513ec8bea60e1740a732f4d4d41748bc8e507a40787cef6374ad92fe3485"
+   },
+   "negative/triple-biases-only/model.safetensors": {
+    "bytes": 76,
+    "sha256": "94b2c686b0501ee56084cd2c4d7c3bd7ba3f738ba261a88c0e5b69c82dd6f2c4"
+   },
+   "negative/triple-dtype-mismatch/README": {
+    "bytes": 70,
+    "sha256": "54814cf8e9fbc791a441c5f86c2071f2b5ddb8d17056ee53b84a6927d4fc7401"
+   },
+   "negative/triple-dtype-mismatch/config.json": {
+    "bytes": 58,
+    "sha256": "6ef0513ec8bea60e1740a732f4d4d41748bc8e507a40787cef6374ad92fe3485"
+   },
+   "negative/triple-dtype-mismatch/model.safetensors": {
+    "bytes": 273,
+    "sha256": "80c818e2d752a3d031fc9e3febcd3f57d22d1742104167e6b84896591af41338"
+   },
+   "negative/triple-scales-without-biases/README": {
+    "bytes": 68,
+    "sha256": "7932646db5a9746d400384cc1be67ffc270efb68e1c02dcc1e4c1654fdf1a737"
+   },
+   "negative/triple-scales-without-biases/config.json": {
+    "bytes": 58,
+    "sha256": "6ef0513ec8bea60e1740a732f4d4d41748bc8e507a40787cef6374ad92fe3485"
+   },
+   "negative/triple-scales-without-biases/model.safetensors": {
+    "bytes": 205,
+    "sha256": "369577627cc4b9520450b43d951fd4e4ad9a213f484feed339251d64db320377"
+   },
+   "negative/triple-shape-mismatch/README": {
+    "bytes": 75,
+    "sha256": "6c4938fe17d3205ee46d6045b5182e42a5bc9648a62b45284fa8ee180e9fe58a"
+   },
+   "negative/triple-shape-mismatch/config.json": {
+    "bytes": 58,
+    "sha256": "6ef0513ec8bea60e1740a732f4d4d41748bc8e507a40787cef6374ad92fe3485"
+   },
+   "negative/triple-shape-mismatch/model.safetensors": {
+    "bytes": 278,
+    "sha256": "21d7f6b64fca0aa07168fd62199e60161c136d01f98c3fb6620de5285b21531a"
+   },
+   "negative/triple-weight-without-scales/README": {
+    "bytes": 84,
+    "sha256": "c5d9cf1a7b4d8fcdbfac624ceac678854f503678a353f2c0a6cf39d004ad57d4"
+   },
+   "negative/triple-weight-without-scales/config.json": {
+    "bytes": 58,
+    "sha256": "6ef0513ec8bea60e1740a732f4d4d41748bc8e507a40787cef6374ad92fe3485"
+   },
+   "negative/triple-weight-without-scales/model.safetensors": {
+    "bytes": 136,
+    "sha256": "69b3ecff88fd56fd879e1b2c9a857182bca82132720b70c79707d20c4070324e"
+   },
+   "uniform-affine-v1/config.json": {
+    "bytes": 94,
+    "sha256": "6fde90f59eda4150c784669d1c0eb9422f873868c7569bb7f5428d9e4a5a6261"
+   },
+   "uniform-affine-v1/expected.json": {
+    "bytes": 24223,
+    "sha256": "7ed3811c608a347d82237620c2d01273a317fa06014a6ca2e429f2bdf6dacb9c"
+   },
+   "uniform-affine-v1/model.safetensors": {
+    "bytes": 1605,
+    "sha256": "48c7fbd06b618f98d149069e4d3cface72efacc260f5b45e5b565f06e379ad0d"
+   }
+  }
+ },
+ "what_changed_since_v2": {
+  "added": [
+   "negative/header-reversed-range/README",
+   "negative/header-reversed-range/model.safetensors",
+   "negative/json-escaped-duplicate-tensor-name/README",
+   "negative/json-escaped-duplicate-tensor-name/model.safetensors",
+   "negative/json-lone-surrogate-tensor-name/README",
+   "negative/json-lone-surrogate-tensor-name/model.safetensors",
+   "negative/json-surrogate-pair-duplicate-metadata/README",
+   "negative/json-surrogate-pair-duplicate-metadata/model.safetensors",
+   "negative/layout-cross-shard-duplicate-name/README",
+   "negative/layout-cross-shard-duplicate-name/model.safetensors.index.json",
+   "negative/layout-cross-shard-duplicate-name/one.safetensors",
+   "negative/layout-cross-shard-duplicate-name/two.safetensors"
+  ],
+  "content_changed": [],
+  "nothing_existing_was_regenerated": true,
+  "removed": [],
+  "summary": [
+   "json-escaped-duplicate-tensor-name, json-surrogate-pair-duplicate-metadata and json-lone-surrogate-tensor-name: the first committed fixtures anywhere in this corpus whose bytes contain a \\\\uXXXX escape or a surrogate pair (Astra round-2 finding 2). Two declare CatalogError::DuplicateKey and one CatalogError::InvalidJson.",
+   "layout-cross-shard-duplicate-name: two shards both declaring \"b\" with an index placing it in the second, replacing coverage that existed only inside a test.",
+   "header-reversed-range: data_offsets [8, 4], replacing coverage that existed only in memory through parse_header."
+  ]
+ },
+ "why_a_new_file": "Evidence here is append-only. v1 and v2 recorded the corpus as it was in their rounds and are left exactly as they were added; the corpus changed again in Round 3, so the current state is a new file."
+}

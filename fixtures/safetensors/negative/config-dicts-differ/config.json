@@ -1,0 +1,10 @@
+{
+ "quantization": {
+  "bits": 4,
+  "group_size": 64
+ },
+ "quantization_config": {
+  "bits": 8,
+  "group_size": 64
+ }
+}

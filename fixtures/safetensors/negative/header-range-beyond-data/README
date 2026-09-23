@@ -1,0 +1,2 @@
+CatalogError::InvalidRange
+A tensor range extends past the end of the data section.

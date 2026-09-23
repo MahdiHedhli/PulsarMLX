@@ -1,0 +1,2 @@
+AffineError::IncompleteTriple
+A weight and .scales, but no .biases.

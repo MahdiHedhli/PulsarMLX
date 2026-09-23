@@ -1,0 +1,2 @@
+CatalogError::MalformedHeader
+The file holds four bytes, which cannot carry the eight-byte length prefix.

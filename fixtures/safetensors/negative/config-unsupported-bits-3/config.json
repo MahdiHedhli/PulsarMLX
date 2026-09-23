@@ -1,0 +1,6 @@
+{
+ "quantization": {
+  "bits": 3,
+  "group_size": 64
+ }
+}

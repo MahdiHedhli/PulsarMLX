@@ -307,3 +307,40 @@ non-required step now requires advancing `RESOLUTION_BASE` and
 `RESOLUTION_WORKFLOW_SHA256` deliberately in the same commit. That includes the
 workflow header, concurrency, permissions, any job-level key, and any job that
 runs no required step — not just the required steps themselves.
+
+### 2026-09-22 — the resolution advances for the F020 required steps
+
+The freeze's own mechanism was used, once, deliberately, and this line records
+it. `RESOLUTION_BASE` moves from `9e145b09` to
+`4f0ed191bd3944550cfa14076109643a15827875` and `RESOLUTION_WORKFLOW_SHA256`
+from `4e132d2c…` to `185c2183…`, in the commit immediately after the one that
+added two required steps to `apple-mlx-small-fixtures`: `Qualify MLX affine
+compatibility (synthetic, pinned MLX wheel)` and `Test MLX affine
+representation`. The doctor fails at the first of those two commits and passes
+at the second, which is the review point the amendment above was written to
+create.
+
+Two things are worth stating plainly.
+
+First, **advancing the base adds required steps; it does not rewrite or drop
+one.** All ten required blocks frozen at `9e145b09` are present in
+`4f0ed191` byte for byte, in the same jobs and in the same order; the only
+difference is the two new blocks. That was verified before the constants moved,
+and the doctor's own `resolution contains the qualify lineage in order`
+construction check still holds, because the new steps are not part of the
+qualify lineage and are skipped by it.
+
+Second, **the required-step selector gained a second rule.** Until now a step
+was required exactly when it named a script whose basename contains `f017`.
+That was always a proxy for "this step is mandatory", and it stops being one as
+soon as a successor feature owns a mandatory gate: F020's native affine
+qualification must run, and naming its script `f017_…` to inherit the rule
+would have been a lie about what the script is. So
+`scripts/ci/f017_measurement_scope_v1.py` now also carries
+`REQUIRED_EXTRA_STEP_NAMES`, an explicit list of step names. A name on that
+list is frozen exactly like an F017 step, which is why the list is short,
+spelled in full, and can only change together with another deliberate advance
+of these two constants. The doctor's tests assert the list's contents, the job
+the named steps sit in, and the new required-step count of twelve.
+
+The required-step census is therefore 10 → 12 and the free-step census is 39.

@@ -1,0 +1,2 @@
+CatalogError::InvalidJson
+A tensor name is a lone high surrogate, which is not a Unicode scalar value.

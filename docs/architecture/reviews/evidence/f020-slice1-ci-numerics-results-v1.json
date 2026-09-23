@@ -1,0 +1,289 @@
+{
+ "branch": "feat/020-mlx-safetensors-affine-20260922",
+ "classification": "FULL_NATIVE",
+ "companion_evidence": "docs/architecture/reviews/evidence/f020-slice1-numerics-results-v1.json",
+ "conclusion": "success",
+ "environment_comparison": {
+  "agreement": "the same 13 quantized modules, exact codes, bit-identical values after rounding, max abs difference 0.0 on both",
+  "ci": {
+   "device": "Device(gpu, 0)",
+   "metal_available": true,
+   "mlx": "0.32.0",
+   "mlx_metal": "0.32.0",
+   "platform": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+   "python": "3.13.13"
+  },
+  "local": {
+   "device": "Device(gpu, 0)",
+   "metal_available": true,
+   "mlx": "0.32.0",
+   "mlx_metal": "0.32.0",
+   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+   "python": "3.13.13"
+  }
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "jobs": {
+  "Apple MLX small-fixture validation": "success",
+  "Apple Silicon workspace baseline": "success",
+  "CI aggregate status": "success",
+  "Classify committed change": "success",
+  "Closed F017 branch guard": "skipped",
+  "Documentation integrity": "skipped",
+  "Evidence integrity": "skipped"
+ },
+ "model_executed": false,
+ "new_required_steps": {
+  "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)": {
+   "conclusion": "success",
+   "job": "apple-mlx-small-fixtures",
+   "step_number": 8
+  },
+  "Test MLX affine representation": {
+   "conclusion": "success",
+   "job": "apple-mlx-small-fixtures",
+   "step_number": 9
+  }
+ },
+ "r2_ci_summary": {
+  "codes_exactly_equal_everywhere": true,
+  "failures": 0,
+  "fixture_manifest_matches": true,
+  "fixture_manifest_sha256_in_tree": "7be7017ee841b5fa8db580770e7ee6522c99bb0413ebe05480790f276aea8dc3",
+  "fixture_manifest_sha256_reported_by_ci": "7be7017ee841b5fa8db580770e7ee6522c99bb0413ebe05480790f276aea8dc3",
+  "max_abs_difference": 0.0,
+  "quantized_modules_observed": 13,
+  "result": "PASS",
+  "values_bit_identical_after_rounding_everywhere": true
+ },
+ "r2_compatibility_observation_on_ci": {
+  "arm": "R2",
+  "cases": {
+   "mixed-4-8-index-total-size-v1": [
+    {
+     "bits": 8,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.down",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.gate",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.up",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_exactly_equal": true,
+     "elements": 1024,
+     "group_size": 32,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.attn",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "kind": "unquantized",
+     "module": "block.1.router",
+     "result": "SKIPPED_UNQUANTIZED"
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 1536,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.experts",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ],
+   "mixed-4-8-v1": [
+    {
+     "bits": 8,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.down",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.gate",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.up",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 8,
+     "codes_exactly_equal": true,
+     "elements": 1024,
+     "group_size": 32,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.attn",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "kind": "unquantized",
+     "module": "block.1.router",
+     "result": "SKIPPED_UNQUANTIZED"
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 1536,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.experts",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ],
+   "uniform-affine-v1": [
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.0.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.1.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    },
+    {
+     "bits": 4,
+     "codes_exactly_equal": true,
+     "elements": 512,
+     "group_size": 64,
+     "kind": "quantized",
+     "max_abs_difference": 0.0,
+     "metadata_dtype": "BF16",
+     "module": "block.2.proj",
+     "output_dtype": "mlx.core.bfloat16",
+     "result": "PASS",
+     "values_exactly_equal_after_rounding": true,
+     "values_within_one_ulp": true
+    }
+   ]
+  },
+  "environment": {
+   "default_device": "Device(gpu, 0)",
+   "interpreter": "/Users/runner/work/PulsarMLX/PulsarMLX/.venv/bin/python",
+   "machine": "arm64",
+   "metal_available": true,
+   "mlx_metal_version": "0.32.0",
+   "mlx_version": "0.32.0",
+   "platform": "macOS-15.7.9-arm64-arm-64bit-Mach-O",
+   "python_version": "3.13.13"
+  },
+  "failures": 0,
+  "fixture_manifest_sha256": "7be7017ee841b5fa8db580770e7ee6522c99bb0413ebe05480790f276aea8dc3",
+  "is_correctness_oracle": false,
+  "quantized_modules_observed": 13,
+  "require_native_mlx": true,
+  "result": "PASS",
+  "schema": "pulsarmlx.f020.mlx-affine-compatibility/1.0.0",
+  "statement": "A compatibility observation against the pinned upstream MLX. Correctness is defined by R1; this arm never establishes it."
+ },
+ "r2_is_correctness_oracle": false,
+ "real_checkpoint_payload_read": false,
+ "recorded_on": "2026-09-22",
+ "run_head": "2d63b46e13ed7809774d95f9d751917081663328",
+ "run_id": 35739240691,
+ "schema": "pulsarmlx.f020.slice1-ci-numerics-results/1.0.0",
+ "slice": 1,
+ "statement": "The environment and result of the two F020 required CI steps, recorded as a NEW evidence file rather than as an edit to f020-slice1-numerics-results-v1.json. Evidence under this directory is append-only; the first attempt to record this by modifying that file was correctly refused by scripts/ci/validate_evidence_change.py and the file has been restored to its as-added bytes.",
+ "workflow": ".github/workflows/macos.yml"
+}

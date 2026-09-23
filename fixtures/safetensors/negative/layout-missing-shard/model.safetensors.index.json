@@ -1,0 +1,8 @@
+{
+ "weight_map": {
+  "gone": "model-00002.safetensors",
+  "m.biases": "model.safetensors",
+  "m.scales": "model.safetensors",
+  "m.weight": "model.safetensors"
+ }
+}

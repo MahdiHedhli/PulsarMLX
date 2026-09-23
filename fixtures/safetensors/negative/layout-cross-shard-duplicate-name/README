@@ -1,0 +1,2 @@
+CatalogError::DuplicateTensor
+Shard one and shard two both declare "b"; the index places it in shard two.

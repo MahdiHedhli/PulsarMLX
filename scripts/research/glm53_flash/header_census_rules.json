@@ -1,0 +1,13 @@
+{
+  "schema": "pulsarmlx.f020.header-census-rules/1.0.0",
+  "note": "Model-specific categorization for crates/mlx-affine/examples/header_census.rs. It lives here, above the neutral crates, because a tensor-name prefix means nothing to safetensors-catalog or mlx-affine and must not start meaning something to them. The census runs without this file and simply reports no groups.",
+  "applies_to": "PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit and the same family",
+  "groups": [
+    {
+      "name": "vision",
+      "prefix": "vision_model",
+      "expect_unquantized_dtype": "BF16",
+      "why": "The conversion recipe excludes the vision tower, so every tensor under this prefix is carried through as stored. Anything else under it is worth reporting."
+    }
+  ]
+}

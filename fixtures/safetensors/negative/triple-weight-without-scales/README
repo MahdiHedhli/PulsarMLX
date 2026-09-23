@@ -1,0 +1,2 @@
+AffineError::IncompleteTriple
+A packed U32 weight with neither .scales nor .biases.

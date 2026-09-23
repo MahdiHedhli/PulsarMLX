@@ -1,0 +1,2 @@
+CatalogError::Gap
+A shard declares a data section longer than its tensors cover.

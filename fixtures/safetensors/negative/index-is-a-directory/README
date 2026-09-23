@@ -1,0 +1,2 @@
+CatalogError::InvalidIndex
+model.safetensors.index.json exists as a directory; absence and invalidity are different.

@@ -1,0 +1,2 @@
+CatalogError::DuplicateKey
+A tensor entry declares "dtype" twice; the geometry matches the second.

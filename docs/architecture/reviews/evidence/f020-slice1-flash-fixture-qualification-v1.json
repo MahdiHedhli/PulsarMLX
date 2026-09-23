@@ -1,0 +1,47 @@
+{
+ "case": {
+  "fixture_id": "multilinear-4bit-g64",
+  "geometry": {
+   "bits": 4,
+   "group_size": 64,
+   "heads": 2,
+   "input_dims": 64,
+   "output_dims": 48
+  },
+  "why_this_one": "It is the case whose expectations are reachable from a decoder alone. The switch-* cases additionally need SwiGLU and routing, which Slice 1 does not implement, and the predicate case is a naming rule this crate deliberately does not implement."
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "fixture": {
+  "bytes": 1321686,
+  "modified_by_this_work": false,
+  "path": "fixtures/research/glm53-flash-decoder-quantized-v1/fixtures.json",
+  "schema_declared_by_the_fixture": "flash-quantized-fixtures/1",
+  "sha256": "bd3e318fb78ff58ccccc638c9262371b8384b220d95708d76a30fcbb0d78c29b"
+ },
+ "git_head_at_record_time": "c7182dc0e4c068585dbd4db0cca7d15a0659cc75",
+ "recorded_on": "2026-09-22",
+ "results": {
+  "dequantize_margin_factor": 67.108864,
+  "dequantize_tolerance": 1e-06,
+  "output_margin_factor": 150119987579.01654,
+  "output_tolerance": 0.0001,
+  "result": "PASS",
+  "weights_compared": 6144,
+  "worst_output_absolute_difference": 6.661338147750939e-16,
+  "worst_r3_vs_r1_absolute_difference": 1.4901161193847656e-08
+ },
+ "round": 2,
+ "schema": "pulsarmlx.f020.slice1-flash-fixture-qualification/1.0.0",
+ "slice": 1,
+ "statement": "R1 and R3 qualified against the frozen Flash research fixture that the governing design note names for this slice. Round 1 never consumed it: running the existing Python research tests establishes things about the Python path, not about this Rust decoder. The fixture is read only; nothing in this work writes to fixtures/research/.",
+ "test": "crates/mlx-affine/tests/flash_decoder_fixture.rs",
+ "tolerances_taken_from_the_fixture": {
+  "dequantize_cross_check": 1e-06,
+  "output": 0.0001
+ },
+ "what_this_does_not_establish": [
+  "no quantized matmul or gather_qmm claim: the matmuls are done in the test, in binary64, from R1's dequantized weights",
+  "no claim about the Python research path, which is qualified separately and by its own tests",
+  "no real-checkpoint claim of any kind"
+ ]
+}

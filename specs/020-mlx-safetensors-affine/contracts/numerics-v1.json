@@ -1,0 +1,246 @@
+{
+  "schema": "pulsarmlx.f020.numerics-contract/1.0.0",
+  "feature": "020-mlx-safetensors-affine",
+  "slice": 1,
+  "frozen_on": "2026-09-22",
+  "status": "PROSPECTIVE_WITH_RECORDED_CORRECTIONS",
+  "prospective_statement": "Every relation, bound and acceptance criterion in this file was written before any R3 or R2 number was produced. The only observation that preceded it is that the Python R1 reproduces the seven quantized cases of the adopted golden fixture exactly; that check validated the reading of the format specification and states nothing about R3 or R2. One check, C-DEQUANT-SINGLE, was subsequently corrected: its first derivation was mathematically wrong under cancellation and is recorded, superseded and explained in that check's `correction` block rather than quietly replaced. No other threshold has moved, and no threshold here may be loosened after output is observed.",
+  "scope": {
+    "in_scope": [
+      "affine dequantization of a packed U32 weight with its scales and biases",
+      "code extraction (unpacking) from the packed little-endian u32 stream",
+      "resolution of bits, group size and mode per module",
+      "byte-range arithmetic for one plane or one row of a stacked tensor"
+    ],
+    "out_of_scope": [
+      "quantized matmul (mx.quantized_matmul) -- no contract in this slice",
+      "gathered quantized matmul (mx.gather_qmm) and its sorted_indices kernel selection -- no contract in this slice",
+      "router and top-k selection -- no contract in this slice",
+      "any full-model or multi-token comparison",
+      "any claim about a real checkpoint's payload"
+    ]
+  },
+  "references": {
+    "R1": {
+      "role": "independent correctness reference",
+      "implementations": [
+        "crates/mlx-affine/src/reference.rs (Rust, binary64, no use statements, shares nothing with crate::decode)",
+        "scripts/research/mlx_affine_reference_v1.py (Python stdlib, binary64, authored before either Rust file existed)"
+      ],
+      "establishes": "the correct interpretation of the checkpoint format and of the affine quantization",
+      "never_establishes": "performance; compatibility with any particular upstream build"
+    },
+    "R2": {
+      "role": "pinned upstream compatibility reference",
+      "implementation": "mx.dequantize at the pinned MLX wheel, driven by scripts/ci/mlx_affine_compat_v1.py",
+      "establishes": "compatibility with the selected upstream execution, including its kernel choices",
+      "never_establishes": "correctness. A defect shared by MLX and by a native path that calls MLX is invisible to an R3-vs-R2 comparison. R2 is not, and may not become, the numerical correctness oracle for this feature."
+    },
+    "R3": {
+      "role": "native candidate",
+      "implementation": "crates/mlx-affine/src/decode.rs (Rust, binary32)",
+      "establishes": "correct integration when compared against R1 under this contract",
+      "never_establishes": "anything by itself"
+    }
+  },
+  "dtypes_and_rounding": {
+    "stored_codes": "unsigned integers of `bits` width, extracted from a contiguous little-endian u32 stream, element j at bit positions [j*bits, j*bits+bits)",
+    "stored_metadata": "scales and biases in the weight's original dtype: BF16, F16 or F32",
+    "R1_intermediate_and_accumulation": "IEEE-754 binary64 throughout; conversions of BF16, F16 and F32 to binary64 are exact",
+    "R3_intermediate_and_accumulation": "IEEE-754 binary32; the stored metadata is widened to binary32 exactly",
+    "R3_expression": "out = scale_f32 * (code as f32) + bias_f32, evaluated as one multiplication followed by one addition. A fused multiply-add is forbidden: it removes the single rounding the exact invariant depends on.",
+    "rounding_mode": "round-to-nearest, ties-to-even, in both references",
+    "reduction_order": "not applicable -- dequantization has no reduction. Where a reduction later enters this feature, R1 is sequential binary64 and the MLX kernel order is recorded as unspecified and measured.",
+    "fusion_assumptions": "none in R1; none in R3"
+  },
+  "checks": [
+    {
+      "id": "C-CODES",
+      "kind": "exact_invariant",
+      "statement": "R3's unpacked codes equal R1's unpacked codes elementwise, for every admitted (bits, group_size) and every fixture.",
+      "justification": "Unpacking is integer arithmetic in both references and admits no rounding."
+    },
+    {
+      "id": "C-DEQUANT-HALF",
+      "kind": "exact_invariant",
+      "statement": "For BF16 and F16 scales and biases, R3(x) == round_to_f32(R1(x)) for every element, bit for bit, including the sign of zero.",
+      "justification": "A BF16 significand carries 8 bits and an F16 significand 11; a code is an integer in [0, 255], i.e. at most 8 bits. The product therefore needs at most 19 significand bits and is exact in binary32 as well as in binary64. The remaining operation is a single addition of two values that are exactly representable in binary32. Double rounding through binary64 is innocuous for such an addition because binary64 carries 53 significand bits and 53 >= 2*24 + 2 = 50 (Figueroa's condition). R3 therefore lands on exactly the binary32 neighbour of R1.",
+      "preconditions": [
+        "no intermediate or final value overflows to infinity in binary32",
+        "every product and sum is normal in binary32; a subnormal product would lose the exactness the argument assumes"
+      ],
+      "precondition_enforcement": "The qualification asserts the preconditions on every fixture before comparing, and a fixture that violates one is a contract failure, not a tolerated case."
+    },
+    {
+      "id": "C-DEQUANT-SINGLE",
+      "kind": "prospectively_justified_bound",
+      "statement": "For F32 scales and biases, |R3(x) - R1(x)| <= 2^-24 * (|scale| * code + |R1(x)|) * (1 + 2^-24) for every element -- half an ulp of binary32 at the magnitude of the product, plus half an ulp at the magnitude of the result, plus the second-order term.",
+      "justification": "R1 computes P = scale * code exactly in binary64 and rounds the sum P + bias once. R3 rounds twice: fl32(P) = P(1 + d1) with |d1| <= 2^-24, and then fl32(fl32(P) + bias) = (P(1 + d1) + bias)(1 + d2) with |d2| <= 2^-24. Subtracting, |R3 - R1| <= 2^-24 * |P| + 2^-24 * |R1| + 2^-48 * |P|. Every term comes from binary32's 24-bit significand; nothing is fitted to an observation.",
+      "note": "The observed error may be smaller. A smaller observation does not tighten this bound retroactively.",
+      "correction": {
+        "corrected_on": "2026-09-22",
+        "superseded_statement": "|R3 - R1| <= 1 ulp_f32(R1)",
+        "why": "The superseded form bounded the error by an ulp of the RESULT and therefore assumed no cancellation. The first rounding happens at the magnitude of the product, and when bias nearly cancels the product the result is far smaller than the product, so an ulp of the result is not an upper bound for it. Observed on the adopted golden case `experts`, where R1 gives 8.94e-8, R3 gives exactly 0, and one ulp of 8.94e-8 is 7.1e-15. This is a corrected derivation, not a loosened threshold: the superseded form was mathematically wrong for the operation it described, and the replacement is derived from the dtypes in the same way the exact invariant for half-precision metadata is.",
+        "observed_margin": "Across the golden fixture's F32-metadata cases the largest observed |R3 - R1| is 2.384e-7 and the largest ratio of that difference to 2^-24 * |product| is 0.88, i.e. the product term alone already covers every case."
+      }
+    },
+    {
+      "id": "C-R2-COMPAT",
+      "kind": "compatibility_observation",
+      "statement": "mx.dequantize's output, compared against R1 rounded to mx.dequantize's own output dtype, agrees within 1 ulp of that dtype; and mx.dequantize's implied codes equal R1's codes exactly.",
+      "not_a_correctness_oracle": true,
+      "rationale": "This records whether the native representation and the pinned upstream agree. Disagreement is a finding about compatibility. Agreement is supporting evidence and is never, on its own, evidence of correctness."
+    },
+    {
+      "id": "C-SHAPE",
+      "kind": "exact_invariant",
+      "statement": "For every classified triple, packed_cols * (32 / bits) == groups * group_size, all leading dimensions of weight, scales and biases are equal, and scales.shape == biases.shape.",
+      "justification": "This is MLX's own validate_quantized_input invariant, restated. It is integer arithmetic."
+    },
+    {
+      "id": "C-SLICE",
+      "kind": "exact_invariant",
+      "statement": "expert_slice and row_slice return byte ranges that lie inside their tensor and that a read reproduces exactly; every offset is computed with checked arithmetic and an overflow is a refusal.",
+      "justification": "Integer arithmetic."
+    },
+    {
+      "id": "C-DETERMINISM",
+      "kind": "exact_invariant",
+      "statement": "Two independent opens of the same checkpoint produce identical catalog digests.",
+      "justification": "The catalog is built from sorted shard names and sorted tensor names; nothing in it depends on directory order or on timing."
+    }
+  ],
+  "acceptance_criteria_slice_1": [
+    "A1: every standard Safetensors dtype string parses and reports its element size, and an unknown string is refused by name.",
+    "A2: every negative fixture in fixtures/safetensors/negative/ is refused with the exact error variant its README names.",
+    "A3: the same parser and the same catalog code path open both a uniform affine checkpoint and a mixed 4/8 checkpoint with per-module overrides, and classify every module correctly, with no parser change between them.",
+    "A4: C-CODES holds on every positive fixture and on seeded randomized rows.",
+    "A5: C-DEQUANT-HALF holds on every positive fixture and on seeded randomized rows.",
+    "A6: C-DEQUANT-SINGLE holds on every F32-metadata case.",
+    "A7: C-SHAPE, C-SLICE and C-DETERMINISM hold.",
+    "A8: R1 in Rust references nothing from the production decoder, checked statically by a test that reads the source file.",
+    "A9: the R2 compatibility script fails closed -- it exits non-zero when MLX cannot be imported or Metal is unavailable while PULSAR_REQUIRE_NATIVE_MLX=1 -- and records the MLX version, device, Metal availability and interpreter path in its report."
+  ],
+  "not_claimed": [
+    "no real-checkpoint Q0 qualification",
+    "no claim about quality retained versus the original BF16 or FP8 model",
+    "no performance claim of any kind",
+    "no claim that R3 and R2 agree bit for bit on any operation other than dequantization"
+  ],
+  "appended_corrections": [
+    {
+      "id": "R2-C1",
+      "appended_on": "2026-09-22",
+      "round": 2,
+      "frozen_before_any_round_2_run": true,
+      "source": "GPT-6 Astra review of e1d7c95d, findings 5 and 6 and per-question verdict 4",
+      "nature": "append-only: nothing above this array was edited; every statement here supersedes the one it names",
+      "title": "The qualified numerical domain, and the exact form of the binary32 bound",
+      "qualified_domain": {
+        "statement": "Every check in this contract is qualified over FINITE inputs whose products and results stay inside the finite binary32 range. Outside it there is no bound and no invariant; the decoder refuses.",
+        "why_this_had_to_be_said": "A finite BF16 triple can leave the domain. scale = max finite bfloat16 (3.3895313892515355e38), code = 2, bias = -scale: R1's binary64 value is 3.3895313892515355e38, finite and exactly representable in binary32, while R3's binary32 product overflows to infinity. Round 1 stated preconditions of this shape but neither enforced them in production nor asserted them in qualification, so the decoder returned an infinity and the tests did not look.",
+        "enforcement": "crates/mlx-affine/src/decode.rs refuses with AffineError::NonFiniteValue{module,row,index} when a product or a result is not finite. crates/mlx-affine/src/reference.rs refuses with ReferenceError::NonFinite{row,index} on the same condition, so agreement between the arms is agreement about a domain both stayed inside.",
+        "qualification": "tests/numerics.rs asserts the overflow case is refused, that both arms refuse an infinite stored scale, and -- elementwise, over every golden case -- that every product is finite in binary64 and remains finite when rounded to binary32."
+      },
+      "supersedes_C-DEQUANT-SINGLE_wording": {
+        "superseded_phrase": "half an ulp of binary32 at the magnitude of the product, plus half an ulp at the magnitude of the result",
+        "why_it_was_imprecise": "The replacement bound u*(|P|+|r|)*(1+u) is a conservative form in the qualified regime, not literally a sum of two half-ulps; describing it as 'half an ULP' overstates how tight it is and hides which quantity each term is about.",
+        "exact_form": "With P = s*q, T = P + b, u = 2^-24 and y = RN32(RN32(P) + b): |y - T| <= u(1+u)|P| + u|T|. Against the binary64 reference r = RN64(T), add that reference's own rounding error: |y - r| <= u(1+u)|P| + u|T| + |r - T|.",
+        "relation_to_the_implemented_check": "The implemented assertion uses u*(|P| + |r|)*(1+u), which dominates the exact form in the qualified regime because |T| <= |r| + |r - T| and |r - T| <= 2^-53|T|. It is a conservative envelope, not an empirically fitted multiplier.",
+        "still_true": "The reason the result-ULP form fails is unchanged and stands: the first rounding happens at the magnitude of the product, and under cancellation the result is far smaller than the product."
+      },
+      "corrects_the_fma_note": {
+        "superseded_claim": "a fused multiply-add would break the exact invariant",
+        "correct_statement": "For BF16 and F16 metadata the product s*q is exact, so a fused multiply-add computes the same single rounding as a separate multiply and add: FMA does not break C-DEQUANT-HALF. The separate-rounding distinction matters for F32 metadata, where the product itself rounds and fusing would remove that first rounding and change the result.",
+        "why_the_code_still_forbids_fusion": "C-DEQUANT-SINGLE's bound is derived for two roundings. The decoder writes a multiply and an add so that one derivation covers both metadata widths rather than needing a different bound per dtype."
+      },
+      "corrects_the_subnormal_note": {
+        "superseded_claim": "a subnormal product would lose the exactness the argument assumes",
+        "correct_statement": "Subnormal BF16 or F16 products do not inherently lose exactness: multiplying a stored value by an integer code preserves the representable lattice, so the product remains exact where it is representable. The real boundary is OVERFLOW at the top of the binary32 range, not gradual underflow at the bottom, which is why the enforced domain check is finiteness."
+      },
+      "corrects_the_significand_note": {
+        "superseded_claim": "a half-precision significand and an 8-bit code multiply to at most 19 significand bits, so the product is exact in binary32",
+        "correct_statement": "The bit count is right -- at most 16 bits for BF16 times an 8-bit code and at most 19 for F16 -- and the conclusion holds ONLY while the product remains representable. F16 finite inputs cannot overflow binary32; BF16 inputs can. That is the whole of the gap this correction closes."
+      },
+      "prospective_timing": {
+        "round_1_claim": "the contract was written before any R3 or R2 number was produced",
+        "what_can_be_established": "Git cannot verify it. R3 was committed in f818d701; the Python R1, the Rust R1 and this contract first appear together in 8c0ec31c. A docstring assertion is not provenance.",
+        "round_2_position": "The Round 1 timing claim is therefore recorded as unproven rather than repeated as established. The bounds in THIS appended correction were fixed in the coordinator's Round 2 instruction before any Round 2 run, which is stated here for the record and is equally unprovable from Git alone. What is checkable is the content: every bound above is derived from the dtypes and the rounding model, and the derivation is written out so a reader can check it without trusting a timestamp."
+      },
+      "acceptance_criteria_amended": {
+        "A5": "C-DEQUANT-HALF holds on every positive fixture and on seeded randomized rows, WITHIN THE QUALIFIED DOMAIN, and inputs outside it are refused by both arms rather than producing a value.",
+        "A6": "C-DEQUANT-SINGLE holds on every F32-metadata case against the exact form above.",
+        "A10": "The decoder refuses any product or result that leaves the finite binary32 range, and qualification checks every product of every golden case rather than only the final magnitudes.",
+        "A11": "R1 and R3 are qualified against the frozen Flash research fixture glm53-flash-decoder-quantized-v1 under that fixture's own tolerances, read-only."
+      }
+    },
+    {
+      "id": "R3-C1",
+      "appended_on": "2026-09-22",
+      "round": 3,
+      "source": "GPT-6 Astra verification of 485d760f, finding 5 (first of two remaining problems)",
+      "nature": "append-only: this entry supersedes the statements it names; the text it supersedes is left in place so the record of what was claimed survives",
+      "title": "The reference's domain check, stated precisely, and made equal to the candidate's",
+      "what_was_wrong": {
+        "finding": "R2-C1 claimed the reference asserts the same qualified domain as the candidate, and amended A5 was written on that basis. The reference in fact tested binary64 finiteness (reference.rs:269 and :317 at 485d760f), which is a strictly wider domain than binary32's, and the overflow regression at tests/numerics.rs:470 explicitly expected the reference to succeed where the candidate refused.",
+        "why_it_matters": "A reference whose domain is wider than the candidate's cannot witness the candidate's refusals: on that input one arm answers and the other refuses, so there is no comparison to make and the 'both arms' claim is empty exactly where it is needed."
+      },
+      "domain_check": {
+        "statement": "The reference refuses an element when RN32(scale*code) is not finite, or when RN32(RN32(scale*code) + bias) is not finite. It evaluates and stores the value in binary64; only the domain test is taken on the binary32 image.",
+        "notation": "RN32(x) is the round-to-nearest-even binary32 image of the real number x.",
+        "equality_with_the_candidate": "The two domains are equal, not merely close. The candidate computes p32 = scale32 * code32 and v32 = p32 + bias32 in binary32. scale and bias are stored as F16, BF16 or F32 and so are exactly representable in binary32. scale*code carries at most 32 significand bits (a 24-bit binary32 significand times a code of at most 8 bits), so the binary64 product is exact and RN32 of it is exactly the candidate's multiply. The second test is applied to RN32(product) + bias, which is exactly the candidate's addition. Each arm therefore refuses precisely the elements the other refuses.",
+        "what_stays_binary64": "The returned reference value is the binary64 product and sum, unrounded. The domain test does not change any value the reference produces; it changes only which inputs it answers for."
+      },
+      "supersedes": [
+        "R2-C1 qualified_domain.enforcement, where 'crates/mlx-affine/src/reference.rs refuses ... on the same condition' described an intention the code did not implement",
+        "the Round 2 wording of amended A5 insofar as it asserted a shared domain already enforced"
+      ],
+      "enforcement": "crates/mlx-affine/src/reference.rs, both dequantize_rows_half and dequantize_rows_single, refuse with ReferenceError::NonFinite{row,index} on the binary32 image test above. crates/mlx-affine/src/decode.rs is unchanged: it already refused with AffineError::NonFiniteValue{module,row,index}.",
+      "qualification": "tests/numerics.rs a_finite_triple_whose_binary32_product_overflows_is_refused_by_both_arms asserts that Astra's case is refused by BOTH arms, at the same row and index, after first asserting that the binary64 product and result are finite and that RN32 of the product is not -- so the test records why the input is interesting as well as that it is refused."
+    },
+    {
+      "id": "R3-C2",
+      "appended_on": "2026-09-22",
+      "round": 3,
+      "source": "GPT-6 Astra verification of 485d760f, finding 5 (second of two remaining problems) and ranked finding 2",
+      "nature": "append-only correction of an append-only claim",
+      "title": "Correction: existing contract text WAS edited in place, contrary to R2-C1's nature sentence",
+      "the_false_statement": {
+        "text": "append-only: nothing above this array was edited; every statement here supersedes the one it names",
+        "located_at": "appended_corrections[0].nature of this file, entry R2-C1",
+        "status": "FALSE as to its first clause. It is left in place: editing it would be one more in-place edit of contract text, which is the practice this entry exists to stop. It is superseded here."
+      },
+      "what_was_actually_edited_in_place": [
+        {
+          "commit": "c7182dc0",
+          "file": "specs/020-mlx-safetensors-affine/contracts/numerics-v1.json",
+          "change": "the top-level status field, from PROSPECTIVE_WITH_ONE_RECORDED_CORRECTION to PROSPECTIVE_WITH_RECORDED_CORRECTIONS",
+          "lines": "one line, line 6; this is the edit that directly contradicts the sentence above, which was added by the same commit"
+        },
+        {
+          "commit": "daec2639",
+          "file": "specs/020-mlx-safetensors-affine/contracts/catalog-contract.md",
+          "change": "existing rows and paragraphs were rewritten, not only appended to: row 4 became 'the first byte after the prefix is {' with MalformedHeader (row 4b was added for the JSON and duplicate-member rule); row 13's error changed from DuplicateTensor to DuplicateKey; the paragraph 'Gaps are legal and are recorded as gap_bytes, not refused' was replaced by the paragraph refusing gaps, and row 14b added; row 17 gained the regular-file and MAX_INDEX_BYTES requirements; row 20 was rewritten from canonicalized-path containment to openat/O_NOFOLLOW with (device, inode) identity; row 25 was renumbered to 25b and a new name-addressed row 25 inserted, with 24b added; and the digest serialization block was replaced, the delimiter-joined form removed and the length-framed form written in its place. A 'Round 2 amendments' section was appended at the end."
+        },
+        {
+          "commit": "daec2639",
+          "file": "specs/020-mlx-safetensors-affine/spec.md",
+          "change": "the dtype paragraph, the duplicate-name bullet, the gaps bullet and the digest serialization block were rewritten in place to match the catalog contract"
+        },
+        {
+          "commit": "daec2639",
+          "file": "fixtures/safetensors/manifest.json",
+          "change": "regenerated: three fixture byte counts and SHA-256 values changed, and generator_sha256 changed, because the generator and the positive fixtures changed. This is a generated manifest rather than contract prose, and it is regenerated with --check verifying it, but it is listed here so the census of in-place changes is complete."
+        },
+        {
+          "commit": "7635158e",
+          "file": "specs/020-mlx-safetensors-affine/spec.md",
+          "change": "the neutrality sentence was narrowed in place from 'appear in the crates' to 'appear in the library crates', with two sentences added about the caller-supplied census rules"
+        }
+      ],
+      "not_reverted_and_why": "None of these edits is reverted. Reverting would discard the corrected statements, which are the ones that are true of the code, and would itself be a further in-place rewrite. Git history preserves every prior version, and this entry names each change, so the record is complete without touching the text again.",
+      "rule_going_forward": "Contract and specification prose under specs/020-mlx-safetensors-affine/ is amended only by appending a dated entry that names what it supersedes. Existing sentences are not rewritten, renumbered or deleted, including sentences that are wrong: a wrong sentence is superseded in place of being erased. Generated artefacts such as fixtures/safetensors/manifest.json are exempt, because they are outputs of a checked generator rather than statements, and their regeneration is itself verified by --check.",
+      "scope_note": "Evidence files under docs/architecture/reviews/evidence/ are a stricter case and were never edited: Astra's finding 10 confirmed nine additions and zero modifications against 751e1ab6. This entry concerns contract and specification prose only."
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+CatalogError::MalformedHeader
+The length prefix declares more header bytes than the file contains.

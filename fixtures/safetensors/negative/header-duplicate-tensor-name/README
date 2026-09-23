@@ -1,0 +1,2 @@
+CatalogError::DuplicateKey
+One header declares the same tensor name twice, which is a repeated JSON member.

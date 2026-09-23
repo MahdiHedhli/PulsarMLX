@@ -1,0 +1,2 @@
+AffineError::InconsistentOverride
+The override claims 8 bits; the stored shapes imply 4.

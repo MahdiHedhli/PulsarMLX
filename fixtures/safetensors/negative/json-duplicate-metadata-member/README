@@ -1,0 +1,2 @@
+CatalogError::DuplicateKey
+__metadata__ declares "format" twice, first as a number and then as a string.

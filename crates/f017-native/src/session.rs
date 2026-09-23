@@ -159,7 +159,7 @@ struct PeakState {
 }
 impl TemporalObserver for PeakState {}
 
-fn logits_sha256(logits: &[f32]) -> String {
+pub fn logits_sha256(logits: &[f32]) -> String {
     let mut digest = Sha256::new();
     for value in logits {
         digest.update(value.to_bits().to_le_bytes());

@@ -1,0 +1,6 @@
+{
+ "weight_map": {
+  "x.weight": "model-00002.safetensors",
+  "y.weight": "model-00001.safetensors"
+ }
+}

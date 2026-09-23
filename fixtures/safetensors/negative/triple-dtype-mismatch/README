@@ -1,0 +1,2 @@
+AffineError::ScalesBiasesMismatch
+Scales are BF16 and biases are F16.

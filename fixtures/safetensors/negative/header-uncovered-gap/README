@@ -1,0 +1,2 @@
+CatalogError::Gap
+A shard leaves eight bytes between two tensors; upstream requires the buffer to be tiled.
