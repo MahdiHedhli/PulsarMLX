@@ -19,6 +19,7 @@ from scripts.ci.classify_ci_change import (
 
 
 EVIDENCE_PREFIX = "docs/architecture/reviews/evidence/"
+GITLINK_MODE = "160000"
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 CREDENTIAL_PATTERNS = {
     "private_key": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
@@ -64,6 +65,11 @@ def _diff_rows(repository: Path, base: str, head: str,
                evidence_subset: bool = False) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     for row in changed_entries(repository, base, head):
+        if (any(path_class(p) == EVIDENCE_ONLY for p in row["paths"])
+                and GITLINK_MODE in (row["old_mode"], row["new_mode"])):
+            # Evidence is regular committed bytes; a gitlink names another
+            # repository's commit, whose content this validator cannot see.
+            raise ValidationError(f"gitlink prohibited under evidence root: {row['paths']}")
         if evidence_subset and not any(path_class(p) == EVIDENCE_ONLY for p in row["paths"]):
             # Mixed ranges: non-evidence rows are native CI's to qualify. A row
             # with an evidence path on EITHER side stays, so a rename out of, or
@@ -215,7 +221,7 @@ def validate_change(
     if not rows:
         raise ValidationError("evidence validation requires changed evidence")
     completed = subprocess.run(
-        ["git", "diff", "--check", base, head,
+        ["git", "diff", "--check", "--ignore-submodules=none", base, head,
          *(("--", EVIDENCE_PREFIX) if subset else ())],
         cwd=repository,
         stdout=subprocess.PIPE,

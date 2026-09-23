@@ -161,8 +161,11 @@ def changed_entries(repository: Path, base: str, head: str) -> list[dict]:
         if not ref or ref.startswith("-") or set(ref) == {"0"}:
             raise ClassificationError("missing or zero diff authority")
         _git("cat-file", "-e", f"{ref}^{{commit}}", cwd=repository)
+    # --ignore-submodules=none: Git otherwise honours submodule ignore settings,
+    # including a repository-controlled `.gitmodules` `ignore = all`, and would
+    # drop gitlink rows from the enumeration entirely.
     output = _git("diff", "--raw", "-z", "--no-abbrev", "--find-renames",
-                  base, head, "--", cwd=repository)
+                  "--ignore-submodules=none", base, head, "--", cwd=repository)
     fields = output.split("\0")
     if fields.pop() != "":
         raise ClassificationError("unterminated Git diff")
