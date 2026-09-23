@@ -236,6 +236,8 @@ Slice 2 implementation has not started. The smallest honest next boundary is the
 real-metadata census on already-verified local headers — no payload, no
 download — and nothing beyond it is authorized.
 
+Slice 2A, the header-only metadata census of both PipeNetwork targets (not Q0, not numerical qualification): [f020-slice2a-metadata-census.md](f020-slice2a-metadata-census.md).
+
 ## Historical — review rounds
 
 Everything below records how Slice 1 got to the accepted state. Counts and
