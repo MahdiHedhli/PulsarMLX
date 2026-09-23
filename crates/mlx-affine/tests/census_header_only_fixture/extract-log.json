@@ -1,0 +1,86 @@
+{
+  "bound": {
+    "max_header_bytes": 104857600,
+    "prefix_bytes": 8,
+    "rule": "per shard, no read ends past 8 + N"
+  },
+  "label": "header bytes only; no payload byte read; header sha256 identifies the header, not the payload; not Q0",
+  "schema": "pulsarmlx.f020.safetensors-header-extract/1.0.0",
+  "shard_count": 2,
+  "shards": [
+    {
+      "bytes_read": 588,
+      "file": "model-00001-of-00002.safetensors",
+      "file_len": 1276,
+      "file_position_after": 0,
+      "header_bytes": 588,
+      "header_len": 580,
+      "header_sha256": "49f159bfa45b6fb3f09cb54da784ca970f37d284cdae0bf73c6ec8a06e18c4b1",
+      "max_read_offset_exclusive": 588,
+      "payload_bytes_read": 0,
+      "read_ceiling": 588,
+      "reads": [
+        [
+          0,
+          8
+        ],
+        [
+          8,
+          580
+        ]
+      ],
+      "within_bound": true
+    },
+    {
+      "bytes_read": 435,
+      "file": "model-00002-of-00002.safetensors",
+      "file_len": 1439,
+      "file_position_after": 0,
+      "header_bytes": 435,
+      "header_len": 427,
+      "header_sha256": "add067067b22b6470d6dddcfe2b40585996177da966429ffa8fbf342adfa9ffd",
+      "max_read_offset_exclusive": 435,
+      "payload_bytes_read": 0,
+      "read_ceiling": 435,
+      "reads": [
+        [
+          0,
+          8
+        ],
+        [
+          8,
+          427
+        ]
+      ],
+      "within_bound": true
+    }
+  ],
+  "small_json": {
+    "config.json": {
+      "present": true,
+      "sha256": "bf63b0cb99595104484a8f5f51b288917e47ede35e0493760f3da179219547f2",
+      "size": 308
+    },
+    "download-record.json": {
+      "present": false
+    },
+    "generation_config.json": {
+      "present": false
+    },
+    "model.safetensors.index.json": {
+      "present": true,
+      "sha256": "5f8aaf03586c1a442b293016ba13004443ea4d95a13c5b910580bf3fea284196",
+      "size": 836
+    },
+    "tokenizer_config.json": {
+      "present": false
+    }
+  },
+  "totals": {
+    "downloads": 0,
+    "full_shard_hashes": 0,
+    "header_bytes_read": 1023,
+    "payload_bytes_read": 0,
+    "shards_within_bound": 2
+  }
+}
