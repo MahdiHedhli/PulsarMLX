@@ -30,7 +30,7 @@ It began as an Apple Silicon derivative of [Pulsar](https://github.com/giannisan
 
 > **DON'T PANIC.** The giant model does not need to fit entirely in memory.
 
-## Status at a glance (2026-09-20)
+## Status at a glance (2026-09-23)
 
 Every claim below is classified, and every number is traceable to the document cited beside it. The five columns are the only vocabulary this project uses for capability status.
 
@@ -42,7 +42,7 @@ Every claim below is classified, and every number is traceable to the document c
 | **GLM-5.3-Flash mixed-4/8, unpruned** — Python/MLX paged research | 120/120 token-identical task pairs against the fresh-process paged reference, and 18/18 token-identical runs across the paired 60e9-vs-70e9 CLI budget ladder ([results](docs/glm53-flash/persistent-serving-results.md)) | decode 2.6–3.3 tok/s at 60e9 and 3.06–4.20 tok/s at the admitted 70e9 ceiling; 6.03 h soak segment at 60e9; 1.33 h / 80-request soak at 70e9 | reference oracle only — persistent OpenAI-style research server, paged expert residency, expert-cache ceiling ladder | a 6 h soak segment at 70e9 (**has not run**) | production readiness; 80e9 on a 128 GB host; this is **not** the Rust-native runtime; a shipping Python runtime (there will be none) |
 | **Pruned REAP variants** (REAP50 etc.) | — | resident serving experiments ([notes](docs/glm53-flash/performance-notes.md)) | — | — | **not the fidelity target**; never compared with unpruned results |
 | **OpenAI-style synthetic serving crate** | — | — | preserved under tag [`archive/2026-09-21/feat/openai-serving`](https://github.com/MahdiHedhli/PulsarMLX/tree/archive/2026-09-21/feat/openai-serving) (branch closed out 2026-09-22), **not on main**; its own gate `Serving synthetic qualification` is **red at head** (run [`35086336439`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/35086336439)) | merge once that gate is green | **not on main**; it serves **no model** even on its branch — a protocol and lifecycle harness, not inference |
-| **Native MLX checkpoint ingestion** (the next target) | — | — | slice 1 (catalog + affine representation, synthetic) 🧪 experimental — see [status doc](docs/architecture/f020-native-safetensors-status.md) | Safetensors ingestion + MLX affine quantization + expert residency, for `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` and `…-Flash-…` ([below](#next-target-native-mlx-checkpoints)) | real-checkpoint qualification, quantized matmul, expert residency, model execution |
+| **Native MLX checkpoint ingestion** (the next target) | F020 Slice 1, merged: native Safetensors catalog/admission and MLX affine representation/decoder, qualified **on synthetic fixtures** against an independent binary64 reference ([status](docs/architecture/f020-native-safetensors-status.md)) | R2 compatibility with the pinned Python/MLX wheel (an observation, not correctness); a header-only metadata observation of the Flash checkpoint, no payload read | — | native execution of `pipenetwork/GLM-5.3-MLX-mixed-4_8bit` and `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` — **neither is native-qualified** ([below](#next-target-native-mlx-checkpoints)) | real-checkpoint payload qualification, native quantized matmul, expert residency integration, model execution |
 
 None of this is a production runtime. The Python/MLX Flash research path is **not** the Rust-native shipping architecture and does not complete it.
 
@@ -275,7 +275,8 @@ CUDA kernel heritage from ds4/ggml remains MIT-notified in [LICENSE](LICENSE).
 | GLM-5.3-Flash expert-cache budget | ✅ **70e9 is the admitted ceiling and the recommended server configuration** on the 128 GB host; the paged reference script's `--max-expert-cache-bytes` default remains 60e9. 80e9 is **not admitted** on a 128 GB host |
 | OpenAI-style **synthetic** serving crate | ❌ **Not on main.** Tag-only (`archive/2026-09-21/feat/openai-serving`, branch closed out 2026-09-22); its own gate is red at head (run `35086336439`). Protocol/lifecycle harness only — **serves no model** |
 | OpenAI-compatible serving of a real model on Apple | 🗺️ Planned — Linux `pulsar-serve` exists upstream; the macOS path is **not implemented** and not claimed |
-| Native Safetensors / MLX affine-quantized checkpoint ingestion | 🗺️ Planned, not started |
+| Native Safetensors catalog/admission + MLX affine representation/decoder (F020 Slice 1) | ✅ Verified **on synthetic fixtures** only — merged; see [F020 status](docs/architecture/f020-native-safetensors-status.md). Real-checkpoint payload qualification, native quantized matmul, residency integration and model execution are ❌ not implemented / not claimed |
+| Native `pipenetwork/GLM-5.3-MLX-mixed-4_8bit` and `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` execution | 🗺️ Planned — neither is native-qualified |
 | Production readiness | ❌ Not claimed |
 | Production tokens/sec | ❌ Not claimed |
 
@@ -384,12 +385,12 @@ The Python/MLX code under `scripts/research/glm53_flash/` is a research referenc
 
 ## Next target: native MLX checkpoints
 
-**Status: planned. Not implemented. Not started.**
+**Status: planned. The native model targets are not implemented and neither is native-qualified.** The first layer, F020 Slice 1 — a native Safetensors catalog and the MLX affine representation and decoder — is merged and qualified on synthetic fixtures only ([status](docs/architecture/f020-native-safetensors-status.md)).
 
 The next major target is to consume MLX-native mixed-precision checkpoints directly:
 
-- `PipeNetwork GLM-5.3-MLX-mixed-4_8bit`
-- `PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit`
+- `pipenetwork/GLM-5.3-MLX-mixed-4_8bit`
+- `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit`
 
 The planned capability is the composition:
 
@@ -409,7 +410,7 @@ The goal is to consume these checkpoints **without converting them to GGUF** and
 
 The native GLM-5.3-Flash mixed 4/8 target **supersedes the Python/MLX research path as the only Flash runtime**, using that path solely as a behavioural reference during qualification.
 
-Nothing in this section is implemented, measured or scheduled. It is stated here so the direction is legible, not to imply progress. The F017 Rust-native runtime described above operates on the GLM-5.2 GGUF checkpoint and does not read Safetensors today.
+Of this composition, only the Safetensors-ingestion and MLX-affine layers have begun: F020 Slice 1 provides a Safetensors catalog and the MLX affine representation and decoder, qualified on synthetic fixtures only, and nothing yet composes them with the native runtime. Real-checkpoint payload qualification, native quantized matmul, residency integration, MLX execution of either model and Slice 2 are not implemented; neither target checkpoint is native-qualified. The F017 Rust-native runtime described above operates on the GLM-5.2 GGUF checkpoint and does not read Safetensors today.
 
 ## Performance: not the point yet
 
@@ -553,7 +554,7 @@ F017 Rust-native GLM-5.2                       ✅ one token qualified; Stage A 
         ↓
 GLM-5.3-Flash paged research                   📏 measured candidate (Python/MLX)
         ↓
-Native Safetensors + MLX affine quantization   🗺️ planned, not started
+Native Safetensors + MLX affine quantization   ✅ Slice 1 on synthetic fixtures; real checkpoints 🗺️ planned
         ↓
 Native GLM-5.3 mixed 4/8                       🗺️ planned, not started
         ↓
