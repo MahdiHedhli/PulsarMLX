@@ -35,17 +35,20 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # The resolution. It began as the merge commit where the qualify and native
 # lineages were reconciled (9e145b09, workflow sha256 4e132d2c...); it is now
 # advanced, deliberately and in the commit immediately after the one that added
-# the two F020 required steps, to that commit's tree. The earlier resolution's
-# required blocks are contained in this one byte for byte -- advancing the base
-# adds required steps, it never rewrites or drops one. Required steps are frozen
-# at these exact bytes. Line-level
+# the two F020 required steps, to that commit's tree (4f0ed191, 185c2183...). It
+# is advanced once more, to the commit that made evidence-integrity also run
+# for mixed code+evidence ranges; that commit changed two residual lines (a
+# classify output and the integrity job's `if:`) and no required step. The
+# earlier resolution's required blocks are contained in this one byte for
+# byte -- advancing the base never rewrites or drops one. Required steps are
+# frozen at these exact bytes. Line-level
 # rules were shown insufficient -- allowed lines can be composed into a function
 # definition that swallows the body, and execution can be redirected from above
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "4f0ed191bd3944550cfa14076109643a15827875"
-RESOLUTION_WORKFLOW_SHA256 = "185c2183098843446d2c9ca9af6b23fe995975e41adc32347757d29fbfa02e97"
+RESOLUTION_BASE = "85b8a002fe8d2955848fe8469f4f7fab077a9e05"
+RESOLUTION_WORKFLOW_SHA256 = "f9f72b1eda07a1cd2f350c5139fe4d7d83ded26f1e21641e72641ae11747c18b"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")

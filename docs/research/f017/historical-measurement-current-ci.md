@@ -344,3 +344,23 @@ of these two constants. The doctor's tests assert the list's contents, the job
 the named steps sit in, and the new required-step count of twelve.
 
 The required-step census is therefore 10 → 12 and the free-step census is 39.
+
+### 2026-09-23 — the resolution advances for mixed-range evidence integrity
+
+`RESOLUTION_BASE` moves from `4f0ed191` to
+`85b8a002fe8d2955848fe8469f4f7fab077a9e05` and `RESOLUTION_WORKFLOW_SHA256`
+from `185c2183…` to `f9f72b1e…`, in the commit immediately after the one that
+made the evidence-integrity job also run for ranges that change code and
+evidence together. The doctor fails at that commit and passes at this one.
+
+That commit changed exactly two frozen residual lines and no required step:
+the classify job gained the output `evidence_touched`, and the
+evidence-integrity job's `if:` became `mode == 'EVIDENCE_ONLY' ||
+evidence_touched == 'true'`. All twelve required blocks frozen at `4f0ed191`
+are present at `85b8a002` byte for byte, in the same jobs and in the same order,
+and `REQUIRED_EXTRA_STEP_NAMES` is unchanged. That was verified before the
+constants moved. The aggregate job's decision moved out of its inline step
+into `scripts/ci/aggregate_status_v1.py`, and a checkout step was added before
+it; both are non-required steps, so they are free and not part of the freeze.
+
+The required-step census stays 12 and the free-step census is 40.

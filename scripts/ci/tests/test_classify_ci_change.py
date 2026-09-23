@@ -232,10 +232,19 @@ class CommittedDiffTests(unittest.TestCase):
         for job in ("macos-15-arm64", "apple-mlx-small-fixtures"):
             block = re.split(r"\n  (?=\S)", text.split("\n  " + job + ":", 1)[1], maxsplit=1)[0]
             self.assertIn("if: needs.classify.outputs.mode == 'FULL_NATIVE' || needs.classify.outputs.mode == 'UNKNOWN_DEFAULT_FULL'", block)
-        for mode in (EVIDENCE_ONLY, DOCS_ONLY):
-            block = text.split("            " + mode + ")", 1)[1].split(";;", 1)[0]
-            self.assertIn('test "$BASELINE_RESULT" = skipped', block)
-            self.assertIn('test "$NATIVE_RESULT" = skipped', block)
+        # The aggregate's decision now lives in scripts/ci/aggregate_status_v1.py,
+        # which test_mixed_evidence_integrity_v1 proves equal to the former
+        # inline shell; the cheap modes still require both native jobs skipped.
+        from scripts.ci.aggregate_status_v1 import AggregateFailure, decide
+        self.assertIn("python3 -I -B scripts/ci/aggregate_status_v1.py", text)
+        for mode, own in ((EVIDENCE_ONLY, "EVIDENCE_RESULT"), (DOCS_ONLY, "DOCS_RESULT")):
+            passing = {"MODE": mode, "CLASSIFY_RESULT": "success", own: "success",
+                       "EVIDENCE_TOUCHED": "true" if mode == EVIDENCE_ONLY else "false",
+                       "BASELINE_RESULT": "skipped", "NATIVE_RESULT": "skipped"}
+            decide(passing)
+            for key in ("BASELINE_RESULT", "NATIVE_RESULT"):
+                with self.assertRaises(AggregateFailure):
+                    decide(dict(passing, **{key: "success"}))
 
 
 if __name__ == "__main__":
