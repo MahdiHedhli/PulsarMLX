@@ -1,6 +1,6 @@
 {
-  "schema": "pulsarmlx.f020.header-census-rules/1.0.0",
-  "note": "Model-specific categorization for crates/mlx-affine/examples/header_census.rs. It lives here, above the neutral crates, because a tensor-name prefix means nothing to safetensors-catalog or mlx-affine and must not start meaning something to them. The census runs without this file and simply reports no groups.",
+  "schema": "pulsarmlx.f020.header-census-rules/1.1.0",
+  "note": "Model-specific categorization for crates/mlx-affine/examples/header_census.rs. It lives here, above the neutral crates, because a tensor-name prefix means nothing to safetensors-catalog or mlx-affine and must not start meaning something to them. The census runs without this file and simply reports no groups. Groups may overlap and are counts, not a partition; the census also reports every tensor no group matched. The `vision` group is unchanged from the 1.0.0 file used by Slice 1; the other groups were added for the Slice 2A census, derived from the checkpoint's shard headers and config.json, and say which. Expectations only make the census report a surprise; classification comes from mlx-affine's Slice 1 rules alone.",
   "applies_to": "PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit and the same family",
   "groups": [
     {
@@ -8,6 +8,86 @@
       "prefix": "vision_model",
       "expect_unquantized_dtype": "BF16",
       "why": "The conversion recipe excludes the vision tower, so every tensor under this prefix is carried through as stored. Anything else under it is worth reporting."
+    },
+    {
+      "name": "embedding",
+      "prefix": "language_model.model.embed_tokens.",
+      "basis": "headers: embed_tokens.{weight,scales,biases}; config text_config.vocab_size 154880, hidden_size 4096"
+    },
+    {
+      "name": "lm_head",
+      "prefix": "language_model.lm_head.",
+      "basis": "headers: lm_head.{weight,scales,biases}; config text_config.tie_word_embeddings false"
+    },
+    {
+      "name": "norms",
+      "contains_any": ["norm.", "norm1.", "norm2."],
+      "expect": "unquantized",
+      "basis": "headers: layer, attention, indexer, output and vision normalization parameters"
+    },
+    {
+      "name": "router",
+      "contains": ".mlp.gate.",
+      "expect": "unquantized",
+      "basis": "headers: mlp.gate.weight and mlp.gate.e_score_correction_bias in MoE layers; config n_routed_experts 288, scoring_func sigmoid, moe_router_dtype float32. The trailing dot keeps gate_proj out."
+    },
+    {
+      "name": "router_correction_bias",
+      "contains": ".mlp.gate.e_score_correction_bias",
+      "expect_unquantized_dtype": "F32",
+      "basis": "headers: F32 [288] per MoE layer; config topk_method noaux_tc"
+    },
+    {
+      "name": "routed_experts",
+      "contains": ".mlp.switch_mlp.",
+      "expect": "quantized",
+      "basis": "headers: switch_mlp.{gate,up,down}_proj stacked with a leading expert dimension; config n_routed_experts 288, moe_intermediate_size 2048"
+    },
+    {
+      "name": "shared_experts",
+      "contains": ".mlp.shared_experts.",
+      "expect": "quantized",
+      "basis": "headers: shared_experts.{gate,up,down}_proj; config n_shared_experts 1"
+    },
+    {
+      "name": "dense_mlp",
+      "prefix": "language_model.",
+      "contains_any": [".mlp.gate_proj.", ".mlp.up_proj.", ".mlp.down_proj."],
+      "expect": "quantized",
+      "basis": "headers: mlp.{gate,up,down}_proj directly under a language-model layer; config first_k_dense_replace 3. The prefix keeps the vision tower's mlp, which the vision group reports, out."
+    },
+    {
+      "name": "mla_attention",
+      "contains_any": [".self_attn.q_a_proj.", ".self_attn.q_b_proj.", ".self_attn.kv_a_proj_with_mqa.", ".self_attn.embed_q.", ".self_attn.unembed_out."],
+      "expect": "quantized",
+      "basis": "headers: MLA projections in the deepseek_sparse_attention layers; config linear_attn_config.full_attn_layers (11 layers), q_lora_rank 1536, kv_lora_rank 512"
+    },
+    {
+      "name": "linear_attention",
+      "contains_any": [".self_attn.q_proj.", ".self_attn.k_proj.", ".self_attn.v_proj.", ".self_attn.b_proj.", ".self_attn.g_a_proj.", ".self_attn.g_b_proj.", ".self_attn.forget_gate.", ".self_attn.conv1d.", ".self_attn.o_norm."],
+      "basis": "headers: the linear-attention members; config linear_attn_config.kda_layers (34 layers), num_heads 64, head_dim 128, short_conv_kernel_size 4"
+    },
+    {
+      "name": "attention_output",
+      "contains": ".self_attn.o_proj.",
+      "expect": "quantized",
+      "basis": "headers: o_proj in every language-model layer, with two in_features depending on the attention type"
+    },
+    {
+      "name": "indexer",
+      "contains": ".self_attn.indexer.",
+      "basis": "headers: indexer members in the sparse-attention layers only; config index_n_heads 32, index_head_dim 128, index_kpool 4, index_kpool_compress true. No expectation: whether the indexer is quantized is what the census reports."
+    },
+    {
+      "name": "hyper_connections",
+      "contains_any": [".attn_hc.", ".ffn_hc."],
+      "basis": "headers: attn_hc/ffn_hc {fn,base,scale}; config text_config.mhc true, hc_mult 4, hc_sinkhorn_iters 20"
+    },
+    {
+      "name": "mtp",
+      "contains_any": ["language_model.model.layers.45.", ".eh_proj.", ".enorm.", ".hnorm.", ".shared_head.", "mtp", "nextn"],
+      "expect": "absent",
+      "basis": "config num_nextn_predict_layers 1 with num_hidden_layers 45: a next-token-prediction layer would be layer index 45. Expected absent from this MLX conversion; a match is reported."
     }
   ]
 }

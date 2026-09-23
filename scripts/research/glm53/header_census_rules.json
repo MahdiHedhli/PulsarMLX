@@ -1,0 +1,82 @@
+{
+  "schema": "pulsarmlx.f020.header-census-rules/1.1.0",
+  "note": "Model-specific categorization for crates/mlx-affine/examples/header_census.rs, kept above the neutral crates on purpose: a tensor-name prefix means nothing to safetensors-catalog or mlx-affine. Groups may overlap and are counts, not a partition; the census also reports every tensor no group matched. Each group was derived from the checkpoint's own shard headers (tensor names, dtypes, shapes) and its config.json, and says which. An expectation (`expect`, `expect_unquantized_dtype`) only makes the census report a surprise; it never changes a classification, which comes from mlx-affine's Slice 1 rules alone.",
+  "applies_to": "pipenetwork/GLM-5.3-MLX-mixed-4_8bit at revision e1034d395c26b9bcd3631df783e65737701ff2d6",
+  "groups": [
+    {
+      "name": "embedding",
+      "prefix": "model.embed_tokens.",
+      "basis": "headers: model.embed_tokens.{weight,scales,biases}; config vocab_size 154880, hidden_size 6144"
+    },
+    {
+      "name": "lm_head",
+      "prefix": "lm_head.",
+      "basis": "headers: lm_head.{weight,scales,biases}; config tie_word_embeddings false"
+    },
+    {
+      "name": "norms",
+      "contains": "norm.",
+      "expect": "unquantized",
+      "basis": "headers: input_layernorm, post_attention_layernorm, q_a_layernorm, kv_a_layernorm, indexer.k_norm and model.norm; normalization parameters are not quantized by the conversion"
+    },
+    {
+      "name": "router",
+      "contains": ".mlp.gate.",
+      "expect": "unquantized",
+      "basis": "headers: mlp.gate.weight and mlp.gate.e_score_correction_bias in MoE layers; config n_routed_experts 256, scoring_func sigmoid, moe_router_dtype float32. The trailing dot keeps gate_proj out."
+    },
+    {
+      "name": "router_correction_bias",
+      "contains": ".mlp.gate.e_score_correction_bias",
+      "expect_unquantized_dtype": "F32",
+      "basis": "headers: F32 [256] per MoE layer; config topk_method noaux_tc"
+    },
+    {
+      "name": "routed_experts",
+      "contains": ".mlp.switch_mlp.",
+      "expect": "quantized",
+      "basis": "headers: switch_mlp.{gate,up,down}_proj stacked with a leading expert dimension; config n_routed_experts 256, moe_intermediate_size 2048"
+    },
+    {
+      "name": "shared_experts",
+      "contains": ".mlp.shared_experts.",
+      "expect": "quantized",
+      "basis": "headers: shared_experts.{gate,up,down}_proj; config n_shared_experts 1"
+    },
+    {
+      "name": "dense_mlp",
+      "contains_any": [".mlp.gate_proj.", ".mlp.up_proj.", ".mlp.down_proj."],
+      "expect": "quantized",
+      "basis": "headers: mlp.{gate,up,down}_proj directly under a layer; config first_k_dense_replace 3, intermediate_size 12288"
+    },
+    {
+      "name": "mla_attention",
+      "contains_any": [".self_attn.q_a_proj.", ".self_attn.q_b_proj.", ".self_attn.kv_a_proj_with_mqa.", ".self_attn.embed_q.", ".self_attn.unembed_out.", ".self_attn.o_proj."],
+      "expect": "quantized",
+      "basis": "headers: the MLA projections; config q_lora_rank 2048, kv_lora_rank 512, qk_rope_head_dim 64, v_head_dim 256, num_attention_heads 64"
+    },
+    {
+      "name": "mla_per_head_stacked",
+      "contains_any": [".self_attn.embed_q.", ".self_attn.unembed_out."],
+      "expect": "quantized",
+      "basis": "headers: embed_q and unembed_out are stored per attention head with a leading dimension of 64 (config num_attention_heads 64)"
+    },
+    {
+      "name": "indexer",
+      "contains": ".self_attn.indexer.",
+      "basis": "headers: indexer.{wq_b,wk,weights_proj,k_norm} in some layers only; config index_n_heads 32, index_head_dim 128, index_topk 2048, indexer_types lists 'full' and 'shared' layers. No expectation: whether the indexer is quantized is what the census reports."
+    },
+    {
+      "name": "mtp",
+      "contains_any": ["model.layers.78.", ".eh_proj.", ".enorm.", ".hnorm.", ".shared_head.", "mtp", "nextn"],
+      "expect": "absent",
+      "basis": "config num_nextn_predict_layers 1 with num_hidden_layers 78: in the upstream layout a next-token-prediction layer would be layer index 78 with eh_proj/enorm/hnorm/shared_head members. Expected absent from this MLX conversion; a match is reported."
+    },
+    {
+      "name": "vision",
+      "contains_any": ["vision_model", "visual."],
+      "expect": "absent",
+      "basis": "config architectures GlmMoeDsaForCausalLM, no vision_config: text-only"
+    }
+  ]
+}
