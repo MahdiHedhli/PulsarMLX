@@ -13,7 +13,8 @@ import sys
 from typing import Any, Iterable
 
 from scripts.ci.classify_ci_change import (
-    DOCS_ONLY, EVIDENCE_ONLY, changed_entries, classify_change, path_class,
+    DOCS_ONLY, EVIDENCE_ONLY, FULL_NATIVE, UNKNOWN_DEFAULT_FULL, CLOSED_BRANCH_GUARD,
+    changed_entries, classify_change, path_class,
 )
 
 
@@ -59,9 +60,15 @@ def _git(repository: Path, *arguments: str, binary: bool = False):
     return completed.stdout
 
 
-def _diff_rows(repository: Path, base: str, head: str) -> list[tuple[str, str]]:
+def _diff_rows(repository: Path, base: str, head: str,
+               evidence_subset: bool = False) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     for row in changed_entries(repository, base, head):
+        if evidence_subset and not any(path_class(p) == EVIDENCE_ONLY for p in row["paths"]):
+            # Mixed ranges: non-evidence rows are native CI's to qualify. A row
+            # with an evidence path on EITHER side stays, so a rename out of, or
+            # into, the evidence root is still refused below.
+            continue
         if row["status"].startswith("R") and len(row["paths"]) == 2:
             old, new = row["paths"]
             if path_class(old) == path_class(new) == DOCS_ONLY:
@@ -184,18 +191,32 @@ def validate_change(
     head: str,
     branch: str,
     run_attempt1: bool = True,
+    mixed_range: bool = False,
 ) -> dict[str, Any]:
+    """Validate a committed range.
+
+    ``mixed_range`` is for a range the classifier routed to native CI that
+    also touches evidence. It validates the evidence-path subset of the SAME
+    range under the SAME append-only rules and leaves every other path to the
+    native jobs; it never widens what an evidence change may do. A range that
+    auto-classifies as EVIDENCE_ONLY (for example a manual ``full`` dispatch)
+    gets the whole strict validation instead of the subset.
+    """
     repository = repository.resolve(strict=True)
     _git(repository, "cat-file", "-e", f"{base}^{{commit}}")
     _git(repository, "cat-file", "-e", f"{head}^{{commit}}")
     mode, _ = classify_change(repository, base, head, branch=branch)
-    if mode not in {EVIDENCE_ONLY, DOCS_ONLY}:
+    allowed = ({FULL_NATIVE, UNKNOWN_DEFAULT_FULL, CLOSED_BRANCH_GUARD, EVIDENCE_ONLY}
+               if mixed_range else {EVIDENCE_ONLY, DOCS_ONLY})
+    if mode not in allowed:
         raise ValidationError(f"evidence validator received {mode} diff")
-    rows = _diff_rows(repository, base, head)
+    subset = mixed_range and mode != EVIDENCE_ONLY
+    rows = _diff_rows(repository, base, head, evidence_subset=subset)
     if not rows:
         raise ValidationError("evidence validation requires changed evidence")
     completed = subprocess.run(
-        ["git", "diff", "--check", base, head],
+        ["git", "diff", "--check", base, head,
+         *(("--", EVIDENCE_PREFIX) if subset else ())],
         cwd=repository,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -254,7 +275,7 @@ def validate_change(
         from scripts.ci.validate_f017_attempt1_evidence import validate
 
         attempt1 = validate(repository)
-    return {
+    result = {
         "schema": "pulsarmlx.ci.evidence-change-validation/2.0.0",
         "result": "PASS",
         "base": base,
@@ -278,6 +299,13 @@ def validate_change(
         "checkpoint_opens": 0,
         "attempt1_validation": attempt1,
     }
+    if mixed_range:
+        result["range_scope"] = ("EVIDENCE_SUBSET_OF_MIXED_RANGE" if subset
+                                 else "WHOLE_EVIDENCE_ONLY_RANGE")
+        result["ignored_non_evidence_row_count"] = sum(
+            1 for row in changed_entries(repository, base, head)
+            if not any(path_class(p) == EVIDENCE_ONLY for p in row["paths"]))
+    return result
 
 
 def main(argv: Iterable[str] | None = None) -> int:
@@ -288,6 +316,8 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--branch", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--skip-attempt1", action="store_true")
+    parser.add_argument("--mixed-range", action="store_true",
+                        help="validate only the evidence subset of a native-routed range")
     arguments = parser.parse_args(list(argv) if argv is not None else None)
     result = validate_change(
         arguments.repository,
@@ -295,6 +325,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         head=arguments.head,
         branch=arguments.branch,
         run_attempt1=not arguments.skip_attempt1,
+        mixed_range=arguments.mixed_range,
     )
     encoded = json.dumps(result, indent=2, sort_keys=True) + "\n"
     arguments.output.write_text(encoded, encoding="utf-8")

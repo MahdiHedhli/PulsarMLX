@@ -30,6 +30,7 @@ jobs:
       mode: ${{ steps.route.outputs.mode }}
       base: ${{ steps.route.outputs.base }}
       head: ${{ steps.route.outputs.head }}
+      evidence_touched: ${{ steps.route.outputs.evidence_touched }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,16 +70,20 @@ jobs:
   evidence-integrity:
     name: Evidence integrity
     needs: classify
-    if: needs.classify.outputs.mode == 'EVIDENCE_ONLY'
+    if: needs.classify.outputs.mode == 'EVIDENCE_ONLY' || needs.classify.outputs.evidence_touched == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # A native-routed range that also touches evidence validates the
+      # evidence subset of the same classified base..head range; an
+      # EVIDENCE_ONLY range keeps the unchanged strict whole-range invocation.
       - name: Validate append-only evidence and accompanying documentation
         env:
           BASE_SHA: ${{ needs.classify.outputs.base }}
           HEAD_SHA: ${{ needs.classify.outputs.head }}
+          MODE: ${{ needs.classify.outputs.mode }}
         run: |
           set -euo pipefail
           BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
@@ -86,13 +91,17 @@ jobs:
           if test -f docs/architecture/reviews/evidence/f017-native-bounded-p1-real-attempt-01-execution-evidence-v1.json; then
             ATTEMPT_FLAG=
           fi
+          RANGE_FLAG=
+          if test "$MODE" != EVIDENCE_ONLY; then
+            RANGE_FLAG=--mixed-range
+          fi
           python3 -m scripts.ci.validate_evidence_change \
             --repository . \
             --base "$BASE_SHA" \
             --head "$HEAD_SHA" \
             --branch "$BRANCH" \
             --output "$RUNNER_TEMP/evidence-validation-summary.json" \
-            $ATTEMPT_FLAG
+            $ATTEMPT_FLAG $RANGE_FLAG
           cat "$RUNNER_TEMP/evidence-validation-summary.json"
           cat "$RUNNER_TEMP/evidence-validation-summary.json" >> "$GITHUB_STEP_SUMMARY"
 
@@ -1106,9 +1115,11 @@ jobs:
       - apple-mlx-small-fixtures
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - name: Enforce selected mode result
         env:
           MODE: ${{ needs.classify.outputs.mode }}
+          EVIDENCE_TOUCHED: ${{ needs.classify.outputs.evidence_touched }}
           CLASSIFY_RESULT: ${{ needs.classify.result }}
           EVIDENCE_RESULT: ${{ needs.evidence-integrity.result }}
           DOCS_RESULT: ${{ needs.documentation.result }}
@@ -1117,38 +1128,4 @@ jobs:
           NATIVE_RESULT: ${{ needs.apple-mlx-small-fixtures.result }}
         run: |
           set -euo pipefail
-          test "$CLASSIFY_RESULT" = success
-          case "$MODE" in
-            FULL_NATIVE)
-              test "$BASELINE_RESULT" = success
-              test "$NATIVE_RESULT" = success
-              ;;
-            EVIDENCE_ONLY)
-              test "$EVIDENCE_RESULT" = success
-              test "$BASELINE_RESULT" = skipped
-              test "$NATIVE_RESULT" = skipped
-              ;;
-            DOCS_ONLY)
-              test "$DOCS_RESULT" = success
-              test "$BASELINE_RESULT" = skipped
-              test "$NATIVE_RESULT" = skipped
-              ;;
-            NO_CHANGES)
-              test "$BASELINE_RESULT" = skipped
-              test "$NATIVE_RESULT" = skipped
-              ;;
-            CLOSED_BRANCH_GUARD)
-              test "$GUARD_RESULT" = failure
-              echo 'Closed-branch guard correctly refused automatic implementation qualification.'
-              exit 1
-              ;;
-            UNKNOWN_DEFAULT_FULL)
-              test "$BASELINE_RESULT" = success
-              test "$NATIVE_RESULT" = success
-              ;;
-            *)
-              echo "Unknown CI mode: $MODE" >&2
-              exit 1
-              ;;
-          esac
-          printf 'selected_mode=%s\n' "$MODE"
+          python3 -I -B scripts/ci/aggregate_status_v1.py
