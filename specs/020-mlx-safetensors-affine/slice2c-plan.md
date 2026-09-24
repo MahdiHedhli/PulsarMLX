@@ -1,8 +1,9 @@
 # Feature 020, Slice 2C: synthetic expert-plane composition (plan)
 
-**Status: plan draft 2 (2026-09-24), with contract `1.0.0-draft.2`.** Prepared
-before any composition code exists. Draft 2 folds in the planner's resolutions
-of the draft-1 open questions (§10). The generator, the manifest and the
+**Status: plan draft 3 (2026-09-24), with contract `1.0.0-draft.3`.** Prepared
+before any composition code exists. Draft 2 folded in the planner's resolutions
+of the draft-1 open questions (§10). Draft 3 replaces only the Slice 2B
+regression requirement (§6.2) with the planner's decision. The generator, the manifest and the
 fixtures are byte-identical to draft 1. Nothing here is authorized until the
 owner gives the GO in §10.
 
@@ -370,90 +371,158 @@ Four further requirements:
 Evidence for Y records the doctor test output with every control listed and
 rejected.
 
-### 6.2 Slice 2B invocation unchanged: required regression proof
+### 6.2 Slice 2B invocation unchanged: required regression proof (planner decision, draft 3)
 
-On the same GitHub runner class as attempt 3 (`macos-15`, job
-`apple-mlx-small-fixtures`), at the Slice 2C candidate, all of the following
-are required:
+Draft 2 required the candidate's 363-case Slice 2B child report to be
+byte-identical to the attempt-3 report. That cannot hold by construction: the
+report embeds the running `qualify` binary's own sha256. The requirement is
+replaced by a primary same-run differential (b) and a secondary cross-run
+comparison (a).
 
-1. **Test set unchanged.** `cargo test -p mlx-native-affine --release --
-   --list` and `cargo test -p mlx-native-affine --release --doc -- --list`
-   list exactly the same tests, in the same order, at base `12b06367` and at
-   the candidate. In particular, `composition_qualification` does not appear,
-   because it is `test = false`. `cargo test -p mlx-native-affine --release
-   --test composition_qualification -- --list` does list it, which confirms
-   the explicit invocation still runs it.
-2. **Behaviour unchanged.** The 363-case Slice 2B child report
-   (`qualification/child/report.json`) is byte-identical to the attempt-3
-   report. The attempt-3 evidence records it
-   (`docs/architecture/reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json`,
-   CI run `36006063937`, candidate `e6f502ff`) as sha256
-   `e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640`,
-   519,872 bytes.
-3. **Gate counts unchanged.** The Slice 2B summary's `gate_counts` equal
-   attempt 3's exactly:
+#### (b) PRIMARY: same-run base vs candidate differential
 
-   | Gate | Cases |
-   |---|---|
-   | B6-REFUSAL | 37 |
-   | E1-DEVICE | 362 |
-   | E6-CPU-REFUSED | 1 |
-   | G-IMPORT | 8 |
-   | G-CAST | 2 |
-   | G-DQ-CODES | 18 |
-   | G-DQ-RUST | 59 |
-   | G-DQ-EXACT | 59 |
-   | G-R1-SELF-DQ | 59 |
-   | G-QMM-RUST | 239 |
-   | G-QMM-EXACT | 237 |
-   | G-R1-SELF-QMM | 237 |
-   | N-QMM-ZERO | 1 |
-   | SHAPE-DTYPE | 326 |
+This runs in the same CI run and the same job (`apple-mlx-small-fixtures`, on
+the GitHub `macos-15` runner), inside the required Slice 2C step. Both runs
+use the same runner-built native prefix, meaning the same `MLX_C_PREFIX` and
+`MLX_PREFIX` produced once by `scripts/ci/install_native_mlx.sh` in that job,
+and the same toolchain.
 
-   All passed, with 363 cases and an empty failures list.
+- **BASE.** A detached worktree of `12b063675c2227c59d2157458e051d73647b7045`
+  runs its unchanged Slice 2B qualification:
+  `cargo test -p mlx-native-affine --release --no-fail-fast --
+  --test-threads=1 --nocapture`, with its own `CARGO_TARGET_DIR` and
+  `PULSAR_F020_QUALIFICATION_OUT`.
+- **CANDIDATE.** The candidate checkout runs the same command, invoking the
+  existing Slice 2B mode (`--mode qualify`) unchanged, with its own target and
+  output directories.
+- **Compare.** A new stdlib-only script,
+  `scripts/ci/f020_slice2b_regression_compare_v1.py`, compares the two
+  `qualification/child/report.json` files.
+  - Canonical form: for each report, parse the JSON, delete exactly the
+    volatile fields below, and serialize with Python
+    `json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)`,
+    encoded as UTF-8.
+  - Deleting a field means removing the key from its object. Arrays keep their
+    order, and `cases` stays in manifest order.
+  - The two canonical byte strings must be equal. Everything not listed is
+    therefore compared byte for byte, including:
+    - every case's `outcome`, `refusal_id`, `expected_refusal_id`,
+      `geometry`, `kernel`, `metadata_cast`, `structural` and `output`
+      (`file`, `sha256`, `nbytes`, `dtype`, `shape`);
+    - each case's `stats.numerical_calls_before_decision`,
+      `stats.imports_before_decision`, `stats.device_facts_gpu` and
+      `stats.e5_peak_memory.output_nbytes`;
+    - `canary_start` and `canary_end`, including `output_sha256`;
+    - `cleanup` (errors, `array_free_calls`, `result_handles`), `handles`,
+      `call_counts` and `error_handler`;
+    - `abi_values`, all of `provenance` except the listed field (the native
+      library, metallib and prefix identity, the environment, the device,
+      `build.rustc`, `build.crate_version` and `build.profile`);
+    - `schema`, the three echoed hashes, `completed`, `test_fault` and
+      `thread`.
+- **Also required in the same run:**
+  - the two runs' parent `summary.json` `gate_counts` are identical, and
+    equal the attempt-3 counts in the table below;
+  - both have `result` PASS and an empty `failures` list;
+  - the Slice 2B step's test-name list is identical at base and candidate:
+    `cargo test -p mlx-native-affine --release -- --list` and
+    `cargo test -p mlx-native-affine --release --doc -- --list`, compared line
+    for line;
+  - `composition_qualification` appears in neither list (it is
+    `test = false`), and
+    `cargo test -p mlx-native-affine --release --test composition_qualification -- --list`
+    does list it.
 
-**Finding: requirement 2 cannot be met as stated.** It is recorded here and
-not resolved by this preparation. By construction, the child report embeds
-values that change when the candidate changes or the runner image changes:
+**Volatile fields, prospectively enumerated and exhaustive.** These are the
+only fields removed. The paths are relative to the child report root, and
+`cases[*]` means every element of `cases`.
 
-- `provenance.build.qualify_executable_sha256` is the sha256 of the running
-  `qualify` binary (`src/bin/qualify/provenance.rs:188-190`, reported at
-  line 230). Adding `--mode compose` to that binary, and linking
-  `mlx-affine` and `safetensors-catalog` into it, changes that value.
-- `provenance.build.rustc` is the runner's toolchain version.
-- The libmlx, libmlxc and metallib sha256 and byte counts come from the
-  native prefix, which is built on the runner.
-- The per-case `e5_peak_memory.active_before` and `peak_after` values are
-  allocator observations (`src/bin/qualify/run.rs:53-66`).
+| # | JSON path | Why it is volatile |
+|---|---|---|
+| V1 | `provenance.build.qualify_executable_sha256` | the sha256 of the running `qualify` binary (`std::env::current_exe()`, `src/bin/qualify/provenance.rs:188-190`, reported at line 230). Base and candidate are different binaries by construction: the candidate adds `--mode compose` and links `mlx-affine` and `safetensors-catalog`. The report carries no path or size of the executable, so nothing else about it is removed. |
+| V2 | `cases[*].stats.e5_peak_memory.active_before` | the allocator's active-memory reading before the operation (`mlx_get_active_memory`, `src/bin/qualify/run.rs:53-66`, `bridge.rs` `memory_before`). It depends on allocator and buffer-cache state, not only on the case's inputs. It is `null` on refused cases in both runs. |
+| V3 | `cases[*].stats.e5_peak_memory.peak_after` | the allocator's peak reading after the operation (`mlx_get_peak_memory`, same sites). Volatile for the same reason. |
+| V4 | `cases[*].stats.e5_peak_memory.peak_delta_ge_output_nbytes` | derived only from V2 and V3 (`peak_after - active_before >= output_nbytes`, `run.rs:53-56`). It is E5, which is "supporting only" and gates nothing in the Slice 2B contract (`execution_evidence` E5). |
 
-The candidate's own child cannot reproduce `e3b596bc…`. The integration owner
-must not substitute a weaker comparison on their own: a mismatch in
-requirement 2 is a STOP reported to the planner. Two options are proposed for
-the planner's decision. Neither is adopted here.
+Deliberately NOT listed, and therefore compared:
 
-- **(a) Canonical projection.** The report is compared byte for byte as
-  canonical JSON after removing only an enumerated volatile-field set:
-  - `provenance.build.qualify_executable_sha256`;
-  - `provenance.build.rustc`;
-  - the native-library and metallib sha256 and byte counts, only when the
-    runner-built prefix differs from attempt 3's, and that difference is
-    itself recorded;
-  - every case's `stats.e5_peak_memory.active_before` and `peak_after`.
+- `provenance.build.rustc`, `build.crate_version` and `build.profile`: one job
+  builds both children with the same toolchain, crate version `0.1.0` and the
+  `release` profile, so a difference is a finding. The candidate must not
+  change the crate version.
+- Every native-library, metallib and prefix-identity field: both children
+  load the same runner-built prefix.
+- `provenance.os_product_version` and `device_info`: same runner.
+- `provenance.environment`: the same fixed child environment, with paths
+  already redacted to `<native-prefix>`.
 
-  In addition, every per-case output file (`outputs/<id>.bin`) must be
-  byte-identical to attempt 3's.
-- **(b) Same-run differential.** In one workflow run, the base `12b06367`
-  child and the candidate child run on the same runner, and their reports are
-  compared under the same projection.
+The child report has no timestamp or duration field. The parent's `elapsed_ms`
+lives in the parent summary, not in the child report. If an integration
+change would add one to the Slice 2B child report, that would itself change
+the Slice 2B invocation, which is not allowed.
 
-Attempt 3's full report exists only as the CI artifact
-`f020-slice2b-qualification` of run `36006063937`. The evidence records only
-its hash. The artifact has to be retrieved and preserved before GitHub's
-artifact retention expires, or option (a) against attempt 3 becomes
-impossible.
+**Stop rule.** Any difference outside V1–V4, including a field present in one
+report and absent from the other, is a STOP condition reported to the planner.
+Adding a field to the volatile list after any observation is a contract
+change: it needs a new contract version and re-review (correction_policy
+rule_2). The comparison script prints the list of differing JSON paths and
+exits non-zero. It never prints or accepts a tolerance.
 
-The generator test runs in the existing research-methodology step. That step
-discovers `scripts/research/tests/test*.py` and needs no workflow change.
+#### (a) SECONDARY: cross-run comparison against attempt 3
+
+The reference is the attempt-3 child report, which the planner has preserved:
+
+- CI run `36006063937`, artifact
+  `f020-slice2b-qualification/qualification/child/report.json`;
+- sha256 `e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640`,
+  519,872 bytes;
+- also recorded in
+  `docs/architecture/reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json`.
+
+The comparison needs a checked-in or retrievable copy whose sha256 is verified
+first. Where it is stored is for the integration owner to propose. It must not
+be a private host path in a committed file.
+
+For every one of the 363 case ids, the candidate report's per-case outputs
+must equal attempt 3's:
+
+- `outcome`, `refusal_id`;
+- `output.sha256`, `output.nbytes`, `output.dtype`, `output.shape`;
+- `structural`.
+
+In addition, `canary_start.output_sha256` and `canary_end.output_sha256` must
+be equal. The report carries no per-case numerical values beyond these
+digests, because the outputs are separate files.
+
+This cross-run comparison relies on the runner's native build (libmlx,
+libmlxc, metallib), toolchain and device being identical across runs. The
+comparison records both runs' `provenance.native_prefix.identity_sha256`,
+`libmlx`/`libmlxc`/`metallib` sha256, `build.rustc`, `os_product_version` and
+`device_info`.
+
+A mismatch in (a) while (b) passes is recorded in the evidence together with
+those provenance differences, and reported to the planner. It is not silently
+accepted, and it is not converted into a pass.
+
+**Attempt-3 gate counts.** All passed; these are the values (b) must also
+match.
+
+| Gate | Cases |
+|---|---|
+| B6-REFUSAL | 37 |
+| E1-DEVICE | 362 |
+| E6-CPU-REFUSED | 1 |
+| G-IMPORT | 8 |
+| G-CAST | 2 |
+| G-DQ-CODES | 18 |
+| G-DQ-RUST | 59 |
+| G-DQ-EXACT | 59 |
+| G-R1-SELF-DQ | 59 |
+| G-QMM-RUST | 239 |
+| G-QMM-EXACT | 237 |
+| G-R1-SELF-QMM | 237 |
+| N-QMM-ZERO | 1 |
+| SHAPE-DTYPE | 326 |
 
 ## 7. Evidence records (append-only)
 
@@ -528,10 +597,13 @@ into the sections cited.
 2. **Linking Slice 1 into the child.** Approved. Independence is required at
    two levels, the static source test and the `nm` symbol check with positive
    and negative controls (§2.1).
-3. **Slice 2B invocation unchanged.** Required: the same test set, a
-   byte-identical 363-case report (`e3b596bc…`) and the same gate counts
-   (§6.2). The finding in §6.2, that requirement 2 cannot be met as stated,
-   is open for the planner.
+3. **Slice 2B invocation unchanged.** Replaced by the planner's decision in
+   draft 3 (§6.2). The primary requirement is (b): a same-run base vs
+   candidate differential of the two child reports as canonical JSON, with
+   only V1–V4 removed, plus identical gate counts and an identical test-name
+   list. The secondary requirement is (a): per-case output digests against
+   the preserved attempt-3 report, recorded and reported on mismatch. Any
+   difference outside V1–V4 is a stop condition.
 4. **Harness extraction.** Authorized as the behaviour-preserving move listed
    in §2.3. The regression proof is §6.2.
 5. **Mutation injection at the selection-record level.** Accepted. The
@@ -543,8 +615,9 @@ into the sections cited.
 
 Remaining owner GO items:
 
-1. **Freeze the contract.** Freeze `native-composition-v1.json` draft.2. It is
-   normatively draft.1 plus the requirements of resolutions 2, 3, 5 and 7,
+1. **Freeze the contract.** Freeze `native-composition-v1.json` draft.3. It is
+   normatively draft.1 plus the requirements of resolutions 2, 3 (as decided
+   in draft 3), 5 and 7,
    and includes:
    - the composition refusal order;
    - the selection checks;
@@ -554,5 +627,3 @@ Remaining owner GO items:
    The manifest's `contract_schema` field names draft.1, the draft under
    which the population was generated. This follows Slice 2B, whose manifest
    names contract draft.4 under the frozen draft.6.
-3. **Decide the §6.2 finding.** Choose option (a) or (b), or another rule,
-   before the integration run.

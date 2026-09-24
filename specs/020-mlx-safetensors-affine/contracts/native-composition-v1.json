@@ -1,5 +1,5 @@
 {
-  "schema": "pulsarmlx.f020.native-composition-contract/1.0.0-draft.2",
+  "schema": "pulsarmlx.f020.native-composition-contract/1.0.0-draft.3",
   "feature": "020-mlx-safetensors-affine",
   "slice": "2C",
   "status": "DRAFT_PROSPECTIVE_NOT_FROZEN",
@@ -12,6 +12,10 @@
     {
       "version": "1.0.0-draft.2",
       "note": "folds in the planner's resolutions of the draft-1 open questions (2026-09-24), requirements only: child independence from R1 and the production decoder at source and symbol level (C7); a required public-interface test for the sealed plane (I-PLANE-SINGLE-INDEX); the Slice 2B regression requirement stated exactly (unchanged test set, byte-identical 363-case report e3b596bc..., unchanged gate counts), with the recorded finding that report byte-identity is unattainable as stated (slice2c-plan.md section 6.2), open for the planner; the composition CI step REQUIRED through doctor X/Y with mutation controls (C10). No relation, refusal predicate, selection check, comparison, assumption or fixture changed; generator, manifest and fixtures byte-unchanged. The manifest's contract_schema field keeps naming draft.1, the draft under which the population was generated."
+    },
+    {
+      "version": "1.0.0-draft.3",
+      "note": "planner decision on the draft-2 finding: replaces execution.slice_2b_regression and C9 only. The unattainable byte-identity to the attempt-3 report becomes (b), a primary same-run base (12b06367) vs candidate differential of the Slice 2B child reports as canonical JSON with exactly four prospectively enumerated volatile fields removed, plus identical gate counts and test-name list; and (a), a secondary cross-run comparison of per-case output digests against the preserved attempt-3 report. Nothing else changed; generator, manifest and fixtures byte-unchanged; the manifest's contract_schema keeps naming draft.1."
     }
   ],
   "prospective_statement": "Every relation, refusal, check and acceptance criterion in this file was written before any composition code existed and before any Slice 2C observation. No MLX operation, native bridge call, qualification child, composition path or Rust R1 was run while drafting it. The fixture population was produced by a stdlib-only generator whose only arithmetic is exact integer offset/size arithmetic and the frozen Slice 2B domain classifier; the generator's oracle does not call production slicing (mlx_affine::AffineTriple::expert_slice / row_slice) or the production decoder. One non-numerical sanity observation preceded this file and is disclosed: the committed fixture checkpoints were opened with the Slice 1 catalog (Checkpoint::open, QuantizationConfig::from_config_json, validate_catalog, classify_module) in a throwaway program that was not committed; it confirmed admission and the resolved (bits, group) of every module, that ck-a-single and ck-a-sibling have the same catalog digest, and that dropping the block.1.stack_d override is refused as InconsistentOverride with implied_bits 8. No range, byte or number from any selection or execution was observed.",
@@ -227,7 +231,48 @@
   "execution": {
     "child": "a new mode of the existing qualify child (e.g. --mode compose), not a change to --mode qualify; the same start-environment assertion (R-NAX), single error handler, default device GPU, provenance (E3), E4 canary at start and end, one NativeContext, one thread, all cases in manifest order (the three seq-aba cases consecutive), report written atomically",
     "parent": "a separate parent test target that launches the compose child with the Slice 2B fixed environment and the frozen CHILD_TIMEOUT_SECONDS watchdog (SIGKILL, waitpid, TIMEOUT, no retry); the parent failure conditions of native-primitives-v1.json#error_handling.child_process apply unchanged; cleanup accounting (cleanup.errors empty, result handles balanced, zero live arrays at context drop, no double free) as in Slice 2B",
-    "slice_2b_regression": "REQUIRED of every Slice 2C candidate, on the GitHub macos-15 runner of job apple-mlx-small-fixtures: (1) the Slice 2B step's test set is unchanged: `cargo test -p mlx-native-affine --release -- --list` and `--doc -- --list` are identical at base 12b06367 and at the candidate; (2) the 363-case Slice 2B child report is byte-identical to the attempt-3 report, sha256 e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640 (docs/architecture/reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json, run 36006063937); (3) the Slice 2B gate counts equal attempt 3's exactly, all passed, with 363 cases and no failure. Recorded finding: (2) is unattainable as stated, because the report embeds the qualify executable's sha256, the rustc version, runner-built native-library hashes and allocator observations (slice2c-plan.md section 6.2). A mismatch is a STOP reported to the planner, and no weaker comparison may be substituted without a planner decision."
+    "slice_2b_regression": {
+     "primary_b_same_run_differential": {
+      "setting": "one CI run, one job (apple-mlx-small-fixtures on the GitHub macos-15 runner), inside the required Slice 2C step; one runner-built native prefix (the MLX_C_PREFIX/MLX_PREFIX produced once in that job by scripts/ci/install_native_mlx.sh) and one toolchain",
+      "base": "a detached worktree of 12b063675c2227c59d2157458e051d73647b7045 runs its unchanged Slice 2B qualification (cargo test -p mlx-native-affine --release --no-fail-fast -- --test-threads=1 --nocapture) with its own target and output directories",
+      "candidate": "the candidate runs the same command, invoking the existing Slice 2B mode (--mode qualify) unchanged, with its own target and output directories",
+      "comparison": "the two qualification/child/report.json documents are parsed, exactly the volatile_fields are deleted (key removal; array order kept; cases in manifest order), and each is serialized as json.dumps(value, sort_keys=True, separators=(\",\", \":\"), ensure_ascii=True) encoded as UTF-8; the two byte strings must be equal. Every other field is thereby compared byte for byte, including every per-case outcome, refusal_id, expected_refusal_id, geometry, kernel, metadata_cast, structural and output digest, the stats call counters, device_facts_gpu and e5 output_nbytes, both canaries, cleanup, handles, call_counts, error_handler, abi_values, and all provenance except V1 (including build.rustc, build.crate_version, build.profile, native library, metallib and prefix identity, environment and device)",
+      "also_required": [
+       "the base and candidate parent summaries' gate_counts are identical and equal the attempt-3 counts (B6-REFUSAL 37, E1-DEVICE 362, E6-CPU-REFUSED 1, G-IMPORT 8, G-CAST 2, G-DQ-CODES 18, G-DQ-RUST 59, G-DQ-EXACT 59, G-R1-SELF-DQ 59, G-QMM-RUST 239, G-QMM-EXACT 237, G-R1-SELF-QMM 237, N-QMM-ZERO 1, SHAPE-DTYPE 326, all passed); both have result PASS and no failure",
+       "the Slice 2B step's test-name list is identical at base and candidate (cargo test -p mlx-native-affine --release -- --list and --doc -- --list, compared line by line); composition_qualification is absent from both and is listed by --test composition_qualification -- --list"
+      ],
+      "volatile_fields": [
+       {
+        "id": "V1",
+        "path": "provenance.build.qualify_executable_sha256",
+        "why": "the sha256 of the running qualify binary (current_exe, src/bin/qualify/provenance.rs:188-190, reported at 230); the base and candidate binaries differ by construction. The report carries no path or size of the executable."
+       },
+       {
+        "id": "V2",
+        "path": "cases[*].stats.e5_peak_memory.active_before",
+        "why": "the allocator's active-memory reading before the operation (mlx_get_active_memory; src/bin/qualify/bridge.rs memory_before, run.rs:53-66); it depends on allocator and cache state; null on refused cases"
+       },
+       {
+        "id": "V3",
+        "path": "cases[*].stats.e5_peak_memory.peak_after",
+        "why": "the allocator's peak-memory reading after the operation (mlx_get_peak_memory, same sites)"
+       },
+       {
+        "id": "V4",
+        "path": "cases[*].stats.e5_peak_memory.peak_delta_ge_output_nbytes",
+        "why": "derived only from V2 and V3 (run.rs:53-56); E5 is supporting only and gates nothing (native-primitives-v1.json#execution_evidence E5)"
+       }
+      ],
+      "not_volatile_by_decision": "build.rustc, build.crate_version and build.profile (same toolchain, version and profile in one job; the candidate must not change the crate version); native-library, metallib and prefix identity (same prefix); os_product_version and device_info (same runner); environment (fixed, redacted). The child report has no timestamp or duration field.",
+      "stop_rule": "any difference outside V1-V4, including a field present in only one report, is a STOP condition reported to the planner; adding a field to volatile_fields after any observation is a contract change requiring a new version and re-review (correction_policy.rule_2); no tolerance exists"
+     },
+     "secondary_a_cross_run": {
+      "reference": "the attempt-3 child report preserved by the planner: CI run 36006063937, artifact f020-slice2b-qualification/qualification/child/report.json, sha256 e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640 (519872 bytes), verified before use; recorded in docs/architecture/reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json",
+      "comparison": "for every one of the 363 case ids: outcome, refusal_id, output.sha256, output.nbytes, output.dtype, output.shape and structural equal attempt 3's; canary_start.output_sha256 and canary_end.output_sha256 equal attempt 3's (the report carries no per-case numerical values beyond these digests)",
+      "reliance": "this cross-run comparison relies on the runner's native build (libmlx, libmlxc, metallib), toolchain and device being identical across runs; both runs' native_prefix identity, library and metallib sha256, build.rustc, os_product_version and device_info are recorded with it",
+      "mismatch_policy": "a mismatch in (a) while (b) passes is recorded in the evidence with the provenance differences and reported to the planner; it is not silently accepted and not converted into a pass"
+     }
+    }
   },
   "reporting_and_ci": {
     "report": "the child report carries schema pulsarmlx.f020.slice2c-child-report/1.0.0, echoes contract_sha256, manifest_sha256, generator_sha256 and slice2b_contract_sha256, and per case: id, outcome (executed | refused | detected | error), refusal id or detected checks, call-counter deltas, selection record (identity, ranges, sha256), copy/array census, A and B output files with sha256 (executed cases)",
@@ -244,7 +289,7 @@
     "C6: every FX-COMP-MUTATION case detected by exactly its detected_by checks, the mutation applied exactly as specified, and no native call in the case.",
     "C7: I-PLANE-SINGLE-INDEX by its required public-interface test; I-PLANE-NO-REINTERPRET verified statically; I-PLANE-NO-F32-WEIGHT through N-COMP-ARRAYS; the library crate stays MLX-free and #![forbid(unsafe_code)]; the child still contains exactly one mlx_set_error_handler call site and no newly linked crate calls it. Independence of the child from R1 and from the production decoder at two levels: (a) a static test that no child code path (src/compose.rs, src/frozen_compose.rs, src/bin/qualify/**) names mlx_affine reference, reference_qmm, qmm_reference, dq_reference, decode, dequantize_rows or unpack_codes, and that none glob-imports mlx_affine; (b) an nm check of the built qualify executable: no symbol containing 10mlx_affine13reference_qmm, 10mlx_affine9reference or 10mlx_affine6decode; a positive control (at least one 10mlx_affine6module symbol present); and a negative control (the same scan of the parent test executable, which calls reference_qmm, finds 10mlx_affine13reference_qmm).",
     "C8: E1-E4 and E6 in the compose child on the required gate host; E5 recorded; cleanup accounting clean; parent failure conditions and watchdog as in Slice 2B.",
-    "C9: execution.slice_2b_regression holds in full at the same candidate (unchanged test set, byte-identical 363-case report, unchanged gate counts), or the recorded finding is decided by the planner before the run.",
+    "C9: execution.slice_2b_regression.primary_b_same_run_differential holds in full (canonical child reports equal after removing exactly V1-V4, identical gate counts equal to attempt 3, identical test-name list); secondary_a_cross_run is performed and recorded, and any mismatch in it is reported to the planner.",
     "C10: the composition step is required in apple-mlx-small-fixtures through doctor X/Y, and every doctor mutation control of reporting_and_ci.ci is rejected."
   ],
   "unknowns": [
