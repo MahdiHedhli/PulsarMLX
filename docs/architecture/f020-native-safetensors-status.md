@@ -246,7 +246,13 @@ request outside D-GEOM, D-NUM or D-DQ is refused, in the contract's frozen
 order, before any MLX-C call. All MLX work runs in one child process with a
 fixed environment (`MLX_ENABLE_TF32=0`), an 1800 s watchdog and no retry.
 
-**What passed.** CI run
+**What passed.** The qualified candidate is `e6f502ff`: CI run
+[`36006063937`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/36006063937),
+attempt 3 ([record](reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json)),
+after an implementation review asked that cleanup (teardown) MLX-C failures be
+preserved and fail qualification and that error-path frees be counted
+directly; both injected cleanup-error controls fail as required, and the
+numbers below are unchanged. Attempt 2, CI run
 [`35953592030`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/35953592030)
 on candidate `844a8f63`, required step `Qualify F020 Slice 2B native primitives
 (frozen synthetic population, runner GPU)`: all 363 frozen cases. Imports 8/8
