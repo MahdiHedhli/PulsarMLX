@@ -13,6 +13,7 @@ members = [
     "crates/f017-native",
     "crates/safetensors-catalog",
     "crates/mlx-affine",
+    "crates/mlx-native-affine",
 ]
 
 [workspace.package]

@@ -700,6 +700,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-native-affine"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "libc",
+ "mlx-affine",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "nix"
 version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
