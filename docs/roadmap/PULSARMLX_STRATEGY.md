@@ -11,43 +11,70 @@ local-usability work. GLM-5.2 remains the established large-model correctness
 reference. The [model-target register](MODEL_TARGETS.md) separates their evidence,
 formats and hardware roles; none inherits qualification solely from a family name.
 
-## Current direction (2026-09-20)
+## Current direction (2026-09-23)
 
-**This section is the current pointer for strategy.** Sections below that predate
-2026-09-20 are retained as written; where they disagree with this section about
-sequencing or the next target, they are historical and this section is current.
+**This section is the current pointer for strategy and sequencing.** It
+supersedes older sequencing, format-status and hardware-priority descriptions
+below. Historical evidence and model-specific restrictions remain unchanged.
+The concrete planned experiments, dependencies, metrics and stop rules are in
+[the optimization roadmap](OPTIMIZATION_ROADMAP.md).
 
-The consolidated mainline now carries three tracks together, and the boundary
-between them is load-bearing:
+The consolidated mainline carries distinct tracks:
 
 | Track | What it is | Status |
 | --- | --- | --- |
-| Qwen3-30B-A3B Q8_0 | the frozen Apple MLX research baseline | ✅ verified, frozen |
-| GLM-5.2 | Python/NumPy research ladder **and** the F017 Rust-native runtime — two different things | ✅ ladder C01–C11; ✅ one native token **qualified** on the real checkpoint; Stage A positions 1–7 and Stage B1 text generation 📏 measured, not qualified; formal closeout pending ([status](../architecture/f017-native-runtime-status.md)) |
-| GLM-5.3-Flash | Python/MLX paged expert-residency research | 🧪 measured candidate `971db9c1`; **not** the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
+| Qwen3-30B-A3B Q8_0 | the frozen Apple MLX research baseline | Verified, frozen |
+| GLM-5.2 | Python/NumPy research ladder and the F017 Rust-native runtime, separately qualified | Ladder C01-C11; one native token qualified on the real checkpoint; later real positions/text are measured, not independently qualified; formal closeout remains separate ([status](../architecture/f017-native-runtime-status.md)) |
+| GLM-5.3-Flash | Python/MLX paged expert-residency research | Measured candidate `971db9c1`, not the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
+| F020 Slice 1 | native model-neutral Safetensors catalog/admission and MLX affine representation/decoder | Merged; qualified on synthetic fixtures only ([status](../architecture/f020-native-safetensors-status.md)) |
+| F020 Slice 2B | native packed-weight primitive implementation and synthetic qualification | Reviewed preparation at [`9bf6a810`](https://github.com/MahdiHedhli/PulsarMLX/blob/9bf6a810622b7ef1156b750dd0f3140f8c0ca211/specs/020-mlx-safetensors-affine/slice2b-plan.md); implementation authorized separately, with no successful implementation/qualification claimed here |
 
-The Python/MLX Flash path is a research reference oracle for the native implementation, not a shipping path: the Rust-native Flash runtime is the only one PulsarMLX intends to ship.
+The Python/MLX Flash path is a behavioral and compatibility reference, not a
+shipping path or an independent correctness oracle for native MLX. R1 remains
+an independent scalar/binary64 or exact mathematical reference; R2 records
+upstream compatibility; R3 is the native candidate. The intended shipping
+runtime remains Rust-native, with no required Python inference process.
 
-The next major target is **native ingestion of MLX mixed-precision checkpoints**
-— `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` and
-`PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit` — as the composition *native Rust
-runtime + Safetensors checkpoint ingestion + MLX affine quantization + PulsarMLX
-expert residency/streaming + MLX execution*, consuming them **without converting
-to GGUF** and **without requantizing weights**. This is **planned, not
-implemented, not started**.
+The concrete native targets are
+`pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` first and
+`pipenetwork/GLM-5.3-MLX-mixed-4_8bit` as the full-scale second architecture.
+Consume their Safetensors and affine-quantized bytes without conversion to
+GGUF or requantization. Keep packed weights packed into quantized matmul;
+metadata widening is not permission for complete f32 weight expansion.
+Neither target is native-qualified by the catalog, census or synthetic tests.
 
-Sequence (a roadmap, not a completion claim):
+Prioritize the owned **M1 Ultra Mac Studio, 128 GB**, for practical Flash
+integration and later optimization. The **M2 Max MacBook Pro, 64 GB**, remains
+a subsequent, separately admitted lower-memory target. Do not require a future
+hardware purchase or infer a universal full-GLM memory floor from a discussion.
+Existing host/storage authorization boundaries continue to apply.
+
+Sequence (a roadmap, not a completion claim or execution authorization):
 
 ```text
-Qwen Apple MLX baseline → GLM-5.2 research execution → F017 Rust-native GLM-5.2
-  → GLM-5.3-Flash paged research → Native Safetensors + MLX affine quantization
-  → Native GLM-5.3 mixed 4/8 → Native GLM-5.3-Flash mixed 4/8
-  → Residency / caching / prefetch optimization → KV / state optimization
-  → Serving + broader hardware qualification
+Qwen baseline + GLM-5.2 reference/native evidence + Flash paged research
+  -> F020 catalog/affine representation (Slice 1 merged, synthetic-only)
+  -> independent native packed-weight primitive qualification (Slice 2B)
+  -> authorized real weights and production shapes, Flash first
+  -> projection / selected expert / block / fixed-prefix and state correctness
+  -> token-time profiling and authentic routing traces
+  -> hot/cold residency and capacity curves
+  -> bounded double-buffered staging / prefetch and lossless repacking experiments
+  -> streamed composition correctness before generation / serving acceptance
+  -> KV/prefix/hybrid-state optimization and broader hardware qualification
 ```
 
-Everything from *Native Safetensors + MLX affine quantization* onward has not
-been started. The full register is in [model targets](MODEL_TARGETS.md).
+Instrumentation precedes optimization selection. Storage experiments must
+first avoid unnecessary reads, then reduce the cost of unavoidable reads.
+Track logical/requested bytes separately from physical I/O, measure real
+read/compute overlap, and keep negative results and rollback paths. See
+[OPT-01 through OPT-08](OPTIMIZATION_ROADMAP.md#concrete-work-register).
+
+**F020 Slice 2B remains bounded to its reviewed synthetic primitive contract.**
+This roadmap does not authorize payload reads, production geometry, model
+graphs, residency, streaming, serving or performance runs. F017 closeout stays
+separate. The older GGUF/F018 migration stages below remain design references;
+they do not override the active MLX-affine target sequence.
 
 ## Current verified boundary
 
@@ -91,7 +118,7 @@ not itself a direct trunk or cleanup measurement.
 ## Architectural principles
 
 1. Correctness before performance claims.
-2. Python oracle, Rust runtime.
+2. Independent mathematical reference, Rust runtime; upstream compatibility is separate.
 3. Compressed weights remain compressed as long as possible.
 4. Storage, unified memory, and GPU form one managed hierarchy.
 5. Model semantics must not change silently.
@@ -101,15 +128,15 @@ not itself a direct trunk or cleanup measurement.
 9. Donor code is qualified rather than blindly inherited.
 10. No required Python process in the shipping runtime.
 
-Python and NumPy remain the permanent architecture oracle, fixture generator,
-boundary-inspection environment, reference decoder, differential-testing path,
-and research evidence producer. That path may be slower, but it must remain
-independently understandable.
+Independent Python, NumPy and Rust reference implementations remain the
+architecture-oracle, fixture-generation, boundary-inspection and differential
+testing environment. The independent numerical path may be slower, but must
+remain understandable and distinct from upstream MLX compatibility comparisons.
 
 ## Runtime architecture
 
 The planned shipping control and data plane is Rust. It is intended to own checkpoint identity, the
-GGUF catalog and multi-shard tensor store, positional reads, memory admission,
+GGUF/Safetensors catalogs and multi-shard tensor stores, positional reads, memory admission,
 compressed expert residency, cache and prefetch policy, routing, MLA/DSA state,
 tokenization, generation, telemetry, cancellation, recovery, CLI, and serving.
 Architecture-specific plugins provide tensor maps and model semantics rather
@@ -185,6 +212,8 @@ eight. Numerical gates must be frozen before performance collection.
 - Submit resident GPU work while bounded asynchronous reads fill misses.
 - Add bounded prefetch and adapt to memory pressure.
 - Test Metal residency sets only if measured binding overhead warrants them.
+- Use the trace-driven experiments, double-buffer ownership rules and measured
+  acceptance questions in [OPT-01 through OPT-05](OPTIMIZATION_ROADMAP.md#concrete-work-register).
 
 ### Stage F: product surface
 
@@ -213,16 +242,18 @@ never described as bit exact.
 ### M1 Ultra Mac Studio
 
 The 128 GB Studio owns the F017 GLM-5.2 reference and prospective instrumentation
-track. Later GLM-5.3/Flash evaluation, memory admission and end-to-end integration
-require their own qualified boundaries.
+track and is the first practical Flash native-integration/optimization host.
+Later GLM-5.3/Flash evaluation, memory admission and end-to-end integration
+require their own qualified boundaries and authorization.
 
 ### M2 Max MacBook Pro
 
-The 64 GB MacBook leads the independent GLM-5.3 Flash bring-up, using its
-authorized external NVMe storage/workspace. This includes model-specific source
-mapping and bounded synthetic component work; full-model correctness, sustained
-decoding and dogfood are not claimed. Shared work can include verified fixtures,
-decoder/Metal experiments, smaller Qwen regressions, CLI and packaging.
+The 64 GB MacBook remains the lower-memory Flash target and a development host
+for source mapping and bounded synthetic work, using its authorized external
+NVMe workspace. Do not inherit the Studio's cache budget or claim full-model
+correctness, sustained decoding or dogfood from another host. Shared work can
+include verified fixtures, decoder/Metal experiments, smaller Qwen regressions,
+CLI and packaging.
 
 The tracks share verified components and lessons without blocking each other's
 day-to-day progress. Network-distributed inference is outside the roadmap.
@@ -260,7 +291,7 @@ current research prototype.
 
 ## Generalization boundary
 
-Reusable runtime mechanisms are the GGUF catalog, multi-shard store, storage
+Reusable runtime mechanisms are the GGUF/Safetensors catalogs, multi-shard store, storage
 scheduling, caches and slab pools, telemetry, memory admission, MLX/Metal
 backend contracts, CLI/server, and evidence infrastructure.
 
