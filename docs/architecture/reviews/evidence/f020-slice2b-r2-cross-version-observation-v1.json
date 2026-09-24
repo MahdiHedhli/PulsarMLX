@@ -1,0 +1,46 @@
+{
+ "candidate_commit": "844a8f639c1f821b3777b312a75e14d2a881deeb",
+ "ci_run_id": 35953592030,
+ "different_kernel_family_records": 0,
+ "environment": {
+  "architecture": "air64_v27",
+  "architecture_generation": 2,
+  "default_device": "Device(gpu, 0)",
+  "dyld_library_path_set": false,
+  "machine": "arm64",
+  "mlx_metal_version": "0.32.0",
+  "mlx_version": "0.32.0",
+  "python_version": "3.13.13"
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "gates_anything": false,
+ "is_reference_for_r3": false,
+ "kind": "COMPATIBILITY_OBSERVATION_NON_GATING",
+ "label": "CROSS_VERSION_0.32.0_vs_0.31.2",
+ "note": "On this runner (generation parsed as 2 from air64_v27) the 0.32.0 qmv_wide predicate is false for every case, so no record is labelled different_kernel_family; all 316 outputs were bit-identical to R3. That is an observation about this host and this population only; no bit-identity is claimed.",
+ "report_file": {
+  "file": "r2-cross-version.json",
+  "sha256": "f5124a75a366f2df5abb5eaf99b93eb5707499a3656dd791576f24d198ee1be6"
+ },
+ "schema": "pulsarmlx.f020.slice2b-r2-observation-record/1.0.0",
+ "script": {
+  "commit": "844a8f639c1f821b3777b312a75e14d2a881deeb",
+  "path": "scripts/ci/mlx_native_primitives_compat_v1.py",
+  "sha256": "bcd9feae2af47b56faf34e5d5c0f26e07f9a681913644e090f9872d45ffd5cde"
+ },
+ "slice": "2B",
+ "step_conclusion": "success",
+ "summary": {
+  "bit_identical_to_r3_records": 316,
+  "compared_to_exact_r1": 296,
+  "compared_to_r3": 316,
+  "different_kernel_family_records": 0,
+  "every_record_labelled": true,
+  "records": 316,
+  "records_over_yardstick": []
+ },
+ "worst_margin_vs_exact_r1_by_op": {
+  "dequantize": 0.9878856983567912,
+  "quantized_matmul": 0.12722819977405303
+ }
+}

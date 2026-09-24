@@ -1,7 +1,8 @@
 # F020 native Safetensors status — current pointer
 
-**Last updated 2026-09-23. Slice 1 is accepted and merged. Slice 2 implementation
-has not started.** This is a current-pointer document: it says what is qualified
+**Last updated 2026-09-24. Slice 1 is accepted and merged. Slice 2B (native
+primitive qualification on synthetic fixtures) is implemented and qualified on
+its branch, not merged; see [Slice 2B](#slice-2b--native-primitives-branch-not-merged).** This is a current-pointer document: it says what is qualified
 today, what is not, and where to read the detail. It deliberately claims nothing
 about a real checkpoint's payload.
 
@@ -230,11 +231,75 @@ Evidence under `docs/architecture/reviews/evidence/` is **append-only**: an
 added file may not later be edited, and a newer record is a new file that names
 what it supersedes.
 
+## Slice 2B — native primitives (branch, not merged)
+
+**Scope.** Under the frozen contract
+[`native-primitives-v1.json`](../../specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json)
+(sha256 `76959ccb…`, plan `24a06db0…`, owner GO
+[record](reviews/evidence/f020-slice2b-owner-go-v1.json)), the new crate
+`crates/mlx-native-affine` qualifies five native MLX 0.31.2 operations through
+MLX-C on small synthetic fixtures: exact packed-U32 import, exact F16/BF16/F32
+metadata import, the bridge's own metadata widening (`mlx_astype` on the
+explicit GPU stream), `mlx_dequantize`, and `mlx_quantized_matmul` with
+`transpose=true`, float32 x and the imported U32 weight passed unchanged. Every
+request outside D-GEOM, D-NUM or D-DQ is refused, in the contract's frozen
+order, before any MLX-C call. All MLX work runs in one child process with a
+fixed environment (`MLX_ENABLE_TF32=0`), an 1800 s watchdog and no retry.
+
+**What passed.** CI run
+[`35953592030`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/35953592030)
+on candidate `844a8f63`, required step `Qualify F020 Slice 2B native primitives
+(frozen synthetic population, runner GPU)`: all 363 frozen cases. Imports 8/8
+byte-identical; the cast exact on every zero/normal F16 and BF16 pattern (2/2);
+dequantize 18/18 exact codes and 59/59 inside N-DQ-BOUND under both the exact
+and the binary64 R1 decision; quantized matmul 239/239 inside N-QMM-BOUND under
+the binary64 decision and 237/237 under the exact one; N-QMM-ZERO; 37/37
+refusals with exactly the expected id and zero MLX-C calls before the decision;
+E1 on all 362 GPU records and E6 on the CPU negative control; both R1
+self-checks (237 and 59 cases). Worst distance/bound: dequantize 0.988 (BF16),
+0.970 (F32), 0.934 (F16); quantized matmul at most 0.127 (split-K). Evidence:
+[CI qualification](reviews/evidence/f020-slice2b-ci-qualification-v1.json);
+the first attempt on `acc94f40`
+([record](reviews/evidence/f020-slice2b-ci-qualification-attempt-1-v1.json))
+passed every numerical gate but failed its workflow post-check, which wrongly
+expected an `applegpu_*` architecture string; that failure stays recorded.
+The R2 cross-version observation (wheel 0.32.0, gates nothing) is
+[recorded separately](reviews/evidence/f020-slice2b-r2-cross-version-observation-v1.json),
+and so are the [labelled local runs](reviews/evidence/f020-slice2b-local-observations-v1.json).
+
+**The gate host.** The GitHub runner's Metal device is a paravirtual device
+(architecture `air64_v27`, parsed generation 2, not NAX-capable, no NAX kernels
+in its metallib). Kernel families that depend on the architecture were covered
+by the contract's union bound; the family that actually ran is derived, not
+observed (no kernel-reporting API exists).
+
+**CI.** The Slice 2B step is required (census 12 → 13), frozen through two
+deliberate advances of the doctor's resolution (`99677210`, then `7f28bc5c`);
+see [`historical-measurement-current-ci.md`](../research/f017/historical-measurement-current-ci.md).
+The R2 step is not required and carries `continue-on-error`.
+
+**Unresolved assumptions.** The bounds and invariants rest on assumptions that
+this slice records but cannot verify from source: A-OPS (a)–(e), in particular
+U19 (how Metal lowers the power-of-two divisions), U1 (FMA contraction), U2/U3/U16
+(denormal and half/bfloat arithmetic semantics), U4/U5 (simd_sum and MMA
+accumulation order), U9 (a GPU command-buffer fault is expected to terminate the
+child, not be recovered), and U10/U14 (the R2 wheel's build provenance). If an
+assumption fails, the derived bounds are void.
+
+**Production-coverage limits.** Small-fixture qualification is not
+production-geometry qualification: the largest fixture K is 4096, and no
+production module shape is covered by evidence. Vocabulary projection and
+embedding, the Flash `indexer.weights_proj` and every stacked rank-3 tensor are
+outside v1 geometry and refused; expert and per-head plane extraction is future
+work. Metadata admission is not numerical admission: whether real payloads fall
+inside D-NUM or D-DQ needs payload reads, which are not authorized. No
+transpose=false, half kernel types, NAX, CPU backend, gather_qmm, model graph,
+residency or performance claim is made.
+
 ## Next
 
-Slice 2 implementation has not started. The smallest honest next boundary is the
-real-metadata census on already-verified local headers — no payload, no
-download — and nothing beyond it is authorized.
+Slice 2B awaits implementation review and a separate merge GO; nothing beyond it
+is authorized.
 
 Slice 2A, the header-only metadata census of both PipeNetwork targets (not Q0, not numerical qualification): [f020-slice2a-metadata-census.md](f020-slice2a-metadata-census.md).
 
