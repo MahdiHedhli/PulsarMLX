@@ -18,7 +18,7 @@ use std::cell::{Cell, RefCell};
 use std::ffi::{CStr, CString};
 use std::marker::PhantomData;
 use std::os::raw::{c_char, c_int, c_void};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Once;
 
 use mlx_native_affine::dtype::Dtype;
@@ -147,6 +147,125 @@ pub fn double_free_attempts() -> u64 {
     DOUBLE_FREE_ATTEMPTS.load(Ordering::SeqCst)
 }
 
+// ------------------------------------------------------ cleanup accounting --
+//
+// Every MLX-C status returned during cleanup (frees, the context's final
+// synchronize) is checked. A failure is never cleared: it is preserved here
+// and written into the child report, and the parent fails qualification on
+// any preserved cleanup error. A handle whose free failed stays counted as
+// live; the freed counter moves only on a successful free.
+
+/// One preserved cleanup failure.
+#[derive(Clone, Debug)]
+pub struct CleanupError {
+    pub call: &'static str,
+    pub status: i32,
+    pub message: Option<String>,
+}
+
+thread_local! {
+    static CLEANUP_ERRORS: RefCell<Vec<CleanupError>> = const { RefCell::new(Vec::new()) };
+}
+
+/// Test-only fault injection (reachable only through `--test-fault`): make
+/// the n-th array free report failure (0 = never), or make the next context
+/// teardown's synchronize report failure.
+static INJECT_FREE_FAILURE_AT: AtomicU64 = AtomicU64::new(0);
+static INJECT_TEARDOWN_SYNC_FAILURE: AtomicBool = AtomicBool::new(false);
+static ARRAY_FREE_CALLS: AtomicU64 = AtomicU64::new(0);
+
+pub fn inject_free_failure_at(n: u64) {
+    INJECT_FREE_FAILURE_AT.store(n, Ordering::SeqCst);
+}
+
+pub fn inject_teardown_sync_failure() {
+    INJECT_TEARDOWN_SYNC_FAILURE.store(true, Ordering::SeqCst);
+}
+
+fn record_cleanup(call: &'static str, status: i32, message: Option<String>) {
+    CLEANUP_ERRORS.with(|v| {
+        v.borrow_mut().push(CleanupError {
+            call,
+            status,
+            message,
+        })
+    });
+}
+
+/// Check a cleanup call's status; a failure (nonzero status or a handler
+/// message) is preserved, never discarded. Returns whether it succeeded.
+fn cleanup_status(call: &'static str, st: c_int) -> bool {
+    let message = take_error();
+    if st == 0 && message.is_none() {
+        true
+    } else {
+        record_cleanup(call, st, message);
+        false
+    }
+}
+
+/// Preserved cleanup failures so far (in order).
+pub fn cleanup_errors() -> Vec<CleanupError> {
+    CLEANUP_ERRORS.with(|v| v.borrow().clone())
+}
+
+/// Record any message still in the error slot as a cleanup failure (called
+/// after teardown, before the report is written).
+pub fn drain_residual_error(label: &'static str) {
+    if let Some(m) = take_error() {
+        record_cleanup(label, 0, Some(m));
+    }
+}
+
+/// Every mlx_array_free goes through here.
+fn free_array(raw: ffi::mlx_array, call: &'static str) -> bool {
+    let n = ARRAY_FREE_CALLS.fetch_add(1, Ordering::SeqCst) + 1;
+    if INJECT_FREE_FAILURE_AT.load(Ordering::SeqCst) == n {
+        // Simulated failed free: the handle is left allocated, as a real
+        // failure would leave it, and the failure is preserved.
+        record_cleanup(
+            call,
+            1,
+            Some("injected cleanup failure (test fault cleanup-free)".into()),
+        );
+        return false;
+    }
+    // SAFETY: callers pass a handle they own and free it exactly once.
+    let st = unsafe { ffi::mlx_array_free(raw) };
+    cleanup_status(call, st)
+}
+
+fn free_device(dev: ffi::mlx_device, call: &'static str) -> bool {
+    // SAFETY: callers pass a device handle they own, freed once.
+    cleanup_status(call, unsafe { ffi::mlx_device_free(dev) })
+}
+
+// Result-handle census (L-ERRFREE): every out-handle an operation creates
+// with mlx_array_new is either adopted into a NativeArray or, on the error
+// path, freed -- counted here independently of adoption.
+static RESULT_HANDLES_CREATED: AtomicU64 = AtomicU64::new(0);
+static RESULT_HANDLES_ADOPTED: AtomicU64 = AtomicU64::new(0);
+static ERROR_RESULT_FREES: AtomicU64 = AtomicU64::new(0);
+
+/// (result handles created, adopted, freed on an error path).
+pub fn result_census() -> (u64, u64, u64) {
+    (
+        RESULT_HANDLES_CREATED.load(Ordering::SeqCst),
+        RESULT_HANDLES_ADOPTED.load(Ordering::SeqCst),
+        ERROR_RESULT_FREES.load(Ordering::SeqCst),
+    )
+}
+
+pub fn array_free_calls() -> u64 {
+    ARRAY_FREE_CALLS.load(Ordering::SeqCst)
+}
+
+fn new_result() -> ffi::mlx_array {
+    RESULT_HANDLES_CREATED.fetch_add(1, Ordering::SeqCst);
+    // SAFETY: returns an empty handle (no allocation, cannot fail).
+    unsafe { ffi::mlx_array_new() }
+}
+
 // ------------------------------------------------------------------ device --
 
 /// Which device a context owns.
@@ -175,8 +294,8 @@ pub fn default_device_type() -> Result<ffi::mlx_device_type, NativeError> {
     let s = unsafe { ffi::mlx_get_default_device(&mut dev) };
     let r = status("mlx_get_default_device", s).and_then(|_| device_type_of(dev));
     if !dev.ctx.is_null() {
-        // SAFETY: allocated by MLX-C above, freed once.
-        unsafe { ffi::mlx_device_free(dev) };
+        // Allocated by MLX-C above, freed once.
+        free_device(dev, "mlx_device_free (default device query)");
     }
     r
 }
@@ -189,7 +308,7 @@ pub fn set_default_device_gpu() -> Result<(), NativeError> {
     let msg = take_error();
     if dev.ctx.is_null() || msg.is_some() {
         if !dev.ctx.is_null() {
-            unsafe { ffi::mlx_device_free(dev) };
+            free_device(dev, "mlx_device_free (set default device, error path)");
         }
         return Err(NativeError::EmptyHandle {
             call: "mlx_device_new_type",
@@ -200,7 +319,7 @@ pub fn set_default_device_gpu() -> Result<(), NativeError> {
     let r = status("mlx_set_default_device", unsafe {
         ffi::mlx_set_default_device(dev)
     });
-    unsafe { ffi::mlx_device_free(dev) };
+    free_device(dev, "mlx_device_free (set default device)");
     r
 }
 
@@ -233,7 +352,7 @@ impl NativeContext {
         let msg = take_error();
         if device.ctx.is_null() || msg.is_some() {
             if !device.ctx.is_null() {
-                unsafe { ffi::mlx_device_free(device) };
+                free_device(device, "mlx_device_free (context construction, error path)");
             }
             return Err(NativeError::EmptyHandle {
                 call: "mlx_device_new_type",
@@ -245,12 +364,13 @@ impl NativeContext {
         let msg = take_error();
         if stream.ctx.is_null() || msg.is_some() {
             // L-ERRFREE: free what was created.
-            unsafe {
-                if !stream.ctx.is_null() {
-                    ffi::mlx_stream_free(stream);
-                }
-                ffi::mlx_device_free(device);
+            if !stream.ctx.is_null() {
+                cleanup_status(
+                    "mlx_stream_free (context construction, error path)",
+                    unsafe { ffi::mlx_stream_free(stream) },
+                );
             }
+            free_device(device, "mlx_device_free (context construction, error path)");
             return Err(NativeError::EmptyHandle {
                 call: "mlx_stream_new_device",
                 message: msg,
@@ -278,7 +398,7 @@ impl NativeContext {
         let s = unsafe { ffi::mlx_stream_get_device(&mut sdev, self.stream) };
         let stream_type = status("mlx_stream_get_device", s).and_then(|_| device_type_of(sdev));
         if !sdev.ctx.is_null() {
-            unsafe { ffi::mlx_device_free(sdev) };
+            free_device(sdev, "mlx_device_free (stream device query)");
         }
         let stream_type = stream_type?;
         Ok(DeviceFacts {
@@ -338,7 +458,7 @@ impl NativeContext {
         let msg = take_error();
         if raw.ctx.is_null() || msg.is_some() {
             if !raw.ctx.is_null() {
-                unsafe { ffi::mlx_array_free(raw) };
+                free_array(raw, "mlx_array_free (import, error path)");
             }
             return Err(NativeError::EmptyHandle {
                 call: "mlx_array_new_data",
@@ -350,7 +470,7 @@ impl NativeContext {
 
     /// `mlx_astype(a, float32)` on this context's stream.
     pub fn astype_f32(&self, a: &NativeArray<'_>) -> Result<NativeArray<'_>, NativeError> {
-        let mut res = unsafe { ffi::mlx_array_new() };
+        let mut res = new_result();
         // SAFETY: `a.raw` is owned by a live NativeArray; `res` is an empty
         // out-handle that is either adopted or freed.
         let s = ffi::numerical(|| unsafe {
@@ -370,7 +490,7 @@ impl NativeContext {
         bits: u32,
     ) -> Result<NativeArray<'_>, NativeError> {
         let mode = CString::new("affine").unwrap();
-        let mut res = unsafe { ffi::mlx_array_new() };
+        let mut res = new_result();
         let empty = ffi::mlx_array {
             ctx: std::ptr::null_mut(),
         };
@@ -414,7 +534,7 @@ impl NativeContext {
         bits: u32,
     ) -> Result<NativeArray<'_>, NativeError> {
         let mode = CString::new("affine").unwrap();
-        let mut res = unsafe { ffi::mlx_array_new() };
+        let mut res = new_result();
         let st = ffi::numerical(|| unsafe {
             ffi::mlx_quantized_matmul(
                 &mut res,
@@ -445,11 +565,17 @@ impl NativeContext {
         res: ffi::mlx_array,
     ) -> Result<NativeArray<'_>, NativeError> {
         match status(call, st) {
-            Ok(()) if !res.ctx.is_null() => Ok(self.adopt(res)),
+            Ok(()) if !res.ctx.is_null() => {
+                RESULT_HANDLES_ADOPTED.fetch_add(1, Ordering::SeqCst);
+                Ok(self.adopt(res))
+            }
             other => {
                 // L-ERRFREE: the result handle is freed on every error path
-                // (an empty-handle free is a no-op).
-                unsafe { ffi::mlx_array_free(res) };
+                // (an empty-handle free is a no-op) and the free is counted
+                // independently of adoption.
+                if free_array(res, "mlx_array_free (operation result, error path)") {
+                    ERROR_RESULT_FREES.fetch_add(1, Ordering::SeqCst);
+                }
                 Err(other.err().unwrap_or(NativeError::EmptyHandle {
                     call,
                     message: None,
@@ -461,14 +587,32 @@ impl NativeContext {
 
 impl Drop for NativeContext {
     fn drop(&mut self) {
-        // Arrays borrow the context, so none can be alive here (L-OUTLIVE).
-        debug_assert_eq!(self.live_arrays.get(), 0);
-        unsafe {
-            let _ = ffi::mlx_synchronize(self.stream);
-            ffi::mlx_stream_free(self.stream);
-            ffi::mlx_device_free(self.device);
+        // Arrays borrow the context, so none can be alive here unless a free
+        // failed (L-OUTLIVE); either way it is preserved, not asserted away.
+        let live = self.live_arrays.get();
+        if live != 0 {
+            record_cleanup(
+                "NativeContext::drop (live arrays at context drop)",
+                -1,
+                Some(format!("{live} array handle(s) still live")),
+            );
         }
-        let _ = take_error();
+        // SAFETY: owned, non-empty stream and device, each freed once.
+        let st = ffi::numerical(|| unsafe { ffi::mlx_synchronize(self.stream) });
+        if INJECT_TEARDOWN_SYNC_FAILURE.swap(false, Ordering::SeqCst) {
+            let _ = cleanup_status("mlx_synchronize (context teardown)", st);
+            record_cleanup(
+                "mlx_synchronize (context teardown)",
+                1,
+                Some("injected cleanup failure (test fault cleanup-sync)".into()),
+            );
+        } else {
+            cleanup_status("mlx_synchronize (context teardown)", st);
+        }
+        cleanup_status("mlx_stream_free (context teardown)", unsafe {
+            ffi::mlx_stream_free(self.stream)
+        });
+        free_device(self.device, "mlx_device_free (context teardown)");
     }
 }
 
@@ -516,18 +660,20 @@ impl<'ctx> NativeArray<'ctx> {
             DOUBLE_FREE_ATTEMPTS.fetch_add(1, Ordering::SeqCst);
             return;
         }
-        // SAFETY: freed exactly once (guarded by `freed`).
-        unsafe { ffi::mlx_array_free(self.raw) };
-        self.ctx.live_arrays.set(self.ctx.live_arrays.get() - 1);
-        LIVE_HANDLES.fetch_sub(1, Ordering::SeqCst);
-        FREED_HANDLES.fetch_add(1, Ordering::SeqCst);
+        // Freed at most once (guarded by `freed`). Only a successful free
+        // moves the live and freed counters; a failure is preserved by
+        // free_array and the handle stays counted as live.
+        if free_array(self.raw, "mlx_array_free (NativeArray drop)") {
+            self.ctx.live_arrays.set(self.ctx.live_arrays.get() - 1);
+            LIVE_HANDLES.fetch_sub(1, Ordering::SeqCst);
+            FREED_HANDLES.fetch_add(1, Ordering::SeqCst);
+        }
     }
 }
 
 impl Drop for NativeArray<'_> {
     fn drop(&mut self) {
         self.free_once();
-        let _ = take_error();
     }
 }
 
@@ -630,7 +776,9 @@ pub fn mlx_version() -> Result<String, NativeError> {
         }
         Ok(unsafe { CStr::from_ptr(p) }.to_string_lossy().into_owned())
     });
-    unsafe { ffi::mlx_string_free(s) };
+    cleanup_status("mlx_string_free (version)", unsafe {
+        ffi::mlx_string_free(s)
+    });
     r
 }
 
@@ -639,13 +787,22 @@ pub fn gpu_device_info() -> Result<Vec<(String, String)>, NativeError> {
     let dev = unsafe { ffi::mlx_device_new_type(ffi::MLX_GPU, 0) };
     let msg = take_error();
     if dev.ctx.is_null() || msg.is_some() {
+        if !dev.ctx.is_null() {
+            free_device(dev, "mlx_device_free (device info, error path)");
+        }
         return Err(NativeError::EmptyHandle {
             call: "mlx_device_new_type",
             message: msg,
         });
     }
     let mut info = unsafe { ffi::mlx_device_info_new() };
-    let _ = take_error();
+    if let Some(m) = take_error() {
+        free_device(dev, "mlx_device_free (device info, error path)");
+        return Err(NativeError::EmptyHandle {
+            call: "mlx_device_info_new",
+            message: Some(m),
+        });
+    }
     let result = (|| {
         status("mlx_device_info_get", unsafe {
             ffi::mlx_device_info_get(&mut info, dev)
@@ -696,11 +853,10 @@ pub fn gpu_device_info() -> Result<Vec<(String, String)>, NativeError> {
         }
         Ok(out)
     })();
-    unsafe {
-        ffi::mlx_device_info_free(info);
-        ffi::mlx_device_free(dev);
-    }
-    let _ = take_error();
+    cleanup_status("mlx_device_info_free", unsafe {
+        ffi::mlx_device_info_free(info)
+    });
+    free_device(dev, "mlx_device_free (device info)");
     result
 }
 

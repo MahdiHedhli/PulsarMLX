@@ -742,7 +742,8 @@ fn native_qualification_of_the_frozen_population() {
                    "generator_check_before": pre.generator_check, "population_valid_after": post.is_ok()},
         "child": {"outcome": run.outcome.describe(), "elapsed_ms": run.elapsed_ms, "timeout_seconds": frozen::CHILD_TIMEOUT_SECONDS,
                   "report_sha256": report_sha, "abi_values": report["abi_values"], "error_handler": report["error_handler"],
-                  "handles": report["handles"], "call_counts": report["call_counts"],
+                  "handles": report["handles"],
+            "cleanup": report["cleanup"], "call_counts": report["call_counts"],
                   "canary_start": report["canary_start"], "canary_end": report["canary_end"]},
         "provenance": prov,
         "gate_counts": counts.iter().map(|(g, (n, p))| (g.clone(), json!({"cases": n, "passed": p}))).collect::<serde_json::Map<_, _>>(),
@@ -847,6 +848,29 @@ fn child_failure_paths_are_reported_as_failures() {
     let (run, acc) = fault_run("no-report", Duration::from_secs(120));
     assert_eq!(run.outcome, ChildOutcome::Exited(0));
     assert!(matches!(acc, Err(ReportError::Missing(_))));
+
+    // Injected cleanup failures: the full qualification runs, the child
+    // preserves the teardown failure in its report, and the parent fails
+    // qualification with that reason.
+    for (kind, call) in [
+        ("cleanup-free", "mlx_array_free (NativeArray drop)"),
+        ("cleanup-sync", "mlx_synchronize (context teardown)"),
+    ] {
+        let (run, acc) = fault_run(kind, frozen_timeout());
+        assert_eq!(run.outcome, ChildOutcome::Exited(0), "{kind}");
+        match acc {
+            Err(ReportError::Cleanup(errors)) => {
+                assert!(
+                    errors
+                        .iter()
+                        .any(|e| e.contains(call) && e.contains("injected cleanup failure")),
+                    "{kind}: {errors:?}"
+                );
+            }
+            other => panic!("{kind}: expected a cleanup failure, got {other:?}"),
+        }
+        println!("cleanup-fault control {kind}: parent FAIL with preserved cleanup error ({call})");
+    }
 
     let (run, acc) = fault_run("garbage-report", Duration::from_secs(120));
     assert_eq!(run.outcome, ChildOutcome::Exited(0));

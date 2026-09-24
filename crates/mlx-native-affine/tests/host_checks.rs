@@ -214,6 +214,11 @@ fn skeleton(ids: &[String]) -> Value {
         "generator_sha256": frozen::GENERATOR_SHA256,
         "completed": true,
         "cases": ids.iter().map(|i| json!({"id": i})).collect::<Vec<_>>(),
+        "cleanup": {"errors": [], "array_free_calls": 3,
+                    "result_handles": {"created": 2, "adopted": 2, "freed_on_error_path": 0, "balanced": true}},
+        "handles": {"live_array_handles_after_context_drop": 0, "live_arrays_in_context_at_drop": 0,
+                    "array_handles_freed": 3, "double_free_attempts": 0},
+        "test_fault": null,
     })
 }
 
@@ -256,6 +261,52 @@ fn report_acceptance_rules() {
     assert!(matches!(
         accept_report(&ok_run(), &p, &m),
         Err(ReportError::HashEcho(_))
+    ));
+
+    // Preserved cleanup (teardown) failures fail qualification.
+    let mut c = skeleton(&ids);
+    c["cleanup"]["errors"] =
+        json!([{"call": "mlx_array_free (NativeArray drop)", "status": 1, "message": "x"}]);
+    let p = write_report(&dir, "cleanup.json", &c);
+    assert!(
+        matches!(accept_report(&ok_run(), &p, &m), Err(ReportError::Cleanup(ref e)) if e.len() == 1)
+    );
+    let mut c = skeleton(&ids);
+    c["cleanup"] = json!(null);
+    let p = write_report(&dir, "cleanup-missing.json", &c);
+    assert!(matches!(
+        accept_report(&ok_run(), &p, &m),
+        Err(ReportError::Schema(_))
+    ));
+    let mut c = skeleton(&ids);
+    c["cleanup"]["result_handles"]["balanced"] = json!(false);
+    let p = write_report(&dir, "census.json", &c);
+    assert!(matches!(
+        accept_report(&ok_run(), &p, &m),
+        Err(ReportError::HandleCensus(_))
+    ));
+    for key in [
+        "live_array_handles_after_context_drop",
+        "live_arrays_in_context_at_drop",
+        "double_free_attempts",
+    ] {
+        let mut c = skeleton(&ids);
+        c["handles"][key] = json!(1);
+        let p = write_report(&dir, "handles.json", &c);
+        assert!(
+            matches!(
+                accept_report(&ok_run(), &p, &m),
+                Err(ReportError::HandleCensus(_))
+            ),
+            "{key}"
+        );
+    }
+    let mut c = skeleton(&ids);
+    c["test_fault"] = json!("cleanup-free");
+    let p = write_report(&dir, "fault.json", &c);
+    assert!(matches!(
+        accept_report(&ok_run(), &p, &m),
+        Err(ReportError::TestFault(_))
     ));
 
     let mut inc = skeleton(&ids);

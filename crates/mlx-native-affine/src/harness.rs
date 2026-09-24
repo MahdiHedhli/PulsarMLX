@@ -178,6 +178,12 @@ pub enum ReportError {
         duplicated: Vec<String>,
     },
     Incomplete(String),
+    /// A cleanup (teardown) MLX-C status failed; the child preserved it.
+    Cleanup(Vec<String>),
+    /// The handle or result-handle census does not balance after teardown.
+    HandleCensus(String),
+    /// The report was produced under a test-only fault mode.
+    TestFault(String),
 }
 
 impl std::fmt::Display for ReportError {
@@ -217,6 +223,31 @@ pub fn accept_report(
     }
     if report["completed"].as_bool() != Some(true) {
         return Err(ReportError::Incomplete("completed != true".into()));
+    }
+    // Cleanup failures are preserved by the child and fail qualification
+    // after teardown (contract error_handling.status_calls).
+    let cleanup = &report["cleanup"];
+    let errors = cleanup["errors"]
+        .as_array()
+        .ok_or_else(|| ReportError::Schema("cleanup.errors".into()))?;
+    if !errors.is_empty() {
+        return Err(ReportError::Cleanup(
+            errors.iter().map(|e| e.to_string()).collect(),
+        ));
+    }
+    let rh = &cleanup["result_handles"];
+    if rh["balanced"].as_bool() != Some(true) {
+        return Err(ReportError::HandleCensus(format!("result handles {rh}")));
+    }
+    let h = &report["handles"];
+    if h["live_array_handles_after_context_drop"].as_u64() != Some(0)
+        || h["live_arrays_in_context_at_drop"].as_i64() != Some(0)
+        || h["double_free_attempts"].as_u64() != Some(0)
+    {
+        return Err(ReportError::HandleCensus(format!("handles {h}")));
+    }
+    if !report["test_fault"].is_null() {
+        return Err(ReportError::TestFault(report["test_fault"].to_string()));
     }
     let cases = report["cases"]
         .as_array()

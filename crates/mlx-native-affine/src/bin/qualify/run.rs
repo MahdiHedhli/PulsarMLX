@@ -295,6 +295,22 @@ fn read_frozen(repo: &Path, rel: &str, want: &str) -> Result<Vec<u8>, String> {
     Ok(raw)
 }
 
+/// Preserved cleanup failures and the result-handle census, for the report.
+/// Written only after every native handle has been torn down.
+fn cleanup_json() -> Value {
+    let (created, adopted, error_freed) = native::result_census();
+    let errors: Vec<Value> = native::cleanup_errors()
+        .iter()
+        .map(|e| json!({"call": e.call, "status": e.status, "message": e.message.as_deref().map(redact)}))
+        .collect();
+    json!({
+        "errors": errors,
+        "array_free_calls": native::array_free_calls(),
+        "result_handles": {"created": created, "adopted": adopted, "freed_on_error_path": error_freed,
+                           "balanced": created == adopted + error_freed},
+    })
+}
+
 pub fn qualify(args: &Args) -> Result<(), String> {
     let abi = ffi::verify_abi()?;
     native::ensure_error_handler();
@@ -324,7 +340,11 @@ pub fn qualify(args: &Args) -> Result<(), String> {
     }
     let canary_end = canary(&cx, &gpu, "end");
     let live_in_context = gpu.live_arrays();
+    if args.test_fault.as_deref() == Some("cleanup-sync") {
+        native::inject_teardown_sync_failure();
+    }
     drop(gpu);
+    native::drain_residual_error("residual error slot after teardown");
     let (live, freed) = native::handle_census();
 
     let report = json!({
@@ -342,6 +362,8 @@ pub fn qualify(args: &Args) -> Result<(), String> {
                     "array_handles_freed": freed, "double_free_attempts": native::double_free_attempts()},
         "call_counts": {"numerical": ffi::call_counts().0, "imports": ffi::call_counts().1},
         "thread": "all MLX work on the main thread",
+        "cleanup": cleanup_json(),
+        "test_fault": args.test_fault,
         "completed": true,
     });
     let bytes = serde_json::to_vec_pretty(&report).map_err(|e| e.to_string())?;
@@ -423,13 +445,24 @@ pub fn selftest(args: &Args) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         let live_before = ctx.live_arrays();
         let msgs_before = native::handler_messages();
+        let census_before = native::result_census();
+        let frees_before = native::array_free_calls();
         let r = ctx.quantized_matmul(&x, &w, &s, &s, true, 64, 4);
+        let census_after = native::result_census();
+        let frees_after = native::array_free_calls();
         let (is_err, message) = match &r {
             Err(native::NativeError::Status { message, .. }) => (true, message.clone()),
             _ => (false, None),
         };
         drop(r);
-        let freed_ok = ctx.live_arrays() == live_before;
+        // Exactly one result handle created, none adopted, exactly one freed
+        // on the error path (counted at the free itself, independently of
+        // adoption), exactly one array free issued, and no live change.
+        let freed_ok = census_after.0 - census_before.0 == 1
+            && census_after.1 - census_before.1 == 0
+            && census_after.2 - census_before.2 == 1
+            && frees_after - frees_before == 1
+            && ctx.live_arrays() == live_before;
         record(
             "B9 injected MLX-C error becomes a Rust error",
             is_err && message.is_some() && native::handler_messages() > msgs_before,
@@ -438,7 +471,11 @@ pub fn selftest(args: &Args) -> Result<(), String> {
         record(
             "L-ERRFREE result handle freed on the error path",
             freed_ok,
-            json!({"live_arrays": ctx.live_arrays()}),
+            json!({"result_handles_created": census_after.0 - census_before.0,
+                   "adopted": census_after.1 - census_before.1,
+                   "freed_on_error_path": census_after.2 - census_before.2,
+                   "array_free_calls": frees_after - frees_before,
+                   "live_arrays": ctx.live_arrays()}),
         );
         // Continue: a valid import + astype + evaluate on the same context.
         let h = ctx
@@ -492,6 +529,19 @@ pub fn selftest(args: &Args) -> Result<(), String> {
         "single error-handler install",
         native::handler_installs() == 1,
         json!(native::handler_installs()),
+    );
+    native::drain_residual_error("residual error slot after teardown");
+    let (created, adopted, error_freed) = native::result_census();
+    record(
+        "L-ERRFREE result-handle census balanced (created = adopted + freed on error path)",
+        created == adopted + error_freed && error_freed >= 1,
+        json!({"created": created, "adopted": adopted, "freed_on_error_path": error_freed}),
+    );
+    let cleanup = cleanup_json();
+    record(
+        "no preserved cleanup errors",
+        cleanup["errors"].as_array().is_some_and(Vec::is_empty),
+        cleanup.clone(),
     );
 
     let report = json!({

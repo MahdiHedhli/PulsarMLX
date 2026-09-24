@@ -13,8 +13,11 @@
 //! `--test-fault` exists only so the parent's failure paths can be exercised
 //! (acceptance B9): `abort` raises SIGABRT after MLX is initialised, `hang`
 //! never returns, `exit` exits 7, `no-report` exits 0 without a report, and
-//! `garbage-report` writes an unparsable report and exits 0. The parent treats
-//! every one of them as a failure.
+//! `garbage-report` writes an unparsable report and exits 0, and
+//! `cleanup-free` / `cleanup-sync` run the full qualification with one
+//! injected cleanup failure (the first array free, or the final context
+//! synchronize) that the report must preserve. The parent treats every one of
+//! them as a failure.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -107,7 +110,13 @@ fn native_main(_args: &Args) -> ExitCode {
 #[cfg(pulsar_native_mlx)]
 fn native_main(args: &Args) -> ExitCode {
     if let Some(fault) = &args.test_fault {
-        return test_fault(fault, args);
+        // Cleanup faults run the full qualification with one injected
+        // teardown failure; every other fault replaces it.
+        match fault.as_str() {
+            "cleanup-free" => native::inject_free_failure_at(1),
+            "cleanup-sync" => {} // armed in run::qualify just before teardown
+            _ => return test_fault(fault, args),
+        }
     }
     let r = if args.mode == "selftest" {
         run::selftest(args)
