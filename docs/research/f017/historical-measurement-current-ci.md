@@ -391,3 +391,23 @@ deleted, a build-only substitution (`--no-run`), made non-fatal, disabled with
 `if: false`, and moved to another job. All eight are rejected with
 `WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`; no earlier control changed. The
 required-step census is 12 → 13 and the free-step census is 42.
+
+### 2026-09-23 — the resolution advances again for the Slice 2B step's post-check
+
+`RESOLUTION_BASE` moves from `99677210` to
+`7f28bc5cd6727d2d80952ecd19347d6e224d8f6d` and `RESOLUTION_WORKFLOW_SHA256`
+from `13fd6efe…` to `c759c5d1…`, in the doctor and the confined runner, in the
+commit immediately after the one that edited the required Slice 2B step. The
+doctor fails at that commit and passes at this one.
+
+The edit is confined to that step's summary post-check. CI run `35952463705`
+(candidate `acc94f40`) passed every Slice 2B numerical gate, but the step
+asserted an architecture string starting with `applegpu_`, and the hosted
+runner exposes a paravirtual Metal device whose architecture is `air64_v27`;
+that failure remains recorded against `acc94f40`. The step now requires a
+non-empty architecture and device name, and the exact `E1-DEVICE` (362) and
+`E6-CPU-REFUSED` (1) counts. The other twelve required blocks are byte-identical
+between `99677210` and `7f28bc5c`, in the same jobs and order; the residual
+difference is those six lines. The required-step census stays 13, the free-step
+census 42, and the eight Slice 2B mutation controls still reject at
+`WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`.
