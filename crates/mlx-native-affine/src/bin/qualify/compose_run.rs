@@ -4,7 +4,8 @@
 //! Start sequence exactly as the Slice 2B child: the R-NAX environment
 //! assertion (in `main`, before any MLX-C call), ABI verification, the single
 //! error handler, the default device set to GPU, provenance (E3) and the E4
-//! canary (the unchanged Slice 2B canary on the Slice 2B population). Then the
+//! canary (the unchanged Slice 2B canary on the Slice 2B population); E6 (the
+//! CPU-context negative control) runs on a composed plane after the cases. Then the
 //! frozen Slice 2C files are read against `frozen_compose`, one
 //! `NativeContext` is opened, every manifest case runs in manifest order (the
 //! three `seq-aba-*` cases are consecutive in the manifest), the canary runs
@@ -648,6 +649,74 @@ fn run_case_inner(
     Ok(Value::Object(rec))
 }
 
+/// E6 in the compose child (contract C8; slice2c-plan.md section 3 keeps the
+/// Slice 2B start sequence and evidence): the CPU-context negative control.
+/// The first FX-COMP-ACCEPT case is composed and staged exactly as side A,
+/// then handed to the EXISTING bridge on a CPU-device `NativeContext`, which
+/// must refuse it with R-DEVICE before any MLX-C numerical call or import. It
+/// is a control like the E4 canary, not a manifest case: the frozen 32-case
+/// population is unchanged. The child records; the parent decides.
+fn e6_cpu_control(cx: &ComposeCtx, specs: &[CaseSpec], docs: &BTreeMap<String, Value>) -> Value {
+    let r = (|| -> Result<Value, String> {
+        let spec = specs
+            .iter()
+            .find(|c| c.family == "FX-COMP-ACCEPT")
+            .ok_or("no FX-COMP-ACCEPT case")?;
+        let doc = docs.get(&spec.id).ok_or("no manifest document")?;
+        let comp = &doc["composition"];
+        let ck_dir = cx
+            .fixture_dir
+            .join(str_of(&comp["checkpoint"], "composition.checkpoint")?);
+        let config_text = read_text(
+            &cx.fixture_dir,
+            str_of(&comp["config"], "composition.config")?,
+        )?;
+        let module = str_of(&comp["module"], "composition.module")?;
+        let idx = index_path(&comp["index_path"])?;
+        let source = Source::open(
+            &ck_dir,
+            &config_text,
+            &windows(&comp["backing"]["windows"])?,
+        )
+        .map_err(|e| e.to_string())?;
+        let plane = compose_plane(&source, module, &idx).map_err(|e| e.to_string())?;
+        let selection = plane.record().to_json();
+        let [w, s, b] = stage(&plane)?;
+        let standalone = load_case(&cx.fixture_dir, spec).map_err(|e| e.to_string())?;
+        let x = standalone.tensor("x").ok_or("no standalone x")?;
+        let id = plane.identity();
+        let cpu = NativeContext::new(DeviceKind::Cpu).map_err(|e| e.to_string())?;
+        let before = snapshot();
+        let r = bridge::quantized_matmul(&cpu, x, &w, &s, &b, id.bits, id.group_size);
+        let after = snapshot();
+        let mut rec = json!({
+            "case_id": spec.id, "context": "cpu", "selection": selection,
+            "staged": staged_records(x, &w, &s, &b),
+            "counters": delta(before, after),
+        });
+        match r {
+            Err((BridgeError::Refused(rid), stats)) => {
+                rec["outcome"] = json!("refused");
+                rec["refusal_id"] = json!(rid.as_str());
+                rec["stats"] = stats_json(&stats);
+            }
+            Err((BridgeError::Native(n), stats)) => {
+                rec["outcome"] = json!("error");
+                rec["error"] = json!(redact(&n.to_string()));
+                rec["stats"] = stats_json(&stats);
+            }
+            Ok((_, _, stats)) => {
+                rec["outcome"] = json!("executed");
+                rec["stats"] = stats_json(&stats);
+            }
+        }
+        rec["cpu_context_live_arrays_after"] = json!(cpu.live_arrays());
+        drop(cpu);
+        Ok(rec)
+    })();
+    r.unwrap_or_else(|e| json!({"context": "cpu", "outcome": "error", "error": redact(&e)}))
+}
+
 pub fn compose(args: &Args) -> Result<(), String> {
     let abi = ffi::verify_abi()?;
     native::ensure_error_handler();
@@ -705,6 +774,7 @@ pub fn compose(args: &Args) -> Result<(), String> {
             .ok_or_else(|| format!("{}: no manifest document", spec.id))?;
         cases.push(run_case(&cx, &gpu, spec, case_doc));
     }
+    let e6 = e6_cpu_control(&cx, &manifest.cases, &docs);
     let canary_end = canary(&canary_cx, &gpu, "end");
     let live_in_context = gpu.live_arrays();
     if args.test_fault.as_deref() == Some("cleanup-sync") {
@@ -728,6 +798,7 @@ pub fn compose(args: &Args) -> Result<(), String> {
         "provenance": prov,
         "canary_start": canary_start,
         "canary_end": canary_end,
+        "e6_cpu_negative_control": e6,
         "cases": cases,
         "handles": {"live_arrays_in_context_at_drop": live_in_context, "live_array_handles_after_context_drop": live,
                     "array_handles_freed": freed, "double_free_attempts": native::double_free_attempts()},
