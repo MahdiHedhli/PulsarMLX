@@ -1,7 +1,7 @@
 //! `qualify` -- the F020 Slice 2B qualification child.
 //!
 //! ```text
-//! qualify --repo <checkout> --out <dir> [--mode qualify|selftest] [--test-fault <kind>]
+//! qualify --repo <checkout> --out <dir> [--mode qualify|selftest|compose] [--test-fault <kind>]
 //! ```
 //!
 //! Before any MLX-C call the child asserts its start environment
@@ -18,14 +18,21 @@
 //! injected cleanup failure (the first array free, or the final context
 //! synchronize) that the report must preserve. The parent treats every one of
 //! them as a failure.
+//!
+//! `--mode compose` (F020 Slice 2C) runs the frozen composition population
+//! through the same start sequence, bridge, handler and cleanup accounting
+//! (`compose_run`); `qualify` and `selftest` are unchanged.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use mlx_native_affine::frozen;
+use mlx_native_affine::frozen_compose;
 
 #[cfg(pulsar_native_mlx)]
 mod bridge;
+#[cfg(pulsar_native_mlx)]
+mod compose_run;
 #[cfg(pulsar_native_mlx)]
 mod ffi;
 #[cfg(pulsar_native_mlx)]
@@ -58,7 +65,7 @@ fn parse_args() -> Result<Args, String> {
             other => return Err(format!("unknown argument {other}")),
         }
     }
-    if mode != "qualify" && mode != "selftest" {
+    if mode != "qualify" && mode != "selftest" && mode != frozen_compose::CHILD_MODE {
         return Err(format!("unknown mode {mode}"));
     }
     Ok(Args {
@@ -120,6 +127,8 @@ fn native_main(args: &Args) -> ExitCode {
     }
     let r = if args.mode == "selftest" {
         run::selftest(args)
+    } else if args.mode == frozen_compose::CHILD_MODE {
+        compose_run::compose(args)
     } else {
         run::qualify(args)
     };

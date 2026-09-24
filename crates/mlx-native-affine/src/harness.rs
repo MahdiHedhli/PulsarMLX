@@ -18,6 +18,7 @@ use serde_json::Value;
 
 use crate::fixture::Manifest;
 use crate::frozen;
+use crate::frozen_compose;
 
 /// How a child process ended.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -201,10 +202,7 @@ pub fn accept_report(
     report_path: &Path,
     manifest: &Manifest,
 ) -> Result<Value, ReportError> {
-    match &run.outcome {
-        ChildOutcome::Exited(0) => {}
-        other => return Err(ReportError::ChildFailed(other.describe())),
-    }
+    require_exit_zero(run)?;
     let raw = std::fs::read(report_path)
         .map_err(|e| ReportError::Missing(format!("{}: {e}", report_path.display())))?;
     let report: Value =
@@ -224,6 +222,27 @@ pub fn accept_report(
     if report["completed"].as_bool() != Some(true) {
         return Err(ReportError::Incomplete("completed != true".into()));
     }
+    require_clean_teardown(&report)?;
+    let want: BTreeSet<String> = manifest.cases.iter().map(|c| c.id.clone()).collect();
+    require_case_id_set(&report, &want)?;
+    Ok(report)
+}
+
+/// The child exited normally with status 0 (moved verbatim out of
+/// [`accept_report`], slice2c-plan.md section 2.3).
+pub fn require_exit_zero(run: &ChildRun) -> Result<(), ReportError> {
+    match &run.outcome {
+        ChildOutcome::Exited(0) => {}
+        other => return Err(ReportError::ChildFailed(other.describe())),
+    }
+    Ok(())
+}
+
+/// Teardown accounting (moved verbatim out of [`accept_report`],
+/// slice2c-plan.md section 2.3): no preserved cleanup error, a balanced
+/// result-handle census, zero live handles after the context drop, zero live
+/// arrays in the context at drop, no double free, and no test fault.
+pub fn require_clean_teardown(report: &Value) -> Result<(), ReportError> {
     // Cleanup failures are preserved by the child and fail qualification
     // after teardown (contract error_handling.status_calls).
     let cleanup = &report["cleanup"];
@@ -249,6 +268,13 @@ pub fn accept_report(
     if !report["test_fault"].is_null() {
         return Err(ReportError::TestFault(report["test_fault"].to_string()));
     }
+    Ok(())
+}
+
+/// The report's case-id set equals `want` exactly: no missing, unexpected or
+/// duplicated id (moved verbatim out of [`accept_report`], slice2c-plan.md
+/// section 2.3).
+pub fn require_case_id_set(report: &Value, want: &BTreeSet<String>) -> Result<(), ReportError> {
     let cases = report["cases"]
         .as_array()
         .ok_or_else(|| ReportError::Schema("cases".into()))?;
@@ -259,10 +285,9 @@ pub fn accept_report(
             .ok_or_else(|| ReportError::Schema("case id".into()))?;
         *counts.entry(id.to_string()).or_default() += 1;
     }
-    let want: BTreeSet<String> = manifest.cases.iter().map(|c| c.id.clone()).collect();
     let got: BTreeSet<String> = counts.keys().cloned().collect();
     let missing: Vec<String> = want.difference(&got).cloned().collect();
-    let unexpected: Vec<String> = got.difference(&want).cloned().collect();
+    let unexpected: Vec<String> = got.difference(want).cloned().collect();
     let duplicated: Vec<String> = counts
         .iter()
         .filter(|(_, &n)| n > 1)
@@ -275,6 +300,46 @@ pub fn accept_report(
             duplicated,
         });
     }
+    Ok(())
+}
+
+/// Accept a Slice 2C compose child's report (slice2c-plan.md section 4 step 2):
+/// exit 0, the report exists and parses, its schema and hash echo (the
+/// composition contract, manifest and generator, and the inherited Slice 2B
+/// contract) are the frozen ones of [`frozen_compose`], it is complete, its
+/// teardown is clean, no test fault, and its case-id set equals `want`
+/// exactly (the manifest's 32 ids).
+pub fn accept_compose_report(
+    run: &ChildRun,
+    report_path: &Path,
+    want: &BTreeSet<String>,
+) -> Result<Value, ReportError> {
+    require_exit_zero(run)?;
+    let raw = std::fs::read(report_path)
+        .map_err(|e| ReportError::Missing(format!("{}: {e}", report_path.display())))?;
+    let report: Value =
+        serde_json::from_slice(&raw).map_err(|e| ReportError::Unparsable(e.to_string()))?;
+    if report["schema"].as_str() != Some(frozen_compose::CHILD_REPORT_SCHEMA) {
+        return Err(ReportError::Schema(format!("{:?}", report["schema"])));
+    }
+    for (key, want) in [
+        ("contract_sha256", frozen_compose::CONTRACT_SHA256),
+        ("manifest_sha256", frozen_compose::MANIFEST_SHA256),
+        ("generator_sha256", frozen_compose::GENERATOR_SHA256),
+        (
+            "slice2b_contract_sha256",
+            frozen_compose::SLICE2B_CONTRACT_SHA256,
+        ),
+    ] {
+        if report[key].as_str() != Some(want) {
+            return Err(ReportError::HashEcho(format!("{key} = {:?}", report[key])));
+        }
+    }
+    if report["completed"].as_bool() != Some(true) {
+        return Err(ReportError::Incomplete("completed != true".into()));
+    }
+    require_clean_teardown(&report)?;
+    require_case_id_set(&report, want)?;
     Ok(report)
 }
 

@@ -433,8 +433,12 @@ fn rust_sources(dir: &Path, out: &mut Vec<PathBuf>) {
 }
 
 /// Coexistence policy: exactly one mlx_set_error_handler call site in this
-/// crate (inside the Once), no workspace crate is linked into the child, and
-/// no other workspace crate calls mlx_set_error_handler.
+/// crate (inside the Once), and no other workspace crate calls
+/// mlx_set_error_handler. Extended for F020 Slice 2C (slice2c-plan.md section
+/// 2.1): the child now links exactly the Slice 1 crates `mlx-affine` and
+/// `safetensors-catalog` (and, through the catalog, `backend`), and none of
+/// the crates in that closure installs a handler. The test name is kept so
+/// that the Slice 2B step's test-name list stays identical (section 6.2).
 #[test]
 fn single_error_handler_call_site_and_no_other_workspace_crate_in_the_child() {
     let mut files = Vec::new();
@@ -465,7 +469,22 @@ fn single_error_handler_call_site_and_no_other_workspace_crate_in_the_child() {
         "the call sits inside the Once"
     );
 
-    // The child's dependency closure: [dependencies] has no path (workspace) crate.
+    // The child's workspace dependency closure: exactly mlx-affine and
+    // safetensors-catalog directly, backend through the catalog, nothing else.
+    fn path_deps(cargo_toml: &Path) -> Vec<String> {
+        let cargo = std::fs::read_to_string(cargo_toml).unwrap();
+        let deps = cargo
+            .split("[dependencies]")
+            .nth(1)
+            .unwrap_or_default()
+            .split("\n[")
+            .next()
+            .unwrap_or_default();
+        deps.lines()
+            .filter(|l| !l.trim_start().starts_with('#') && l.contains("path"))
+            .map(|l| l.split('=').next().unwrap().trim().to_string())
+            .collect()
+    }
     let cargo = std::fs::read_to_string(crate_dir().join("Cargo.toml")).unwrap();
     let deps = cargo
         .split("[dependencies]")
@@ -474,11 +493,26 @@ fn single_error_handler_call_site_and_no_other_workspace_crate_in_the_child() {
         .split("\n[")
         .next()
         .unwrap();
-    assert!(
-        !deps.contains("path"),
-        "a workspace crate would be linked into the child: {deps}"
-    );
     assert!(deps.contains("serde_json") && deps.contains("sha2") && deps.contains("libc"));
+    let mut closure = std::collections::BTreeSet::new();
+    let mut todo = path_deps(&crate_dir().join("Cargo.toml"));
+    assert_eq!(
+        todo,
+        vec!["mlx-affine".to_string(), "safetensors-catalog".to_string()],
+        "the child links exactly the Slice 1 crates"
+    );
+    while let Some(k) = todo.pop() {
+        if closure.insert(k.clone()) {
+            todo.extend(path_deps(
+                &crate_dir().join("..").join(&k).join("Cargo.toml"),
+            ));
+        }
+    }
+    assert_eq!(
+        closure.into_iter().collect::<Vec<_>>(),
+        vec!["backend", "mlx-affine", "safetensors-catalog"],
+        "workspace crates linked into the child"
+    );
 
     // No other workspace crate calls it (crates/stream included).
     let mut others = Vec::new();

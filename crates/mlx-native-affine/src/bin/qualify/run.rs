@@ -25,7 +25,7 @@ use crate::native::{self, DeviceKind, HostCopy, NativeContext};
 use crate::provenance;
 use crate::Args;
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
     let tmp = path.with_extension("tmp");
     std::fs::write(&tmp, bytes).map_err(|e| format!("write {}: {e}", tmp.display()))?;
     std::fs::rename(&tmp, path).map_err(|e| format!("rename {}: {e}", path.display()))
@@ -49,7 +49,7 @@ pub fn redact(text: &str) -> String {
     out
 }
 
-fn stats_json(s: &OpStats) -> Value {
+pub(crate) fn stats_json(s: &OpStats) -> Value {
     let e5 = match (s.active_before, s.peak_after, s.output_nbytes) {
         (Some(a), Some(p), Some(o)) => Some(p.saturating_sub(a) >= o),
         _ => None,
@@ -67,11 +67,11 @@ fn stats_json(s: &OpStats) -> Value {
     })
 }
 
-struct Ctx<'a> {
-    out_dir: PathBuf,
-    fixture_dir: PathBuf,
-    manifest: &'a Manifest,
-    arch: Architecture,
+pub(crate) struct Ctx<'a> {
+    pub(crate) out_dir: PathBuf,
+    pub(crate) fixture_dir: PathBuf,
+    pub(crate) manifest: &'a Manifest,
+    pub(crate) arch: Architecture,
 }
 
 fn tensor<'a>(case: &'a LoadedCase, name: &str) -> Result<&'a HostTensor, String> {
@@ -243,7 +243,7 @@ fn run_case_inner(cx: &Ctx, gpu: &NativeContext, spec: &CaseSpec) -> Result<Valu
 }
 
 /// E4: the N-DQ-CODES canary, decided in the child (it has no R1).
-fn canary(cx: &Ctx, gpu: &NativeContext, label: &str) -> Value {
+pub(crate) fn canary(cx: &Ctx, gpu: &NativeContext, label: &str) -> Value {
     let r = (|| -> Result<Value, String> {
         let spec = cx
             .manifest
@@ -286,7 +286,7 @@ fn canary(cx: &Ctx, gpu: &NativeContext, label: &str) -> Value {
     r.unwrap_or_else(|e| json!({"label": label, "pass": false, "error": redact(&e)}))
 }
 
-fn read_frozen(repo: &Path, rel: &str, want: &str) -> Result<Vec<u8>, String> {
+pub(crate) fn read_frozen(repo: &Path, rel: &str, want: &str) -> Result<Vec<u8>, String> {
     let raw = std::fs::read(repo.join(rel)).map_err(|e| format!("{rel}: {e}"))?;
     let got = sha256_hex(&raw);
     if got != want {
@@ -297,7 +297,7 @@ fn read_frozen(repo: &Path, rel: &str, want: &str) -> Result<Vec<u8>, String> {
 
 /// Preserved cleanup failures and the result-handle census, for the report.
 /// Written only after every native handle has been torn down.
-fn cleanup_json() -> Value {
+pub(crate) fn cleanup_json() -> Value {
     let (created, adopted, error_freed) = native::result_census();
     let errors: Vec<Value> = native::cleanup_errors()
         .iter()

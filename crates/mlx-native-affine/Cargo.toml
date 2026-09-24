@@ -15,11 +15,14 @@ build = "build.rs"
 serde_json = "1"
 sha2 = "0.10"
 libc = "0.2"
-
-[dev-dependencies]
-# R1 (the independent binary64 reference) is consumed by the parent test only;
-# the qualification child never links it.
+# F020 Slice 2C (slice2c-plan.md section 2.1): composition runs the Slice 1
+# catalog, module resolution and checked selection, so both crates are normal
+# dependencies and the `qualify` child links them. Neither links MLX or calls
+# mlx_set_error_handler. R1 (`mlx_affine::reference_qmm`) is linked but never
+# called from the child: a static source test and an `nm` symbol check of the
+# built child enforce that (tests/composition_qualification.rs).
 mlx-affine = { path = "../mlx-affine" }
+safetensors-catalog = { path = "../safetensors-catalog" }
 
 [build-dependencies]
 cc = "1"
@@ -27,3 +30,11 @@ cc = "1"
 [[bin]]
 name = "qualify"
 path = "src/bin/qualify/main.rs"
+
+# F020 Slice 2C composition parent. `test = false` keeps it out of the Slice 2B
+# step's `cargo test -p mlx-native-affine` inventory; the Slice 2C step runs it
+# explicitly with `--test composition_qualification`.
+[[test]]
+name = "composition_qualification"
+path = "tests/composition_qualification.rs"
+test = false
