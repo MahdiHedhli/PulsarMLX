@@ -67,7 +67,7 @@ This is a feasibility and systems-engineering thesis, not a claim that a Mac out
 | **GLM-5.2 research path** | Giant-model correctness across the full model | ✅ C01-C11 committed |
 | **GLM-5.2 Rust-native runtime** | Native model semantics without Python in the inference path | ✅ One real-checkpoint token qualified; later positions measured |
 | **GLM-5.3 Flash paged research** | Practical expert paging and persistent residency | 📏 Measured Python/MLX research path |
-| **Native Safetensors + MLX affine** | Native checkpoint-format foundation for current targets | ✅ Slice 1 qualified on synthetic fixtures |
+| **Native Safetensors + MLX affine** | Native checkpoint-format foundation for current targets | ✅ Slices 1 and 2B qualified on synthetic fixtures |
 | **Native GLM-5.3 Flash runtime** | Intended shipping path | 🔨 In development / planned boundaries |
 
 None of this is a production runtime. The Python/MLX Flash implementation is a research reference and performance vehicle. The intended shipping architecture is Rust-native.
@@ -208,7 +208,7 @@ MLX / Metal execution
 
 The goal is to consume the selected MLX mixed-precision checkpoints **without converting them to GGUF** and **without requantizing their weights**.
 
-F020 Slice 1 has already merged the native Safetensors catalog/admission and MLX affine representation/decoder layers, qualified on synthetic fixtures. Real-checkpoint payload qualification, native quantized matrix operations, residency integration, and native Flash execution remain separate upcoming gates.
+F020 Slice 1 has already merged the native Safetensors catalog/admission and MLX affine representation/decoder layers, qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner. Real checkpoint execution and production geometry remain unqualified. Residency integration and native Flash execution remain separate upcoming gates.
 
 See [F020 native Safetensors status](docs/architecture/f020-native-safetensors-status.md).
 
@@ -243,7 +243,7 @@ GLM-5.3 Flash paged research               📏 measured
         ↓
 Safetensors + MLX affine foundation        ✅ Slice 1
         ↓
-Native packed-weight operations            🔨 active / bounded
+Native packed-weight operations            ✅ Slice 2B (synthetic)
         ↓
 Native GLM-5.3 Flash composition           🗺️ next
         ↓

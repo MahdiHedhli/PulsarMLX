@@ -27,7 +27,7 @@ execution*, consuming both targets **without converting to GGUF** and
 | --- | --- |
 | F020 Slice 1 catalog/admission and affine representation/decoder | Merged; qualified on synthetic fixtures only ([status](../architecture/f020-native-safetensors-status.md)) |
 | Slice 2 target metadata census and primitive contract | Committed preparation at [`9bf6a810`](https://github.com/MahdiHedhli/PulsarMLX/blob/9bf6a810622b7ef1156b750dd0f3140f8c0ca211/specs/020-mlx-safetensors-affine/slice2b-plan.md); metadata compatibility is not payload identity, numerical admission or native model qualification |
-| Slice 2B native packed-weight operations | Implementation authorized separately under the reviewed synthetic contract; no successful implementation result claimed here |
+| Slice 2B native packed-weight operations | Merged. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner. Real checkpoint execution and production geometry remain unqualified. ([status](../architecture/f020-native-safetensors-status.md)) |
 | Native Flash / full GLM-5.3 model execution | Planned; independently qualified per architecture, Flash first |
 | Native residency, double buffering, prefetch and repacking | Planned after the relevant correctness/composition gates and an instrumented baseline; see OPT-01 through OPT-08 |
 

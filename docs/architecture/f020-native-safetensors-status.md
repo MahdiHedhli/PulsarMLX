@@ -1,17 +1,18 @@
 # F020 native Safetensors status — current pointer
 
-**Last updated 2026-09-24. Slice 1 is accepted and merged. Slice 2B (native
-primitive qualification on synthetic fixtures) is implemented and qualified on
-its branch, not merged; see [Slice 2B](#slice-2b--native-primitives-branch-not-merged).** This is a current-pointer document: it says what is qualified
+**Last updated 2026-09-24. Slice 1 and Slice 2B are accepted and merged.
+Slice 2B (native primitive qualification on synthetic fixtures) was merged into
+`main` by merge commit `274da684a4b3081dde61c772d98c7814198b5752`; see
+[Slice 2B](#slice-2b--native-primitives-merged).** This is a current-pointer document: it says what is qualified
 today, what is not, and where to read the detail. It deliberately claims nothing
 about a real checkpoint's payload.
 
 ## Current state (accepted)
 
 F020 Slice 1 is merged. Native Safetensors catalog/admission and MLX affine
-representation/decoder support are qualified on synthetic fixtures. Real
-checkpoint payload qualification, native quantized-matmul integration, model
-execution, and residency integration remain unqualified or unimplemented.
+representation/decoder support are qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner.
+Real checkpoint execution and production geometry remain unqualified.
+Model execution and residency integration remain unimplemented.
 
 * **Merged** into `main` by merge commit
   [`030d70810c5e01ed91870bb05b1ec05ff5dba079`](https://github.com/MahdiHedhli/PulsarMLX/commit/030d70810c5e01ed91870bb05b1ec05ff5dba079)
@@ -231,7 +232,11 @@ Evidence under `docs/architecture/reviews/evidence/` is **append-only**: an
 added file may not later be edited, and a newer record is a new file that names
 what it supersedes.
 
-## Slice 2B — native primitives (branch, not merged)
+## Slice 2B — native primitives (merged)
+
+Merged into `main` by merge commit
+`274da684a4b3081dde61c772d98c7814198b5752` of branch head
+`528e6cf9e7365fd8a9056f87e31e1be269346969` (qualified candidate `e6f502ff`).
 
 **Scope.** Under the frozen contract
 [`native-primitives-v1.json`](../../specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json)
