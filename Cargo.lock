@@ -684,6 +684,7 @@ dependencies = [
  "safetensors-catalog",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]
@@ -694,6 +695,17 @@ dependencies = [
  "gguf",
  "libc",
  "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "mlx-native-affine"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "libc",
+ "mlx-affine",
  "serde_json",
  "sha2",
 ]

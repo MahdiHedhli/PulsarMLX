@@ -1,0 +1,37 @@
+{
+  "entries": [
+    {
+      "children": [
+        {
+          "name": "stray.cpython-314.pyc",
+          "size": 19,
+          "type": "file"
+        }
+      ],
+      "name": "__pycache__",
+      "size": 96,
+      "type": "directory"
+    },
+    {
+      "name": "config.json",
+      "size": 308,
+      "type": "file"
+    },
+    {
+      "name": "model-00001-of-00002.safetensors",
+      "size": 1276,
+      "type": "file"
+    },
+    {
+      "name": "model-00002-of-00002.safetensors",
+      "size": 1439,
+      "type": "file"
+    },
+    {
+      "name": "model.safetensors.index.json",
+      "size": 836,
+      "type": "file"
+    }
+  ],
+  "schema": "pulsarmlx.f020.safetensors-header-extract/1.0.0"
+}

@@ -1,0 +1,929 @@
+{
+ "attempt": 1,
+ "branch": "feat/020-slice2-census-contract-20260923",
+ "candidate_commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+ "case_accounting": {
+  "by_operation": {
+   "astype_f32": 2,
+   "dequantize": 83,
+   "import_meta": 3,
+   "import_u32": 5,
+   "quantized_matmul": 270
+  },
+  "by_reference_category": {
+   "byte_identity": 8,
+   "codes_exact": 18,
+   "exact_host_widening": 2,
+   "refusal_probe": 37,
+   "rust_binary64_r1": 2,
+   "rust_binary64_r1+python_exact_r1": 296
+  },
+  "case_ids": 363,
+  "passed_cases": 363,
+  "production_relevant_cases": 8,
+  "quantized_matmul_by_derived_family_on_this_host": {
+   "qmm_t": 20,
+   "qmm_t_splitk": 57,
+   "qmv": 91,
+   "qmv_fast": 41,
+   "qmv_quad": 30
+  }
+ },
+ "checkpoint_reads": 0,
+ "ci_conclusion": "failure",
+ "ci_run_id": 35952463705,
+ "ci_run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/35952463705",
+ "downloads_of_model_data": 0,
+ "failure": {
+  "exit": "AssertionError at line 16 of the step's summary check: summary['provenance']['architecture'].startswith('applegpu_')",
+  "numerical_gates_all_passed": true,
+  "retry": "none (a separately identified rerun after the fix)",
+  "step": "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)"
+ },
+ "feature": "020-mlx-safetensors-affine",
+ "frozen_package": {
+  "case_file_listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82",
+  "contract": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+   "sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72"
+  },
+  "fixture_generator": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "scripts/research/f020_native_primitives_fixtures_v1.py",
+   "sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999"
+  },
+  "fixture_manifest": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "fixtures/native-primitives/manifest.json",
+   "sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04"
+  },
+  "owner_go": {
+   "commit": "02bc9b227b1be627c742be9b3949f9874f1aa39d",
+   "path": "docs/architecture/reviews/evidence/f020-slice2b-owner-go-v1.json",
+   "sha256": "d6ca2eb1999eeb72cce0790ef6972468677292f1f2171f2163e430b09d5ffcab"
+  },
+  "plan": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/slice2b-plan.md",
+   "sha256": "24a06db0a34ee4ec8ca9af8728d3d27e26cfe3c4a6c22dcba06011c8ab2796df"
+  },
+  "source_pins": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/source-pins-slice2.json",
+   "sha256": "02e963a02cf1d63168c57cff316c1d3471313498396b2abd7b3e5ec432267bb4"
+  }
+ },
+ "gates": {
+  "candidate_commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+  "cast_recorded_only": {
+   "cast-bf16-to-f32": {
+    "gated_mismatches": 0,
+    "gated_patterns": 65026,
+    "recorded_only": {
+     "infinite": 2,
+     "infinite_bit_equal": 2,
+     "nan": 254,
+     "nan_bit_equal": 254,
+     "nan_is_nan": 254,
+     "subnormal": 254,
+     "subnormal_bit_equal": 254,
+     "subnormal_flushed_to_signed_zero": 0
+    }
+   },
+   "cast-f16-to-f32": {
+    "gated_mismatches": 0,
+    "gated_patterns": 61442,
+    "recorded_only": {
+     "infinite": 2,
+     "infinite_bit_equal": 2,
+     "nan": 2046,
+     "nan_bit_equal": 1,
+     "nan_is_nan": 2046,
+     "subnormal": 2046,
+     "subnormal_bit_equal": 2046,
+     "subnormal_flushed_to_signed_zero": 0
+    }
+   }
+  },
+  "child": {
+   "abi_values": [
+    8,
+    8,
+    8,
+    8,
+    8,
+    4,
+    4,
+    0,
+    1,
+    2,
+    3,
+    9,
+    10,
+    12,
+    8,
+    4,
+    8,
+    4
+   ],
+   "call_counts": {
+    "imports": 1203,
+    "numerical": 1300
+   },
+   "canary_end": {
+    "case_id": "dq-codes-b8-g64-bf16",
+    "elements": 2048,
+    "label": "end",
+    "mismatches": 0,
+    "output_sha256": "862f1873b80969ea670ffca463340cb739c7883866d4b46337cc9424c56f6bf8",
+    "pass": true
+   },
+   "canary_start": {
+    "case_id": "dq-codes-b8-g64-bf16",
+    "elements": 2048,
+    "label": "start",
+    "mismatches": 0,
+    "output_sha256": "862f1873b80969ea670ffca463340cb739c7883866d4b46337cc9424c56f6bf8",
+    "pass": true
+   },
+   "elapsed_ms": 2483,
+   "error_handler": {
+    "installs": 1,
+    "messages_received": 0
+   },
+   "handles": {
+    "array_handles_freed": 1847,
+    "double_free_attempts": 0,
+    "live_array_handles_after_context_drop": 0,
+    "live_arrays_in_context_at_drop": 0
+   },
+   "outcome": "EXIT_STATUS 0",
+   "report_sha256": "4afa1a1601020f6a49aa41eac89ab694766a30889f7a0a69a852e019cfd4ec8f",
+   "timeout_seconds": 1800
+  },
+  "exact_gates_summary": {
+   "G-DQ-EXACT": {
+    "cases": 59,
+    "elements": 692672,
+    "failed_elements": 0,
+    "passed_cases": 59
+   },
+   "G-QMM-EXACT": {
+    "cases": 237,
+    "elements": 207744,
+    "failed_elements": 0,
+    "passed_cases": 237
+   },
+   "G-R1-SELF-DQ": {
+    "cases": 59,
+    "elements": 692672,
+    "failed_elements": 0,
+    "passed_cases": 59
+   },
+   "G-R1-SELF-QMM": {
+    "cases": 237,
+    "elements": 207744,
+    "failed_elements": 0,
+    "passed_cases": 237
+   },
+   "H-DQ-SET": {
+    "cases": 59,
+    "contracted": 692672,
+    "contracted_via_f32": 692672,
+    "elements": 692672,
+    "gating": false,
+    "in_set": 692672,
+    "separate": 569954
+   },
+   "not_executed": []
+  },
+  "failures": [],
+  "frozen_population_validation": {
+   "case_count": 363,
+   "case_file_count": 361,
+   "cases_listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82",
+   "contract_sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72",
+   "generator_check_before": "PASS",
+   "generator_sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999",
+   "manifest_sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04",
+   "plan_sha256": "24a06db0a34ee4ec8ca9af8728d3d27e26cfe3c4a6c22dcba06011c8ab2796df",
+   "population_valid_after": true,
+   "source_pins_sha256": "02e963a02cf1d63168c57cff316c1d3471313498396b2abd7b3e5ec432267bb4"
+  },
+  "gate_counts": {
+   "B6-REFUSAL": {
+    "cases": 37,
+    "passed": 37
+   },
+   "G-CAST": {
+    "cases": 2,
+    "passed": 2
+   },
+   "G-DQ-CODES": {
+    "cases": 18,
+    "passed": 18
+   },
+   "G-DQ-EXACT": {
+    "cases": 59,
+    "passed": 59
+   },
+   "G-DQ-RUST": {
+    "cases": 59,
+    "passed": 59
+   },
+   "G-IMPORT": {
+    "cases": 8,
+    "passed": 8
+   },
+   "G-QMM-EXACT": {
+    "cases": 237,
+    "passed": 237
+   },
+   "G-QMM-RUST": {
+    "cases": 239,
+    "passed": 239
+   },
+   "G-R1-SELF-DQ": {
+    "cases": 59,
+    "passed": 59
+   },
+   "G-R1-SELF-QMM": {
+    "cases": 237,
+    "passed": 237
+   },
+   "N-QMM-ZERO": {
+    "cases": 1,
+    "passed": 1
+   },
+   "SHAPE-DTYPE": {
+    "cases": 326,
+    "passed": 326
+   }
+  },
+  "host_label": "github-macos-15",
+  "r1_self_check_reference_owner": {
+   "N-R1-SELF": {
+    "cases": 237,
+    "elements": 207744,
+    "failed_cases": [],
+    "failed_elements": 0,
+    "passed_cases": 237
+   },
+   "N-R1-SELF-DQ": {
+    "cases": 59,
+    "elements": 692672,
+    "failed_cases": [],
+    "failed_elements": 0,
+    "passed_cases": 59
+   },
+   "dual_reference_cases": 296,
+   "missing_cases": [],
+   "p_hat_exact": {
+    "cases": 59,
+    "elements": 692672,
+    "failed_cases": [],
+    "failed_elements": 0,
+    "passed_cases": 59
+   },
+   "phi_hat_reference_error": {
+    "cases": 237,
+    "elements": 207744,
+    "failed_cases": [],
+    "failed_elements": 0,
+    "passed_cases": 237
+   },
+   "result": "PASS"
+  },
+  "refusals": [
+   {
+    "expected": "R-DOMAIN-X-RANGE",
+    "got": "R-DOMAIN-X-RANGE",
+    "id": "ref-astra-f1-vector-x-underflow",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DOMAIN-META-RANGE",
+    "got": "R-DOMAIN-META-RANGE",
+    "id": "ref-astra-f1-matrix-scale-underflow",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DOMAIN-ROWSUM",
+    "got": "R-DOMAIN-ROWSUM",
+    "id": "ref-astra-f2-rowsum-in-range",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DOMAIN-X-RANGE",
+    "got": "R-DOMAIN-X-RANGE",
+    "id": "ref-x-above-range",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DOMAIN-ROWSUM",
+    "got": "R-DOMAIN-ROWSUM",
+    "id": "ref-rowsum-2p41",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DOMAIN-WMAX",
+    "got": "R-DOMAIN-WMAX",
+    "id": "ref-wmax-s2p30",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DQ-RANGE",
+    "got": "R-DQ-RANGE",
+    "id": "ref-astra-f3-f16-fused-overflow",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DQ-NORMAL",
+    "got": "R-DQ-NORMAL",
+    "id": "ref-dq-f16-subnormal-result",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-SUBNORMAL",
+    "got": "R-SUBNORMAL",
+    "id": "ref-subnormal-x",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-SUBNORMAL",
+    "got": "R-SUBNORMAL",
+    "id": "ref-subnormal-scale-dq-f16",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-NONFINITE",
+    "got": "R-NONFINITE",
+    "id": "ref-nonfinite-x-nan",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-NONFINITE",
+    "got": "R-NONFINITE",
+    "id": "ref-nonfinite-scale-inf",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-TRANSPOSE",
+    "got": "R-TRANSPOSE",
+    "id": "ref-transpose-false",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-XDTYPE",
+    "got": "R-XDTYPE",
+    "id": "ref-x-f16",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-XDTYPE",
+    "got": "R-XDTYPE",
+    "id": "ref-x-bf16",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-BITS",
+    "got": "R-BITS",
+    "id": "ref-bits-2",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-BITS",
+    "got": "R-BITS",
+    "id": "ref-bits-3",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-BITS",
+    "got": "R-BITS",
+    "id": "ref-bits-5",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-BITS",
+    "got": "R-BITS",
+    "id": "ref-bits-6",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GROUP",
+    "got": "R-GROUP",
+    "id": "ref-group-16",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GROUP",
+    "got": "R-GROUP",
+    "id": "ref-group-256",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GEOMETRY",
+    "got": "R-GEOMETRY",
+    "id": "ref-n-not-64-aligned",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GEOMETRY",
+    "got": "R-GEOMETRY",
+    "id": "ref-k-over-cap",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GEOMETRY",
+    "got": "R-GEOMETRY",
+    "id": "ref-n-over-cap",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-GEOMETRY",
+    "got": "R-GEOMETRY",
+    "id": "ref-m-over-cap",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-XSHAPE",
+    "got": "R-XSHAPE",
+    "id": "ref-x-rank4",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-XSHAPE",
+    "got": "R-XSHAPE",
+    "id": "ref-x-lastdim-mismatch",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-META",
+    "got": "R-META",
+    "id": "ref-meta-dtype-mismatch",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-META",
+    "got": "R-META",
+    "id": "ref-meta-shape-mismatch",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-WDTYPE",
+    "got": "R-WDTYPE",
+    "id": "ref-weight-rank3",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-WDTYPE",
+    "got": "R-WDTYPE",
+    "id": "ref-weight-f32",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-DEVICE",
+    "got": "R-DEVICE",
+    "id": "ref-cpu-context",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-EMPTY-DIM",
+    "got": "R-EMPTY-DIM",
+    "id": "ref-astra-r2-2-n-zero",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-EMPTY-DIM",
+    "got": "R-EMPTY-DIM",
+    "id": "ref-empty-m-zero",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-EMPTY-DIM",
+    "got": "R-EMPTY-DIM",
+    "id": "ref-empty-k-zero",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-EMPTY-DIM",
+    "got": "R-EMPTY-DIM",
+    "id": "ref-dq-empty-rows",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   },
+   {
+    "expected": "R-EMPTY-DIM",
+    "got": "R-EMPTY-DIM",
+    "id": "ref-dq-empty-k",
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0,
+    "pass": true
+   }
+  ],
+  "result": "PASS",
+  "worktree_dirty": false,
+  "worst_ratio_by_family": {
+   "dequantize/BF16": {
+    "cases": 21,
+    "exact_distance_over_bound": 0.9878856983567912,
+    "rust_d_hi_over_B_lo": 0.9878856983568584
+   },
+   "dequantize/F16": {
+    "cases": 19,
+    "exact_distance_over_bound": 0.933545922010654,
+    "rust_d_hi_over_B_lo": 0.9335459220111044
+   },
+   "dequantize/F32": {
+    "cases": 19,
+    "exact_distance_over_bound": 0.9699197520598376,
+    "rust_d_hi_over_B_lo": 0.9699197557042956
+   },
+   "quantized_matmul/qmm_t": {
+    "cases": 20,
+    "exact_distance_over_bound": 0.038776601182922435,
+    "rust_d_hi_over_B_lo": 0.10505233386870436
+   },
+   "quantized_matmul/qmm_t_splitk": {
+    "cases": 57,
+    "exact_distance_over_bound": 0.12722819977405303,
+    "rust_d_hi_over_B_lo": 0.12722820592043985
+   },
+   "quantized_matmul/qmv": {
+    "cases": 91,
+    "exact_distance_over_bound": 0.02978768297676259,
+    "rust_d_hi_over_B_lo": 0.029787694024832695
+   },
+   "quantized_matmul/qmv_fast": {
+    "cases": 41,
+    "exact_distance_over_bound": 0.02829748271813283,
+    "rust_d_hi_over_B_lo": 0.02829750223215888
+   },
+   "quantized_matmul/qmv_quad": {
+    "cases": 30,
+    "exact_distance_over_bound": 0.08347412213191172,
+    "rust_d_hi_over_B_lo": 0.08347412788151261
+   }
+  }
+ },
+ "host": "GitHub-hosted macos-15 runner (required gate host)",
+ "implementation_bindings": [
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "Cargo.toml",
+   "sha256": "318677d8cb524b222291aff84ab81b2017c27635697606fe4c287f5da6cb6d72"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "Cargo.lock",
+   "sha256": "2cf2790913d59ff68dca301b18f3d85bdb3340c80890124145a25740ebd0f5f3"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/Cargo.toml",
+   "sha256": "7e807f02c261d8a167b9af287d8890668f2fb1d610c706c43ab9364b25655ce8"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/build.rs",
+   "sha256": "a32e0817e014d2038584fad82fae200f088d245db4c6ff19f6a47c6b7d7e914a"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/abi_check.c",
+   "sha256": "f5f58ff4c810dbbe1a7a25aa3e3ec0c1de1606af073d23fbb2e8932c54560a81"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/lib.rs",
+   "sha256": "0f29aad587ded3737834aa1b3ba353aa8086840c40494507693fc1cfd99848e9"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/dtype.rs",
+   "sha256": "20d3104aa10ff491f15c9d139507a99f43d0a99388fc4ccbec79365c15ed2561"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/family.rs",
+   "sha256": "7a761d986aad199e0543cc4df43db54c8c2864374d6e7a078fcb0c060f93a286"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/fixture.rs",
+   "sha256": "69cc64cccd044d2c5ad99c280cc9708d2b5972fac74c2508f415491ec47cab53"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/frozen.rs",
+   "sha256": "ebdf678063fd3ec3a13905277b1bdd67cf3fa0f2c7d9e5324c374faf3a7918ad"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/gates.rs",
+   "sha256": "3cf843f432f4431ae0923c08fafe6bc8d59380fdd0634f8147cdb222e973f875"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/harness.rs",
+   "sha256": "7faa576969d2194268e1724a3df8454f677d7aacec4fca16e1bbc149ce0f85df"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/refusal.rs",
+   "sha256": "90b61b7b59672f784a9811cfa968b4594f69150361931798cedbc19840b2fda0"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/main.rs",
+   "sha256": "a27bd7146c651e56de510a7055ef2d822be59e49d5e4adb4a8d190a513b9cb3f"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/ffi.rs",
+   "sha256": "ea7ff4d6905f5ba72ddff46dd154775344308fb70f71a8018bac59ca9e8d85bd"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/native.rs",
+   "sha256": "1fd30c49e633165f262eaf719e399a38d6807fb7cb4dd5383c24daa87b2743ce"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/bridge.rs",
+   "sha256": "94cefa71f63db727529831ecbf0bf0663dfc584fa58735c3c7e92a55628b3827"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/provenance.rs",
+   "sha256": "7977c0273c1e0983ce0005524a246c9c9749c6f5265f2941948e6553ab9c589d"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/src/bin/qualify/run.rs",
+   "sha256": "13781a729c9ec80f7331b964141a490cb563eedb7f7769c4b9a6ea43483ed56c"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/tests/host_checks.rs",
+   "sha256": "56a82592acc223e0272e3373721099725c99e705ec779286f8f75a66fbf4b8a8"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/tests/native_qualification.rs",
+   "sha256": "f865f8d2963b4fa165a864681377d54ecd1627f650eef7df584134b6677d9ea5"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/acceptance/exact_gates_v1.py",
+   "sha256": "23b6c46e1d2e986d5027c0eea9d902c88a54f623a07d6ab42264fc410f23e887"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-native-affine/acceptance/test_exact_gates_v1.py",
+   "sha256": "56725c7499cf4239a0d92b34e314a075f36e82b0cfdc98b46df1d93ac6e8886e"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "crates/mlx-affine/src/reference_qmm.rs",
+   "sha256": "6a5c8e82f224c79e33f418fdba83a76846df015d62eab8eb7f09258860150fa8"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "scripts/research/mlx_affine_qmm_reference_v1.py",
+   "sha256": "b9ef145e2bdce533aa733b70866d39364e2e61ee4642746b650e705f8a40ef15"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "scripts/ci/mlx_native_primitives_compat_v1.py",
+   "sha256": "bcd9feae2af47b56faf34e5d5c0f26e07f9a681913644e090f9872d45ffd5cde"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": ".github/workflows/macos.yml",
+   "sha256": "13fd6efeb96d6e0b1178a6bca0fd5b75b845d4f88ddc5c38972d064d0797a9eb"
+  },
+  {
+   "commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "path": "scripts/ci/f017_measurement_scope_v1.py",
+   "sha256": "b1a4ff464955e03b505a806bc1818bbd7a2cff0bdc65dada2efbc8e1e3903e8c"
+  }
+ ],
+ "jobs": {
+  "Apple MLX small-fixture validation": "failure",
+  "Apple Silicon workspace baseline": "success",
+  "CI aggregate status": "failure",
+  "Classify committed change": "success",
+  "Closed F017 branch guard": "skipped",
+  "Documentation integrity": "skipped",
+  "Evidence integrity": "skipped"
+ },
+ "kind": "SYNTHETIC_NATIVE_QUALIFICATION_GATE_HOST",
+ "later_steps": "skipped after the failure (GitHub default), including the doctor step",
+ "model_executed": false,
+ "required_step": {
+  "conclusion": "failure",
+  "job": "apple-mlx-small-fixtures",
+  "name": "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)"
+ },
+ "runner_artifact": {
+  "files": {
+   "qualification/child/report.json": {
+    "bytes": 519653,
+    "sha256": "4afa1a1601020f6a49aa41eac89ab694766a30889f7a0a69a852e019cfd4ec8f"
+   },
+   "qualification/exact-gates.json": {
+    "bytes": 116677,
+    "sha256": "d77111f260800a070abcf2d2f4559c0025ff9daa352b80f95d69705959a9af1f"
+   },
+   "qualification/summary.json": {
+    "bytes": 418622,
+    "sha256": "75c45f2513105bc55686c83fe596c0bdf9a8fc49be4d12c5e94d4996e7124f24"
+   },
+   "selftest/child/selftest.json": {
+    "bytes": 1300,
+    "sha256": "e85e54eab90c5907b413a768d3b710cf96ef8885d983c7238b4859d3eb69ea8c"
+   }
+  },
+  "name": "f020-slice2b-qualification"
+ },
+ "runner_provenance": {
+  "architecture": "air64_v27",
+  "architecture_generation": 2,
+  "architecture_size_class": "7",
+  "build": {
+   "crate_version": "0.1.0",
+   "profile": "release",
+   "qualify_executable_sha256": "61bbd764d70b2b4aee15e0b28006b3288184c1ce36b9160714aa64dfe1504cdd",
+   "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+  },
+  "device_info": {
+   "architecture": "air64_v27",
+   "device_name": "Apple Paravirtual device",
+   "max_buffer_length": "3758096384",
+   "max_recommended_working_set_size": "5010800640",
+   "memory_size": "7516192768",
+   "resource_limit": "499000"
+  },
+  "environment": {
+   "DYLD_LIBRARY_PATH": "<native-prefix>/lib",
+   "MLX_ENABLE_TF32": "0",
+   "MLX_MAX_MB_PER_BUFFER_set": false,
+   "MLX_MAX_OPS_PER_BUFFER_set": false,
+   "MLX_METAL_GPU_ARCH_set": false
+  },
+  "libmlx": {
+   "bytes": 21037712,
+   "method": "dyld image list",
+   "relative_path": "lib/libmlx.dylib",
+   "relative_to": "<native-prefix>",
+   "sha256": "e861c439c69a943e134bba520bb07719d55f4db1dac9f0feaf38bf3486982919"
+  },
+  "libmlxc": {
+   "bytes": 820336,
+   "method": "dladdr(mlx_version)",
+   "relative_path": "lib/libmlxc.dylib",
+   "relative_to": "<native-prefix>",
+   "sha256": "9dcf8fdb2f4a662916c9018a43f3ba0bfa6aaf16ed5944839bcfb67e98fa7d20"
+  },
+  "metallib": {
+   "bytes": 125280936,
+   "contains_nax_names": false,
+   "nax_name_occurrences": 0,
+   "relative_path": "lib/mlx.metallib",
+   "relative_to": "<native-prefix>",
+   "sha256": "9ca9cbc6d37929a79f13b358c431d1d151f742977a7bad3f15d052a366598107"
+  },
+  "mlx_version": "0.31.2",
+  "native_prefix": {
+   "identity_method": "sha256 of '<relpath> <sha256>' lines for libmlx, libmlxc, mlx.metallib",
+   "identity_sha256": "abac624dc19a7288398dd8098d51ce4dbe5ba4163962cea465c4263254c38c72",
+   "label": "<native-prefix>"
+  },
+  "nax_capable_hardware": false,
+  "os_product_version": "15.7.9"
+ },
+ "schema": "pulsarmlx.f020.slice2b-ci-qualification/1.0.0",
+ "selftest": {
+  "checks": {
+   "B6 refusal precedes every MLX-C numerical call and import": {
+    "detail": null,
+    "pass": true
+   },
+   "B9 child continues after the injected error": {
+    "detail": "b9c80b5adeca450753a16950c3cc655d271f7bef7a485bc83f112b72fef21d37",
+    "pass": true
+   },
+   "B9 injected MLX-C error becomes a Rust error": {
+    "detail": {
+     "message": "[quantized_matmul] Last dimension of first input with shape (..., 7) does not match the expanded quantized matrix (64, 64) computed from shape (64,8) with group_size=64, bits=4 and transpose=true at <path>"
+    },
+    "pass": true
+   },
+   "L-ERRFREE result handle freed on the error path": {
+    "detail": {
+     "live_arrays": 3
+    },
+    "pass": true
+   },
+   "L-ONCE drop-order permutations": {
+    "detail": {
+     "permutations": 6
+    },
+    "pass": true
+   },
+   "L-OUTLIVE zero live arrays before context drop": {
+    "detail": 0,
+    "pass": true
+   },
+   "single error-handler install": {
+    "detail": 1,
+    "pass": true
+   },
+   "zero live native array handles after context drop": {
+    "detail": [
+     0,
+     18
+    ],
+    "pass": true
+   }
+  },
+  "completed": true,
+  "pass": true,
+  "schema": "pulsarmlx.f020.slice2b-child-selftest/1.0.0"
+ },
+ "slice": "2B",
+ "verdict_note": "FAIL. Every Slice 2B numerical gate passed on the runner, but the required step's workflow post-check asserted an architecture string starting with 'applegpu_' and the runner reported 'air64_v27' (Apple Paravirtual device). Diagnosed as an implementation defect in that post-check (an unfounded assumption), not a numerical failure; fixed under the contract in 0b656a89 / 7f28bc5c / 844a8f63 and rerun as attempt 2. This failure stays recorded against acc94f40."
+}

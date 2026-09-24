@@ -1,0 +1,19 @@
+{
+  "model_type": "synthetic-census",
+  "quantization": {
+    "bits": 4,
+    "blocks.0.wide": {
+      "bits": 8,
+      "group_size": 64
+    },
+    "group_size": 64
+  },
+  "quantization_config": {
+    "bits": 4,
+    "blocks.0.wide": {
+      "bits": 8,
+      "group_size": 64
+    },
+    "group_size": 64
+  }
+}

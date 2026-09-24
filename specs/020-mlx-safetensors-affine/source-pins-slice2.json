@@ -1,0 +1,1640 @@
+{
+  "schema": "pulsarmlx.f020.source-pins/1.0.0-draft.6",
+  "feature": "020-mlx-safetensors-affine",
+  "slice": "2B",
+  "drafted_on": "2026-09-23",
+  "status": "DRAFT",
+  "method": "Read-only clones of ml-explore/mlx and ml-explore/mlx-c; each pinned revision checked out in its own worktree. The four MLX-C patches were applied locally, in the script's order, from `git diff <commit>^ <commit>` of the patch commits themselves (all four descend from v0.6.0 and applied cleanly). No numerical operation of any kind was executed; no MLX library was loaded.",
+  "repository_anchor": {
+    "commit": "030d70810c5e01ed91870bb05b1ec05ff5dba079",
+    "subject": "merge: F020 Slice 1 -- native Safetensors catalog and MLX affine representation"
+  },
+  "native_mlx": {
+    "repository": "https://github.com/ml-explore/mlx",
+    "commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+    "tag": "v0.31.2 (tag resolves to this commit)",
+    "commit_date": "2026-04-21T17:35:20-07:00",
+    "pinned_at": "scripts/ci/install_native_mlx.sh:5",
+    "cmake_options": {
+      "source": "scripts/ci/install_native_mlx.sh:22-32",
+      "generator": "Ninja",
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_INSTALL_PREFIX": "<prefix>",
+      "CMAKE_INSTALL_RPATH": "<prefix>/lib",
+      "BUILD_SHARED_LIBS": "ON",
+      "MLX_BUILD_TESTS": "OFF",
+      "MLX_BUILD_EXAMPLES": "OFF",
+      "MLX_BUILD_BENCHMARKS": "OFF",
+      "MLX_BUILD_PYTHON_BINDINGS": "OFF",
+      "MLX_BUILD_GGUF": "OFF",
+      "MLX_BUILD_SAFETENSORS": "OFF",
+      "left_at_upstream_default": {
+        "MLX_METAL_JIT": "OFF (CMakeLists.txt:44) -> kernels are compiled ahead of time into mlx.metallib",
+        "MLX_BUILD_METAL": "ON (CMakeLists.txt:36)",
+        "MLX_BUILD_CPU": "ON (CMakeLists.txt:37)",
+        "MLX_METAL_DEBUG": "OFF (CMakeLists.txt:39)",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "unset -> no -mmacosx-version-min for the Metal compiler (CMakeLists.txt:197-202)"
+      },
+      "build_dependent": {
+        "MLX_METAL_VERSION": "queried from the runner's `xcrun -sdk macosx metal` at configure time (CMakeLists.txt:203-207)",
+        "NAX kernels": "built only if MLX_METAL_VERSION >= 400 and MACOS_SDK_VERSION >= 26.2, otherwise MLX_METAL_NO_NAX is defined (mlx/backend/metal/kernels/CMakeLists.txt:158-176)",
+        "Metal toolchain": "downloaded by xcodebuild -downloadComponent MetalToolchain if absent (scripts/ci/install_native_mlx.sh:13-16); version not pinned"
+      },
+      "metal_kernel_flags": "-x metal -Wall -Wextra -fno-fast-math -Wno-c++17-extensions -Wno-c++20-extensions (mlx/backend/metal/kernels/CMakeLists.txt:12-20)"
+    }
+  },
+  "native_mlx_c": {
+    "repository": "https://github.com/ml-explore/mlx-c",
+    "commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "tag": "v0.6.0 (annotated tag; resolves to this commit)",
+    "commit_date": "2026-03-19T17:43:53-07:00",
+    "pinned_at": "scripts/ci/install_native_mlx.sh:6",
+    "patches": {
+      "source": "scripts/ci/install_native_mlx.sh:38-52 (downloaded as https://github.com/ml-explore/mlx-c/commit/<commit>.patch?full_index=1, sha256-checked, then git apply)",
+      "applied_in_order": [
+        {
+          "commit": "1e3c24ffebfdfbeecca054c51637fc4381d98aab",
+          "subject": "support for mlx_distributed_group_free() (#110)",
+          "date": "2026-04-07T16:56:39-07:00",
+          "patch_sha256": "24831d5bc44b72a0fd027572a4e4eaf754ed9805ffed86185bb8dbdfb6284818"
+        },
+        {
+          "commit": "89d3454ac3f46ff68668dd9f7817c6d47650e47c",
+          "subject": "support for gguf (#111)",
+          "date": "2026-04-07T16:57:09-07:00",
+          "patch_sha256": "411749fd1908fdee783c3b378471603606852ce3a0ee0011ca5b66f47187b9d3"
+        },
+        {
+          "commit": "782d4712862b247a094086419ce130fd82cf3c53",
+          "subject": "support for graph export (#112)",
+          "date": "2026-04-08T09:45:26-07:00",
+          "patch_sha256": "4469b3ec2836efeadce98a192ae26f423cdbbd182edcd2126f4a6ef36891ce58"
+        },
+        {
+          "commit": "fba4470b89073180056c9ea46c443051375f7399",
+          "subject": "feat: regenerate bindings for MLX 0.31.2 (#114)",
+          "date": "2026-04-23T17:19:10-07:00",
+          "patch_sha256": "5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609"
+        }
+      ],
+      "patch_hash_verification": "Verified at build time, not re-derived here: scripts/ci/install_native_mlx.sh downloads each patch and runs `shasum -a 256 -c` against the pinned value before `git apply` (install_native_mlx.sh:38-46, check at line 45); the script runs under `set -euo pipefail` (line 3), so a mismatch fails the build. This research reconstructed the patched tree from the commit objects only to read source.",
+      "effect_on_in_scope_api": "none: mlx_dequantize (mlx/c/ops.h:359-369) and mlx_quantized_matmul (mlx/c/ops.h:809-819) declarations are identical before and after the patches; array, stream, device, error and memory APIs used here are unchanged by them"
+    },
+    "cmake_options": {
+      "source": "scripts/ci/install_native_mlx.sh:54-61",
+      "generator": "Ninja",
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_INSTALL_PREFIX": "<prefix>",
+      "CMAKE_INSTALL_RPATH": "<prefix>/lib",
+      "CMAKE_PREFIX_PATH": "<prefix>",
+      "BUILD_SHARED_LIBS": "ON",
+      "MLX_C_BUILD_EXAMPLES": "OFF",
+      "MLX_C_USE_SYSTEM_MLX": "ON"
+    }
+  },
+  "python_wheel": {
+    "requirement": "mlx==0.32.0 (pyproject.toml:10), resolved in uv.lock:43-65 with mlx-metal==0.32.0 (uv.lock:67-75)",
+    "upstream_source": {
+      "tag": "v0.32.0 (lightweight tag)",
+      "commit": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247",
+      "commit_date": "2026-07-07T09:10:33-07:00",
+      "commits_after_native_pin": 146,
+      "relation": "68cf2fdd is an ancestor of 7a1d4f5c",
+      "provenance_caveat": "uv.lock pins wheel hashes, not a build provenance; the mapping wheel -> tag commit is by version label only (U14), and the wheel's build options are unknown (U10)"
+    },
+    "ci_interpreter": "Python 3.13.13 (.github/workflows/macos.yml:212) on runs-on: macos-15 (macos.yml:162); by tag specificity the installed files are expected to be the cp313 macosx_15_0 mlx wheel and the macosx_15_0 mlx-metal wheel -- an inference, to be recorded at run time",
+    "mlx_wheels": [
+      {
+        "file": "mlx-0.32.0-cp310-cp310-macosx_14_0_arm64.whl",
+        "sha256": "c6feb17e32160b70c7634aab925cf3f8c5c7bebbf99f227c48450478e1008af2",
+        "size": 562899
+      },
+      {
+        "file": "mlx-0.32.0-cp310-cp310-macosx_15_0_arm64.whl",
+        "sha256": "73303259f2bda7fb4a0c782a7299e0e28a2890b9b6fbfc4b635fb8032208ec7e",
+        "size": 562898
+      },
+      {
+        "file": "mlx-0.32.0-cp310-cp310-macosx_26_0_arm64.whl",
+        "sha256": "8637003c6eb089443d149fdb483f5d7a7846d6cc43d112148d7aa07cf1356c04",
+        "size": 562871
+      },
+      {
+        "file": "mlx-0.32.0-cp311-cp311-macosx_14_0_arm64.whl",
+        "sha256": "72c605368d145c756877057d7e3c54f169c9899fe1f83232bfb3a6342561e234",
+        "size": 562792
+      },
+      {
+        "file": "mlx-0.32.0-cp311-cp311-macosx_15_0_arm64.whl",
+        "sha256": "0a0e38a409b9cae29647ec9e75ce9747b224ce7e5d91adbfad7eac37b6118ffd",
+        "size": 562792
+      },
+      {
+        "file": "mlx-0.32.0-cp311-cp311-macosx_26_0_arm64.whl",
+        "sha256": "2a180cd39ac68b397b85cc4658d0b8e0ab58166c2549fc9ab2ca5f99d15ef0c3",
+        "size": 562776
+      },
+      {
+        "file": "mlx-0.32.0-cp312-cp312-macosx_14_0_arm64.whl",
+        "sha256": "ea5a594355c89c0095eaba413fd39d4caa8642fa13432dfb0c9354d141046467",
+        "size": 558889
+      },
+      {
+        "file": "mlx-0.32.0-cp312-cp312-macosx_15_0_arm64.whl",
+        "sha256": "e5f778001562ccce26cf6e5be1050d2afc78e2902bad206201ab9f5a6d0f886a",
+        "size": 558890
+      },
+      {
+        "file": "mlx-0.32.0-cp312-cp312-macosx_26_0_arm64.whl",
+        "sha256": "8dfb577faa4dc413cfd0d6eb78f230d3b3b6169df4473e84408abdeb21346e9d",
+        "size": 558856
+      },
+      {
+        "file": "mlx-0.32.0-cp313-cp313-macosx_14_0_arm64.whl",
+        "sha256": "abb786ee1e9638759be82583222fc7d09c5650ef90ad2b7c5da7d1931a8676dc",
+        "size": 558795
+      },
+      {
+        "file": "mlx-0.32.0-cp313-cp313-macosx_15_0_arm64.whl",
+        "sha256": "deb284f3a5cd0c3e87bed80c2bee9dcbf946bdad44d75592f6fb784da878c1c0",
+        "size": 558799
+      },
+      {
+        "file": "mlx-0.32.0-cp313-cp313-macosx_26_0_arm64.whl",
+        "sha256": "4192a2d02014a13a6a1030bf13dfb4e4fe05ec3ffa47678ee37da29111e25cb1",
+        "size": 558786
+      },
+      {
+        "file": "mlx-0.32.0-cp314-cp314-macosx_14_0_arm64.whl",
+        "sha256": "2ee79b1f8c2c2a329afc95ece7dce0be798d43f3de771a6370d2b9f9702bbd9a",
+        "size": 561387
+      },
+      {
+        "file": "mlx-0.32.0-cp314-cp314-macosx_15_0_arm64.whl",
+        "sha256": "e0db558267bb2d13fac4f85674456adbe0f085c570b9219e03d4e95fdc11c4d0",
+        "size": 561389
+      },
+      {
+        "file": "mlx-0.32.0-cp314-cp314-macosx_26_0_arm64.whl",
+        "sha256": "23e83c8e74a23156696e9f9905d16a17b7d27b5a596c1bc0f720a98df1c5aadf",
+        "size": 561392
+      }
+    ],
+    "mlx_metal_wheels": [
+      {
+        "file": "mlx_metal-0.32.0-py3-none-macosx_14_0_arm64.whl",
+        "sha256": "5b64b20ac24b0c401f489de01e8209edc4d372125201f19314e6f39e385322aa",
+        "size": 40824649
+      },
+      {
+        "file": "mlx_metal-0.32.0-py3-none-macosx_15_0_arm64.whl",
+        "sha256": "1bd94a1ce5b03a0c898771a3e759f0124300c6ab5155127906a1d50b1f3fcf19",
+        "size": 40818869
+      },
+      {
+        "file": "mlx_metal-0.32.0-py3-none-macosx_26_0_arm64.whl",
+        "sha256": "3af76a498d84804f66119800499f9d143d7dffb0878a0dd0d7c2846e58565fd7",
+        "size": 56511379
+      }
+    ],
+    "observation_on_sizes": "the macosx_26_0 mlx-metal wheel is ~15.7 MB larger than the 14_0/15_0 wheels, consistent with (not proof of) NAX kernels being present only in the 26_0 build (U10)"
+  },
+  "repository_bridge": {
+    "location": "crates/stream/src/apple_mlx_bridge.mm (Objective-C++ over MLX-C) and crates/stream/src/apple_mlx_bridge.rs (Rust FFI), built by crates/stream/build.rs:40-55 under cfg(pulsar_native_mlx)",
+    "array_creation": "only mlx_array_new_data_managed_payload with MLX_FLOAT32, rank 1 or 2 (apple_mlx_bridge.mm:470-530, rank check 483, dtype 516); zero-copy when MLX can wrap the pointer, otherwise MLX copies and calls the deleter at once (mlx array.cpp:88-107)",
+    "dtypes": "float32 only (import, matvec dtype check 625-631, copy-out 673)",
+    "ownership": "OwnershipState refcount shared between the Rust wrapper and the MLX deleter callback (apple_mlx_bridge.mm:109-142, 501-529); Rust lifetimes tie MlxArray<'a> to the borrowed &'a mut [f32] and the context (apple_mlx_bridge.rs:252-262, 453-526); Drop frees (632-636, 697-709)",
+    "stream_device": "single process-wide context (apple_mlx_bridge.mm:359-364); mlx_set_default_device/stream are changed globally (387, 406) and restored to CPU on destroy (226-250)",
+    "errors": "status codes checked and turned into strings (apple_mlx_bridge.rs:242-245); NO mlx_set_error_handler is installed anywhere under crates/, so an MLX exception reaches MLX-C's default handler, which exits the process (mlx-c error.cpp:12-15)",
+    "evaluation": "mlx_array_eval then mlx_synchronize(stream) (apple_mlx_bridge.mm:549-570)",
+    "freeze_status": "crates/stream/{build.rs, src/apple_mlx_bridge.rs, src/apple_mlx_bridge.mm, src/apple_mlx_deallocation_observer.mm} are still byte-identical to the sha256 bindings in specs/017-rust-native-inference-runtime/contracts/f017-native-bounded-p1-admission-contract-v2.json code_manifest (checked at the anchor), and are enumerated by crates/f017-native/src/contract.rs:201-230. They must not be edited; Slice 2B code lives in a new crate.",
+    "frozen_f017_files_untouched_by_plan": [
+      "crates/f017-native/src/model.rs",
+      "crates/f017-native/src/executor.rs",
+      "crates/f017-native/src/contract.rs",
+      "crates/f017-native/src/loader.rs",
+      "crates/f017-native/src/bin/bounded_p1.rs"
+    ]
+  },
+  "citations": [
+    {
+      "claim": "affine validation: biases required; dtype = result_type(scales, biases)",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4396-4447 (4411-4425)"
+    },
+    {
+      "claim": "default group_size 64, bits 4 for affine when not passed",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4367-4395"
+    },
+    {
+      "claim": "weight uint32, same batch shape, packed*32/bits == groups*group_size",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:75-114"
+    },
+    {
+      "claim": "transpose meaning: inner = w.shape(-1)*32/bits and outer = w.shape(-2) when transpose, else inner = w.shape(-2), outer = w.shape(-1)*32/bits",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:131-132"
+    },
+    {
+      "claim": "quantized_matmul dtype promotion and input casts; broadcast only when both ranks > 2; output shape",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4477-4527"
+    },
+    {
+      "claim": "promotion table (float16 + bfloat16 -> float32; uint32 + float16 -> float16)",
+      "at": "mlx@68cf2fdd:mlx/dtype.cpp:34-50, 86-89"
+    },
+    {
+      "claim": "dequantize: GPU primitive with output dtype = scales dtype; CPU fallback graph multiply then add",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4954-5046 (5028-5029, 5035-5045), 5171-5230"
+    },
+    {
+      "claim": "dequantize kernel: byte-wise LSB-first unpack, out = scale*d + bias in T",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:2537-2596 (2549, 2582-2593)"
+    },
+    {
+      "claim": "dequantize host dispatch, one thread per packed byte",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:1656-1741"
+    },
+    {
+      "claim": "kernel selection for quantized_matmul",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:1386-1454, 1364-1385, 83-126, 259, 314, 323, 695-712, 773-803"
+    },
+    {
+      "claim": "qmv family: float accumulator, per-thread chunk, factorized scale*accum + sum*bias, simd/quad reduction, cast to T",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:28-105, 191-290, 692-975"
+    },
+    {
+      "claim": "bits-4 x-sum partials evaluated in T",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:64"
+    },
+    {
+      "claim": "qvm: dequantize-then-multiply in float (qouter), simd_sum",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:395-481, 977-1084"
+    },
+    {
+      "claim": "qvm_split_k x stride uses partition size (defect), fixed upstream",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:1019, 1652-1705; fix mlx@241f1bf7 / mlx@7a1d4f5c:mlx/backend/metal/kernels/quantized.h:1118, 1854"
+    },
+    {
+      "claim": "qmm: weights dequantized in T into threadgroup memory; BlockMMA float accumulation; store converts to T",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:484-561, 571-690, 1093-1348; steel/gemm/mma.h:205, 446, 476-478, 526, 545"
+    },
+    {
+      "claim": "split-K intermediates in x dtype, reduced by strided sum whose float16/bfloat16 accumulator is float16/bfloat16",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:359, 415-416, 818, 865-866; kernels/reduce.metal:136-150; kernels/reduction/ops.h:119-138"
+    },
+    {
+      "claim": "fast math disabled for AOT kernels and JIT",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/CMakeLists.txt:18; mlx/backend/metal/device.cpp:556"
+    },
+    {
+      "claim": "Metal bfloat16_t is the native `bfloat` type",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/bf16.h:9"
+    },
+    {
+      "claim": "NAX availability, MLX_ENABLE_TF32 default 1, MLX_METAL_GPU_ARCH override, architecture generation parsing",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/device.cpp:485-497, 828-847; mlx/utils.h:171-184"
+    },
+    {
+      "claim": "thread-local command encoders",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/device.cpp:809-822; mlx/backend/metal/eval.cpp:14-19"
+    },
+    {
+      "claim": "GPU command-buffer errors thrown from completion handlers; synchronize checks only its own buffer",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/eval.cpp:21-28, 60-84; mlx/backend/metal/device.cpp:457-471"
+    },
+    {
+      "claim": "copying array constructor; managed constructor may copy and call the deleter immediately",
+      "at": "mlx@68cf2fdd:mlx/array.h:39-44, 532-540, 588-629; mlx/array.cpp:88-107"
+    },
+    {
+      "claim": "MLX-C default error handler exits; set_error_handler",
+      "at": "mlx-c@0726ca92+patches:mlx/c/error.cpp:12-34; mlx/c/error.h:15-33"
+    },
+    {
+      "claim": "MLX-C dequantize / quantized_matmul wrappers",
+      "at": "mlx-c@0726ca92+patches:mlx/c/ops.cpp:1075-1110, 2585-2617; mlx/c/ops.h:359-369, 809-819"
+    },
+    {
+      "claim": "MLX-C array creation, free, eval, empty-handle semantics",
+      "at": "mlx-c@0726ca92+patches:mlx/c/array.cpp:27-35, 37-43, 155-252, 348-356; mlx/c/private/array.h:12-53"
+    },
+    {
+      "claim": "MLX-C stream, device, device_info, metal, memory APIs",
+      "at": "mlx-c@0726ca92+patches:mlx/c/stream.h:35, 43, 55, 63; mlx/c/device.h:32, 42, 46, 66, 92-130; mlx/c/metal.h:31; mlx/c/memory.h:32-36"
+    },
+    {
+      "claim": "0.32.0 qmv_wide routing and kernel",
+      "at": "mlx@7a1d4f5c:mlx/backend/metal/quantized.cpp:298-301, 304-386, 1456-1484; mlx/backend/metal/kernels/quantized.h:981-1073"
+    },
+    {
+      "claim": "0.32.0 command-buffer error recording",
+      "at": "mlx@7a1d4f5c:mlx/backend/metal/device.cpp:518-545, 560"
+    },
+    {
+      "claim": "0.32.0 NAX build gating adds deployment target",
+      "at": "mlx@7a1d4f5c:mlx/backend/metal/kernels/CMakeLists.txt:158-160"
+    },
+    {
+      "claim": "workflow freeze: non-required steps are free; making a step required needs REQUIRED_EXTRA_STEP_NAMES and a RESOLUTION_BASE advance",
+      "at": "PulsarMLX@030d7081:scripts/ci/f017_measurement_scope_v1.py:47-48, 58-70, 468-485"
+    },
+    {
+      "claim": "metadata reaches float32 inside quantized_matmul: promote to float32, astype(scales/biases, float32)",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4417, 4496-4498, 4509-4512; mlx/dtype.cpp:45-48"
+    },
+    {
+      "claim": "astype is a no-op for equal dtypes, else an AsType primitive evaluated as copy_gpu with static_cast<float>",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:258-268; mlx/backend/gpu/primitives.cpp:28-33; mlx/backend/metal/kernels/copy.h:30, 34"
+    },
+    {
+      "claim": "MLX_ENABLE_TF32 parsed with atoi at first use and cached",
+      "at": "mlx@68cf2fdd:mlx/utils.cpp:289-295; mlx/utils.h:171-174"
+    },
+    {
+      "claim": "qmm_splitk falls back to qmm (and therefore to its NAX check) when split_k <= 1",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:802-805, 695-712"
+    },
+    {
+      "claim": "required gate host runner",
+      "at": "PulsarMLX@030d7081:.github/workflows/macos.yml:162"
+    },
+    {
+      "claim": "quantized_matmul's internal astype calls take no stream and resolve via default_stream(default_device())",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:4509-4512; mlx/utils.cpp:15-17"
+    },
+    {
+      "claim": "astype to the same dtype returns its argument with no new primitive",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:258-261"
+    },
+    {
+      "claim": "MLX-C astype, default-device get/set",
+      "at": "mlx-c@0726ca92+patches:mlx/c/ops.h:161-165; mlx/c/device.h:70, 74"
+    },
+    {
+      "claim": "MLX-C handler and data are unsynchronized process globals",
+      "at": "mlx-c@0726ca92+patches:mlx/c/error.cpp:17-34"
+    },
+    {
+      "claim": "MLX-C value accessors without status (mlx_array_dtype returns MLX_BOOL on error) and data accessors without evaluation check",
+      "at": "mlx-c@0726ca92+patches:mlx/c/array.cpp:339-346, 517-524; mlx@68cf2fdd:mlx/array.h:373-381"
+    },
+    {
+      "claim": "qmv_quad tail: grid ceil(N/64), metadata loads before the row test",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:193-199; mlx/backend/metal/kernels/quantized.h:729-738"
+    },
+    {
+      "claim": "prescaling divisors: x by up to 4096 (qmv family), s by 16 (matrix loader)",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:62-71, 521-525"
+    },
+    {
+      "claim": "int32 index expressions on the qualified paths",
+      "at": "mlx@68cf2fdd:mlx/ops.cpp:107, 131-132, 4978; mlx/backend/metal/kernels/quantized.h:613-624, 721-725, 730-732, 783-787, 860-864, 922-927, 1138-1148, 1812-1818; mlx/backend/metal/quantized.cpp:808, 1404-1406"
+    },
+    {
+      "claim": "0.32.0 dispatch order: quad branch before qmv_wide",
+      "at": "mlx@7a1d4f5c:mlx/backend/metal/quantized.cpp:1471-1482"
+    },
+    {
+      "claim": "power-of-two divisions on the qualified paths",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/kernels/quantized.h:62-71, 142-151, 521-525"
+    },
+    {
+      "claim": "upstream divisions by dimensions guarded by R-EMPTY-DIM",
+      "at": "mlx@68cf2fdd:mlx/backend/metal/quantized.cpp:191, 249, 714"
+    }
+  ],
+  "version_diff_summary": {
+    "range": "68cf2fdd..7a1d4f5c (146 commits)",
+    "byte_identical_in_scope": "ops-level quantized_matmul/dequantize/affine_dequantize/validation; QuantizedMatmul::eval_gpu; fast::Quantize::eval_gpu; qmm; qmm_splitk; qvm; qmv; qmv_quad; get_qmv_batch_limit; kernels affine_dequantize, load_vector, qdot, qouter, QuantizedBlockLoader, qmv_quad_impl, qmv_fast_impl, qmv_impl, qmm_t_impl, qmm_n_impl, affine_qmm_t_splitk; BlockMMA; Sum; dtype.cpp",
+    "changed_in_scope": [
+      "548dd80e Add small-batch quantized matvec kernel (qmv_wide) (#3764): dispatch_qmv and a new kernel",
+      "241f1bf7 Fix qvm_split_k incorrect batch stride calculation (#3497): qvm_impl gains in_vec_stride",
+      "a025496c Catch error in CommandBuffer and poison the events (#3523): error propagation",
+      "ae3db542 NAX requires setting MACOSX_DEPLOYMENT_TARGET=26.2 (#3622): build gating",
+      "cc3ef8d9 Detect int32 shape-product overflow at MLX compute-shape boundaries (#3524)"
+    ],
+    "changed_not_on_path": [
+      "2414e5df Fix steel GEMM safe load offset (#3560): MMATile::load_safe, which no quantized kernel calls at 68cf2fdd",
+      "51bef6fc Add math mode option for custom Metal kernels (#3728): JIT compile options; the AOT metallib flags are unchanged"
+    ]
+  },
+  "unknowns": [
+    {
+      "id": "U1",
+      "what": "Whether the Metal compiler contracts `a*b + c` (e.g. quantized.h:2593, 525, 558, 289, 435) into a fused multiply-add under -fno-fast-math.",
+      "impact": "decides which H-DQ-SET candidate occurs; N-DQ-BOUND and N-QMM-BOUND hold for every contraction choice; D-DQ guards every admitted evaluation path (review F3)"
+    },
+    {
+      "id": "U2",
+      "what": "Denormal handling (flush-to-zero or gradual) of Metal float, half and bfloat arithmetic and conversions under -fno-fast-math.",
+      "impact": "no longer affects qualified results: subnormal operands are refused (R-SUBNORMAL) and lemma L / D-DQ exclude subnormal intermediates and results; subnormal behaviour is only recorded in FX-CAST"
+    },
+    {
+      "id": "U3",
+      "what": "Semantics of Metal-native `bfloat` arithmetic (bf16.h:9): correctly rounded in bfloat, or float then round, or otherwise.",
+      "impact": "u_star_T covers float-then-round; any other semantics voids A-RN for bfloat16; v1 quantized_matmul uses T = float32 only, so this affects OP-DQ with F16/BF16 metadata and the deferred half kernel types"
+    },
+    {
+      "id": "U4",
+      "what": "Internal order and rounding of simd_sum and quad_sum.",
+      "impact": "covered by order-independent gamma bounds under A-SIMD"
+    },
+    {
+      "id": "U5",
+      "what": "Internal precision and accumulation order of simdgroup_multiply_accumulate on float 8x8 tiles.",
+      "impact": "covered by A-MMA; unverifiable from source"
+    },
+    {
+      "id": "U6",
+      "what": "NAX kernel numerics (qmm_nax; TF32 enabled by default for float32).",
+      "impact": "excluded: MLX_ENABLE_TF32=0 with x float32 makes the qmm_nax branch unreachable by source (quantized.cpp:695-712; utils.h:171-174; utils.cpp:289-295); hardware capability and metallib NAX presence recorded"
+    },
+    {
+      "id": "U7",
+      "what": "Architecture string and generation of the qualification hosts: the required gate host is the GitHub macos-15 runner (recorded in evidence); the Studio and MacBook produce labelled, non-gating observations.",
+      "impact": "recorded at run time (E3); band 6 <= M_eff <= 31 uses the union bound"
+    },
+    {
+      "id": "U8",
+      "what": "Metal toolchain version on the runner at native build time (MLX_METAL_VERSION), hence whether NAX kernels exist in the native metallib and how kernels are code-generated.",
+      "impact": "record metal --version and metallib sha256 with every qualification"
+    },
+    {
+      "id": "U9",
+      "what": "What happens when a GPU command buffer fails in 0.31.2: check_error throws inside a Metal completion handler (eval.cpp:21-28, 60-84) outside any MLX-C try/catch.",
+      "impact": "contained: the child is expected to terminate or hang; the parent reports signal/exit status or TIMEOUT (frozen 1800 s watchdog)"
+    },
+    {
+      "id": "U10",
+      "what": "Build configuration of the mlx 0.32.0 / mlx-metal 0.32.0 wheels (JIT or AOT, deployment target, Xcode and Metal versions, NAX presence per platform tag).",
+      "impact": "R2 is compatibility only"
+    },
+    {
+      "id": "U11",
+      "what": "Whether __ARM_FEATURE_FP16_SCALAR_ARITHMETIC / __ARM_FEATURE_BF16 are defined in the native C++ build (mlx/types/half_types.h:5-37), selecting __fp16/__bf16 or MLX's struct wrappers for the import copy.",
+      "impact": "low: both are bit-copy types; the exhaustive import fixture checks it"
+    },
+    {
+      "id": "U12",
+      "what": "qvm_split_k grid uses N/64 with floor division (quantized.cpp:323): suspected unwritten output columns when N % 64 != 0.",
+      "impact": "transpose=false deferred and refused"
+    },
+    {
+      "id": "U13",
+      "what": "Resolved by build-time verification: the four patch sha256 values are checked by scripts/ci/install_native_mlx.sh:45 on every native build (set -euo pipefail, line 3). Residual: this research's reconstructed tree was built from commit diffs, not from the verified .patch files; byte equality of the two was not checked here.",
+      "impact": "none for the contract; the CI build is the authority"
+    },
+    {
+      "id": "U14",
+      "what": "Build provenance of the PyPI wheel relative to tag v0.32.0.",
+      "impact": "R2 source mapping is by version label"
+    },
+    {
+      "id": "U15",
+      "what": "Whether MLX's compile/graph layer could fuse or rewrite the single-op graphs used here (no mx.compile is used; none expected).",
+      "impact": "the bridge never calls compile; recorded as an assumption"
+    },
+    {
+      "id": "U16",
+      "what": "Whether half-typed expressions such as x[i] + x[i+1] + x[i+2] + x[i+3] (quantized.h:64) are evaluated in half or promoted to float by the compiler.",
+      "impact": "bounds assume the worse (half) case; v1 quantized_matmul uses T = float32 only, so this affects OP-DQ with F16/BF16 metadata and the deferred half kernel types"
+    },
+    {
+      "id": "U17",
+      "what": "Exact quantized-module dimensions (K, N) of the F020 target checkpoints are not in pinned repository sources; the planner-set caps K, N <= 16384 and N % 64 == 0 must be confirmed by the metadata census. The only repository dimension found is hidden_size 6144 for the F017 target (docs/architecture/reviews/evidence/f017-native-bounded-p1-checkpoint-plan-audit-v1.json).",
+      "impact": "resolved: of the 46 (checkpoint, family) entries, 15 are outside v1 quantized_matmul geometry (lm_head and embed_tokens with N = 154880 in both checkpoints; Flash indexer.weights_proj with N = 32; ten stacked rank-3 entries: switch_mlp gate/up/down, embed_q and unembed_out in both checkpoints) and 14 are outside v1 dequantize geometry (the same except indexer.weights_proj); none exceeds K = 16384",
+      "status": "RESOLVED 2026-09-23 by the Slice 2A metadata census (production_geometry)"
+    },
+    {
+      "id": "U18",
+      "what": "qmv_quad loads scales/biases (sl[0], bl[0]) before its out_vec_size row test (mlx/backend/metal/kernels/quantized.h:729-738) with ceil(N/64) threadgroups (quantized.cpp:193-199): out-of-bounds metadata reads when N % 64 != 0 unless the compiler sinks the loads.",
+      "impact": "excluded by D-GEOM (N % 64 == 0), under which every load is in bounds; recorded for any future relaxation"
+    },
+    {
+      "id": "U19",
+      "what": "How the Metal compiler lowers the kernels' divisions by exact powers of two (x/16.0f, x/256.0f, x/4096.0f in load_vector and load_vector_safe, mlx/backend/metal/kernels/quantized.h:62-71 and 142-151; scale/16 in the matrix dequantize helper, quantized.h:521-525): correctly rounded divide, exact reciprocal multiply, or another sequence. No pinned lowering evidence (compiled AIR/metallib inspection) was obtained.",
+      "impact": "covered by the explicit assumption A-OPS(e) (exact quotient whenever it is normal, which D-NUM guarantees); if A-OPS(e) fails the qmv-family and matrix-family bounds are void. No runtime probe is added because it would be a numerical observation."
+    }
+  ],
+  "v1_scope_decisions": {
+    "date": "2026-09-23",
+    "quantized_matmul": "transpose=true only; x float32 only (T = float32); metadata F16/BF16/F32 widened by MLX's own promotion",
+    "dequantize": "all three metadata dtypes, output in the metadata dtype",
+    "deferred": "transpose=false (qvm, qvm_split_k, qmm_n) and float16/bfloat16 kernel types",
+    "draft3": "numeric/geometric domains refused (D-GEOM, D-NUM, D-DQ); bridge-side metadata cast on the explicit stream; process-wide error handler via Once; frozen fixture population; watchdog"
+  },
+  "frozen_population": {
+    "generator": "scripts/research/f020_native_primitives_fixtures_v1.py",
+    "generator_sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999",
+    "manifest": "fixtures/native-primitives/manifest.json",
+    "manifest_sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04",
+    "cases_listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82",
+    "case_count": 363,
+    "case_files": 361,
+    "total_bytes_including_manifest": 10844998,
+    "references": {
+      "rust_binary64_r1": 298,
+      "python_exact_r1": 296,
+      "codes_exact": 18,
+      "byte_identity": 8,
+      "exact_host_widening": 2
+    }
+  },
+  "production_geometry": {
+    "status": "DATA_ADDENDUM (2026-09-23): resolves U17; changes no bound, domain value or refusal",
+    "source": {
+      "evidence": [
+        "f020-slice2a-metadata-census-glm53-v1.json (sha256 b418e78798828d6a9039295ee1d2d5d151a8ec1a1d2c912be5ca2ac33e1e9bf2)",
+        "f020-slice2a-metadata-census-glm53-flash-v1.json (sha256 712aaaa74e1ce394268497e6ab53eeb362f186393a64721df055d5d439bb0ea5)"
+      ],
+      "fields": "observations.census.tensor_families (U32 weight shapes and BF16 scales shapes per family and layer-index set), observations.census.configuration (default bits 4, group 64, affine) and observations.census.modules.families (resolved bits per family: explicit 8-bit group-64 overrides, otherwise the default)",
+      "status": "census evidence is sanitized and not yet committed; hashes as read on 2026-09-23"
+    },
+    "method": "for each quantized module family variant: weight_shape from tensor_families[<family>.weight] matched by layer-index set; N = weight_shape[-2]; K = weight_shape[-1]*32/bits with the variant's resolved bits; leading = weight_shape[:-2]; cross-checked exactly against the census's in_features/out_features/leading and against scales_shape[-1]*group_size == K",
+    "v1_geometry_tested": {
+      "OP-QMM": "rank-2 weight, K <= 16384, N <= 16384, N % 64 == 0, K % 64 == 0 (group 64)",
+      "OP-DQ": "rank-2 weight, K <= 16384, rows <= 16384, K % group == 0"
+    },
+    "meaning": "IN_V1_DOMAIN means only that the shape passes the v1 geometry refusals. It does NOT mean the shape is qualified: v1 qualifies the primitives on small fixtures (largest K 4096), and none of these production shapes is covered by v1 evidence. OUT_OF_V1_DOMAIN shapes are refused by the bridge.",
+    "summary": {
+      "families_total": 46,
+      "qmm_in": 31,
+      "qmm_out": 15,
+      "combinations_seen": "bits 4 and 8, group 64, BF16 metadata only (both checkpoints)",
+      "no_family_exceeds_K": "no family has K > 16384; every o_proj is 8-bit; GLM-5.3 o_proj (packed [6144, 4096], scales [6144, 256], logical [6144, 16384]) and Flash o_proj in layers 3,7,...,43 (logical [4096, 16384]) sit exactly at the inclusive K cap",
+      "dq_in": 32,
+      "dq_out": 14,
+      "correction_note": "an earlier planner expectation that some o_proj might exceed K = 16384 was a reporting error; the census shows K = 16384 exactly; no bound was changed to reconcile it",
+      "counts_basis": "qmm_in/qmm_out and dq_in/dq_out treat each stacked family as one whole rank-3 tensor"
+    },
+    "families": [
+      {
+        "checkpoint": "glm53",
+        "family": "lm_head",
+        "layers": null,
+        "count": 1,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          154880,
+          1536
+        ],
+        "N": 154880,
+        "K": 6144,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "N>16384"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rows>16384"
+        ]
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.embed_tokens",
+        "layers": null,
+        "count": 1,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          154880,
+          1536
+        ],
+        "N": 154880,
+        "K": 6144,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "N>16384"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rows>16384"
+        ]
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.down_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          6144,
+          3072
+        ],
+        "N": 6144,
+        "K": 12288,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.gate_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          12288,
+          1536
+        ],
+        "N": 12288,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.shared_experts.down_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          6144,
+          512
+        ],
+        "N": 6144,
+        "K": 2048,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.shared_experts.gate_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          2048,
+          1536
+        ],
+        "N": 2048,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.shared_experts.up_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          2048,
+          1536
+        ],
+        "N": 2048,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.switch_mlp.down_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          256,
+          6144,
+          256
+        ],
+        "N": 6144,
+        "K": 2048,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 256,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 6144,
+            "logical_K": 2048,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.switch_mlp.gate_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          256,
+          2048,
+          768
+        ],
+        "N": 2048,
+        "K": 6144,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 256,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 2048,
+            "logical_K": 6144,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.switch_mlp.up_proj",
+        "layers": "3-77",
+        "count": 75,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          256,
+          2048,
+          768
+        ],
+        "N": 2048,
+        "K": 6144,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 256,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 2048,
+            "logical_K": 6144,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.mlp.up_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          12288,
+          1536
+        ],
+        "N": 12288,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.embed_q",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          64,
+          512,
+          48
+        ],
+        "N": 512,
+        "K": 192,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 64,
+          "leading_kind": "heads",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "per-head plane",
+            "logical_N": 512,
+            "logical_K": 192,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.kv_a_proj_with_mqa",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          576,
+          1536
+        ],
+        "N": 576,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.o_proj",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          6144,
+          4096
+        ],
+        "N": 6144,
+        "K": 16384,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": [],
+        "boundary": "IN - boundary (K = 16384, inclusive cap)"
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.q_a_proj",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          2048,
+          1536
+        ],
+        "N": 2048,
+        "K": 6144,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.q_b_proj",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          16384,
+          512
+        ],
+        "N": 16384,
+        "K": 2048,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": [],
+        "boundary": "IN - boundary (N = 16384, inclusive cap)"
+      },
+      {
+        "checkpoint": "glm53",
+        "family": "model.layers.*.self_attn.unembed_out",
+        "layers": "0-77",
+        "count": 78,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          64,
+          256,
+          128
+        ],
+        "N": 256,
+        "K": 512,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 64,
+          "leading_kind": "heads",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "per-head plane",
+            "logical_N": 256,
+            "logical_K": 512,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.lm_head",
+        "layers": null,
+        "count": 1,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          154880,
+          1024
+        ],
+        "N": 154880,
+        "K": 4096,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "N>16384"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rows>16384"
+        ]
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.embed_tokens",
+        "layers": null,
+        "count": 1,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          154880,
+          1024
+        ],
+        "N": 154880,
+        "K": 4096,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "N>16384"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rows>16384"
+        ]
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.down_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          4096,
+          3072
+        ],
+        "N": 4096,
+        "K": 12288,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.gate_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          12288,
+          1024
+        ],
+        "N": 12288,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.shared_experts.down_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          4096,
+          512
+        ],
+        "N": 4096,
+        "K": 2048,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.shared_experts.gate_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          2048,
+          1024
+        ],
+        "N": 2048,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.shared_experts.up_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          2048,
+          1024
+        ],
+        "N": 2048,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.switch_mlp.down_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          288,
+          4096,
+          256
+        ],
+        "N": 4096,
+        "K": 2048,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 288,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 4096,
+            "logical_K": 2048,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.switch_mlp.gate_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          288,
+          2048,
+          512
+        ],
+        "N": 2048,
+        "K": 4096,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 288,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 2048,
+            "logical_K": 4096,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.switch_mlp.up_proj",
+        "layers": "3-44",
+        "count": 42,
+        "bits": 4,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          288,
+          2048,
+          512
+        ],
+        "N": 2048,
+        "K": 4096,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 288,
+          "leading_kind": "experts",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "expert plane",
+            "logical_N": 2048,
+            "logical_K": 4096,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.mlp.up_proj",
+        "layers": "0-2",
+        "count": 3,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          12288,
+          1024
+        ],
+        "N": 12288,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.b_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          64,
+          1024
+        ],
+        "N": 64,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.embed_q",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          64,
+          512,
+          64
+        ],
+        "N": 512,
+        "K": 256,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 64,
+          "leading_kind": "heads",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "per-head plane",
+            "logical_N": 512,
+            "logical_K": 256,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.forget_gate.f_a_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          128,
+          1024
+        ],
+        "N": 128,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.forget_gate.f_b_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          8192,
+          32
+        ],
+        "N": 8192,
+        "K": 128,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.g_a_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          128,
+          1024
+        ],
+        "N": 128,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.g_b_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          8192,
+          32
+        ],
+        "N": 8192,
+        "K": 128,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.indexer.weights_proj",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          32,
+          1024
+        ],
+        "N": 32,
+        "K": 4096,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "N%64!=0"
+        ],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.indexer.wk",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          128,
+          1024
+        ],
+        "N": 128,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.indexer.wq_b",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          4096,
+          384
+        ],
+        "N": 4096,
+        "K": 1536,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.k_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          8192,
+          1024
+        ],
+        "N": 8192,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.kv_a_proj_with_mqa",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          512,
+          1024
+        ],
+        "N": 512,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.o_proj",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          4096,
+          4096
+        ],
+        "N": 4096,
+        "K": 16384,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": [],
+        "boundary": "IN - boundary (K = 16384, inclusive cap)"
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.o_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          4096,
+          2048
+        ],
+        "N": 4096,
+        "K": 8192,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.q_a_proj",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          1536,
+          1024
+        ],
+        "N": 1536,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.q_b_proj",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          16384,
+          384
+        ],
+        "N": 16384,
+        "K": 1536,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": [],
+        "boundary": "IN - boundary (N = 16384, inclusive cap)"
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.q_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          8192,
+          1024
+        ],
+        "N": 8192,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.unembed_out",
+        "layers": "3,7,11,15,19,23,27,31,35,39,43",
+        "count": 11,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          64,
+          256,
+          128
+        ],
+        "N": 256,
+        "K": 512,
+        "qmm_v1": "OUT_OF_V1_DOMAIN",
+        "qmm_violations": [
+          "stacked rank-3 weight (R-WDTYPE; out of scope: gather_qmm/batched)"
+        ],
+        "dq_v1": "OUT_OF_V1_DOMAIN",
+        "dq_violations": [
+          "rank-3 weight (R-WDTYPE)"
+        ],
+        "stacked": {
+          "leading": 64,
+          "leading_kind": "heads",
+          "whole_tensor_execution": "OUT - R-WDTYPE; gather/stacked dispatch deferred",
+          "single_plane": {
+            "kind": "per-head plane",
+            "logical_N": 256,
+            "logical_K": 512,
+            "fits_D_GEOM": true
+          },
+          "plane_extraction_and_execution_qualification": "future work (not in this slice)"
+        }
+      },
+      {
+        "checkpoint": "glm53-flash",
+        "family": "language_model.model.layers.*.self_attn.v_proj",
+        "layers": "0-2,4-6,8-10,12-14,16-18,20-22,24-26,28-30,32-34,36-38,40-42,44",
+        "count": 34,
+        "bits": 8,
+        "group_size": 64,
+        "metadata": "BF16",
+        "weight_shape": [
+          8192,
+          1024
+        ],
+        "N": 8192,
+        "K": 4096,
+        "qmm_v1": "IN_V1_DOMAIN",
+        "qmm_violations": [],
+        "dq_v1": "IN_V1_DOMAIN",
+        "dq_violations": []
+      }
+    ],
+    "caps_are_inclusive": "K <= 16384 and N <= 16384 are inclusive caps; shapes exactly at a cap are IN (boundary)",
+    "metadata_vs_numerical_admission": "The census establishes metadata compatibility only (bits, group size, dtypes, shapes). It does not establish that real payload values (scales, biases, activations) fall inside D-NUM or D-DQ; that requires payload reads, which are not authorized."
+  }
+}

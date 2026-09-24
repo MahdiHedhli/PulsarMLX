@@ -42,6 +42,7 @@ pub mod decode;
 pub mod error;
 pub mod module;
 pub mod reference;
+pub mod reference_qmm;
 pub mod spec;
 
 pub use decode::{dequantize_rows, unpack_codes, ScaleDtype};

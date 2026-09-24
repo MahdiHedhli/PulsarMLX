@@ -1,0 +1,19 @@
+{
+  "schema": "pulsarmlx.f020.safetensors-header-extract/1.0.0",
+  "shards": [
+    {
+      "file": "model-00001-of-00002.safetensors",
+      "file_len": 1276,
+      "header_file": "headers/model-00001-of-00002.safetensors.header",
+      "header_len": 580,
+      "header_sha256": "49f159bfa45b6fb3f09cb54da784ca970f37d284cdae0bf73c6ec8a06e18c4b1"
+    },
+    {
+      "file": "model-00002-of-00002.safetensors",
+      "file_len": 1439,
+      "header_file": "headers/model-00002-of-00002.safetensors.header",
+      "header_len": 427,
+      "header_sha256": "add067067b22b6470d6dddcfe2b40585996177da966429ffa8fbf342adfa9ffd"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+ "acceptance_host": "the reviewed GitHub macOS runner; other hosts produce separately labelled observations only",
+ "approved_package": {
+  "case_file_listing": {
+   "case_files": 361,
+   "listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82",
+   "manifest_cases": 363,
+   "method": "from inside fixtures/native-primitives: LC_ALL=C shasum -a 256 cases/*.bin | shasum -a 256",
+   "note": "363 manifest cases are carried by 361 committed case files; the two cast cases reuse the exhaustive F16/BF16 import files."
+  },
+  "contract": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+   "sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72"
+  },
+  "fixture_generator": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "scripts/research/f020_native_primitives_fixtures_v1.py",
+   "sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999"
+  },
+  "fixture_manifest": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "fixtures/native-primitives/manifest.json",
+   "sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04"
+  },
+  "plan": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/slice2b-plan.md",
+   "sha256": "24a06db0a34ee4ec8ca9af8728d3d27e26cfe3c4a6c22dcba06011c8ab2796df"
+  },
+  "source_pins": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "specs/020-mlx-safetensors-affine/source-pins-slice2.json",
+   "sha256": "02e963a02cf1d63168c57cff316c1d3471313498396b2abd7b3e5ec432267bb4"
+  }
+ },
+ "authorized": [
+  "implement the reviewed plan: crates/mlx-native-affine (build/ABI checks, FFI, ownership, error handling, operation-domain guards, qualification child and parent harness)",
+  "root Cargo.toml and Cargo.lock changes required by the new crate",
+  "independent Rust R1 extension reference_qmm.rs with minimal wiring and tests",
+  "the exact Python R1 reference",
+  "the R2 cross-version observation script (non-gating)",
+  "the native Slice 2B qualification step as a REQUIRED step in the native small-fixture workflow, via the two-commit X/Y workflow and measurement-scope doctor update",
+  "targeted current-status documentation and new append-only evidence records",
+  "checkpoint-free Rust/Python tests, the frozen synthetic native qualification, the labelled R2 observation, applicable CI and evidence checks"
+ ],
+ "branch": "feat/020-slice2-census-contract-20260923",
+ "exclusions_accepted": [
+  "transpose=false",
+  "half-precision quantized-matmul kernels",
+  "subnormal metadata for quantized matmul",
+  "production geometry outside D-GEOM (vocabulary projection and embedding, N%64!=0 projections, whole stacked tensors)",
+  "gather_qmm and sorted-expert kernels",
+  "expert-plane extraction plus execution",
+  "padding or alternate kernels",
+  "model graphs, residency, streaming, serving"
+ ],
+ "failure_policy": "implementation defects may be fixed under this contract with separately identified reruns; earlier failed results and their candidate SHAs are preserved; no automatic retries",
+ "feature": "020-mlx-safetensors-affine",
+ "independent_review": {
+  "final_round_nonce": "astra-f020-s2b-contract-r6-20260923T223943Z-26170",
+  "final_verdict": "CONTRACT_READY_FOR_OWNER_GO",
+  "note": "The approved bytes are governed as reviewed; draft/status labels inside the artifacts are intentionally not edited to mark approval.",
+  "rounds": 6
+ },
+ "kind": "OWNER_AUTHORIZATION",
+ "label": "Owner GO for F020 Slice 2B implementation and synthetic qualification. Recorded before any Slice 2B candidate (R3) or compatibility (R2) numerical observation.",
+ "main_at_authorization": "1a05cf4f27ec4339c70609bd55d53e3cf6d6beba",
+ "not_authorized": [
+  "real-checkpoint payload reads",
+  "checkpoint rehashes or downloads",
+  "model runs",
+  "throughput benchmarks",
+  "production-geometry or full-model qualification",
+  "merging into main without implementation review and a separate merge GO",
+  "any change to a bound, domain, refusal, assumption, acceptance criterion or the frozen population without a separately identified, independently reviewed and owner-authorized contract version"
+ ],
+ "preparation_commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+ "recorded_on": "2026-09-23",
+ "schema": "pulsarmlx.f020.slice2b-owner-go/1.0.0",
+ "slice": "2B"
+}

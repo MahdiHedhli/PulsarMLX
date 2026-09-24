@@ -249,6 +249,96 @@ jobs:
           test -z "$PULSARMLX_MODEL_GGUF"
       - name: Test MLX affine representation
         run: cargo test -p mlx-affine -p safetensors-catalog --no-fail-fast
+      # F020 Slice 2B (required). Builds the qualify child against the pinned
+      # native prefix and RUNS it on this runner's GPU over the frozen synthetic
+      # population (363 cases), then decides every gate with the contract's
+      # frozen algorithms against both R1 references. Missing prerequisites, a
+      # build without MLX, a CPU context, a skipped suite or a missing summary
+      # all fail this step; there is no retry.
+      - name: Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          test "$PULSAR_REQUIRE_NATIVE_MLX" = 1
+          test -f "$MLX_C_PREFIX/include/mlx/c/mlx.h"
+          test -f "$MLX_C_PREFIX/lib/libmlxc.dylib"
+          test -f "$MLX_PREFIX/lib/libmlx.dylib"
+          test -f "$MLX_PREFIX/lib/mlx.metallib"
+          xcrun -sdk macosx metal --version
+          F020_OUT="$RUNNER_TEMP/f020-slice2b"
+          rm -rf "$F020_OUT"
+          mkdir -p "$F020_OUT"
+          PULSAR_F020_QUALIFICATION_OUT="$F020_OUT" PULSAR_F020_HOST_LABEL=github-macos-15 PULSAR_F020_PYTHON=python3 \
+            cargo test -p mlx-native-affine --release --no-fail-fast -- --test-threads=1 --nocapture
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          out = Path(os.environ["RUNNER_TEMP"]) / "f020-slice2b"
+          summary = json.loads((out / "qualification/summary.json").read_text())
+          assert summary["result"] == "PASS", summary["failures"]
+          assert summary["failures"] == []
+          assert summary["host_label"] == "github-macos-15"
+          assert summary["frozen"]["case_count"] == 363
+          assert summary["frozen"]["population_valid_after"] is True
+          assert summary["frozen"]["generator_check_before"] == "PASS"
+          assert summary["child"]["outcome"] == "EXIT_STATUS 0"
+          assert summary["child"]["timeout_seconds"] == 1800
+          assert summary["provenance"]["mlx_version"] == "0.31.2"
+          # The architecture string is recorded, not predicted: hosted runners
+          # expose a paravirtual Metal device whose name is not "applegpu_*".
+          assert summary["provenance"]["architecture"]
+          assert summary["provenance"]["device_info"]["device_name"]
+          assert summary["provenance"]["environment"]["MLX_ENABLE_TF32"] == "0"
+          expected = {"B6-REFUSAL": 37, "E1-DEVICE": 362, "E6-CPU-REFUSED": 1, "G-IMPORT": 8, "G-CAST": 2, "G-DQ-CODES": 18, "G-DQ-RUST": 59,
+                      "G-DQ-EXACT": 59, "G-R1-SELF-DQ": 59, "G-QMM-RUST": 239, "G-QMM-EXACT": 237,
+                      "G-R1-SELF-QMM": 237, "N-QMM-ZERO": 1, "SHAPE-DTYPE": 326}
+          for gate, count in expected.items():
+              assert summary["gate_counts"][gate] == {"cases": count, "passed": count}, gate
+          assert len(summary["cases"]) == 363
+          assert all(case["pass"] for case in summary["cases"])
+          selftest = json.loads((out / "selftest/child/selftest.json").read_text())
+          assert selftest["pass"] is True
+          print(json.dumps({"result": summary["result"], "candidate_commit": summary["candidate_commit"],
+                            "architecture": summary["provenance"]["architecture"],
+                            "gate_counts": summary["gate_counts"],
+                            "worst_ratio_by_family": summary["worst_ratio_by_family"]}, sort_keys=True))
+          PY
+          shasum -a 256 "$F020_OUT/qualification/summary.json" "$F020_OUT/qualification/child/report.json" \
+            "$F020_OUT/qualification/exact-gates.json" "$F020_OUT/selftest/child/selftest.json"
+          test -z "$PULSARMLX_MODEL_GGUF"
+      # F020 Slice 2B R2 (observation only; not required and gates nothing).
+      # The pinned 0.32.0 wheel is a different version from the native 0.31.2
+      # candidate, so every record is labelled CROSS_VERSION_0.32.0_vs_0.31.2.
+      # The script fails closed when MLX is unusable; continue-on-error keeps
+      # that observation failure from failing the job. The wheel ships its own
+      # libmlx, so DYLD_LIBRARY_PATH is dropped for this command only.
+      - name: Observe F020 Slice 2B cross-version compatibility (R2, wheel 0.32.0, non-gating)
+        continue-on-error: true
+        run: |
+          test -z "$PULSARMLX_MODEL_GGUF"
+          F020_Q="$RUNNER_TEMP/f020-slice2b/qualification"
+          env -u DYLD_LIBRARY_PATH PULSAR_REQUIRE_NATIVE_MLX=1 .venv/bin/python scripts/ci/mlx_native_primitives_compat_v1.py \
+            --output "$RUNNER_TEMP/f020-slice2b/r2-cross-version.json" \
+            --r1-exact "$F020_Q/r1-exact.json" \
+            --r3-report "$F020_Q/child/report.json" \
+            --r3-dir "$F020_Q/child"
+          shasum -a 256 "$RUNNER_TEMP/f020-slice2b/r2-cross-version.json"
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Upload F020 Slice 2B qualification reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: f020-slice2b-qualification
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/f020-slice2b/qualification/summary.json
+            ${{ runner.temp }}/f020-slice2b/qualification/exact-gates.json
+            ${{ runner.temp }}/f020-slice2b/qualification/child/report.json
+            ${{ runner.temp }}/f020-slice2b/selftest/child/selftest.json
+            ${{ runner.temp }}/f020-slice2b/r2-cross-version.json
       - name: Build exact native F017 producer targets
         run: cargo build -p f017-native --release --all-targets
       - name: Test exact native F017 producer targets

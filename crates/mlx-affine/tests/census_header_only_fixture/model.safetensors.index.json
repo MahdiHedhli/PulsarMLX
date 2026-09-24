@@ -1,0 +1,19 @@
+{
+  "metadata": {
+    "total_size": 1692
+  },
+  "weight_map": {
+    "blocks.0.norm.weight": "model-00001-of-00002.safetensors",
+    "blocks.0.proj.biases": "model-00001-of-00002.safetensors",
+    "blocks.0.proj.scales": "model-00001-of-00002.safetensors",
+    "blocks.0.proj.weight": "model-00001-of-00002.safetensors",
+    "blocks.0.wide.biases": "model-00001-of-00002.safetensors",
+    "blocks.0.wide.scales": "model-00001-of-00002.safetensors",
+    "blocks.0.wide.weight": "model-00001-of-00002.safetensors",
+    "blocks.1.gate.correction": "model-00002-of-00002.safetensors",
+    "blocks.1.stack.biases": "model-00002-of-00002.safetensors",
+    "blocks.1.stack.scales": "model-00002-of-00002.safetensors",
+    "blocks.1.stack.weight": "model-00002-of-00002.safetensors",
+    "embed.weight": "model-00002-of-00002.safetensors"
+  }
+}

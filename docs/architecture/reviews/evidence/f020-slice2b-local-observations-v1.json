@@ -1,0 +1,527 @@
+{
+ "feature": "020-mlx-safetensors-affine",
+ "gate_host": false,
+ "host_label": "macbook-m2max-local",
+ "kind": "LABELLED_LOCAL_OBSERVATION_NOT_ACCEPTANCE_EVIDENCE",
+ "native_build": {
+  "mlx_c_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+  "mlx_commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+  "patch_hash_checks": "4 of 4 OK (shasum -c in the script)",
+  "prefix": "<native-prefix> (fresh build by the pinned script for this slice)",
+  "script": {
+   "commit": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+   "path": "scripts/ci/install_native_mlx.sh",
+   "sha256": "ec8e5d01ef3c3251be181c885db4d2cbac8fd8dbf5c56f4fca04dc1e22a011d3"
+  }
+ },
+ "r2_local_interpreter": "a pre-existing lockfile-backed environment with mlx 0.32.0 / mlx-metal 0.32.0 / numpy 2.4.5 (no download)",
+ "runs": [
+  {
+   "candidate_commit": "cd3aebc08a194e257d7bdcb77f9d15389a179dd8",
+   "child": {
+    "elapsed_ms": 1350,
+    "outcome": "EXIT_STATUS 0",
+    "report_sha256": "0608f559e605073d2f2ed3f477f4981c10d3be19c03bf447c158c0cc358b1327"
+   },
+   "gate_counts": {
+    "B6-REFUSAL": {
+     "cases": 37,
+     "passed": 37
+    },
+    "G-CAST": {
+     "cases": 2,
+     "passed": 2
+    },
+    "G-DQ-CODES": {
+     "cases": 18,
+     "passed": 18
+    },
+    "G-DQ-EXACT": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-DQ-RUST": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-IMPORT": {
+     "cases": 8,
+     "passed": 8
+    },
+    "G-QMM-EXACT": {
+     "cases": 237,
+     "passed": 237
+    },
+    "G-QMM-RUST": {
+     "cases": 239,
+     "passed": 239
+    },
+    "G-R1-SELF-DQ": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-R1-SELF-QMM": {
+     "cases": 237,
+     "passed": 237
+    },
+    "N-QMM-ZERO": {
+     "cases": 1,
+     "passed": 1
+    },
+    "SHAPE-DTYPE": {
+     "cases": 326,
+     "passed": 326
+    }
+   },
+   "host_label": "macbook-m2max-local",
+   "provenance": {
+    "architecture": "applegpu_g14s",
+    "architecture_generation": 14,
+    "device_info": {
+     "architecture": "applegpu_g14s",
+     "device_name": "Apple M2 Max",
+     "max_buffer_length": "41747087360",
+     "max_recommended_working_set_size": "55662788608",
+     "memory_size": "68719476736",
+     "resource_limit": "499000"
+    },
+    "environment": {
+     "DYLD_LIBRARY_PATH": "<native-prefix>/lib",
+     "MLX_ENABLE_TF32": "0",
+     "MLX_MAX_MB_PER_BUFFER_set": false,
+     "MLX_MAX_OPS_PER_BUFFER_set": false,
+     "MLX_METAL_GPU_ARCH_set": false
+    },
+    "libmlx": {
+     "bytes": 21729392,
+     "method": "dyld image list",
+     "relative_path": "lib/libmlx.dylib",
+     "sha256": "0ef9edd0c5d497170d9a46d63dd6eec1ea46810662f3a8d442641dd7254d68e5"
+    },
+    "libmlxc": {
+     "bytes": 813696,
+     "method": "dladdr(mlx_version)",
+     "relative_path": "lib/libmlxc.dylib",
+     "sha256": "1fb169b84a8b6d964ea5df7b570fa244e3754e6fc3c59d3eef4d511b6315f0de"
+    },
+    "metallib": {
+     "bytes": 158455928,
+     "contains_nax_names": true,
+     "nax_name_occurrences": 4668,
+     "relative_path": "lib/mlx.metallib",
+     "sha256": "7d2e5f44dac2de9327cf0c93e280795abd13c6cdf10035ec4a4acc95deeac413"
+    },
+    "mlx_version": "0.31.2",
+    "native_prefix": {
+     "identity_method": "sha256 of '<relpath> <sha256>' lines for libmlx, libmlxc, mlx.metallib",
+     "identity_sha256": "52b7ee3cb1584d00ff8f463a14bdf6e084f33a2654205c83afd314e928a19356",
+     "label": "<native-prefix>"
+    },
+    "nax_capable_hardware": false,
+    "os_product_version": "26.6.2"
+   },
+   "r2_local": {
+    "environment": {
+     "architecture": "applegpu_g14s",
+     "architecture_generation": 14,
+     "default_device": "Device(gpu, 0)",
+     "dyld_library_path_set": false,
+     "machine": "arm64",
+     "mlx_metal_version": "0.32.0",
+     "mlx_version": "0.32.0",
+     "python_version": "3.13.13"
+    },
+    "report_sha256": "d1f711f7723a1d82866e9788e781a499a75ec105a143b8243099266b4158e248",
+    "result": "OBSERVED",
+    "summary": {
+     "bit_identical_to_r3_records": 316,
+     "compared_to_exact_r1": 296,
+     "compared_to_r3": 316,
+     "different_kernel_family_records": 0,
+     "every_record_labelled": true,
+     "records": 316,
+     "records_over_yardstick": []
+    }
+   },
+   "result": "PASS",
+   "summary_sha256": "212636df49ec7b210b31b12e68321d0943ef32dfa5e71a85442ad55a61230f04",
+   "worktree_dirty": false,
+   "worst_ratio_by_family": {
+    "dequantize/BF16": {
+     "cases": 21,
+     "exact_distance_over_bound": 0.9878856983567912,
+     "rust_d_hi_over_B_lo": 0.9878856983568584
+    },
+    "dequantize/F16": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.933545922010654,
+     "rust_d_hi_over_B_lo": 0.9335459220111044
+    },
+    "dequantize/F32": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.9699197520598376,
+     "rust_d_hi_over_B_lo": 0.9699197557042956
+    },
+    "quantized_matmul/qmm_t": {
+     "cases": 20,
+     "exact_distance_over_bound": 0.038776601182922435,
+     "rust_d_hi_over_B_lo": 0.10505233386870436
+    },
+    "quantized_matmul/qmm_t_splitk": {
+     "cases": 75,
+     "exact_distance_over_bound": 0.12722819977405303,
+     "rust_d_hi_over_B_lo": 0.12722820592043985
+    },
+    "quantized_matmul/qmv": {
+     "cases": 73,
+     "exact_distance_over_bound": 0.0270906387310764,
+     "rust_d_hi_over_B_lo": 0.027090649698382412
+    },
+    "quantized_matmul/qmv_fast": {
+     "cases": 41,
+     "exact_distance_over_bound": 0.02829748271813283,
+     "rust_d_hi_over_B_lo": 0.02829750223215888
+    },
+    "quantized_matmul/qmv_quad": {
+     "cases": 30,
+     "exact_distance_over_bound": 0.08347412213191172,
+     "rust_d_hi_over_B_lo": 0.08347412788151261
+    }
+   }
+  },
+  {
+   "candidate_commit": "acc94f400ea59100b7f99125cef8149ba2bb44c7",
+   "child": {
+    "elapsed_ms": 1087,
+    "outcome": "EXIT_STATUS 0",
+    "report_sha256": "0608f559e605073d2f2ed3f477f4981c10d3be19c03bf447c158c0cc358b1327"
+   },
+   "gate_counts": {
+    "B6-REFUSAL": {
+     "cases": 37,
+     "passed": 37
+    },
+    "G-CAST": {
+     "cases": 2,
+     "passed": 2
+    },
+    "G-DQ-CODES": {
+     "cases": 18,
+     "passed": 18
+    },
+    "G-DQ-EXACT": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-DQ-RUST": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-IMPORT": {
+     "cases": 8,
+     "passed": 8
+    },
+    "G-QMM-EXACT": {
+     "cases": 237,
+     "passed": 237
+    },
+    "G-QMM-RUST": {
+     "cases": 239,
+     "passed": 239
+    },
+    "G-R1-SELF-DQ": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-R1-SELF-QMM": {
+     "cases": 237,
+     "passed": 237
+    },
+    "N-QMM-ZERO": {
+     "cases": 1,
+     "passed": 1
+    },
+    "SHAPE-DTYPE": {
+     "cases": 326,
+     "passed": 326
+    }
+   },
+   "host_label": "macbook-m2max-local",
+   "provenance": {
+    "architecture": "applegpu_g14s",
+    "architecture_generation": 14,
+    "device_info": {
+     "architecture": "applegpu_g14s",
+     "device_name": "Apple M2 Max",
+     "max_buffer_length": "41747087360",
+     "max_recommended_working_set_size": "55662788608",
+     "memory_size": "68719476736",
+     "resource_limit": "499000"
+    },
+    "environment": {
+     "DYLD_LIBRARY_PATH": "<native-prefix>/lib",
+     "MLX_ENABLE_TF32": "0",
+     "MLX_MAX_MB_PER_BUFFER_set": false,
+     "MLX_MAX_OPS_PER_BUFFER_set": false,
+     "MLX_METAL_GPU_ARCH_set": false
+    },
+    "libmlx": {
+     "bytes": 21729392,
+     "method": "dyld image list",
+     "relative_path": "lib/libmlx.dylib",
+     "sha256": "0ef9edd0c5d497170d9a46d63dd6eec1ea46810662f3a8d442641dd7254d68e5"
+    },
+    "libmlxc": {
+     "bytes": 813696,
+     "method": "dladdr(mlx_version)",
+     "relative_path": "lib/libmlxc.dylib",
+     "sha256": "1fb169b84a8b6d964ea5df7b570fa244e3754e6fc3c59d3eef4d511b6315f0de"
+    },
+    "metallib": {
+     "bytes": 158455928,
+     "contains_nax_names": true,
+     "nax_name_occurrences": 4668,
+     "relative_path": "lib/mlx.metallib",
+     "sha256": "7d2e5f44dac2de9327cf0c93e280795abd13c6cdf10035ec4a4acc95deeac413"
+    },
+    "mlx_version": "0.31.2",
+    "native_prefix": {
+     "identity_method": "sha256 of '<relpath> <sha256>' lines for libmlx, libmlxc, mlx.metallib",
+     "identity_sha256": "52b7ee3cb1584d00ff8f463a14bdf6e084f33a2654205c83afd314e928a19356",
+     "label": "<native-prefix>"
+    },
+    "nax_capable_hardware": false,
+    "os_product_version": "26.6.2"
+   },
+   "r2_local": null,
+   "result": "PASS",
+   "summary_sha256": "447ea1f443f212cce3d25f7bab3a348ca2dd22614d8cde0443b255119813519c",
+   "worktree_dirty": false,
+   "worst_ratio_by_family": {
+    "dequantize/BF16": {
+     "cases": 21,
+     "exact_distance_over_bound": 0.9878856983567912,
+     "rust_d_hi_over_B_lo": 0.9878856983568584
+    },
+    "dequantize/F16": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.933545922010654,
+     "rust_d_hi_over_B_lo": 0.9335459220111044
+    },
+    "dequantize/F32": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.9699197520598376,
+     "rust_d_hi_over_B_lo": 0.9699197557042956
+    },
+    "quantized_matmul/qmm_t": {
+     "cases": 20,
+     "exact_distance_over_bound": 0.038776601182922435,
+     "rust_d_hi_over_B_lo": 0.10505233386870436
+    },
+    "quantized_matmul/qmm_t_splitk": {
+     "cases": 75,
+     "exact_distance_over_bound": 0.12722819977405303,
+     "rust_d_hi_over_B_lo": 0.12722820592043985
+    },
+    "quantized_matmul/qmv": {
+     "cases": 73,
+     "exact_distance_over_bound": 0.0270906387310764,
+     "rust_d_hi_over_B_lo": 0.027090649698382412
+    },
+    "quantized_matmul/qmv_fast": {
+     "cases": 41,
+     "exact_distance_over_bound": 0.02829748271813283,
+     "rust_d_hi_over_B_lo": 0.02829750223215888
+    },
+    "quantized_matmul/qmv_quad": {
+     "cases": 30,
+     "exact_distance_over_bound": 0.08347412213191172,
+     "rust_d_hi_over_B_lo": 0.08347412788151261
+    }
+   }
+  },
+  {
+   "candidate_commit": "844a8f639c1f821b3777b312a75e14d2a881deeb",
+   "child": {
+    "elapsed_ms": 1118,
+    "outcome": "EXIT_STATUS 0",
+    "report_sha256": "0608f559e605073d2f2ed3f477f4981c10d3be19c03bf447c158c0cc358b1327"
+   },
+   "gate_counts": {
+    "B6-REFUSAL": {
+     "cases": 37,
+     "passed": 37
+    },
+    "E1-DEVICE": {
+     "cases": 362,
+     "passed": 362
+    },
+    "E6-CPU-REFUSED": {
+     "cases": 1,
+     "passed": 1
+    },
+    "G-CAST": {
+     "cases": 2,
+     "passed": 2
+    },
+    "G-DQ-CODES": {
+     "cases": 18,
+     "passed": 18
+    },
+    "G-DQ-EXACT": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-DQ-RUST": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-IMPORT": {
+     "cases": 8,
+     "passed": 8
+    },
+    "G-QMM-EXACT": {
+     "cases": 237,
+     "passed": 237
+    },
+    "G-QMM-RUST": {
+     "cases": 239,
+     "passed": 239
+    },
+    "G-R1-SELF-DQ": {
+     "cases": 59,
+     "passed": 59
+    },
+    "G-R1-SELF-QMM": {
+     "cases": 237,
+     "passed": 237
+    },
+    "N-QMM-ZERO": {
+     "cases": 1,
+     "passed": 1
+    },
+    "SHAPE-DTYPE": {
+     "cases": 326,
+     "passed": 326
+    }
+   },
+   "host_label": "macbook-m2max-local",
+   "provenance": {
+    "architecture": "applegpu_g14s",
+    "architecture_generation": 14,
+    "device_info": {
+     "architecture": "applegpu_g14s",
+     "device_name": "Apple M2 Max",
+     "max_buffer_length": "41747087360",
+     "max_recommended_working_set_size": "55662788608",
+     "memory_size": "68719476736",
+     "resource_limit": "499000"
+    },
+    "environment": {
+     "DYLD_LIBRARY_PATH": "<native-prefix>/lib",
+     "MLX_ENABLE_TF32": "0",
+     "MLX_MAX_MB_PER_BUFFER_set": false,
+     "MLX_MAX_OPS_PER_BUFFER_set": false,
+     "MLX_METAL_GPU_ARCH_set": false
+    },
+    "libmlx": {
+     "bytes": 21729392,
+     "method": "dyld image list",
+     "relative_path": "lib/libmlx.dylib",
+     "sha256": "0ef9edd0c5d497170d9a46d63dd6eec1ea46810662f3a8d442641dd7254d68e5"
+    },
+    "libmlxc": {
+     "bytes": 813696,
+     "method": "dladdr(mlx_version)",
+     "relative_path": "lib/libmlxc.dylib",
+     "sha256": "1fb169b84a8b6d964ea5df7b570fa244e3754e6fc3c59d3eef4d511b6315f0de"
+    },
+    "metallib": {
+     "bytes": 158455928,
+     "contains_nax_names": true,
+     "nax_name_occurrences": 4668,
+     "relative_path": "lib/mlx.metallib",
+     "sha256": "7d2e5f44dac2de9327cf0c93e280795abd13c6cdf10035ec4a4acc95deeac413"
+    },
+    "mlx_version": "0.31.2",
+    "native_prefix": {
+     "identity_method": "sha256 of '<relpath> <sha256>' lines for libmlx, libmlxc, mlx.metallib",
+     "identity_sha256": "52b7ee3cb1584d00ff8f463a14bdf6e084f33a2654205c83afd314e928a19356",
+     "label": "<native-prefix>"
+    },
+    "nax_capable_hardware": false,
+    "os_product_version": "26.6.2"
+   },
+   "r2_local": {
+    "environment": {
+     "architecture": "applegpu_g14s",
+     "architecture_generation": 14,
+     "default_device": "Device(gpu, 0)",
+     "dyld_library_path_set": false,
+     "machine": "arm64",
+     "mlx_metal_version": "0.32.0",
+     "mlx_version": "0.32.0",
+     "python_version": "3.13.13"
+    },
+    "report_sha256": "d1f711f7723a1d82866e9788e781a499a75ec105a143b8243099266b4158e248",
+    "result": "OBSERVED",
+    "summary": {
+     "bit_identical_to_r3_records": 316,
+     "compared_to_exact_r1": 296,
+     "compared_to_r3": 316,
+     "different_kernel_family_records": 0,
+     "every_record_labelled": true,
+     "records": 316,
+     "records_over_yardstick": []
+    }
+   },
+   "result": "PASS",
+   "summary_sha256": "9b49b0d0ae8fab3233cc146df8ceae4b6c035cd719b8c04d039eb39a8ec9fdfb",
+   "worktree_dirty": false,
+   "worst_ratio_by_family": {
+    "dequantize/BF16": {
+     "cases": 21,
+     "exact_distance_over_bound": 0.9878856983567912,
+     "rust_d_hi_over_B_lo": 0.9878856983568584
+    },
+    "dequantize/F16": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.933545922010654,
+     "rust_d_hi_over_B_lo": 0.9335459220111044
+    },
+    "dequantize/F32": {
+     "cases": 19,
+     "exact_distance_over_bound": 0.9699197520598376,
+     "rust_d_hi_over_B_lo": 0.9699197557042956
+    },
+    "quantized_matmul/qmm_t": {
+     "cases": 20,
+     "exact_distance_over_bound": 0.038776601182922435,
+     "rust_d_hi_over_B_lo": 0.10505233386870436
+    },
+    "quantized_matmul/qmm_t_splitk": {
+     "cases": 75,
+     "exact_distance_over_bound": 0.12722819977405303,
+     "rust_d_hi_over_B_lo": 0.12722820592043985
+    },
+    "quantized_matmul/qmv": {
+     "cases": 73,
+     "exact_distance_over_bound": 0.0270906387310764,
+     "rust_d_hi_over_B_lo": 0.027090649698382412
+    },
+    "quantized_matmul/qmv_fast": {
+     "cases": 41,
+     "exact_distance_over_bound": 0.02829748271813283,
+     "rust_d_hi_over_B_lo": 0.02829750223215888
+    },
+    "quantized_matmul/qmv_quad": {
+     "cases": 30,
+     "exact_distance_over_bound": 0.08347412213191172,
+     "rust_d_hi_over_B_lo": 0.08347412788151261
+    }
+   }
+  }
+ ],
+ "schema": "pulsarmlx.f020.slice2b-local-observations/1.0.0",
+ "slice": "2B"
+}

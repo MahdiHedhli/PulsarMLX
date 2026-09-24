@@ -54,9 +54,10 @@ def run(work_dir, code_view):
     unrelated_marker='      - name: Validate independent Feature 017 oracle\n'
     jobs_head='jobs:\n'
     required=[s for s in scope._steps(res_text) if scope._is_required('\n'.join(s['lines']))]
-    # Ten F017 steps plus the two F020 steps that REQUIRED_EXTRA_STEP_NAMES
-    # admits, which the advanced resolution now contains.
-    assert len(required)==12,len(required)
+    # Ten F017 steps plus the three F020 steps that REQUIRED_EXTRA_STEP_NAMES
+    # admits (Slice 1's two and Slice 2B's native qualification), which the
+    # advanced resolution now contains.
+    assert len(required)==13,len(required)
     extra=[s['name'] for s in required if s['name'] in scope.REQUIRED_EXTRA_STEP_NAMES]
     assert sorted(extra)==sorted(scope.REQUIRED_EXTRA_STEP_NAMES),extra
     for s in required:
@@ -67,6 +68,39 @@ def run(work_dir, code_view):
     assert text.count(block)==1
     def swap(new_block):
         return text.replace(block,new_block,1).encode()
+
+    # --- the F020 Slice 2B native qualification is frozen like every required step ---
+    s2b_name='Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)'
+    assert s2b_name in scope.REQUIRED_EXTRA_STEP_NAMES
+    s2b=[s for s in required if s['name']==s2b_name]
+    assert len(s2b)==1 and s2b[0]['job']=='apple-mlx-small-fixtures'
+    s2b_lines=s2b[0]['lines']; s2b_block='\n'.join(s2b_lines)
+    assert text.count(s2b_block)==1
+    def s2b_swap(new_block):
+        return text.replace(s2b_block,new_block,1).encode()
+    s2b_name_line='      - name: '+s2b_name
+    assert s2b_lines[0]==s2b_name_line
+    s2b_cargo='            cargo test -p mlx-native-affine --release --no-fail-fast -- --test-threads=1 --nocapture'
+    s2b_assert='          assert summary["result"] == "PASS", summary["failures"]'
+    assert s2b_cargo in s2b_block and s2b_assert in s2b_block
+    rejection('Slice 2B step renamed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap(s2b_block.replace(s2b_name_line,s2b_name_line+' (renamed)',1))))
+    rejection('Slice 2B step removed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(s2b_block+'\n','',1).encode()))
+    rejection('Slice 2B step body changed (qualification command masked)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap(s2b_block.replace(s2b_cargo,s2b_cargo+' || true',1))))
+    rejection('Slice 2B step body changed (summary assertion deleted)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap(s2b_block.replace(s2b_assert+'\n','',1))))
+    rejection('Slice 2B step body changed (build-only substitution)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap(s2b_block.replace(' --no-fail-fast -- --test-threads=1 --nocapture',' --no-run',1))))
+    rejection('Slice 2B step made non-fatal','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap('\n'.join([s2b_lines[0],'        continue-on-error: true']+s2b_lines[1:]))))
+    rejection('Slice 2B step disabled with if: false','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_swap('\n'.join([s2b_lines[0],'        if: false']+s2b_lines[1:]))))
+    s2b_moved=(text.replace(s2b_block+'\n','',1).rstrip('\n')+'\n'
+               +'  relocated-job:\n    runs-on: macos-15\n    steps:\n'+s2b_block+'\n')
+    rejection('Slice 2B step moved to another job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2b_moved.encode()))
 
     # --- lineage construction: the resolution contains the qualify lineage in order ---
     expected_steps={s['name']:s for s in scope._steps(

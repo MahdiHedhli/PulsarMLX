@@ -38,7 +38,12 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # the two F020 required steps, to that commit's tree (4f0ed191, 185c2183...). It
 # is advanced once more, to the commit that made evidence-integrity also run
 # for mixed code+evidence ranges; that commit changed two residual lines (a
-# classify output and the integrity job's `if:`) and no required step. The
+# classify output and the integrity job's `if:`) and no required step. It is
+# advanced again, to the commit that added the required F020 Slice 2B native
+# qualification step (99677210); that commit added one required block and
+# changed no existing one. It is advanced once more, to 7f28bc5c, whose only
+# change is that step's post-check (the runner architecture is recorded
+# rather than predicted, and E1/E6 counts are asserted). The
 # earlier resolution's required blocks are contained in this one byte for
 # byte -- advancing the base never rewrites or drops one. Required steps are
 # frozen at these exact bytes. Line-level
@@ -47,8 +52,8 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "85b8a002fe8d2955848fe8469f4f7fab077a9e05"
-RESOLUTION_WORKFLOW_SHA256 = "f9f72b1eda07a1cd2f350c5139fe4d7d83ded26f1e21641e72641ae11747c18b"
+RESOLUTION_BASE = "7f28bc5cd6727d2d80952ecd19347d6e224d8f6d"
+RESOLUTION_WORKFLOW_SHA256 = "c759c5d1df2aae04f123853674775667b4b2bec2fd604b58a587797a12133551"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")
@@ -70,6 +75,9 @@ NEW_COMMANDS = (
 REQUIRED_EXTRA_STEP_NAMES = (
     "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)",
     "Test MLX affine representation",
+    # F020 Slice 2B (owner GO 2026-09-23): the native qualification that runs
+    # the qualify child on the runner GPU over the frozen population.
+    "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)",
 )
 
 

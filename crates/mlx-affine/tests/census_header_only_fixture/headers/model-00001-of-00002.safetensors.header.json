@@ -1,0 +1,10 @@
+{
+  "file": "model-00001-of-00002.safetensors",
+  "file_len": 1276,
+  "header_bytes": 588,
+  "header_len": 580,
+  "header_sha256": "49f159bfa45b6fb3f09cb54da784ca970f37d284cdae0bf73c6ec8a06e18c4b1",
+  "label": "header bytes only; no payload byte read; header sha256 identifies the header, not the payload; not Q0",
+  "max_read_offset_exclusive": 588,
+  "schema": "pulsarmlx.f020.safetensors-header-extract/1.0.0"
+}
