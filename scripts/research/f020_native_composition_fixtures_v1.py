@@ -451,8 +451,14 @@ def array_census(spec: ModuleSpec, m: int, families):
                 "is_weight_matrix": False,
                 "holds": "per-partition float32 partial OUTPUT sums, not weights"})
     return {"bridge_visible_handles": handles,
-            "measured_counter_deltas": {"imports": 4, "result_handles_created": 3, "result_handles_adopted": 3,
-                                        "result_handles_freed_on_error_path": 0, "array_free_calls": 7},
+            # Measured in SEPARATE intervals around side A's and side B's bridge
+            # call; the whole-case aggregate (A + B) is reported separately.
+            "measured_counter_deltas": {
+                "per_side": {side: {"imports": 4, "result_handles_created": 3, "result_handles_adopted": 3,
+                                    "result_handles_freed_on_error_path": 0, "array_free_calls": 7}
+                             for side in ("A", "B")},
+                "whole_case_aggregate": {"imports": 8, "result_handles_created": 6, "result_handles_adopted": 6,
+                                         "result_handles_freed_on_error_path": 0, "array_free_calls": 14}},
             "source_derived_workspace": workspace,
             "source_derived_workspace_note": ("vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal "
                                               "array beyond the output in MLX312 quantized.cpp; inputs are already "
@@ -466,10 +472,27 @@ def staged_inputs(tensors):
 
 def composition_guards(sit):
     """Evaluate EVERY composition guard independently (True violated, False
-    satisfied, "n/a: ..." when its precondition does not hold)."""
+    satisfied, "n/a: ..." when its precondition does not hold). The returned
+    map's key set is exactly COMPOSITION_REFUSAL_ORDER: every guard is either
+    evaluated or recorded as not evaluable, by name, never by position."""
+    G = _composition_guards(sit)
+    assert set(G) == set(COMPOSITION_REFUSAL_ORDER) and len(G) == len(COMPOSITION_REFUSAL_ORDER), sorted(G)
+    return G
+
+
+# Guards that the E-RANGE probe cannot evaluate: it enters at range resolution,
+# after resolution, binding and index checks, with no module, triple or index.
+E_RANGE_NOT_EVALUABLE = ("C-R-RESOLVE", "C-R-SOURCE-BINDING", "C-R-MODULE-BINDING",
+                         "C-R-RECIPE-BINDING", "C-R-INDEX-RANK", "C-R-INDEX-RANGE")
+# Guards that cannot be evaluated when the module does not resolve.
+UNRESOLVED_NOT_EVALUABLE = ("C-R-SOURCE-BINDING", "C-R-MODULE-BINDING", "C-R-RECIPE-BINDING",
+                            "C-R-INDEX-RANK", "C-R-INDEX-RANGE", "C-R-OVERFLOW", "C-R-BACKING")
+
+
+def _composition_guards(sit):
     G = {}
     if sit["entry"] == "E-RANGE":
-        for rid in COMPOSITION_REFUSAL_ORDER[:5]:
+        for rid in E_RANGE_NOT_EVALUABLE:
             G[rid] = "n/a: range-resolution probe"
         begin, length = sit["range"]["begin"], sit["range"]["len"]
         G["C-R-OVERFLOW"] = begin + length > U64_MAX
@@ -478,7 +501,7 @@ def composition_guards(sit):
         return G
     G["C-R-RESOLVE"] = not sit["resolve_consistent"]
     if G["C-R-RESOLVE"]:
-        for rid in COMPOSITION_REFUSAL_ORDER[1:]:
+        for rid in UNRESOLVED_NOT_EVALUABLE:
             G[rid] = "n/a: module unresolved"
         return G
     G["C-R-SOURCE-BINDING"] = sit["backing_source"] != sit["triple_source"]

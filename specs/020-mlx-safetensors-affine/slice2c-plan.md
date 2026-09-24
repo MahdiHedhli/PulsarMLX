@@ -1,6 +1,6 @@
 # Feature 020, Slice 2C: synthetic expert-plane composition (plan)
 
-**Status: plan draft 4 (2026-09-24), with contract `1.0.0-draft.4`.** Prepared
+**Status: plan draft 5 (2026-09-24), with contract `1.0.0-draft.5`.** Prepared
 before any composition code exists. The drafts so far:
 
 - Draft 2 folded in the planner's resolutions of the draft-1 open questions
@@ -12,6 +12,8 @@ before any composition code exists. The drafts so far:
   a 32nd case, and regenerates the generator and the manifest. The
   checkpoints, the standalone files and the fixture listing are
   byte-identical to draft 1.
+- Draft 5 resolves the round-2 review's remaining items (§11): per-side
+  counter intervals, and guard evaluability by name.
 
 Nothing here is authorized until the owner gives the GO in §10.
 
@@ -27,9 +29,9 @@ Related files:
 | Role | Path | sha256 |
 |---|---|---|
 | Contract (new) | `contracts/native-composition-v1.json` | recorded in the commit that adds it |
-| Generator and selection oracle (new) | `scripts/research/f020_native_composition_fixtures_v1.py` | `318c8209…` |
+| Generator and selection oracle (new) | `scripts/research/f020_native_composition_fixtures_v1.py` | `3aab90e8…` |
 | Generator test (new) | `scripts/research/tests/test_f020_native_composition_fixtures_v1.py` | |
-| Fixture manifest (new) | `fixtures/native-composition/manifest.json` | `c8d605bf…` |
+| Fixture manifest (new) | `fixtures/native-composition/manifest.json` | `6f0e39e6…` |
 | Fixture listing (new) | `find checkpoints mutations standalone -type f \| LC_ALL=C sort \| xargs shasum -a 256 \| shasum -a 256`, run inside `fixtures/native-composition` | `2d314e23…` |
 | Inherited contract | `contracts/native-primitives-v1.json` (Slice 2B, `9bf6a810`, merged by `274da684`) | `76959ccb…` |
 
@@ -267,10 +269,27 @@ Per case, the child does the following:
 The array census needs no change to the bridge. Measured and source-derived
 entries are labelled separately in the report.
 
-- **Measured.** The counter deltas around the case: 4 imports from the `ffi`
-  import counter; 3 result handles created and 3 adopted, and 0 freed on an
-  error path, from `native::result_census`; and 7 array frees from
-  `native::array_free_calls`. Also measured: the staged-input records of the
+- **Measured, per side.** Counters are measured in two SEPARATE intervals:
+  one opened immediately before and closed immediately after side A's
+  `bridge::quantized_matmul` call (including its evaluation, readback and
+  handle drops), and one likewise around side B's call. The sources are the
+  `ffi` import counter, `native::result_census` and
+  `native::array_free_calls`. Each interval must show exactly:
+  - 4 imports;
+  - 3 result handles created and 3 adopted;
+  - 0 freed on an error path;
+  - 7 array frees.
+
+  The expected values are `measured_counter_deltas.per_side.A` and `.B`.
+- **Whole-case aggregate.** The aggregate is reported separately and must
+  equal the sum of the two intervals: 8 imports, 6 created, 6 adopted, 0 freed
+  on an error path and 14 array frees for executed cases
+  (`measured_counter_deltas.whole_case_aggregate`). It is distinct from two
+  other sets of counters:
+  - the whole-case refusal counters of composition-refusal and mutation
+    cases: 0 imports and 0 numerical calls;
+  - the inherited-refusal counters: `numerical_before_decision` 0 and
+    `imports_before_decision` 0 on each side. Also measured: the staged-input records of the
   four imports and the output's `Evaluated` readback dtype and shape.
   Together these cover the seven bridge-visible handles
   (`expected.array_census.bridge_visible_handles`, `measured_counter_deltas`).
@@ -352,7 +371,7 @@ the contract's `copy_and_ownership.accounting_method` defines:
 The parent checks four things:
 
 - staging bytes equal `plane_bytes`;
-- the measured counters equal `measured_counter_deltas`;
+- each side's measured interval equals `measured_counter_deltas.per_side`, and the separately reported aggregate equals `whole_case_aggregate` and the sum of the two intervals;
 - the bridge-visible handles equal `bridge_visible_handles`;
 - no bridge-visible float array has the weight's logical shape.
 
@@ -703,7 +722,7 @@ Remaining owner GO items:
    - the composition refusal order;
    - the selection checks;
    - N-COMP-AB as exact bitwise equality under A-DET, with its failure policy.
-2. **Freeze the population.** Generator `318c8209…`, manifest `c8d605bf…`,
+2. **Freeze the population.** Generator `3aab90e8…`, manifest `6f0e39e6…`,
    listing `2d314e23…` (unchanged since draft 1), 32 cases and 28 files. The
    manifest's `contract_schema` field still names draft.1, the draft under
    which the checkpoints and standalone files were generated. This follows Slice 2B, whose manifest
@@ -727,4 +746,13 @@ No inherited contract changed. The checkpoints, the standalone files and the
 fixture listing `2d314e23…` are byte-identical. The generator and the
 manifest were regenerated for the new case, the exact detection set, the
 split census and the staged/source expectations.
+
+Round-2 review `astra-f020-s2c-contract-r2-20260924T174533Z-10999` of
+`532f8fba` closed M1, M2, M3 and m5. Draft 5 resolves the two remaining
+items:
+
+| # | Severity | Finding | Resolution |
+|---|---|---|---|
+| M4 (r2) | MAJOR | One counter interval "around the case" contradicts the A-then-B execution, whose totals are 8/6/6/0/14. | Separate measurement intervals for side A and side B, each 4/3/3/0/7. The whole-case aggregate, 8/6/6/0/14, is reported separately and must equal their sum. Both are distinct from the refusal counters: 0 imports and 0 numerical calls for composition refusals and mutations, and 0 before the decision on each side for inherited refusals. (§3; contract N-COMP-ARRAYS; manifest `measured_counter_deltas`.) |
+| r2-2 | MINOR | Positional slicing (`COMPOSITION_REFUSAL_ORDER[:5]`) dropped `C-R-INDEX-RANGE` from `ref-range-overflow`'s guard map. | Evaluability is explicit per guard, by name. `ref-range-overflow` records `C-R-INDEX-RANGE` as not evaluable. The generator asserts, and a test checks for all 26 guard maps, that each map's key set equals `composition_refusal_order` exactly. |
 

@@ -248,6 +248,26 @@ class CompositionFixtureTests(unittest.TestCase):
                 self.assertEqual(case["oracle"]["composition_guards"],
                                  {k: False for k in self.manifest["composition_refusal_order"]})
 
+    def test_every_composition_guard_map_covers_the_declared_order_exactly(self):
+        order = self.manifest["composition_refusal_order"]
+        seen = 0
+        for case in self.manifest["cases"]:
+            guards = case.get("oracle", {}).get("composition_guards")
+            if guards is None:
+                continue
+            seen += 1
+            self.assertEqual(sorted(guards), sorted(order), case["id"])
+            evaluated = {k for k, v in guards.items() if isinstance(v, bool)}
+            not_evaluable = {k for k, v in guards.items() if isinstance(v, str)}
+            self.assertEqual(evaluated | not_evaluable, set(order), case["id"])
+            self.assertFalse(evaluated & not_evaluable)
+            if case["expected"].get("stage") == "composition":
+                self.assertEqual(case["expected"]["not_evaluable_guards"], sorted(not_evaluable), case["id"])
+        self.assertEqual(seen, 26)
+        overflow = self.cases["ref-range-overflow"]["expected"]
+        self.assertIn("C-R-INDEX-RANGE", overflow["not_evaluable_guards"])
+        self.assertEqual(overflow["violated_guards"], ["C-R-OVERFLOW"])
+
     def test_mutations_are_detectable_by_construction(self):
         for case in self.manifest["cases"]:
             if case["family"] != "FX-COMP-MUTATION":
@@ -311,8 +331,11 @@ class CompositionFixtureTests(unittest.TestCase):
             census = case["expected"]["array_census"]
             roles = [h["role"] for h in census["bridge_visible_handles"]]
             self.assertEqual(roles, ["x", "w", "scales", "biases", "scales_f32", "biases_f32", "out"])
-            self.assertEqual(census["measured_counter_deltas"]["imports"], 4)
-            self.assertEqual(census["measured_counter_deltas"]["result_handles_created"], 3)
+            side = {"imports": 4, "result_handles_created": 3, "result_handles_adopted": 3,
+                    "result_handles_freed_on_error_path": 0, "array_free_calls": 7}
+            deltas = census["measured_counter_deltas"]
+            self.assertEqual(deltas["per_side"], {"A": side, "B": side})
+            self.assertEqual(deltas["whole_case_aggregate"], {k: 2 * v for k, v in side.items()})
             fams = case["expected"]["families_0_31_2"]
             split = [f for f in fams if f["family"] == "qmm_t_splitk"]
             ws = census["source_derived_workspace"]

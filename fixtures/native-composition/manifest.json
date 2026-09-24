@@ -2,7 +2,7 @@
  "schema": "pulsarmlx.f020.native-composition-fixtures/1.0.0",
  "contract_schema": "pulsarmlx.f020.native-composition-contract/1.0.0-draft.1",
  "generator": "scripts/research/f020_native_composition_fixtures_v1.py",
- "generator_sha256": "318c8209b9fc41608c2c64a70b8fc78bcc8c983d822d1d735fe2c9118bce73a2",
+ "generator_sha256": "3aab90e85a64530a554e6e0d03324ea95496ac83c940734c75d7bad701830f5b",
  "inherits": {
   "slice2b_contract_sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72",
   "slice2b_generator": "scripts/research/f020_native_primitives_fixtures_v1.py",
@@ -960,11 +960,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -1267,11 +1285,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -1589,11 +1625,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -1910,11 +1964,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -2217,11 +2289,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -2540,11 +2630,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -2848,11 +2956,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -3157,11 +3283,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -3481,11 +3625,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -3804,11 +3966,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -4112,11 +4292,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [],
      "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
@@ -4421,11 +4619,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -4750,11 +4966,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -5080,11 +5314,29 @@
       }
      ],
      "measured_counter_deltas": {
-      "imports": 4,
-      "result_handles_created": 3,
-      "result_handles_adopted": 3,
-      "result_handles_freed_on_error_path": 0,
-      "array_free_calls": 7
+      "per_side": {
+       "A": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       },
+       "B": {
+        "imports": 4,
+        "result_handles_created": 3,
+        "result_handles_adopted": 3,
+        "result_handles_freed_on_error_path": 0,
+        "array_free_calls": 7
+       }
+      },
+      "whole_case_aggregate": {
+       "imports": 8,
+       "result_handles_created": 6,
+       "result_handles_adopted": 6,
+       "result_handles_freed_on_error_path": 0,
+       "array_free_calls": 14
+      }
      },
      "source_derived_workspace": [
       {
@@ -5502,6 +5754,7 @@
     ],
     "not_evaluable_guards": [
      "C-R-BACKING",
+     "C-R-INDEX-RANGE",
      "C-R-INDEX-RANK",
      "C-R-MODULE-BINDING",
      "C-R-RECIPE-BINDING",
@@ -5539,6 +5792,7 @@
      "C-R-MODULE-BINDING": "n/a: range-resolution probe",
      "C-R-RECIPE-BINDING": "n/a: range-resolution probe",
      "C-R-INDEX-RANK": "n/a: range-resolution probe",
+     "C-R-INDEX-RANGE": "n/a: range-resolution probe",
      "C-R-OVERFLOW": true,
      "C-R-BACKING": "n/a: end undefined"
     }
