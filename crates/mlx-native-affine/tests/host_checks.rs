@@ -503,3 +503,21 @@ fn frozen_constants_equal_the_contract() {
     assert_eq!(frozen::CHILD_TIMEOUT_SECONDS, 1800);
     let _ = Dtype::U32;
 }
+
+/// The exact-rational gate script's boundary controls (both sides of every
+/// bound, NaN, zero Phi, tampered output). A missing interpreter is a failure.
+#[test]
+fn exact_gate_script_boundary_controls() {
+    let py = std::env::var("PULSAR_F020_PYTHON").unwrap_or_else(|_| "python3".into());
+    let out = std::process::Command::new(py)
+        .args(["-I", "-B"])
+        .arg(crate_dir().join("acceptance/test_exact_gates_v1.py"))
+        .output()
+        .expect("python3 is required (a missing interpreter is a failure, not a skip)");
+    assert!(
+        out.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+}
