@@ -310,7 +310,15 @@ residency or performance claim is made.
 ## Slice 2C — synthetic expert-plane composition (branch, not merged)
 
 On branch `feat/020-synthetic-expert-plane-composition-20260924`; **not
-merged** (a merge needs a separate GO). Candidate `110efa72`.
+merged** (a merge needs a separate GO). Current candidate `4d39dc3e` (attempt 2,
+CI run [`36053452198`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/36053452198),
+[record](reviews/evidence/f020-slice2c-ci-qualification-attempt-2-v1.json)): the
+independent implementation review of attempt 1 asked that S-SOURCE-UNCHANGED
+require exact, unique and exhaustive shard evidence per phase (with rejection
+controls) and that E6, the CPU-context negative control, run in the compose
+child; both are implementation fixes under the frozen contract, and attempt 2
+passes with them (E6 refused R-DEVICE; 388/388 evidence controls rejected).
+Attempt 1 (`110efa72`, below) stays on record.
 
 **Scope.** Under the composition contract
 [`native-composition-v1.json`](../../specs/020-mlx-safetensors-affine/contracts/native-composition-v1.json)
