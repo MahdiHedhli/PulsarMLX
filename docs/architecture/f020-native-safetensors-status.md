@@ -307,10 +307,54 @@ inside D-NUM or D-DQ needs payload reads, which are not authorized. No
 transpose=false, half kernel types, NAX, CPU backend, gather_qmm, model graph,
 residency or performance claim is made.
 
+## Slice 2C — synthetic expert-plane composition (branch, not merged)
+
+On branch `feat/020-synthetic-expert-plane-composition-20260924`; **not
+merged** (a merge needs a separate GO). Candidate `110efa72`.
+
+**Scope.** Under the composition contract
+[`native-composition-v1.json`](../../specs/020-mlx-safetensors-affine/contracts/native-composition-v1.json)
+(draft.5, sha256 `e3fc848c…`, plan `b4e23bf4…`, frozen before any observation
+in [this record](reviews/evidence/f020-slice2c-contract-acceptance-v1.json)),
+ONE projection of ONE selected expert plane of a synthetic stacked affine
+tensor goes through the Slice 1 catalog, module resolution and checked
+selection into the unchanged Slice 2B bridge (`qualify --mode compose`). Two
+combinations: 4-bit g64 BF16 (default) and 8-bit g64 BF16 (override), float32
+x, `transpose=true`, vector and matrix x. Selection adds only exact checks; no
+bound, domain or tolerance changed.
+
+**What passed.** CI run
+[`36043386953`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/36043386953)
+([record](reviews/evidence/f020-slice2c-ci-qualification-v1.json)), required
+step `Qualify F020 Slice 2C synthetic expert-plane composition (frozen
+synthetic population, runner GPU)`: all 32 frozen cases. Selection identity,
+ranges, bytes, staged inputs and unchanged sources on 17/17 planes, decided by
+the parent from input evidence; A (composed) and B (standalone) outputs
+bitwise equal on 14/14 executed cases, A-B-A equal; the inherited R1 gates on
+A and on B (exact and binary64) and R1 self-check on 14/14; per-side counters
+4/3/3/0/7 with 5 numerical calls; 9/9 composition refusals and 3/3 inherited
+refusals with zero MLX-C calls before the decision; 6/6 mutation controls
+detected by exactly their listed checks; the child is independent of R1 and
+the decoder (static scan and `nm`, both controls). The Slice 2B invocation is
+proven unchanged in the same job: base `12b06367` and candidate child reports
+are equal as canonical JSON minus V1–V4, with identical gate counts and
+test-name lists, and the candidate matches attempt 3 on all 363 cases.
+[Labelled local runs](reviews/evidence/f020-slice2c-local-observations-v1.json)
+are not acceptance evidence.
+
+**CI.** The Slice 2C step is required (census 13 → 14), through doctor X
+`6d76adc6` / Y `110efa72`; all 88 doctor mutation controls reject.
+
+**Not claimed.** No real checkpoint payload, production geometry,
+`gather_qmm`, routing, full MLP, model graph, residency or performance. A-DET
+is shown only for the runner, build and process it ran on.
+
 ## Next
 
 Slice 2B awaits implementation review and a separate merge GO; nothing beyond it
 is authorized.
+
+Slice 2C is qualified on its branch and awaits review and a separate merge GO.
 
 Slice 2A, the header-only metadata census of both PipeNetwork targets (not Q0, not numerical qualification): [f020-slice2a-metadata-census.md](f020-slice2a-metadata-census.md).
 

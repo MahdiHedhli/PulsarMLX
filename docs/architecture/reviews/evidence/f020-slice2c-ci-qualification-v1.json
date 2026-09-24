@@ -1,0 +1,2835 @@
+{
+ "a_vs_b": {
+  "cases": [
+   {
+    "bitwise_equal": true,
+    "id": "acc-a-stack_a-e0-m1",
+    "output_sha256_A": "478e9f1f272c8e036d37d1e50d5d8328953edb9e4cf5ee86f43a6eef392a7323",
+    "output_sha256_B": "478e9f1f272c8e036d37d1e50d5d8328953edb9e4cf5ee86f43a6eef392a7323",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-a-stack_a-e3-m32",
+    "output_sha256_A": "a579abca27cce8fd72e081f14785b951893ca56fd62bee7c4f646f14361b7762",
+    "output_sha256_B": "a579abca27cce8fd72e081f14785b951893ca56fd62bee7c4f646f14361b7762",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-a-stack_b-e1-m32",
+    "output_sha256_A": "075c986baec1e4d26f9636add261d69b5d9a9957130a83274e6cb696201e8154",
+    "output_sha256_B": "075c986baec1e4d26f9636add261d69b5d9a9957130a83274e6cb696201e8154",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-a-stack_b-e2-m1",
+    "output_sha256_A": "3902e7d1ebe734d344417b662aa34ea678b6e16c7f2d767fbbdbc603adb754c8",
+    "output_sha256_B": "3902e7d1ebe734d344417b662aa34ea678b6e16c7f2d767fbbdbc603adb754c8",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_d-e0-m32",
+    "output_sha256_A": "a5dff4c63a05ee42020a67734ee6aa88b6dc53efc51cf5b725b50896191ff6c7",
+    "output_sha256_B": "a5dff4c63a05ee42020a67734ee6aa88b6dc53efc51cf5b725b50896191ff6c7",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_d-e3-m1",
+    "output_sha256_A": "9d3220e5191cdf20fa6253788b5ea545e712414d4f29220c83d8ae896c27e646",
+    "output_sha256_B": "9d3220e5191cdf20fa6253788b5ea545e712414d4f29220c83d8ae896c27e646",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_c-e1-m1",
+    "output_sha256_A": "2c2cb7469bbc0a9a758a240d82f45cb814a6dcb72feada75ad8b4d86ab0c7a77",
+    "output_sha256_B": "2c2cb7469bbc0a9a758a240d82f45cb814a6dcb72feada75ad8b4d86ab0c7a77",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_c-e0-m32",
+    "output_sha256_A": "02dd3915a0d9ccb4508d3faa6f7db983d017ec7df3e5556e13c369b8809b9a6f",
+    "output_sha256_B": "02dd3915a0d9ccb4508d3faa6f7db983d017ec7df3e5556e13c369b8809b9a6f",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_q-e1-m32",
+    "output_sha256_A": "aa0a7f583f09fd1f14554811a87bfafc3a19796ba0597c17df769ef5cbdf40c9",
+    "output_sha256_B": "aa0a7f583f09fd1f14554811a87bfafc3a19796ba0597c17df769ef5cbdf40c9",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_q-e2-m1",
+    "output_sha256_A": "0c35341b1de5de44892b3d3d95544d8889afaa53814548349ce492f92451261f",
+    "output_sha256_B": "0c35341b1de5de44892b3d3d95544d8889afaa53814548349ce492f92451261f",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "acc-b-stack_r-e2-m1",
+    "output_sha256_A": "a7c2f20982f7e30c14a3fbaa2b61747581f307b7bd795fdd81921b022677567e",
+    "output_sha256_B": "a7c2f20982f7e30c14a3fbaa2b61747581f307b7bd795fdd81921b022677567e",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "seq-aba-0",
+    "output_sha256_A": "f786d6e9240f64f0afee6d02b4215775225007d4b4a73a8aa53edced28b32421",
+    "output_sha256_B": "f786d6e9240f64f0afee6d02b4215775225007d4b4a73a8aa53edced28b32421",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "seq-aba-1",
+    "output_sha256_A": "d2eb7c4b8998a4278c6187d9cace1a090551748487f7d5512a63f523dad15f7c",
+    "output_sha256_B": "d2eb7c4b8998a4278c6187d9cace1a090551748487f7d5512a63f523dad15f7c",
+    "staged_inputs_equal": true
+   },
+   {
+    "bitwise_equal": true,
+    "id": "seq-aba-2",
+    "output_sha256_A": "f786d6e9240f64f0afee6d02b4215775225007d4b4a73a8aa53edced28b32421",
+    "output_sha256_B": "f786d6e9240f64f0afee6d02b4215775225007d4b4a73a8aa53edced28b32421",
+    "staged_inputs_equal": true
+   }
+  ],
+  "equal_cases": 14,
+  "n_comp_aba": {
+   "cases": 1,
+   "passed": 1
+  },
+  "relation": "N-COMP-AB exact bitwise equality of the output files; A-DET held on this host for all 14 executed cases"
+ },
+ "artifacts": {
+  "child_report_json_sha256": "293c9ad4e5526bcbf3f8bd08a202d3e67aa4ae5bb3c781292ddb6de0ab3da59f",
+  "composition_gates_json_sha256": "6d50793bf755c03de4819bb3f2778d56149b5b5cff840dd3f21c0346a827a7ba",
+  "name": "f020-slice2c-qualification",
+  "note": "CI artifacts (retention 30 days) are bound by sha256 only; they are not repository files.",
+  "regression_json_sha256": "356b4b1d27131cd2480dde4550a971fe3c075bc1cc314bf18864e69e19a664f3",
+  "run": 36043386953,
+  "summary_json_sha256": "5ff665ab6deb6b69b70060e01927d1b753aec1b3b694ef40686c172d38e05e19"
+ },
+ "attempt": 1,
+ "candidate_commit": "110efa72727f45a4b1923227efa5bf0513611872",
+ "candidate_sources": {
+  "attempt3_reference_copy": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "fixtures/f020-slice2b-attempt3/child-report.json",
+   "sha256": "e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640"
+  },
+  "child_main": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/bin/qualify/main.rs",
+   "sha256": "2459e803f23536fd988eba091d0d9c0121dcaed248271a7bab7751978ad6e3c8"
+  },
+  "child_run": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/bin/qualify/run.rs",
+   "sha256": "a12b3de256daa7a69eb416d1d1927359ab096ed832e8b26e113dc352f94c04c6"
+  },
+  "compose": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/compose.rs",
+   "sha256": "3550ec6ad6d6b370b074e80c4777c8728c9219ab9170892b7d5d6c04ba2d4ce0"
+  },
+  "compose_child": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/bin/qualify/compose_run.rs",
+   "sha256": "209ab041bdb41446ed9ac5cf4691b8550fac478667795b8b04645f392fcc44ba"
+  },
+  "composition_gates": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/acceptance/composition_gates_v1.py",
+   "sha256": "0889e7eeb0c56ff8912a653c156d1bb002be1bd1c4ee438b55120debf56ea0c9"
+  },
+  "confined_runner": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/research/tests/f017_primary_confined_ci_v1.py",
+   "sha256": "3b6c437d1e0e0f36c3ee6d0abceb5da580342df40aa6653d3d5fe3e3b998d138"
+  },
+  "crate_manifest": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/Cargo.toml",
+   "sha256": "ee4f0c19b8247ce2897d4b93baebe631cabcae5524c843161c4b6a13b7977890"
+  },
+  "doctor": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/ci/f017_measurement_scope_v1.py",
+   "sha256": "e7617ad54785ca109dda6fbb20e2f2e17e52d20f2fdd9f93f31f3f1113590574"
+  },
+  "doctor_tests": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/ci/f017_measurement_scope_tests_v1.py",
+   "sha256": "e1e330ea444a2f03c2572f918bba3c2a5aa1671afcc89639cdf78ca52861cceb"
+  },
+  "frozen_compose": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/frozen_compose.rs",
+   "sha256": "8685f0622ed75848f21c4f4d688cba5f677ee35b0757e14d01e243ffcdefd09d"
+  },
+  "harness": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/src/harness.rs",
+   "sha256": "e0da9661808933b8ffea6f95b71ec5a9af707c9759940c7f59f5681a56a41d04"
+  },
+  "host_checks": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/tests/host_checks.rs",
+   "sha256": "b3c323cec1b366d89e9009fe6e034e6f7369e87c8b638b8f0a29f56b3bc87f68"
+  },
+  "parent": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "crates/mlx-native-affine/tests/composition_qualification.rs",
+   "sha256": "31e4e5411d39950eefd17b07cdc9e032db92e6b96bf4e4eefff5e79a04384a03"
+  },
+  "regression_compare": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/ci/f020_slice2b_regression_compare_v1.py",
+   "sha256": "ee6f25efac566f8168bf750e964e57aa01422f008daeae498e6018bbcdfad31f"
+  },
+  "regression_compare_controls": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/ci/tests/test_f020_slice2b_regression_compare_v1.py",
+   "sha256": "cf55b37c55e58e1d8a424f3b5a27b08bf4f58e1c9528c34f4aa3efc6cbab9930"
+  },
+  "workflow": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": ".github/workflows/macos.yml",
+   "sha256": "8f849896da619ce88d81a48aae1003af50cefaf2dcac54fabf1376397f3d566f"
+  }
+ },
+ "case_accounting": {
+  "by_family": {
+   "FX-COMP-ACCEPT": 11,
+   "FX-COMP-INHERITED-REFUSE": 3,
+   "FX-COMP-MUTATION": 6,
+   "FX-COMP-REFUSE": 9,
+   "FX-COMP-SEQUENCE": 3
+  },
+  "by_outcome": {
+   "detected": 6,
+   "executed": 14,
+   "refused": 12
+  },
+  "case_ids": 32
+ },
+ "checkpoint_reads": 0,
+ "child": {
+  "abi_values": [
+   8,
+   8,
+   8,
+   8,
+   8,
+   4,
+   4,
+   0,
+   1,
+   2,
+   3,
+   9,
+   10,
+   12,
+   8,
+   4,
+   8,
+   4
+  ],
+  "call_counts": {
+   "imports": 118,
+   "numerical": 147
+  },
+  "cleanup": {
+   "array_free_calls": 204,
+   "errors": [],
+   "result_handles": {
+    "adopted": 86,
+    "balanced": true,
+    "created": 86,
+    "freed_on_error_path": 0
+   }
+  },
+  "elapsed_ms": 1999,
+  "error_handler": {
+   "installs": 1,
+   "messages_received": 0
+  },
+  "handles": {
+   "array_handles_freed": 204,
+   "double_free_attempts": 0,
+   "live_array_handles_after_context_drop": 0,
+   "live_arrays_in_context_at_drop": 0
+  },
+  "outcome": "EXIT_STATUS 0",
+  "report_sha256": "293c9ad4e5526bcbf3f8bd08a202d3e67aa4ae5bb3c781292ddb6de0ab3da59f",
+  "timeout_seconds": 1800
+ },
+ "ci_conclusion": "success",
+ "ci_event": "push",
+ "ci_range": "b481c8da..110efa72 (FULL_NATIVE)",
+ "ci_required_step": {
+  "aggregate": "the CI aggregate job requires the native job; a missing, renamed, masked, build-only, non-fatal, disabled or relocated Slice 2C step is rejected by the doctor, and a failing step (summary FAIL, child TIMEOUT, missing report, NOT RUN under PULSAR_REQUIRE_NATIVE_MLX=1) fails the job under set -euo pipefail",
+  "doctor_check_on_runner": {
+   "free_steps": 43,
+   "frozen_at": "6d76adc63b8d59bd27fb9056a5ed2c171a7feb56",
+   "required_steps": 14,
+   "result": "PASS"
+  },
+  "doctor_mutation_controls_on_runner": {
+   "controls": 88,
+   "mutations": [
+    {
+     "case": "wrong historical head",
+     "diagnostic": "HISTORICAL_HEAD",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "wrong historical tree",
+     "diagnostic": "HISTORICAL_TREE",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "altered historical record",
+     "diagnostic": "RECORD_IDENTITY",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "altered generator",
+     "diagnostic": "GENERATOR_IDENTITY",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing declared source",
+     "diagnostic": "HISTORICAL_COMPLETE_CLOSURE",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "wrong Git blob identity",
+     "diagnostic": "HISTORICAL_BLOB:scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "changed actual Git source",
+     "diagnostic": "HISTORICAL_BLOB:scripts/research/f017_corrected_oracle_primary_numerics_v3.py",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "current bytes substituted into history",
+     "diagnostic": "HISTORICAL_BLOB:scripts/research/f017_corrected_oracle_primary_wrapper_v11.py",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing old workflow source",
+     "diagnostic": "WORKFLOW_ORIGINAL_IDENTITY",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing native workflow source",
+     "diagnostic": "WORKFLOW_NATIVE_IDENTITY",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing resolution workflow source",
+     "diagnostic": "WORKFLOW_RESOLUTION_IDENTITY",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step renamed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step removed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step body changed (qualification command masked)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step body changed (summary assertion deleted)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step body changed (build-only substitution)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step made non-fatal",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step disabled with if: false",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2B step moved to another job",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step renamed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step removed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step body changed (composition command masked)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step body changed (summary assertion deleted)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step body changed (build-only substitution)",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step made non-fatal",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step disabled with if: false",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Slice 2C step moved to another job",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "resolution contains the qualify lineage in order",
+     "diagnostic": "14 required steps",
+     "result": "CONSTRUCTION_VERIFIED"
+    },
+    {
+     "case": "required step body wrapped in an uncalled function",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "trailing backslash changed on a set line",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job-level defaults.run.shell replaces execution",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job disabled with if: false",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job made non-fatal",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job given a timeout",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "workflow-level defaults.run.shell replaces execution",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "workflow-level env injected",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step disabled with if: false",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step made non-fatal",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step given a timeout",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "errexit disabled inside a required step",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step short-circuited with exit 0",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "result assertion deleted",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "result assertion weakened",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "assertion commented out",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "continuation line masked",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing current primary leg",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "missing unrelated mandatory check",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "current validators moved to historical context",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "masked command error",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step moved to another job",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required steps reordered",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "required step name duplicated in a second job",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "quoted job-level \"defaults\" installs a no-op shell",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "anchored quoted defaults reused through an alias",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "explicit complex key ? defaults",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "tab after defaults:",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "quoted \"continue-on-error\"",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "quoted \"strategy\"",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "flow-style needs list",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "duplicate jobs: key shadowing the required job",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "second job with the same id",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "step item without a name",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "alias-only merge into a required step",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "workflow-level quoted \"defaults\"",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "concurrency changed",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "permissions changed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job env added",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "a job with no required steps changed",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "bare CR inside a non-required step",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "CRLF line endings",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "UTF-8 BOM",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "NEL line break",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "U+2028 line separator",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "U+2029 paragraph separator",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "invalid UTF-8 byte",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "C0 control in structure",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "Unicode look-alike key",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "real anchor defined in a free step and aliased at job level",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "duplicate step name with uses: first",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "duplicate step name differently quoted",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "key with whitespace before its colon",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "block-scalar header with a trailing comment",
+     "diagnostic": "WORKFLOW_NONCANONICAL",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job if: replaced",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job needs: replaced",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "job env: replaced",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "workflow concurrency replaced",
+     "diagnostic": "WORKFLOW_CHECK_INVENTORY_OR_CONTEXT",
+     "result": "REJECTED_AT_INTENDED_GUARD"
+    },
+    {
+     "case": "additive unrelated step",
+     "diagnostic": "outside every required step",
+     "result": "ACCEPTED_AS_ADDITIVE"
+    },
+    {
+     "case": "modified non-required step",
+     "diagnostic": "Feature-002 discovery line",
+     "result": "ACCEPTED_AS_UNCONSTRAINED"
+    }
+   ],
+   "result": "PASS",
+   "unexpected_passes": 0
+  },
+  "resolution_base_after_y": "6d76adc63b8d59bd27fb9056a5ed2c171a7feb56",
+  "resolution_workflow_sha256_after_y": "8f849896da619ce88d81a48aae1003af50cefaf2dcac54fabf1376397f3d566f",
+  "x_commit": "6d76adc63b8d59bd27fb9056a5ed2c171a7feb56",
+  "y_commit": "110efa72727f45a4b1923227efa5bf0513611872"
+ },
+ "ci_run_id": 36043386953,
+ "ci_run_url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/36043386953",
+ "copy_and_lifetime_accounting": {
+  "labels": "measured = borrows, staging copies and counter intervals observed in the child; source-derived = cast result dtype/shape (bridge code) and qmm_splitk workspace (MLX312 quantized.cpp:810-820), copied from the manifest and never presented as observations",
+  "per_side_counters_expected": {
+   "array_free_calls": 7,
+   "imports": 4,
+   "result_handles_adopted": 3,
+   "result_handles_created": 3,
+   "result_handles_freed_on_error_path": 0
+  },
+  "per_side_numerical_calls_pinned_from_bridge_source": 5,
+  "rows": [
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 904,
+      "component": "weight",
+      "len": 8192,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 33672,
+      "component": "scales",
+      "len": 512,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 35720,
+      "component": "biases",
+      "len": 512,
+      "shard": "model.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-a-stack_a-e0-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 8192
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 25480,
+      "component": "weight",
+      "len": 8192,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 35208,
+      "component": "scales",
+      "len": 512,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 37256,
+      "component": "biases",
+      "len": 512,
+      "shard": "model.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-a-stack_a-e3-m32",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       4,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 8192
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 48008,
+      "component": "weight",
+      "len": 8192,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 73096,
+      "component": "scales",
+      "len": 512,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 38280,
+      "component": "biases",
+      "len": 512,
+      "shard": "model.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-a-stack_b-e1-m32",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       4,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 8192
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 56200,
+      "component": "weight",
+      "len": 8192,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 73608,
+      "component": "scales",
+      "len": 512,
+      "shard": "model.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 38792,
+      "component": "biases",
+      "len": 512,
+      "shard": "model.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-a-stack_b-e2-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 8192
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 984,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 68568,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 66520,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_d-e0-m32",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       4,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 50136,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 70104,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 68056,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_d-e3-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 19088,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 1680,
+      "component": "scales",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 36496,
+      "component": "biases",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_c-e1-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 1024,
+     "scales": 1024,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 2704,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 656,
+      "component": "scales",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 35472,
+      "component": "biases",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_c-e0-m32",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 65536,
+      "role": "splitk_intermediate",
+      "shape": [
+       8,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 1024,
+     "scales": 1024,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 16976,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00003-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 71128,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 51856,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_q-e1-m32",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       2,
+       32,
+       128
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 33360,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00003-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 71640,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 52368,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_q-e2-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 45712,
+      "component": "weight",
+      "len": 4096,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 50320,
+      "component": "scales",
+      "len": 256,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 51088,
+      "component": "biases",
+      "len": 256,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "acc-b-stack_r-e2-m1",
+    "source_derived_workspace_not_measured": [],
+    "staging_bytes_measured": {
+     "biases": 256,
+     "scales": 256,
+     "w": 4096
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 17368,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 69080,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 67032,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "seq-aba-0",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       4,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 2704,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 656,
+      "component": "scales",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 35472,
+      "component": "biases",
+      "len": 1024,
+      "shard": "model-00002-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "seq-aba-1",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 65536,
+      "role": "splitk_intermediate",
+      "shape": [
+       8,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 1024,
+     "scales": 1024,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   },
+   {
+    "borrowed_ranges_measured": [
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 17368,
+      "component": "weight",
+      "len": 16384,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 69080,
+      "component": "scales",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     },
+     {
+      "accounting": "measured: borrowed sub-slice of the immutable backing, not a copy",
+      "begin": 67032,
+      "component": "biases",
+      "len": 512,
+      "shard": "model-00001-of-00003.safetensors"
+     }
+    ],
+    "counters_A_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "counters_B_measured": {
+     "array_free_calls": 7,
+     "imports": 4,
+     "numerical_calls": 5,
+     "result_handles_adopted": 3,
+     "result_handles_created": 3,
+     "result_handles_freed_on_error_path": 0
+    },
+    "id": "seq-aba-2",
+    "source_derived_workspace_not_measured": [
+     {
+      "accounting": "source-derived, not measured",
+      "dtype": "F32",
+      "holds": "per-partition float32 partial OUTPUT sums, not weights",
+      "is_weight_matrix": false,
+      "nbytes": 32768,
+      "role": "splitk_intermediate",
+      "shape": [
+       4,
+       32,
+       64
+      ],
+      "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing"
+     }
+    ],
+    "staging_bytes_measured": {
+     "biases": 512,
+     "scales": 512,
+     "w": 16384
+    },
+    "staging_equals_plane_bytes": true,
+    "whole_case_aggregate_measured": {
+     "array_free_calls": 14,
+     "imports": 8,
+     "numerical_calls": 10,
+     "result_handles_adopted": 6,
+     "result_handles_created": 6,
+     "result_handles_freed_on_error_path": 0
+    }
+   }
+  ]
+ },
+ "deviations": [
+  "compose() takes a loaded Source (open_source: Checkpoint::open, hash_shards, from_config_json, Backing::load) plus ONE module path and ONE index path instead of the plan's single compose(dir, config_text, module, index_path, windows): a plane borrows its backing, so the backing must outlive the call. E-COMPOSE is the same path P0-P7.",
+  "run.rs gains pub(crate) visibility on Ctx, canary, read_frozen, cleanup_json, stats_json and write_atomic (no body change) so the compose child reuses the E4 canary and report helpers instead of duplicating them; run.rs is not in the plan's file table. The same-run regression proof covers it.",
+  "tests/host_checks.rs: the existing coexistence test (name kept) now admits exactly the Slice 1 path dependencies, as plan 2.1 requires; host_checks.rs is not in the file table.",
+  "The committed attempt-3 reference copy lives at fixtures/f020-slice2b-attempt3/child-report.json (hash-pinned regression input, not an evidence record).",
+  "C-R-RESOLVE is also used for a QuantizationConfig::from_config_json failure (Slice 1 variant recorded); no fixture probes it."
+ ],
+ "downloads_of_model_data": 0,
+ "e4_canary": {
+  "end": {
+   "case_id": "dq-codes-b8-g64-bf16",
+   "elements": 2048,
+   "label": "end",
+   "mismatches": 0,
+   "output_sha256": "862f1873b80969ea670ffca463340cb739c7883866d4b46337cc9424c56f6bf8",
+   "pass": true
+  },
+  "start": {
+   "case_id": "dq-codes-b8-g64-bf16",
+   "elements": 2048,
+   "label": "start",
+   "mismatches": 0,
+   "output_sha256": "862f1873b80969ea670ffca463340cb739c7883866d4b46337cc9424c56f6bf8",
+   "pass": true
+  }
+ },
+ "failures": [],
+ "feature": "020-mlx-safetensors-affine",
+ "frozen_package": {
+  "contract": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-composition-v1.json",
+   "sha256": "e3fc848cea14222e0ed9f1c3c9c3c52faa044ed024d665d8767f7148e0e15c93"
+  },
+  "files_listing_sha256": "2d314e23ed061bb82d757edb1f6a9fe783d2b2da23c94f794bc07757f34058b8",
+  "fixture_generator": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "scripts/research/f020_native_composition_fixtures_v1.py",
+   "sha256": "3aab90e85a64530a554e6e0d03324ea95496ac83c940734c75d7bad701830f5b"
+  },
+  "fixture_manifest": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "fixtures/native-composition/manifest.json",
+   "sha256": "6f0e39e6d2c705603f3f897133d42c31837c53348aba0f4b0389dca18018fc14"
+  },
+  "freeze_record": {
+   "commit": "b481c8da89664ca75410901fcb908f4627f897ed",
+   "path": "docs/architecture/reviews/evidence/f020-slice2c-contract-acceptance-v1.json",
+   "sha256": "e7f67ab1c86acf3516e65fbe2624dcab557a58087bcc1d3caea8c50201540a24"
+  },
+  "generator_test": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "scripts/research/tests/test_f020_native_composition_fixtures_v1.py",
+   "sha256": "a4cbd213fa53037a5d90c564e54e97056b919b49231dca83b3d7a6e3e2265b7c"
+  },
+  "plan": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/slice2c-plan.md",
+   "sha256": "b4e23bf4500aa4082e1e7fc26f2731a1c37cc9cf122c59693b2353b62dda5dbf"
+  },
+  "slice2b_contract": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+   "sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72"
+  },
+  "slice2b_identities_validated": {
+   "cases_listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82",
+   "contract_sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72",
+   "generator_sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999",
+   "manifest_sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04",
+   "plan_sha256": "24a06db0a34ee4ec8ca9af8728d3d27e26cfe3c4a6c22dcba06011c8ab2796df",
+   "source_pins_sha256": "02e963a02cf1d63168c57cff316c1d3471313498396b2abd7b3e5ec432267bb4"
+  },
+  "unchanged_since_freeze": true
+ },
+ "frozen_population_validation": {
+  "case_count": 32,
+  "checkpoint_files_checked": 9,
+  "generator_check_before": "PASS",
+  "generator_test": "EXIT_STATUS 0",
+  "listed_file_count": 27,
+  "population_valid_after": true,
+  "standalone_files_checked": 17
+ },
+ "gate_counts": {
+  "C-R-REFUSAL": {
+   "cases": 9,
+   "passed": 9
+  },
+  "E1-DEVICE": {
+   "cases": 17,
+   "passed": 17
+  },
+  "G-QMM-EXACT(A)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "G-QMM-EXACT(B)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "G-QMM-RUST(A)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "G-QMM-RUST(B)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "G-R1-SELF-QMM(C)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "INHERITED-REFUSAL": {
+   "cases": 3,
+   "passed": 3
+  },
+  "MUTATION-DETECTED": {
+   "cases": 6,
+   "passed": 6
+  },
+  "N-COMP-AB": {
+   "cases": 14,
+   "passed": 14
+  },
+  "N-COMP-ABA": {
+   "cases": 1,
+   "passed": 1
+  },
+  "N-COMP-ARRAYS": {
+   "cases": 14,
+   "passed": 14
+  },
+  "N-QMM-SHAPE-DTYPE(A)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "N-QMM-SHAPE-DTYPE(B)": {
+   "cases": 14,
+   "passed": 14
+  },
+  "S-BYTES": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-IDENTITY": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-RANGES": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-SOURCE-UNCHANGED": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-STAGED-EQUAL": {
+   "cases": 17,
+   "passed": 17
+  }
+ },
+ "host": {
+  "architecture": "aarch64",
+  "device_name": "Apple Paravirtual device",
+  "gpu_architecture": "air64_v27",
+  "label": "github-macos-15",
+  "mlx_version": "0.31.2",
+  "native_prefix_identity_sha256": "abac624dc19a7288398dd8098d51ce4dbe5ba4163962cea465c4263254c38c72",
+  "nax_capable_hardware": false,
+  "os_product_version": "15.7.9",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+ },
+ "independence": {
+  "handler": {
+   "call_sites": [
+    "native.rs:91"
+   ],
+   "linked_crate_hits": [],
+   "pass": true
+  },
+  "nm": {
+   "child_executable_sha256": "91c1676aa5251cad3b94c3771ce8306af92151bca895a21f3362fda1e6d93661",
+   "child_forbidden_hits": {
+    "10mlx_affine13reference_qmm": 0,
+    "10mlx_affine6decode": 0,
+    "10mlx_affine9reference": 0
+   },
+   "child_symbol_lines": 2045,
+   "negative_control_parent_10mlx_affine13reference_qmm": 6,
+   "nm_version": "llvm-nm, compatible with GNU nm | Apple LLVM version 17.0.0",
+   "pass": true,
+   "positive_control_10mlx_affine6module": 18
+  },
+  "static_source": {
+   "control_detected": true,
+   "control_hits": 13,
+   "files": [
+    "src/bin/qualify/bridge.rs",
+    "src/bin/qualify/compose_run.rs",
+    "src/bin/qualify/ffi.rs",
+    "src/bin/qualify/main.rs",
+    "src/bin/qualify/native.rs",
+    "src/bin/qualify/provenance.rs",
+    "src/bin/qualify/run.rs",
+    "src/compose.rs",
+    "src/frozen_compose.rs"
+   ],
+   "hits": [],
+   "pass": true
+  }
+ },
+ "jobs": {
+  "aggregate": {
+   "conclusion": "success",
+   "job_id": 107794687168
+  },
+  "apple-mlx-small-fixtures": {
+   "conclusion": "success",
+   "job_id": 107780874567,
+   "required_step": "Qualify F020 Slice 2C synthetic expert-plane composition (frozen synthetic population, runner GPU)",
+   "step_completed": "2026-09-24T19:06:02Z",
+   "step_started": "2026-09-24T18:56:10Z"
+  }
+ },
+ "kind": "CI_QUALIFICATION_GATE_HOST",
+ "label": "F020 Slice 2C synthetic expert-plane composition, first and only candidate qualification attempt, on the recorded GitHub runner. Branch feat/020-synthetic-expert-plane-composition-20260924, NOT merged.",
+ "mutation_controls": [
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "applied_exactly": true,
+    "parent_detection_set": [
+     "S-BYTES:biases",
+     "S-BYTES:scales",
+     "S-BYTES:weight",
+     "S-RANGES:biases",
+     "S-RANGES:scales",
+     "S-RANGES:weight"
+    ],
+    "unmutated_plane_matches_baseline": true
+   },
+   "expected_detected_by": [
+    "S-BYTES:biases",
+    "S-BYTES:scales",
+    "S-BYTES:weight",
+    "S-RANGES:biases",
+    "S-RANGES:scales",
+    "S-RANGES:weight"
+   ],
+   "id": "mut-wrong-index",
+   "kind": "wrong_expert_index",
+   "pass": true,
+   "reported": [
+    "S-BYTES:biases",
+    "S-BYTES:scales",
+    "S-BYTES:weight",
+    "S-RANGES:biases",
+    "S-RANGES:scales",
+    "S-RANGES:weight"
+   ]
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "applied_exactly": true,
+    "parent_detection_set": [
+     "S-BYTES:weight",
+     "S-RANGES:weight"
+    ],
+    "unmutated_plane_matches_baseline": true
+   },
+   "expected_detected_by": [
+    "S-BYTES:weight",
+    "S-RANGES:weight"
+   ],
+   "id": "mut-wrong-stride",
+   "kind": "wrong_plane_stride",
+   "pass": true,
+   "reported": [
+    "S-BYTES:weight",
+    "S-RANGES:weight"
+   ]
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "applied_exactly": true,
+    "parent_detection_set": [
+     "S-BYTES:scales",
+     "S-RANGES:scales"
+    ],
+    "unmutated_plane_matches_baseline": true
+   },
+   "expected_detected_by": [
+    "S-BYTES:scales",
+    "S-RANGES:scales"
+   ],
+   "id": "mut-swap-scales",
+   "kind": "scales_from_other_expert",
+   "pass": true,
+   "reported": [
+    "S-BYTES:scales",
+    "S-RANGES:scales"
+   ]
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "applied_exactly": true,
+    "parent_detection_set": [
+     "S-BYTES:biases",
+     "S-RANGES:biases"
+    ],
+    "unmutated_plane_matches_baseline": true
+   },
+   "expected_detected_by": [
+    "S-BYTES:biases",
+    "S-RANGES:biases"
+   ],
+   "id": "mut-swap-biases",
+   "kind": "biases_from_other_expert",
+   "pass": true,
+   "reported": [
+    "S-BYTES:biases",
+    "S-RANGES:biases"
+   ]
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "refusal": {
+     "detail": "module block.1.stack_d: shapes imply 8 bits: 64 packed columns at 4 bits unpack to 512, but 4 groups of 64 are 256",
+     "id": "C-R-RESOLVE",
+     "implied_bits": 8,
+     "slice1_variant": "InconsistentOverride"
+    }
+   },
+   "expected_detected_by": [
+    "C-R-RESOLVE"
+   ],
+   "id": "mut-override-ignored-resolve",
+   "kind": "override_ignored_at_resolution",
+   "pass": true,
+   "reported": [
+    "C-R-RESOLVE"
+   ]
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "detail": {
+    "applied_exactly": true,
+    "parent_detection_set": [
+     "S-IDENTITY:bits",
+     "S-IDENTITY:resolved_from"
+    ],
+    "unmutated_plane_matches_baseline": true
+   },
+   "expected_detected_by": [
+    "S-IDENTITY:bits",
+    "S-IDENTITY:resolved_from"
+   ],
+   "id": "mut-override-ignored-plane",
+   "kind": "override_ignored_in_plane",
+   "pass": true,
+   "reported": [
+    "S-IDENTITY:bits",
+    "S-IDENTITY:resolved_from"
+   ]
+  }
+ ],
+ "not_claimed": [
+  "no merge",
+  "no real checkpoint payload, production geometry, gather_qmm, routing, full MLP, model graph, residency or performance claim",
+  "A-DET is shown only for this runner, build and process; not for another device, build or MLX version"
+ ],
+ "r1": {
+  "composition_gates_summary": {
+   "G-QMM-EXACT(A)": {
+    "cases": 14,
+    "elements": 18880,
+    "failed_elements": 0,
+    "passed_cases": 14
+   },
+   "G-QMM-EXACT(B)": {
+    "cases": 14,
+    "elements": 18880,
+    "failed_elements": 0,
+    "passed_cases": 14
+   },
+   "G-R1-SELF-QMM(C)": {
+    "cases": 14,
+    "elements": 18880,
+    "failed_elements": 0,
+    "passed_cases": 14
+   },
+   "not_executed": []
+  },
+  "kernel_families_derived_not_observed": {
+   "acc-a-stack_a-e0-m1": {
+    "bound_gamma_n": 41,
+    "derived_family": "qmv",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv",
+      "gamma_n": 41
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-a-stack_a-e3-m32": {
+    "bound_gamma_n": 71,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 71,
+      "split_k": 4
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-a-stack_b-e1-m32": {
+    "bound_gamma_n": 71,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 71,
+      "split_k": 4
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-a-stack_b-e2-m1": {
+    "bound_gamma_n": 41,
+    "derived_family": "qmv",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv",
+      "gamma_n": 41
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-b-stack_c-e0-m32": {
+    "bound_gamma_n": 75,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 75,
+      "split_k": 8
+     }
+    ],
+    "split_k": 8
+   },
+   "acc-b-stack_c-e1-m1": {
+    "bound_gamma_n": 49,
+    "derived_family": "qmv_fast",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv_fast",
+      "gamma_n": 49
+     }
+    ],
+    "split_k": 8
+   },
+   "acc-b-stack_d-e0-m32": {
+    "bound_gamma_n": 71,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 71,
+      "split_k": 4
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-b-stack_d-e3-m1": {
+    "bound_gamma_n": 69,
+    "derived_family": "qmv",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv",
+      "gamma_n": 69
+     }
+    ],
+    "split_k": 4
+   },
+   "acc-b-stack_q-e1-m32": {
+    "bound_gamma_n": 69,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 69,
+      "split_k": 2
+     }
+    ],
+    "split_k": 2
+   },
+   "acc-b-stack_q-e2-m1": {
+    "bound_gamma_n": 37,
+    "derived_family": "qmv_quad",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv_quad",
+      "gamma_n": 37
+     }
+    ],
+    "split_k": 2
+   },
+   "acc-b-stack_r-e2-m1": {
+    "bound_gamma_n": 37,
+    "derived_family": "qmv_quad",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmv_quad",
+      "gamma_n": 37
+     }
+    ],
+    "split_k": 2
+   },
+   "seq-aba-0": {
+    "bound_gamma_n": 71,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 71,
+      "split_k": 4
+     }
+    ],
+    "split_k": 4
+   },
+   "seq-aba-1": {
+    "bound_gamma_n": 75,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 75,
+      "split_k": 8
+     }
+    ],
+    "split_k": 8
+   },
+   "seq-aba-2": {
+    "bound_gamma_n": 71,
+    "derived_family": "qmm_t_splitk",
+    "manifest_families_0_31_2": [
+     {
+      "family": "qmm_t_splitk",
+      "gamma_n": 71,
+      "split_k": 4
+     }
+    ],
+    "split_k": 4
+   }
+  },
+  "worst_ratio_by_family_and_side": {
+   "qmm_t_splitk/A": {
+    "cases": 8,
+    "exact_distance_over_bound": 0.0552995004672227,
+    "rust_d_hi_over_B_lo": 0.055299507226026785
+   },
+   "qmm_t_splitk/B": {
+    "cases": 8,
+    "exact_distance_over_bound": 0.0552995004672227,
+    "rust_d_hi_over_B_lo": 0.055299507226026785
+   },
+   "qmv/A": {
+    "cases": 3,
+    "exact_distance_over_bound": 0.021346489238422757,
+    "rust_d_hi_over_B_lo": 0.021346500897526946
+   },
+   "qmv/B": {
+    "cases": 3,
+    "exact_distance_over_bound": 0.021346489238422757,
+    "rust_d_hi_over_B_lo": 0.021346500897526946
+   },
+   "qmv_fast/A": {
+    "cases": 1,
+    "exact_distance_over_bound": 0.00852311564282221,
+    "rust_d_hi_over_B_lo": 0.008523135142934677
+   },
+   "qmv_fast/B": {
+    "cases": 1,
+    "exact_distance_over_bound": 0.00852311564282221,
+    "rust_d_hi_over_B_lo": 0.008523135142934677
+   },
+   "qmv_quad/A": {
+    "cases": 2,
+    "exact_distance_over_bound": 0.03781168435748287,
+    "rust_d_hi_over_B_lo": 0.037811690851557445
+   },
+   "qmv_quad/B": {
+    "cases": 2,
+    "exact_distance_over_bound": 0.03781168435748287,
+    "rust_d_hi_over_B_lo": 0.037811690851557445
+   }
+  }
+ },
+ "recorded_on": "2026-09-24",
+ "refusals": [
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-INDEX-RANGE",
+   "got": "C-R-INDEX-RANGE",
+   "id": "ref-index-range",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-INDEX-RANGE",
+   "got": "C-R-INDEX-RANGE",
+   "id": "ref-index-range-u64max",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-INDEX-RANK",
+   "got": "C-R-INDEX-RANK",
+   "id": "ref-index-rank-empty",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-INDEX-RANK",
+   "got": "C-R-INDEX-RANK",
+   "id": "ref-index-rank-two",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-OVERFLOW",
+   "got": "C-R-OVERFLOW",
+   "id": "ref-range-overflow",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-BACKING",
+   "got": "C-R-BACKING",
+   "id": "ref-backing-window-short",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-SOURCE-BINDING",
+   "got": "C-R-SOURCE-BINDING",
+   "id": "ref-source-sibling",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-MODULE-BINDING",
+   "got": "C-R-MODULE-BINDING",
+   "id": "ref-module-mixed",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "counters": {
+    "at_decision": {
+     "imports": 0,
+     "numerical": 0
+    },
+    "whole_case": {
+     "imports": 0,
+     "numerical": 0
+    }
+   },
+   "expected": "C-R-RECIPE-BINDING",
+   "got": "C-R-RECIPE-BINDING",
+   "id": "ref-recipe-mismatch",
+   "pass": true,
+   "slice1_variant": null,
+   "stage": "composition"
+  },
+  {
+   "expected": "R-GEOMETRY",
+   "got_A": "R-GEOMETRY",
+   "got_B": "R-GEOMETRY",
+   "id": "inh-geometry-narrow",
+   "pass": true,
+   "stage": "bridge",
+   "stats_A": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   },
+   "stats_B": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   }
+  },
+  {
+   "expected": "R-DOMAIN-META-RANGE",
+   "got_A": "R-DOMAIN-META-RANGE",
+   "got_B": "R-DOMAIN-META-RANGE",
+   "id": "inh-meta-range-e1",
+   "pass": true,
+   "stage": "bridge",
+   "stats_A": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   },
+   "stats_B": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   }
+  },
+  {
+   "expected": "R-XSHAPE",
+   "got_A": "R-XSHAPE",
+   "got_B": "R-XSHAPE",
+   "id": "inh-xshape",
+   "pass": true,
+   "stage": "bridge",
+   "stats_A": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   },
+   "stats_B": {
+    "device_facts_gpu": true,
+    "e5_peak_memory": {
+     "active_before": null,
+     "output_nbytes": null,
+     "peak_after": null,
+     "peak_delta_ge_output_nbytes": null
+    },
+    "imports_before_decision": 0,
+    "numerical_calls_before_decision": 0
+   }
+  }
+ ],
+ "result": "PASS",
+ "schema": "pulsarmlx.f020.slice2c-ci-qualification/1.0.0",
+ "selection_and_byte_preservation": {
+  "S-BYTES": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-IDENTITY": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-RANGES": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-SOURCE-UNCHANGED": {
+   "cases": 17,
+   "passed": 17
+  },
+  "S-STAGED-EQUAL": {
+   "cases": 17,
+   "passed": 17
+  },
+  "cases": 17,
+  "decided_by": "the parent from the reported SelectionRecord, per-side staged-input records and phase-labelled source/backing hashes against the manifest oracle (S-NO-OUTPUT-SUBSTITUTION)",
+  "sealed_plane_interface_test": "passed (API audit, every public entry with every fixture mixing, no compile_fail doctest)"
+ },
+ "slice": "2C",
+ "slice2b_regression_proof": {
+  "primary_b_same_run_differential": {
+   "base_commit": "12b063675c2227c59d2157458e051d73647b7045",
+   "base_report_sha256": "d3160c9ae728e647d99e5bdda6dc1aceca4c59566a28ea36153b7a00af4ce4e4",
+   "candidate_report_sha256": "147342e27df7c4deb75ad8d647b58c855174d14df1883045c92bc6c11ce52984",
+   "canonical_reports_equal": true,
+   "composition_target": {
+    "absent_from_slice2b_lists": true,
+    "tests_listed_by_test_flag": [
+     "child_independence_nm_symbols: test",
+     "child_independence_static_source: test",
+     "compose_report_acceptance_rules: test",
+     "composition_child_failure_paths_are_failures: test",
+     "composition_population_validation_controls: test",
+     "composition_qualification_of_the_frozen_population: test",
+     "handler_coexistence_and_mlx_free_library: test",
+     "sealed_plane_interface: test"
+    ]
+   },
+   "differing_paths": [],
+   "e5_pre_removal_validation": {
+    "cases_per_report": 363,
+    "errors": []
+   },
+   "failures": [],
+   "gate_counts": {
+    "base": {
+     "B6-REFUSAL": {
+      "cases": 37,
+      "passed": 37
+     },
+     "E1-DEVICE": {
+      "cases": 362,
+      "passed": 362
+     },
+     "E6-CPU-REFUSED": {
+      "cases": 1,
+      "passed": 1
+     },
+     "G-CAST": {
+      "cases": 2,
+      "passed": 2
+     },
+     "G-DQ-CODES": {
+      "cases": 18,
+      "passed": 18
+     },
+     "G-DQ-EXACT": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-DQ-RUST": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-IMPORT": {
+      "cases": 8,
+      "passed": 8
+     },
+     "G-QMM-EXACT": {
+      "cases": 237,
+      "passed": 237
+     },
+     "G-QMM-RUST": {
+      "cases": 239,
+      "passed": 239
+     },
+     "G-R1-SELF-DQ": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-R1-SELF-QMM": {
+      "cases": 237,
+      "passed": 237
+     },
+     "N-QMM-ZERO": {
+      "cases": 1,
+      "passed": 1
+     },
+     "SHAPE-DTYPE": {
+      "cases": 326,
+      "passed": 326
+     }
+    },
+    "candidate": {
+     "B6-REFUSAL": {
+      "cases": 37,
+      "passed": 37
+     },
+     "E1-DEVICE": {
+      "cases": 362,
+      "passed": 362
+     },
+     "E6-CPU-REFUSED": {
+      "cases": 1,
+      "passed": 1
+     },
+     "G-CAST": {
+      "cases": 2,
+      "passed": 2
+     },
+     "G-DQ-CODES": {
+      "cases": 18,
+      "passed": 18
+     },
+     "G-DQ-EXACT": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-DQ-RUST": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-IMPORT": {
+      "cases": 8,
+      "passed": 8
+     },
+     "G-QMM-EXACT": {
+      "cases": 237,
+      "passed": 237
+     },
+     "G-QMM-RUST": {
+      "cases": 239,
+      "passed": 239
+     },
+     "G-R1-SELF-DQ": {
+      "cases": 59,
+      "passed": 59
+     },
+     "G-R1-SELF-QMM": {
+      "cases": 237,
+      "passed": 237
+     },
+     "N-QMM-ZERO": {
+      "cases": 1,
+      "passed": 1
+     },
+     "SHAPE-DTYPE": {
+      "cases": 326,
+      "passed": 326
+     }
+    },
+    "equal_attempt3": true
+   },
+   "result": "PASS",
+   "test_lists": {
+    "doc-list": {
+     "base_lines": 1,
+     "candidate_lines": 1,
+     "identical": true,
+     "tests": 0
+    },
+    "list": {
+     "base_lines": 39,
+     "candidate_lines": 39,
+     "identical": true,
+     "tests": 31
+    }
+   },
+   "v1_values": {
+    "base": "10d9689eecb8173fa5a506d97351310527c8af100c091c9f3f29e01e2e2e1aab",
+    "candidate": "1b39c13d69a27c8b25e6d13e1f6a1b1d53a95fd905dd459dc5d6d2bc476c6f60"
+   },
+   "volatile_fields_removed": [
+    "provenance.build.qualify_executable_sha256",
+    "cases[*].stats.e5_peak_memory.active_before",
+    "cases[*].stats.e5_peak_memory.peak_after",
+    "cases[*].stats.e5_peak_memory.peak_delta_ge_output_nbytes"
+   ]
+  },
+  "secondary_a_cross_run": {
+   "cases_compared": 363,
+   "mismatch_count": 0,
+   "mismatches": [],
+   "policy": "recorded and reported to the planner on mismatch; never converted into a pass",
+   "provenance": {
+    "attempt3": {
+     "device_info": {
+      "architecture": "air64_v27",
+      "device_name": "Apple Paravirtual device",
+      "max_buffer_length": "3758096384",
+      "max_recommended_working_set_size": "5010800640",
+      "memory_size": "7516192768",
+      "resource_limit": "499000"
+     },
+     "libmlx_sha256": "e861c439c69a943e134bba520bb07719d55f4db1dac9f0feaf38bf3486982919",
+     "libmlxc_sha256": "9dcf8fdb2f4a662916c9018a43f3ba0bfa6aaf16ed5944839bcfb67e98fa7d20",
+     "metallib_sha256": "9ca9cbc6d37929a79f13b358c431d1d151f742977a7bad3f15d052a366598107",
+     "native_prefix_identity_sha256": "abac624dc19a7288398dd8098d51ce4dbe5ba4163962cea465c4263254c38c72",
+     "os_product_version": "15.7.9",
+     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    },
+    "candidate": {
+     "device_info": {
+      "architecture": "air64_v27",
+      "device_name": "Apple Paravirtual device",
+      "max_buffer_length": "3758096384",
+      "max_recommended_working_set_size": "5010800640",
+      "memory_size": "7516192768",
+      "resource_limit": "499000"
+     },
+     "libmlx_sha256": "e861c439c69a943e134bba520bb07719d55f4db1dac9f0feaf38bf3486982919",
+     "libmlxc_sha256": "9dcf8fdb2f4a662916c9018a43f3ba0bfa6aaf16ed5944839bcfb67e98fa7d20",
+     "metallib_sha256": "9ca9cbc6d37929a79f13b358c431d1d151f742977a7bad3f15d052a366598107",
+     "native_prefix_identity_sha256": "abac624dc19a7288398dd8098d51ce4dbe5ba4163962cea465c4263254c38c72",
+     "os_product_version": "15.7.9",
+     "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)"
+    }
+   },
+   "reference": {
+    "bytes": 519872,
+    "ci_run": 36006063937,
+    "sha256": "e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640",
+    "verified": true
+   },
+   "result": "MATCH"
+  }
+ },
+ "slice2b_step_same_run": {
+  "conclusion": "success",
+  "step": "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)"
+ },
+ "starting_commit": "b481c8da"
+}

@@ -1,0 +1,293 @@
+{
+ "failed_local_attempts": "none; two compile errors during development (a json! macro array literal, a tuple arity) were fixed before any run",
+ "feature": "020-mlx-safetensors-affine",
+ "gate_host": false,
+ "host_label": "macbook-m2max-local",
+ "kind": "LABELLED_LOCAL_OBSERVATION_NOT_ACCEPTANCE_EVIDENCE",
+ "native_build": {
+  "native_prefix_identity_sha256": "52b7ee3cb1584d00ff8f463a14bdf6e084f33a2654205c83afd314e928a19356",
+  "prefix": "<native-prefix> (the Slice 2B local build, reused after verification)",
+  "script": {
+   "commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "path": "scripts/ci/install_native_mlx.sh",
+   "sha256": "ec8e5d01ef3c3251be181c885db4d2cbac8fd8dbf5c56f4fca04dc1e22a011d3"
+  },
+  "verification": "built by scripts/ci/install_native_mlx.sh with sha256 ec8e5d01... (the current script bytes), mlx 68cf2fdd, mlx-c 0726ca92, 4 of 4 patch hashes OK; library identity 52b7ee3c equals the Slice 2B local observation record"
+ },
+ "recorded_on": "2026-09-24",
+ "runs": [
+  {
+   "composition_summary_sha256": "ef2fa83a9219dcc64cb7f34fbfd2fb17c82c7ec8f5186e1f010ba44540817178",
+   "gate_counts": {
+    "C-R-REFUSAL": {
+     "cases": 9,
+     "passed": 9
+    },
+    "E1-DEVICE": {
+     "cases": 17,
+     "passed": 17
+    },
+    "G-QMM-EXACT(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-EXACT(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-RUST(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-RUST(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-R1-SELF-QMM(C)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "INHERITED-REFUSAL": {
+     "cases": 3,
+     "passed": 3
+    },
+    "MUTATION-DETECTED": {
+     "cases": 6,
+     "passed": 6
+    },
+    "N-COMP-AB": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-COMP-ABA": {
+     "cases": 1,
+     "passed": 1
+    },
+    "N-COMP-ARRAYS": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-QMM-SHAPE-DTYPE(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-QMM-SHAPE-DTYPE(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "S-BYTES": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-IDENTITY": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-RANGES": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-SOURCE-UNCHANGED": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-STAGED-EQUAL": {
+     "cases": 17,
+     "passed": 17
+    }
+   },
+   "label": "development probe and step rehearsal (uncommitted tree on top of b481c8da, worktree_dirty true)",
+   "result": "PASS",
+   "slice2b_regression_rehearsal": {
+    "canonical_reports_equal": true,
+    "primary_b": "PASS",
+    "secondary_a_vs_attempt3": "MISMATCH",
+    "secondary_mismatch_count": 18,
+    "secondary_mismatches": [
+     "qmm-b4-g32-f16-band-m16.output.sha256",
+     "qmm-b4-g32-bf16-band-m16.output.sha256",
+     "qmm-b4-g32-f32-band-m16.output.sha256",
+     "qmm-b4-g64-f16-band-m16.output.sha256",
+     "qmm-b4-g64-bf16-band-m16.output.sha256",
+     "qmm-b4-g64-f32-band-m16.output.sha256",
+     "qmm-b4-g128-f16-band-m16.output.sha256",
+     "qmm-b4-g128-bf16-band-m16.output.sha256",
+     "qmm-b4-g128-f32-band-m16.output.sha256",
+     "qmm-b8-g32-f16-band-m16.output.sha256",
+     "qmm-b8-g32-bf16-band-m16.output.sha256",
+     "qmm-b8-g32-f32-band-m16.output.sha256",
+     "qmm-b8-g64-f16-band-m16.output.sha256",
+     "qmm-b8-g64-bf16-band-m16.output.sha256",
+     "qmm-b8-g64-f32-band-m16.output.sha256",
+     "qmm-b8-g128-f16-band-m16.output.sha256",
+     "qmm-b8-g128-bf16-band-m16.output.sha256",
+     "qmm-b8-g128-f32-band-m16.output.sha256"
+    ],
+    "secondary_note": "expected on this host: every mismatch is an architecture-dependent band case (M=16, 6..31 band) whose kernel family differs between applegpu_g14s and the runner's air64_v27; attempt 3 is a runner report. Not a gate; the runner comparison matched 363/363.",
+    "test_lists": {
+     "doc-list": {
+      "base_lines": 1,
+      "candidate_lines": 1,
+      "identical": true,
+      "tests": 0
+     },
+     "list": {
+      "base_lines": 39,
+      "candidate_lines": 39,
+      "identical": true,
+      "tests": 31
+     }
+    }
+   }
+  },
+  {
+   "a_vs_b_equal_cases": 14,
+   "architecture": "applegpu_g14s",
+   "candidate_commit": "110efa72727f45a4b1923227efa5bf0513611872",
+   "child_report_sha256": "7b2bd2b40a2238fdfb560d4c16f2d4eb944c137872439154a7c12d085072881a",
+   "composition_summary_sha256": "31da390d9dc74926cc3757101da5c8387aaa4f010e1e250cf062246d92998988",
+   "device_name": "Apple M2 Max",
+   "gate_counts": {
+    "C-R-REFUSAL": {
+     "cases": 9,
+     "passed": 9
+    },
+    "E1-DEVICE": {
+     "cases": 17,
+     "passed": 17
+    },
+    "G-QMM-EXACT(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-EXACT(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-RUST(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-QMM-RUST(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "G-R1-SELF-QMM(C)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "INHERITED-REFUSAL": {
+     "cases": 3,
+     "passed": 3
+    },
+    "MUTATION-DETECTED": {
+     "cases": 6,
+     "passed": 6
+    },
+    "N-COMP-AB": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-COMP-ABA": {
+     "cases": 1,
+     "passed": 1
+    },
+    "N-COMP-ARRAYS": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-QMM-SHAPE-DTYPE(A)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "N-QMM-SHAPE-DTYPE(B)": {
+     "cases": 14,
+     "passed": 14
+    },
+    "S-BYTES": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-IDENTITY": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-RANGES": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-SOURCE-UNCHANGED": {
+     "cases": 17,
+     "passed": 17
+    },
+    "S-STAGED-EQUAL": {
+     "cases": 17,
+     "passed": 17
+    }
+   },
+   "independence_nm": {
+    "child_executable_sha256": "0719d10f75f576b37745dedc11ec98c826c341f974a6ae5fa94a5ab6182f20b1",
+    "child_forbidden_hits": {
+     "10mlx_affine13reference_qmm": 0,
+     "10mlx_affine6decode": 0,
+     "10mlx_affine9reference": 0
+    },
+    "child_symbol_lines": 2019,
+    "negative_control_parent_10mlx_affine13reference_qmm": 5,
+    "nm_version": "llvm-nm, compatible with GNU nm | Apple LLVM version 21.0.0",
+    "pass": true,
+    "positive_control_10mlx_affine6module": 14
+   },
+   "label": "clean run at the candidate",
+   "os_product_version": "26.6.2",
+   "result": "PASS",
+   "rustc": "rustc 1.95.0 (59807616e 2026-04-14)",
+   "worktree_dirty": false,
+   "worst_ratio_by_family_and_side": {
+    "qmm_t_splitk/A": {
+     "cases": 8,
+     "exact_distance_over_bound": 0.0552995004672227,
+     "rust_d_hi_over_B_lo": 0.055299507226026785
+    },
+    "qmm_t_splitk/B": {
+     "cases": 8,
+     "exact_distance_over_bound": 0.0552995004672227,
+     "rust_d_hi_over_B_lo": 0.055299507226026785
+    },
+    "qmv/A": {
+     "cases": 3,
+     "exact_distance_over_bound": 0.021346489238422757,
+     "rust_d_hi_over_B_lo": 0.021346500897526946
+    },
+    "qmv/B": {
+     "cases": 3,
+     "exact_distance_over_bound": 0.021346489238422757,
+     "rust_d_hi_over_B_lo": 0.021346500897526946
+    },
+    "qmv_fast/A": {
+     "cases": 1,
+     "exact_distance_over_bound": 0.00852311564282221,
+     "rust_d_hi_over_B_lo": 0.008523135142934677
+    },
+    "qmv_fast/B": {
+     "cases": 1,
+     "exact_distance_over_bound": 0.00852311564282221,
+     "rust_d_hi_over_B_lo": 0.008523135142934677
+    },
+    "qmv_quad/A": {
+     "cases": 2,
+     "exact_distance_over_bound": 0.03781168435748287,
+     "rust_d_hi_over_B_lo": 0.037811690851557445
+    },
+    "qmv_quad/B": {
+     "cases": 2,
+     "exact_distance_over_bound": 0.03781168435748287,
+     "rust_d_hi_over_B_lo": 0.037811690851557445
+    }
+   }
+  }
+ ],
+ "schema": "pulsarmlx.f020.slice2c-local-observations/1.0.0",
+ "slice": "2C",
+ "slice2b_suite_on_candidate_tree_locally": "cargo test -p mlx-native-affine --release: 17 lib + 9 host_checks + 5 native_qualification tests passed; composition_qualification not in that inventory"
+}
