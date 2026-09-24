@@ -38,7 +38,10 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # the two F020 required steps, to that commit's tree (4f0ed191, 185c2183...). It
 # is advanced once more, to the commit that made evidence-integrity also run
 # for mixed code+evidence ranges; that commit changed two residual lines (a
-# classify output and the integrity job's `if:`) and no required step. The
+# classify output and the integrity job's `if:`) and no required step. It is
+# advanced again, to the commit that added the required F020 Slice 2B native
+# qualification step (99677210); that commit added one required block and
+# changed no existing one. The
 # earlier resolution's required blocks are contained in this one byte for
 # byte -- advancing the base never rewrites or drops one. Required steps are
 # frozen at these exact bytes. Line-level
@@ -47,8 +50,8 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "85b8a002fe8d2955848fe8469f4f7fab077a9e05"
-RESOLUTION_WORKFLOW_SHA256 = "f9f72b1eda07a1cd2f350c5139fe4d7d83ded26f1e21641e72641ae11747c18b"
+RESOLUTION_BASE = "9967721087d4c58a0b40e7c95cae231c8ed1c60b"
+RESOLUTION_WORKFLOW_SHA256 = "13fd6efeb96d6e0b1178a6bca0fd5b75b845d4f88ddc5c38972d064d0797a9eb"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")

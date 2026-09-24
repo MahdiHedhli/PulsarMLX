@@ -364,3 +364,30 @@ into `scripts/ci/aggregate_status_v1.py`, and a checkout step was added before
 it; both are non-required steps, so they are free and not part of the freeze.
 
 The required-step census stays 12 and the free-step census is 40.
+
+### 2026-09-23 — the resolution advances for the F020 Slice 2B required step
+
+`RESOLUTION_BASE` moves from `85b8a002` to
+`9967721087d4c58a0b40e7c95cae231c8ed1c60b` and `RESOLUTION_WORKFLOW_SHA256`
+from `f9f72b1e…` to `13fd6efe…`, in the doctor and in the confined runner, in
+the commit immediately after the one that added the required step `Qualify
+F020 Slice 2B native primitives (frozen synthetic population, runner GPU)` to
+`apple-mlx-small-fixtures` and its name to `REQUIRED_EXTRA_STEP_NAMES` (owner
+GO for F020 Slice 2B, 2026-09-23). The doctor fails at that commit and passes
+at this one.
+
+All twelve required blocks frozen at `85b8a002` are present at `99677210`
+byte for byte, in the same jobs and in the same order, and the residual
+comparison between the two resolutions is purely additive: 56 lines added
+(the new step and the comment above it), none removed. That was verified
+before the constants moved. The same commit also added two non-required
+steps -- the non-gating Slice 2B R2 cross-version observation, which carries
+`continue-on-error: true`, and an `always()` upload of the Slice 2B reports --
+which are free and not part of the freeze.
+
+The mutation controls gain eight cases for the new step: renamed, removed,
+its qualification command masked with `|| true`, its summary assertion
+deleted, a build-only substitution (`--no-run`), made non-fatal, disabled with
+`if: false`, and moved to another job. All eight are rejected with
+`WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`; no earlier control changed. The
+required-step census is 12 → 13 and the free-step census is 42.

@@ -30,7 +30,7 @@ GENERATOR = 'scripts/research/generate_f017_v11_measurement_v1.py'
 HISTORICAL = 'f35d341110c67377200ad353ab56a3cf38615a73'
 SOURCE_BASE = '6f59d9db93e92afed142b543a0e2fc19e0362bb4'
 NATIVE_BASE = '44c1b34eaec4768933f807ea6406d9dcb97f00e9'
-RESOLUTION_BASE = '85b8a002fe8d2955848fe8469f4f7fab077a9e05'
+RESOLUTION_BASE = '9967721087d4c58a0b40e7c95cae231c8ed1c60b'
 LIMIT = 32768
 def need(ok, label):
     if not ok: raise ValueError(label)
