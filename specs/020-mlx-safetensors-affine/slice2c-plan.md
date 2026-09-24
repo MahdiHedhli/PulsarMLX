@@ -1,8 +1,10 @@
 # Feature 020, Slice 2C: synthetic expert-plane composition (plan)
 
-**Status: plan draft 1 (2026-09-24), with contract `1.0.0-draft.1`.** Prepared
-before any composition code exists. Nothing here is authorized until the owner
-gives the GO in §10.
+**Status: plan draft 2 (2026-09-24), with contract `1.0.0-draft.2`.** Prepared
+before any composition code exists. Draft 2 folds in the planner's resolutions
+of the draft-1 open questions (§10). The generator, the manifest and the
+fixtures are byte-identical to draft 1. Nothing here is authorized until the
+owner gives the GO in §10.
 
 The slice composes things that are already qualified and adds nothing
 numerical. It takes one expert plane of a synthetic stacked affine tensor. The
@@ -66,13 +68,13 @@ change are listed below, and every change to them preserves behaviour.
 
 | File | Change |
 |---|---|
-| `crates/mlx-native-affine/Cargo.toml` | Add `mlx-affine` and `safetensors-catalog` as normal (path) dependencies; `mlx-affine` is currently a dev-dependency (see §2.1). Add `[[test]] name = "composition_qualification"`, `test = false`, so that the Slice 2B step's `cargo test -p mlx-native-affine` does not run it (to be confirmed, see §10). |
+| `crates/mlx-native-affine/Cargo.toml` | Add `mlx-affine` and `safetensors-catalog` as normal (path) dependencies; `mlx-affine` is currently a dev-dependency (see §2.1). Add `[[test]] name = "composition_qualification"`, `test = false`, so that the Slice 2B step's `cargo test -p mlx-native-affine` does not run it. That the Slice 2B step's test set and behaviour are unchanged must be proven (§6.2). |
 | `crates/mlx-native-affine/src/lib.rs` | Add `pub mod compose;` and `pub mod frozen_compose;`. The crate stays `#![forbid(unsafe_code)]` and MLX-free. |
 | `src/compose.rs` (new) | All selection logic. See §2.2. |
 | `src/frozen_compose.rs` (new) | The Slice 2C frozen identities: contract, manifest, generator, listing, case count 31, report schemas, and the composition refusal order. `frozen.rs` stays byte-identical. |
 | `src/bin/qualify/main.rs` | Accept `--mode compose` and dispatch it to a new module. `qualify` and `selftest` are unchanged. |
 | `src/bin/qualify/compose_run.rs` (new) | The compose child. See §3. It reuses `bridge`, `native`, `ffi`, `provenance` and the E4 canary unchanged. |
-| `src/harness.rs` | Only if needed, one behaviour-preserving extraction: pull the exit-status, cleanup/handle-census and case-id-set checks out of `accept_report` into helpers that `accept_report` and a new `accept_compose_report` both call. `accept_report`'s decisions stay identical, and its existing tests stay green. |
+| `src/harness.rs` | One identified, behaviour-preserving move (authorized; §2.3). Regression is proven by §6.2. |
 | `tests/composition_qualification.rs` (new) | The parent. See §4. |
 | `acceptance/composition_gates_v1.py` (new) | Imports `exact_gates_v1.decide_qmm` and `mlx_affine_qmm_reference_v1.exact_case` as modules and applies them to A and B. `exact_gates_v1.py` is not edited. Its hard-coded Slice 2B manifest hash sits only in its `run()`. |
 | `.github/workflows/macos.yml` | A new step after the Slice 2B step. See §6. |
@@ -94,6 +96,64 @@ called from the child. A static test enforces this:
 The existing static test is extended to the newly linked crates. That test
 asserts one handler call site and that no linked crate installs one.
 
+Independence of the child from R1 and from the production decoder is required
+at two levels. Both are required checks of the composition parent target, so
+they run inside the required CI step:
+
+1. **Static (source).** A test reads every source file of the child's code
+   paths: `src/compose.rs`, `src/frozen_compose.rs` and every file under
+   `src/bin/qualify/`. It fails if any names `reference_qmm`, `reference::`,
+   `mlx_affine::reference`, `decode::`, `mlx_affine::decode`,
+   `dequantize_rows`, `unpack_codes`, `qmm_reference` or `dq_reference`. It
+   also fails on a glob import from `mlx_affine`
+   (`use mlx_affine::*`, `use mlx_affine::{...*...}`), so no alias can bring
+   those names in.
+2. **Binary (symbols).** The parent runs `nm -a` (macOS `nm`) on the built
+   `qualify` executable, the exact file it launches. The raw, mangled symbol
+   table must contain no symbol with any of these substrings:
+   - `10mlx_affine13reference_qmm`
+   - `10mlx_affine9reference`
+   - `10mlx_affine6decode`
+
+   These substrings match the path component in both legacy and v0 Rust
+   mangling. The release profile has no `strip`, and `lto = "thin"` removes
+   unreferenced functions. Two controls guard against a vacuous pass:
+   - **positive control:** the same table must contain at least one
+     `10mlx_affine6module` symbol, proving it is not stripped and that the
+     pattern style matches the build;
+   - **negative control:** the same scan run on the parent test executable
+     itself (`std::env::current_exe()`), which does call
+     `mlx_affine::reference_qmm`, must find `10mlx_affine13reference_qmm`.
+
+   Any hit in the child, a missing positive control, or a missing negative
+   control is a FAIL. The parent records the symbol counts and the `nm`
+   version in the summary.
+
+### 2.3 Harness extraction (authorized, behaviour-preserving)
+
+Exactly three blocks of the body of `harness::accept_report`
+(`crates/mlx-native-affine/src/harness.rs`, the function starting at line 199
+at base `12b06367`) move, verbatim, into three new `pub fn`s in the same file.
+`accept_report` then calls them in the same positions:
+
+| New function | Moved block, in original order |
+|---|---|
+| `require_exit_zero(run: &ChildRun) -> Result<(), ReportError>` | the `match &run.outcome { ChildOutcome::Exited(0) => {}, other => ChildFailed }` check |
+| `require_clean_teardown(report: &Value) -> Result<(), ReportError>` | the `cleanup.errors` check (`Cleanup`), the `cleanup.result_handles.balanced` check (`HandleCensus`), the `handles` census check (`live_array_handles_after_context_drop`, `live_arrays_in_context_at_drop`, `double_free_attempts`, giving `HandleCensus`), and the `test_fault` null check (`TestFault`) |
+| `require_case_id_set(report: &Value, want: &BTreeSet<String>) -> Result<(), ReportError>` | the `cases` array extraction, the per-id counts and the `missing`/`unexpected`/`duplicated` computation (`CaseSet`) |
+
+What stays in `accept_report`, unchanged and in place: the report read
+(`Missing`), the parse (`Unparsable`), the schema check (`Schema`) against
+`frozen::CHILD_REPORT_SCHEMA`, the hash echo against the three Slice 2B frozen
+constants (`HashEcho`), and `completed` (`Incomplete`).
+
+`ReportError`, its variants and their payload strings do not change, and the
+order of the checks does not change. `accept_compose_report` (new) calls the
+three helpers and does its own schema, hash-echo and completed checks against
+`frozen_compose.rs`. No other function in `harness.rs` changes. The existing
+`harness.rs` unit tests stay unchanged and must pass. The regression proof is
+§6.2.
+
 ### 2.2 `compose.rs` (library, MLX-free)
 
 - **`Backing`.** Per shard it holds:
@@ -113,6 +173,20 @@ asserts one handler call site and that no linked crate installs one.
 - **`SelectionRecord`.** The serializable identity, ranges and sha256 of a plane, which the child reports.
 - **`stage(plane) -> [HostTensor; 3]`.** Copies exactly the borrowed bytes into Slice 2B `HostTensor`s with shapes `[N, K*bits/32]` and `[N, K/group]`.
 - **Unit tests.** Put them in the composition test target, not in `#[cfg(test)]` inside `compose.rs`, so that the Slice 2B step's test inventory does not change.
+- **Sealed-plane interface test (required).** A test in the composition target shows that a `SelectedPlane` cannot be built from components of different experts, modules or sources through any public interface. It has three parts:
+  1. **API audit.** Read `compose.rs` and assert:
+     - `SelectedPlane` has no `pub` or `pub(crate)` field;
+     - it derives or implements neither `Default` nor `Clone`;
+     - the only public functions that return a `SelectedPlane` (directly or inside `Result`) are `select_plane` and `compose`, and each takes exactly one index path and one triple, or one module path;
+     - there is no public function or method that takes a `ByteSlice`, `TripleSlice`, raw range or `&[u8]` component and returns or modifies a plane;
+     - there is no `&mut self` method on `SelectedPlane`.
+  2. **Every public entry, run.** E-COMPOSE and E-SELECT are driven with every mixing the fixtures allow:
+     - weight and companions from two modules through `AffineTriple::new` must give C-R-MODULE-BINDING;
+     - a triple from one source with a backing from another must give C-R-SOURCE-BINDING;
+     - for every accepted case, the three reported ranges must be the oracle's ranges of the ONE requested index, with no component from another index.
+  3. **No `compile_fail` doctests.** They would add to the Slice 2B step's doctest inventory, which §6.2 requires to stay unchanged.
+
+  Mutation controls stay at the selection-record level through the test-only child path (planner resolution 5).
 
 ## 3. The compose child (`--mode compose`)
 
@@ -246,17 +320,137 @@ primitives …`: `Qualify F020 Slice 2C synthetic expert-plane composition
   output directory, then a post-check of `summary.json`: PASS, 31 cases, gate
   counts, child `EXIT_STATUS 0`, timeout 1800, `mlx_version` 0.31.2 and
   `MLX_ENABLE_TF32` 0.
-- **Initial status.** It is added as non-required, which changes nothing
-  gated.
-- **Making it required.** This uses the doctor procedure in
+- **Missing prerequisites.** Handled as in the Slice 2B step: a missing
+  prerequisite, a build without MLX (`NOT RUN` panics under
+  `PULSAR_REQUIRE_NATIVE_MLX=1`), a missing `summary.json` or a missing child
+  report fails the step.
+- **Required (owner GO).** The step is REQUIRED in the native small-fixture
+  job `apple-mlx-small-fixtures`, using the doctor procedure in
   `scripts/ci/f017_measurement_scope_v1.py`:
   - commit X adds the step;
   - commit Y adds its exact name to `REQUIRED_EXTRA_STEP_NAMES` and advances
     `RESOLUTION_BASE` and `RESOLUTION_WORKFLOW_SHA256` to X;
-  - the earlier required blocks stay contained byte for byte.
+  - the resolution's earlier required blocks, including the Slice 2B step,
+    stay contained byte for byte.
 - **Existing steps.** The Slice 2B required step's body is not changed. The
   new test target has `test = false`, so that step runs the same tests as
-  before.
+  before. This is proven, not assumed (§6.2).
+
+### 6.1 A missing, skipped or failing composition step cannot leave the aggregate green
+
+Commit Y extends `scripts/ci/f017_measurement_scope_tests_v1.py` with a block
+for the new step name that mirrors the existing Slice 2B block. Each workflow
+mutation below must be rejected by the doctor (expected refusal
+`WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`, as for Slice 2B):
+
+| Control | Mutation of the composition step |
+|---|---|
+| rename | `name:` with a suffix appended |
+| removal | the step block deleted |
+| masking | `|| true` appended to the `cargo test … --test composition_qualification …` command |
+| summary assertion deleted | the `assert summary["result"] == "PASS"` line removed |
+| build-only | the test invocation replaced by `--no-run` |
+| non-fatal | `continue-on-error: true` added to the step |
+| disabled | `if: false` added to the step |
+| moved job | the step moved into a new job outside `apple-mlx-small-fixtures` |
+
+Four further requirements:
+
+- The existing job-level controls apply unchanged: a job `continue-on-error`,
+  a job `if:`, workflow `defaults` and a changed aggregate job are all
+  rejected.
+- The existing Slice 2B controls must still pass.
+- The doctor `--check` runs in the required measurement-scope step. The
+  aggregate job (`CI aggregate status`, `scripts/ci/aggregate_status_v1.py`)
+  is green only when the native job succeeds.
+- A failing composition step (summary `FAIL`, child timeout, missing report or
+  a skipped suite) fails its job and therefore the aggregate. The step's shell
+  runs under `set -euo pipefail`, as the Slice 2B step does.
+
+Evidence for Y records the doctor test output with every control listed and
+rejected.
+
+### 6.2 Slice 2B invocation unchanged: required regression proof
+
+On the same GitHub runner class as attempt 3 (`macos-15`, job
+`apple-mlx-small-fixtures`), at the Slice 2C candidate, all of the following
+are required:
+
+1. **Test set unchanged.** `cargo test -p mlx-native-affine --release --
+   --list` and `cargo test -p mlx-native-affine --release --doc -- --list`
+   list exactly the same tests, in the same order, at base `12b06367` and at
+   the candidate. In particular, `composition_qualification` does not appear,
+   because it is `test = false`. `cargo test -p mlx-native-affine --release
+   --test composition_qualification -- --list` does list it, which confirms
+   the explicit invocation still runs it.
+2. **Behaviour unchanged.** The 363-case Slice 2B child report
+   (`qualification/child/report.json`) is byte-identical to the attempt-3
+   report. The attempt-3 evidence records it
+   (`docs/architecture/reviews/evidence/f020-slice2b-ci-qualification-attempt-3-v1.json`,
+   CI run `36006063937`, candidate `e6f502ff`) as sha256
+   `e3b596bc6d3c3af3eca33d8084c1a9cb3b0c6bbd2b8910d3bbe7c4e32cac5640`,
+   519,872 bytes.
+3. **Gate counts unchanged.** The Slice 2B summary's `gate_counts` equal
+   attempt 3's exactly:
+
+   | Gate | Cases |
+   |---|---|
+   | B6-REFUSAL | 37 |
+   | E1-DEVICE | 362 |
+   | E6-CPU-REFUSED | 1 |
+   | G-IMPORT | 8 |
+   | G-CAST | 2 |
+   | G-DQ-CODES | 18 |
+   | G-DQ-RUST | 59 |
+   | G-DQ-EXACT | 59 |
+   | G-R1-SELF-DQ | 59 |
+   | G-QMM-RUST | 239 |
+   | G-QMM-EXACT | 237 |
+   | G-R1-SELF-QMM | 237 |
+   | N-QMM-ZERO | 1 |
+   | SHAPE-DTYPE | 326 |
+
+   All passed, with 363 cases and an empty failures list.
+
+**Finding: requirement 2 cannot be met as stated.** It is recorded here and
+not resolved by this preparation. By construction, the child report embeds
+values that change when the candidate changes or the runner image changes:
+
+- `provenance.build.qualify_executable_sha256` is the sha256 of the running
+  `qualify` binary (`src/bin/qualify/provenance.rs:188-190`, reported at
+  line 230). Adding `--mode compose` to that binary, and linking
+  `mlx-affine` and `safetensors-catalog` into it, changes that value.
+- `provenance.build.rustc` is the runner's toolchain version.
+- The libmlx, libmlxc and metallib sha256 and byte counts come from the
+  native prefix, which is built on the runner.
+- The per-case `e5_peak_memory.active_before` and `peak_after` values are
+  allocator observations (`src/bin/qualify/run.rs:53-66`).
+
+The candidate's own child cannot reproduce `e3b596bc…`. The integration owner
+must not substitute a weaker comparison on their own: a mismatch in
+requirement 2 is a STOP reported to the planner. Two options are proposed for
+the planner's decision. Neither is adopted here.
+
+- **(a) Canonical projection.** The report is compared byte for byte as
+  canonical JSON after removing only an enumerated volatile-field set:
+  - `provenance.build.qualify_executable_sha256`;
+  - `provenance.build.rustc`;
+  - the native-library and metallib sha256 and byte counts, only when the
+    runner-built prefix differs from attempt 3's, and that difference is
+    itself recorded;
+  - every case's `stats.e5_peak_memory.active_before` and `peak_after`.
+
+  In addition, every per-case output file (`outputs/<id>.bin`) must be
+  byte-identical to attempt 3's.
+- **(b) Same-run differential.** In one workflow run, the base `12b06367`
+  child and the candidate child run on the same runner, and their reports are
+  compared under the same projection.
+
+Attempt 3's full report exists only as the CI artifact
+`f020-slice2b-qualification` of run `36006063937`. The evidence records only
+its hash. The artifact has to be retrieved and preserved before GitHub's
+artifact retention expires, or option (a) against attempt 3 becomes
+impossible.
 
 The generator test runs in the existing research-methodology step. That step
 discovers `scripts/research/tests/test*.py` and needs no workflow change.
@@ -320,42 +514,45 @@ that the Slice 2B exact-R1 reader accepts every standalone file.
   MLP, streaming, residency or performance work.
 - It makes no change to the meaning of the Slice 2B invocation.
 
-## 10. Owner GO items and open questions
+## 10. Planner resolutions (2026-09-24) and remaining owner GO items
 
-1. **Freeze the contract.** Freeze `native-composition-v1.json` draft.1,
-   including:
+The draft-1 open questions are resolved as follows. Each resolution is folded
+into the sections cited.
+
+1. **`.gitignore`.** A single-line path exception,
+   `!fixtures/native-composition/**`, is added directly after the existing
+   `!fixtures/safetensors/**/*.safetensors`. After it:
+   - `git check-ignore --no-index` matches none of the 28 tracked fixture files;
+   - a new file under `fixtures/native-composition/` shows as untracked;
+   - `*.safetensors` and `checkpoints/` stay ignored everywhere else.
+2. **Linking Slice 1 into the child.** Approved. Independence is required at
+   two levels, the static source test and the `nm` symbol check with positive
+   and negative controls (§2.1).
+3. **Slice 2B invocation unchanged.** Required: the same test set, a
+   byte-identical 363-case report (`e3b596bc…`) and the same gate counts
+   (§6.2). The finding in §6.2, that requirement 2 cannot be met as stated,
+   is open for the planner.
+4. **Harness extraction.** Authorized as the behaviour-preserving move listed
+   in §2.3. The regression proof is §6.2.
+5. **Mutation injection at the selection-record level.** Accepted. The
+   required sealed-plane interface test is added in §2.2.
+6. **Overflow probe through direct range arithmetic.** Accepted as disclosed
+   (contract `composition_refusals.order`, C-R-OVERFLOW).
+7. **Required CI step.** The composition step is required through doctor X/Y,
+   and the doctor mutation controls are listed in §6.1.
+
+Remaining owner GO items:
+
+1. **Freeze the contract.** Freeze `native-composition-v1.json` draft.2. It is
+   normatively draft.1 plus the requirements of resolutions 2, 3, 5 and 7,
+   and includes:
    - the composition refusal order;
    - the selection checks;
-   - N-COMP-AB as exact bitwise equality under the new assumption A-DET, with
-     its failure policy (STOP, and no tolerance fallback without a new
-     version).
+   - N-COMP-AB as exact bitwise equality under A-DET, with its failure policy.
 2. **Freeze the population.** Generator `e4214ffb…`, manifest `bae476dd…`,
-   listing `2d314e23…`, 31 cases and 28 files. CI runs `--check` through the
-   generator test.
-3. **Authorize the dependencies.** Make `mlx-affine` and `safetensors-catalog`
-   normal dependencies of `mlx-native-affine`, so they link into the child
-   (§2.1). The alternative is to keep selection in the parent and pass staged
-   bytes to the child. That weakens "refusal before native call" to a
-   parent-side argument, and is not recommended.
-4. **Confirm the test-target setting.** Confirm that `test = false` on the new
-   `[[test]]` target keeps the Slice 2B step's inventory unchanged, while
-   `--test composition_qualification` still runs it. This must be verified on
-   the pinned toolchain before the CI step is written.
-5. **Harness extraction.** Authorize the optional behaviour-preserving helper
-   extraction in `harness.rs`, or require a separate `accept_compose_report`
-   that re-implements the three checks.
-6. **CI requirement.** Decide whether the new step is required. If it is,
-   authorize the doctor X/Y advance.
-7. **Mutation injection point.** Mutation controls are injected at the
-   selection-record level through a test-only child path, not inside the
-   sealed plane constructor. Confirm that this satisfies the "mutation
-   control" requirement for I-PLANE-SINGLE-INDEX. The type requirement itself
-   is verified statically.
-8. **Ignored fixture files.** `.gitignore` ignores `*.safetensors` outside
-   `fixtures/safetensors/`, and ignores every `checkpoints/` directory. The 28
-   generated files under `fixtures/native-composition/` were therefore added
-   with `git add -f`. Once tracked, they behave like any other file, and
-   `--check` reports any missing or changed file. `.gitignore` is outside this
-   preparation's file scope. Decide whether to add a path exception there, like
-   the existing `!fixtures/safetensors/**/*.safetensors`, in a separately
-   authorized change.
+   listing `2d314e23…`, 31 cases and 28 files, all unchanged since draft 1.
+   The manifest's `contract_schema` field names draft.1, the draft under
+   which the population was generated. This follows Slice 2B, whose manifest
+   names contract draft.4 under the frozen draft.6.
+3. **Decide the §6.2 finding.** Choose option (a) or (b), or another rule,
+   before the integration run.
