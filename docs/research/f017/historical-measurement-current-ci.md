@@ -411,3 +411,26 @@ between `99677210` and `7f28bc5c`, in the same jobs and order; the residual
 difference is those six lines. The required-step census stays 13, the free-step
 census 42, and the eight Slice 2B mutation controls still reject at
 `WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`.
+
+### 2026-09-24 — the resolution advances for the F020 Slice 2C required step
+
+`RESOLUTION_BASE` moves from `7f28bc5c` to
+`6d76adc63b8d59bd27fb9056a5ed2c171a7feb56` and `RESOLUTION_WORKFLOW_SHA256`
+from `c759c5d1…` to `8f849896…`, in the doctor and the confined runner, and the
+step `Qualify F020 Slice 2C synthetic expert-plane composition (frozen
+synthetic population, runner GPU)` joins `REQUIRED_EXTRA_STEP_NAMES` (owner GO
+for F020 Slice 2C, 2026-09-24; slice2c-plan.md section 6). Commit `6d76adc6`
+added the step directly after the Slice 2B step, together with a free
+`always()` upload of its reports; the doctor passed there with the step still
+free. This commit makes it required.
+
+All thirteen required blocks frozen at `7f28bc5c` are present at `6d76adc6`
+byte for byte, in the same jobs and order; the residual difference is the new
+block and its comment. The required-step census is 13 → 14 and the free-step
+census 43 (the new upload step is free). The mutation controls gain eight
+cases for the new step -- renamed, removed, its composition command masked
+with `|| true`, its summary assertion deleted, a build-only substitution
+(`--no-run`), made non-fatal, disabled with `if: false`, and moved to another
+job -- all rejected with `WORKFLOW_CHECK_INVENTORY_OR_CONTEXT`; the Slice 2B
+and job-level controls are unchanged and still rejected (88 controls, no
+unexpected pass).
