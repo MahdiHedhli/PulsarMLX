@@ -7,61 +7,61 @@ not substitutes for qualifying a new model.
 
 | Model | Role | Current evidence boundary |
 | --- | --- | --- |
-| GLM-5.2 IQ2_XXS | Large-model correctness reference on the 128 GB Mac Studio | Sequence 43: two independent 79-layer oracles. Prospective instrumentation is separate; full performance and dogfood are not qualified. |
-| GLM-5.3 | Full-scale model-family target | No exact PulsarMLX quantized artifact is ratified here. Numerical compatibility and performance remain to be qualified. |
-| `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` | Primary practical-usability target on the 64 GB M2 Max MacBook Pro with external NVMe; later 128 GB Studio evaluation | **Superseded by the 2026-09-20 consolidation — see *Current direction* above.** The unpruned model now has a measured paged/persistent serving candidate (`971db9c1`) on the 128 GB Studio: 120/120 token-identical task pairs against the fresh-process paged reference, 70e9 admitted as the expert-cache ceiling, decode I/O characterised. Still not claimed: PulsarMLX full-model correctness qualification, sustained decoding, dogfood, and a 6 h soak at 70e9. This track is the Python/MLX research path, not the Rust-native runtime. It is a research reference oracle for the native implementation and will not be extended into a shipping runtime; the Rust-native Flash runtime is the only one PulsarMLX intends to ship. |
+| GLM-5.2 IQ2_XXS | Large-model correctness reference on the 128 GB Mac Studio | Historical research plus bounded native results; later measured positions/text are not independently qualified. See the [F017 current status](../architecture/f017-native-runtime-status.md). |
+| `pipenetwork/GLM-5.3-Flash-MLX-mixed-4_8bit` | First practical native-integration/optimization target on the owned 128 GB M1 Ultra Studio; subsequent 64 GB M2 Max qualification | Measured Python/MLX paged/persistent research candidate, not a native model. Native tensor primitives and model integration retain separate qualification boundaries. |
+| `pipenetwork/GLM-5.3-MLX-mixed-4_8bit` | Full-scale second architecture target | Exact mixed-4/8 target selected; native numerical compatibility, model execution and useful performance remain unqualified. No universal hardware floor is established here. |
 
-## Current direction (2026-09-20)
+## Current direction (2026-09-23)
 
-This section is the current pointer for target selection. Sections below it that
-predate 2026-09-20 remain as written; where they disagree with this section about
-*what comes next*, this section is current and they are historical.
+This section is the current pointer for target selection. Historical evidence
+below remains unchanged; it does not override the present Flash-first sequence.
+The [optimization roadmap](OPTIMIZATION_ROADMAP.md) captures the latest project
+feedback as explicit planned work, not implementation authority.
 
-The consolidated mainline now carries the F017 Rust-native GLM-5.2 runtime, the
-GLM-5.3-Flash paged research track and the Qwen baseline together. The next major
-target is **native ingestion of MLX mixed-precision checkpoints**:
+The intended capability is *native Rust runtime + Safetensors checkpoint
+access + MLX affine quantization + PulsarMLX expert residency/streaming + MLX
+execution*, consuming both targets **without converting to GGUF** and
+**without requantizing weights**.
 
-| Planned target checkpoint | Status |
+| Boundary | Status |
 | --- | --- |
-| `PipeNetwork GLM-5.3-MLX-mixed-4_8bit` | **Planned. Not implemented. Not started.** |
-| `PipeNetwork GLM-5.3-Flash-MLX-mixed-4_8bit` | **Planned. Not implemented. Not started.** |
+| F020 Slice 1 catalog/admission and affine representation/decoder | Merged; qualified on synthetic fixtures only ([status](../architecture/f020-native-safetensors-status.md)) |
+| Slice 2 target metadata census and primitive contract | Committed preparation at [`9bf6a810`](https://github.com/MahdiHedhli/PulsarMLX/blob/9bf6a810622b7ef1156b750dd0f3140f8c0ca211/specs/020-mlx-safetensors-affine/slice2b-plan.md); metadata compatibility is not payload identity, numerical admission or native model qualification |
+| Slice 2B native packed-weight operations | Implementation authorized separately under the reviewed synthetic contract; no successful implementation result claimed here |
+| Native Flash / full GLM-5.3 model execution | Planned; independently qualified per architecture, Flash first |
+| Native residency, double buffering, prefetch and repacking | Planned after the relevant correctness/composition gates and an instrumented baseline; see OPT-01 through OPT-08 |
 
-The planned capability is the composition *native Rust runtime + Safetensors
-checkpoint ingestion + MLX affine quantization + PulsarMLX expert
-residency/streaming + MLX execution*, consuming those checkpoints **without
-converting them to GGUF** and **without requantizing their weights**.
+The active Slice 2B scope does not include real-checkpoint payload reads,
+production-geometry qualification, model graphs, streaming or benchmarks.
+A shape admitted by the primitive contract is not automatically qualified by
+small fixtures. Individually selected expert planes and whole stacked tensors
+are different execution boundaries.
 
 Sequence (a roadmap, not a completion claim):
 
 ```text
-Qwen Apple MLX baseline                        ✅ verified
-        ↓
-GLM-5.2 research execution                     ✅ committed ladder C01–C11
-        ↓
-F017 Rust-native GLM-5.2                       ✅ one token qualified on the real checkpoint; Stage A positions 1-7
-                                               and Stage B1 text generation executed and measured, not qualified;
-                                               formal closeout pending human approval
-        ↓
-GLM-5.3-Flash paged research                   🧪 measured candidate (Python/MLX)
-        ↓
-Native Safetensors + MLX affine quantization   🗺️ planned, not started
-        ↓
-Native GLM-5.3 mixed 4/8                       🗺️ planned, not started
-        ↓
-Native GLM-5.3-Flash mixed 4/8                 🗺️ planned, not started
-        ↓
-Residency / caching / prefetch optimization    🗺️ planned
-        ↓
-KV / state optimization                        🗺️ planned
-        ↓
-Serving + broader hardware qualification       🗺️ planned
+Qwen baseline / GLM-5.2 reference and native evidence / Flash paged research
+  -> F020 catalog and affine representation (Slice 1 synthetic qualification)
+  -> native packed-weight primitive qualification (bounded Slice 2B)
+  -> authorized Flash real-weight, expert, block, fixed-prefix and state gates
+  -> separately qualified full GLM-5.3 architecture using shared infrastructure
+  -> profiling and routing traces, then residency / layout / staging experiments
+  -> streamed composition, generation and serving acceptance
+  -> KV/prefix/hybrid-state tuning and separately admitted 64 GB qualification
 ```
 
-Current Flash evidence boundary is unchanged by this direction: the paged
-persistent-serving work is Python/MLX research
-([results](../glm53-flash/persistent-serving-results.md), candidate `971db9c1`,
-expert-cache budget 60e9 with **70e9 admitted as the ceiling**), not the native
-runtime, and a 6 h soak at 70e9 has not been completed.
+The full-model track need not block bounded Flash profiling or optimization;
+its implementation and evidence remain independent. Upcoming work needs its
+own authorization and cannot silently enter the active primitive slice.
+
+Current Flash research evidence is unchanged: the paged persistent-serving
+candidate `971db9c1` is Python/MLX
+([results](../glm53-flash/persistent-serving-results.md)), with a 60e9-byte
+baseline expert-cache budget and **70e9 admitted as the ceiling** on its stated
+128 GB host. A 6 h soak at 70e9 has not been completed. Those budgets are not
+native defaults or 64 GB admission results. The Python/MLX path remains a
+behavioral/compatibility reference, not the shipping runtime or R1 numerical
+correctness oracle. Only the Rust-native Flash runtime is intended to ship.
 
 ## GLM-5.2 reference evidence
 
@@ -107,15 +107,23 @@ mapping and numerical qualification; it is not a smaller drop-in GLM-5.2/GGUF pa
 
 ## Hardware and progression toward local use
 
-Studio's F017 reference/instrumentation track and MacBook's Flash bring-up are
-independent. They share verified components and lessons, not a distributed
-inference session. External NVMe is the established Flash storage/workspace;
-F017's internal-SSD and RAID sequencing rules are not global bans on that track.
-This description grants no drive access or new experiment authority.
+The owned 128 GB M1 Ultra Studio is the first practical native Flash integration
+and optimization host. The 64 GB M2 Max MacBook remains a subsequent lower-memory
+target and a development host for bounded fixtures and source mapping. Keep
+F017's reference track independent. The hosts share verified components and
+lessons, not a distributed inference session.
 
-The runtime design keeps attention state and useful expert residency in unified
-memory and streams other weights as needed. An optimized Flash streaming/cache
-path is unfinished; existing research/scaffolding does not establish usable speed.
+External NVMe is an established Flash workspace; F017's internal-SSD and RAID
+sequencing rules are not global bans on that track. This description grants no
+drive access or new experiment authority. Cache, state and staging memory need
+fresh admission for each runtime, host, workload and storage configuration.
+
+The runtime design keeps attention/hybrid state and useful expert residency in
+unified memory and streams other weights as needed. The planned native
+optimization work is explicit in [the optimization register](OPTIMIZATION_ROADMAP.md):
+profile token costs, build routing-based hot/cold and capacity models, qualify
+fixed-buffer read/compute overlap, and evaluate deterministic lossless layout
+changes. Existing Python/MLX research does not establish native useful speed.
 
 1. Establish model-specific semantics, tensor maps and synthetic composition.
 2. Earn independent numerical qualification at the appropriate real boundary.
