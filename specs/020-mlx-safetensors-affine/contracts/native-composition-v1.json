@@ -1,0 +1,258 @@
+{
+  "schema": "pulsarmlx.f020.native-composition-contract/1.0.0-draft.1",
+  "feature": "020-mlx-safetensors-affine",
+  "slice": "2C",
+  "status": "DRAFT_PROSPECTIVE_NOT_FROZEN",
+  "drafted_on": "2026-09-24",
+  "revision_history": [
+    {
+      "version": "1.0.0-draft.1",
+      "note": "initial prospective draft by the Slice 2C preparation owner: composition objective, plane identity, composition refusals, selection checks, A/B/C comparisons with the prospective A-vs-B relation, copy accounting, mutation controls, frozen synthetic population. No composition code exists and nothing was observed."
+    }
+  ],
+  "prospective_statement": "Every relation, refusal, check and acceptance criterion in this file was written before any composition code existed and before any Slice 2C observation. No MLX operation, native bridge call, qualification child, composition path or Rust R1 was run while drafting it. The fixture population was produced by a stdlib-only generator whose only arithmetic is exact integer offset/size arithmetic and the frozen Slice 2B domain classifier; the generator's oracle does not call production slicing (mlx_affine::AffineTriple::expert_slice / row_slice) or the production decoder. One non-numerical sanity observation preceded this file and is disclosed: the committed fixture checkpoints were opened with the Slice 1 catalog (Checkpoint::open, QuantizationConfig::from_config_json, validate_catalog, classify_module) in a throwaway program that was not committed; it confirmed admission and the resolved (bits, group) of every module, that ck-a-single and ck-a-sibling have the same catalog digest, and that dropping the block.1.stack_d override is refused as InconsistentOverride with implied_bits 8. No range, byte or number from any selection or execution was observed.",
+  "correction_policy": {
+    "inherited_from": "native-primitives-v1.json#correction_policy (Slice 2B), applied verbatim to this contract",
+    "rule_1": "An observation that exceeds a bound, violates an exact invariant, or fails any acceptance criterion is a FAIL. It is recorded against the original criteria of the contract version under which it was observed and is retained permanently.",
+    "rule_2": "Any revision of a relation, a refusal, an assumption, a check or an acceptance criterion is a new, separately identified contract version (new schema version string and file hash) that must be independently reviewed and explicitly authorized by the owner before any renewed qualification run.",
+    "rule_3": "No appended entry, correction, erratum or replacement contract may convert a recorded failure into a pass, and no threshold is moved in place. A renewed qualification under a revised contract is a new run with its own evidence; the earlier failure remains a failure of the earlier version.",
+    "rule_4": "The qualification report binds the sha256 of this contract file, the fixture manifest, the generator and the Slice 2B contract; a report produced under a different contract version cannot satisfy this version's acceptance criteria.",
+    "failure_triage": "Every failed attempt is preserved with candidate commit and contract identity. An implementation defect gets a targeted fix and a separately identified rerun. A contract defect, a scope expansion, an unsupported prerequisite or a numerical-rule change is a STOP reported to the planner."
+  },
+  "citation_keys": {
+    "MLX312": "ml-explore/mlx at 68cf2fddd8de5edd8ab3d926391772b2e2cedad8 (tag v0.31.2), as in native-primitives-v1.json#citation_keys",
+    "MLXC": "ml-explore/mlx-c at 0726ca922fc902c4c61ef9c27d94132be418e945 plus the four build-verified patches, as in native-primitives-v1.json#citation_keys",
+    "REPO": "PulsarMLX main at 12b063675c2227c59d2157458e051d73647b7045 (Slice 2C base)",
+    "format": "KEY:path:line or KEY:path:first-last"
+  },
+  "inheritance": {
+    "slice_2b_contract": {
+      "path": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+      "sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72",
+      "schema": "pulsarmlx.f020.native-primitives-contract/1.0.0-draft.6",
+      "prepared_in": "9bf6a810622b7ef1156b750dd0f3140f8c0ca211",
+      "merged_by": "274da684a4b3081dde61c772d98c7814198b5752"
+    },
+    "slice_2b_package": {
+      "plan": {"path": "specs/020-mlx-safetensors-affine/slice2b-plan.md", "sha256": "24a06db0a34ee4ec8ca9af8728d3d27e26cfe3c4a6c22dcba06011c8ab2796df"},
+      "source_pins": {"path": "specs/020-mlx-safetensors-affine/source-pins-slice2.json", "sha256": "02e963a02cf1d63168c57cff316c1d3471313498396b2abd7b3e5ec432267bb4"},
+      "generator": {"path": "scripts/research/f020_native_primitives_fixtures_v1.py", "sha256": "28078a6d0a6de859c1a1ac557fef3f683d8ecd75a780198b4c0bc7c15c267999"},
+      "manifest": {"path": "fixtures/native-primitives/manifest.json", "sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04"},
+      "cases_listing_sha256": "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7dac25461f82 (inside fixtures/native-primitives: LC_ALL=C shasum -a 256 cases/*.bin | shasum -a 256)"
+    },
+    "slice_1": {
+      "numerics": {"path": "specs/020-mlx-safetensors-affine/contracts/numerics-v1.json", "sha256": "ac61f0b66dac670ede2ed8dcb0a0db9cd98718bbd4ed9b364b805a1a535ca1bb"},
+      "catalog_contract": {"path": "specs/020-mlx-safetensors-affine/contracts/catalog-contract.md", "sha256": "dc8fceba3556fdafba853c3a2f18ec7ce6c410be39ab4f827d068d660d691351"},
+      "spec": {"path": "specs/020-mlx-safetensors-affine/spec.md", "sha256": "4dce1e0cb334039092ab8b2f05247f4b02677df3114839a56a7e20180ba9323f"}
+    },
+    "inherited_unchanged": [
+      "Slice 2B domains D-GEOM and D-NUM as they apply to OP-QMM (native-primitives-v1.json#domains)",
+      "Slice 2B assumptions A-OPS(a)-(e), A-SIMD, A-MMA, A-NONAX (#assumptions)",
+      "Slice 2B operations OP-IMPORT-U32, OP-IMPORT-META, OP-CAST and OP-QMM, their MLX-C calls and invariants N-IMPORT-U32, N-IMPORT-META, N-CAST-WIDEN, N-QMM-SHAPE-DTYPE, N-QMM-BOUND, N-R1-SELF (#operations)",
+      "Slice 2B refusals.order (18 ids, first failing id returned), refusals.process_level R-NAX (#refusals)",
+      "Slice 2B acceptance_implementation G-QMM-EXACT, G-QMM-RUST, G-R1-SELF-QMM and both_references_rule, including the gamma exponent n taken from the manifest's families_0_31_2 (#acceptance_implementation)",
+      "Slice 2B execution_evidence E1-E6, error_handling (single error handler, status checks, empty-handle checks, child process, CHILD_TIMEOUT_SECONDS watchdog, SIGKILL + waitpid, no retry) and ownership L-ONCE, L-OUTLIVE, L-NOALIAS, L-ERRFREE, L-THREAD",
+      "Slice 1 catalog admission and its refusal vocabulary (catalog-contract.md), Slice 1 module resolution and checked slicing (spec.md; numerics-v1.json checks C-SHAPE and C-SLICE)"
+    ],
+    "not_used": "OP-DQ is not on the composition path: the selected plane is never dequantized. Its Slice 2B qualification stands unchanged.",
+    "rule": "No bound, domain value, refusal predicate, assumption or acceptance rule of Slice 2B or Slice 1 is restated here with a different value or widened. Where this file names an inherited element, the inherited text is authoritative. This contract adds only exact checks (selection identity, byte identity, bitwise A-vs-B equality, refusal ids) and one assumption, A-DET."
+  },
+  "scope": {
+    "objective": "ONE projection (transpose=true, y = x @ W^T) of ONE selected expert plane taken from synthetic stacked affine tensors weight U32 [E, N, K*bits/32], scales/biases [E, N, K/group], through the admitted Slice 1 catalog, the resolved Slice 1 module (default recipe plus explicit per-module override), a checked selection of one expert index, and the existing Slice 2B native import and quantized_matmul.",
+    "combos": [
+      {"bits": 4, "group_size": 64, "metadata_dtype": "BF16", "resolved_from": "default"},
+      {"bits": 8, "group_size": 64, "metadata_dtype": "BF16", "resolved_from": "explicit per-module override over a 4-bit default"}
+    ],
+    "x": "float32 only; M_eff = 1 (vector family on every architecture, native-primitives-v1.json#operations.OP-QMM.kernel_selection_0_31_2.architecture_dependence) and M_eff = 32 (matrix family on every architecture); the 6..31 band is deliberately not used so that A, B and C name one kernel family per case on every host",
+    "geometry": "inside Slice 2B D-GEOM with its small admitted shapes: N in {64, 128}, K in {128, 256, 512}, E in {2, 3, 4}; N = 32 appears only as an inherited R-GEOMETRY probe",
+    "not_authorized": [
+      "real checkpoint payloads, rehashing or downloads",
+      "production geometry",
+      "a full expert MLP, routing, gather_qmm, sorted or batched expert kernels",
+      "model graphs, streaming, mmap redesign, external-memory MLX, async loading, buffer pools, caches, prefetch, residency",
+      "performance work of any kind",
+      "merging"
+    ]
+  },
+  "composition_pipeline": {
+    "stages": [
+      {"id": "P0-LOAD", "what": "Checkpoint::open(dir, OpenMode::Auto) (Slice 1 admission; catalog refusals unchanged and reported as C-R-CATALOG with the Slice 1 variant); QuantizationConfig::from_config_json(config.json); Checkpoint::hash_shards for the payload-inclusive source identity; the backing: one immutable host buffer per shard (optionally a manifest-declared prefix window) read through the catalog's admitted descriptors", "copies": "the backing buffer is a copy of the shard file's bytes (fixture load)"},
+      {"id": "P1-RESOLVE", "what": "classify_module(catalog, Some(config), module) -> ModuleKind::Quantized(AffineTriple); the spec is the explicit override when one exists, else the default (Slice 1 resolution). A refusal is C-R-RESOLVE with the Slice 1 AffineError variant recorded", "copies": "none (metadata only)"},
+      {"id": "P2-SELECT", "what": "composition refusals C-R-SOURCE-BINDING .. C-R-BACKING in composition_refusals.order, then the Slice 1 checked selection AffineTriple::expert_slice(index_path) giving the three absolute ranges, then borrowing the three ranges from the backing", "copies": "none: the plane borrows &[u8] sub-slices of the immutable backing"},
+      {"id": "P3-PLANE", "what": "SelectedPlane (plane_identity) constructed once from one resolved triple and one index path", "copies": "none"},
+      {"id": "P4-CHECK", "what": "the independent selection checks S-IDENTITY, S-RANGES, S-BYTES against the manifest oracle, before any native call", "copies": "none (hashing reads the borrowed bytes)"},
+      {"id": "P5-STAGE", "what": "staging into the existing Slice 2B HostTensor form: w U32 [N, K*bits/32], scales and biases in their stored dtype [N, K/group]; the packed weight is copied byte for byte, never unpacked or widened; S-STAGED-EQUAL", "copies": "one byte copy per component of exactly the plane's bytes (plane_bytes), plus x from the standalone file"},
+      {"id": "P6-NATIVE", "what": "the EXISTING Slice 2B bridge quantized_matmul on the staged tensors: Slice 2B refusals in their frozen order on host data, then OP-IMPORT (mlx_array_new_data copies), OP-CAST (mlx_astype of BF16 scales/biases to float32 on the explicit GPU stream), OP-QMM (mlx_quantized_matmul, transpose=true, the imported U32 weight passed unchanged), Evaluated readback", "copies": "native import copies of x, w, scales, biases; two float32 metadata arrays from OP-CAST; one float32 output; one host readback copy of the output"},
+      {"id": "P7-COMPARE", "what": "comparisons A, B, C", "copies": "B stages its own HostTensors from the standalone file; C reads the standalone file"}
+    ],
+    "entry_levels": {
+      "E-COMPOSE": "the full path P0-P7 from (checkpoint directory, config, module path, index path)",
+      "E-SELECT": "the public selection function from (opened checkpoint with its backing, an AffineTriple supplied by the caller, index path); it must re-establish every binding itself because AffineTriple::new is public and accepts caller-supplied TensorMeta",
+      "E-RANGE": "the composition layer's own range resolution (absolute range -> borrowed slice of a backing), exercised directly by the overflow probe"
+    }
+  },
+  "plane_identity": {
+    "fields": {
+      "source_identity": "sha256 of the `shasum -a 256` listing of the checkpoint's shard files in C-locale order (inside the checkpoint directory: LC_ALL=C shasum -a 256 *.safetensors | shasum -a 256); payload-inclusive, so two checkpoints with identical headers and catalog digests differ",
+      "checkpoint": "fixture checkpoint id",
+      "module": "the module path, as an opaque string",
+      "index_path": "the selected expert index path (length = the number of leading dimensions, 1 here)",
+      "ranges": "weight, scales, biases: (shard file name, absolute begin, length) each",
+      "bits": "resolved bits (4 or 8)",
+      "group_size": "resolved group size (64)",
+      "resolved_from": "default | override",
+      "metadata_dtype": "BF16",
+      "logical_shape": "[N, K] with K = packed_cols*32/bits from the RESOLVED spec",
+      "packed_shape": "[N, K*bits/32]",
+      "metadata_shape": "[N, K/group]",
+      "transpose": "true (y = x @ W^T, the Safetensors [out, in] layout)"
+    },
+    "invariants": [
+      {"id": "I-PLANE-SINGLE-INDEX", "kind": "type/interface requirement", "statement": "A SelectedPlane has exactly one index_path and exactly one source/module binding; its three ranges are derived inside one constructor from one resolved triple and that one index path. It has no public field, no setter, no constructor or builder that accepts per-component ranges, tensors or indices, and no way to replace one component of an existing plane. Weight from expert A cannot be combined with scales or biases from expert B, or from another module or source, through any public API.", "verification": "a static test in the implementing crate reads the plane module's source and asserts private fields and the single constructor signature; mutation controls mut-swap-scales and mut-swap-biases show that a mixed selection, if it ever arose, is detected by S-RANGES and S-BYTES before native execution"},
+      {"id": "I-PLANE-BORROW", "kind": "ownership", "statement": "the plane borrows its three byte ranges from the immutable backing (lifetime tied to the backing); it does not own copies; the backing is never mutated while any plane borrows it"},
+      {"id": "I-PLANE-NO-F32-WEIGHT", "kind": "exact invariant", "statement": "no complete float32 (or any float) weight matrix of the plane is created on the QMM path; the packed U32 words are staged and imported unchanged (inherits native-primitives-v1.json#scope.packed_weight_path)"},
+      {"id": "I-PLANE-NO-REINTERPRET", "kind": "code requirement", "statement": "no unsafe reinterpretation (pointer casts, transmute, align_to, from_raw_parts) is used to avoid a copy; the library crate remains #![forbid(unsafe_code)]"}
+    ]
+  },
+  "composition_refusals": {
+    "principle": "Checked in this order, on host data, before any MLX-C call of the case (no import, no numerical call); the first failing check's id is returned as a typed error and the case records it. The inherited Slice 2B refusals then apply to the selected plane, in their frozen order, inside the existing bridge, also before any MLX-C numerical call or import.",
+    "order": [
+      {"id": "C-R-CATALOG", "condition": "Slice 1 catalog admission fails (any catalog-contract.md refusal); the Slice 1 variant is recorded. No Slice 2C probe: the Slice 1 negative corpus already covers these and is not duplicated."},
+      {"id": "C-R-RESOLVE", "condition": "classify_module does not return Quantized for the module under the configuration (unknown module, incomplete triple, override inconsistent with the stored shapes, scales without configuration, ...); the Slice 1 AffineError variant and, for InconsistentOverride, implied_bits are recorded"},
+      {"id": "C-R-SOURCE-BINDING", "condition": "the backing's source identity (shard file names and sha256 values, recorded when the backing was loaded) differs from the opened checkpoint's (Checkpoint::hash_shards provenance)"},
+      {"id": "C-R-MODULE-BINDING", "condition": "the triple's weight, scales or biases TensorMeta is not the checkpoint catalog's authoritative entry for <module>.weight, <module>.scales, <module>.biases respectively (name and full TensorMeta equality)"},
+      {"id": "C-R-INDEX-RANK", "condition": "index_path length != the triple's number of leading dimensions"},
+      {"id": "C-R-INDEX-RANGE", "condition": "rank matches and some index >= its leading extent (including values near u64::MAX, which are never wrapped, truncated or narrowed)"},
+      {"id": "C-R-OVERFLOW", "condition": "a checked u64/usize operation of the composition layer's range arithmetic overflows (begin + len, begin or end conversion). Through an admitted catalog and a validated AffineTriple this is unreachable (catalog rules 10-12 and 24b; Slice 1 C-SLICE); the probe exercises E-RANGE directly"},
+      {"id": "C-R-BACKING", "condition": "a selected range's end exceeds the length of the backing (window) of its shard, or the checkpoint has no backing (header-only)"}
+    ],
+    "evaluation_rule": "The generator evaluates every composition guard from C-R-RESOLVE on independently (manifest composition_refusal_order and oracle.composition_guards; C-R-CATALOG is omitted there because it has no Slice 2C probe and every fixture checkpoint is admissible); a guard whose precondition fails is recorded as not evaluable. Every FX-COMP-REFUSE probe violates EXACTLY ONE evaluable guard, its expected id; every accepted and inherited-refusal case violates none.",
+    "instrumentation": "The child samples the existing MLX-C call counters (numerical, imports; crates/mlx-native-affine/src/bin/qualify/ffi.rs call_counts) at case start and at the refusal decision and records both deltas; for a composition refusal or a detected mutation the whole-case delta must be (0, 0). For inherited refusals the existing OpStats numerical_before_decision and imports_before_decision must be 0. The parent enforces both from the report."
+  },
+  "selection_checks": {
+    "principle": "Exact comparisons of the candidate's selection against the manifest oracle, performed in the child before any native call (so a wrong plane is never executed) and re-decided by the parent from the reported values (the parent never trusts a child verdict).",
+    "checks": [
+      {"id": "S-IDENTITY", "statement": "every plane_identity field except ranges equals oracle.identity exactly"},
+      {"id": "S-RANGES", "statement": "for each component: (shard file name, absolute begin, length) equals oracle.ranges exactly"},
+      {"id": "S-BYTES", "statement": "for each component: sha256 of the borrowed bytes equals oracle.sha256 (the sha256 of the oracle's expected plane bytes, which are also the standalone file's w/scales/biases tensors)"},
+      {"id": "S-STAGED-EQUAL", "statement": "A's staged HostTensors w, scales, biases and x are byte-identical, with identical dtype and shape, to B's HostTensors loaded from the standalone file"},
+      {"id": "S-SOURCE-UNCHANGED", "statement": "the sha256 of every shard file and of every backing buffer after extraction and after native execution equals the manifest's file sha256 recorded before; the standalone file is re-hashed after B"}
+    ],
+    "oracle_independence": "oracle.ranges and oracle.sha256 are computed by the generator from the fixture specification (tensor placement chosen by its writer plus index * plane_bytes from (N, K, bits, group, dtype)) and cross-checked against a separate stdlib parse of the written headers and against slices of the written files; the test re-derives the ranges with its own header reader. None of them calls the Slice 1 slicing or decoding code."
+  },
+  "comparisons": {
+    "A": "the composed path: E-COMPOSE, the plane's staged bytes through the existing bridge quantized_matmul",
+    "B": "the standalone plane: the oracle's expected w/scales/biases and x loaded from standalone/<id>.bin with the Slice 2B fixture loader, through the SAME bridge quantized_matmul, in the same child, on the same NativeContext and GPU stream, with the same bits, group size and transpose, immediately after A",
+    "C": "independent R1 on the oracle's expected logical data (the standalone file): the Rust binary64 R1 (crates/mlx-affine/src/reference_qmm.rs) and the exact Python R1 (scripts/research/mlx_affine_qmm_reference_v1.py), both unchanged",
+    "gates": [
+      {"id": "N-QMM-SHAPE-DTYPE(A), N-QMM-SHAPE-DTYPE(B)", "rule": "inherited unchanged"},
+      {"id": "G-QMM-EXACT(A), G-QMM-RUST(A), G-QMM-EXACT(B), G-QMM-RUST(B)", "rule": "inherited unchanged: native-primitives-v1.json#acceptance_implementation, with n = the largest gamma_n in the case's families_0_31_2 and the both_references_rule; A and B are each decided against C independently"},
+      {"id": "G-R1-SELF-QMM(C)", "rule": "inherited unchanged"},
+      {"id": "N-COMP-AB", "kind": "exact_invariant", "rule": "the float32 output bytes of A and B are identical, bit for bit, including the sign of zero, for every element"},
+      {"id": "N-COMP-ABA", "kind": "exact_invariant", "rule": "within one child, seq-aba-2's A output bytes equal seq-aba-0's A output bytes bit for bit (same selection, same x), with seq-aba-1 (another module at another bit width) executed between them"},
+      {"id": "N-COMP-ARRAYS", "kind": "exact_invariant", "rule": "the arrays the composed path creates are exactly the manifest's array_census: imports x F32 [M,K], w U32 [N,K*bits/32], scales and biases BF16 [N,K/group]; astype scales_f32 and biases_f32 F32 [N,K/group]; output F32 [M,N]; no other array, and in particular no float array of the weight's logical shape"}
+    ],
+    "a_vs_b_relation": {
+      "relation": "EXACT BITWISE EQUALITY (N-COMP-AB). No tolerance is defined and none may be substituted.",
+      "premises": [
+        "Identical inputs: S-STAGED-EQUAL establishes byte-identical x, w, scales, biases with identical dtypes and shapes before either execution.",
+        "Identical operation and settings: both go through the one existing bridge entry (quantized_matmul, transpose=true, same bits, group size, OP-CAST on the same explicit GPU stream of the same NativeContext, default device GPU), in the same child process, adjacent in time, with MLX_ENABLE_TF32=0 (A-NONAX).",
+        "Identical kernel: QuantizedMatmul::eval_gpu chooses the kernel only from transpose, M, N, K, the batch count, bits, group size, x dtype and the device (MLX312:mlx/backend/metal/quantized.cpp:1386-1454; get_qmv_batch_limit depends on K, N and the device); qmm_splitk's split_k depends only on M, N, K and group size (quantized.cpp:787-803). Every input is made row-contiguous by the same rule (ensure_row_contiguous_matrix, quantized.cpp:1393-1400), and mlx_array_new_data imports are already row-contiguous, so no conditional copy distinguishes A from B.",
+        "No order-dependent accumulation visible in source: there is no atomic operation in MLX312:mlx/backend/metal/kernels/quantized.h or mlx/backend/metal/quantized.cpp; the split-K partial sums are written to an intermediate array (quantized.cpp:818-820) by distinct threadgroups and reduced by strided_reduce_general_dispatch (quantized.cpp:860-866), whose column-reduce kernels write each output non-atomically (mlx/backend/metal/kernels/reduction/reduce_col.h:86-90, 139, 250-254, 283-287, 390-394; that file contains no atomic operation). The only floating-point atomic add, Sum::atomic_update (kernels/reduction/ops.h:130-131), is reached from the scatter kernels (kernels/indexing/scatter.h:57, scatter_axis.h:51), not from this path.",
+        "Under D-GEOM every element of the split-K intermediate and of the output is written before it is read (N % 64 == 0 alignment, native-primitives-v1.json#domains.D-GEOM.justification.N_mod_64), so uninitialised allocator memory cannot reach a result."
+      ],
+      "assumption": "A-DET",
+      "failure_policy": "A single differing bit in any element is a FAIL of N-COMP-AB, recorded for that case and contract version and never reclassified. Triage, without retry: if S-STAGED-EQUAL or S-BYTES failed, it is an implementation defect (targeted fix, separately identified rerun). If every input check passed and A and B still differ, A-DET is falsified for this build and host: STOP and report to the planner; replacing bitwise equality by any tolerance or by the R1 gates alone is a new contract version (correction_policy.rule_2). A and B must each still pass the inherited R1 gates against C; passing those never excuses an N-COMP-AB failure."
+    }
+  },
+  "assumptions": {
+    "A-DET": {
+      "statement": "On one device, in one process, the same compiled Metal pipeline dispatched with the same grid and threadgroup geometry on byte-identical, identically shaped and identically strided input buffers produces byte-identical outputs. In particular simd_sum, quad_sum (MLX312:quantized.h:742, 809, 913, 969) and simdgroup_multiply_accumulate (A-MMA) evaluate in an order that, although unknown (U4, U5), is fixed for a given pipeline and input, and results do not depend on buffer addresses or on threadgroup scheduling order.",
+      "basis": "Not provable from pinned source: the order of the hardware reductions is not specified (native-primitives-v1.json U4, U5). The source-visible sources of run-to-run variation (atomics, kernel choice, conditional copies, uninitialised reads) are excluded by the premises of comparisons.a_vs_b_relation.",
+      "if_false": "N-COMP-AB fails; the failure policy applies. The inherited bounds are unaffected (they are order-independent)."
+    }
+  },
+  "copy_and_ownership": {
+    "accounting_method": "For every executed case the child reports, per stage P0-P7, each host buffer it allocates or copies (role, dtype, shape, bytes) and each MLX array it creates (role, operation, dtype, shape), taken from the existing import/astype/QMM entry points and the staging code; the parent compares them with the manifest's array_census (N-COMP-ARRAYS) and with the component plane_bytes. Borrowed ranges are reported as borrows (begin, length, backing shard), not as copies.",
+    "stages": {
+      "fixture_load": "one immutable host buffer per shard (a prefix window when the manifest declares one); the only copy of source bytes before staging",
+      "host_selection": "borrowed &[u8] sub-slices of the backing; zero copies",
+      "staging": "one copy of exactly plane_bytes[component] into each Slice 2B HostTensor (the bridge API takes owned HostTensors; changing that API is not authorized)",
+      "native_import": "mlx_array_new_data copies (L-NOALIAS); four imports",
+      "metadata_widening": "OP-CAST creates two float32 arrays of the metadata shape [N, K/group] only",
+      "execution": "one float32 output [M, N]; the packed U32 weight is consumed unchanged; the kernels decode codes transiently (native-primitives-v1.json#scope.packed_weight_path)",
+      "readback": "one host copy of the output through the Evaluated typestate (E2)"
+    },
+    "lifetimes": "backing outlives every plane that borrows it; HostTensors are owned by the case; NativeArray<'ctx> handles are dropped before the case ends (zero live arrays between cases, as in Slice 2B)",
+    "prohibited": ["a complete float weight matrix on the QMM path", "unsafe reinterpretation to cut copies", "mutation of the backing while borrowed"]
+  },
+  "mutation_controls": {
+    "principle": "A mutation control proves that the independent checks are SENSITIVE to one specific selection defect. The harness injects the defect at the selection-record level through a test-only path of the child (never through a public plane constructor): it replaces the named ranges or identity fields of the record, reads the bytes at the mutated ranges from the backing, and submits the mutated record to the same checks. Every listed check must report a mismatch, the mutation must have taken effect exactly as the manifest specifies (the mutated ranges and sha256 equal composition.mutation.ranges/sha256), and no native call is issued in the case. A control that is not detected, or detected by a different set of checks, is a FAIL.",
+    "controls": [
+      {"id": "mut-wrong-index", "defect": "selection arithmetic uses expert (e+1) mod E while the identity records e", "detected_by": ["S-RANGES:weight", "S-RANGES:scales", "S-RANGES:biases", "S-BYTES:weight", "S-BYTES:scales", "S-BYTES:biases"]},
+      {"id": "mut-wrong-stride", "defect": "weight plane stride one u32 word too large on expert 2 of 4 (stays inside the tensor; invisible on expert 0 by construction)", "detected_by": ["S-RANGES:weight", "S-BYTES:weight"]},
+      {"id": "mut-swap-scales", "defect": "scales of expert 2 with weight and biases of expert 3", "detected_by": ["S-RANGES:scales", "S-BYTES:scales"]},
+      {"id": "mut-swap-biases", "defect": "biases of expert 0 with weight and scales of expert 1 (three shards)", "detected_by": ["S-RANGES:biases", "S-BYTES:biases"]},
+      {"id": "mut-override-ignored-resolve", "defect": "the 8-bit override is dropped from the configuration", "detected_by": ["C-R-RESOLVE"], "expected_slice1": "InconsistentOverride, implied_bits 8"},
+      {"id": "mut-override-ignored-plane", "defect": "the plane records the 4-bit default for an 8-bit-override module (ranges and bytes unchanged)", "detected_by": ["S-IDENTITY:bits"]}
+    ],
+    "detectability_precondition": "Every expert of every module has pairwise-distinct packed weights, scales and biases (asserted by the generator and the test), so a range defect that selects another expert's component changes that component's bytes.",
+    "not_claimed": "Arbitrary corrupted bytes are NOT claimed detectable without an identity or reference check: a byte change inside a correctly selected range is detected only by S-BYTES against the oracle hash (fixtures) or by the R1 gates, and in production (no oracle) only by a payload identity such as a verified shard sha256. Mutations are not claimed to cover every possible selection defect."
+  },
+  "frozen_population": {
+    "generator": "scripts/research/f020_native_composition_fixtures_v1.py",
+    "generator_sha256": "e4214ffbaa8e5da44284cf7f7e8e7b9df25effc6c2d4c1f4bf2df13ee1379f86",
+    "generator_test": "scripts/research/tests/test_f020_native_composition_fixtures_v1.py",
+    "manifest": "fixtures/native-composition/manifest.json",
+    "manifest_sha256": "bae476dd7d2fba38ad9936cdcf522d203a0fe25e35ca0e03473009d8aa042cf8",
+    "files_listing_sha256": "2d314e23ed061bb82d757edb1f6a9fe783d2b2da23c94f794bc07757f34058b8",
+    "files_listing_method": "inside fixtures/native-composition: find checkpoints mutations standalone -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256 (27 files: 9 checkpoint files (5 shards, 1 index, 3 configs), 1 mutated config, 17 standalone case files; the manifest records the same value)",
+    "file_count": 28,
+    "case_count": 31,
+    "composition": {
+      "FX-COMP-ACCEPT": "11: first/middle/last experts; vector and matrix x; 4-bit default and 8-bit override; single shard and three shards; companions in three different shards; a tensor starting at data offset 0; K 128/256/512 covering qmv_quad, qmv, qmv_fast and qmm_t_splitk (split_k 2, 4, 8); the admitted expert of a module with a refused expert",
+      "FX-COMP-SEQUENCE": "3: A-B-A in one child (8-bit expert 1, 4-bit default module, 8-bit expert 1 again with the same x)",
+      "FX-COMP-REFUSE": "8: C-R-INDEX-RANGE x2 (E, 2^64-1), C-R-INDEX-RANK x2 ([], [0,0]), C-R-OVERFLOW (E-RANGE probe), C-R-BACKING (window one byte short), C-R-SOURCE-BINDING (identical-header sibling), C-R-MODULE-BINDING (stack_a weight with stack_b companions through AffineTriple::new)",
+      "FX-COMP-INHERITED-REFUSE": "3: R-GEOMETRY (N 32), R-DOMAIN-META-RANGE (one expert's scale 2^-33), R-XSHAPE (x K 128 vs plane K 256); A and B must refuse with the same id",
+      "FX-COMP-MUTATION": "6: mutation_controls.controls"
+    },
+    "prng": "Slice 2B splitmix64 and value draws (draw_codes, draw_meta, draw_x, draw_float) loaded read-only from the sha256-verified Slice 2B generator; per-draw seed = first 8 bytes (big-endian) of sha256(b'f020-2c:' + label)",
+    "regeneration": "`--check` regenerates every file in memory and requires byte equality and no extra file; the test regenerates twice into fresh directories and compares with the committed tree",
+    "parent_validation": "Before accepting a child report the parent verifies: (1) sha256(manifest.json) == manifest_sha256 above; (2) every checkpoint file's and standalone file's sha256 == the manifest's; (3) the files listing sha256 == files_listing_sha256; (4) the report's case-id set equals the manifest's exactly (no missing, unexpected or duplicate id); (5) the report echoes this contract's, the manifest's, the generator's and the Slice 2B contract's sha256; any mismatch is a FAIL"
+  },
+  "execution": {
+    "child": "a new mode of the existing qualify child (e.g. --mode compose), not a change to --mode qualify; the same start-environment assertion (R-NAX), single error handler, default device GPU, provenance (E3), E4 canary at start and end, one NativeContext, one thread, all cases in manifest order (the three seq-aba cases consecutive), report written atomically",
+    "parent": "a separate parent test target that launches the compose child with the Slice 2B fixed environment and the frozen CHILD_TIMEOUT_SECONDS watchdog (SIGKILL, waitpid, TIMEOUT, no retry); the parent failure conditions of native-primitives-v1.json#error_handling.child_process apply unchanged; cleanup accounting (cleanup.errors empty, result handles balanced, zero live arrays at context drop, no double free) as in Slice 2B",
+    "slice_2b_regression": "the existing Slice 2B invocation keeps its meaning and its 363-case run (all Slice 2B gate counts unchanged) remains a regression requirement of every Slice 2C candidate"
+  },
+  "reporting_and_ci": {
+    "report": "the child report carries schema pulsarmlx.f020.slice2c-child-report/1.0.0, echoes contract_sha256, manifest_sha256, generator_sha256 and slice2b_contract_sha256, and per case: id, outcome (executed | refused | detected | error), refusal id or detected checks, call-counter deltas, selection record (identity, ranges, sha256), copy/array census, A and B output files with sha256 (executed cases)",
+    "summary": "the parent summary (schema pulsarmlx.f020.slice2c-qualification/1.0.0) records exact case-id accounting (31 ids), per-gate case counts, every failure, the frozen hashes, the child outcome and timeout, and the host architecture",
+    "ci": "a new step in the macos native job, after the Slice 2B step, running only the composition parent target; added first as non-required. Making it required, or changing any existing required step's body, uses the doctor procedure of scripts/ci/f017_measurement_scope_v1.py: commit X adds or changes the step; commit Y adds its exact name to REQUIRED_EXTRA_STEP_NAMES and advances RESOLUTION_BASE and RESOLUTION_WORKFLOW_SHA256 to X, containing the earlier required blocks byte for byte",
+    "evidence": "append-only evidence records under docs/architecture/reviews/evidence/ name the candidate commit, the contract/manifest/generator hashes, the CI run and the summary sha256; a failed attempt is a record too"
+  },
+  "acceptance_criteria_slice_2c": [
+    "C1: the frozen population validates (generator --check; manifest, file and listing hashes) before and after the run; the generator test passes.",
+    "C2: every FX-COMP-ACCEPT and FX-COMP-SEQUENCE case: S-IDENTITY, S-RANGES, S-BYTES, S-STAGED-EQUAL, S-SOURCE-UNCHANGED, N-COMP-ARRAYS, N-QMM-SHAPE-DTYPE(A and B), N-COMP-AB, G-QMM-EXACT and G-QMM-RUST for A and for B against C, G-R1-SELF-QMM on C; family, split_k and gamma exponent recorded.",
+    "C3: N-COMP-ABA on seq-aba-2 against seq-aba-0.",
+    "C4: every FX-COMP-REFUSE case refused with exactly its expected C-R id and a whole-case MLX-C call delta of (0 numerical, 0 imports).",
+    "C5: every FX-COMP-INHERITED-REFUSE case: selection checks pass, then A and B are refused by the existing bridge with exactly the expected Slice 2B id, numerical_before_decision = 0 and imports_before_decision = 0.",
+    "C6: every FX-COMP-MUTATION case detected by exactly its detected_by checks, the mutation applied exactly as specified, and no native call in the case.",
+    "C7: I-PLANE-SINGLE-INDEX and I-PLANE-NO-REINTERPRET verified statically; I-PLANE-NO-F32-WEIGHT through N-COMP-ARRAYS; the library crate stays MLX-free and #![forbid(unsafe_code)]; the child still contains exactly one mlx_set_error_handler call site and no newly linked crate calls it.",
+    "C8: E1-E4 and E6 in the compose child on the required gate host; E5 recorded; cleanup accounting clean; parent failure conditions and watchdog as in Slice 2B.",
+    "C9: the Slice 2B 363-case qualification passes unchanged at the same candidate."
+  ],
+  "unknowns": [
+    {"id": "U-DET", "what": "Whether A-DET holds for the pinned 0.31.2 build on the gate host (hardware reduction order fixed per pipeline and input; no address or scheduling dependence).", "impact": "decides N-COMP-AB; the inherited bounds are unaffected"},
+    {"id": "U-S2C-1", "what": "The inherited Slice 2B unknowns U1-U16, U18, U19 (source-pins-slice2.json#unknowns) apply unchanged."}
+  ],
+  "not_claimed": [
+    "no real-checkpoint payload, production geometry, full expert MLP, routing, gather_qmm or model-graph claim",
+    "no claim that production stacked tensors (source-pins-slice2.json#production_geometry) are qualified: only synthetic small planes are composed",
+    "no claim about how a checkpoint's backing is loaded, mapped or cached in production; the fixture backing (a whole-shard or windowed host buffer) is a qualification device",
+    "no claim that arbitrary corrupted bytes are detectable without an identity or reference check",
+    "no claim that A equals B on a different device, process, build or MLX version, or for different inputs",
+    "no performance, memory-footprint or residency claim",
+    "nothing outside the inherited D-GEOM and D-NUM: those inputs are refused, not bounded"
+  ]
+}

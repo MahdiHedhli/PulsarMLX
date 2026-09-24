@@ -1,0 +1,11 @@
+{
+ "model_type": "synthetic-composition",
+ "quantization": {
+  "bits": 4,
+  "block.2.stack_q": {
+   "bits": 8,
+   "group_size": 64
+  },
+  "group_size": 64
+ }
+}
