@@ -289,40 +289,173 @@ fn staged_equal(rec: &Value, expected: &Value) -> bool {
     })
 }
 
-/// S-SOURCE-UNCHANGED from the phase-labelled records only: every shard file
-/// at every phase, every backing buffer (whole, not a window, with the file's
-/// length and hash) after selection and after execution, and the standalone
-/// file before and after, equal `expected.source_hashes`.
-fn source_unchanged(rec: &Value, expected: &Value, file_lens: &BTreeMap<String, u64>) -> bool {
-    let ph = &rec["source_hashes"];
-    let shards = &expected["shards"];
-    let Some(shard_map) = shards.as_object() else {
+/// An object whose key set equals `want`'s exactly and whose every value
+/// equals `want`'s (no missing, no extra key).
+fn exact_map(got: &Value, want: &Map<String, Value>) -> bool {
+    got.as_object().is_some_and(|g| {
+        g.len() == want.len()
+            && g.keys().eq(want.keys())
+            && want.iter().all(|(k, v)| g.get(k) == Some(v))
+    })
+}
+
+/// A phase's backing records: one record per expected shard, EXACTLY -- the
+/// reported shard names are unique and their set equals the expected set
+/// (no duplicate, no missing, no extra shard) -- and every record is the
+/// whole file (not a window) with the file's length and expected hash at
+/// load and as held now. Missing evidence fails (S-NO-OUTPUT-SUBSTITUTION).
+fn backing_exact(
+    phase: &Value,
+    shard_map: &Map<String, Value>,
+    file_lens: &BTreeMap<String, u64>,
+) -> bool {
+    let Some(list) = phase.get("backing").and_then(Value::as_array) else {
         return false;
     };
-    if shard_map.is_empty() || expected["phases"] != json!(fc::SOURCE_PHASES) {
-        return false;
-    }
-    let backing_ok = |phase: &Value| {
-        let Some(list) = phase["backing"].as_array() else {
+    let mut seen: BTreeSet<&str> = BTreeSet::new();
+    for b in list {
+        let Some(name) = b.get("shard").and_then(Value::as_str) else {
             return false;
         };
-        list.len() == shard_map.len()
-            && list.iter().all(|b| {
-                let name = b["shard"].as_str().unwrap_or_default();
-                shard_map.get(name).is_some()
-                    && b["sha256"] == shard_map[name]
-                    && b["file_sha256_at_load"] == shard_map[name]
-                    && b["len"].as_u64() == file_lens.get(name).copied()
-                    && b["window"] == false
-            })
+        if !seen.insert(name) {
+            return false; // duplicate record
+        }
+        let Some(want) = shard_map.get(name) else {
+            return false; // extra shard
+        };
+        let entry_ok = b.get("sha256") == Some(want)
+            && b.get("file_sha256_at_load") == Some(want)
+            && b.get("len").and_then(Value::as_u64).is_some()
+            && b.get("len").and_then(Value::as_u64) == file_lens.get(name).copied()
+            && b.get("file_len").and_then(Value::as_u64) == file_lens.get(name).copied()
+            && b.get("window") == Some(&Value::Bool(false));
+        if !entry_ok {
+            return false;
+        }
+    }
+    // Exhaustive: every expected shard has exactly one record.
+    seen.len() == shard_map.len()
+        && seen
+            .iter()
+            .copied()
+            .eq(shard_map.keys().map(String::as_str))
+}
+
+/// S-SOURCE-UNCHANGED from the phase-labelled records only: for EACH phase,
+/// the reported shard-file set equals the expected set exactly with the
+/// expected hashes; the backing records after selection and after execution
+/// are unique and exhaustive (see [`backing_exact`]); the standalone file
+/// before and after equals the expected one exactly.
+fn source_unchanged(rec: &Value, expected: &Value, file_lens: &BTreeMap<String, u64>) -> bool {
+    let ph = &rec["source_hashes"];
+    let Some(shard_map) = expected["shards"].as_object() else {
+        return false;
     };
-    ph["before_load"]["shards"] == *shards
-        && ph["before_load"]["standalone"] == expected["standalone"]
-        && ph["after_host_selection"]["shards"] == *shards
-        && backing_ok(&ph["after_host_selection"])
-        && ph["after_native_execution"]["shards"] == *shards
-        && backing_ok(&ph["after_native_execution"])
-        && ph["after_native_execution"]["standalone"] == expected["standalone"]
+    let Some(standalone) = expected["standalone"].as_object() else {
+        return false;
+    };
+    if shard_map.is_empty()
+        || standalone.len() != 1
+        || expected["phases"] != json!(fc::SOURCE_PHASES)
+        || file_lens.len() < shard_map.len()
+    {
+        return false;
+    }
+    exact_map(&ph["before_load"]["shards"], shard_map)
+        && exact_map(&ph["before_load"]["standalone"], standalone)
+        && exact_map(&ph["after_host_selection"]["shards"], shard_map)
+        && backing_exact(&ph["after_host_selection"], shard_map, file_lens)
+        && exact_map(&ph["after_native_execution"]["shards"], shard_map)
+        && backing_exact(&ph["after_native_execution"], shard_map, file_lens)
+        && exact_map(&ph["after_native_execution"]["standalone"], standalone)
+}
+
+/// Controls for S-SOURCE-UNCHANGED (implementation review r1, finding 1):
+/// every defect below, applied to an otherwise valid record, must be
+/// REJECTED. Returns (label, rejected) for each; the valid record itself
+/// must be accepted, reported as ("valid record accepted", accepted).
+fn source_evidence_controls(
+    rec: &Value,
+    expected: &Value,
+    file_lens: &BTreeMap<String, u64>,
+) -> Vec<(String, bool)> {
+    let mut out = vec![(
+        "valid record accepted".to_string(),
+        source_unchanged(rec, expected, file_lens),
+    )];
+    let mut add = |label: String, mutate: &dyn Fn(&mut Value)| {
+        let mut r = rec.clone();
+        mutate(&mut r);
+        out.push((label, !source_unchanged(&r, expected, file_lens)));
+    };
+    for phase in ["after_host_selection", "after_native_execution"] {
+        let n = rec["source_hashes"][phase]["backing"]
+            .as_array()
+            .map_or(0, Vec::len);
+        if n >= 2 {
+            add(
+                format!("{phase}: duplicate backing record replacing another shard"),
+                &|r| {
+                    let list = r["source_hashes"][phase]["backing"].as_array_mut().unwrap();
+                    let first = list[0].clone();
+                    for slot in list.iter_mut().skip(1) {
+                        *slot = first.clone();
+                    }
+                },
+            );
+            add(
+                format!("{phase}: one duplicated backing record added"),
+                &|r| {
+                    let list = r["source_hashes"][phase]["backing"].as_array_mut().unwrap();
+                    let first = list[0].clone();
+                    list.push(first);
+                },
+            );
+        }
+        add(format!("{phase}: missing backing record"), &|r| {
+            r["source_hashes"][phase]["backing"]
+                .as_array_mut()
+                .unwrap()
+                .pop();
+        });
+        add(
+            format!("{phase}: extra backing record for another shard"),
+            &|r| {
+                let list = r["source_hashes"][phase]["backing"].as_array_mut().unwrap();
+                let mut extra = list[0].clone();
+                extra["shard"] = json!("model-extra.safetensors");
+                list.push(extra);
+            },
+        );
+        add(format!("{phase}: backing evidence absent"), &|r| {
+            r["source_hashes"][phase]
+                .as_object_mut()
+                .unwrap()
+                .remove("backing");
+        });
+        add(format!("{phase}: windowed backing"), &|r| {
+            r["source_hashes"][phase]["backing"][0]["window"] = json!(true);
+        });
+    }
+    for phase in fc::SOURCE_PHASES {
+        add(format!("{phase}: missing shard-file hash"), &|r| {
+            let m = r["source_hashes"][phase]["shards"].as_object_mut().unwrap();
+            let k = m.keys().next().unwrap().clone();
+            m.remove(&k);
+        });
+        add(format!("{phase}: extra shard-file hash"), &|r| {
+            r["source_hashes"][phase]["shards"]["model-extra.safetensors"] = json!("0".repeat(64));
+        });
+        add(format!("{phase}: phase evidence absent"), &|r| {
+            r["source_hashes"].as_object_mut().unwrap().remove(phase);
+        });
+    }
+    for phase in ["before_load", "after_native_execution"] {
+        add(format!("{phase}: extra standalone entry"), &|r| {
+            r["source_hashes"][phase]["standalone"]["standalone/extra.bin"] = json!("0".repeat(64));
+        });
+    }
+    out
 }
 
 fn counters_match(got: &Value, want: &Value) -> bool {
@@ -728,6 +861,9 @@ fn composition_qualification_of_the_frozen_population() {
     let mut copy = Vec::new();
     let mut worst: BTreeMap<String, (usize, f64, f64)> = BTreeMap::new();
     let mut outputs_a: BTreeMap<String, Vec<u8>> = BTreeMap::new();
+    let mut source_control_failures: Vec<String> = Vec::new();
+    let mut source_controls_run = 0usize;
+    let mut source_control_cases = 0usize;
     for spec in &manifest.cases {
         let rec = &records[&spec.id];
         let d = &docs[&spec.id];
@@ -794,7 +930,22 @@ fn composition_qualification_of_the_frozen_population() {
                 }
                 if checks.contains("S-SOURCE-UNCHANGED") {
                     let p = source_unchanged(rec, &expected["source_hashes"], &file_lens);
-                    case_pass &= gate("S-SOURCE-UNCHANGED", p, json!(null), &mut gates);
+                    // The predicate's own controls on this real record: every
+                    // incomplete, duplicated or extra evidence form is rejected.
+                    let ctl = source_evidence_controls(rec, &expected["source_hashes"], &file_lens);
+                    let not_rejected: Vec<&String> =
+                        ctl.iter().filter(|(_, ok)| !ok).map(|(l, _)| l).collect();
+                    if !not_rejected.is_empty() {
+                        source_control_failures.push(format!("{}: {not_rejected:?}", spec.id));
+                    }
+                    source_controls_run += ctl.len();
+                    source_control_cases += 1;
+                    case_pass &= gate(
+                        "S-SOURCE-UNCHANGED",
+                        p,
+                        json!({"controls_rejected": ctl.len() - not_rejected.len(), "controls": ctl.len()}),
+                        &mut gates,
+                    );
                 }
                 // E1 on both sides (the bridge asserted the device facts).
                 let e1 = ["A", "B"]
@@ -1120,6 +1271,55 @@ fn composition_qualification_of_the_frozen_population() {
         fail("N-COMP-ABA: seq-aba-2 A output differs from seq-aba-0 A output (or order/outcome wrong)".into());
     }
 
+    // S-SOURCE-UNCHANGED evidence controls (implementation review r1 finding 1).
+    if source_control_cases != 17 || !source_control_failures.is_empty() {
+        fail(format!(
+            "S-SOURCE-UNCHANGED evidence controls: {source_control_cases} cases, not rejected: {source_control_failures:?}"
+        ));
+    }
+    // E6 in the compose child (contract C8; implementation review r1 finding
+    // 2): the CPU-context negative control on a composed, staged plane is
+    // refused R-DEVICE before any MLX-C numerical call or import. A control
+    // like E4, not a manifest case: exactly one, and it must pass.
+    let e6 = &report["e6_cpu_negative_control"];
+    let e6_case = e6["case_id"].as_str().unwrap_or_default().to_string();
+    let e6_oracle = docs
+        .get(&e6_case)
+        .map(|d| d["oracle"].clone())
+        .unwrap_or(Value::Null);
+    let e6_selection_ok = e6["selection"].is_object()
+        && parent_mismatches(
+            &e6["selection"],
+            &e6_oracle["identity"],
+            &e6_oracle["ranges"],
+            &e6_oracle["sha256"],
+        )
+        .is_empty();
+    let e6_pass = e6.is_object()
+        && e6["context"] == "cpu"
+        && docs
+            .get(&e6_case)
+            .is_some_and(|d| d["family"] == "FX-COMP-ACCEPT")
+        && e6_selection_ok
+        && e6["outcome"] == "refused"
+        && e6["refusal_id"] == "R-DEVICE"
+        && e6["stats"]["device_facts_gpu"] == false
+        && e6["stats"]["numerical_calls_before_decision"] == 0
+        && e6["stats"]["imports_before_decision"] == 0
+        && counters_match(
+            &e6["counters"],
+            &json!({"imports": 0, "numerical_calls": 0, "result_handles_created": 0, "result_handles_adopted": 0, "result_handles_freed_on_error_path": 0, "array_free_calls": 0}),
+        )
+        && e6["cpu_context_live_arrays_after"] == 0;
+    let controls = json!({
+        "E6-CPU-REFUSED": {"cases": 1, "passed": e6_pass as usize, "record": e6, "selection_matches_oracle": e6_selection_ok},
+        "S-SOURCE-UNCHANGED-evidence-controls": {"cases": source_control_cases, "controls_run": source_controls_run,
+                                                  "not_rejected": source_control_failures},
+    });
+    if !e6_pass {
+        fail(format!("E6-CPU-REFUSED in the compose child: {e6}"));
+    }
+
     // Exact case-id accounting and every expected gate count, exactly.
     let by_family: BTreeMap<String, usize> =
         manifest.cases.iter().fold(BTreeMap::new(), |mut m, c| {
@@ -1230,6 +1430,7 @@ fn composition_qualification_of_the_frozen_population() {
         "mutations": mutations,
         "copy_accounting": copy,
         "independence": {"static_source": static_ind, "nm": nm_ind, "handler": handler},
+        "controls": controls,
         "composition_gates_summary": exact["summary"],
         "cases": per_case,
         "failures": failures,
@@ -1570,6 +1771,61 @@ fn sealed_plane_interface() {
         checked += 1;
     }
     assert_eq!(checked, 14);
+}
+
+/// S-SOURCE-UNCHANGED evidence controls (implementation review r1 finding
+/// 1) on synthetic records built from the manifest's own expectations: the
+/// exact record is accepted; a duplicate backing record replacing another
+/// shard, a missing or extra shard, absent evidence and a window are all
+/// rejected, in both the after-selection and after-execution phases.
+#[test]
+fn source_unchanged_evidence_controls() {
+    let raw = std::fs::read(repo_root().join(fc::MANIFEST_PATH)).unwrap();
+    let doc = fc::manifest_document(&raw).unwrap();
+    let docs = fc::case_documents(&doc);
+    let mut checked = 0;
+    for id in [
+        "acc-b-stack_d-e0-m32",
+        "acc-a-stack_a-e0-m1",
+        "inh-meta-range-e1",
+    ] {
+        let d = &docs[id];
+        let exp = &d["expected"]["source_hashes"];
+        let ck = d["composition"]["checkpoint"]
+            .as_str()
+            .unwrap()
+            .trim_start_matches("checkpoints/");
+        let lens: BTreeMap<String, u64> = doc["checkpoints"][ck]["files"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .map(|(k, v)| (k.clone(), v["bytes"].as_u64().unwrap()))
+            .collect();
+        let backing: Vec<Value> = exp["shards"]
+            .as_object()
+            .unwrap()
+            .iter()
+            .map(|(n, h)| json!({"shard": n, "sha256": h, "file_sha256_at_load": h, "len": lens[n], "file_len": lens[n], "window": false}))
+            .collect();
+        let rec = json!({"source_hashes": {
+            "before_load": {"shards": exp["shards"], "standalone": exp["standalone"]},
+            "after_host_selection": {"shards": exp["shards"], "backing": backing},
+            "after_native_execution": {"shards": exp["shards"], "backing": backing, "standalone": exp["standalone"]},
+        }});
+        let ctl = source_evidence_controls(&rec, exp, &lens);
+        let multi = exp["shards"].as_object().unwrap().len() >= 2;
+        for (label, ok) in &ctl {
+            assert!(ok, "{id}: {label}");
+        }
+        let duplicate_controls = ctl.iter().filter(|(l, _)| l.contains("duplicate")).count();
+        assert_eq!(duplicate_controls, if multi { 4 } else { 0 }, "{id}");
+        println!(
+            "{id}: {} controls, all rejected (valid record accepted)",
+            ctl.len() - 1
+        );
+        checked += 1;
+    }
+    assert_eq!(checked, 3);
 }
 
 /// Harness extraction regression (plan section 2.3) and composition report
