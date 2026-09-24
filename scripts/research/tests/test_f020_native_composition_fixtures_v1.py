@@ -47,7 +47,7 @@ SLICE2B_CASES_LISTING = "ed0c2e73420213a1ae316ea90a20100fcefee87bade32dec36ff7da
 
 STDLIB_IMPORTS = {"__future__", "argparse", "hashlib", "importlib", "importlib.util", "json",
                   "struct", "sys", "pathlib"}
-EXPECTED_FAMILIES = {"FX-COMP-ACCEPT": 11, "FX-COMP-SEQUENCE": 3, "FX-COMP-REFUSE": 8,
+EXPECTED_FAMILIES = {"FX-COMP-ACCEPT": 11, "FX-COMP-SEQUENCE": 3, "FX-COMP-REFUSE": 9,
                      "FX-COMP-INHERITED-REFUSE": 3, "FX-COMP-MUTATION": 6}
 COMPONENTS = ("weight", "scales", "biases")
 WIDTH = {"U32": 4, "F32": 4, "F16": 2, "BF16": 2}
@@ -257,6 +257,20 @@ class CompositionFixtureTests(unittest.TestCase):
             detected = case["expected"]["detected_by"]
             self.assertEqual(base["expected"]["outcome"], "accept")
             self.assertTrue(detected)
+            # EXACT set equality: the detection set is precisely the set of
+            # mismatches the specified mutation causes, no more and no fewer.
+            implied = set()
+            if "ranges" in mut:
+                for c in COMPONENTS:
+                    if mut["ranges"][c] != base["oracle"]["ranges"][c]:
+                        implied |= {"S-RANGES:" + c, "S-BYTES:" + c}
+            if "identity" in mut:
+                implied |= {"S-IDENTITY:" + k for k in mut["identity"]
+                            if mut["identity"][k] != base["oracle"]["identity"][k]}
+            if "config" in mut:
+                implied.add("C-R-RESOLVE")
+            self.assertEqual(implied, set(detected), case["id"])
+            self.assertEqual(len(detected), len(set(detected)), case["id"])
             if "ranges" in mut:
                 for c in COMPONENTS:
                     changed = mut["ranges"][c] != base["oracle"]["ranges"][c]
@@ -267,7 +281,7 @@ class CompositionFixtureTests(unittest.TestCase):
                     self.assertEqual(sha256(data), mut["sha256"][c])
             if "identity" in mut:
                 diff = sorted(k for k in mut["identity"] if mut["identity"][k] != base["oracle"]["identity"][k])
-                self.assertIn("bits", diff)
+                self.assertEqual(diff, ["bits", "resolved_from"])
             if "config" in mut:
                 q = json.loads((FIXTURES / mut["config"]).read_text())["quantization"]
                 self.assertNotIn(base["composition"]["module"], q)
@@ -276,6 +290,56 @@ class CompositionFixtureTests(unittest.TestCase):
         self.assertEqual(kinds, {"wrong_expert_index", "wrong_plane_stride", "scales_from_other_expert",
                                  "biases_from_other_expert", "override_ignored_at_resolution",
                                  "override_ignored_in_plane"})
+
+    def test_recipe_probe_uses_identical_descriptors_and_a_shape_consistent_other_recipe(self):
+        case = self.cases["ref-recipe-mismatch"]
+        comp = case["composition"]
+        self.assertEqual(comp["entry"], "E-SELECT")
+        self.assertEqual(comp["triple_components"], {c: comp["module"] + "." + c for c in COMPONENTS})
+        m = self.manifest["checkpoints"]["ck-a-single"]["modules"][comp["module"]]
+        recipe = comp["triple_spec"]
+        self.assertNotEqual((recipe["bits"], recipe["group_size"]), (m["bits"], m["group_size"]))
+        # packed_cols*32 == groups*group*bits holds for BOTH recipes (Slice 1 admits either)
+        for bits, group in ((recipe["bits"], recipe["group_size"]), (m["bits"], m["group_size"])):
+            self.assertEqual(m["packed_cols"] * 32, m["groups"] * group * bits)
+        self.assertEqual(case["expected"]["violated_guards"], ["C-R-RECIPE-BINDING"])
+
+    def test_array_census_separates_measured_handles_from_derived_workspace(self):
+        for case in self.manifest["cases"]:
+            if case["expected"]["outcome"] != "accept":
+                continue
+            census = case["expected"]["array_census"]
+            roles = [h["role"] for h in census["bridge_visible_handles"]]
+            self.assertEqual(roles, ["x", "w", "scales", "biases", "scales_f32", "biases_f32", "out"])
+            self.assertEqual(census["measured_counter_deltas"]["imports"], 4)
+            self.assertEqual(census["measured_counter_deltas"]["result_handles_created"], 3)
+            fams = case["expected"]["families_0_31_2"]
+            split = [f for f in fams if f["family"] == "qmm_t_splitk"]
+            ws = census["source_derived_workspace"]
+            self.assertEqual(len(ws), len(split), case["id"])
+            m, n = case["params"]["M_eff"], case["params"]["N"]
+            for w, f in zip(ws, split):
+                self.assertEqual((w["dtype"], w["shape"]), ("F32", [f["split_k"], m, n]))
+                self.assertFalse(w["is_weight_matrix"])
+                self.assertEqual(w["accounting"], "source-derived, not measured")
+        matrix = [c for c in self.manifest["cases"] if c["expected"]["outcome"] == "accept"
+                  and c["expected"]["array_census"]["source_derived_workspace"]]
+        self.assertEqual(len(matrix), 8)
+
+    def test_staged_inputs_and_source_hashes_are_the_manifest_records(self):
+        for case in self.manifest["cases"]:
+            staged = case["expected"].get("staged_inputs")
+            if staged is None:
+                continue
+            self.assertEqual(list(staged), ["x", "w", "scales", "biases"])
+            for t in case["tensors"]:
+                self.assertEqual(staged[t["name"]], {k: t[k] for k in ("dtype", "shape", "nbytes", "sha256")})
+            src = case["expected"]["source_hashes"]
+            self.assertEqual(src["phases"], ["before_load", "after_host_selection", "after_native_execution"])
+            ck = self.manifest["checkpoints"][case["composition"]["checkpoint"].split("/", 1)[1]]
+            self.assertEqual(src["shards"], {n: v["sha256"] for n, v in ck["files"].items()
+                                             if n.endswith(".safetensors")})
+            self.assertEqual(src["standalone"], {case["file"]: case["file_sha256"]})
 
     def test_sibling_checkpoint_shares_the_header_but_not_the_payload(self):
         a = (FIXTURES / "checkpoints/ck-a-single/model.safetensors").read_bytes()

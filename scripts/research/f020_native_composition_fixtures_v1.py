@@ -57,7 +57,7 @@ FORBIDDEN_NAME_TOKENS = ("glm", "pipenetwork", "qwen", "switch_mlp", "self_attn"
 # Composition refusal order (contract composition_refusals.order), evaluated
 # before any native call; the Slice 2B order then applies to the selected plane.
 COMPOSITION_REFUSAL_ORDER = [
-    "C-R-RESOLVE", "C-R-SOURCE-BINDING", "C-R-MODULE-BINDING",
+    "C-R-RESOLVE", "C-R-SOURCE-BINDING", "C-R-MODULE-BINDING", "C-R-RECIPE-BINDING",
     "C-R-INDEX-RANK", "C-R-INDEX-RANGE", "C-R-OVERFLOW", "C-R-BACKING",
 ]
 SELECTION_CHECKS = ["S-IDENTITY", "S-RANGES", "S-BYTES", "S-STAGED-EQUAL", "S-SOURCE-UNCHANGED"]
@@ -413,6 +413,57 @@ def resolution_consistent(spec: ModuleSpec, config_bits: int, config_group: int)
     return consistent, implied
 
 
+def recipe_of(spec: ModuleSpec, bits=None, group=None):
+    """The recipe a triple carries: (bits, group, mode, metadata dtype)."""
+    return {"bits": spec.bits if bits is None else bits, "group_size": spec.group if group is None else group,
+            "mode": "affine", "metadata_dtype": spec.meta}
+
+
+def array_census(spec: ModuleSpec, m: int, families):
+    """Bridge-visible handles (measured by the child's counters and records) and
+    source-derived internal workspace (NOT measured; disclosed from pinned source)."""
+    handles = [
+        {"role": "x", "op": "import", "dtype": "F32", "shape": [m, spec.K],
+         "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"},
+        {"role": "w", "op": "import", "dtype": "U32", "shape": [spec.N, spec.P],
+         "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"},
+        {"role": "scales", "op": "import", "dtype": spec.meta, "shape": [spec.N, spec.G],
+         "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"},
+        {"role": "biases", "op": "import", "dtype": spec.meta, "shape": [spec.N, spec.G],
+         "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"},
+        {"role": "scales_f32", "op": "astype", "dtype": "F32", "shape": [spec.N, spec.G],
+         "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"},
+        {"role": "biases_f32", "op": "astype", "dtype": "F32", "shape": [spec.N, spec.G],
+         "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"},
+        {"role": "out", "op": "quantized_matmul", "dtype": "F32", "shape": [m, spec.N],
+         "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"},
+    ]
+    workspace = []
+    for f in families:
+        if f["family"] == "qmm_t_splitk":
+            workspace.append({
+                "role": "splitk_intermediate", "dtype": "F32", "shape": [f["split_k"], m, spec.N],
+                "nbytes": f["split_k"] * m * spec.N * 4,
+                "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, "
+                          "allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small "
+                          "(split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+                "accounting": "source-derived, not measured",
+                "is_weight_matrix": False,
+                "holds": "per-partition float32 partial OUTPUT sums, not weights"})
+    return {"bridge_visible_handles": handles,
+            "measured_counter_deltas": {"imports": 4, "result_handles_created": 3, "result_handles_adopted": 3,
+                                        "result_handles_freed_on_error_path": 0, "array_free_calls": 7},
+            "source_derived_workspace": workspace,
+            "source_derived_workspace_note": ("vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal "
+                                              "array beyond the output in MLX312 quantized.cpp; inputs are already "
+                                              "row-contiguous, so ensure_row_contiguous_matrix copies nothing")}
+
+
+def staged_inputs(tensors):
+    return {t["name"]: {"dtype": t["dtype"], "shape": t["shape"], "nbytes": t["nbytes"], "sha256": t["sha256"]}
+            for t in tensors}
+
+
 def composition_guards(sit):
     """Evaluate EVERY composition guard independently (True violated, False
     satisfied, "n/a: ..." when its precondition does not hold)."""
@@ -432,6 +483,10 @@ def composition_guards(sit):
         return G
     G["C-R-SOURCE-BINDING"] = sit["backing_source"] != sit["triple_source"]
     G["C-R-MODULE-BINDING"] = any(sit["triple_names"][c] != sit["module"] + SUFFIX[c] for c in COMPONENTS)
+    # The caller's triple is never the authority: its recipe (bits, group, mode,
+    # metadata dtype) must equal the one the Slice 1 resolution authority
+    # (QuantizationConfig + classify_module) resolves for the module.
+    G["C-R-RECIPE-BINDING"] = sit["triple_spec"] != sit["resolved_spec"]
     rank_ok = len(sit["index_path"]) == len(sit["leading"])
     G["C-R-INDEX-RANK"] = not rank_ok
     if not rank_ok:
@@ -494,6 +549,16 @@ def population():
     def windows_full(ck):
         return {n: len(b) for n, b in ck["shards"].items()}
 
+    def source_hashes(ck, standalone_path=None, standalone_sha=None):
+        """Expected sha256 at every phase (before load, after host selection, after
+        native execution) of every shard file and backing buffer, and of the
+        standalone file: unchanged from the manifest."""
+        out = {"phases": ["before_load", "after_host_selection", "after_native_execution"],
+               "shards": {n: sha256_hex(b) for n, b in sorted(ck["shards"].items())}}
+        if standalone_path:
+            out["standalone"] = {standalone_path: standalone_sha}
+        return out
+
     def base_situation(ck_id, module, index_path, entry="E-COMPOSE"):
         ck = cks[ck_id]
         spec = ck["modules"][module]
@@ -504,6 +569,7 @@ def population():
                 "resolve_consistent": True, "backing_source": source_identity(ck["shards"]),
                 "triple_source": source_identity(ck["shards"]),
                 "triple_names": {c: module + SUFFIX[c] for c in COMPONENTS},
+                "triple_spec": recipe_of(spec), "resolved_spec": recipe_of(spec),
                 "ranges": ranges, "windows": windows_full(ck)}
 
     def composition_block(ck_id, module, index_path, entry="E-COMPOSE", **more):
@@ -542,16 +608,10 @@ def population():
                 "outcome": "accept", "checks": checks,
                 "families_0_31_2": S.families(p),
                 "architecture_dependent": 6 <= p["M_eff"] <= 31,
-                "array_census": [
-                    {"role": "x", "op": "import", "dtype": "F32", "shape": x_shape},
-                    {"role": "w", "op": "import", "dtype": "U32", "shape": [spec.N, spec.P]},
-                    {"role": "scales", "op": "import", "dtype": spec.meta, "shape": [spec.N, spec.G]},
-                    {"role": "biases", "op": "import", "dtype": spec.meta, "shape": [spec.N, spec.G]},
-                    {"role": "scales_f32", "op": "astype", "dtype": "F32", "shape": [spec.N, spec.G]},
-                    {"role": "biases_f32", "op": "astype", "dtype": "F32", "shape": [spec.N, spec.G]},
-                    {"role": "out", "op": "quantized_matmul", "dtype": "F32", "shape": [m, spec.N]},
-                ],
+                "array_census": array_census(spec, m, S.families(p)),
                 "output_nbytes": m * spec.N * 4,
+                "staged_inputs": staged_inputs(tensors),
+                "source_hashes": source_hashes(ck, "standalone/%s.bin" % cid, sha256_hex(blob)),
             },
             "references": refs,
             "composition": composition_block(ck_id, module, [index], x_from="standalone:x", **(
@@ -659,7 +719,9 @@ def population():
             "triple resolved from ck-a-single, backing loaded from ck-a-sibling: identical headers and catalog, "
             "different payload; only the payload-inclusive source identity distinguishes them",
             entry="E-SELECT", sit_patch=patch_sibling,
-            block_more={"backing": {"checkpoint": "checkpoints/ck-a-sibling", "windows": {}}})
+            block_more={"backing": {"checkpoint": "checkpoints/ck-a-sibling", "windows": {}},
+                        "triple_components": {c: "block.0.stack_a" + SUFFIX[c] for c in COMPONENTS},
+                        "triple_spec": {"bits": 4, "group_size": 64, "mode": "affine"}})
 
     def patch_mixed(sit):
         sit["triple_names"] = {"weight": "block.0.stack_a.weight", "scales": "block.0.stack_b.scales",
@@ -671,7 +733,23 @@ def population():
             block_more={"triple_components": {"weight": "block.0.stack_a.weight",
                                               "scales": "block.0.stack_b.scales",
                                               "biases": "block.0.stack_b.biases"},
-                        "triple_spec": {"bits": 4, "group_size": 64}})
+                        "triple_spec": {"bits": 4, "group_size": 64, "mode": "affine"}})
+
+    spec_a = ck_a["modules"]["block.0.stack_a"]
+    consistent_832, _ = resolution_consistent(spec_a, 8, 32)
+    assert consistent_832 and (spec_a.P * 32 // 8) == 128, "8-bit/g32/K128 must be shape-consistent"
+
+    def patch_recipe(sit):
+        sit["triple_spec"] = recipe_of(spec_a, bits=8, group=32)
+    refusal("ref-recipe-mismatch", "ck-a-single", "block.0.stack_a", [1], "C-R-RECIPE-BINDING",
+            "a triple built through the public AffineTriple::new with block.0.stack_a's own weight, scales and "
+            "biases (descriptors identical to the catalog's) but the recipe 8-bit / group 32, which is "
+            "shape-consistent with packed width 32 and 4 groups (logical K 128) and is admitted by Slice 1; the "
+            "resolution authority resolves 4-bit / group 64 (K 256) from the default, so selection refuses. "
+            "Group 32 is also outside the Slice 2C scope (g64 only)",
+            entry="E-SELECT", sit_patch=patch_recipe,
+            block_more={"triple_components": {c: "block.0.stack_a" + SUFFIX[c] for c in COMPONENTS},
+                        "triple_spec": {"bits": 8, "group_size": 32, "mode": "affine"}})
 
     # ---- inherited Slice 2B refusals on the selected plane ---------------------
     def inherited(cid, ck_id, module, index, rid, note, x_shape_override=None):
@@ -698,7 +776,9 @@ def population():
                                     "not_evaluable_guards": S.not_evaluable(G),
                                     "checks": ["S-IDENTITY", "S-RANGES", "S-BYTES", "S-STAGED-EQUAL",
                                                "S-SOURCE-UNCHANGED"],
-                                    "native_numerical_before_decision": 0, "native_imports_before_decision": 0},
+                                    "native_numerical_before_decision": 0, "native_imports_before_decision": 0,
+                                    "staged_inputs": staged_inputs(tensors),
+                                    "source_hashes": source_hashes(ck, "standalone/%s.bin" % cid, sha256_hex(blob))},
                        "references": [],
                        "composition": composition_block(ck_id, module, [index], x_from="standalone:x"),
                        "oracle": {"identity": identity_of(ck_id, ck, module, index), "ranges": ranges,
@@ -744,12 +824,25 @@ def population():
                     mranges[c_]["begin"] + mranges[c_]["len"] <= t["abs_end"], (cid, c_)
         if "identity" in mut:
             record["identity"] = mut["identity"]
-            assert mut["identity"] != base["oracle"]["identity"]
+            diff = {"S-IDENTITY:" + k for k in mut["identity"] if mut["identity"][k] != base["oracle"]["identity"][k]}
+            assert diff and diff == {d for d in detected_by if d.startswith("S-IDENTITY:")}, (cid, diff)
         if "config" in mut:
             record["config"] = mut["config"]
             consistent, implied = resolution_consistent(spec, mut["config_bits"], mut["config_group"])
             assert not consistent and implied == spec.bits, (cid, implied)
             record["slice1_refusal"] = {"variant": "InconsistentOverride", "implied_bits": implied}
+        # the detection set is EXACTLY the set of mismatches the mutation causes
+        implied = set()
+        if "ranges" in mut:
+            for c_ in COMPONENTS:
+                if mut["ranges"][c_] != exp_ranges[c_]:
+                    implied |= {"S-RANGES:" + c_, "S-BYTES:" + c_}
+        if "identity" in mut:
+            implied |= {"S-IDENTITY:" + k for k in mut["identity"]
+                        if mut["identity"][k] != base["oracle"]["identity"][k]}
+        if "config" in mut:
+            implied.add("C-R-RESOLVE")
+        assert implied == set(detected_by) and len(detected_by) == len(set(detected_by)), (cid, implied, detected_by)
         cases.append(({"id": cid, "family": "FX-COMP-MUTATION", "op": "quantized_matmul", "params": {},
                        "expected": {"outcome": "detected", "detected_by": detected_by,
                                     "native_calls_in_case": {"numerical": 0, "imports": 0}},
@@ -808,7 +901,7 @@ def population():
              "the 8-bit override is dropped from the configuration; Slice 1 resolution refuses "
              "(InconsistentOverride, implied bits 8) before any selection", override_ignored_resolve)
     mutation("mut-override-ignored-plane", "acc-b-stack_d-e3-m1", "override_ignored_in_plane",
-             ["S-IDENTITY:bits"],
+             ["S-IDENTITY:bits", "S-IDENTITY:resolved_from"],
              "the plane records the 4-bit default instead of the resolved 8-bit override; ranges and bytes are "
              "unchanged, so only the identity comparison detects it (the bridge's R-META would refuse later)",
              override_ignored_plane)

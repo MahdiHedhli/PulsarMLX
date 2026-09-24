@@ -2,7 +2,7 @@
  "schema": "pulsarmlx.f020.native-composition-fixtures/1.0.0",
  "contract_schema": "pulsarmlx.f020.native-composition-contract/1.0.0-draft.1",
  "generator": "scripts/research/f020_native_composition_fixtures_v1.py",
- "generator_sha256": "e4214ffbaa8e5da44284cf7f7e8e7b9df25effc6c2d4c1f4bf2df13ee1379f86",
+ "generator_sha256": "318c8209b9fc41608c2c64a70b8fc78bcc8c983d822d1d735fe2c9118bce73a2",
  "inherits": {
   "slice2b_contract_sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72",
   "slice2b_generator": "scripts/research/f020_native_primitives_fixtures_v1.py",
@@ -13,6 +13,7 @@
   "C-R-RESOLVE",
   "C-R-SOURCE-BINDING",
   "C-R-MODULE-BINDING",
+  "C-R-RECIPE-BINDING",
   "C-R-INDEX-RANK",
   "C-R-INDEX-RANGE",
   "C-R-OVERFLOW",
@@ -833,12 +834,12 @@
    }
   }
  },
- "case_count": 31,
+ "case_count": 32,
  "case_count_by_family": {
   "FX-COMP-ACCEPT": 11,
   "FX-COMP-INHERITED-REFUSE": 3,
   "FX-COMP-MUTATION": 6,
-  "FX-COMP-REFUSE": 8,
+  "FX-COMP-REFUSE": 9,
   "FX-COMP-SEQUENCE": 3
  },
  "cases": [
@@ -885,72 +886,141 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 256,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        256
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "4e39a12689d7323f23769cffb3c8cedc151118690cd41ddf72edaeaf232eb819"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        32
-      ]
+      ],
+      "nbytes": 8192,
+      "sha256": "f90367efb82070f3ff26ae6b31d2aa7e72b1a87b9325925f6fa3f4183c15bb61"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "7ffebc5454490c47999e60aeec344092279a6ec89e2d9da873e42234043bc745"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "10e551ebe9dd8beeb8e3ec26411a9bc9b5ef223ca1a4d22290f2ffb510bf47d5"
      }
-    ],
-    "output_nbytes": 256
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model.safetensors": "55b2e970001b3eda8d8af265debdd237c3d20ba746391ed046fd372312059fee"
+     },
+     "standalone": {
+      "standalone/acc-a-stack_a-e0-m1.bin": "2cbe14d49422180b87ac37c6115f6ae741335f025f3bf6728d398cac5f1ce72e"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -1022,6 +1092,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -1122,72 +1193,156 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        4,
+        32,
+        64
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        256
-      ]
+      ],
+      "nbytes": 32768,
+      "sha256": "0f21f43787c05ab612240ca75c2f4f8022022203f41b90937754d9f5d238ab90"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        32
-      ]
+      ],
+      "nbytes": 8192,
+      "sha256": "e612fe2d99b48ae8e73e176549f740e5ed6f1a8746ae2a2186a156a810d5b522"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "f6cf61c398c9d4d6fc46bcf2eb995fecfd7a16c6fb854e81ed8684c0a676bc88"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "93874f47095574d1c2d7984ef07749fe778a998ade2f1b33599b3b4993c464c8"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model.safetensors": "55b2e970001b3eda8d8af265debdd237c3d20ba746391ed046fd372312059fee"
+     },
+     "standalone": {
+      "standalone/acc-a-stack_a-e3-m32.bin": "85719ef46ee5a9eb7763c76a327880b1a2a41c49bd071bc238c5f49759dc2d3b"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -1259,6 +1414,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -1359,72 +1515,156 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        4,
+        32,
+        64
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        256
-      ]
+      ],
+      "nbytes": 32768,
+      "sha256": "7f905cdebaca06c314d7aff1b7d34bf886c6aea2b3667028600d86a77f457d24"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        32
-      ]
+      ],
+      "nbytes": 8192,
+      "sha256": "3e3b78105231af684e8fc2057a9384b809a64fc96eab5d9db235291576bbdd50"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "4b5a5747d9eff85b2f66cf5ee5c1af844077c26e5a3cfcd98f6b7556ff622250"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "1d33ee097311501a1e06c93613a34e1d1cc37e9468653265f31628f1f238250c"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model.safetensors": "55b2e970001b3eda8d8af265debdd237c3d20ba746391ed046fd372312059fee"
+     },
+     "standalone": {
+      "standalone/acc-a-stack_b-e1-m32.bin": "be875370f0be9eba383fe5ad828936d2e76b9e9f98ba47dfa6b5e2b3dc93f081"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -1496,6 +1736,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -1595,72 +1836,141 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 256,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        256
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "cbff03f12742778fee48d4538a9bd69bd9782a4d600472fb59524d6c452dd363"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        32
-      ]
+      ],
+      "nbytes": 8192,
+      "sha256": "78dabca28f3d9802ccc89a81210c7140dd3de1e67606ccf0d0eb7303b7cdb314"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "20d02cd0dc6a344f5496920be1d3e3e6ed834d133c4fac24f77835b8cc187597"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "df37ab5ee36d159f2f6a27294a4d050403a56b3d43e8e3c5486b8541751e0dc3"
      }
-    ],
-    "output_nbytes": 256
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model.safetensors": "55b2e970001b3eda8d8af265debdd237c3d20ba746391ed046fd372312059fee"
+     },
+     "standalone": {
+      "standalone/acc-a-stack_b-e2-m1.bin": "23e9efddb3aa31dc3d641099b58331417c81ddb366ec41fa695d3fa990ea25ad"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -1732,6 +2042,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -1832,72 +2143,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        4,
+        32,
+        64
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        256
-      ]
+      ],
+      "nbytes": 32768,
+      "sha256": "1a0db74ec8b0d86e7656c6756692aae24c11446d6c6f52a0bfae42ccc4aea6ee"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "2ef5738410b7dd3277563611fe9a930fb5d0b53379b8fb205a1d65955c2cbb65"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "3969d9ed01df84f24b0b774879fe0fb3e2cf534ad0c1d6cd76a147f147fb45a6"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "03a0b09cf0d5a08d9b08733504f5525ba8e5263e9080c0e55f1d5deb46e54167"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_d-e0-m32.bin": "a01c7cc141c720cd2c45af86d185b8bf37dfbe875f57372147ef052fc0077062"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -1969,6 +2366,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -2068,72 +2466,143 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 256,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        256
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "468045d1577c01ff44d7a9c3364042b1edf190b2e16b291bd782bd7874bc4d02"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "219a802503c2f1f69414ca20dbf599793947c7c1ae616a65d41fb04384060b57"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "9fb60dd22c5ea968529a50edf579ab4002ad03559392dab38529740252a6b274"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "278052213e16682a9e87f5602d28a7b9a19961f8ece309775ddd30131b9cbf76"
      }
-    ],
-    "output_nbytes": 256
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_d-e3-m1.bin": "61c0b8e280f88ff79c1d75eee4cac6f8362e8062965b0af13c6cd601c1e2069a"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -2205,6 +2674,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -2304,72 +2774,143 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        512
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 256,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        512
-      ]
+      ],
+      "nbytes": 2048,
+      "sha256": "941d1770c4c85bb080aeff741b721ecafe5d683a41769b392bbc693184cbd64a"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "ad267cf87dc81e5816e4865521fa8d9e4530cc199e83b7330d5f7036700f0c8d"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "f88f723218138671cb3d04e6c89762c8778a96e82f42fcd5d6cab2b440b692d6"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       64
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "5ec229b5e20846ca37a04d7597ad49d1a48c44f842cfd103adc49b4d935fb078"
      }
-    ],
-    "output_nbytes": 256
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_c-e1-m1.bin": "00a25fd26641206aa0154aed397181ae66a94728b9e2463854417f7c547d4a0e"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -2441,6 +2982,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -2541,72 +3083,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        512
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        8,
+        32,
+        64
+       ],
+       "nbytes": 65536,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        512
-      ]
+      ],
+      "nbytes": 65536,
+      "sha256": "9e77d492f7f28a94e5db3bd5426245eb30b85826ab1f6f497f3b9ab1fced2043"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "71d63f37fe6d10f1b36e2b3e2ccc3048a13d4760406eeca9eff1e354534ea926"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "08b514e3322b171c29e31da198c2ebd2bdf1b6920593e162812a4372d4111544"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "7dd7f12bcb7ba5a12465d6bc1875e35d685c232eff8537bcf712cae59ca3305f"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_c-e0-m32.bin": "113e68c8f67a39a32b8c3edf0ccec516ccdf5bdf0d502381667af4b8759a482e"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -2678,6 +3306,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -2778,72 +3407,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        128
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        128,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        128
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        2,
+        32,
+        128
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 16384,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        128
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "787c8b4af9bd310dc7ba2d6f4ade32dd6c404cdd2cfa2aeb8236165f906bd57e"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        128,
        32
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "3a89eada86215210d8e46c46c07512e0983ed646afd30cf2cc9539028d9e455b"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        128,
        2
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "2ac9e671c08ef5ad42ee8aa6c87ba30c69ae7e52d436684fb1a0f41d1967175a"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        128,
        2
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       128,
-       2
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       128,
-       2
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       128
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "12c71fa60feef5a716aab7faeacab4cade381efa992442234dfe5e2b76c92da8"
      }
-    ],
-    "output_nbytes": 16384
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_q-e1-m32.bin": "233049a24903e177a2f1444c08235de53adbb47495e42caf93ecf6ccf7b4d696"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -2915,6 +3630,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -3014,72 +3730,143 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        128
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        128,
+        32
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        128,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        128
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 512,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        128
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "44f93486e9b53147179011f57c4c77f7efe5bac31def329fb1897266d17e5f1d"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        128,
        32
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "478917ca1c0c2e40aea30dfafa272cb783b5e4e3eda237bcb37e7988e61f5a7c"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        128,
        2
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "41c9bd323ef53310536a03bad39e4f16029231c17bbf817418f4c2278a0b030c"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        128,
        2
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       128,
-       2
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       128,
-       2
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       128
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "5e9e3177e4154ebd310ab4071e785de5795edb3492073cd9bd34fc1bf1929809"
      }
-    ],
-    "output_nbytes": 512
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_q-e2-m1.bin": "072df3e0b4330186de486081023baa0a59ccf90ad854a6d2260b91988942cf49"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -3151,6 +3938,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -3250,72 +4038,143 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        1,
+        128
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        16
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        2
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        2
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        1,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 256,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        1,
        128
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "8a50f368773502da14b59c89fd800fed8afca991f6ab9f47bf0f06e4f2d4d279"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        16
-      ]
+      ],
+      "nbytes": 4096,
+      "sha256": "511381ed163f8b709ea65e3ea266a4efb78a81a75f78dfef08304d707c5086b3"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        2
-      ]
+      ],
+      "nbytes": 256,
+      "sha256": "52d215b5877d8916a0100c4d4e4dced38cc97e48afbf00de9875448471c3ac67"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        2
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       2
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       2
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       1,
-       64
-      ]
+      ],
+      "nbytes": 256,
+      "sha256": "f57990c4d9a3f168058733c0c2e66a870725c7afc61d67d2d175f8ea07bbc3da"
      }
-    ],
-    "output_nbytes": 256
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/acc-b-stack_r-e2-m1.bin": "82d91069270fe6f8f7520dd32ee62e03e7fd9c26504d2e0cc3733d3a6ac8cae4"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -3387,6 +4246,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -3487,72 +4347,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        4,
+        32,
+        64
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        256
-      ]
+      ],
+      "nbytes": 32768,
+      "sha256": "a6f84aac0f8062edef959aeebdd9c1a6142ec2ad06cb0dbe95ffb92bc981c7ee"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "86eaa5b7d08076534ecd4ebb785e86f6308a1a304b6f1bb735c14800adf7ecc9"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "4c7dc26968157bc8f6b1097a31a50fb8e865daf8abec6e59f3687376e8dc01f5"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "6b7ec0a59c5372053ef4e32e0bb9d254af7874d7951d1b3d4096f71540d33fcb"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/seq-aba-0.bin": "0154c4385f0f0717c5fbd54a2d43ca5fb6aac3516a8141f39ace5e42ee366f72"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -3629,6 +4575,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -3729,72 +4676,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        512
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        8
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        8,
+        32,
+        64
+       ],
+       "nbytes": 65536,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        512
-      ]
+      ],
+      "nbytes": 65536,
+      "sha256": "e3ba26a9856ddb591a1756ef6c2d6cd156affbf8e62405d4415ce2987bfb065a"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "71d63f37fe6d10f1b36e2b3e2ccc3048a13d4760406eeca9eff1e354534ea926"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "08b514e3322b171c29e31da198c2ebd2bdf1b6920593e162812a4372d4111544"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        8
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       8
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 1024,
+      "sha256": "7dd7f12bcb7ba5a12465d6bc1875e35d685c232eff8537bcf712cae59ca3305f"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/seq-aba-1.bin": "4848da68b5a5f65a40f51f4b46933a1e1f8b1257376628b189cf5f11a18e5e7f"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -3871,6 +4904,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -3972,72 +5006,158 @@
      }
     ],
     "architecture_dependent": false,
-    "array_census": [
-     {
-      "role": "x",
-      "op": "import",
+    "array_census": {
+     "bridge_visible_handles": [
+      {
+       "role": "x",
+       "op": "import",
+       "dtype": "F32",
+       "shape": [
+        32,
+        256
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "w",
+       "op": "import",
+       "dtype": "U32",
+       "shape": [
+        64,
+        64
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "biases",
+       "op": "import",
+       "dtype": "BF16",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: import counter; staged-input record (dtype, shape, nbytes, sha256)"
+      },
+      {
+       "role": "scales_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "biases_f32",
+       "op": "astype",
+       "dtype": "F32",
+       "shape": [
+        64,
+        4
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape source-derived (bridge qmm_inner astype_f32)"
+      },
+      {
+       "role": "out",
+       "op": "quantized_matmul",
+       "dtype": "F32",
+       "shape": [
+        32,
+        64
+       ],
+       "evidence": "measured: result-handle counter; dtype and shape from the Evaluated readback"
+      }
+     ],
+     "measured_counter_deltas": {
+      "imports": 4,
+      "result_handles_created": 3,
+      "result_handles_adopted": 3,
+      "result_handles_freed_on_error_path": 0,
+      "array_free_calls": 7
+     },
+     "source_derived_workspace": [
+      {
+       "role": "splitk_intermediate",
+       "dtype": "F32",
+       "shape": [
+        4,
+        32,
+        64
+       ],
+       "nbytes": 32768,
+       "source": "MLX312:mlx/backend/metal/quantized.cpp:810-820 (qmm_splitk: temp_shape = [split_k] + out.shape, allocator::malloc, add_temporary); the split-K sum uses strided_reduce_small (split_k * 1 < 32, MLX312:mlx/backend/metal/reduce.cpp:931-933), which allocates nothing",
+       "accounting": "source-derived, not measured",
+       "is_weight_matrix": false,
+       "holds": "per-partition float32 partial OUTPUT sums, not weights"
+      }
+     ],
+     "source_derived_workspace_note": "vector-family kernels (qmv, qmv_fast, qmv_quad) allocate no internal array beyond the output in MLX312 quantized.cpp; inputs are already row-contiguous, so ensure_row_contiguous_matrix copies nothing"
+    },
+    "output_nbytes": 8192,
+    "staged_inputs": {
+     "x": {
       "dtype": "F32",
       "shape": [
        32,
        256
-      ]
+      ],
+      "nbytes": 32768,
+      "sha256": "a6f84aac0f8062edef959aeebdd9c1a6142ec2ad06cb0dbe95ffb92bc981c7ee"
      },
-     {
-      "role": "w",
-      "op": "import",
+     "w": {
       "dtype": "U32",
       "shape": [
        64,
        64
-      ]
+      ],
+      "nbytes": 16384,
+      "sha256": "86eaa5b7d08076534ecd4ebb785e86f6308a1a304b6f1bb735c14800adf7ecc9"
      },
-     {
-      "role": "scales",
-      "op": "import",
+     "scales": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "4c7dc26968157bc8f6b1097a31a50fb8e865daf8abec6e59f3687376e8dc01f5"
      },
-     {
-      "role": "biases",
-      "op": "import",
+     "biases": {
       "dtype": "BF16",
       "shape": [
        64,
        4
-      ]
-     },
-     {
-      "role": "scales_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "biases_f32",
-      "op": "astype",
-      "dtype": "F32",
-      "shape": [
-       64,
-       4
-      ]
-     },
-     {
-      "role": "out",
-      "op": "quantized_matmul",
-      "dtype": "F32",
-      "shape": [
-       32,
-       64
-      ]
+      ],
+      "nbytes": 512,
+      "sha256": "6b7ec0a59c5372053ef4e32e0bb9d254af7874d7951d1b3d4096f71540d33fcb"
      }
-    ],
-    "output_nbytes": 8192
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/seq-aba-2.bin": "0154c4385f0f0717c5fbd54a2d43ca5fb6aac3516a8141f39ace5e42ee366f72"
+     }
+    }
    },
    "references": [
     "rust_binary64_r1",
@@ -4114,6 +5234,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4210,6 +5331,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": true,
      "C-R-OVERFLOW": "n/a: index not admitted",
@@ -4258,6 +5380,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": true,
      "C-R-OVERFLOW": "n/a: index not admitted",
@@ -4305,6 +5428,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": true,
      "C-R-INDEX-RANGE": "n/a: index rank",
      "C-R-OVERFLOW": "n/a: index not admitted",
@@ -4355,6 +5479,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": true,
      "C-R-INDEX-RANGE": "n/a: index rank",
      "C-R-OVERFLOW": "n/a: index not admitted",
@@ -4377,9 +5502,9 @@
     ],
     "not_evaluable_guards": [
      "C-R-BACKING",
-     "C-R-INDEX-RANGE",
      "C-R-INDEX-RANK",
      "C-R-MODULE-BINDING",
+     "C-R-RECIPE-BINDING",
      "C-R-RESOLVE",
      "C-R-SOURCE-BINDING"
     ],
@@ -4412,8 +5537,8 @@
      "C-R-RESOLVE": "n/a: range-resolution probe",
      "C-R-SOURCE-BINDING": "n/a: range-resolution probe",
      "C-R-MODULE-BINDING": "n/a: range-resolution probe",
+     "C-R-RECIPE-BINDING": "n/a: range-resolution probe",
      "C-R-INDEX-RANK": "n/a: range-resolution probe",
-     "C-R-INDEX-RANGE": "n/a: range-resolution probe",
      "C-R-OVERFLOW": true,
      "C-R-BACKING": "n/a: end undefined"
     }
@@ -4459,6 +5584,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4497,6 +5623,16 @@
     "backing": {
      "checkpoint": "checkpoints/ck-a-sibling",
      "windows": {}
+    },
+    "triple_components": {
+     "weight": "block.0.stack_a.weight",
+     "scales": "block.0.stack_a.scales",
+     "biases": "block.0.stack_a.biases"
+    },
+    "triple_spec": {
+     "bits": 4,
+     "group_size": 64,
+     "mode": "affine"
     }
    },
    "oracle": {
@@ -4504,6 +5640,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": true,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4550,7 +5687,8 @@
     },
     "triple_spec": {
      "bits": 4,
-     "group_size": 64
+     "group_size": 64,
+     "mode": "affine"
     }
    },
    "oracle": {
@@ -4558,6 +5696,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": true,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4565,6 +5704,62 @@
     }
    },
    "note": "a triple built through the public AffineTriple::new for module block.0.stack_a from stack_a's weight and stack_b's scales and biases (identical shapes, so Slice 1 admits it)"
+  },
+  {
+   "id": "ref-recipe-mismatch",
+   "family": "FX-COMP-REFUSE",
+   "op": "quantized_matmul",
+   "params": {},
+   "expected": {
+    "outcome": "refuse",
+    "refusal_id": "C-R-RECIPE-BINDING",
+    "stage": "composition",
+    "violated_guards": [
+     "C-R-RECIPE-BINDING"
+    ],
+    "not_evaluable_guards": [],
+    "native_calls_in_case": {
+     "numerical": 0,
+     "imports": 0
+    }
+   },
+   "references": [],
+   "composition": {
+    "entry": "E-SELECT",
+    "checkpoint": "checkpoints/ck-a-single",
+    "config": "checkpoints/ck-a-single/config.json",
+    "module": "block.0.stack_a",
+    "index_path": [
+     1
+    ],
+    "backing": {
+     "checkpoint": "checkpoints/ck-a-single",
+     "windows": {}
+    },
+    "triple_components": {
+     "weight": "block.0.stack_a.weight",
+     "scales": "block.0.stack_a.scales",
+     "biases": "block.0.stack_a.biases"
+    },
+    "triple_spec": {
+     "bits": 8,
+     "group_size": 32,
+     "mode": "affine"
+    }
+   },
+   "oracle": {
+    "composition_guards": {
+     "C-R-RESOLVE": false,
+     "C-R-SOURCE-BINDING": false,
+     "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": true,
+     "C-R-INDEX-RANK": false,
+     "C-R-INDEX-RANGE": false,
+     "C-R-OVERFLOW": false,
+     "C-R-BACKING": false
+    }
+   },
+   "note": "a triple built through the public AffineTriple::new with block.0.stack_a's own weight, scales and biases (descriptors identical to the catalog's) but the recipe 8-bit / group 32, which is shape-consistent with packed width 32 and 4 groups (logical K 128) and is admitted by Slice 1; the resolution authority resolves 4-bit / group 64 (K 256) from the default, so selection refuses. Group 32 is also outside the Slice 2C scope (g64 only)"
   },
   {
    "id": "inh-geometry-narrow",
@@ -4601,7 +5796,60 @@
      "S-SOURCE-UNCHANGED"
     ],
     "native_numerical_before_decision": 0,
-    "native_imports_before_decision": 0
+    "native_imports_before_decision": 0,
+    "staged_inputs": {
+     "x": {
+      "dtype": "F32",
+      "shape": [
+       1,
+       128
+      ],
+      "nbytes": 512,
+      "sha256": "6cef6a86c4c5b27e49a00b40596797bad46f994557bfb2e445971e545a86b2f4"
+     },
+     "w": {
+      "dtype": "U32",
+      "shape": [
+       32,
+       16
+      ],
+      "nbytes": 2048,
+      "sha256": "c8cd1db64cf772262f74761176f6044cad0ea5c9e20f9c9d00e3d4eeae4ac76f"
+     },
+     "scales": {
+      "dtype": "BF16",
+      "shape": [
+       32,
+       2
+      ],
+      "nbytes": 128,
+      "sha256": "6b763b5d872e80151d4a71896a0b97d92a7a2586a603a0db5d0ea6674204f2a1"
+     },
+     "biases": {
+      "dtype": "BF16",
+      "shape": [
+       32,
+       2
+      ],
+      "nbytes": 128,
+      "sha256": "077e8a00b1162c6c3c39d33882458fba8528d57d050dd7b13ef75e8e53705d37"
+     }
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/inh-geometry-narrow.bin": "2aee12dac69b8696dccecbb928d224596917ccf14ec58f69642e6d0676d9ab15"
+     }
+    }
    },
    "references": [],
    "composition": {
@@ -4670,6 +5918,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4761,7 +6010,60 @@
      "S-SOURCE-UNCHANGED"
     ],
     "native_numerical_before_decision": 0,
-    "native_imports_before_decision": 0
+    "native_imports_before_decision": 0,
+    "staged_inputs": {
+     "x": {
+      "dtype": "F32",
+      "shape": [
+       1,
+       128
+      ],
+      "nbytes": 512,
+      "sha256": "e6978defb6789a6c54ce911cd1db42cc019b9926a6ee17b72ace309ab6c29946"
+     },
+     "w": {
+      "dtype": "U32",
+      "shape": [
+       64,
+       16
+      ],
+      "nbytes": 4096,
+      "sha256": "141a84b7ac8b7f328243335cf751ad0b8265e05599f270f5d75b12692b943034"
+     },
+     "scales": {
+      "dtype": "BF16",
+      "shape": [
+       64,
+       2
+      ],
+      "nbytes": 256,
+      "sha256": "2978764f66dcdd1be82f022ea7536f904953c1a91c82c2eae721d86bc18a169f"
+     },
+     "biases": {
+      "dtype": "BF16",
+      "shape": [
+       64,
+       2
+      ],
+      "nbytes": 256,
+      "sha256": "5f16817744fd568b2511488ea95eb5ff1e32d199b40f56a813181676d5ee5e65"
+     }
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model-00001-of-00003.safetensors": "4eae5a52d3f94e6a74a65019b068b27377afdf305a1b2e34958e8358cbf90370",
+      "model-00002-of-00003.safetensors": "0a2631781d2ec49e207f0d36bf2efa8498fc17314cc0f5582bac11f528db7420",
+      "model-00003-of-00003.safetensors": "e85bc8972206f01c8c32739485307891e4545e5dd712d943abc94766c3d86bde"
+     },
+     "standalone": {
+      "standalone/inh-meta-range-e1.bin": "a217bf4d2ed72daac82499fcc6c270e2fd6417273ad8a6350632a779f33c83a1"
+     }
+    }
    },
    "references": [],
    "composition": {
@@ -4830,6 +6132,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -4921,7 +6224,58 @@
      "S-SOURCE-UNCHANGED"
     ],
     "native_numerical_before_decision": 0,
-    "native_imports_before_decision": 0
+    "native_imports_before_decision": 0,
+    "staged_inputs": {
+     "x": {
+      "dtype": "F32",
+      "shape": [
+       1,
+       128
+      ],
+      "nbytes": 512,
+      "sha256": "c2b86b1e393b05dd13ea1ad3cd0fc1843fc4549f3c69ee9f18e6d3dcaf109fba"
+     },
+     "w": {
+      "dtype": "U32",
+      "shape": [
+       64,
+       32
+      ],
+      "nbytes": 8192,
+      "sha256": "9a2f1bc73318688558119d06a816f26cc6cdaf45d2b648034f08b61dee9edb28"
+     },
+     "scales": {
+      "dtype": "BF16",
+      "shape": [
+       64,
+       4
+      ],
+      "nbytes": 512,
+      "sha256": "042bfaeb5b53c59fea40f30d5e2a0839f90b47c56fcb22adc3e0549eb1b1d8a4"
+     },
+     "biases": {
+      "dtype": "BF16",
+      "shape": [
+       64,
+       4
+      ],
+      "nbytes": 512,
+      "sha256": "41c76b4b53dfec9cdd3c4aa4840bc68eeccf9822a1b1b3f072fd193e738de6cb"
+     }
+    },
+    "source_hashes": {
+     "phases": [
+      "before_load",
+      "after_host_selection",
+      "after_native_execution"
+     ],
+     "shards": {
+      "model.safetensors": "55b2e970001b3eda8d8af265debdd237c3d20ba746391ed046fd372312059fee"
+     },
+     "standalone": {
+      "standalone/inh-xshape.bin": "94105296a2f7fe86837884ee682fc7c6caaff1dbf9e521e38add7992509353c2"
+     }
+    }
    },
    "references": [],
    "composition": {
@@ -4990,6 +6344,7 @@
      "C-R-RESOLVE": false,
      "C-R-SOURCE-BINDING": false,
      "C-R-MODULE-BINDING": false,
+     "C-R-RECIPE-BINDING": false,
      "C-R-INDEX-RANK": false,
      "C-R-INDEX-RANGE": false,
      "C-R-OVERFLOW": false,
@@ -5580,7 +6935,8 @@
    "expected": {
     "outcome": "detected",
     "detected_by": [
-     "S-IDENTITY:bits"
+     "S-IDENTITY:bits",
+     "S-IDENTITY:resolved_from"
     ],
     "native_calls_in_case": {
      "numerical": 0,
