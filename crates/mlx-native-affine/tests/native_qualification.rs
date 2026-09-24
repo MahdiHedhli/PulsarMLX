@@ -448,6 +448,24 @@ fn native_qualification_of_the_frozen_population() {
         let mut gates = serde_json::Map::new();
         let mut case_pass = true;
         let executed = rec["outcome"] == "executed";
+        // E1: every operation ran on a GPU context whose stream and the
+        // process default device were MLX_GPU with Metal available, asserted
+        // before the op. E6: the CPU-context negative control is the only
+        // record whose context is not the GPU, and it must be refused.
+        let gpu_facts = rec["stats"]["device_facts_gpu"].as_bool();
+        if spec.param_str("context") == Some("cpu") {
+            let pass = gpu_facts == Some(false)
+                && rec["outcome"] == "refused"
+                && rec["refusal_id"] == "R-DEVICE";
+            tally("E6-CPU-REFUSED", pass);
+            gates.insert("E6-CPU-REFUSED".into(), json!(pass));
+            case_pass &= pass;
+        } else {
+            let pass = gpu_facts == Some(true);
+            tally("E1-DEVICE", pass);
+            gates.insert("E1-DEVICE".into(), json!(pass));
+            case_pass &= pass;
+        }
         if spec.is_refusal() {
             let calls = &rec["stats"];
             let pass = rec["outcome"] == "refused"
@@ -681,6 +699,8 @@ fn native_qualification_of_the_frozen_population() {
     // Every expected gate count, exactly (case accounting).
     let expect = [
         ("B6-REFUSAL", 37),
+        ("E1-DEVICE", 362),
+        ("E6-CPU-REFUSED", 1),
         ("G-IMPORT", 8),
         ("G-CAST", 2),
         ("G-DQ-CODES", 18),
