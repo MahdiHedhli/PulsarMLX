@@ -70,6 +70,9 @@ NEW_COMMANDS = (
 REQUIRED_EXTRA_STEP_NAMES = (
     "Qualify MLX affine compatibility (synthetic, pinned MLX wheel)",
     "Test MLX affine representation",
+    # F020 Slice 2B (owner GO 2026-09-23): the native qualification that runs
+    # the qualify child on the runner GPU over the frozen population.
+    "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)",
 )
 
 
