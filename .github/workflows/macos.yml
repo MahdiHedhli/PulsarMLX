@@ -286,9 +286,12 @@ jobs:
           assert summary["child"]["outcome"] == "EXIT_STATUS 0"
           assert summary["child"]["timeout_seconds"] == 1800
           assert summary["provenance"]["mlx_version"] == "0.31.2"
-          assert summary["provenance"]["architecture"].startswith("applegpu_")
+          # The architecture string is recorded, not predicted: hosted runners
+          # expose a paravirtual Metal device whose name is not "applegpu_*".
+          assert summary["provenance"]["architecture"]
+          assert summary["provenance"]["device_info"]["device_name"]
           assert summary["provenance"]["environment"]["MLX_ENABLE_TF32"] == "0"
-          expected = {"B6-REFUSAL": 37, "G-IMPORT": 8, "G-CAST": 2, "G-DQ-CODES": 18, "G-DQ-RUST": 59,
+          expected = {"B6-REFUSAL": 37, "E1-DEVICE": 362, "E6-CPU-REFUSED": 1, "G-IMPORT": 8, "G-CAST": 2, "G-DQ-CODES": 18, "G-DQ-RUST": 59,
                       "G-DQ-EXACT": 59, "G-R1-SELF-DQ": 59, "G-QMM-RUST": 239, "G-QMM-EXACT": 237,
                       "G-R1-SELF-QMM": 237, "N-QMM-ZERO": 1, "SHAPE-DTYPE": 326}
           for gate, count in expected.items():
