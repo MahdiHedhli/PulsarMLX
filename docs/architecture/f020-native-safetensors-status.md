@@ -1,9 +1,12 @@
 # F020 native Safetensors status — current pointer
 
-**Last updated 2026-09-24. Slice 1 and Slice 2B are accepted and merged.
+**Last updated 2026-09-25. Slices 1, 2B and 2C are accepted and merged.
 Slice 2B (native primitive qualification on synthetic fixtures) was merged into
 `main` by merge commit `274da684a4b3081dde61c772d98c7814198b5752`; see
-[Slice 2B](#slice-2b--native-primitives-merged).** This is a current-pointer document: it says what is qualified
+[Slice 2B](#slice-2b--native-primitives-merged). Slice 2C (synthetic
+expert-plane composition) was merged by merge commit
+`bd5b83bf0475b1341e209ba7c883e9f609fdd97a`; see
+[Slice 2C](#slice-2c--synthetic-expert-plane-composition-merged).** This is a current-pointer document: it says what is qualified
 today, what is not, and where to read the detail. It deliberately claims nothing
 about a real checkpoint's payload.
 
@@ -12,6 +15,7 @@ about a real checkpoint's payload.
 F020 Slice 1 is merged. Native Safetensors catalog/admission and MLX affine
 representation/decoder support are qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner.
 Real checkpoint execution and production geometry remain unqualified.
+F020 Slice 2C composes synthetic stacked-affine expert-plane selection with native packed-weight quantized matmul. It is qualified on its frozen small-fixture population on the recorded GitHub runner. Real checkpoint payloads, production geometry, full expert MLPs, model execution, streaming and performance remain outside that qualification.
 Model execution and residency integration remain unimplemented.
 
 * **Merged** into `main` by merge commit
@@ -307,17 +311,23 @@ inside D-NUM or D-DQ needs payload reads, which are not authorized. No
 transpose=false, half kernel types, NAX, CPU backend, gather_qmm, model graph,
 residency or performance claim is made.
 
-## Slice 2C — synthetic expert-plane composition (branch, not merged)
+## Slice 2C — synthetic expert-plane composition (merged)
 
-On branch `feat/020-synthetic-expert-plane-composition-20260924`; **not
-merged** (a merge needs a separate GO). Current candidate `4d39dc3e` (attempt 2,
+Merged into `main` by merge commit
+`bd5b83bf0475b1341e209ba7c883e9f609fdd97a` of branch head
+`472d98691951baa9ca2aec1f15cdbf25455d1f3f` (qualified candidate `4d39dc3e`).
+The account below was written before the merge and is kept as it was, except
+for the corrected evidence-control count.
+
+Developed on branch `feat/020-synthetic-expert-plane-composition-20260924`.
+Qualified candidate `4d39dc3e` (attempt 2,
 CI run [`36053452198`](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/36053452198),
 [record](reviews/evidence/f020-slice2c-ci-qualification-attempt-2-v1.json)): the
 independent implementation review of attempt 1 asked that S-SOURCE-UNCHANGED
 require exact, unique and exhaustive shard evidence per phase (with rejection
 controls) and that E6, the CPU-context negative control, run in the compose
 child; both are implementation fixes under the frozen contract, and attempt 2
-passes with them (E6 refused R-DEVICE; 388/388 evidence controls rejected).
+passes with them (E6 refused R-DEVICE; 388 source-evidence checks = 371 injected invalid-record rejections + 17 valid-record acceptances — the attempt-2 record's "388 rejected" label is inaccurate, see the [reporting erratum](reviews/evidence/f020-slice2c-attempt-2-reporting-erratum-v1.json)).
 Attempt 1 (`110efa72`, below) stays on record.
 
 **Scope.** Under the composition contract
@@ -355,7 +365,8 @@ are not acceptance evidence.
 
 **Not claimed.** No real checkpoint payload, production geometry,
 `gather_qmm`, routing, full MLP, model graph, residency or performance. A-DET
-is shown only for the runner, build and process it ran on.
+is supported by the recorded comparisons on the tested runner, build and
+process only; it is not a universal determinism guarantee.
 
 ## Next
 

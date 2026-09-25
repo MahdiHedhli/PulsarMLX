@@ -208,7 +208,7 @@ MLX / Metal execution
 
 The goal is to consume the selected MLX mixed-precision checkpoints **without converting them to GGUF** and **without requantizing their weights**.
 
-F020 Slice 1 has already merged the native Safetensors catalog/admission and MLX affine representation/decoder layers, qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner. Real checkpoint execution and production geometry remain unqualified. Residency integration and native Flash execution remain separate upcoming gates.
+F020 Slice 1 has already merged the native Safetensors catalog/admission and MLX affine representation/decoder layers, qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner. Real checkpoint execution and production geometry remain unqualified. F020 Slice 2C composes synthetic stacked-affine expert-plane selection with native packed-weight quantized matmul. It is qualified on its frozen small-fixture population on the recorded GitHub runner. Real checkpoint payloads, production geometry, full expert MLPs, model execution, streaming and performance remain outside that qualification. Residency integration and native Flash execution remain separate upcoming gates.
 
 See [F020 native Safetensors status](docs/architecture/f020-native-safetensors-status.md).
 

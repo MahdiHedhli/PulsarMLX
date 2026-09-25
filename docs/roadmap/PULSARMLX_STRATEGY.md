@@ -28,6 +28,7 @@ The consolidated mainline carries distinct tracks:
 | GLM-5.3-Flash | Python/MLX paged expert-residency research | Measured candidate `971db9c1`, not the native runtime ([results](../glm53-flash/persistent-serving-results.md)) |
 | F020 Slice 1 | native model-neutral Safetensors catalog/admission and MLX affine representation/decoder | Merged; qualified on synthetic fixtures only ([status](../architecture/f020-native-safetensors-status.md)) |
 | F020 Slice 2B | native packed-weight primitive implementation and synthetic qualification | Reviewed preparation at [`9bf6a810`](https://github.com/MahdiHedhli/PulsarMLX/blob/9bf6a810622b7ef1156b750dd0f3140f8c0ca211/specs/020-mlx-safetensors-affine/slice2b-plan.md); merged; native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner; real checkpoint execution and production geometry remain unqualified ([status](../architecture/f020-native-safetensors-status.md)) |
+| F020 Slice 2C | synthetic stacked-affine expert-plane selection composed with native packed-weight quantized matmul | Merged; qualified on its frozen small-fixture population on the recorded GitHub runner; real checkpoint payloads, production geometry, full expert MLPs, model execution, streaming and performance remain outside that qualification ([status](../architecture/f020-native-safetensors-status.md)) |
 
 The Python/MLX Flash path is a behavioral and compatibility reference, not a
 shipping path or an independent correctness oracle for native MLX. R1 remains
