@@ -1,0 +1,24 @@
+{
+ "metadata": {
+  "total_size": 177792
+ },
+ "weight_map": {
+  "block.1.norm.weight": "model-00001-of-00003.safetensors",
+  "block.1.stack_c.biases": "model-00002-of-00003.safetensors",
+  "block.1.stack_c.scales": "model-00002-of-00003.safetensors",
+  "block.1.stack_c.weight": "model-00002-of-00003.safetensors",
+  "block.1.stack_d.biases": "model-00001-of-00003.safetensors",
+  "block.1.stack_d.scales": "model-00001-of-00003.safetensors",
+  "block.1.stack_d.weight": "model-00001-of-00003.safetensors",
+  "block.2.bias_vec": "model-00003-of-00003.safetensors",
+  "block.2.narrow.biases": "model-00003-of-00003.safetensors",
+  "block.2.narrow.scales": "model-00003-of-00003.safetensors",
+  "block.2.narrow.weight": "model-00003-of-00003.safetensors",
+  "block.2.stack_q.biases": "model-00002-of-00003.safetensors",
+  "block.2.stack_q.scales": "model-00001-of-00003.safetensors",
+  "block.2.stack_q.weight": "model-00003-of-00003.safetensors",
+  "block.2.stack_r.biases": "model-00002-of-00003.safetensors",
+  "block.2.stack_r.scales": "model-00002-of-00003.safetensors",
+  "block.2.stack_r.weight": "model-00002-of-00003.safetensors"
+ }
+}

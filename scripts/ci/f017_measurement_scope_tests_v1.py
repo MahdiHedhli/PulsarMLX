@@ -54,10 +54,10 @@ def run(work_dir, code_view):
     unrelated_marker='      - name: Validate independent Feature 017 oracle\n'
     jobs_head='jobs:\n'
     required=[s for s in scope._steps(res_text) if scope._is_required('\n'.join(s['lines']))]
-    # Ten F017 steps plus the three F020 steps that REQUIRED_EXTRA_STEP_NAMES
-    # admits (Slice 1's two and Slice 2B's native qualification), which the
-    # advanced resolution now contains.
-    assert len(required)==13,len(required)
+    # Ten F017 steps plus the four F020 steps that REQUIRED_EXTRA_STEP_NAMES
+    # admits (Slice 1's two, Slice 2B's native qualification and Slice 2C's
+    # composition qualification), which the advanced resolution now contains.
+    assert len(required)==14,len(required)
     extra=[s['name'] for s in required if s['name'] in scope.REQUIRED_EXTRA_STEP_NAMES]
     assert sorted(extra)==sorted(scope.REQUIRED_EXTRA_STEP_NAMES),extra
     for s in required:
@@ -101,6 +101,41 @@ def run(work_dir, code_view):
                +'  relocated-job:\n    runs-on: macos-15\n    steps:\n'+s2b_block+'\n')
     rejection('Slice 2B step moved to another job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
               lambda:inventory(s2b_moved.encode()))
+
+    # --- the F020 Slice 2C composition qualification is frozen like every required step ---
+    s2c_name='Qualify F020 Slice 2C synthetic expert-plane composition (frozen synthetic population, runner GPU)'
+    assert s2c_name in scope.REQUIRED_EXTRA_STEP_NAMES
+    s2c=[s for s in required if s['name']==s2c_name]
+    assert len(s2c)==1 and s2c[0]['job']=='apple-mlx-small-fixtures'
+    s2c_lines=s2c[0]['lines']; s2c_block='\n'.join(s2c_lines)
+    assert text.count(s2c_block)==1
+    def s2c_swap(new_block):
+        return text.replace(s2c_block,new_block,1).encode()
+    s2c_name_line='      - name: '+s2c_name
+    assert s2c_lines[0]==s2c_name_line
+    s2c_cargo='            cargo test -p mlx-native-affine --release --test composition_qualification -- --test-threads=1 --nocapture'
+    s2c_assert='          assert summary["result"] == "PASS", summary["failures"]'
+    assert s2c_block.count(s2c_cargo+'\n')==1 and s2c_block.count(s2c_assert+'\n')==1
+    order=[s['name'] for s in required]
+    assert order.index(s2c_name)==order.index(s2b_name)+1, 'the Slice 2C step follows the Slice 2B step'
+    rejection('Slice 2C step renamed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap(s2c_block.replace(s2c_name_line,s2c_name_line+' (renamed)',1))))
+    rejection('Slice 2C step removed','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(text.replace(s2c_block+'\n','',1).encode()))
+    rejection('Slice 2C step body changed (composition command masked)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap(s2c_block.replace(s2c_cargo+'\n',s2c_cargo+' || true\n',1))))
+    rejection('Slice 2C step body changed (summary assertion deleted)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap(s2c_block.replace(s2c_assert+'\n','',1))))
+    rejection('Slice 2C step body changed (build-only substitution)','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap(s2c_block.replace(s2c_cargo+'\n',s2c_cargo.replace(' -- --test-threads=1 --nocapture',' --no-run')+'\n',1))))
+    rejection('Slice 2C step made non-fatal','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap('\n'.join([s2c_lines[0],'        continue-on-error: true']+s2c_lines[1:]))))
+    rejection('Slice 2C step disabled with if: false','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_swap('\n'.join([s2c_lines[0],'        if: false']+s2c_lines[1:]))))
+    s2c_moved=(text.replace(s2c_block+'\n','',1).rstrip('\n')+'\n'
+               +'  relocated-job:\n    runs-on: macos-15\n    steps:\n'+s2c_block+'\n')
+    rejection('Slice 2C step moved to another job','WORKFLOW_CHECK_INVENTORY_OR_CONTEXT',
+              lambda:inventory(s2c_moved.encode()))
 
     # --- lineage construction: the resolution contains the qualify lineage in order ---
     expected_steps={s['name']:s for s in scope._steps(

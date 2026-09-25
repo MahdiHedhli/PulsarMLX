@@ -1,0 +1,67 @@
+{
+ "base_main": "12b063675c2227c59d2157458e051d73647b7045",
+ "branch": "feat/020-synthetic-expert-plane-composition-20260924",
+ "feature": "020-mlx-safetensors-affine",
+ "frozen": {
+  "contract": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-composition-v1.json",
+   "sha256": "e3fc848cea14222e0ed9f1c3c9c3c52faa044ed024d665d8767f7148e0e15c93"
+  },
+  "fixture_generator": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "scripts/research/f020_native_composition_fixtures_v1.py",
+   "sha256": "3aab90e85a64530a554e6e0d03324ea95496ac83c940734c75d7bad701830f5b"
+  },
+  "fixture_listing": {
+   "files": 27,
+   "listing_sha256": "2d314e23ed061bb82d757edb1f6a9fe783d2b2da23c94f794bc07757f34058b8",
+   "manifest_cases": 32,
+   "method": "inside fixtures/native-composition: find checkpoints mutations standalone -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256"
+  },
+  "fixture_manifest": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "fixtures/native-composition/manifest.json",
+   "sha256": "6f0e39e6d2c705603f3f897133d42c31837c53348aba0f4b0389dca18018fc14"
+  },
+  "generator_test": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "scripts/research/tests/test_f020_native_composition_fixtures_v1.py",
+   "sha256": "a4cbd213fa53037a5d90c564e54e97056b919b49231dca83b3d7a6e3e2265b7c"
+  },
+  "plan": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/slice2c-plan.md",
+   "sha256": "b4e23bf4500aa4082e1e7fc26f2731a1c37cc9cf122c59693b2353b62dda5dbf"
+  }
+ },
+ "independent_review": {
+  "final_round_nonce": "astra-f020-s2c-contract-r3-20260924T175507Z-30946",
+  "final_verdict": "COMPOSITION_CONTRACT_READY",
+  "rounds": 3,
+  "scope": "new composition boundary only; the accepted Slice 2B design was not re-reviewed"
+ },
+ "inherited": {
+  "note": "Slice 2B contract, plan, source pins, generator, manifest and case listing are inherited unchanged (76959ccb / 24a06db0 / 02e963a0 / 28078a6d / 472b5b64 / ed0c2e73).",
+  "slice2b_contract": {
+   "commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+   "path": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+   "sha256": "76959ccb13046c664db67469fd8186b7fb668910072060400b38b682e92fec72"
+  }
+ },
+ "kind": "CONTRACT_FROZEN_BEFORE_OBSERVATION",
+ "label": "Slice 2C composition package accepted by independent review and frozen before any candidate composition observation. Implementation proceeds under the owner's 2026-09-24 Slice 2C GO (preparation, review, then implementation/qualification within the work order; no merge).",
+ "new_assumption": "A-DET (hardware reduction determinism for identical inputs through the same kernel in one process/device) \u2014 stated in the composition contract; a violation is a STOP, never a tolerance.",
+ "not_authorized": [
+  "real-checkpoint payload reads, rehashes or downloads",
+  "production geometry",
+  "complete expert MLPs, routing, gather_qmm",
+  "model graphs, streaming, residency, performance",
+  "merging without a separate merge GO",
+  "any change to inherited bounds, domains, assumptions, refusals or numerical acceptance"
+ ],
+ "package_commit": "aff04f16de2b456c00d0367c6e61948f27bb278e",
+ "recorded_on": "2026-09-24",
+ "schema": "pulsarmlx.f020.slice2c-contract-acceptance/1.0.0",
+ "slice": "2C"
+}

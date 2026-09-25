@@ -706,6 +706,7 @@ dependencies = [
  "cc",
  "libc",
  "mlx-affine",
+ "safetensors-catalog",
  "serde_json",
  "sha2",
 ]

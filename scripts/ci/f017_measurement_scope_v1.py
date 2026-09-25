@@ -43,7 +43,9 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # qualification step (99677210); that commit added one required block and
 # changed no existing one. It is advanced once more, to 7f28bc5c, whose only
 # change is that step's post-check (the runner architecture is recorded
-# rather than predicted, and E1/E6 counts are asserted). The
+# rather than predicted, and E1/E6 counts are asserted). It is advanced
+# once more, to 6d76adc6, the commit that added the required F020 Slice 2C
+# composition step (one required block added, no existing one changed). The
 # earlier resolution's required blocks are contained in this one byte for
 # byte -- advancing the base never rewrites or drops one. Required steps are
 # frozen at these exact bytes. Line-level
@@ -52,8 +54,8 @@ NATIVE_WORKFLOW_SHA256 = "72cb1cfe1b5563a12bc9691ce28914c1391d0f67952a73e5eb5426
 # the step by `defaults.run.shell`, job `if:` or job `continue-on-error:` -- so
 # the whole step block, its job's execution keys and the workflow's own defaults
 # are compared byte for byte instead.
-RESOLUTION_BASE = "7f28bc5cd6727d2d80952ecd19347d6e224d8f6d"
-RESOLUTION_WORKFLOW_SHA256 = "c759c5d1df2aae04f123853674775667b4b2bec2fd604b58a587797a12133551"
+RESOLUTION_BASE = "6d76adc63b8d59bd27fb9056a5ed2c171a7feb56"
+RESOLUTION_WORKFLOW_SHA256 = "8f849896da619ce88d81a48aae1003af50cefaf2dcac54fabf1376397f3d566f"
 # Everything that decides whether, where and how a step runs.
 JOB_EXECUTION_KEYS = ("runs-on", "env", "if", "continue-on-error", "defaults",
                       "timeout-minutes", "strategy", "container", "services")
@@ -78,6 +80,10 @@ REQUIRED_EXTRA_STEP_NAMES = (
     # F020 Slice 2B (owner GO 2026-09-23): the native qualification that runs
     # the qualify child on the runner GPU over the frozen population.
     "Qualify F020 Slice 2B native primitives (frozen synthetic population, runner GPU)",
+    # F020 Slice 2C (owner GO 2026-09-24): the composition qualification of
+    # the frozen synthetic population plus the same-run Slice 2B regression
+    # proof (slice2c-plan.md sections 6, 6.1, 6.2).
+    "Qualify F020 Slice 2C synthetic expert-plane composition (frozen synthetic population, runner GPU)",
 )
 
 

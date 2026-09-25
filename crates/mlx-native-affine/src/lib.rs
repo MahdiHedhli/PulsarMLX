@@ -25,12 +25,23 @@
 //! by the parent test only. R3 is the `qualify` child. R2 (the 0.32.0 wheel)
 //! is a cross-version observation in `scripts/ci/` and gates nothing.
 
+//!
+//! # Slice 2C
+//!
+//! [`compose`] selects ONE expert plane of a synthetic stacked affine tensor
+//! through the Slice 1 catalog, module resolution and checked selection, and
+//! stages it for the unchanged Slice 2B bridge; [`frozen_compose`] holds the
+//! frozen Slice 2C identities. Both stay MLX-free: the compose child mode of
+//! the `qualify` binary is the only place the staged plane meets MLX-C.
+
 #![forbid(unsafe_code)]
 
+pub mod compose;
 pub mod dtype;
 pub mod family;
 pub mod fixture;
 pub mod frozen;
+pub mod frozen_compose;
 pub mod gates;
 pub mod harness;
 pub mod refusal;

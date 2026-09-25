@@ -308,6 +308,134 @@ jobs:
           shasum -a 256 "$F020_OUT/qualification/summary.json" "$F020_OUT/qualification/child/report.json" \
             "$F020_OUT/qualification/exact-gates.json" "$F020_OUT/selftest/child/selftest.json"
           test -z "$PULSARMLX_MODEL_GGUF"
+      # F020 Slice 2C (required; owner GO 2026-09-24). Runs the composition
+      # parent target only (it is `test = false`, so the Slice 2B step above
+      # never runs it): the frozen-population validation and the generator's
+      # test, one `qualify --mode compose` child on this runner's GPU over the
+      # 32 frozen cases under the frozen 1800 s watchdog, every selection,
+      # refusal, mutation, A-vs-B and inherited R1 gate, and the child
+      # independence checks. It then proves the Slice 2B invocation unchanged
+      # in this same job and prefix: the base (12b06367) and the candidate run
+      # their unchanged Slice 2B qualification with separate target and output
+      # directories, and the child reports are compared as canonical JSON
+      # minus exactly V1-V4, with identical gate counts and test-name lists,
+      # plus the recorded cross-run comparison with attempt 3. Any missing
+      # prerequisite, a build without MLX, a skipped suite, a missing summary
+      # or report, or any difference fails this step; there is no retry.
+      - name: Qualify F020 Slice 2C synthetic expert-plane composition (frozen synthetic population, runner GPU)
+        run: |
+          set -euo pipefail
+          test -z "$PULSARMLX_MODEL_GGUF"
+          test "$PULSAR_REQUIRE_NATIVE_MLX" = 1
+          test -f "$MLX_C_PREFIX/include/mlx/c/mlx.h"
+          test -f "$MLX_C_PREFIX/lib/libmlxc.dylib"
+          test -f "$MLX_PREFIX/lib/libmlx.dylib"
+          test -f "$MLX_PREFIX/lib/mlx.metallib"
+          F020C_OUT="$RUNNER_TEMP/f020-slice2c"
+          rm -rf "$F020C_OUT"
+          mkdir -p "$F020C_OUT/regression/lists"
+          PULSAR_F020_COMPOSITION_OUT="$F020C_OUT" PULSAR_F020_HOST_LABEL=github-macos-15 PULSAR_F020_PYTHON=python3 \
+            cargo test -p mlx-native-affine --release --test composition_qualification -- --test-threads=1 --nocapture
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          out = Path(os.environ["RUNNER_TEMP"]) / "f020-slice2c"
+          summary = json.loads((out / "qualification/summary.json").read_text())
+          assert summary["result"] == "PASS", summary["failures"]
+          assert summary["failures"] == []
+          assert summary["host_label"] == "github-macos-15"
+          assert summary["case_accounting"]["case_ids"] == 32
+          assert summary["frozen"]["case_count"] == 32
+          assert summary["frozen"]["population_valid_after"] is True
+          assert summary["frozen"]["generator_check_before"] == "PASS"
+          assert summary["frozen"]["generator_test"] == "EXIT_STATUS 0"
+          assert summary["child"]["outcome"] == "EXIT_STATUS 0"
+          assert summary["child"]["timeout_seconds"] == 1800
+          assert summary["provenance"]["mlx_version"] == "0.31.2"
+          assert summary["provenance"]["environment"]["MLX_ENABLE_TF32"] == "0"
+          assert summary["provenance"]["architecture"]
+          assert summary["independence"]["static_source"]["pass"] is True
+          assert summary["independence"]["nm"]["pass"] is True
+          assert summary["independence"]["handler"]["pass"] is True
+          expected = {"S-IDENTITY": 17, "S-RANGES": 17, "S-BYTES": 17, "S-STAGED-EQUAL": 17, "S-SOURCE-UNCHANGED": 17,
+                      "E1-DEVICE": 17, "N-COMP-ARRAYS": 14, "N-QMM-SHAPE-DTYPE(A)": 14, "N-QMM-SHAPE-DTYPE(B)": 14,
+                      "N-COMP-AB": 14, "G-QMM-RUST(A)": 14, "G-QMM-RUST(B)": 14, "G-QMM-EXACT(A)": 14,
+                      "G-QMM-EXACT(B)": 14, "G-R1-SELF-QMM(C)": 14, "N-COMP-ABA": 1, "C-R-REFUSAL": 9,
+                      "INHERITED-REFUSAL": 3, "MUTATION-DETECTED": 6}
+          assert set(summary["gate_counts"]) == set(expected), sorted(summary["gate_counts"])
+          for gate, count in expected.items():
+              assert summary["gate_counts"][gate] == {"cases": count, "passed": count}, gate
+          assert len(summary["cases"]) == 32
+          assert all(case["pass"] for case in summary["cases"])
+          print(json.dumps({"result": summary["result"], "candidate_commit": summary["candidate_commit"],
+                            "architecture": summary["provenance"]["architecture"],
+                            "gate_counts": summary["gate_counts"]}, sort_keys=True))
+          PY
+          F020C_BASE_WT="$RUNNER_TEMP/f020-slice2c-base-worktree"
+          rm -rf "$F020C_BASE_WT"
+          git worktree add --detach "$F020C_BASE_WT" 12b063675c2227c59d2157458e051d73647b7045
+          (cd "$F020C_BASE_WT" && CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-base" \
+            PULSAR_F020_QUALIFICATION_OUT="$F020C_OUT/regression/base" PULSAR_F020_HOST_LABEL=github-macos-15 PULSAR_F020_PYTHON=python3 \
+            cargo test -p mlx-native-affine --release --no-fail-fast -- --test-threads=1 --nocapture)
+          (cd "$F020C_BASE_WT" && CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-base" \
+            cargo test -p mlx-native-affine --release -- --list > "$F020C_OUT/regression/lists/base-list.txt")
+          (cd "$F020C_BASE_WT" && CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-base" \
+            cargo test -p mlx-native-affine --release --doc -- --list > "$F020C_OUT/regression/lists/base-doc-list.txt")
+          CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-candidate" \
+            PULSAR_F020_QUALIFICATION_OUT="$F020C_OUT/regression/candidate" PULSAR_F020_HOST_LABEL=github-macos-15 PULSAR_F020_PYTHON=python3 \
+            cargo test -p mlx-native-affine --release --no-fail-fast -- --test-threads=1 --nocapture
+          CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-candidate" \
+            cargo test -p mlx-native-affine --release -- --list > "$F020C_OUT/regression/lists/candidate-list.txt"
+          CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-candidate" \
+            cargo test -p mlx-native-affine --release --doc -- --list > "$F020C_OUT/regression/lists/candidate-doc-list.txt"
+          CARGO_TARGET_DIR="$RUNNER_TEMP/f020-slice2c-target-candidate" \
+            cargo test -p mlx-native-affine --release --test composition_qualification -- --list > "$F020C_OUT/regression/lists/composition-list.txt"
+          python3 scripts/ci/f020_slice2b_regression_compare_v1.py \
+            --base "$F020C_OUT/regression/base" \
+            --candidate "$F020C_OUT/regression/candidate" \
+            --lists "$F020C_OUT/regression/lists" \
+            --attempt3 fixtures/f020-slice2b-attempt3/child-report.json \
+            --out "$F020C_OUT/regression/regression.json"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          doc = json.loads((Path(os.environ["RUNNER_TEMP"]) / "f020-slice2c/regression/regression.json").read_text())
+          b = doc["primary_b_same_run_differential"]
+          assert b["result"] == "PASS", b["failures"]
+          assert b["canonical_reports_equal"] is True
+          assert b["gate_counts"]["equal_attempt3"] is True
+          assert b["test_lists"]["list"]["identical"] is True and b["test_lists"]["doc-list"]["identical"] is True
+          assert b["composition_target"]["absent_from_slice2b_lists"] is True
+          a = doc["secondary_a_cross_run"]
+          print(json.dumps({"primary_b": b["result"], "secondary_a": a["result"], "secondary_mismatch_count": a["mismatch_count"],
+                            "secondary_provenance": a["provenance"]}, sort_keys=True))
+          PY
+          git worktree remove --force "$F020C_BASE_WT"
+          shasum -a 256 "$F020C_OUT/qualification/summary.json" "$F020C_OUT/qualification/child/report.json" \
+            "$F020C_OUT/qualification/composition-gates.json" "$F020C_OUT/regression/regression.json" \
+            "$F020C_OUT/regression/base/qualification/child/report.json" "$F020C_OUT/regression/candidate/qualification/child/report.json"
+          test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Upload F020 Slice 2C qualification reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: f020-slice2c-qualification
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/f020-slice2c/qualification/summary.json
+            ${{ runner.temp }}/f020-slice2c/qualification/composition-gates.json
+            ${{ runner.temp }}/f020-slice2c/qualification/child/report.json
+            ${{ runner.temp }}/f020-slice2c/regression/regression.json
+            ${{ runner.temp }}/f020-slice2c/regression/lists
+            ${{ runner.temp }}/f020-slice2c/regression/base/qualification/summary.json
+            ${{ runner.temp }}/f020-slice2c/regression/base/qualification/child/report.json
+            ${{ runner.temp }}/f020-slice2c/regression/candidate/qualification/summary.json
+            ${{ runner.temp }}/f020-slice2c/regression/candidate/qualification/child/report.json
       # F020 Slice 2B R2 (observation only; not required and gates nothing).
       # The pinned 0.32.0 wheel is a different version from the native 0.31.2
       # candidate, so every record is labelled CROSS_VERSION_0.32.0_vs_0.31.2.

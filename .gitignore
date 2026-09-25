@@ -50,6 +50,7 @@ checkpoints/
 # their sha256 in fixtures/safetensors/manifest.json, so they are excepted by
 # path rather than by extension.
 !fixtures/safetensors/**/*.safetensors
+!fixtures/native-composition/**
 
 # Local-only research scratch space. These paths are defense-in-depth for an
 # accidentally repo-local run; validated specifications, schemas, fixtures,
