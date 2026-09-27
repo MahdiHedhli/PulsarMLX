@@ -1,0 +1,40 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-package/2.0.0",
+  "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
+  "feature": "F020",
+  "sequence": 2,
+  "method_revision": "certified-candidate-b-bridge-exhaustive-native-sweep-v2",
+  "predecessor_public_commit": "5be58b2589abc86676a5eefab7a27dda8d23eece",
+  "authority_private_commit": "6fdfb7766bbae08371b93f525286058406c2b44c",
+  "historical_v1_preserved": true,
+  "historical_direct_r1_blocker_preserved": true,
+  "contract": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-native-sweep-v2.json",
+  "r1_contract_unchanged": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-r1-v1.json",
+  "candidate_b_contract_unchanged": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-candidate-b-v1.json",
+  "implementation": "scripts/research/f020_fused_swiglu_native_bridge_v2.cpp",
+  "table_generator": "scripts/research/f020_fused_swiglu_generate_b_table_v2.py",
+  "counters": {
+    "candidate_observations": 0,
+    "candidate_n_observations": 0,
+    "candidate_b_observations": 0,
+    "benchmark": 0,
+    "checkpoint_payload_access": 0,
+    "production_geometry": 0,
+    "full_model_inference": 0,
+    "merge": 0
+  },
+  "budgets": {
+    "beta_B": "5201/4194304",
+    "E_N": "1/128",
+    "delta_max": "27567/4194304",
+    "batch_elements": 1048576,
+    "up_f32_control": "1.0"
+  },
+  "inherited_regressions": {"primitive": 363, "slice2c_composition": 32},
+  "files": [
+    {"path": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-native-sweep-v2.json", "sha256": "91f662fa75072b6d69210140b426a6958c2c52408076a503f59bcb8b186835d0"},
+    {"path": "scripts/research/f020_fused_swiglu_native_bridge_v2.cpp", "sha256": "1a37ad1841bb05de58c31fc14884dc88b59edb93b518f68cc5b5b24e40497b32"},
+    {"path": "scripts/research/f020_fused_swiglu_generate_b_table_v2.py", "sha256": "a7a5b01821970c4eb309c7c78fd7b30a06135201001343731aa92921b80719b7"},
+    {"path": "scripts/research/f020_fused_swiglu_v2_static_selfcheck.py", "sha256": "b3a711b11cd6a4d38b1f7758292493da1eb5f3703125d9a66dfd7fd5a8338437"}
+  ]
+}

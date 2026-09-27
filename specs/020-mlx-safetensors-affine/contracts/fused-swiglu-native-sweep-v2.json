@@ -1,0 +1,72 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-native-sweep/2.0.0",
+  "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
+  "method_identity": "certified-candidate-b-bridge-exhaustive-native-sweep-v2",
+  "scope": "synthetic activation stage only; finite binary32 gate domain [-16,16]",
+  "predecessor_method": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-native-sweep-v1.json",
+  "r1": {
+    "unchanged": true,
+    "contract": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-r1-v1.json",
+    "independent_of_candidates": true,
+    "direct_r1_blocker_preserved": true
+  },
+  "certified_bridge": {
+    "candidate_b_is_oracle": false,
+    "beta_B": "5201/4194304",
+    "beta_B_decimal": "0.0012400150299072265625",
+    "proof_claim": "for every admitted gate input x, |B(x)-R1(x)| <= beta_B",
+    "source_contract": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-candidate-b-v1.json"
+  },
+  "candidate_n": {
+    "E_N": "1/128",
+    "E_N_decimal": "0.0078125",
+    "exact_graph": "g=min(gate,10); s=native MLX sigmoid(g); silu=native MLX multiply(g,s); h=native MLX multiply(silu,clip(up,-10,10))",
+    "runtime_scope": "exact pinned runtime/toolchain/source/native artifact identities from source-pins-v1",
+    "observations_at_freeze": 0
+  },
+  "differential_gate": {
+    "delta_definition": "max over every finite binary32 gate bit-pattern x in [-16,16] of |N(x)-B(x)|",
+    "delta_max": "27567/4194304",
+    "delta_max_decimal": "0.0065724849700927734375",
+    "acceptance": "delta + beta_B <= E_N",
+    "comparison": "promote each binary32 output exactly to binary64; correctly-rounded binary64 subtraction; absolute value; nextafter toward +infinity before max",
+    "underestimation": "forbidden",
+    "retained_witness": ["input_gate_f32_bits", "candidate_n_output_f32_bits", "candidate_b_output_f32_bits", "upward_rounded_abs_delta_bits"]
+  },
+  "enumeration": {
+    "representation": "uint32 binary32 bit patterns",
+    "negative_range_inclusive": ["0x80000000", "0xc1800000"],
+    "positive_range_inclusive": ["0x00000000", "0x41800000"],
+    "finite_only": true,
+    "gate_domain": [-16, 16],
+    "batch_elements": 1048576,
+    "outputs_materialized": false,
+    "up_f32_control": "1.0"
+  },
+  "corroboration": {
+    "r1": "exact Fraction R1 at predeclared structured boundary inputs and retained worst-delta input set after sweep",
+    "tuning_forbidden": true,
+    "threshold_population_benchmark_mutation_forbidden": true,
+    "structured_up_controls_preserved": true,
+    "analytical_full_gate_up_propagation_preserved": true
+  },
+  "guards": {
+    "candidate_b": "fail closed unless exact compiler identity, -fno-fast-math, separate RN32 multiply/add, and no-contracted-FMA disassembly verification pass",
+    "candidate_n": "fail closed unless exact pinned Mac Studio M1 Ultra/macOS/Metal/MLX/MLX-C/source/native-artifact identities pass",
+    "execution": "bridge binary refuses to execute unless --execute-sweep is explicitly supplied and the v2 manifest/hash preflight passes"
+  },
+  "inherited_regressions": {
+    "primitive": 363,
+    "slice2c_composition": 32,
+    "report_integration_required": true
+  },
+  "exclusions": {
+    "real_checkpoint_payload_access": 0,
+    "production_geometry": 0,
+    "full_model_inference": 0,
+    "streaming_residency_serving": 0,
+    "benchmark": 0,
+    "merge": 0,
+    "next_slice": 0
+  }
+}
