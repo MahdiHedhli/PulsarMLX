@@ -1,0 +1,15 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-benchmark/1.0.0",
+  "status": "FROZEN_PROTOCOL_NO_RESULTS",
+  "scope": "activation stage only; no QMM, model, checkpoint, or production geometry",
+  "shapes": [{"M": 1, "H": 64}, {"M": 1, "H": 128}, {"M": 32, "H": 64}, {"M": 32, "H": 128}],
+  "buffers": "contiguous float32 gate/up input and output buffers sized exactly M*H",
+  "inputs": "same deterministic synthetic fixture declaration channels, separately generated for each candidate",
+  "warmup_trials": 50,
+  "measured_trials": 200,
+  "metrics": ["warm steady-state latency", "throughput", "graph/kernel launch overhead", "temporary memory allocation/traffic where observable"],
+  "report": "median, p05, p95, min, max, standard deviation, and per-trial samples",
+  "selection": "only among numerically qualified candidates; materially faster wins; effective tie prefers simpler/native; other qualified candidate retained as fallback",
+  "prohibited_changes_after_results": ["coefficients", "bounds", "fusion semantics", "workloads"],
+  "candidate_observations_at_freeze": 0
+}

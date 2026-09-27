@@ -1,0 +1,26 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-source-pins/1.0.0",
+  "status": "FROZEN",
+  "native_mlx": {"commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8", "version": "0.31.2"},
+  "native_mlx_c": {"commit": "0726ca922fc902c4c61ef9c27d94132be418e945", "version": "0.6.0"},
+  "source_files": [
+    {"path": "mlx/mlx/backend/metal/kernels/unary_ops.h", "sha256": "95aeaba511fd32cfc89803366ac30f9e152ab02e2ac3c2aaecfc660d1f6b7463", "claim": "Metal Sigmoid uses 1/(1+exp(abs(x))) and sign selection"},
+    {"path": "mlx/mlx/backend/metal/kernels/unary.metal", "sha256": "51af04126d68e1f5baee5f467268408650d24a68db66e8c044f7f0be3f15368b", "claim": "F32 Exp and Sigmoid kernels are instantiated"},
+    {"path": "mlx/mlx/backend/metal/unary.cpp", "sha256": "35a7a35a9d14f5cac74e1535106093383aeb91c147a8a1a5f486913e74ccc521", "claim": "native unary dispatch path"},
+    {"path": "mlx/mlx/backend/metal/jit_kernels.cpp", "sha256": "5ac2bf01266db13e2b6a3f3d830ee1d5000776d87f7ebf69a1b05c89c5e69eb7", "claim": "compiled/JIT unary kernel selection"},
+    {"path": "mlx/mlx/compile.cpp", "sha256": "96a652d7c75630033fbd992dd04d30845394b48325ab8e7a5c6a5a8d50fdd913", "claim": "compile primitive classification"},
+    {"path": "mlx/mlx/primitives.cpp", "sha256": "b941072272740caf8ece06acf71ec2c0a557360c946d6ec0862688a19dca7afa", "claim": "primitive graph definitions"}
+  ],
+  "runtime": {
+    "machine": "Mac Studio M1 Ultra",
+    "architecture": "arm64",
+    "macos": "26.0 (25A354)",
+    "metal_toolchain": "Apple metal 32023.864; metalfe-32023.864; air64-apple-darwin25.0.0",
+    "native_artifacts": [
+      {"name": "mlx.metallib", "sha256": "5518fd265f31a8973732996d5eecc612301c94c1852156fb9ff30f6b708be365"},
+      {"name": "libmlx.dylib", "sha256": "c11a4d814042213b866ce66032107921857e4bbc8bfe0dd8150573a1ff9a8053"},
+      {"name": "libmlxc.dylib", "sha256": "e523f544758f042f78aeacdbe646af9d966432605ad4cfe760609b4044c2ce27"}
+    ]
+  },
+  "candidate_n_claim": "Only the exact pinned source, compiled graph path, Metal toolchain, artifacts, OS, and Mac Studio runtime are in scope; no universal Apple intrinsic bound is claimed."
+}

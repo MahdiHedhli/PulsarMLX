@@ -1,0 +1,27 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-native-sweep/1.0.0",
+  "status": "FROZEN_METHOD_NO_RESULTS",
+  "candidate": "N",
+  "domain": {
+    "enumeration": "all binary32 bit patterns whose finite decoded value is in [-16,16]",
+    "partition": "positive and negative sign regions, monotone uint32 bit-order ranges",
+    "chunk_elements": 1048576,
+    "outputs_materialized": false
+  },
+  "graph": [
+    "gate_f32",
+    "up_f32_control",
+    "minimum(gate_f32, 10.0f)",
+    "native MLX sigmoid primitive",
+    "native MLX multiply by clipped up control"
+  ],
+  "reduction": {
+    "location": "Metal device reduction per chunk",
+    "retained": ["worst absolute error", "worst relative error where meaningful", "worst ULP distance", "worst input bits", "nonfinite count", "subnormal count", "monotonicity violations", "sign violations", "R1 contract violations"],
+    "reference": "independent rational R1 interval evaluator, never candidate-derived",
+    "structured_pairs": ["clamp boundaries", "zero", "sign changes", "small magnitudes", "worst-error gate neighborhoods", "up endpoints"]
+  },
+  "coverage_claim": "exhaustive over the frozen finite F32 gate domain; Cartesian gate/up product is covered only by the declared composition controls and proved clamp/product propagation",
+  "runtime_identity": "fused-swiglu-source-pins-v1.json",
+  "candidate_observations_at_freeze": 0
+}
