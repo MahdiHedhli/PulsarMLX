@@ -22,5 +22,7 @@
       {"name": "libmlxc.dylib", "sha256": "e523f544758f042f78aeacdbe646af9d966432605ad4cfe760609b4044c2ce27"}
     ]
   },
-  "candidate_n_claim": "Only the exact pinned source, compiled graph path, Metal toolchain, artifacts, OS, and Mac Studio runtime are in scope; no universal Apple intrinsic bound is claimed."
+  "candidate_n_graph": "g=min(gate,10); s=native MLX sigmoid(g); silu=native MLX multiply(g,s); h=native MLX multiply(silu,clip(up,-10,10))",
+  "candidate_n_claim": "Only the exact pinned source, compiled graph path, Metal toolchain, artifacts, OS, and Mac Studio runtime are in scope; no universal Apple intrinsic bound is claimed.",
+  "runtime_fail_closed": "Refuse Candidate N execution unless architecture, macOS build, Metal toolchain identity, MLX/MLX-C commits, and native artifact hashes exactly match this record."
 }

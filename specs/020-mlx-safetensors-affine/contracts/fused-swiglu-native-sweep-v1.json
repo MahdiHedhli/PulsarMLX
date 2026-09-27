@@ -11,10 +11,11 @@
   },
   "graph": [
     "gate_f32",
-    "up_f32_control = float32(1.0)",
-    "minimum(gate_f32, 10.0f)",
-    "native MLX sigmoid primitive",
-    "native MLX multiply by clipped up control"
+    "g = minimum(gate_f32, 10.0f) [upper-only clamp]",
+    "s = native MLX sigmoid(g)",
+    "silu = native MLX multiply(g, s)",
+    "up_clipped = clip(up_f32_control = float32(1.0), -10.0f, 10.0f)",
+    "h = native MLX multiply(silu, up_clipped)"
   ],
   "reduction": {
     "location": "Metal device reduction per chunk",
@@ -22,7 +23,8 @@
     "reference": "independent rational R1 interval evaluator, never candidate-derived",
     "structured_pairs": ["clamp boundaries", "zero", "sign changes", "small magnitudes", "worst-error gate neighborhoods", "up endpoints"]
   },
-  "coverage_claim": "exhaustive over the frozen finite F32 gate domain; Cartesian gate/up product is covered only by the declared composition controls and proved clamp/product propagation",
+  "coverage_claim": "exhaustive over the frozen finite F32 gate domain for the exact g -> sigmoid(g) -> g*sigmoid(g) -> h graph; Cartesian gate/up product is covered only by the declared composition controls and proved clamp/product propagation",
+  "runtime_fail_closed": "refuse the sweep unless SoC architecture, macOS build, Metal toolchain identity, MLX/MLX-C commits, and native artifact hashes exactly match fused-swiglu-source-pins-v1.json",
   "runtime_identity": "fused-swiglu-source-pins-v1.json",
   "candidate_observations_at_freeze": 0
 }

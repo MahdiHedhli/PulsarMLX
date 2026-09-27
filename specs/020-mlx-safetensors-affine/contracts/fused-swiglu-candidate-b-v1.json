@@ -10,7 +10,13 @@
     "coefficients": "fixtures/f020-fused-swiglu/candidate-b-silu-table-v1.json",
     "evaluation_order": "clamp gate; locate i by exact floor on grid; one float32 multiply and one float32 add for interpolation; float32 multiply by clamped up",
     "fma": "not permitted; separate RN32 multiply and RN32 add",
-    "rounding": "binary32 round-to-nearest ties-to-even; reject nonfinite/subnormal intermediates"
+    "rounding": "binary32 round-to-nearest ties-to-even; reject nonfinite/subnormal intermediates",
+    "implementation_fail_closed": {
+      "required_compile_flags": ["-fno-fast-math"],
+      "required_operations": "explicit RN32 multiply followed by explicit RN32 add; no contracted FMA",
+      "verification": "compiler IR or disassembly must show separate operations and the exact implementation/compiler identity is recorded",
+      "failure": "refuse Candidate B qualification if flags, operation separation, or compiler identity cannot be verified"
+    }
   },
   "certificate": {
     "silu_second_derivative_bound": "M <= 1 on [-16,10], proved by interval subdivision in proof artifact",

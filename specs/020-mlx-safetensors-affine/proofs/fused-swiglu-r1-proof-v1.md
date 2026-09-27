@@ -38,8 +38,11 @@ after observations.
 
 The pinned source establishes the graph operation and actual Metal
 implementation path, but not a universal transcendental error bound. Candidate
-N therefore receives an environment-scoped empirical certificate only after
+N is exactly g=min(gate,10), s=native MLX sigmoid(g), silu=g*s using native
+MLX multiply, then h=silu*clip(up,-10,10). It receives an environment-scoped
+empirical certificate only after
 the exhaustive gate sweep and structured composition controls execute on the
 declared runtime. The sweep reduces on device and retains worst input, absolute,
 relative, ULP, non-finite, subnormal, monotonicity, sign, and violation counts.
-No result exists at freeze.
+No result exists at freeze. Refuse execution if the exact runtime, toolchain,
+source commits, or native artifact hashes do not match the frozen source pins.

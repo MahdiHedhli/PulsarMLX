@@ -2,7 +2,7 @@
   "schema": "pulsarmlx.f020.fused-swiglu-r1/1.0.0",
   "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
   "scope": "synthetic activation stage only",
-  "operation": "h = silu(min(gate, 10)) * clip(up, -10, 10)",
+  "operation": "g = min(gate, 10); s = silu(g) = g*sigmoid(g); h = s*clip(up, -10, 10)",
   "input": {"dtype": "float32", "finite": true, "gate_domain": [-16, 16], "up_domain": [-16, 16]},
   "reference": {
     "name": "R1",

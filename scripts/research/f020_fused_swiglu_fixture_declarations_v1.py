@@ -52,6 +52,13 @@ def declaration() -> dict:
         "gate_clamp": "upper-only min(gate, 10); no lower clamp",
         "up_domain": [-16, 16],
         "up_clamp": "clip(up, -10, 10)",
+        "candidate_n_graph": [
+            "g=min(gate,10)",
+            "s=native MLX sigmoid(g)",
+            "silu=native MLX multiply(g,s)",
+            "h=native MLX multiply(silu,clip(up,-10,10))",
+        ],
+        "candidate_n_runtime_fail_closed": True,
         "candidate_b_table_grid": "x_num/32, x_num=-512..320",
         "case_ids": positives + refusals + mutations,
         "positive_cases": len(positives),
