@@ -13,6 +13,8 @@
 #include <limits.h>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <CommonCrypto/CommonDigest.h>
 
@@ -121,7 +123,7 @@ static bool read_capability(const std::string &path, std::map<std::string, std::
     if (cap.count(key) != 0) return false;
     cap.emplace(key, line.substr(split + 1));
   }
-  return in.eof() && cap.size() == 13;
+  return in.eof() && cap.size() == 15;
 }
 
 static bool real_path(const std::string &path, std::string &out) {
@@ -142,6 +144,9 @@ static bool validate_capability(int argc, char **argv) {
   for (int i = 1; i + 1 < argc; ++i)
     if (std::strcmp(argv[i], "--capability") == 0) capability = argv[i + 1];
   if (capability.empty()) return false;
+  struct stat cap_stat{};
+  if (lstat(capability.c_str(), &cap_stat) != 0 || !S_ISREG(cap_stat.st_mode) ||
+      cap_stat.st_uid != geteuid() || (cap_stat.st_mode & 0077) != 0) return false;
   std::map<std::string, std::string> cap;
   if (!read_capability(capability, cap)) return false;
   if (!capability_value(cap, "schema", "pulsarmlx.f020.native-bridge-capability/1.0.0") ||
@@ -151,20 +156,39 @@ static bool validate_capability(int argc, char **argv) {
       !capability_value(cap, "candidate_b_flags", "-fno-fast-math;-ffp-contract=off") ||
       !capability_value(cap, "runtime_identity_sha256") ||
       !capability_value(cap, "compiler_identity_sha256") ||
-      !capability_value(cap, "disassembly_sha256")) return false;
+      !capability_value(cap, "disassembly_sha256") ||
+      !capability_value(cap, "execution_root") ||
+      !capability_value(cap, "capability_path", capability.c_str())) return false;
   std::string actual;
+  if (!real_path(capability, actual) || actual != capability) return false;
+  std::string root = cap.at("execution_root");
+  std::string cap_parent = actual.substr(0, actual.find_last_of('/'));
+  if (cap_parent != root) return false;
   if (!capability_value(cap, "manifest_path") || !sha256_file(cap.at("manifest_path"), actual) ||
       actual != cap.at("manifest_sha256")) return false;
   if (!capability_value(cap, "source_path") || !sha256_file(cap.at("source_path"), actual) ||
       actual != cap.at("bridge_source_sha256")) return false;
   if (!capability_value(cap, "bridge_path") || !real_path(argv[0], actual) || actual != cap.at("bridge_path")) return false;
   if (!sha256_file(actual, actual) || actual != cap.at("bridge_binary_sha256")) return false;
+  std::string bridge_real;
+  if (!real_path(cap.at("bridge_path"), bridge_real) ||
+      bridge_real.substr(0, bridge_real.find_last_of('/')) != root) return false;
+  if (std::remove(capability.c_str()) != 0) return false;
   return capability_value(cap, "bridge_source_sha256") && capability_value(cap, "bridge_binary_sha256");
 }
 
+struct ControlEvidence {
+  uint32_t gate_bits = 0;
+  uint32_t up_bits = 0;
+  uint32_t n_bits = 0;
+  uint32_t b_bits = 0;
+  uint64_t delta_bits = 0;
+};
+
 static int run_batch(const std::vector<uint32_t> &input_bits,
                      mlx_stream stream, Witness &worst, double &max_delta, SweepStats &stats,
-                     uint64_t range_index, const std::vector<float> *controlled_up = nullptr) {
+                     uint64_t range_index, const std::vector<float> *controlled_up = nullptr,
+                     std::vector<ControlEvidence> *evidence = nullptr) {
   const int shape[1] = {static_cast<int>(input_bits.size())};
   std::vector<float> gate(input_bits.size());
   std::vector<float> up(input_bits.size(), 1.0f);
@@ -234,6 +258,7 @@ static int run_batch(const std::vector<uint32_t> &input_bits,
         worst.b_bits = bits(b[i]);
         worst.delta_bits = bits(d);
       }
+      if (evidence != nullptr) evidence->push_back({input_bits[i], bits(up[i]), bits(n[i]), bits(b[i]), bits(d)});
     }
   }
   mlx_array_free(h); mlx_array_free(clipped); mlx_array_free(silu);
@@ -319,15 +344,25 @@ static int execute_structured_v2(int argc, char **argv) {
   mlx_device device = mlx_device_new_type(MLX_GPU, 0);
   mlx_stream stream = mlx_stream_new_device(device);
   Witness worst{}; SweepStats stats{}; double max_delta = 0.0;
-  const int rc = run_batch(gates, stream, worst, max_delta, stats, 0, &controls);
+  std::vector<ControlEvidence> evidence;
+  const int rc = run_batch(gates, stream, worst, max_delta, stats, 0, &controls, &evidence);
   mlx_stream_free(stream); mlx_device_free(device);
   const std::string path = report_path(argc, argv);
   if (path.empty()) return 64;
   std::ofstream out(path);
   if (!out) return 73;
-  out << "{\"schema\":\"pulsarmlx.f020.native-bridge-v2-1-structured/1.0.0\","
+  out << "{\"schema\":\"pulsarmlx.f020.native-bridge-v2-2-structured/1.0.0\","
       << "\"structured\":true,\"total_evaluated\":" << stats.total_evaluated
-      << ",\"anomaly_count\":" << stats.anomaly_count << "}\n";
+      << ",\"anomaly_count\":" << stats.anomaly_count << ",\"controls\":[";
+  for (size_t i = 0; i < evidence.size(); ++i) {
+    if (i) out << ',';
+    out << "{\"gate_f32_bits\":\"0x" << std::hex << std::setw(8) << std::setfill('0') << evidence[i].gate_bits
+        << "\",\"up_f32_bits\":\"0x" << std::setw(8) << evidence[i].up_bits
+        << "\",\"candidate_n_output_f32_bits\":\"0x" << std::setw(8) << evidence[i].n_bits
+        << "\",\"candidate_b_output_f32_bits\":\"0x" << std::setw(8) << evidence[i].b_bits
+        << "\",\"upward_rounded_abs_delta_bits\":\"0x" << std::setw(16) << evidence[i].delta_bits << "\"}";
+  }
+  out << "]}\n";
   return rc;
 }
 

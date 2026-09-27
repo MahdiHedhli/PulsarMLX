@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Admitted F020 v2.1 qualification driver.
+"""Admitted F020 v2.2 qualification driver.
 
 The default mode performs only frozen preflight/build/attestation. Candidate
 execution requires the explicit --execute flag and proceeds only through the
 capability this driver creates after every guard passes.
-"""
+    """
 from __future__ import annotations
 
 import argparse
@@ -31,12 +31,18 @@ GEN = ROOT / "scripts/research/f020_fused_swiglu_generate_b_table_v2.py"
 R1 = ROOT / "scripts/research/f020_fused_swiglu_r1_v1.py"
 STATIC_CHECK = ROOT / "scripts/research/f020_fused_swiglu_v2_static_selfcheck.py"
 DRIVER = ROOT / "scripts/research/f020_fused_swiglu_qualification_v2_1.py"
-PUBLIC_FILES = (MANIFEST, CONTRACT, BRIDGE, GEN, R1, STATIC_CHECK, DRIVER)
 EXPECTED_TOTAL = 2_197_815_298
+BRANCH = "feat/020-synthetic-expert-mlp-20260925"
+PRIMITIVE_MANIFEST = ROOT / "fixtures/native-primitives/manifest.json"
+COMPOSITION_MANIFEST = ROOT / "fixtures/native-composition/manifest.json"
+PRIMITIVE_SHA = "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04"
+COMPOSITION_SHA = "6f0e39e6d2c705603f3f897133d42c31837c53348aba0f4b0389dca18018fc14"
+PUBLIC_FILES = (MANIFEST, CONTRACT, BRIDGE, GEN, R1, STATIC_CHECK, DRIVER,
+                PRIMITIVE_MANIFEST, COMPOSITION_MANIFEST)
 
 
 def fail(message: str) -> None:
-    raise SystemExit("F020_V2_1_BLOCKER: " + message)
+    raise SystemExit("F020_V2_2_BLOCKER: " + message)
 
 
 def sha(path: Path) -> str:
@@ -52,6 +58,36 @@ def run(cmd: list[str], *, cwd: Path | None = None) -> str:
         return subprocess.run(cmd, cwd=cwd, check=True, capture_output=True, text=True).stdout
     except (OSError, subprocess.CalledProcessError) as exc:
         fail("command failed: " + " ".join(cmd) + " :: " + str(exc))
+
+
+def git_authority(requested: str) -> str:
+    branch = run(["git", "branch", "--show-current"], cwd=ROOT).strip()
+    head = run(["git", "rev-parse", "HEAD"], cwd=ROOT).strip()
+    dirty = subprocess.run(["git", "status", "--porcelain=v1", "--untracked-files=all"], cwd=ROOT,
+                           capture_output=True, text=True, check=False).stdout
+    remote = run(["git", "ls-remote", "origin", f"refs/heads/{BRANCH}"], cwd=ROOT).split()
+    if requested != head or branch != BRANCH or dirty or not remote or remote[0] != head:
+        fail("Git authority mismatch: require requested==HEAD, exact branch, clean tree, and origin parity")
+    return head
+
+
+def frozen_population(path: Path, expected_sha: str, expected_count: int) -> dict:
+    if not path.is_file() or sha(path) != expected_sha:
+        fail("frozen population manifest hash mismatch: " + str(path.relative_to(ROOT)))
+    data = json.loads(path.read_text())
+    cases = data.get("cases")
+    if data.get("case_count") != expected_count or not isinstance(cases, list) or len(cases) != expected_count:
+        fail("frozen population case-count mismatch: " + str(path.relative_to(ROOT)))
+    ids = [case.get("id") for case in cases]
+    if any(not isinstance(case_id, str) for case_id in ids) or len(set(ids)) != expected_count:
+        fail("frozen population case IDs are not exact and unique")
+    return {"manifest": str(path.relative_to(ROOT)), "manifest_sha256": expected_sha,
+            "case_count": expected_count, "case_ids": ids}
+
+
+def frozen_populations() -> dict:
+    return {"primitive": frozen_population(PRIMITIVE_MANIFEST, PRIMITIVE_SHA, 363),
+            "slice2c": frozen_population(COMPOSITION_MANIFEST, COMPOSITION_SHA, 32)}
 
 
 def load_contract() -> tuple[dict, dict]:
@@ -166,8 +202,15 @@ def write_capability(path: Path, args: argparse.Namespace, manifest_sha: str, pu
         f"compiler_identity_sha256={attestation['compiler_hash']}",
         f"disassembly_sha256={attestation['disassembly_hash']}",
         "candidate_b_flags=-fno-fast-math;-ffp-contract=off",
+        f"execution_root={temp.resolve()}", f"capability_path={path.resolve()}",
     ]
-    path.write_text("\n".join(lines) + "\n")
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        os.write(fd, ("\n".join(lines) + "\n").encode())
+    finally:
+        os.close(fd)
+    if not path.is_file() or path.is_symlink() or (path.stat().st_mode & 0o077):
+        fail("capability file is not a restrictive regular file")
 
 
 def decode_f64_bits(text: str) -> Fraction:
@@ -183,6 +226,28 @@ def decode_f32_bits(text: str) -> float:
     if not re.fullmatch(r"0x[0-9a-fA-F]{8}", text):
         fail("malformed f32 witness bits")
     return struct.unpack(">f", int(text, 16).to_bytes(4, "big"))[0]
+
+
+def r1_check(r1, gate: float, up: float, n_bits: str, b_bits: str) -> dict:
+    n = decode_f32_bits(n_bits); b = decode_f32_bits(b_bits)
+    if not math.isfinite(n) or not math.isfinite(b):
+        fail("R1 corroboration encountered nonfinite candidate evidence")
+    interval = r1.evaluate(gate, up)
+    n_frac = Fraction.from_float(n); b_frac = Fraction.from_float(b)
+    n_distance = max(Fraction(0), interval.lo - n_frac, n_frac - interval.hi)
+    b_distance = max(Fraction(0), interval.lo - b_frac, b_frac - interval.hi)
+    radius = interval.width / 2
+    n_bound = n_distance + radius
+    b_bound = b_distance + radius
+    if n_bound > Fraction(1, 128) or b_bound > Fraction(5201, 4194304):
+        fail("exact-R1 corroboration budget exceeded")
+    return {"gate": gate, "up": up, "gate_f32_bits": f"0x{struct.unpack('>I', struct.pack('>f', gate))[0]:08x}",
+            "up_f32_bits": f"0x{struct.unpack('>I', struct.pack('>f', up))[0]:08x}",
+            "candidate_n_output_f32_bits": n_bits, "candidate_b_output_f32_bits": b_bits,
+            "interval_lo": str(interval.lo), "interval_hi": str(interval.hi),
+            "interval_width": str(interval.width), "interval_radius": str(radius),
+            "n_distance": str(n_distance), "b_distance": str(b_distance),
+            "n_bound": str(n_bound), "b_bound": str(b_bound)}
 
 
 def fixed_controls() -> list[tuple[float, float]]:
@@ -201,7 +266,48 @@ def discover_regressions() -> list[list[str]]:
     ]
 
 
-def execute(args: argparse.Namespace, manifest: dict, contract: dict, cap: Path, binary: Path, temp: Path) -> dict:
+def verify_regression_summary(root: Path, population: dict, label: str) -> dict:
+    summary_path = root / "qualification/summary.json"
+    if not summary_path.is_file():
+        fail(label + " qualification summary missing")
+    summary = json.loads(summary_path.read_text())
+    if summary.get("result") != "PASS" or summary.get("failures") != []:
+        fail(label + " qualification summary is not PASS")
+    frozen = summary.get("frozen", {})
+    if frozen.get("case_count") != population["case_count"] or frozen.get("population_valid_after") is not True:
+        fail(label + " summary does not prove frozen case count/population")
+    cases = summary.get("cases")
+    if not isinstance(cases, list) or len(cases) != population["case_count"]:
+        fail(label + " summary case population is not exact")
+    observed = [case.get("id") for case in cases]
+    if observed != population["case_ids"] or not all(case.get("pass") is True for case in cases):
+        fail(label + " summary case IDs or pass evidence do not match frozen manifest")
+    return {"manifest": population["manifest"], "manifest_sha256": population["manifest_sha256"],
+            "expected_case_count": population["case_count"], "observed_case_count": len(cases),
+            "summary": str(summary_path), "summary_sha256": sha(summary_path),
+            "case_ids_exact": True}
+
+
+def run_regressions(temp: Path, populations: dict) -> dict:
+    roots = [temp / "primitive", temp / "slice2c"]
+    outputs = []
+    for command, root, label, population in zip(discover_regressions(), roots,
+                                                ("primitive", "slice2c"),
+                                                (populations["primitive"], populations["slice2c"])):
+        root.mkdir(parents=True)
+        env = os.environ.copy()
+        env["PULSAR_F020_QUALIFICATION_OUT"] = str(root) if label == "primitive" else env.get("PULSAR_F020_QUALIFICATION_OUT", str(root))
+        env["PULSAR_F020_COMPOSITION_OUT"] = str(root)
+        proc = subprocess.run(command, cwd=ROOT, env=env, capture_output=True, text=True, check=False)
+        if proc.returncode != 0:
+            fail(label + " inherited qualification command failed: " + str(proc.returncode))
+        outputs.append({"label": label, "command": command, "exit": proc.returncode,
+                       "proven": verify_regression_summary(root, population, label)})
+    return {item["label"]: item for item in outputs}
+
+
+def execute(args: argparse.Namespace, manifest: dict, contract: dict, cap: Path, binary: Path,
+            temp: Path, attestation: dict, runtime_sha: str, public_commit: str, populations: dict) -> dict:
     report = temp / "bridge-result.json"
     run([str(binary), "--execute-sweep", "--capability", str(cap), "--report", str(report)])
     result = json.loads(report.read_text())
@@ -216,26 +322,34 @@ def execute(args: argparse.Namespace, manifest: dict, contract: dict, cap: Path,
     if not decision:
         fail("delta + beta_B exceeds E_N")
     structured_report = temp / "structured-result.json"
-    run([str(binary), "--structured-up-controls", "--capability", str(cap), "--report", str(structured_report)])
+    cap2 = temp / "capability-structured.txt"
+    write_capability(cap2, args, sha(MANIFEST), public_commit, runtime_sha, attestation, temp)
+    run([str(binary), "--structured-up-controls", "--capability", str(cap2), "--report", str(structured_report)])
     structured = json.loads(structured_report.read_text())
     if structured.get("structured") is not True or structured.get("total_evaluated") != 42 or structured.get("anomaly_count") != 0:
         fail("structured up-control report is incomplete or anomalous")
-    # Exact R1 is imported only after the bridge result and only for fixed,
-    # predeclared corroboration points; it never changes a threshold.
+    # Exact R1 is imported only after bridge evidence exists. It is an actual
+    # interval admission check, never a synthesized PASS or threshold tuner.
     sys.path.insert(0, str(R1.parent))
     import f020_fused_swiglu_r1_v1 as r1  # type: ignore
     r1.self_test()
-    for gate, up in fixed_controls():
-        r1.evaluate(gate, up)
+    structured_checks = []
+    for item in structured["controls"]:
+        structured_checks.append(r1_check(r1, decode_f32_bits(item["gate_f32_bits"]),
+                                          decode_f32_bits(item["up_f32_bits"]),
+                                          item["candidate_n_output_f32_bits"],
+                                          item["candidate_b_output_f32_bits"]))
+    if len(structured_checks) != 42:
+        fail("structured report did not retain exactly 42 controls")
     worst_gate = decode_f32_bits(result["input_gate_f32_bits"])
-    r1.evaluate(worst_gate, 1.0)
-    for command in discover_regressions():
-        run(command, cwd=ROOT)
-    return {"schema": "pulsarmlx.f020.fused-swiglu-v2-1-qualification/1.0.0",
+    worst_check = r1_check(r1, worst_gate, 1.0, result["candidate_n_output_f32_bits"],
+                           result["candidate_b_output_f32_bits"])
+    regressions = run_regressions(temp / "regressions", populations)
+    return {"schema": "pulsarmlx.f020.fused-swiglu-v2-2-qualification/1.0.0",
             "status": "PASS", "manifest_sha256": sha(MANIFEST), "bridge": result,
             "delta_plus_beta_leq_E_N": decision, "r1_corroboration": "PASS",
-            "structured_up_controls": structured["total_evaluated"], "worst_delta_r1_corroboration": "PASS",
-            "regressions": {"primitive": 363, "slice2c": 32}}
+            "structured_up_controls": structured_checks, "worst_delta_r1_corroboration": worst_check,
+            "regressions": regressions}
 
 
 def main() -> int:
@@ -248,19 +362,22 @@ def main() -> int:
     ap.add_argument("--report", type=Path)
     args = ap.parse_args()
     manifest, contract = load_contract()
+    public_commit = git_authority(args.public_commit)
     privacy_scan()
     runtime, runtime_sha = runtime_identity(args)
     with tempfile.TemporaryDirectory(prefix="f020-v2-1-driver-") as raw:
         temp = Path(raw)
-        attestation = compile_and_attest(args, sha(MANIFEST), args.public_commit, temp)
-        capability = temp / "capability.txt"
-        write_capability(capability, args, sha(MANIFEST), args.public_commit, runtime_sha, attestation, temp)
+        attestation = compile_and_attest(args, sha(MANIFEST), public_commit, temp)
         if not args.execute:
             print(json.dumps({"status": "STATIC_PREFLIGHT_PASS", "capability_issued": False,
                               "compiler_identity_sha256": attestation["compiler_hash"],
                               "disassembly_sha256": attestation["disassembly_hash"]}, sort_keys=True))
             return 0
-        result = execute(args, manifest, contract, capability, attestation["binary"], temp)
+        populations = frozen_populations()
+        capability = temp / "capability-sweep.txt"
+        write_capability(capability, args, sha(MANIFEST), public_commit, runtime_sha, attestation, temp)
+        result = execute(args, manifest, contract, capability, attestation["binary"], temp,
+                         attestation, runtime_sha, public_commit, populations)
         if args.report is None:
             fail("--report is required for execution")
         args.report.write_text(json.dumps(result, sort_keys=True, indent=2) + "\n")

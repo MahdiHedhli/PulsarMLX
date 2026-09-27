@@ -79,7 +79,8 @@ def main() -> int:
         common = [clang, "-std=c++17", "-O2", "-Wall", "-Wextra", "-Werror",
                   "-fno-fast-math", "-ffp-contract=off", "-isysroot", sdk,
                   "-I", str(native / "include"), "-I", str(t)]
-        subprocess.run(common + ["-DF020_TABLE_HEADER=\"f020_candidate_b_table_v1.h\"", str(B_SRC)], check=True)
+        b_binary = t / "candidate-b-static"
+        subprocess.run(common + ["-DF020_TABLE_HEADER=\"f020_candidate_b_table_v1.h\"", str(B_SRC), "-o", str(b_binary)], check=True)
         binary = t / "f020-native-bridge-v2-1-static"
         subprocess.run(common + ["-DF020_EXPECTED_MANIFEST_SHA256=\"STATIC\"",
                                  "-DF020_EXPECTED_PUBLIC_COMMIT=\"STATIC\"", str(BRIDGE),
@@ -98,7 +99,8 @@ def main() -> int:
                      "candidate_b_output_f32_bits", "input_gate_f32_bits", "--capability",
                      "--structured-up-controls", "structured", "total_evaluated",
                      "anomaly_count", "F020_EXPECTED_MANIFEST_SHA256",
-                     "bridge_binary_sha256", "pulsarmlx.f020.native-bridge-capability/1.0.0"):
+                     "bridge_binary_sha256", "execution_root", "capability_path", "std::remove",
+                     "pulsarmlx.f020.native-bridge-capability/1.0.0"):
         if required not in source:
             fail("bridge source missing required guard/operation: " + required)
     print("F020_V2_STATIC_SELFTEST_PASS")
