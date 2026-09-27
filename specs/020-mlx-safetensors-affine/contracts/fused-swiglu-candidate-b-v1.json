@@ -1,22 +1,24 @@
 {
   "schema": "pulsarmlx.f020.fused-swiglu-candidate-b/1.0.0",
   "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
-  "domain": {"gate_after_clamp": [-10, 10], "up_after_clamp": [-10, 10]},
+  "domain": {"gate_after_clamp": [-16, 10], "up_after_clamp": [-10, 10]},
   "approximation": {
-    "form": "piecewise-linear interpolation of SiLU at 257 uniformly spaced nodes",
-    "node_grid": "x_i = (-640 + 5*i)/64 for i=0..256",
-    "interval_width": "5/64",
+    "form": "piecewise-linear interpolation of SiLU at 833 uniformly spaced nodes",
+    "node_grid": "x_i = (-512 + i)/32 for i=0..832",
+    "interval_width": "1/32",
+    "lower_gate_clamp": "none; gate values in [-16,-10) use table indices 0..191",
     "coefficients": "fixtures/f020-fused-swiglu/candidate-b-silu-table-v1.json",
     "evaluation_order": "clamp gate; locate i by exact floor on grid; one float32 multiply and one float32 add for interpolation; float32 multiply by clamped up",
     "fma": "not permitted; separate RN32 multiply and RN32 add",
     "rounding": "binary32 round-to-nearest ties-to-even; reject nonfinite/subnormal intermediates"
   },
   "certificate": {
-    "silu_second_derivative_bound": "M <= 1 on [-10,10], proved by interval subdivision in proof artifact",
-    "piecewise_linear_real_error": "<= M*h^2/8 = 25/32768",
+    "silu_second_derivative_bound": "M <= 1 on [-16,10], proved by interval subdivision in proof artifact",
+    "piecewise_linear_real_error": "<= M*h^2/8 = 1/8192",
     "node_rounding_error": "<= 10*2^-24",
-    "interpolation_rounding_error": "<= 2^-20",
-    "product_rounding_error": "<= 2^-21",
+    "interpolation_rounding_error": "<= 2^-20 before multiplication by |up|<=10",
+    "product_rounding_error": "<= 2^-18 for |h|<=100",
+    "composite_error": "10*(1/8192 + 10*2^-24 + 2^-20) + 2^-18 < 1/128",
     "frozen_uniform_activation_error": "E_B = 1/128",
     "proof_artifact": "specs/020-mlx-safetensors-affine/proofs/fused-swiglu-r1-proof-v1.md",
     "candidate_outputs_may_not_define_bound": true

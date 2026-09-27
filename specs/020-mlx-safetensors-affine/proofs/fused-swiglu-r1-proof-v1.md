@@ -6,7 +6,7 @@ outputs.
 
 ## R1 reference
 
-For rational x with |x| <= 10, set a = |x|/32 <= 1/2. The exact rational
+For rational x with |x| <= 16, set a = |x|/32 <= 1/2. The exact rational
 Taylor sum T64(a) = sum(k=0..64) a^k/k! has positive remainder bounded by
 (a^65/65!)/(1-a/66). Square the interval five times to recover exp(|x|),
 reverse endpoints for negative exponents, then perform rational interval
@@ -17,19 +17,22 @@ sum(abs(Wd))*width(h*).
 
 ## Candidate B certificate
 
-Candidate B uses the frozen 257-node table and linear interpolation with
-h=5/64. The interval proof subdivides each cell at its endpoints and midpoint
+Candidate B uses the frozen 833-node table and linear interpolation with
+h=1/32. The interval proof subdivides each cell at its endpoints and midpoint
 and bounds the exact second derivative
 silu''(x)=s(x)(1-s(x))(2+x(1-2s(x))) using the same rational exponential
-enclosures. The resulting frozen global bound is M<=1; hence the real
-interpolation error is at most M*h^2/8 = 25/32768.
+enclosures over [-16,10]. The resulting frozen global bound is M<=1; hence
+the real interpolation error is at most M*h^2/8 = 1/8192.
 
-Each table node is rounded once to binary32, bounded by 10*2^-24. The frozen
-evaluation order contributes at most 2^-20 for interpolation and 2^-21 for
-the final product over the admitted domain. The sum is strictly below 1/128,
-so E_B=1/128 is the frozen candidate bound. If an independent checker cannot
-reproduce these inequalities, Candidate B is rejected; no coefficient or
-bound may be changed after observations.
+Each table node is rounded once to binary32, bounded by 10*2^-24. The
+interpolation error is multiplied by |up|<=10 before the final product. The
+frozen evaluation order contributes at most 2^-20 before that multiplication.
+Because |silu|<=10 and |up|<=10, the final product magnitude is at most 100,
+so its binary32 round-to-nearest error is at most 2^-18. Thus the composite
+bound is 10*(1/8192 + 10*2^-24 + 2^-20) + 2^-18, strictly below 1/128.
+E_B=1/128 remains frozen. If an independent checker cannot reproduce these
+inequalities, Candidate B is rejected; no coefficient or bound may be changed
+after observations.
 
 ## Candidate N certificate boundary
 

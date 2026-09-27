@@ -48,6 +48,11 @@ def declaration() -> dict:
     return {
         "schema": "pulsarmlx.f020.fused-swiglu-fixtures/1.0.0",
         "status": "FROZEN_DECLARATION_NO_BYTES_GENERATED",
+        "gate_domain": [-16, 16],
+        "gate_clamp": "upper-only min(gate, 10); no lower clamp",
+        "up_domain": [-16, 16],
+        "up_clamp": "clip(up, -10, 10)",
+        "candidate_b_table_grid": "x_num/32, x_num=-512..320",
         "case_ids": positives + refusals + mutations,
         "positive_cases": len(positives),
         "refusal_cases": len(refusals),

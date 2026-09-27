@@ -2,6 +2,7 @@
   "schema": "pulsarmlx.f020.fused-swiglu-native-sweep/1.0.0",
   "status": "FROZEN_METHOD_NO_RESULTS",
   "candidate": "N",
+  "up_f32_control_value": 1.0,
   "domain": {
     "enumeration": "all binary32 bit patterns whose finite decoded value is in [-16,16]",
     "partition": "positive and negative sign regions, monotone uint32 bit-order ranges",
@@ -10,7 +11,7 @@
   },
   "graph": [
     "gate_f32",
-    "up_f32_control",
+    "up_f32_control = float32(1.0)",
     "minimum(gate_f32, 10.0f)",
     "native MLX sigmoid primitive",
     "native MLX multiply by clipped up control"
