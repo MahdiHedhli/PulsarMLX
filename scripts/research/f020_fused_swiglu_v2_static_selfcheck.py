@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -64,7 +65,10 @@ def main() -> int:
     clang = shutil.which("clang++") or "/usr/bin/clang++"
     if not Path(clang).exists():
         fail("clang++ unavailable")
-    native = args.mlx_prefix or Path("/Users/mhedhli/.local/share/pulsarmlx/studio-stage-20260925/native")
+    prefix_value = args.mlx_prefix or os.environ.get("F020_MLX_PREFIX")
+    if not prefix_value:
+        fail("operator-supplied --mlx-prefix or F020_MLX_PREFIX is required")
+    native = Path(prefix_value)
     if not (native / "include/mlx/c/mlx.h").is_file():
         fail("pinned MLX headers unavailable")
     with tempfile.TemporaryDirectory(prefix="f020-v2-static-") as temp:

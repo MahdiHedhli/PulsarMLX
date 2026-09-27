@@ -35,6 +35,6 @@
     {"path": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-native-sweep-v2.json", "sha256": "91f662fa75072b6d69210140b426a6958c2c52408076a503f59bcb8b186835d0"},
     {"path": "scripts/research/f020_fused_swiglu_native_bridge_v2.cpp", "sha256": "1a37ad1841bb05de58c31fc14884dc88b59edb93b518f68cc5b5b24e40497b32"},
     {"path": "scripts/research/f020_fused_swiglu_generate_b_table_v2.py", "sha256": "a7a5b01821970c4eb309c7c78fd7b30a06135201001343731aa92921b80719b7"},
-    {"path": "scripts/research/f020_fused_swiglu_v2_static_selfcheck.py", "sha256": "b3a711b11cd6a4d38b1f7758292493da1eb5f3703125d9a66dfd7fd5a8338437"}
+    {"path": "scripts/research/f020_fused_swiglu_v2_static_selfcheck.py", "sha256": "af8279eba125bdee0a9fefa6613d90d0fb93a19989cc3488ca2491780610e26e"}
   ]
 }
