@@ -1,0 +1,46 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-r1/2.0.0",
+  "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
+  "scope": "synthetic activation stage only",
+  "operation": "g = min(gate, 10); s = silu(g) = g*sigmoid(g); h = s*clip(up, -10, 10)",
+  "input": {
+    "dtype": "float32",
+    "finite": true,
+    "gate_domain": [
+      -16,
+      16
+    ],
+    "up_domain": [
+      -16,
+      16
+    ]
+  },
+  "reference": {
+    "name": "R1",
+    "target": "real-valued ClampedSwiGLU",
+    "independent_of_candidates": true,
+    "arithmetic": "exact rational outward intervals",
+    "exp_method": "unchanged R1 source: certified ln2 interval; integer range reduction checked abs(r)<=1/2; degree64 interval Taylor with geometric tail; exact power-of-two rescale",
+    "acceptance": "distance(candidate, R1 interval) + R1 interval radius <= frozen bound",
+    "reference_width": "fail closed unless every scalar enclosure width <= 2^-160",
+    "implementation": "scripts/research/f020_fused_swiglu_r1_v1.py",
+    "implementation_proof": "specs/020-mlx-safetensors-affine/proofs/fused-swiglu-candidate-b-rn32-v2.md"
+  },
+  "admission": {
+    "preserve_inherited_down_qmm_contract": true,
+    "h_dtype": "float32",
+    "reject": [
+      "nonfinite",
+      "subnormal",
+      "zero",
+      "abs(h)<2^-32",
+      "abs(h)>2^32",
+      "row_abs_sum>2^40"
+    ],
+    "no_rescale_or_clip_after_activation": true
+  },
+  "composition_bound": "Bh = 20*Bg + 10*Bu + E_act; By = Bqmm_down + sum_abs_Wd*Bh",
+  "candidate_observation_count_at_freeze": 0,
+  "predecessor": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-r1-v1.json",
+  "clarification": "v1 prose described five-squaring range reduction; the existing pinned source uses ln2 reduction. This additive clarification certifies the actual unchanged implementation; target, domains, acceptance, widths, admission and bounds are unchanged."
+}
