@@ -1,0 +1,53 @@
+{
+  "schema": "pulsarmlx.f020.fused-swiglu-native-sweep/2.3.0",
+  "status": "FROZEN_PROSPECTIVE_NO_CANDIDATE_OBSERVATIONS",
+  "method_identity": "certified-candidate-b-bridge-exhaustive-native-sweep-v2.3",
+  "predecessor_method": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-native-sweep-v2-1.json",
+  "r1_unchanged": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-r1-v1.json",
+  "budgets": {"beta_B": "5201/4194304", "E_N": "1/128", "delta_max": "27567/4194304"},
+  "execution": {
+    "admitted_driver": "scripts/research/f020_fused_swiglu_qualification_v2_2.py",
+    "bridge": "scripts/research/f020_fused_swiglu_native_bridge_v2.cpp",
+    "capability_schema": "pulsarmlx.f020.native-bridge-capability/1.0.0",
+    "capability_required_fields": ["manifest_sha256", "bridge_source_sha256", "bridge_binary_sha256", "runtime_identity_sha256", "compiler_identity_sha256", "disassembly_sha256", "public_commit", "execution_root", "capability_path"],
+    "bridge_requires_capability_before_mlx_gpu_init": true,
+    "environment_only_authorization": false,
+    "execution_bypass": "fail closed unless admitted driver-issued capability validates against compile-time manifest and public-commit bindings, actual manifest/source/binary hashes, exact capability schema, Git authority, and a current-UID restrictive single-use capability in the expected temporary execution root; bridge unlinks before GPU initialization"
+  },
+  "enumeration": {
+    "positive_range": ["0x00000000", "0x41800000"],
+    "negative_range": ["0x80000000", "0xc1800000"],
+    "expected_positive_count": 1098907649,
+    "expected_negative_count": 1098907649,
+    "expected_total_evaluated": 2197815298,
+    "batch_elements": 1048576,
+    "exhaustive_true_only_after_count_equality": true,
+    "fixed_width_bit_fields": true
+  },
+  "reducer": {
+    "promotion": "binary32 outputs exactly promoted to binary64",
+    "delta": "correctly-rounded absolute binary64 subtraction followed by nextafter toward +infinity",
+    "acceptance": "exact rational comparison of Fraction.from_float(upward_delta) + 5201/4194304 <= 1/128",
+    "anomaly_policy": "fail closed immediately on malformed arrays, nonfinite N/B output, NaN/Inf delta, or incomplete counts; retain anomaly witness and count"
+  },
+  "corroboration": {
+    "fixed_gate_values": ["-16.0", "-10.0", "-0.0", "0.0", "10.0", "16.0"],
+    "fixed_up_values": ["-16.0", "-10.0", "-0.0", "0.0", "1.0", "10.0", "16.0"],
+    "worst_delta_witness": true,
+    "ordered_42_control_grid_must_match_exact_f32_bits": true,
+    "structured_n_b_and_upward_delta_bits_required_and_cross_checked": true,
+    "r1_tuning_forbidden": true
+  },
+  "regressions": {
+    "primitive_count": 363,
+    "slice2c_count": 32,
+    "primitive_manifest": {"path": "fixtures/native-primitives/manifest.json", "sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04", "case_count": 363},
+    "slice2c_manifest": {"path": "fixtures/native-composition/manifest.json", "sha256": "6f0e39e6d2c705603f3f897133d42c31837c53348aba0f4b0389dca18018fc14", "case_count": 32},
+    "required_commands_discoverable": true,
+    "report_case_ids_must_match_manifest": true,
+    "missing_command_behavior": "fail closed",
+    "report_integration": "one bound qualification report"
+  },
+  "candidate_observations_at_freeze": 0,
+  "exclusions": {"checkpoint": 0, "production_geometry": 0, "full_model_inference": 0, "benchmark": 0, "merge": 0, "next_slice": 0}
+}
