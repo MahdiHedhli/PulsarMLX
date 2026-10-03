@@ -175,7 +175,12 @@ fn run(
     {
         let gate = compose(&source, ROLES[0], &[e]).map_err(|e| e.to_string())?;
         let up = compose(&source, ROLES[1], &[e]).map_err(|e| e.to_string())?;
-        let down = compose(&source, ROLES[2], &[(e + 1) % 3]).map_err(|e| e.to_string())?;
+        let down_expert = if mutation == "gate-down-role-swap" {
+            e
+        } else {
+            (e + 1) % 3
+        };
+        let down = compose(&source, ROLES[2], &[down_expert]).map_err(|e| e.to_string())?;
         let mut p = [gate, up, down];
         if mutation == "gate-down-role-swap" {
             p.swap(0, 2);

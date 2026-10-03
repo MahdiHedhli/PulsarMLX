@@ -58,8 +58,27 @@ def control_detected(ident,doc,failures):
       'candidate-fed-reference':'R1 authority binding'}
     if ident in expected:return expected[ident] in failures
     if ident in ['gate-down-role-swap','down-expert-swap','ignore-bit-override']:
-        return 'positive incomplete' in failures and doc.get('phase')=='tuple' and 'MLP-R-TUPLE' in doc.get('detail','') and doc.get('final_counters')=={'numerical':0,'imports':0}
+        reason={'gate-down-role-swap':'module','down-expert-swap':'index_path','ignore-bit-override':'inherited gate selection'}[ident]
+        return 'positive incomplete' in failures and doc.get('phase')=='tuple' and ('MLP-R-TUPLE: '+reason) in doc.get('detail','') and doc.get('final_counters')=={'numerical':0,'imports':0}
     return False
+
+def validate_review(review,raw,capsule,commit,tree,digest,binary_sha,files):
+    """Derive authority from the actual hash-verified CLI result and capsule."""
+    if raw.get('is_error') is not False or not raw.get('modelUsage'):raise ValueError('independent reviewer CLI failure or missing model identity')
+    result=raw.get('result','').strip()
+    if result.startswith('```json\n') and result.endswith('\n```'):result=result[8:-4]
+    assessed=json.loads(result)
+    if assessed.get('decision')!='ACCEPT' or assessed.get('blocking_findings')!=0 or not isinstance(assessed.get('findings'),list):raise ValueError('raw independent review did not accept')
+    if any(f.get('severity','').lower() in ['medium','high','critical'] or f.get('blocking',False) for f in assessed['findings']):raise ValueError('raw independent review contains blocking finding')
+    actual={'commit':commit,'tree':tree,'package_sha256':digest,'binary_sha256':binary_sha}
+    version=capsule.get('exact_version',{})
+    for k,want in actual.items():
+        if assessed.get('assessed_'+k)!=want or version.get(k)!=want or review.get(k)!=want:raise ValueError('raw review/capsule/wrapper exact-version mismatch: '+k)
+    if version.get('candidate_observations')!=0 or capsule.get('file_bindings')!=files:raise ValueError('review capsule pre-observation/source bindings mismatch')
+    for name,text in capsule.get('source',{}).items():
+        if name in files and sha(text.encode())!=files[name]:raise ValueError('reviewed source bytes mismatch')
+    if review.get('decision')!=assessed['decision'] or review.get('blocking_findings')!=assessed['blocking_findings'] or review.get('actual_model')!=sorted(raw['modelUsage']) or not review.get('reviewer'):raise ValueError('review wrapper does not match actual reviewer result')
+    return assessed
 
 def verify_child(m,c,doc,reference):
     try:
@@ -154,7 +173,10 @@ def main():
         if sha((a.review.parent/name).read_bytes())!=review.get(label):raise RuntimeError('independent review evidence hash mismatch')
     if not review.get('actual_model') or not review.get('reviewer'):raise RuntimeError('actual independent reviewer identity required')
     binary=a.binary.resolve();cap=a.out/'admission.json'
-    if review.get('binary_sha256')!=sha(binary.read_bytes()):raise RuntimeError('executable is not the exact reviewed build')
+    binary_sha=sha(binary.read_bytes())
+    raw_review=json.loads((a.review.parent/review['raw_review_file']).read_text())
+    capsule=json.loads((a.review.parent/review['review_capsule_file']).read_text())
+    validate_review(review,raw_review,capsule,commit,tree,digest,binary_sha,files)
     capability={'status':'ADMITTED','commit':commit,'tree':tree,'package_sha256':digest,'source_files':files,'review_sha256':sha(a.review.read_bytes()),'binary_sha256':sha(binary.read_bytes()),'manifest_sha256':static['manifest_sha256']}
     cap.write_bytes(canonical(capability));cap.chmod(0o600)
     env=dict(os.environ,MLX_ENABLE_TF32='0',PYTHONDONTWRITEBYTECODE='1',PYTHONINTMAXSTRDIGITS='0')
@@ -192,7 +214,13 @@ def main():
                 doc['r1_authority']={'kind':'original-fixture','source_sha256':sha(checkpoint(m,c).read_bytes()),'input_sha256':sha((FIXTURE/c['input']).read_bytes())}
                 failures=verify_child(m,c,doc,references[c['id']])
             detected=bool(failures) if ident=='lower-gate-clamp' else control_detected(ident,doc,failures)
-            result['controls'].append({'id':ident,'status':'DETECTED' if detected else 'SURVIVED','detection':failures[:4],'expected_detection':control['expected_detection'],'scope':'host audit mutation' if ident in ['skip-down-admission','candidate-fed-reference'] else control['target']});save()
+            control_out=a.out/ident;control_out.mkdir(exist_ok=True)
+            verified_path=control_out/'verified-report.json';verified_path.write_bytes(canonical(doc))
+            raw_path=control_out/'report.json'
+            custody={'verified_report_sha256':sha(verified_path.read_bytes())}
+            if raw_path.exists():custody['raw_report_sha256']=sha(raw_path.read_bytes())
+            else:custody['source_case_raw_report_sha256']=sha((a.out/c['id']/'report.json').read_bytes())
+            result['controls'].append({'id':ident,'status':'DETECTED' if detected else 'SURVIVED','detection':failures[:4],'expected_detection':control['expected_detection'],'scope':'host audit mutation' if ident in ['skip-down-admission','candidate-fed-reference'] else control['target'],**custody});save()
             if not detected:raise RuntimeError('mutation failed its frozen semantic detection predicate: '+ident)
             print('DETECTED '+ident,flush=True)
         if package_files()!=files or git('status','--porcelain'):raise RuntimeError('source/fixture changed during qualification')

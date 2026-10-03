@@ -36,11 +36,17 @@ fn individually_valid_selected_planes_do_not_authorize_cross_expert_or_role_tupl
     let gate = compose(&s, ROLES[0], &[0]).unwrap();
     let up = compose(&s, ROLES[1], &[0]).unwrap();
     let down = compose(&s, ROLES[2], &[1]).unwrap();
-    assert!(ExpertTuple::bind(&s, [gate, up, down], 0, 64, 64, false).is_err());
+    match ExpertTuple::bind(&s, [gate, up, down], 0, 64, 64, false) {
+        Ok(_) => panic!("cross expert admitted"),
+        Err(e) => assert!(e.contains("MLP-R-TUPLE: index_path")),
+    }
     let gate = compose(&s, ROLES[0], &[0]).unwrap();
     let up = compose(&s, ROLES[1], &[0]).unwrap();
     let down = compose(&s, ROLES[2], &[0]).unwrap();
-    assert!(ExpertTuple::bind(&s, [down, up, gate], 0, 64, 64, false).is_err());
+    match ExpertTuple::bind(&s, [down, up, gate], 0, 64, 64, false) {
+        Ok(_) => panic!("cross role admitted"),
+        Err(e) => assert!(e.contains("MLP-R-TUPLE: module")),
+    }
 }
 
 #[test]

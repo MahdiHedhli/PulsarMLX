@@ -48,26 +48,39 @@ impl<'a> ExpertTuple<'a> {
                 .catalog()
                 .get(&format!("{}.weight", ROLES[i]))
                 .ok_or("MLP-R-TUPLE: missing role weight")?;
-            if meta.shape != [3, n, k * bits / 32]
-                || id.source_identity != source.backing().source_identity()
-                || id.checkpoint != source.checkpoint().root_name()
-                || id.module != ROLES[i]
-                || id.index_path != [expert]
-                || id.logical_shape != [n, k]
-                || id.packed_shape != [n, k * bits / 32]
-                || id.metadata_shape != [n, k / 64]
-                || id.bits != bits as u32
-                || id.group_size != 64
-                || id.metadata_dtype != "BF16"
-                || !id.transpose
-                || id.resolved_from
-                    != if mixed && i != 1 {
-                        "override"
-                    } else {
-                        "default"
-                    }
-            {
-                return Err(format!("MLP-R-TUPLE: role {} binding", ROLES[i]));
+            let checks = [
+                (
+                    "source_identity",
+                    id.source_identity == source.backing().source_identity(),
+                ),
+                (
+                    "checkpoint",
+                    id.checkpoint == source.checkpoint().root_name(),
+                ),
+                ("module", id.module == ROLES[i]),
+                ("index_path", id.index_path == [expert]),
+                ("expert_geometry", meta.shape == [3, n, k * bits / 32]),
+                ("logical_shape", id.logical_shape == [n, k]),
+                ("packed_shape", id.packed_shape == [n, k * bits / 32]),
+                ("metadata_shape", id.metadata_shape == [n, k / 64]),
+                ("bits", id.bits == bits as u32),
+                ("group_size", id.group_size == 64),
+                ("metadata_dtype", id.metadata_dtype == "BF16"),
+                ("transpose", id.transpose),
+                (
+                    "resolved_from",
+                    id.resolved_from
+                        == if mixed && i != 1 {
+                            "override"
+                        } else {
+                            "default"
+                        },
+                ),
+            ];
+            for (field, ok) in checks {
+                if !ok {
+                    return Err(format!("MLP-R-TUPLE: {field} for role {}", ROLES[i]));
+                }
             }
             for suffix in ["scales", "biases"] {
                 if source

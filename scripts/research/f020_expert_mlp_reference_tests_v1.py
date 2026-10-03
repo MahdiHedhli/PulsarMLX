@@ -2,6 +2,8 @@
 from fractions import Fraction as F
 from pathlib import Path
 import sys
+import json,copy
+import pytest
 
 sys.path.insert(0,str(Path(__file__).parent))
 import f020_expert_mlp_r1_v1 as R
@@ -50,3 +52,26 @@ def test_incidental_control_failures_do_not_count_as_semantic_detection():
     assert not Q.control_detected('missing-upper-gate-clamp',{},['activation ownership/order/materialization'])
     assert Q.control_detected('missing-upper-gate-clamp',{},['exact clamp semantics'])
     assert not Q.control_detected('down-expert-swap',{'phase':'tuple','detail':'MLP-R-TUPLE','final_counters':{'imports':1,'numerical':0}},['positive incomplete'])
+
+def test_raw_review_controls_admission_even_when_wrapper_claims_acceptance():
+    expected={'commit':'c','tree':'t','package_sha256':'p','binary_sha256':'b'}
+    wrapper={**expected,'decision':'ACCEPT','blocking_findings':0,'actual_model':['claude-opus-5-5'],'reviewer':'Claude CLI'}
+    assessed={'decision':'ACCEPT','blocking_findings':0,'findings':[],**{'assessed_'+k:v for k,v in expected.items()}}
+    capsule={'exact_version':{**expected,'candidate_observations':0},'file_bindings':{},'source':{}}
+    raw={'is_error':False,'modelUsage':{'claude-opus-5-5':{}},'result':json.dumps(assessed)}
+    Q.validate_review(wrapper,raw,capsule,'c','t','p','b',{})
+    for change in [{'decision':'BLOCK'},{'blocking_findings':1},{'assessed_binary_sha256':'other'},{'assessed_commit':'other'},{'findings':[{'severity':'high'}]}]:
+        altered={**assessed,**change};bad={**raw,'result':json.dumps(altered)}
+        with pytest.raises(ValueError):Q.validate_review(wrapper,bad,capsule,'c','t','p','b',{})
+    bad=copy.deepcopy(capsule);bad['exact_version']['candidate_observations']=1
+    with pytest.raises(ValueError):Q.validate_review(wrapper,raw,bad,'c','t','p','b',{})
+    bad=copy.deepcopy(capsule);bad['exact_version']['binary_sha256']='other'
+    with pytest.raises(ValueError):Q.validate_review(wrapper,raw,bad,'c','t','p','b',{})
+
+def test_tuple_control_detection_requires_the_specific_bound_field():
+    doc={'phase':'tuple','detail':'MLP-R-TUPLE: index_path for role synthetic.experts.down','final_counters':{'imports':0,'numerical':0}}
+    assert Q.control_detected('down-expert-swap',doc,['positive incomplete'])
+    assert not Q.control_detected('gate-down-role-swap',doc,['positive incomplete'])
+    doc['detail']='MLP-R-TUPLE: module for role synthetic.experts.gate'
+    assert Q.control_detected('gate-down-role-swap',doc,['positive incomplete'])
+    assert not Q.control_detected('down-expert-swap',doc,['positive incomplete'])

@@ -98,13 +98,13 @@ def generate(out):
       ('missing-up-lower-clamp','activation'),('ignore-bit-override','recipe'),('skip-down-admission','guard-audit'),('candidate-fed-reference','authority-audit')]]
     predicates={
       'gate-up-argument-swap':'stage packed recipe',
-      'gate-down-role-swap':'MLP-R-TUPLE at tuple phase with zero native counters',
-      'down-expert-swap':'MLP-R-TUPLE at tuple phase with zero native counters',
+      'gate-down-role-swap':'MLP-R-TUPLE: module at tuple phase with zero native counters; same expert in every plane',
+      'down-expert-swap':'MLP-R-TUPLE: index_path at tuple phase with zero native counters; correct modules',
       'lower-gate-clamp':'exact clamp stage rejects illicit lower clamp with unchanged handle census',
       'missing-upper-gate-clamp':'exact clamp semantics with unchanged handle census',
       'missing-up-upper-clamp':'exact clamp semantics with unchanged handle census',
       'missing-up-lower-clamp':'exact clamp semantics with unchanged handle census',
-      'ignore-bit-override':'MLP-R-TUPLE at tuple phase with zero native counters',
+      'ignore-bit-override':'MLP-R-TUPLE: inherited gate selection at tuple phase with zero native counters',
       'skip-down-admission':'missing down_admission evidence',
       'candidate-fed-reference':'R1 authority binding'}
     for control in controls:control['expected_detection']=predicates[control['id']]
