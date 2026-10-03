@@ -1,8 +1,8 @@
 {
   "schema": "pulsarmlx.f020.expert-mlp-contract/1",
   "status": "PROSPECTIVE_REVIEW_REQUIRED",
-  "revision": 3,
-  "revision_reason": "pre-observation independent review: parse actual review verdict/version/build/capsule, isolate pure tuple mutations with field-specific refusals and bind all control report hashes; prior semantic census, signed-zero and raw-report fixes retained; numerical budgets/domains/positive bytes unchanged",
+  "revision": 4,
+  "revision_reason": "preserved revision3 attempt1 failed at activation setup after two projection outputs; repair valid empty result slots and cleanup of filled slots; capability retains the already validated executable hash; no activation/down output was accepted; numerical criteria/domains/positive bytes unchanged; new implementation requires exact-version review before its first observation",
   "scope": "complete single synthetic expert MLP; host readbacks and reimports explicitly permitted; no performance claim",
   "accepted_base": "2d388856593b96a136fa5a6036c0e973919cedff",
   "inherited_activation_commit": "60a2436886fb6803d62a28d28c0cfb717d93e206",
@@ -67,7 +67,7 @@
   "qualification": {
     "admission": "clean exact source commit/tree; every package file committed; bound contract/source/fixture hashes; parse the hash-verified actual reviewer CLI result: ACCEPT/zero blockers, assessed commit/tree/package/executable hashes and actual model; parse hash-verified capsule: matching exact version/build, source file bindings/bytes and zero pre-review observations; require wrapper equality to these authorities before capability creation; qualified native pins before observations; Studio internal paths; default mode is static only",
     "execution": "one bounded child per case, watchdog and process group cleanup; no external volumes or real payload access",
-    "ownership": "all statuses/handler messages retained; zero live handles, double frees, cleanup errors; same source fixture hashes before and after; all readbacks materialized and shape/dtype/finite checked",
+    "ownership": "stable owned result slots: empty mlx_array_new placeholders are valid until the API fills the same slot, and cleanup frees the final filled values; all statuses/handler messages retained; zero live handles, double frees, cleanup errors; host stub tests 5 modes and 5 partial-result failures without linking MLX; same source fixture hashes before and after; all readbacks materialized and shape/dtype/finite checked",
     "regressions": "unchanged 363 primitive +32 expert-plane composition cases and required repository CI",
     "review": "independent exact-version method/source/fixture review before native observation; repair findings with new frozen version, never observed tolerance tuning",
     "publication": "sanitized evidence with exact source tree/commit, pins, IDs, controls, stage bounds, copies, independent-review receipt and terminal CI; no main merge without qualified integration"

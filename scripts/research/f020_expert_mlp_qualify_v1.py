@@ -177,7 +177,7 @@ def main():
     raw_review=json.loads((a.review.parent/review['raw_review_file']).read_text())
     capsule=json.loads((a.review.parent/review['review_capsule_file']).read_text())
     validate_review(review,raw_review,capsule,commit,tree,digest,binary_sha,files)
-    capability={'status':'ADMITTED','commit':commit,'tree':tree,'package_sha256':digest,'source_files':files,'review_sha256':sha(a.review.read_bytes()),'binary_sha256':sha(binary.read_bytes()),'manifest_sha256':static['manifest_sha256']}
+    capability={'status':'ADMITTED','commit':commit,'tree':tree,'package_sha256':digest,'source_files':files,'review_sha256':sha(a.review.read_bytes()),'binary_sha256':binary_sha,'manifest_sha256':static['manifest_sha256']}
     cap.write_bytes(canonical(capability));cap.chmod(0o600)
     env=dict(os.environ,MLX_ENABLE_TF32='0',PYTHONDONTWRITEBYTECODE='1',PYTHONINTMAXSTRDIGITS='0')
     for name in ['MLX_METAL_GPU_ARCH','MLX_MAX_OPS_PER_BUFFER','MLX_MAX_MB_PER_BUFFER','DYLD_INSERT_LIBRARIES']:env.pop(name,None)

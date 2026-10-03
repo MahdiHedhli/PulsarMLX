@@ -18,3 +18,4 @@ cc = "1"
 [[bin]]
 name = "qualify-expert-mlp"
 path = "src/main.rs"
+test = false

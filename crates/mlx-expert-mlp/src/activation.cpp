@@ -33,14 +33,28 @@ extern "C" int pulsar_mlp_activation(const float *gate, const float *up, int m, 
   rc|=mlx_device_free(sd);
   bool available=false;if(!rc)rc=mlx_metal_is_available(&available);
   if (!available)rc=75;
+  if(rc) {
+    if(stream.ctx){const int st=mlx_stream_free(stream);if(st)stats[7]++;rc|=st;}
+    if(dev.ctx){const int st=mlx_device_free(dev);if(st)stats[7]++;rc|=st;}
+    return rc;
+  }
   std::vector<mlx_array> arrays;
-  auto keep=[&](mlx_array a){arrays.push_back(a);stats[2]++;if(!a.ctx)rc=75;return a;};
+  // Reserve once before imports. References below remain stable; result APIs
+  // update the owned slot itself. mlx_array_new() is an EMPTY result handle,
+  // deliberately allowed until the operation fills it (the inherited bridge
+  // uses the same new_result/finish ownership protocol).
+  arrays.reserve(9);
+  auto keep=[&](mlx_array a,bool require_nonempty)->mlx_array& {
+    arrays.push_back(a);stats[2]++;
+    if(require_nonempty && !a.ctx)rc=75;
+    return arrays.back();
+  };
   const int shape[2]={m,hsize};
-  auto ga=keep(mlx_array_new_data(gate,shape,2,MLX_FLOAT32));
-  auto ua=keep(mlx_array_new_data(up,shape,2,MLX_FLOAT32));
-  auto ten=keep(mlx_array_new_float32(10));auto negten=keep(mlx_array_new_float32(-10));stats[3]=4;
-  auto g=keep(mlx_array_new());auto s=keep(mlx_array_new());auto silu=keep(mlx_array_new());
-  auto clipped=keep(mlx_array_new());auto value=keep(mlx_array_new());
+  auto &ga=keep(mlx_array_new_data(gate,shape,2,MLX_FLOAT32),true);
+  auto &ua=keep(mlx_array_new_data(up,shape,2,MLX_FLOAT32),true);
+  auto &ten=keep(mlx_array_new_float32(10),true);auto &negten=keep(mlx_array_new_float32(-10),true);stats[3]=4;
+  auto &g=keep(mlx_array_new(),false);auto &s=keep(mlx_array_new(),false);auto &silu=keep(mlx_array_new(),false);
+  auto &clipped=keep(mlx_array_new(),false);auto &value=keep(mlx_array_new(),false);
   if(!rc) {
     if(mode==1)rc=mlx_clip(&g,ga,negten,ten,stream);
     else if(mode==2)rc=mlx_minimum(&g,ga,ga,stream);
