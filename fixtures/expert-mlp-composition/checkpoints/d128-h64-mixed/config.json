@@ -1,0 +1,15 @@
+{
+  "model_type": "synthetic-expert-mlp",
+  "quantization": {
+    "bits": 4,
+    "group_size": 64,
+    "synthetic.experts.down": {
+      "bits": 8,
+      "group_size": 64
+    },
+    "synthetic.experts.gate": {
+      "bits": 8,
+      "group_size": 64
+    }
+  }
+}

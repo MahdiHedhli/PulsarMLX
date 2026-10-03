@@ -124,6 +124,8 @@ def main():
     if not a.execute:return
     if a.review is None or a.binary is None:raise RuntimeError('exact review and executable required')
     review=json.loads(a.review.read_text());commit=git('rev-parse','HEAD');tree=git('rev-parse','HEAD^{tree}')
+    tracked=set(git('ls-files').splitlines())
+    if set(files)-tracked:raise RuntimeError('every source/fixture package file must belong to the frozen commit')
     if git('status','--porcelain') or review.get('decision')!='ACCEPT' or review.get('blocking_findings')!=0 or review.get('commit')!=commit or review.get('tree')!=tree or review.get('package_sha256')!=digest:raise RuntimeError('exact clean accepted review required')
     for field,label in [('raw_review_file','raw_review_sha256'),('review_capsule_file','review_capsule_sha256')]:
         name=review.get(field,'')
