@@ -247,6 +247,11 @@ jobs:
           env -u DYLD_LIBRARY_PATH PULSAR_REQUIRE_NATIVE_MLX=1 .venv/bin/python scripts/ci/mlx_affine_compat_v1.py --output "$RUNNER_TEMP/mlx-affine-compat.json"
           cat "$RUNNER_TEMP/mlx-affine-compat.json"
           test -z "$PULSARMLX_MODEL_GGUF"
+      - name: Validate complete synthetic expert MLP prospective package (host only)
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 PYTHONINTMAXSTRDIGITS=0 .venv/bin/python -B scripts/research/f020_expert_mlp_qualify_v1.py --out "$RUNNER_TEMP/f020-expert-mlp-static"
+          PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m pytest -p no:cacheprovider -q scripts/research/f020_expert_mlp_reference_tests_v1.py
+          cargo test -p mlx-expert-mlp --lib --test tuple_tests --no-fail-fast
       - name: Test MLX affine representation
         run: cargo test -p mlx-affine -p safetensors-catalog --no-fail-fast
       # F020 Slice 2B (required). Builds the qualify child against the pinned

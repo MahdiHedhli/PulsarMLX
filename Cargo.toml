@@ -14,6 +14,7 @@ members = [
     "crates/safetensors-catalog",
     "crates/mlx-affine",
     "crates/mlx-native-affine",
+    "crates/mlx-expert-mlp",
 ]
 
 [workspace.package]

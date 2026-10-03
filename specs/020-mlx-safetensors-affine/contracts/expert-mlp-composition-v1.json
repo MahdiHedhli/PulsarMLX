@@ -1,0 +1,74 @@
+{
+  "schema": "pulsarmlx.f020.expert-mlp-contract/1",
+  "status": "PROSPECTIVE_REVIEW_REQUIRED",
+  "scope": "complete single synthetic expert MLP; host readbacks and reimports explicitly permitted; no performance claim",
+  "accepted_base": "2d388856593b96a136fa5a6036c0e973919cedff",
+  "inherited_activation_commit": "60a2436886fb6803d62a28d28c0cfb717d93e206",
+  "inherited_activation_manifest_sha256": "368e647c192946086643a078f99b11b0e00f363c73d3d2d6c35ae049ddbbf4b1",
+  "inherited_activation_raw_result_sha256": "8fc5612f3cbb4969f9f64fab88f4efaaaec112e4770da4b14df435b6fa16a343",
+  "fixed_budgets": {"E_act": "1/128", "beta_B": "5201/4194304", "change_allowed": false},
+  "tuple": {
+    "roles": ["synthetic.experts.gate", "synthetic.experts.up", "synthetic.experts.down"],
+    "common": ["source_identity", "checkpoint", "expert_index"],
+    "shapes": {"gate": "[H,D]", "up": "[H,D]", "down": "[D,H]"},
+    "expert_count": 3,
+    "metadata": "BF16 widened exactly to F32 in the inherited bridge",
+    "weight": "U32 packed affine, unchanged in native QMM; never candidate dense-dequantized",
+    "recipe": "4-bit/group64 default; mixed profile overrides gate and down to 8-bit/group64",
+    "selection": "existing Source::open and compose, then a private immutable sealed tuple; parent independently checks expected identities, byte hashes, ranges and recipe",
+    "refusal": "MLP-R-TUPLE before any numerical call/import for a cross-role/source/checkpoint/index/shape/recipe binding violation"
+  },
+  "primitive_domains": {
+    "contract": "specs/020-mlx-safetensors-affine/contracts/native-primitives-v1.json",
+    "unchanged": true,
+    "initial_and_down_input": "zero or normal F32; nonzero absolute value [2^-32,2^32]; row absolute sum <=2^40; all other inherited checks in original order",
+    "metadata": "zero or normal finite BF16; nonzero absolute value [2^-32,2^32]; affine envelope <=2^36",
+    "guard_order": "tuple; initial gate/up primitive host preflight; actual device; gate/up QMM; finite F32 gate/up [-16,16]; accepted activation; actual h inherited down guard before any down import/QMM; down QMM",
+    "rescue": "none; no clipping, rescaling, rounding small h to zero, dense fallback or alternate model target"
+  },
+  "native_activation": {
+    "graph": ["g=minimum(gate,10)", "s=sigmoid(g)", "silu=g*s", "evaluate silu then synchronize", "clipped=clip(up,-10,10)", "h=silu*clipped", "evaluate h then synchronize"],
+    "restriction": "actual finite F32 gate and up each in [-16,16]",
+    "lower_gate_clamp": false,
+    "cpu_guard": "unchanged f020_fused_swiglu_cpu_guard_v2_4.h before and after; no FPCR writes",
+    "new_bridge": "separate C++ shim; same MLX-C calls and explicit SiLU materialization; new ownership/cleanup and shape controls must independently qualify"
+  },
+  "reference": {
+    "authority": "independent Python standard-library parser and exact dyadic packed affine decoder; starts from original x and expected expert fixture payload, never candidate h or selected production bytes",
+    "nonlinear": "|z|/32 positive degree64 Taylor; tail a^65/65!/(1-a/66); five interval squarings; reciprocal for negative argument; exact reciprocal sigmoid; every enclosure projected outward to 2^-256 dyadic lattice",
+    "fixed_hidden_interval_width": "<=2^-160 or fail",
+    "gate_up": "G*=x Wg^T; U*=x Wu^T; independent exact sums",
+    "hidden": "h*=SiLU(min(G*,10))*clip(U*,-10,10)",
+    "output": "y*=h* Wd^T, independently enclosed; no candidate fed reference",
+    "uncertainty": "max distance to both interval endpoints must be <= fixed budget; reference uncertainty never increases budget"
+  },
+  "error_composition": {
+    "local_qmm": "unchanged gamma_n= n/(2^24-n), n from inherited pinned family::bound_exponent; Phi=sum |x_j| (|s_j|q_j+|b_j|)",
+    "Bg_Bu": "gamma_n Phi of original x for each independent projection",
+    "proof": "clamps are 1-Lipschitz; |SiLU|<=10 under upper gate clamp; global |SiLU derivative|<=2; clipped up magnitude<=10; telescoping split gives 20 Bg +10 Bu + E_act",
+    "Bh": "20 Bg+10 Bu+1/128; exact zero exception only if an independently verified G*=0 with Bg=0 or U*=0 with Bu=0, then local QMM exactness and finite native multiply force h=0",
+    "By": "local gamma_n Phi_down(actual h) + sum_j |Wd_exact_j| Bh_j",
+    "no_double_count": "down local rounding appears exactly once; actual h may determine local down admission/rounding only",
+    "stage_gates": ["exact G distance <=Bg", "exact U distance <=Bu", "actual h distance to independent h* interval <=Bh", "actual y distance to independent y* interval <=By"],
+    "certified_margins": "before candidate observations, each positive G*/U* +/- local bound lies inside [-16,16]; each nonzero h* interval +/- Bh lies outside (-2^-32,2^-32), within magnitude cap and row-sum cap; exact-zero exception separately proved"
+  },
+  "population": {
+    "positive": "48 = D,H in {64,128} x M in {1,32} x expert in {0,1,2} x recipe in {default,mixed}; E=3; group64; per-projection M*N*K <=2^21",
+    "generator": "scripts/research/f020_expert_mlp_fixtures_v1.py; deterministic closed-form integer codes and exactly representable BF16 metadata; M32 has 1,1/2,0 basis rows",
+    "refusals": ["input floor", "metadata floor", "gate outside activation domain", "up outside activation domain", "cross-expert tuple"],
+    "guard_control": "explicit injected down input 2^-33 checks inherited guard; is not a full computed tiny-product fixture",
+    "mutation_controls": ["gate/up argument swap", "gate/down role swap", "down expert swap", "lower gate clamp", "missing upper gate clamp", "missing upper up clamp", "missing lower up clamp", "ignored 8-bit override", "skip down admission", "candidate-fed R1"],
+    "lower_gate_control": "separate exact clamp-stage witness gate=-15/up=1; numeric E_act alone cannot reliably detect an illicit lower gate clamp; do not label this a full positive MLP",
+    "unsafe_controls": "guard/admission/reference-authority audit mutations are host report/decision controls; never issue inadmissible native kernels",
+    "required": "exact IDs and complete population; zero surviving mutations; no duplicate IDs, truncation, unreported errors or exclusions"
+  },
+  "qualification": {
+    "admission": "clean exact source commit/tree, bound contract/source/fixture hashes, successful exact-version independent review, qualified native pins, Studio internal paths; default mode is static only",
+    "execution": "one bounded child per case, watchdog and process group cleanup; no external volumes or real payload access",
+    "ownership": "all statuses/handler messages retained; zero live handles, double frees, cleanup errors; same source fixture hashes before and after; all readbacks materialized and shape/dtype/finite checked",
+    "regressions": "unchanged 363 primitive +32 expert-plane composition cases and required repository CI",
+    "review": "independent exact-version method/source/fixture review before native observation; repair findings with new frozen version, never observed tolerance tuning",
+    "publication": "sanitized evidence with exact source tree/commit, pins, IDs, controls, stage bounds, copies, independent-review receipt and terminal CI; no main merge without qualified integration"
+  },
+  "next_real_payload_gate": "read-only checkpoint header/config census and bind real gate/up/down expert identity/recipe/geometry to qualified interfaces; demonstrate actual intermediate domain or design a separately reviewed domain extension before one bounded real expert fixture; no full-model, routing, top-k, aggregation, streaming or serving claim"
+}

@@ -700,6 +700,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-expert-mlp"
+version = "0.1.0"
+dependencies = [
+ "cc",
+ "libc",
+ "mlx-native-affine",
+ "serde_json",
+]
+
+[[package]]
 name = "mlx-native-affine"
 version = "0.1.0"
 dependencies = [
