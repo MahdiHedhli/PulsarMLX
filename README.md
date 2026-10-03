@@ -67,7 +67,7 @@ This is a feasibility and systems-engineering thesis, not a claim that a Mac out
 | **GLM-5.2 research path** | Giant-model correctness across the full model | ✅ C01-C11 committed |
 | **GLM-5.2 Rust-native runtime** | Native model semantics without Python in the inference path | ✅ One real-checkpoint token qualified; later positions measured |
 | **GLM-5.3 Flash paged research** | Practical expert paging and persistent residency | 📏 Measured Python/MLX research path |
-| **Native Safetensors + MLX affine** | Native checkpoint-format foundation for current targets | ✅ Slices 1 and 2B qualified on synthetic fixtures |
+| **Native Safetensors + MLX affine** | Native checkpoint-format foundation for current targets | ✅ Slices 1, 2B and 2C qualified on synthetic fixtures |
 | **Native GLM-5.3 Flash runtime** | Intended shipping path | 🔨 In development / planned boundaries |
 
 None of this is a production runtime. The Python/MLX Flash implementation is a research reference and performance vehicle. The intended shipping architecture is Rust-native.
@@ -210,7 +210,7 @@ The goal is to consume the selected MLX mixed-precision checkpoints **without co
 
 F020 Slice 1 has already merged the native Safetensors catalog/admission and MLX affine representation/decoder layers, qualified on synthetic fixtures. F020 Slice 2B provides native MLX affine primitives, including packed-weight quantized matmul, qualified on frozen synthetic fixtures on the recorded GitHub runner. Real checkpoint execution and production geometry remain unqualified. F020 Slice 2C composes synthetic stacked-affine expert-plane selection with native packed-weight quantized matmul. It is qualified on its frozen small-fixture population on the recorded GitHub runner. Real checkpoint payloads, production geometry, full expert MLPs, model execution, streaming and performance remain outside that qualification. Residency integration and native Flash execution remain separate upcoming gates.
 
-See [F020 native Safetensors status](docs/architecture/f020-native-safetensors-status.md).
+See [F020 native Safetensors status](docs/architecture/f020-native-safetensors-status.md). The separately [qualified ClampedSwiGLU activation](docs/architecture/f020-activation-qualification-status.md) supplies the next nonlinear building block; complete expert-MLP composition remains a separate qualification gate.
 
 ## Correctness before speed
 

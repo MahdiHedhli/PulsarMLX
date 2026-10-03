@@ -1,6 +1,6 @@
 # F020 native Safetensors status — current pointer
 
-**Last updated 2026-09-25. Slices 1, 2B and 2C are accepted and merged.
+**Last updated 2026-10-03. Slices 1, 2B and 2C are accepted and merged.
 Slice 2B (native primitive qualification on synthetic fixtures) was merged into
 `main` by merge commit `274da684a4b3081dde61c772d98c7814198b5752`; see
 [Slice 2B](#slice-2b--native-primitives-merged). Slice 2C (synthetic
@@ -17,6 +17,8 @@ representation/decoder support are qualified on synthetic fixtures. F020 Slice 2
 Real checkpoint execution and production geometry remain unqualified.
 F020 Slice 2C composes synthetic stacked-affine expert-plane selection with native packed-weight quantized matmul. It is qualified on its frozen small-fixture population on the recorded GitHub runner. Real checkpoint payloads, production geometry, full expert MLPs, model execution, streaming and performance remain outside that qualification.
 Model execution and residency integration remain unimplemented.
+
+The additive ClampedSwiGLU v2.5 activation package has completed synthetic numerical qualification on the recorded M1 Ultra Studio runtime, with the frozen exhaustive gate sweep, independent R1 controls, inherited regressions and required CI. See [activation qualification](f020-activation-qualification-status.md). This does not qualify complete expert MLPs or real model execution.
 
 * **Merged** into `main` by merge commit
   [`030d70810c5e01ed91870bb05b1ec05ff5dba079`](https://github.com/MahdiHedhli/PulsarMLX/commit/030d70810c5e01ed91870bb05b1ec05ff5dba079)

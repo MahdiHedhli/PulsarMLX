@@ -1,0 +1,150 @@
+{
+  "schema": "pulsarmlx.f020.activation-qualification-summary/1.0.0",
+  "status": "PASS",
+  "scope": "synthetic ClampedSwiGLU activation; no complete expert MLP or model claim",
+  "qualified_public_commit": "60a2436886fb6803d62a28d28c0cfb717d93e206",
+  "qualified_tree": "2c2fe07d05e4f752b9d1b69188394806f9846071",
+  "package_manifest": "specs/020-mlx-safetensors-affine/fused-swiglu-package-manifest-v2-5.json",
+  "package_manifest_sha256": "368e647c192946086643a078f99b11b0e00f363c73d3d2d6c35ae049ddbbf4b1",
+  "full_report": {
+    "sha256": "8fc5612f3cbb4969f9f64fab88f4efaaaec112e4770da4b14df435b6fa16a343",
+    "bytes": 24428844,
+    "storage": "owner private qualification archive"
+  },
+  "method_reviews": [
+    {
+      "model": "grok-4.7",
+      "verdict": "ACCEPT",
+      "blocking_findings": 0
+    },
+    {
+      "model": "gemini-3.8-flash-medium",
+      "verdict": "ACCEPT",
+      "blocking_findings": 0
+    }
+  ],
+  "runtime": {
+    "hardware": "Apple M1 Ultra Mac Studio,128GiB unified memory",
+    "architecture": "arm64",
+    "macos": "26.0 (25A354)",
+    "native_mlx": {
+      "commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+      "version": "0.31.2"
+    },
+    "native_mlx_c": {
+      "commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+      "version": "0.6.0"
+    },
+    "source_pins": "specs/020-mlx-safetensors-affine/contracts/fused-swiglu-source-pins-v2-5.json",
+    "native_artifacts": {
+      "mlx.metallib": "5518fd265f31a8973732996d5eecc612301c94c1852156fb9ff30f6b708be365",
+      "libmlx.dylib": "c11a4d814042213b866ce66032107921857e4bbc8bfe0dd8150573a1ff9a8053",
+      "libmlxc.dylib": "e523f544758f042f78aeacdbe646af9d966432605ad4cfe760609b4044c2ce27"
+    }
+  },
+  "enumeration": {
+    "total_evaluated": 2197815298,
+    "batch_count": 2098,
+    "gate_count_exhaustive": true,
+    "range_counts": {
+      "negative": 1098907649,
+      "positive": 1098907649
+    },
+    "range_endpoints": {
+      "negative_end": "0xc1800000",
+      "negative_start": "0x80000000",
+      "positive_end": "0x41800000",
+      "positive_start": "0x00000000"
+    },
+    "native_silu_materializations": 2098,
+    "cpu_guard_checks": 6295,
+    "cpu_fpcr": 0,
+    "anomaly_count": 0
+  },
+  "worst_witness": {
+    "input_gate_f32_bits": "0xbc7ffc21",
+    "input_up_f32_bits": "0x3f800000",
+    "candidate_n_output_f32_bits": "0xbbfdfc35",
+    "candidate_b_output_f32_bits": "0xbbfbfc44",
+    "max_delta_f64_bits": "0x3f0fff1000000001"
+  },
+  "budgets": {
+    "beta_B": "5201/4194304",
+    "E_N": "1/128",
+    "E_act_used_in_composition": "1/128",
+    "upward_delta_exact": "9006168462589953/147573952589676412928",
+    "inherited_gate_pass": true,
+    "full_up_propagation": {
+      "E_N": "1/128",
+      "beta_silu": "1037/8388608",
+      "full_up_error_bound": "78865178687705238413162890244653067/42535295865117307932921825928971026432",
+      "full_up_leq_E_N": true,
+      "inherited_delta_plus_beta_leq_E_N": true,
+      "native_silu_abs_envelope": "11",
+      "product_flush": "11/42535295865117307932921825928971026432",
+      "product_rounding": "1/131072",
+      "scalar_native_error": "27249265390649345/147573952589676412928"
+    }
+  },
+  "controls": {
+    "fixed": 42,
+    "extended": 500,
+    "r1_corroboration": "PASS",
+    "policy_sha256": "6a26ab0e6501710e7154289e6ee690fccecf2bf141369296afbe68d097f40b73"
+  },
+  "regressions": {
+    "primitive": {
+      "status": "PASS",
+      "case_ids_exact": true,
+      "expected_case_count": 363,
+      "observed_case_count": 363,
+      "manifest_sha256": "472b5b64aaddfe7ecbfd05930ba2f4d261023a9a829f957b5b23b110fcf37d04",
+      "summary_sha256": "bb92b424fd8b7996d36d48827e0d87376d769cf67c0f47712bbbea05262d5556"
+    },
+    "slice2c": {
+      "status": "PASS",
+      "case_ids_exact": true,
+      "expected_case_count": 32,
+      "observed_case_count": 32,
+      "manifest_sha256": "6f0e39e6d2c705603f3f897133d42c31837c53348aba0f4b0389dca18018fc14",
+      "summary_sha256": "39e7a6fd9ea70c27d3398343979684d0d05677224bc561d493515b372c26e7a0"
+    }
+  },
+  "ci": {
+    "run_id": 37133162964,
+    "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/37133162964",
+    "public_commit": "60a2436886fb6803d62a28d28c0cfb717d93e206",
+    "conclusion": "success",
+    "required_jobs": [
+      "Apple Silicon workspace baseline",
+      "Apple MLX small-fixture validation",
+      "CI aggregate status"
+    ],
+    "same_run_baseline_candidate_canonical_reports_equal": true
+  },
+  "attempts": [
+    {
+      "number": 1,
+      "status": "REPORT_SERIALIZATION_FAILED",
+      "native_sweep_and_control_bridge": "PASS",
+      "error": "exact R1 fraction formatting exceeded Python default4300-digit conversion limit",
+      "preserved": true
+    },
+    {
+      "number": 2,
+      "status": "PASS",
+      "serialization_setting": "process-local PYTHONINTMAXSTRDIGITS=0",
+      "numerical_source_and_budget_changes": 0
+    }
+  ],
+  "qualification_exclusions": [
+    "complete expert MLP",
+    "real checkpoint payloads",
+    "production geometry",
+    "routing and aggregation",
+    "full model",
+    "physical fused expert kernel",
+    "benchmark and serving"
+  ],
+  "frozen_package_bytes_unchanged": true
+}
