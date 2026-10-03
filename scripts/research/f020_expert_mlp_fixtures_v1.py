@@ -96,6 +96,18 @@ def generate(out):
       ('gate-up-argument-swap','stage-gate'),('gate-down-role-swap','tuple'),('down-expert-swap','tuple'),
       ('lower-gate-clamp','clamp-probe'),('missing-upper-gate-clamp','activation'),('missing-up-upper-clamp','activation'),
       ('missing-up-lower-clamp','activation'),('ignore-bit-override','recipe'),('skip-down-admission','guard-audit'),('candidate-fed-reference','authority-audit')]]
+    predicates={
+      'gate-up-argument-swap':'stage packed recipe',
+      'gate-down-role-swap':'MLP-R-TUPLE at tuple phase with zero native counters',
+      'down-expert-swap':'MLP-R-TUPLE at tuple phase with zero native counters',
+      'lower-gate-clamp':'exact clamp stage rejects illicit lower clamp with unchanged handle census',
+      'missing-upper-gate-clamp':'exact clamp semantics with unchanged handle census',
+      'missing-up-upper-clamp':'exact clamp semantics with unchanged handle census',
+      'missing-up-lower-clamp':'exact clamp semantics with unchanged handle census',
+      'ignore-bit-override':'MLP-R-TUPLE at tuple phase with zero native counters',
+      'skip-down-admission':'missing down_admission evidence',
+      'candidate-fed-reference':'R1 authority binding'}
+    for control in controls:control['expected_detection']=predicates[control['id']]
     manifest={'schema':'pulsarmlx.f020.expert-mlp-fixtures/1','license':'MIT','population':{'positives':48,'refusals':5,'guard_controls':1,'mutations':10,'total':64},'checkpoints':cps,'cases':cases,'controls':controls,'files':{k:{'bytes':len(v),'sha256':sha(v)} for k,v in sorted(files.items())}}
     files['manifest.json']=canonical(manifest)
     return files

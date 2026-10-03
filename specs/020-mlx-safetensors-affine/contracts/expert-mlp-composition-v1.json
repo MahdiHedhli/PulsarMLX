@@ -1,6 +1,8 @@
 {
   "schema": "pulsarmlx.f020.expert-mlp-contract/1",
   "status": "PROSPECTIVE_REVIEW_REQUIRED",
+  "revision": 2,
+  "revision_reason": "pre-observation independent review: semantic mutation detection and reviewed executable binding; signed-zero and raw-report hash custody repair; all numerical budgets/domains/positive bytes unchanged",
   "scope": "complete single synthetic expert MLP; host readbacks and reimports explicitly permitted; no performance claim",
   "accepted_base": "2d388856593b96a136fa5a6036c0e973919cedff",
   "inherited_activation_commit": "60a2436886fb6803d62a28d28c0cfb717d93e206",
@@ -60,10 +62,10 @@
     "mutation_controls": ["gate/up argument swap", "gate/down role swap", "down expert swap", "lower gate clamp", "missing upper gate clamp", "missing upper up clamp", "missing lower up clamp", "ignored 8-bit override", "skip down admission", "candidate-fed R1"],
     "lower_gate_control": "separate exact clamp-stage witness gate=-15/up=1; numeric E_act alone cannot reliably detect an illicit lower gate clamp; do not label this a full positive MLP",
     "unsafe_controls": "guard/admission/reference-authority audit mutations are host report/decision controls; never issue inadmissible native kernels",
-    "required": "exact IDs and complete population; zero surviving mutations; no duplicate IDs, truncation, unreported errors or exclusions"
+    "required": "exact IDs and complete population; zero surviving mutations; each mutation must satisfy its manifest's frozen semantic detection predicate, not an incidental error; activation controls preserve the baseline handle census; no duplicate IDs, truncation, unreported errors or exclusions"
   },
   "qualification": {
-    "admission": "clean exact source commit/tree, bound contract/source/fixture hashes, successful exact-version independent review, qualified native pins, Studio internal paths; default mode is static only",
+    "admission": "clean exact source commit/tree; every package file committed; bound contract/source/fixture hashes; successful exact-version independent review with actual model and raw/capsule hash custody; supplied executable SHA256 must equal the reviewed build hash before capability creation; qualified native pins before observations; Studio internal paths; default mode is static only",
     "execution": "one bounded child per case, watchdog and process group cleanup; no external volumes or real payload access",
     "ownership": "all statuses/handler messages retained; zero live handles, double frees, cleanup errors; same source fixture hashes before and after; all readbacks materialized and shape/dtype/finite checked",
     "regressions": "unchanged 363 primitive +32 expert-plane composition cases and required repository CI",

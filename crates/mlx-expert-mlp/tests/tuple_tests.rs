@@ -60,3 +60,19 @@ fn same_shape_from_another_checkpoint_cannot_be_bound_to_source() {
     let down = compose(&b, ROLES[2], &[0]).unwrap();
     assert!(ExpertTuple::bind(&a, [gate, up, down], 0, 64, 64, false).is_err());
 }
+
+#[test]
+fn dropping_explicit_override_refuses_tuple_before_any_native_bridge() {
+    let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../fixtures/expert-mlp-composition/checkpoints/d64-h64-mixed");
+    let mut config: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(p.join("config.json")).unwrap()).unwrap();
+    for role in [ROLES[0], ROLES[2]] {
+        config["quantization"].as_object_mut().unwrap().remove(role);
+    }
+    let s = Source::open(&p, &config.to_string(), &BTreeMap::new()).unwrap();
+    match ExpertTuple::select(&s, 0, 64, 64, true) {
+        Ok(_) => panic!("ignored override was admitted"),
+        Err(e) => assert!(e.contains("MLP-R-TUPLE")),
+    }
+}

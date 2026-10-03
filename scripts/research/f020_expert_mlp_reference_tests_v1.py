@@ -5,6 +5,7 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).parent))
 import f020_expert_mlp_r1_v1 as R
+import f020_expert_mlp_qualify_v1 as Q
 
 def test_exp_enclosures_and_fixed_width():
     lo,hi=R.exp_interval(F(0));assert lo==hi==1
@@ -40,3 +41,12 @@ def test_f32_decoder_handles_signed_zero_and_subnormal_exactly():
     assert R.f32(1)==F(1,2**149)
     assert R.f32(0x3f800000)==1
     assert R.bf16(0x3f80)==1
+
+def test_exact_clamp_bits_preserve_both_zero_signs_and_asymmetry():
+    assert Q.clamp_bits([0,0x80000000,0xc1700000,0x41700000],'gate')==[0,0x80000000,0xc1700000,0x41200000]
+    assert Q.clamp_bits([0,0x80000000,0xc1700000,0x41700000],'up')==[0,0x80000000,0xc1200000,0x41200000]
+
+def test_incidental_control_failures_do_not_count_as_semantic_detection():
+    assert not Q.control_detected('missing-upper-gate-clamp',{},['activation ownership/order/materialization'])
+    assert Q.control_detected('missing-upper-gate-clamp',{},['exact clamp semantics'])
+    assert not Q.control_detected('down-expert-swap',{'phase':'tuple','detail':'MLP-R-TUPLE','final_counters':{'imports':1,'numerical':0}},['positive incomplete'])

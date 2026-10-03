@@ -19,9 +19,12 @@ impl<'a> ExpertTuple<'a> {
         h: u64,
         mixed: bool,
     ) -> Result<Self, String> {
-        let gate = compose(source, ROLES[0], &[expert]).map_err(|e| e.to_string())?;
-        let up = compose(source, ROLES[1], &[expert]).map_err(|e| e.to_string())?;
-        let down = compose(source, ROLES[2], &[expert]).map_err(|e| e.to_string())?;
+        let gate = compose(source, ROLES[0], &[expert])
+            .map_err(|e| format!("MLP-R-TUPLE: inherited gate selection {e}"))?;
+        let up = compose(source, ROLES[1], &[expert])
+            .map_err(|e| format!("MLP-R-TUPLE: inherited up selection {e}"))?;
+        let down = compose(source, ROLES[2], &[expert])
+            .map_err(|e| format!("MLP-R-TUPLE: inherited down selection {e}"))?;
         Self::bind(source, [gate, up, down], expert, d, h, mixed)
     }
 

@@ -39,6 +39,28 @@ def decoded_output(doc,shape):
     v=[R.f32(w) for w in doc['f32_bits']]
     return [v[i*shape[1]:(i+1)*shape[1]] for i in range(shape[0])]
 
+def clamp_bits(words,role):
+    """Finite F32 exact clamps preserve the original signed-zero bits."""
+    ten=0x41200000;neg_ten=0xc1200000
+    result=[]
+    for w in words:
+        x=R.f32(w)
+        result.append(ten if x>10 else neg_ten if role=='up' and x<-10 else w)
+    return result
+
+def control_detected(ident,doc,failures):
+    expected={
+      'gate-up-argument-swap':'stage packed recipe',
+      'missing-upper-gate-clamp':'exact clamp semantics',
+      'missing-up-upper-clamp':'exact clamp semantics',
+      'missing-up-lower-clamp':'exact clamp semantics',
+      'skip-down-admission':"'down_admission'",
+      'candidate-fed-reference':'R1 authority binding'}
+    if ident in expected:return expected[ident] in failures
+    if ident in ['gate-down-role-swap','down-expert-swap','ignore-bit-override']:
+        return 'positive incomplete' in failures and doc.get('phase')=='tuple' and 'MLP-R-TUPLE' in doc.get('detail','') and doc.get('final_counters')=={'numerical':0,'imports':0}
+    return False
+
 def verify_child(m,c,doc,reference):
     try:
         if doc['id']!=c['id']:raise ValueError('case identity')
@@ -81,8 +103,7 @@ def verify_child(m,c,doc,reference):
         g=decoded_output(doc['gate']['output'],[c['M'],c['H']]);u=decoded_output(doc['up']['output'],[c['M'],c['H']])
         a=doc['activation'];hv=decoded_output(a['output'],[c['M'],c['H']]);y=decoded_output(doc['down']['output'],[c['M'],c['D']])
         if a['status'] or a['stats'][0]!=2 or a['stats'][2:]!=[9,4,13,1,9,0] or a['materializations']!=1:raise ValueError('activation ownership/order/materialization')
-        def bits(v):return struct.unpack('<I',struct.pack('<f',v))[0]
-        if a['gate_clamp_bits']!=[bits(min(float(v),10.)) for row in g for v in row] or a['up_clamp_bits']!=[bits(min(max(float(v),-10.),10.)) for row in u for v in row]:raise ValueError('exact clamp semantics')
+        if a['gate_clamp_bits']!=clamp_bits(doc['gate']['output']['f32_bits'],'gate') or a['up_clamp_bits']!=clamp_bits(doc['up']['output']['f32_bits'],'up'):raise ValueError('exact clamp semantics')
         if doc['down_admission']['decision']!='admitted' or doc['down_admission']['before']!=doc['down_admission']['after'] or doc['down_admission']['actual_input_sha256']!=a['output']['sha256']:raise ValueError('actual down admission')
         local,bd=R.qmm(hv,reference['down'])
         failures=[]
@@ -133,6 +154,7 @@ def main():
         if sha((a.review.parent/name).read_bytes())!=review.get(label):raise RuntimeError('independent review evidence hash mismatch')
     if not review.get('actual_model') or not review.get('reviewer'):raise RuntimeError('actual independent reviewer identity required')
     binary=a.binary.resolve();cap=a.out/'admission.json'
+    if review.get('binary_sha256')!=sha(binary.read_bytes()):raise RuntimeError('executable is not the exact reviewed build')
     capability={'status':'ADMITTED','commit':commit,'tree':tree,'package_sha256':digest,'source_files':files,'review_sha256':sha(a.review.read_bytes()),'binary_sha256':sha(binary.read_bytes()),'manifest_sha256':static['manifest_sha256']}
     cap.write_bytes(canonical(capability));cap.chmod(0o600)
     env=dict(os.environ,MLX_ENABLE_TF32='0',PYTHONDONTWRITEBYTECODE='1',PYTHONINTMAXSTRDIGITS='0')
@@ -145,7 +167,9 @@ def main():
             doc=run_child(binary,c,'',a.out/c['id'],cap,env)
             if c['kind']=='positive':doc['r1_authority']={'kind':'original-fixture','source_sha256':sha(checkpoint(m,c).read_bytes()),'input_sha256':sha((FIXTURE/c['input']).read_bytes())}
             failures=verify_child(m,c,doc,references.get(c['id']))
-            result['cases'].append({'id':c['id'],'status':'FAIL' if failures else 'PASS','failures':failures,'raw_report_sha256':sha(canonical(doc))})
+            raw_path=a.out/c['id']/'report.json'
+            verified_path=a.out/c['id']/'verified-report.json';verified_path.write_bytes(canonical(doc))
+            result['cases'].append({'id':c['id'],'status':'FAIL' if failures else 'PASS','failures':failures,'raw_report_sha256':sha(raw_path.read_bytes()),'verified_report_sha256':sha(verified_path.read_bytes())})
             reports[c['id']]=doc;save()
             if failures:raise RuntimeError('correctness gate failed: '+c['id']+' '+str(failures[:4]))
             print('PASS '+c['id'],flush=True)
@@ -167,8 +191,9 @@ def main():
                 doc=run_child(binary,c,ident,a.out/ident,cap,env)
                 doc['r1_authority']={'kind':'original-fixture','source_sha256':sha(checkpoint(m,c).read_bytes()),'input_sha256':sha((FIXTURE/c['input']).read_bytes())}
                 failures=verify_child(m,c,doc,references[c['id']])
-            result['controls'].append({'id':ident,'status':'DETECTED' if failures else 'SURVIVED','detection':failures[:4],'scope':'host audit mutation' if ident in ['skip-down-admission','candidate-fed-reference'] else control['target']});save()
-            if not failures:raise RuntimeError('mutation survived: '+ident)
+            detected=bool(failures) if ident=='lower-gate-clamp' else control_detected(ident,doc,failures)
+            result['controls'].append({'id':ident,'status':'DETECTED' if detected else 'SURVIVED','detection':failures[:4],'expected_detection':control['expected_detection'],'scope':'host audit mutation' if ident in ['skip-down-admission','candidate-fed-reference'] else control['target']});save()
+            if not detected:raise RuntimeError('mutation failed its frozen semantic detection predicate: '+ident)
             print('DETECTED '+ident,flush=True)
         if package_files()!=files or git('status','--porcelain'):raise RuntimeError('source/fixture changed during qualification')
         result['status']='PASS';save();print('COMPLETE_SYNTHETIC_EXPERT_MLP_PASS',flush=True)

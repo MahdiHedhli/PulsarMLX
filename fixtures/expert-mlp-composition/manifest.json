@@ -2850,51 +2850,61 @@
   },
   "controls": [
     {
+      "expected_detection": "stage packed recipe",
       "id": "gate-up-argument-swap",
       "kind": "mutation",
       "target": "stage-gate"
     },
     {
+      "expected_detection": "MLP-R-TUPLE at tuple phase with zero native counters",
       "id": "gate-down-role-swap",
       "kind": "mutation",
       "target": "tuple"
     },
     {
+      "expected_detection": "MLP-R-TUPLE at tuple phase with zero native counters",
       "id": "down-expert-swap",
       "kind": "mutation",
       "target": "tuple"
     },
     {
+      "expected_detection": "exact clamp stage rejects illicit lower clamp with unchanged handle census",
       "id": "lower-gate-clamp",
       "kind": "mutation",
       "target": "clamp-probe"
     },
     {
+      "expected_detection": "exact clamp semantics with unchanged handle census",
       "id": "missing-upper-gate-clamp",
       "kind": "mutation",
       "target": "activation"
     },
     {
+      "expected_detection": "exact clamp semantics with unchanged handle census",
       "id": "missing-up-upper-clamp",
       "kind": "mutation",
       "target": "activation"
     },
     {
+      "expected_detection": "exact clamp semantics with unchanged handle census",
       "id": "missing-up-lower-clamp",
       "kind": "mutation",
       "target": "activation"
     },
     {
+      "expected_detection": "MLP-R-TUPLE at tuple phase with zero native counters",
       "id": "ignore-bit-override",
       "kind": "mutation",
       "target": "recipe"
     },
     {
+      "expected_detection": "missing down_admission evidence",
       "id": "skip-down-admission",
       "kind": "mutation",
       "target": "guard-audit"
     },
     {
+      "expected_detection": "R1 authority binding",
       "id": "candidate-fed-reference",
       "kind": "mutation",
       "target": "authority-audit"

@@ -43,7 +43,7 @@ extern "C" int pulsar_mlp_activation(const float *gate, const float *up, int m, 
   auto clipped=keep(mlx_array_new());auto value=keep(mlx_array_new());
   if(!rc) {
     if(mode==1)rc=mlx_clip(&g,ga,negten,ten,stream);
-    else if(mode==2){auto one=keep(mlx_array_new_float32(1));stats[3]++;rc=mlx_multiply(&g,ga,one,stream);}
+    else if(mode==2)rc=mlx_minimum(&g,ga,ga,stream);
     else rc=mlx_minimum(&g,ga,ten,stream);
     stats[4]++;
   }
