@@ -1,0 +1,56 @@
+{
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "check",
+        "--workspace",
+        "--exclude",
+        "f017-native",
+        "--all-targets",
+        "--locked",
+        "--offline"
+      ],
+      "elapsed_seconds": 15.47,
+      "exit_code": 0,
+      "native_prefixes_unset": true,
+      "offline": true,
+      "source_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+      "stdout_sha256": "44e6674f0df13c4f22d2d2aa09fecffe1fa45f08bae774d705c7e98c74b4acab"
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--workspace",
+        "--exclude",
+        "f017-native",
+        "--no-fail-fast",
+        "--locked",
+        "--offline"
+      ],
+      "elapsed_seconds": 78.77,
+      "exit_code": 0,
+      "native_prefixes_unset": true,
+      "offline": true,
+      "reported_harness_totals": {
+        "failed": 0,
+        "harnesses": 88,
+        "ignored": 3,
+        "passed": 637
+      },
+      "scope": "host workspace; GPU qualification separately admitted and already complete",
+      "source_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+      "stdout_sha256": "532c6195e744060d1e736b1a29fd66ddc896b95fde6cf8548044cbe41e9f4fa8"
+    }
+  ],
+  "native_release_build": "PASS",
+  "qualification_source_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+  "status": "PASS",
+  "targeted_tests": {
+    "activation_ownership_test": 1,
+    "ownership_mock_cases": 10,
+    "reference_admission": 9,
+    "tuple": 5
+  }
+}

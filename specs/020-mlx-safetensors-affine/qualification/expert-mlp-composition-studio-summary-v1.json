@@ -1,0 +1,653 @@
+{
+  "cases": [
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e0-default",
+      "raw_report_sha256": "04ec26606c912e3469b55b466fc2a1f53670e83349cb5a89ff2354efe8808f70",
+      "status": "PASS",
+      "verified_report_sha256": "bdb624d35c794e6a5e1d73facd578776e413ebf385e4f2f217cec2f97e34a6e9"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e1-default",
+      "raw_report_sha256": "25421c8a6255fd9c9dcc5259ead856379593b7d4f3527c44664ed9f50a7d5f3e",
+      "status": "PASS",
+      "verified_report_sha256": "2c8ecbb50b9ad78ae00350e44fccc43a925f36ac9d2bc49f0fc53ab2862ebd80"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e2-default",
+      "raw_report_sha256": "7cc4bb170fd051a1165497a951a46ff63142327f1777821ba5c2a3139aaa19cb",
+      "status": "PASS",
+      "verified_report_sha256": "a444af519b68404b111732dcc271c89ad25c1b247ad34f17f2ee56fc738f6ee1"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e0-default",
+      "raw_report_sha256": "9cec9e6101c5dc01aaa878f660e3feef1f3fd3ff76e328465669419201cee1a5",
+      "status": "PASS",
+      "verified_report_sha256": "b1ce645948af5608e38714e5ca7620bb95d5ff75e88c80fd060a931c22a33f79"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e1-default",
+      "raw_report_sha256": "dc4126377de525ca783d64d0d64d6ec78cfaffcc9be61d96c1794b3afd644a8c",
+      "status": "PASS",
+      "verified_report_sha256": "d1b57216596c99d90e117da43bf5d93a5b2bc6181140606e3576358bd676fcf9"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e2-default",
+      "raw_report_sha256": "a08d10a465e74ad5bcc62ab46385892923915f692ddd2c74e7eceb7ed7af2931",
+      "status": "PASS",
+      "verified_report_sha256": "d2bf0cbd46ff475db44db0efa13839e1b924241e0499aac4bcab35eef7d32cea"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e0-mixed",
+      "raw_report_sha256": "813fa5f542ff8cde3f8b8ebd683bc451cde6d033851ca600dc417f04bf0f1293",
+      "status": "PASS",
+      "verified_report_sha256": "ab356302c648c135191018b07a11c99d1c2f0555c3f1977c60d5bbc7d3338ffe"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e1-mixed",
+      "raw_report_sha256": "e48b72910d65f5559b9c1af3d7551ccd0f829fd377ea54105e5e3baaa6e86e64",
+      "status": "PASS",
+      "verified_report_sha256": "a0a6b6aa74a33e335d0b9e065eb43823eab8efe0290b06a1a67895ab7dc9c09e"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m1-e2-mixed",
+      "raw_report_sha256": "3e7445407b748e76d953b609ffbc6a27d38cd56ef311e00a227343abb825f731",
+      "status": "PASS",
+      "verified_report_sha256": "8097cb7a3087ed2a96cbe0b5e54f02cb0460c5fc808dfe44b6d2be5975919456"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e0-mixed",
+      "raw_report_sha256": "6c2d699ee576615a8d2c38a3eb73b0011b780d3f2e72828af3fc14906d3bcdb7",
+      "status": "PASS",
+      "verified_report_sha256": "b5a07d75f974159c9212830e0ea9bb7b79c5e08dcc6b5077856c0890610e9ccf"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e1-mixed",
+      "raw_report_sha256": "6d6b3bda182d925d43758a54eac4deb52dc8210c895807cb2281a4c9a6fcd954",
+      "status": "PASS",
+      "verified_report_sha256": "804d42e40a03d86d2780e09ca0734b54740c63680292236950951fc8237c5acf"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h64-m32-e2-mixed",
+      "raw_report_sha256": "46117da93827d227fda40c7420b08a38c27069e54a8636c18274119d82f4359b",
+      "status": "PASS",
+      "verified_report_sha256": "0b3ad7df9df074bc57c80aa530a19a54adb97ec7360d2e227edc21effbdcc2a2"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e0-default",
+      "raw_report_sha256": "314802352991c76f3a3829673ddf917536d0e3ef4b5ac37fdcf610152699a203",
+      "status": "PASS",
+      "verified_report_sha256": "feeb74f61b6a7bdd0aa366d7dcc6115759347df7554c3996b5061219c128425e"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e1-default",
+      "raw_report_sha256": "9c862b823fe48cd77ad3116bb76972485b9a85eb96da061b17ca050f0dbe9af4",
+      "status": "PASS",
+      "verified_report_sha256": "7eb65711fcb652bdf34b0df07e7bfc5aa3579696c6aad1fd3ddebd32aee5bfc9"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e2-default",
+      "raw_report_sha256": "cc0e2b564d860fa6adf0db63ca4dcfb8cf3e818a107fc5060387cc36468ec815",
+      "status": "PASS",
+      "verified_report_sha256": "272d10e2479bbc59441239427f4e00a7ded255aca0c92a552729f8bdcb9fa79b"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e0-default",
+      "raw_report_sha256": "aae2fb160fff4de3f667d3ba63dee2da23bc3b813bd3b70e89298b673c741efd",
+      "status": "PASS",
+      "verified_report_sha256": "7b1a3f478921940bbaae252f526b32084f9e7068d7c7ae9e20a42f6f2c16b8f0"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e1-default",
+      "raw_report_sha256": "e1680382bcde143588fa0c72a82d04ed818d6703742ad7efbc0e2ed1d2c0e0d8",
+      "status": "PASS",
+      "verified_report_sha256": "edffc2f43bf00efa5c0d62add216011a7a4b806c45902cd016cf58d8d57a4c8e"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e2-default",
+      "raw_report_sha256": "f320912b8c3178760b60c27121fe6022e2c2234d024df005b91be91537feb50e",
+      "status": "PASS",
+      "verified_report_sha256": "e5bcb92821c43653e63c5fbfe2782d8d910e4a8363f83bee0f13a74563ad0c3a"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e0-mixed",
+      "raw_report_sha256": "562e33f13d2d92bdb1e9849b3d1a7c013aab4cc2216cb29da17d55533015a459",
+      "status": "PASS",
+      "verified_report_sha256": "7415f821062278937c2ae2948b6ccd360d025bf93c3184e0a9433f75ce370bd9"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e1-mixed",
+      "raw_report_sha256": "a5016651aecc784e09795bad0866dfb29419f869f16c17020c2f91c212097347",
+      "status": "PASS",
+      "verified_report_sha256": "041e0bd079fefc6b55640e229441e1a50c4442d04578c61b090e1f354ac702ff"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m1-e2-mixed",
+      "raw_report_sha256": "4445614eba9fb964e0070dcd47b8ce39523ca8a54a1e01d5575ea8f52e4d2280",
+      "status": "PASS",
+      "verified_report_sha256": "d2c5cbe9aef72e53d3f3eef7826acd9142b1fd0cc6c1d3f1e8eebfee3b7cbe38"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e0-mixed",
+      "raw_report_sha256": "85c536fda2df1462b94af92a998349cce3a58cb904be703c3130b510cc45670b",
+      "status": "PASS",
+      "verified_report_sha256": "f63934c190077ddd8ec6c0b4dcbc3d06e904a79db43d3feb1c0b32b4f2d08cc9"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e1-mixed",
+      "raw_report_sha256": "08f758590f7c2e05cef76dc13ca53da616a42430c2ab9a00c3fd1639ea073422",
+      "status": "PASS",
+      "verified_report_sha256": "1a84452de3634e552c8bee487055efd69e06078ec783f9c27de77fce40dc2221"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d64-h128-m32-e2-mixed",
+      "raw_report_sha256": "73f0ce72abc44d030c463602508f3612a4552be557ea39e92d735ab196c0cf21",
+      "status": "PASS",
+      "verified_report_sha256": "4ca581db8e7df0aa6af5221232471c8f646bf8d4290747a470ceb768e5b411fe"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e0-default",
+      "raw_report_sha256": "3b55028ea2246d6997565283a63b9fad95cfd7d380d24a54ab97070bc35ca13d",
+      "status": "PASS",
+      "verified_report_sha256": "7b09c79d0880ef7d4209fbacddd6bcb0580f25b28d668faee8e1abfeb25f7fe2"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e1-default",
+      "raw_report_sha256": "ea7afb5f529605f2ef4739db5614ac18670f310714df0e9d984d9dca9d30f19c",
+      "status": "PASS",
+      "verified_report_sha256": "704b679c7bb07780d8a63b4c4cf21644cd291d88549e06b15d8783ef1b2e78c2"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e2-default",
+      "raw_report_sha256": "3203391a2076f51f240b89fc3d6e5394223591480c0d5f5478bcd9846f1d86c7",
+      "status": "PASS",
+      "verified_report_sha256": "9fe338bf74b3d2597667bb6592ac475cc6ea1e3b12b0c0a35988d33b2ea90398"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e0-default",
+      "raw_report_sha256": "e0f77035e5f6df88f6cc143785d94d0a42d3d73c58b0c08a3a74a6e2199168e7",
+      "status": "PASS",
+      "verified_report_sha256": "07ad1fb0b545db37e85187bd1d9d22629695ee2a1d82fa5cd7cb5c2ff4255bab"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e1-default",
+      "raw_report_sha256": "79c1201cc9cf2a0ee979c79e14c9926882126ca3eca058e1d9d0e9f0d9ce7202",
+      "status": "PASS",
+      "verified_report_sha256": "8e876bf1a223e4d6a7d0b3eaba1160b1c9d8768f63742507e731875364a78a83"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e2-default",
+      "raw_report_sha256": "3a62790a15d9775e343b1bdd0f93a68ae4676eabe3f771f46dcde1900bd5031a",
+      "status": "PASS",
+      "verified_report_sha256": "cf5d245621f89ecb29734066c0e250a49c8d9af85ab186ae43d990f8cf841fce"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e0-mixed",
+      "raw_report_sha256": "ea193b278098a8b91fedb4a660c17c2855b8d43cbebe90bd4455b82f9921be10",
+      "status": "PASS",
+      "verified_report_sha256": "5c66acd6de578c52169a5a671b21db4bb1587bc6c29735e89be6cfd783d4fc00"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e1-mixed",
+      "raw_report_sha256": "ff58b0cbdc20f30605b615a87c31821fc5284fdaa4c663ea8762e52b0b6b00ce",
+      "status": "PASS",
+      "verified_report_sha256": "e7a5d52c16724cc0c3a53dec24a1e490230250ff13870dd8727a52fa1e78ee14"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m1-e2-mixed",
+      "raw_report_sha256": "baadda5c8b69548d3c47073a1048e9e22a52cf10cee3434f4e469094fe4534db",
+      "status": "PASS",
+      "verified_report_sha256": "1c3ab710ac00a48bf5587aae588989a5bf175d9ba34a7db0f01ab466b2995e5e"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e0-mixed",
+      "raw_report_sha256": "e277d4184ce79ac9d1017b08a5d3571a5ceaa5d731a657576ef1e616b91c9ee6",
+      "status": "PASS",
+      "verified_report_sha256": "db600c6d70d9bdaa877c4bcf4de982d2a6d7a07d172f5260de5dcac94efe8ba8"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e1-mixed",
+      "raw_report_sha256": "3778fc45fdbeb66827f0df889c25087b4a0a63ef3afa2709900ff3ef7686a7e8",
+      "status": "PASS",
+      "verified_report_sha256": "279db35afdfe987ce300cc70251d4173c8539e59b7b294cfcc507290c7998e39"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h64-m32-e2-mixed",
+      "raw_report_sha256": "4d03c12b6cba1b7ebf5ce6c8f19acc26543dc8b686ccf9a4c861563df885a01e",
+      "status": "PASS",
+      "verified_report_sha256": "09989021cac5e53510f798a1fd0dabeef5195b0fef0de4e06dcd028bd0620d78"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e0-default",
+      "raw_report_sha256": "c74950e0c24f51b1015f62e5fd067f71ba8f0e5278fc260c1be54f7cbf2f2634",
+      "status": "PASS",
+      "verified_report_sha256": "d61f35d7e5dd3eb66f0d48f1b11dc3a0418bea66f241529b587dc5f23f94f397"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e1-default",
+      "raw_report_sha256": "4edce26659db5d814db5ca5d35fbc68a45e91b3270d835aff8e8c955b70da68c",
+      "status": "PASS",
+      "verified_report_sha256": "cfceca0bb281d2036a341c7f482c6e0adfc2535d371af720c30502fe1cfd170b"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e2-default",
+      "raw_report_sha256": "544154856719555848a2c54a91dae442ac4a8214d88edc7346ad823d263aa950",
+      "status": "PASS",
+      "verified_report_sha256": "c630902532757b29f66ac86b6c894efc33c7a4b501d631d0366a9e3dcffabbcb"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e0-default",
+      "raw_report_sha256": "607cc913f93088922dde669a9b3fcebd366457e418e2ce664949c61deb4eca09",
+      "status": "PASS",
+      "verified_report_sha256": "1f869cbde812ea210460e903d372023a1643ca4b8ebb3b3218a012c2ce9679c7"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e1-default",
+      "raw_report_sha256": "ae357539d1fdd2c9f0fdc3c33881856ae817f59857fdfeed58396c74495a281a",
+      "status": "PASS",
+      "verified_report_sha256": "dce54a4f97865f7104c8faa1188a74ea8ab24778a075ef8847196e036459c017"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e2-default",
+      "raw_report_sha256": "60b8f89aca6dd8376e889ce31414824c04fed0b1084d6007be34c91959160016",
+      "status": "PASS",
+      "verified_report_sha256": "bf6433a2b16582187aa40566570edcfa04f6cf2c35189ceb09dc1c39c36d1260"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e0-mixed",
+      "raw_report_sha256": "36e428d8eaf880248bc711ff7593bcf957c83b4af9e12ffe336636f1e23d046a",
+      "status": "PASS",
+      "verified_report_sha256": "b88567f77ab77c2f5f291357176ab634eb3ebeb2e585a2cd690b69e733abc88a"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e1-mixed",
+      "raw_report_sha256": "a854066c83a43f1cc20450061573256d29016e039666a24fb902dcd2ea48db7d",
+      "status": "PASS",
+      "verified_report_sha256": "7b6fb22ffacb46bdbc509002aedaa5242bc5767cfbb33d67a08928d6280c160d"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m1-e2-mixed",
+      "raw_report_sha256": "ab3b48179fa9dd5f338ad80bafcea98341cbb78f4c61d6b691ae6ee638f815cf",
+      "status": "PASS",
+      "verified_report_sha256": "f4456e3cfac7e2ec1784678eb52420e122607fdcec04f5bf6bc2cc306137cd38"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e0-mixed",
+      "raw_report_sha256": "7e220657bd9e55aa8d5a7a99bc7582adf19039c3cd858086578229b1e49a47eb",
+      "status": "PASS",
+      "verified_report_sha256": "4df14fc909257ac01b451cdfbfde5e374723293261130c0eddada624cdbd81d5"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e1-mixed",
+      "raw_report_sha256": "f8fe06a3f8ed75094212370de425f77d36a6ac97dea0869efc0a8beeab9d81e4",
+      "status": "PASS",
+      "verified_report_sha256": "306e390b7b1d9a0c70a55d774e13a2cc1465a42e16dba3aa0c3f33577de1eb41"
+    },
+    {
+      "failures": [],
+      "id": "mlp-d128-h128-m32-e2-mixed",
+      "raw_report_sha256": "de74519da0a1369e74ef47bd09f03477127ec6b0418b108cf3bcd32cd0c87cc4",
+      "status": "PASS",
+      "verified_report_sha256": "1795d04379a2b7e96c61cba0b99f0b036960453b6519d70dcdc1e8dd31c369f2"
+    },
+    {
+      "failures": [],
+      "id": "refuse-input-floor",
+      "raw_report_sha256": "1869eabc096aefd55dc0b3be669d4e44ab2cd0857071b2b4e98cc3c4d45a3ab2",
+      "status": "PASS",
+      "verified_report_sha256": "4e9a8cf18dd34712f51e6b523e6933777d7de196f854372273778aad86c5f2bc"
+    },
+    {
+      "failures": [],
+      "id": "refuse-metadata-floor",
+      "raw_report_sha256": "3fccd026e297e1cf1f5317aa6c6b7cdb1880e0081c363f547301625ff2ed0a58",
+      "status": "PASS",
+      "verified_report_sha256": "330a77fbcc8410da806d24b09a83ead8689e2d779e3309acc984bf3eec7f3ac1"
+    },
+    {
+      "failures": [],
+      "id": "refuse-gate-range",
+      "raw_report_sha256": "0a68927f203079902637b417f95ea60c4114ba9c9b448769443d440affce0906",
+      "status": "PASS",
+      "verified_report_sha256": "c696c550d9082a6abb0744e315f7f93a89d7dd63798a55809721e433ac1f69dd"
+    },
+    {
+      "failures": [],
+      "id": "refuse-up-range",
+      "raw_report_sha256": "1f88f0ef7165825cff822b0c0322832b349d012db1af4788058df5215819224f",
+      "status": "PASS",
+      "verified_report_sha256": "c4a9512be41228baf6805bf265beacc1a3a45cd6c740bf898da833fb1d8cb864"
+    },
+    {
+      "failures": [],
+      "id": "refuse-cross-expert",
+      "raw_report_sha256": "b9948344c76924ff96f5414314b1c5ace94997b690722aac236e33cc8db14083",
+      "status": "PASS",
+      "verified_report_sha256": "5c612dd2059749b96f60496329bc05efe0f275fd73e7357844449624e0dff11e"
+    },
+    {
+      "failures": [],
+      "id": "refuse-down-floor-guard",
+      "raw_report_sha256": "5262dff1d70e2ed47ddf378e693797fd5be96d0d068d550739b460e598322c4b",
+      "status": "PASS",
+      "verified_report_sha256": "299e7ec2e33cc9c192f2881d599c1e983d6cb8dec09731b6e2e9111aa480866a"
+    }
+  ],
+  "controls": [
+    {
+      "detection": [
+        "stage packed recipe"
+      ],
+      "expected_detection": "stage packed recipe",
+      "id": "gate-up-argument-swap",
+      "raw_report_sha256": "8b7d7fab2923afbdb74d599c82af5b739a6892832948ff4f709a58dce313bfc8",
+      "scope": "stage-gate",
+      "status": "DETECTED",
+      "verified_report_sha256": "a7157b86fe10800a67719cbabedf2a3a5b51419093899fa5bd9855b8dd4453c3"
+    },
+    {
+      "detection": [
+        "positive incomplete"
+      ],
+      "expected_detection": "MLP-R-TUPLE: module at tuple phase with zero native counters; same expert in every plane",
+      "id": "gate-down-role-swap",
+      "raw_report_sha256": "6b24a4d0f9b099f67c66718a0432d456ade7fc77e26615b988509d200bc5a2dc",
+      "scope": "tuple",
+      "status": "DETECTED",
+      "verified_report_sha256": "d76e973a679eb7ed44ad45886811a00db98a177febdaf167aad780a36ef4ba25"
+    },
+    {
+      "detection": [
+        "positive incomplete"
+      ],
+      "expected_detection": "MLP-R-TUPLE: index_path at tuple phase with zero native counters; correct modules",
+      "id": "down-expert-swap",
+      "raw_report_sha256": "df480fb111d5f19983602c632b86ad6431e2da29b2934daee1e8508eaa3f6997",
+      "scope": "tuple",
+      "status": "DETECTED",
+      "verified_report_sha256": "9e1ef4058f62f8543f919b693ed12e7950584af71305340afcf53201141cd26b"
+    },
+    {
+      "detection": [
+        "exact clamp stage rejects illicit lower clamp"
+      ],
+      "expected_detection": "exact clamp stage rejects illicit lower clamp with unchanged handle census",
+      "id": "lower-gate-clamp",
+      "raw_report_sha256": "1fd9f6011dccdf917c3303a16bc1940d923580bb635f0194cadb55f42d2f206f",
+      "scope": "clamp-probe",
+      "status": "DETECTED",
+      "verified_report_sha256": "1f8f39b31d366f468e5d58df37af55c3485f1ff1eaf56ab83058e2764a8717f1"
+    },
+    {
+      "detection": [
+        "exact clamp semantics"
+      ],
+      "expected_detection": "exact clamp semantics with unchanged handle census",
+      "id": "missing-upper-gate-clamp",
+      "raw_report_sha256": "c3bbe9e1949173ade22305079b3529203b8ca521d411b97c612a85cfa656131e",
+      "scope": "activation",
+      "status": "DETECTED",
+      "verified_report_sha256": "cfc9b6644fc3da574aadd58d5cc9bec00e68392f6e3eb003ff36ae82daafe440"
+    },
+    {
+      "detection": [
+        "exact clamp semantics"
+      ],
+      "expected_detection": "exact clamp semantics with unchanged handle census",
+      "id": "missing-up-upper-clamp",
+      "raw_report_sha256": "9a3cb3feec017a717e362134303041e619ab8291ee579c718154d392e56450ed",
+      "scope": "activation",
+      "status": "DETECTED",
+      "verified_report_sha256": "6b68977b48d1806c714cd5d8dd351810868a863beb9184378931cfda9bf3bb84"
+    },
+    {
+      "detection": [
+        "exact clamp semantics"
+      ],
+      "expected_detection": "exact clamp semantics with unchanged handle census",
+      "id": "missing-up-lower-clamp",
+      "raw_report_sha256": "38638e3bc1fb6609bfc9ee245ff25f8750723df542d3a4fd08bfed61d627bf48",
+      "scope": "activation",
+      "status": "DETECTED",
+      "verified_report_sha256": "3e325241ff5bfd64881e44f61a78b9103fe66e69146759661b846539d674fb4c"
+    },
+    {
+      "detection": [
+        "positive incomplete"
+      ],
+      "expected_detection": "MLP-R-TUPLE: inherited gate selection at tuple phase with zero native counters",
+      "id": "ignore-bit-override",
+      "raw_report_sha256": "ad7e0aa6d0d6da225d5a072575ffbd506755dd58d0b7fd4d045ef4a959ff554b",
+      "scope": "recipe",
+      "status": "DETECTED",
+      "verified_report_sha256": "231991107f7f4fcd90f85c5421d323bc1eafbff38d3352199dfc231820c9d635"
+    },
+    {
+      "detection": [
+        "'down_admission'"
+      ],
+      "expected_detection": "missing down_admission evidence",
+      "id": "skip-down-admission",
+      "scope": "host audit mutation",
+      "source_case_raw_report_sha256": "04ec26606c912e3469b55b466fc2a1f53670e83349cb5a89ff2354efe8808f70",
+      "status": "DETECTED",
+      "verified_report_sha256": "7a788acfba55e2504ca80cd263edd6e18c40d8f29451861376e9cbefd90712fc"
+    },
+    {
+      "detection": [
+        "R1 authority binding"
+      ],
+      "expected_detection": "R1 authority binding",
+      "id": "candidate-fed-reference",
+      "scope": "host audit mutation",
+      "source_case_raw_report_sha256": "04ec26606c912e3469b55b466fc2a1f53670e83349cb5a89ff2354efe8808f70",
+      "status": "DETECTED",
+      "verified_report_sha256": "7deedf521d4a79c02052d3f1ffe920bca6a4647d00743c35919dae6727487fcc"
+    }
+  ],
+  "exporter_sha256": "92ad8e7b02260f514de931f57606e7feebc3177351e6fa3cc4474418d987ad39",
+  "fixed_budgets": {
+    "E_act": "1/128",
+    "beta_B": "5201/4194304"
+  },
+  "manifest_sha256": "2a63e04cb3e690a5b9b4b7c6440e279fad51b0b697771904ac22fbbef84d2a3d",
+  "metrics_definition": "max distance to independent interval endpoints / unchanged budget; exact rational gates; floats only display ratios",
+  "next_real_payload_gate": "read-only header/config census and exact real gate/up/down expert identity/recipe/geometry binding; separately qualify bounded expert-only range/lifetime backing before real execution, since current synthetic Source::open hashes and loads the whole checkpoint; demonstrate actual intermediate domains, or separately review an extension, before one bounded real expert case; no whole-model scan/copy/download or performance claim",
+  "package_sha256": "c59f4d6f7662ea3c2549f80a99b621557b9c0b0547f5661f05d30ebcfaa45aee",
+  "population": {
+    "guard_controls": 1,
+    "mutations": 10,
+    "positives": 48,
+    "refusals": 5,
+    "total": 64
+  },
+  "positive_runtime_invariants": {
+    "activation_stats": [
+      2,
+      0,
+      9,
+      4,
+      13,
+      1,
+      9,
+      0
+    ],
+    "cases_checked": 48,
+    "copy_accounting": {
+      "activation_input_copies": 2,
+      "activation_scalar_imports": 2,
+      "activation_stage_readbacks": 3,
+      "down_host_reimport": 1,
+      "packed_plane_host_staging": 9,
+      "qmm_host_readbacks": 3,
+      "zero_copy_claim": false
+    },
+    "double_frees": 0,
+    "handler_messages": 0,
+    "live_arrays_after_cleanup": 0
+  },
+  "publication": {
+    "main_integration": "NOT_DONE",
+    "qualified_source_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+    "required_remote_ci": "NOT_RUN",
+    "source_package_unchanged_by_evidence": true,
+    "status": "LOCAL_ONLY_PENDING_PUSH_AUTHORIZATION"
+  },
+  "qualification_result_sha256": "9427031249c8442e70efbfdbe13adb97a4ae07e73d792e8ce404d856615f4cde",
+  "runtime_provenance": {
+    "architecture": "applegpu_g13d",
+    "device": {
+      "architecture": "applegpu_g13d",
+      "device_name": "Apple M1 Ultra",
+      "max_buffer_length": "86586540032",
+      "max_recommended_working_set_size": "115448725504",
+      "memory_size": "137438953472",
+      "resource_limit": "499000"
+    },
+    "environment": {
+      "DYLD_LIBRARY_PATH": "<native-prefix>/lib",
+      "MLX_ENABLE_TF32": "0",
+      "MLX_MAX_MB_PER_BUFFER_set": false,
+      "MLX_MAX_OPS_PER_BUFFER_set": false,
+      "MLX_METAL_GPU_ARCH_set": false
+    },
+    "mlx_c_commit_pinned": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "mlx_commit_pinned": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+    "native_pins": {
+      "libmlx": {
+        "bytes": 21511888,
+        "relative_path": "lib/libmlx.dylib",
+        "sha256": "c11a4d814042213b866ce66032107921857e4bbc8bfe0dd8150573a1ff9a8053"
+      },
+      "libmlxc": {
+        "bytes": 837296,
+        "relative_path": "lib/libmlxc.dylib",
+        "sha256": "e523f544758f042f78aeacdbe646af9d966432605ad4cfe760609b4044c2ce27"
+      },
+      "metallib": {
+        "bytes": 157748008,
+        "relative_path": "lib/mlx.metallib",
+        "sha256": "5518fd265f31a8973732996d5eecc612301c94c1852156fb9ff30f6b708be365"
+      }
+    },
+    "os_product_version": "26.0"
+  },
+  "schema": "pulsarmlx.f020.expert-mlp-studio-summary/1",
+  "scope": "single complete synthetic expert MLP with explicitly counted host copies; no performance or real-payload claim",
+  "source_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+  "source_tree": "53cc79cbce807dee6f43b4d18b017197e7ea3e31",
+  "stage_metrics": {
+    "down_local": {
+      "checks": 76032,
+      "exact_zero_checks": 23040,
+      "worst": {
+        "budget_exact": "559124774636211/4611680245991342080",
+        "column": 29,
+        "distance_exact": "2242531/274877906944",
+        "id": "mlp-d64-h64-m1-e2-mixed",
+        "ratio_exact": "637684404755/9476691095529",
+        "row": 0
+      },
+      "worst_ratio_display": 0.06728977428164273
+    },
+    "gate": {
+      "checks": 76032,
+      "exact_zero_checks": 28008,
+      "worst": {
+        "budget_exact": "84/16777195",
+        "column": 0,
+        "distance_exact": "0",
+        "id": "mlp-d64-h64-m1-e0-default",
+        "ratio_exact": "0",
+        "row": 0
+      },
+      "worst_ratio_display": 0.0
+    },
+    "hidden": {
+      "checks": 76032,
+      "exact_zero_checks": 31596,
+      "worst": {
+        "budget_exact": "3497231/429496192",
+        "column": 7,
+        "distance_exact": "182178732634922369893712318031704091370779504127657158163885355218324823/28948022309329048855892746252171976963317496166410141009864396001978282409984",
+        "id": "mlp-d64-h64-m1-e2-default",
+        "ratio_exact": "611289624453791281913788166703983144645077008550601807132269312428420625762297/790921257881852647338614413033044180995311019027739873859914621049957113835552768",
+        "row": 0
+      },
+      "worst_ratio_display": 0.0007728830378018559
+    },
+    "output": {
+      "checks": 76032,
+      "exact_zero_checks": 23040,
+      "worst": {
+        "budget_exact": "836425058517230002410545/25790208422436173873414144",
+        "column": 85,
+        "distance_exact": "1070941630780869241966841930374846760104274878611406965464483570260103869/57896044618658097711785492504343953926634992332820282019728792003956564819968",
+        "id": "mlp-d128-h64-m32-e2-mixed",
+        "ratio_exact": "100480275672825173823920174617558493712190075203093436649464836115062000688227726363569/176171679442913077067421533161011944145549148834710552161825013383938842774936670689034240",
+        "row": 0
+      },
+      "worst_ratio_display": 0.000570354304338598
+    },
+    "up": {
+      "checks": 76032,
+      "exact_zero_checks": 27180,
+      "worst": {
+        "budget_exact": "63/16777195",
+        "column": 0,
+        "distance_exact": "0",
+        "id": "mlp-d64-h64-m1-e0-default",
+        "ratio_exact": "0",
+        "row": 0
+      },
+      "worst_ratio_display": 0.0
+    }
+  },
+  "status": "QUALIFIED_SYNTHETIC_ONLY"
+}

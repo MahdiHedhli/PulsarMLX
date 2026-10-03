@@ -1,0 +1,46 @@
+{
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "binary_sha256": "2a699731ed22a85987ef8410ed8019da445d5f4086169ca9cf8c99d9f5207527",
+  "blocking_findings": 0,
+  "commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+  "decision": "ACCEPT",
+  "nonblocking_notes": [
+    {
+      "explanation": "Non-blocking. Setting `test = false` on the qualify-expert-mlp bin only stops Cargo from building and running the bin's own unit-test harness. When CI runs `cargo test -p mlx-expert-mlp --test tuple_tests --test activation_ownership_test`, Cargo still builds every binary target of the package, because integration tests get CARGO_BIN_EXE_*. If MLX_C_PREFIX and MLX_PREFIX are present in that CI step's environment, build.rs links the native child into a test-profile artifact. Nothing executes it, so no native candidate execution happens outside admission. The executable that is reviewed and admitted is the separately built release artifact whose SHA is bound through validate_review. The claim that the binary is 'excluded from automatic unit tests' is therefore accurate only in the sense that it is not run.",
+      "file": "crates/mlx-expert-mlp/Cargo.toml",
+      "line": 21,
+      "optional_repair": "Optional. Unset MLX_C_PREFIX and MLX_PREFIX for the host-only test step, or use `cargo test --lib --test ...` with `-p` in a step whose environment cannot satisfy the native branch of build.rs. Then the static CI step provably builds no native-linked binary.",
+      "severity": "low"
+    },
+    {
+      "explanation": "Non-blocking coverage note. The host mock exercises mode 0 to 4 success paths and a nonzero status after each of the five result-producing operations. It covers min/clip, sigmoid, multiply, the up clamp and the final multiply. It fills the slot before failing, which is a stricter case than real MLX-C, where a failed op leaves the slot empty. Both cases are handled, because free on a null ctx is a no-op. The mock does not inject a null handle from the four `require_nonempty` constructors: mlx_array_new_data and mlx_array_new_float32. It also does not inject failures in eval, synchronize or the accessors, or in the early device/stream/metal failure branch. By inspection those paths set rc, skip all later operations, and free every reserved slot, plus the stream and device, exactly once. The mock also cannot speak to MLX buffer donation or contiguity. That remains with the native admitted run, as the contract states.",
+      "file": "crates/mlx-expert-mlp/tests/activation_ownership_stub.cpp",
+      "line": 16,
+      "optional_repair": "Optional. Add mock injection for a null import or scalar constructor, for eval and synchronize failures, and for the early device/metal branch. Assert arrays.empty(), !devices, !streams and stats[2]==stats[6] in each case.",
+      "severity": "low"
+    },
+    {
+      "explanation": "Non-blocking, pre-existing. mlx_stream_new_device(dev) is called before dev.ctx is checked. If device construction failed, MLX-C would see an empty device. It reports this through the handler and returns an empty stream rather than crashing. rc is set to 75, and the new early-return branch frees only non-null handles, so the path fails closed and counts the handler message. This only matters on a failure path.",
+      "file": "crates/mlx-expert-mlp/src/activation.cpp",
+      "line": 26,
+      "optional_repair": "Optional. Construct the stream only after confirming dev.ctx is non-null.",
+      "severity": "low"
+    }
+  ],
+  "package_sha256": "c59f4d6f7662ea3c2549f80a99b621557b9c0b0547f5661f05d30ebcfaa45aee",
+  "prior_attempt": {
+    "activation_outputs_accepted": 0,
+    "down_outputs_accepted": 0,
+    "gate_up_outputs_observed": 2,
+    "repair": "revision-4 valid empty result slots, stable owned references and capability hash repair; independently reviewed; numerical criteria and positive fixture bytes unchanged",
+    "revision": 3,
+    "status": "FAIL_ACTIVATION_SETUP"
+  },
+  "raw_review_sha256": "716dad1ab2406f892feb21115978024ebecd6cb71eec49387e99eb20c9078806",
+  "review_capsule_sha256": "ee64b753bb7217be260ead5f6632bb78e12267217b25dec76e682f55c00d4539",
+  "schema": "pulsarmlx.f020.independent-review-admission/1",
+  "scope": "Independent static source/numerical review of revision 4 before its first candidate observations. No execution or build provenance claim.",
+  "tree": "53cc79cbce807dee6f43b4d18b017197e7ea3e31"
+}

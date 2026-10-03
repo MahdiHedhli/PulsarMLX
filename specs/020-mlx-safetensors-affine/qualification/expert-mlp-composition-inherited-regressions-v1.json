@@ -1,0 +1,27 @@
+{
+  "base_commit": "2d388856593b96a136fa5a6036c0e973919cedff",
+  "candidate_commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
+  "inherited_files_unchanged": true,
+  "schema": "pulsarmlx.f020.expert-mlp-inherited-raw-regressions/1",
+  "status": "PASS",
+  "suites": {
+    "planes": {
+      "all_cases_pass": true,
+      "base_summary_sha256": "72f6b41098e30e8e79ab6793041f9a1ec2c469312fb776b3470fb82defdc4b8b",
+      "candidate_summary_sha256": "5675312d28a967b9b02efd87ae1099974c974398b4ec62f9579926905574f108",
+      "count": 32,
+      "ids_exact_equal": true,
+      "raw_report_sha256": "5c91ae99d57d361f9fb0ffd935028a5b92c47f2877aa1d3f4a82cc87f454d30a",
+      "raw_reports_byte_identical": true
+    },
+    "primitives": {
+      "all_cases_pass": true,
+      "base_summary_sha256": "f1484deb1f6ab926c8a4b018afaefed68e0609ba1642562da6e3cf819d76e8c2",
+      "candidate_summary_sha256": "0a4bacf24180f1f8701ddaff168ea013d4f23896f9569451e35b02b592f5cd22",
+      "count": 363,
+      "ids_exact_equal": true,
+      "raw_report_sha256": "78742989517a1513421612ba430b2a2dda54b489c8a4299b0a20a879b8eb5499",
+      "raw_reports_byte_identical": true
+    }
+  }
+}
