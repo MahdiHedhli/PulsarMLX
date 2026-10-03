@@ -2,6 +2,7 @@
   "actual_model": [
     "claude-opus-5-5"
   ],
+  "admitted_review_wrapper_sha256": "39b699c0a18d195334f816ee7e23dc919a60defab84b914e7fa56cc6852bac7c",
   "binary_sha256": "2a699731ed22a85987ef8410ed8019da445d5f4086169ca9cf8c99d9f5207527",
   "blocking_findings": 0,
   "commit": "2f0c4a3c5c1a44ba5be3068cb6032bf28329008d",
@@ -39,6 +40,7 @@
     "status": "FAIL_ACTIVATION_SETUP"
   },
   "raw_review_sha256": "716dad1ab2406f892feb21115978024ebecd6cb71eec49387e99eb20c9078806",
+  "receipt_kind": "sanitized derivative of the private admitted review wrapper; not an executable --review input",
   "review_capsule_sha256": "ee64b753bb7217be260ead5f6632bb78e12267217b25dec76e682f55c00d4539",
   "schema": "pulsarmlx.f020.independent-review-admission/1",
   "scope": "Independent static source/numerical review of revision 4 before its first candidate observations. No execution or build provenance claim.",

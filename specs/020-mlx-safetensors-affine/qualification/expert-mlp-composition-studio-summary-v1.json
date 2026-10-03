@@ -1,4 +1,10 @@
 {
+  "admission": {
+    "raw_review_sha256": "716dad1ab2406f892feb21115978024ebecd6cb71eec49387e99eb20c9078806",
+    "review_capsule_sha256": "ee64b753bb7217be260ead5f6632bb78e12267217b25dec76e682f55c00d4539",
+    "review_wrapper_sha256": "39b699c0a18d195334f816ee7e23dc919a60defab84b914e7fa56cc6852bac7c",
+    "reviewed_binary_sha256": "2a699731ed22a85987ef8410ed8019da445d5f4086169ca9cf8c99d9f5207527"
+  },
   "cases": [
     {
       "failures": [],
@@ -491,7 +497,7 @@
       "verified_report_sha256": "7deedf521d4a79c02052d3f1ffe920bca6a4647d00743c35919dae6727487fcc"
     }
   ],
-  "exporter_sha256": "92ad8e7b02260f514de931f57606e7feebc3177351e6fa3cc4474418d987ad39",
+  "exporter_sha256": "7d4f1da28dc676ce4618b6c532e2153683db20672edb0b70c6195b4eb9db7a32",
   "fixed_budgets": {
     "E_act": "1/128",
     "beta_B": "5201/4194304"

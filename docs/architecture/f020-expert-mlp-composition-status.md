@@ -29,8 +29,10 @@ values supply only the separately checked local down projection and admission.
 All 48 positive cases passed, across `D,H ∈ {64,128}`, `M ∈ {1,32}`, three
 experts and default/mixed recipes. Five refusal cases passed, the explicit injected
 down-floor guard control passed, and all ten mutations were detected by their
-frozen semantic predicates. The injected guard case demonstrates guard behavior;
-it is not an end-to-end tiny-product positive case. The lower-gate-clamp witness is
+frozen semantic predicates. Two controls, skipped down admission and candidate-fed
+reference, mutate a host audit report rather than executing a modified candidate.
+The injected guard case demonstrates guard behavior; it is not an end-to-end
+tiny-product positive case. The lower-gate-clamp witness is
 also a separate stage control. No domain or budget was relaxed after observations.
 
 The evidence exporter replayed all numerical decisions and all control predicates,
