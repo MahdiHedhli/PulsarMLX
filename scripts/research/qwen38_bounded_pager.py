@@ -76,6 +76,7 @@ class BoundedPager:
         self.actual_demands: set[PageKey] = set()
         self.pending: dict[PageKey, IoTicket] = {}
         self.resident: OrderedDict[PageKey, PageSpec] = OrderedDict()
+        self.hint_resident: set[PageKey] = set()
         self.leases: dict[int, Lease] = {}
         self.next_ticket = 1
         self.next_lease = 1
@@ -102,6 +103,7 @@ class BoundedPager:
         for key in list(self.resident):
             if not self._pinned(key):
                 self.resident_bytes -= self.resident.pop(key).size_bytes
+                self.hint_resident.discard(key)
 
     def _spec(self, key: PageKey) -> PageSpec:
         spec = self.catalog(key)
@@ -128,6 +130,7 @@ class BoundedPager:
         if key not in self.actual_demands and len(self.actual_demands) >= self.limits.active_demands:
             self._stop("active demand limit exceeded")
         self.actual_demands.add(key)
+        self.hint_resident.discard(key)
         self.cancelled.discard(key)
         if key in self.resident or key in self.pending or key in self.demand_queue:
             return
@@ -158,6 +161,11 @@ class BoundedPager:
             pass
         if key in self.pending and key not in self.actual_demands:
             self.cancelled.add(key)
+        if key in self.hint_resident:
+            spec = self.resident.pop(key)
+            self.resident_bytes -= spec.size_bytes
+            self.hint_waste_bytes += spec.size_bytes
+            self.hint_resident.remove(key)
 
     def _pinned(self, key: PageKey) -> bool:
         return any(lease.key == key for lease in self.leases.values())
@@ -177,6 +185,7 @@ class BoundedPager:
             return False
         for key in victims:
             self.resident_bytes -= self.resident.pop(key).size_bytes
+            self.hint_resident.discard(key)
         return True
 
     def next_io(self) -> IoTicket | None:
@@ -225,6 +234,8 @@ class BoundedPager:
         self.resident[ticket.spec.key] = ticket.spec
         self.resident_bytes += ticket.spec.size_bytes
         self.resident.move_to_end(ticket.spec.key)
+        if ticket.purpose == "hint" and ticket.spec.key not in self.actual_demands:
+            self.hint_resident.add(ticket.spec.key)
 
     def fail_io(self, ticket: IoTicket) -> None:
         """A synchronous failed read ended; release its reservation and stop."""
@@ -270,6 +281,8 @@ class BoundedPager:
         self.demand_queue.clear()
         self.hint_queue.clear()
         self.cancelled.update(self.pending)
+        for key in tuple(self.hint_resident):
+            self.invalidate_hint(key)
         self.actual_demands.clear()
 
     def accounting(self) -> dict[str, int]:

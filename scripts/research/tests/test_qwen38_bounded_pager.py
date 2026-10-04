@@ -188,6 +188,16 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaisesRegex(PagerProtocolError, "unmatched"):
             p.complete_io(ticket)
 
+    def test_completed_unused_hint_is_released_on_invalidation(self):
+        p = pager()
+        p.hint(E0)
+        p.complete_io(p.next_io())
+        self.assertIn(E0, p.resident)
+        p.invalidate_hint(E0)
+        self.assertNotIn(E0, p.resident)
+        self.assertEqual(p.accounting()["resident_bytes"], 0)
+        self.assertEqual(p.accounting()["invalidated_hint_bytes"], 48)
+
     def test_observed_swap_or_headroom_stops_and_drains_inflight(self):
         p = pager()
         p.hint(P0)

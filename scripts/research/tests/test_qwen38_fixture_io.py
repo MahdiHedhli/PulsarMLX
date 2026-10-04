@@ -77,6 +77,16 @@ class FixtureIoTests(unittest.TestCase):
             store.gpu_done(borrow)
             store.release(borrow)
 
+    def test_cancellation_releases_completed_unused_hint_buffer(self):
+        p = pager(self.catalog)
+        with FixturePageStore(self.root, self.files, p, lambda: GOOD) as store:
+            p.hint(E0)
+            store.pump_one()
+            self.assertEqual(store.accounting()["retained_host_buffer_bytes"], 48)
+            p.cancel_request()
+            self.assertEqual(store.accounting()["retained_host_buffer_bytes"], 0)
+            self.assertEqual(store.accounting()["invalidated_hint_bytes"], 48)
+
     def test_ple_row_block_reads_exact_affine_segments(self):
         p = pager(self.catalog)
         with FixturePageStore(self.root, self.files, p, lambda: GOOD) as store:
