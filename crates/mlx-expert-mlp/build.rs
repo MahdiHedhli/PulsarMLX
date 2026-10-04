@@ -5,6 +5,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=MLX_C_PREFIX");
     println!("cargo:rerun-if-env-changed=MLX_PREFIX");
     println!("cargo:rerun-if-changed=src/activation.cpp");
+    println!("cargo:rerun-if-changed=src/activation_selected.cpp");
     println!("cargo:rerun-if-changed=../mlx-native-affine/src/abi_check.c");
     println!("cargo:rerun-if-changed=../../scripts/research/f020_fused_swiglu_cpu_guard_v2_4.h");
     let rustc = std::process::Command::new("rustc")
@@ -48,6 +49,7 @@ fn main() {
     cc::Build::new()
         .cpp(true)
         .file("src/activation.cpp")
+        .file("src/activation_selected.cpp")
         .include(c.join("include"))
         .include("../../scripts/research")
         .flag("-std=c++17")

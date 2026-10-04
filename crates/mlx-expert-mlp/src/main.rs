@@ -14,9 +14,20 @@ mod native;
 #[path = "../../mlx-native-affine/src/bin/qualify/provenance.rs"]
 mod provenance;
 
+#[cfg(pulsar_native_mlx)]
+mod selected_entry;
+#[cfg(pulsar_native_mlx)]
+mod selected_execute;
+#[cfg(pulsar_native_mlx)]
+mod selected_resources;
+
 fn main() {
     #[cfg(pulsar_native_mlx)]
-    let result = execute::main();
+    let result = if std::env::args().nth(1).as_deref() == Some("--selected") {
+        selected_entry::main()
+    } else {
+        execute::main()
+    };
     #[cfg(not(pulsar_native_mlx))]
     let result: Result<(), String> =
         Err("native Studio build required; no computation executed".into());

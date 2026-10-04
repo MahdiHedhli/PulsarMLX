@@ -1,0 +1,84 @@
+{
+  "schema": "pulsarmlx.selected-numerical/2",
+  "status": "PROSPECTIVE_REVIEW_REQUIRED",
+  "snapshot_sha256": "43e251a64d1d475900214d3c51b9b21ca988e7b6634d3891fbc6c3a0d5733305",
+  "snapshot_bytes": 14159388,
+  "payload_bytes": 14155776,
+  "metadata_sha256": "a2b1a6822bf21b8459952e1a0124d00b44f8008167c09f3dbf5099eb4d98deea",
+  "geometry": {
+    "M": 1,
+    "E": 288,
+    "D": 4096,
+    "H": 2048,
+    "layer": 3,
+    "expert": 0,
+    "bits": [
+      4,
+      4,
+      4
+    ],
+    "group_size": 64,
+    "metadata": "BF16",
+    "mac_per_projection": 8388608,
+    "total_macs": 25165824,
+    "activation_elements": 2048
+  },
+  "input": {
+    "version": 2,
+    "formula": "(2+(-1)^popcount(j))/4096; 0<=j<4096",
+    "dtype": "F32-LE",
+    "bytes": 16384,
+    "group_sum": "1/32",
+    "row_sum": "2",
+    "sha256": "746ed37cdd4a6a1792ec512ada02f9a2bd2cfa9c5a88d2eae2758ccbd9b2d799"
+  },
+  "fixed": {
+    "E_act": "1/128",
+    "beta_B": "5201/4194304",
+    "hidden_width_max": "1/2^160",
+    "down_floor": "1/2^32",
+    "magnitude_cap": "2^32",
+    "row_sum_cap": "2^40",
+    "metadata_envelope": "255*abs(s)+abs(b)<=2^36",
+    "gamma": "n/(2^24-n)",
+    "exponents": {
+      "gate": 273,
+      "up": 273,
+      "down": 145
+    }
+  },
+  "inherited_contract": "../../contracts/expert-mlp-composition-v1.json",
+  "inherited_rule": "all numerical predicates, exact-zero exception, activation graph and error-composition definitions preserved; original-byte R1 replaces synthetic parser; scoped geometry only",
+  "population": "../population-v2.md",
+  "resource_design": "../research.md",
+  "review_gate": "exact source/build/contract/input/population ACCEPT/0 before numerical observations",
+  "real_gate": "full synthetic qualification then independent original-byte pre-admission then one candidate",
+  "prohibited": [
+    "whole checkpoint/shard reads",
+    "real review exports",
+    "candidate-fed ideal reference",
+    "post-observation input or tolerance tuning",
+    "dense fallback"
+  ],
+  "ranges_sha256": [
+    "090d137d9f410df1109ac64897871984a407edd9732d71dd4e1fe73d0d7b7b8e",
+    "a563d057aedb10d9b08a588bda2f1475546003ccf853d9960ded191f817904a9",
+    "a44a0e2375712f44cb71961f2080657dd83e9045f4b564c52454b0aee97fd562",
+    "1d1c3e9b4d8ce34e491798146ab1f713d39abb532dfa48503ef36c896272418a",
+    "7d96e8559f1918271f50bf4b7bacbf41a2f541993ad3a21106a492caed97b33d",
+    "5ce47ee00812fddfd26df3d1f939d95f3ad4434db225a72cdc02103d82ad1f71",
+    "49fe6b74ad537499e0d63b1be4effc70b10614ba320f03d4ae4297e339107169",
+    "be4238108dcf39708b4b7c92584f6c0500156d2fa287a518146f2da738d148e6",
+    "e7c910be480687b44225d4825cac5d48671571dbae82e968f57a645e9cced4c0"
+  ],
+  "resources": {
+    "ledger": "../resources-v2.md",
+    "reference_peak_rss_cap_bytes": 268435456,
+    "working_data_acceptance_cap_bytes": 536870912,
+    "native_allocator_acceptance_cap_bytes": 67108864,
+    "native_process_peak_rss_cap_bytes": 1073741824,
+    "poll_ms": 100,
+    "deadline_seconds": 900,
+    "hard_global_ram_claim": false
+  }
+}
