@@ -84,11 +84,21 @@ class BoundedPager:
         self.staging_bytes = 0
         self.hint_waste_bytes = 0
         self.closed = False
+        self.cancel_draining = False
         self.cancelled: set[PageKey] = set()
 
     def _open(self) -> None:
         if self.closed:
             raise PagerStop("pager stopped")
+
+    def _accepting_work(self) -> None:
+        self._open()
+        if self.cancel_draining:
+            raise PagerProtocolError("request cancellation still draining")
+
+    def _finish_cancel_if_drained(self) -> None:
+        if self.cancel_draining and not self.pending and not self.leases:
+            self.cancel_draining = False
 
     def _stop(self, reason: str) -> None:
         self.cancel_request()
@@ -125,7 +135,7 @@ class BoundedPager:
 
     def demand(self, key: PageKey) -> None:
         """Only the actual router or PLE lookup may call this method."""
-        self._open()
+        self._accepting_work()
         self._spec(key)
         if key not in self.actual_demands and len(self.actual_demands) >= self.limits.active_demands:
             self._stop("active demand limit exceeded")
@@ -141,7 +151,7 @@ class BoundedPager:
         self.demand_queue.append(key)
 
     def hint(self, key: PageKey) -> bool:
-        self._open()
+        self._accepting_work()
         spec = self._spec(key)
         if spec.size_bytes > self.limits.staging_bytes or spec.size_bytes > self.limits.weight_bytes - self.limits.fixed_model_bytes:
             return False
@@ -190,7 +200,7 @@ class BoundedPager:
 
     def next_io(self) -> IoTicket | None:
         """Reserve bytes before I/O; never admit a hint ahead of a queued demand."""
-        self._open()
+        self._accepting_work()
         # A demand promoted from an in-flight hint is still waiting. New hints
         # must not take I/O slots until that actual demand has completed.
         waiting_on_io = any(key in self.actual_demands and key not in self.resident
@@ -230,6 +240,7 @@ class BoundedPager:
             self.cancelled.remove(ticket.spec.key)
             if ticket.purpose == "hint":
                 self.hint_waste_bytes += ticket.spec.size_bytes
+            self._finish_cancel_if_drained()
             return
         self.resident[ticket.spec.key] = ticket.spec
         self.resident_bytes += ticket.spec.size_bytes
@@ -270,6 +281,7 @@ class BoundedPager:
         del self.leases[lease_id]
         if self.closed:
             self._drain_unpinned()
+        self._finish_cancel_if_drained()
 
     def finish_demand(self, key: PageKey) -> None:
         if key not in self.actual_demands or self._pinned(key) or key in self.pending or key in self.demand_queue:
@@ -278,12 +290,14 @@ class BoundedPager:
 
     def cancel_request(self) -> None:
         """Drop queued hints/demands; in-flight buffers still await I/O completion."""
+        self.cancel_draining = True
         self.demand_queue.clear()
         self.hint_queue.clear()
         self.cancelled.update(self.pending)
         for key in tuple(self.hint_resident):
             self.invalidate_hint(key)
         self.actual_demands.clear()
+        self._finish_cancel_if_drained()
 
     def accounting(self) -> dict[str, int]:
         return {"resident_bytes": self.resident_bytes,

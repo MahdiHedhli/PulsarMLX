@@ -261,6 +261,33 @@ class SchedulerTests(unittest.TestCase):
         p.mark_gpu_done(lease)
         p.release(lease)
 
+    def test_cancelled_read_cannot_be_promoted_by_next_request(self):
+        p = pager()
+        p.hint(E0)
+        old_ticket = p.next_io()
+        p.cancel_request()
+        with self.assertRaisesRegex(PagerProtocolError, "cancellation still draining"):
+            p.demand(E0)
+        with self.assertRaisesRegex(PagerProtocolError, "cancellation still draining"):
+            p.hint(E1)
+        p.complete_io(old_ticket)
+        self.assertNotIn(E0, p.resident)
+        p.demand(E0)
+        new_ticket = p.next_io()
+        self.assertNotEqual(new_ticket.ticket, old_ticket.ticket)
+
+    def test_cancelled_gpu_lease_blocks_next_request_until_release(self):
+        p = pager()
+        p.demand(E0)
+        p.complete_io(p.next_io())
+        lease = p.acquire(E0)
+        p.cancel_request()
+        with self.assertRaisesRegex(PagerProtocolError, "cancellation still draining"):
+            p.demand(E1)
+        p.mark_gpu_done(lease)
+        p.release(lease)
+        p.demand(E1)
+
 
 if __name__ == "__main__":
     unittest.main()
