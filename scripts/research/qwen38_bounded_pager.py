@@ -130,7 +130,9 @@ class BoundedPager:
 
     def hint(self, key: PageKey) -> bool:
         self._open()
-        self._spec(key)
+        spec = self._spec(key)
+        if spec.size_bytes > self.limits.staging_bytes or spec.size_bytes > self.limits.weight_bytes - self.limits.fixed_model_bytes:
+            return False
         if (key in self.actual_demands or key in self.resident or key in self.pending or
                 key in self.hint_queue or key in self.demand_queue):
             return False

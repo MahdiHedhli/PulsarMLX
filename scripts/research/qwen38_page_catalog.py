@@ -185,13 +185,16 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
                      ple_rows_per_page: int = 8192) -> PageCatalog:
     manifest = json.loads(manifest_path.read_text())
     receipt = json.loads((root / "acquisition-receipt.json").read_text())
-    if not receipt.get("complete") or receipt.get("revision") != manifest["revision"]:
+    if (not receipt.get("complete") or receipt.get("revision") != manifest["revision"] or
+            receipt.get("repo") != manifest.get("repo") or
+            manifest.get("repo") != "pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit"):
         raise CatalogError("unverified checkpoint revision")
     expected_files = {item["path"]: item["size_bytes"] for item in manifest["files"]}
     if set(receipt.get("verified_files", [])) != set(expected_files):
         raise CatalogError("incomplete checkpoint receipt")
     for filename, size in expected_files.items():
-        if Path(filename).name != filename or (root / filename).stat().st_size != size:
+        if (Path(filename).name != filename or (root / filename).is_symlink() or
+                (root / filename).stat().st_size != size):
             raise CatalogError(f"unsafe or changed file: {filename}")
     config = json.loads((root / "config.json").read_text())
     index = json.loads((root / "model.safetensors.index.json").read_text())["weight_map"]
@@ -211,8 +214,8 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
                                       *item["data_offsets"])
     ple_layers = {int(name.split(".layers.", 1)[1].split(".", 1)[0]) for name in tensors
                   if ".ple.ple_embedding.ngram_embedding.shard_" in name}
-    if len(ple_layers) != 1:
-        raise CatalogError("expected one pageable PLE layer")
+    if ple_layers != {1}:
+        raise CatalogError("expected pinned PLE layer 1")
     return PageCatalog(tensors, layers=48, experts=512, ple_layer=ple_layers.pop(),
                        ple_shards=128, ple_rows_per_page=ple_rows_per_page)
 

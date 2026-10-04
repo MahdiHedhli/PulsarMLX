@@ -23,7 +23,7 @@ The future host budget starts at **40 GiB for all model weights**, including the
 | Admit pinned repository and centered norm convention | Complete | [Static admission](checkpoint-admission.md); no output parity. |
 | Build header-only expert and PLE page mapping | Complete in this slice | Set `QWEN38_MODEL_DIR` to the pinned, verified local copy and run `python3 -B scripts/research/qwen38_page_catalog.py --dest "$QWEN38_MODEL_DIR"`. |
 | Exercise scheduler with adversarial synthetic spans | Complete in this slice | Run `python3 -B -m unittest discover -s scripts/research/tests -p 'test_qwen38_bounded_pager.py' -v`. |
-| Independent design/source review | Pending | Send only the two project-owned scripts, synthetic tests, and this plan through the authorized external review route; bank exact findings. |
+| Independent design/source review | Blocked on explicit external-disclosure approval | A Claude Opus request containing the two project-owned scripts, synthetic tests, spec, and this plan was rejected by automatic approval review as an unapproved external transmission of potentially sensitive code. No payload was sent and no external verdict exists. Renew the exact-byte packet only after the disclosure route is authorized. |
 | Actual bounded I/O, MLX residency/fence integration, and numerical parity | Future slice | Requires separate implementation and review. No current full-checkpoint execution command. |
 | First real-model execution and latency comparison | Blocked | Requires resolved hashed environment, source-review approval, actual enforceable/monitored pager gate, and explicit authorization. |
 

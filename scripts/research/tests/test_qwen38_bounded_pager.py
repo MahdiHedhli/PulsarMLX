@@ -168,6 +168,13 @@ class SchedulerTests(unittest.TestCase):
         p.mark_gpu_done(lease)
         p.release(lease)
 
+    def test_oversize_hint_is_rejected_before_queue_and_does_not_starve_demand(self):
+        p = pager(weight=96, staging=48)
+        self.assertFalse(p.hint(P0))  # 64 bytes cannot fit the 48-byte staging cap.
+        self.assertEqual(p.accounting()["queued_hints"], 0)
+        p.demand(E0)
+        self.assertEqual(p.next_io().spec.key, E0)
+
     def test_invalidation_waits_for_io_and_releases_staging(self):
         p = pager()
         p.hint(P0)
