@@ -1,0 +1,32 @@
+# Feature 021 bounded pager design and handoff
+
+## Static geometry and address contract
+
+[`qwen38_page_catalog.py`](../../scripts/research/qwen38_page_catalog.py) imports only project-owned static parsing code and standard-library modules. It checks the pinned manifest/receipt, file sizes, architecture/geometry, every Safetensors header span, exact index membership, complete expert and PLE affine triples, dtypes, row counts, and absence of unexpected pageable tensors. It reads headers, never payload tensors or checkpoint Python. The receipt is evidence of the prior full-file digest verification; repeat digest verification before any runtime session.
+
+On the pinned checkpoint, header admission observes 48 × 512 = **24,576** expert pages. Each expert page contains nine contiguous first-axis slices (`weight`, `scales`, `biases` for gate/up/down), and the layer-0 sample is **2,764,800 logical bytes**. The single PLE layer is layer 1. Its 128 affine shard triples are divided into 8,192-row blocks, yielding **39,168** PLE pages; the first full block is **819,200 logical bytes**. The final block of a shard may be shorter. The PLE key mapping uses global row ÷ padded rows per shard, matching the pinned port's `_ShardedEmbedding` address convention; the n-gram hash that produces a global row is outside this slice. A future MLX adapter must validate that hash/seed and all numeric semantics independently. The same headers report **5,348,837,400 bytes of other text tensors** (provisionally fixed resident budget) and **897,862,112 bytes of vision tensors** excluded from the proposed text path. Neither is free memory at runtime until the adapter proves its materialization behavior.
+
+The catalog's offsets are absolute file offsets. A page may contain spans in different shards, so a future I/O engine must preserve segment order and associate each segment with its tensor and dtype. The logical byte count excludes page-aligned amplification, decompression/quantization buffers, Metal copies, GPU residency, and OS page cache. Those need separate measurements. No model bytes are copied into Git.
+
+## Scheduler state and safety boundary
+
+[`qwen38_bounded_pager.py`](../../scripts/research/qwen38_bounded_pager.py) is a single-threaded, synthetic state machine. It admits demand ahead of hints, reserves staging and total page bytes before a ticket, promotes an in-flight hint to demand without duplicate I/O, pins demanded resident pages through GPU completion, and defers in-flight release until I/O completion after cancellation. Failed speculative admission is atomic with respect to resident eviction. Queued hints, active demands, in-flight requests, staging bytes, and resident plus in-flight bytes are bounded.
+
+No scheduler operation performs actual I/O or allocation. `complete_io` and `mark_gpu_done` are **protocol claims from a future adapter**, not device fences in this slice. An MLX adapter must bind them to real asynchronous completion, prove ownership and eviction, and synchronize data use before freeing. Model-derived actual router IDs/weights and PLE global rows must be the only source of `demand`; hint predictions cannot call it. The trace contract and output/logit parity gate remain separate checks.
+
+The future host budget starts at **40 GiB for all model weights**, including the provisionally fixed 5.35 GB of other text tensors, leaving at most about **35.02 GiB** for resident/in-flight expert and PLE pages. Reserve **8 GiB** for other process allocations and any duplicate staging copy, **48 GiB** total Qwen process, and **16 GiB** for macOS/other processes on 64 GiB unified memory. The scheduler's `fixed_model_bytes` reduces its page allowance accordingly. These are proposed stop values, not guaranteed hard caps. Sample process footprint, MLX allocations, memory pressure, available headroom, and swap before and during execution. Stop on any observed overage or swap growth. Do not call the stock full-model loader or rely on advisory MLX memory settings as a hard gate.
+
+## Tasks and validation
+
+| Step | Status | Evidence / next gate |
+| --- | --- | --- |
+| Admit pinned repository and centered norm convention | Complete | [Static admission](checkpoint-admission.md); no output parity. |
+| Build header-only expert and PLE page mapping | Complete in this slice | Set `QWEN38_MODEL_DIR` to the pinned, verified local copy and run `python3 -B scripts/research/qwen38_page_catalog.py --dest "$QWEN38_MODEL_DIR"`. |
+| Exercise scheduler with adversarial synthetic spans | Complete in this slice | Run `python3 -B -m unittest discover -s scripts/research/tests -p 'test_qwen38_bounded_pager.py' -v`. |
+| Independent design/source review | Pending | Send only the two project-owned scripts, synthetic tests, and this plan through the authorized external review route; bank exact findings. |
+| Actual bounded I/O, MLX residency/fence integration, and numerical parity | Future slice | Requires separate implementation and review. No current full-checkpoint execution command. |
+| First real-model execution and latency comparison | Blocked | Requires resolved hashed environment, source-review approval, actual enforceable/monitored pager gate, and explicit authorization. |
+
+## Constitution check
+
+The change is isolated on the Qwen research branch, preserves Linux/CUDA and the GLM Studio worktree, does not copy third-party code or weights, distinguishes static/synthetic evidence from real-model claims, adds focused tests and documentation together, and requires diff/secret/large-file review before commit. It does not amend project governance or grant execution authority.
