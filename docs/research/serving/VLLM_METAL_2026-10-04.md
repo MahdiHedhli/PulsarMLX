@@ -1,6 +1,6 @@
 # vLLM Metal: serving research for PulsarMLX
 
-Checked 2026-10-04. This is a source review and an experiment proposal, not a
+Checked 2026-10-04 UTC. This is a source review and an experiment proposal, not a
 roadmap decision, deployment approval or measured PulsarMLX comparison. No
 vLLM installation, benchmark or serving change accompanied this note.
 
@@ -31,9 +31,14 @@ claims, not proof of zero-copy SSD-backed weights.
 
 Source inspection confirms the worker passes scheduler output to the model
 runner and initializes its KV cache from vLLM's cache configuration:
-[`worker.py`, lines 183–254](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/worker.py#L183).
-The separate cache policy budgets scheduler-visible attention/state storage:
-[`cache_policy.py`](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/cache_policy.py).
+[`worker.py` cache initialization](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/worker.py#L241) and
+[`execute_model`](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/worker.py#L269).
+The separate cache policy budgets scheduler-visible attention/state storage.
+At this pin, upstream storage applies to hybrid models or non-MLA models
+without a draft model; MLA and non-hybrid draft configurations still use the
+plugin-managed capacity path. The release summary should be read with that
+source-level exception.
+[`cache_policy.py`, lines 261–264](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/cache_policy.py#L261)
 The runner is the execution integration surface:
 [`model_runner.py`](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/model_runner.py).
 
@@ -43,13 +48,16 @@ In the ordinary single-stage lifecycle, `lazy_weights` is false; laziness is
 enabled for pipeline stages that prune non-owned layers. The text loader
 passes that value to `mlx_lm_load`. This is a default eager model-loading
 contract, not PulsarMLX's bounded expert-range contract.
-[`model_lifecycle.py`, lines 101–120 and 350–365](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/model_lifecycle.py#L101)
+[`lazy_weights` selection](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/model_lifecycle.py#L112) and
+[`mlx_lm` loader](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/vllm_metal/v1/model_lifecycle.py#L380)
 
 No bounded expert or per-layer-embedding (PLE) SSD cache/admission interface was
 identified in the inspected lifecycle, worker, runner and cache-policy paths.
 This is a scoped inspection result, not a claim about every upstream extension.
 Paged KV addresses request state capacity; it does not, by itself, admit an
-approximately 182 GB checkpoint on a 128 GB host. Model-specific PLE paging,
+oversized checkpoint on a 128 GB host: the pinned
+[Flash results](https://github.com/MahdiHedhli/PulsarMLX/blob/8932939e9db0ceaa05337db8c65f5c1c03fa94fa/docs/glm53-flash/persistent-serving-results.md#L41)
+report an expert corpus of approximately 170 GB alone. Model-specific PLE paging,
 where applicable, must be established explicitly; it is not inferred as a
 GLM-5.3 Flash feature from this review.
 
@@ -87,10 +95,11 @@ M5-specific; earlier Macs use another path. Its roughly 20% MTP output-rate
 gain at concurrency one is one Gemma 4 experiment, not GLM or Qwen evidence.
 [Announcement](https://vllm.ai/blog/2026-09-22-vllm-metal-v0-28-0)
 
-The [pinned model matrix](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/docs/supported_models.md#L72)
+The [pinned model matrix](https://github.com/vllm-project/vllm-metal/blob/15f0b215c89825928ac796ab8face335f714163f/docs/supported_models.md#L83)
 lists Qwen3 and Qwen3-Next families. A family listing does not qualify our exact
 checkpoint, tokenizer, mixed quantization or Flash Next semantics. GLM-5.3
-Flash is not listed. The release warns that hybrid GDN prefix-cache on/off
+Flash is not listed; GLM-4.5 and GLM-4.7-Flash rows do not qualify it.
+The release warns that hybrid GDN prefix-cache on/off
 parity still diverges on some divergent-suffix prompts.
 [Known boundaries](https://github.com/vllm-project/vllm-metal/releases/tag/v0.30.0)
 
@@ -99,11 +108,17 @@ parity still diverges on some divergent-suffix prompts.
 | Choice | Work and interpretation |
 | --- | --- |
 | Separate resident baseline | Lowest integration effort for an already supported checkpoint that fits memory. Measures serving behavior without substituting for oversized-weight research. |
-| Pulsar expert/PLE storage inside the runner | Substantial model and storage integration. Preserve checked ranges, quantization, cache identity, admission, slot lifetime and GPU fences; coordinate with scheduler-owned request state. |
+| Pulsar expert storage inside the runner | Substantial model and storage integration. Preserve checked ranges, quantization, cache identity, admission, slot lifetime and GPU fences; coordinate with scheduler-owned request state. |
 | Custom vLLM worker adapter over Pulsar execution | High effort: explicitly translate scheduling, positions, state/block tables, cancellation, results and ownership. An OpenAI-compatible API alone is insufficient. |
 | Retain native Pulsar engine and port qualified ideas | Fits the current plan. Borrow scheduling or attention ideas only behind independent correctness and measured-benefit gates. |
 
-These are research options, not selections. Rust's
+These are research options, not selections. Any PLE admission would be a
+hypothetical model-specific extension, not an existing capability established
+here. The upstream MLX 0.32.1 pin also differs from the Flash research
+measurement environment's 0.32.2; shared-process reuse would need explicit
+ABI/version qualification.
+
+Rust's
 [dispatch ownership contract](https://github.com/MahdiHedhli/PulsarMLX/blob/8932939e9db0ceaa05337db8c65f5c1c03fa94fa/docs/architecture/contracts/f017-f018-native-kernel-boundary-v1.md#L24)
 resolves identity, admission and residency before dispatch, and prevents slot
 reuse until GPU completion. A vLLM integration must avoid duplicate weight
@@ -118,6 +133,8 @@ penalty or negate resident-model vLLM results.
 
 ## Proposed first comparison
 
+Compare vLLM Metal against plain mlx-lm or a separately admitted Python/MLX
+research serving arm; there is no Pulsar-native Apple serving arm at the pin.
 Use the exact same resident checkpoint revision, tokenizer/chat template,
 quantization, prompts, stopping rules, greedy sampling and hardware budget.
 Disable speculation and prefix reuse initially. Start at concurrency one,
@@ -131,7 +148,7 @@ read amplification, staging memory and GPU lifetime. It must preserve full
 hybrid state semantics. Re-admit budgets on M1 Ultra and M2 Max independently;
 do not transfer M5 or resident-model claims to them.
 
-The [optimization register, OPT-01 through OPT-08](https://github.com/MahdiHedhli/PulsarMLX/blob/8932939e9db0ceaa05337db8c65f5c1c03fa94fa/docs/roadmap/OPTIMIZATION_ROADMAP.md#L68)
+The [optimization register, OPT-01 through OPT-08](https://github.com/MahdiHedhli/PulsarMLX/blob/8932939e9db0ceaa05337db8c65f5c1c03fa94fa/docs/roadmap/OPTIMIZATION_ROADMAP.md#L69)
 already requires profiling, trace-driven residency, bounded staging and
 retained-state correctness before serving/performance acceptance. This note
 adds references without changing that sequence or authorizing a new run.
