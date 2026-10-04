@@ -6,6 +6,7 @@ No checkpoint-provided Python is imported, and no model computation occurs.
 from __future__ import annotations
 
 import argparse
+import ast
 import collections
 import json
 import math
@@ -115,6 +116,25 @@ def main() -> None:
             tokenizer["added_tokens_decoder"]["248046"]["content"] == "<|im_end|>",
             "unexpected tokenizer metadata")
 
+    runtime_tree = ast.parse((root / "qwen4_exp.py").read_text())
+    allowed_top_level = (ast.Import, ast.ImportFrom, ast.ClassDef, ast.FunctionDef, ast.Assign)
+    require(all(isinstance(node, allowed_top_level) for node in runtime_tree.body),
+            "bundled runtime has unexpected top-level statements")
+    require(not any(isinstance(child, ast.Call) for node in runtime_tree.body
+                    if isinstance(node, ast.Assign) for child in ast.walk(node)),
+            "bundled runtime has top-level call in assignment")
+    runtime_imports = []
+    for node in runtime_tree.body:
+        if isinstance(node, ast.Import):
+            runtime_imports.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            runtime_imports.append(node.module or "")
+    require(not any(name.split(".")[0] in {"os", "subprocess", "socket", "requests", "urllib", "importlib"}
+                    for name in runtime_imports), "bundled runtime imports an unexpected I/O module")
+    require(not any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and
+                    node.func.id in {"exec", "eval", "compile", "__import__"}
+                    for node in ast.walk(runtime_tree)), "bundled runtime contains a direct dynamic-code call")
+
     index = json.loads((root / "model.safetensors.index.json").read_text())
     weight_map = index["weight_map"]
     shards = [f for f in manifest["files"] if f["path"].endswith(".safetensors")]
@@ -141,19 +161,32 @@ def main() -> None:
                 (name[:-len(".scales")] + ".biases") in names
                 for name in names if name.endswith(".scales")),
             "quantized tensor triple incomplete")
+    require(all((name[:-len(".weight")] + ".scales") in names and
+                (name[:-len(".weight")] + ".biases") in names
+                for name, (_, _, info) in all_headers.items()
+                if name.endswith(".weight") and info["dtype"] == "U32"),
+            "packed weight missing affine metadata")
 
     norm_samples = {}
+    norm_families = {}
     for suffix in CENTERED:
-        choices = sorted(n for n in names if n.endswith(suffix) and ".layers." in n)
+        choices = sorted(n for n in names if n.endswith(suffix))
         require(choices, f"centered norm family missing: {suffix}")
-        name = choices[0]
-        path, data_start, info = all_headers[name]
-        norm_samples[suffix] = {"tensor": name, **bf16_summary(path, data_start, info)}
+        summaries = []
+        for name in choices:
+            path, data_start, info = all_headers[name]
+            summaries.append((name, bf16_summary(path, data_start, info)))
+        sample_name, sample = next(((name, summary) for name, summary in summaries
+                                    if ".layers." in name), summaries[0])
+        norm_samples[suffix] = {"tensor": sample_name, **sample}
+        means = [summary["mean"] for _, summary in summaries]
+        norm_families[suffix] = {"tensor_count": len(summaries),
+                                 "minimum_tensor_mean": min(means),
+                                 "maximum_tensor_mean": max(means)}
+        require(min(means) > 0.4, f"norm family does not support pre-folded layout: {suffix}")
     # The raw-HF centered weights are near zero, while the converted tensors
     # have +1 folded in. This is a sample-level admission gate, not a full
     # numerical parity test.
-    require(all(sample["mean"] > 0.4 for sample in norm_samples.values()),
-            "centered norm samples do not support pre-folded layout")
     result = {
         "schema": "pulsarmlx.qwen38.static-admission/1",
         "repo": manifest["repo"], "revision": manifest["revision"],
@@ -161,8 +194,12 @@ def main() -> None:
         "dtype_counts": dict(dtype_counts), "quantization_override_counts":
             {f"{bits}-bit/group-{group}": count for (bits, group), count in overrides.items()},
         "raw_hf_layout_markers": 0, "mtp_tensor_count": 0,
-        "norm_samples": norm_samples,
-        "verdict": "metadata/header admission and sampled pre-folded norms; no model execution",
+        "norm_samples": norm_samples, "norm_families": norm_families,
+        "centered_norm_tensor_count": sum(item["tensor_count"] for item in norm_families.values()),
+        "runtime_static_review": {"imports": runtime_imports,
+                                  "top_level_statements": len(runtime_tree.body),
+                                  "checkpoint_code_executed": False},
+        "verdict": "metadata/header admission; centered norm values support pre-folded layout; no model execution",
     }
     output = root / "static-admission.json"
     temporary = output.with_name(output.name + ".tmp")

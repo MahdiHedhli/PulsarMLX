@@ -22,9 +22,9 @@ The published [checkpoint card](https://huggingface.co/pipenetwork/Qwen3.8-Flash
 ## Admission before a real-model run
 
 1. Verify a clean, accepted `main` SHA with the Studio cleanup owner. This branch is isolated; no worktree pruning or GLM qualification change is part of the spike.
-2. Use the [checkpoint admission audit](checkpoint-admission.md) to pin the Qwen revision, published format, quantization, tokenizer, license and norm-fold contract. Confirm tensor names/shapes, source hashes and the folding verdict against the actual shard bytes at acquisition. A GGUF mixed-IQ result is not an MLX affine parity reference after requantization.
+2. Use the [checkpoint admission audit](checkpoint-admission.md) for the now-verified pinned copy, file hashes, tensor names/shapes, quantization, tokenizer, license and stored norm-fold convention. A GGUF mixed-IQ result is not an MLX affine parity reference after requantization.
 3. Establish an independent reference for routing IDs and weights, layer outputs, logits, and token IDs, with frozen tolerances. Record a no-prefetch baseline before timing any pager variant.
 4. Hold prompt, context, stop policy, seed/greedy setting, checkpoint, quantization, and output length fixed across baseline and candidate. Separate cold startup, logically empty cache, and OS-warm page cache. Capture physical SSD traffic independently from logical store counters.
 5. Compare routing-lookahead I/O alone first, then adaptive residency as a separate experiment. Record useful bytes present before demand, wasted bytes, cache pollution, per-request latency, TTFT, decode p50/p95/p99 and maximum stall, swap, and memory footprint. The 20+ sustained tokens/s goal is a target without a forecast. A 10% end-to-end benefit with no correctness regression or sustained swap/p95 harm is a **proposed** keep threshold, not an adopted gate.
 
-No model was downloaded, third-party code run, benchmark executed, or real-model compatibility claimed for this preparation.
+The one pinned checkpoint copy was acquired and statically admitted on 2026-10-04 UTC. No checkpoint code was executed, benchmark run, or real-model numerical compatibility claimed. See the [receipt and admission evidence](checkpoint-admission.md#acquired-files-and-static-admission).

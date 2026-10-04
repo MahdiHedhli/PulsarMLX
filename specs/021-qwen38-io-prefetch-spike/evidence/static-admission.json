@@ -1,0 +1,144 @@
+{
+  "schema": "pulsarmlx.qwen38.static-admission/1",
+  "repo": "pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit",
+  "revision": "b2c422f3c643e36f04227a64d61796b44a4b1029",
+  "tensor_count": 3215,
+  "shard_count": 11,
+  "dtype_counts": {
+    "BF16": 2442,
+    "U32": 770,
+    "I64": 3
+  },
+  "quantization_override_counts": {
+    "8-bit/group-64": 498,
+    "4-bit/group-32": 128
+  },
+  "raw_hf_layout_markers": 0,
+  "mtp_tensor_count": 0,
+  "norm_samples": {
+    "hc_norm.weight": {
+      "tensor": "language_model.model.layers.0.attn_hyper_connection.hc_norm.weight",
+      "count": 10240,
+      "mean": 0.9364414215087891,
+      "min": -4.9375,
+      "max": 7.625,
+      "negative_count": 2
+    },
+    "q_norm.weight": {
+      "tensor": "language_model.model.layers.11.self_attn.q_norm.weight",
+      "count": 256,
+      "mean": 1.35504150390625,
+      "min": 0.09765625,
+      "max": 1.65625,
+      "negative_count": 0
+    },
+    "k_norm.weight": {
+      "tensor": "language_model.model.layers.11.self_attn.k_norm.weight",
+      "count": 256,
+      "mean": 1.3600616455078125,
+      "min": 0.25390625,
+      "max": 1.7265625,
+      "negative_count": 0
+    },
+    "indexer.q_layernorm.weight": {
+      "tensor": "language_model.model.layers.11.self_attn.indexer.q_layernorm.weight",
+      "count": 128,
+      "mean": 0.930877685546875,
+      "min": 0.5,
+      "max": 1.0546875,
+      "negative_count": 0
+    },
+    "indexer.k_layernorm.weight": {
+      "tensor": "language_model.model.layers.11.self_attn.indexer.k_layernorm.weight",
+      "count": 128,
+      "mean": 0.9302978515625,
+      "min": 0.609375,
+      "max": 1.03125,
+      "negative_count": 0
+    },
+    "ple.norm_key.weight": {
+      "tensor": "language_model.model.layers.1.ple.norm_key.weight",
+      "count": 10240,
+      "mean": 0.8932910919189453,
+      "min": 0.671875,
+      "max": 1.859375,
+      "negative_count": 0
+    },
+    "ple.norm_query.weight": {
+      "tensor": "language_model.model.layers.1.ple.norm_query.weight",
+      "count": 10240,
+      "mean": 0.8932964324951171,
+      "min": 0.671875,
+      "max": 1.859375,
+      "negative_count": 0
+    },
+    "ple.norm_conv.weight": {
+      "tensor": "language_model.model.layers.1.ple.norm_conv.weight",
+      "count": 10240,
+      "mean": 0.8906272888183594,
+      "min": 0.54296875,
+      "max": 1.2734375,
+      "negative_count": 0
+    }
+  },
+  "norm_families": {
+    "hc_norm.weight": {
+      "tensor_count": 97,
+      "minimum_tensor_mean": 0.6758625030517578,
+      "maximum_tensor_mean": 3.749807357788086
+    },
+    "q_norm.weight": {
+      "tensor_count": 12,
+      "minimum_tensor_mean": 1.2833251953125,
+      "maximum_tensor_mean": 1.58917236328125
+    },
+    "k_norm.weight": {
+      "tensor_count": 12,
+      "minimum_tensor_mean": 1.2735137939453125,
+      "maximum_tensor_mean": 1.58599853515625
+    },
+    "indexer.q_layernorm.weight": {
+      "tensor_count": 12,
+      "minimum_tensor_mean": 0.92388916015625,
+      "maximum_tensor_mean": 0.982818603515625
+    },
+    "indexer.k_layernorm.weight": {
+      "tensor_count": 12,
+      "minimum_tensor_mean": 0.925933837890625,
+      "maximum_tensor_mean": 0.98309326171875
+    },
+    "ple.norm_key.weight": {
+      "tensor_count": 1,
+      "minimum_tensor_mean": 0.8932910919189453,
+      "maximum_tensor_mean": 0.8932910919189453
+    },
+    "ple.norm_query.weight": {
+      "tensor_count": 1,
+      "minimum_tensor_mean": 0.8932964324951171,
+      "maximum_tensor_mean": 0.8932964324951171
+    },
+    "ple.norm_conv.weight": {
+      "tensor_count": 1,
+      "minimum_tensor_mean": 0.8906272888183594,
+      "maximum_tensor_mean": 0.8906272888183594
+    }
+  },
+  "centered_norm_tensor_count": 148,
+  "runtime_static_review": {
+    "imports": [
+      "math",
+      "dataclasses",
+      "typing",
+      "mlx.core",
+      "mlx.nn",
+      "numpy",
+      "mlx_lm.models.base",
+      "mlx_lm.models.cache",
+      "mlx_lm.models.gated_delta",
+      "mlx_lm.models.switch_layers"
+    ],
+    "top_level_statements": 38,
+    "checkpoint_code_executed": false
+  },
+  "verdict": "metadata/header admission; centered norm values support pre-folded layout; no model execution"
+}
