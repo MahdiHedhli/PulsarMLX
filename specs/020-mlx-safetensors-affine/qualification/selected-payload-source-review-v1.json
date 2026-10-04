@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.selected-payload-source-review/1",
+  "decision": "ACCEPT",
+  "blocking_findings": 0,
+  "actual_model": "claude-opus-5-5",
+  "source_commit": "cd98e0465a0c91338c212cef7b73c2a645dbeb60",
+  "commit": "cd98e0465a0c91338c212cef7b73c2a645dbeb60",
+  "tree": "764f1ff6492e4a2976df93b2148a2f17440f8aac",
+  "package_sha256": "c34d0405bd589dffbdee9952b39bd2382cb13018cd735979b6d77b430ba295bc",
+  "exit_code": 0,
+  "elapsed_seconds": 65.26,
+  "capsule_sha256": "1c9aa2a7b44e2c6c78ec6b46075b5ca157acc3fb131e5ffdcdb22e2aab737293",
+  "raw_review_sha256": "0264c757bb8e5688dcdf644817d0338028facdd88896e7ad2b6574c7eba1c386",
+  "prior_invalid_provider_attempt_preserved": true,
+  "scope": "host selected-content capture only",
+  "verification_limits_carried_forward": [
+    "I did not compute any file SHA-256, tree hash or package SHA-256 (c34d0405...). Correspondence between the capsule text and the frozen hashes is unverified.",
+    "The claims native_sources_unchanged, inherited_range_functions_unchanged, real_native_calls=0 and real_payload_observations=0 cannot be checked without a diff against 8932939e and the native sources. No diff was supplied.",
+    "The internals of safetensors-catalog (RootDirectory::open/open_file, parse_index, Checkpoint::from_headers, expert_slice), mlx-affine (classify_module, QuantizationConfig) and the 'backend' crate are not in the capsule. Their descriptor confinement, strict parsing and checked arithmetic are taken from prior accepted reviews.",
+    "Absence of MLX linkage is supported only indirectly. The clippy log's dependency set shows no mlx/sys or build-script crates. Plan step 4's linkage check has not been performed yet.",
+    "Test and clippy outcomes are accepted as reported logs. The workspace count of 658 passed / 3 ignored is reported only in the summary, not in a raw log."
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "pulsarmlx.selected-expert-capture-evidence/1",
+  "source": {
+    "commit": "cd98e0465a0c91338c212cef7b73c2a645dbeb60",
+    "tree": "764f1ff6492e4a2976df93b2148a2f17440f8aac",
+    "package_sha256": "c34d0405bd589dffbdee9952b39bd2382cb13018cd735979b6d77b430ba295bc",
+    "base": "8932939e9db0ceaa05337db8c65f5c1c03fa94fa"
+  },
+  "source_review": {
+    "decision": "ACCEPT",
+    "blockers": 0,
+    "actual_model": "claude-opus-5-5",
+    "capsule_sha256": "1c9aa2a7b44e2c6c78ec6b46075b5ca157acc3fb131e5ffdcdb22e2aab737293",
+    "raw_review_sha256": "0264c757bb8e5688dcdf644817d0338028facdd88896e7ad2b6574c7eba1c386",
+    "invalid_provider_attempt_preserved": true
+  },
+  "host": {
+    "targeted": 21,
+    "sparse_skips": 0,
+    "workspace_passed": 658,
+    "workspace_failed": 0,
+    "workspace_ignored": 3,
+    "workspace_exclusion": "f017-native",
+    "format": "PASS",
+    "clippy": "PASS",
+    "workspace_check": "PASS"
+  },
+  "capture": {
+    "status": "PASS",
+    "layer": 3,
+    "expert": 0,
+    "E": 288,
+    "D": 4096,
+    "H": 2048,
+    "bits": [
+      4,
+      4,
+      4
+    ],
+    "group_size": 64,
+    "metadata_dtype": "BF16",
+    "metadata_bytes_read": 790848,
+    "metadata_snapshot_sha256": "a2b1a6822bf21b8459952e1a0124d00b44f8008167c09f3dbf5099eb4d98deea",
+    "original_selected_payload_bytes_read": 14155776,
+    "range_read_attempts": 9,
+    "snapshot_payload_bytes_written": 14155776,
+    "snapshot_bytes": 14159388,
+    "snapshot_sha256": "43e251a64d1d475900214d3c51b9b21ca988e7b6634d3891fbc6c3a0d5733305",
+    "selected_range_sha256": [
+      "090d137d9f410df1109ac64897871984a407edd9732d71dd4e1fe73d0d7b7b8e",
+      "a563d057aedb10d9b08a588bda2f1475546003ccf853d9960ded191f817904a9",
+      "a44a0e2375712f44cb71961f2080657dd83e9045f4b564c52454b0aee97fd562",
+      "1d1c3e9b4d8ce34e491798146ab1f713d39abb532dfa48503ef36c896272418a",
+      "7d96e8559f1918271f50bf4b7bacbf41a2f541993ad3a21106a492caed97b33d",
+      "5ce47ee00812fddfd26df3d1f939d95f3ad4434db225a72cdc02103d82ad1f71",
+      "49fe6b74ad537499e0d63b1be4effc70b10614ba320f03d4ae4297e339107169",
+      "be4238108dcf39708b4b7c92584f6c0500156d2fa287a518146f2da738d148e6",
+      "e7c910be480687b44225d4825cac5d48671571dbae82e968f57a645e9cced4c0"
+    ],
+    "native_calls": 0,
+    "whole_checkpoint_reads": 0,
+    "whole_original_shard_hashes": 0,
+    "model_downloads": 0,
+    "raw_stdout_sha256": "c999194f0735157798a1fea38f516cbb7183f7fb5f82b46915eae91176e373e8",
+    "binary_sha256": "df18c8c8c0474eb31b54ddc974fac7fae45503a100f330647ca17de78d63f62e",
+    "snapshot_location": "private Studio audit only",
+    "physical_SSD_bytes": "unknown"
+  },
+  "independent_byte_verification": {
+    "status": "PASS",
+    "synthetic_tests": 6,
+    "snapshot_bytes_read": 14159388,
+    "original_checkpoint_bytes_read": 0,
+    "native_calls": 0,
+    "verifier_source_sha256": "7bff74e12f7a8b1dbc485218f7c41f921d6be9dce6bfc579bcc04d1ce2b74209",
+    "verifier_tests_sha256": "cfff7feb384855bdfbfea90cd22a99fd5f6f172675a0ea958f5f429fea415b1b",
+    "proof_sha256": "d241d3be61068bea091bcb6570b8fd2b385e0771186633da40b50e92bc322bcc",
+    "tests": "6 PASS",
+    "elapsed_seconds": 0.1218,
+    "scope": "post-capture selected-byte custody, no original model reopening or numerical execution"
+  },
+  "exporter_sha256": "bcb63b3d7f02f2679846041a5e53f2e4facde8bebc87738ac36ca5c1f634294f",
+  "scope": "one bounded packed host capture and selected-byte custody; no R1/native/full-shape numerical qualification",
+  "next_gate": "Separately review original-byte R1, frozen F32 input and exact native adapter; prospectively qualify 4096/2048 geometry and 8388608 MACs per projection or label a bounded block. Preserve E_act=1/128, beta_B=5201/4194304 and the down admission floor."
+}

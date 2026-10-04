@@ -1,0 +1,32 @@
+{
+  "schema": "pulsarmlx.selected-expert-source-freeze/1",
+  "observed_at_utc": "2026-10-04T01:52:44.146546+00:00",
+  "base": "8932939e9db0ceaa05337db8c65f5c1c03fa94fa",
+  "commit": "cd98e0465a0c91338c212cef7b73c2a645dbeb60",
+  "tree": "764f1ff6492e4a2976df93b2148a2f17440f8aac",
+  "source_files": {
+    "crates/mlx-expert-ranges/src/lib.rs": "517d51716ef912e1c191b4508f5cdc6fd83efddf95594b653f4799126785324e",
+    "crates/mlx-expert-ranges/src/snapshot.rs": "c88a4ee27ba8264cde7228c225fa506b533c0b0f14b4135572e13e1b3b773511",
+    "crates/mlx-expert-ranges/examples/glm_selected_freeze.rs": "885dec6eeb5d3e577a6670699eb9b5a1aadb8cd2a5dc433f9506c7b3b01f10b7",
+    "crates/mlx-expert-ranges/tests/ranges.rs": "8e1af40ef7c6ccdd089de60fdff9a278c4bccad7a4a410c5ea0b7eb8aa51c483",
+    "specs/020-mlx-safetensors-affine/selected-payload-spec-v1.md": "ed51d7d193dcb4bb8185843e67c022a41c66693795fb43f2dea197e8e496a2c7",
+    "specs/020-mlx-safetensors-affine/selected-payload-plan-v1.md": "f4ed8db79617c352d11c99f83b8b01e721fa5f71dfd4bdcd56be9301c3408875",
+    "specs/020-mlx-safetensors-affine/selected-payload-tasks-v1.md": "ea1c033c8c66e63c000d5b8fb6693c35df85d34148caa7a83f72a3f89980452a"
+  },
+  "package_sha256": "c34d0405bd589dffbdee9952b39bd2382cb13018cd735979b6d77b430ba295bc",
+  "inherited_range_functions_unchanged": true,
+  "native_sources_unchanged": true,
+  "real_payload_observations": 0,
+  "real_native_calls": 0,
+  "host_tests": {
+    "targeted": 21,
+    "sparse_skips": 0,
+    "workspace_passed": 658,
+    "workspace_failed": 0,
+    "workspace_ignored": 3,
+    "workspace_exclusion": "f017-native",
+    "format": "PASS",
+    "clippy": "PASS",
+    "workspace_check": "PASS"
+  }
+}
