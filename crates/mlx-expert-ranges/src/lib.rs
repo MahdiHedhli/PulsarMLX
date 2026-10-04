@@ -1,6 +1,8 @@
 //! Host-only bounded expert ownership. No native/GPU or whole-shard reads.
 #![forbid(unsafe_code)]
 
+pub mod snapshot;
+
 use mlx_affine::{classify_module, ModuleKind, QuantizationConfig};
 use safetensors_catalog::{parse_index, Checkpoint, Dtype, RootDirectory, INDEX_FILE_NAME};
 use serde::Serialize;

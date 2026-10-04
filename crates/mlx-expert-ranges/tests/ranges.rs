@@ -440,3 +440,138 @@ fn sparse_supported() -> bool {
         * 512
         < 64 * 1024
 }
+
+#[test]
+fn snapshot_independent_framing_bytes_and_hashes() {
+    use mlx_expert_ranges::snapshot::freeze_selected;
+    use sha2::{Digest, Sha256};
+    let f = fixture(64, 128, 3, true, 0, true);
+    let source = BoundedSource::open(&f.root).unwrap();
+    let plan = source.plan(f.request.clone()).unwrap();
+    let output = f.root.join("selected.snapshot");
+    let receipt = freeze_selected(&plan, &plan.record().metadata_snapshot_sha256, &output).unwrap();
+    let bytes = fs::read(&output).unwrap();
+    assert_eq!(&bytes[..8], b"PLSEX001");
+    let len = u64::from_le_bytes(bytes[8..16].try_into().unwrap()) as usize;
+    let header: Value = serde_json::from_slice(&bytes[16..16 + len]).unwrap();
+    assert_eq!(header["schema"], "pulsarmlx.selected-expert-snapshot/1");
+    assert_eq!(
+        receipt.snapshot_sha256,
+        format!("{:x}", Sha256::digest(&bytes))
+    );
+    assert_eq!(receipt.snapshot_bytes, bytes.len() as u64);
+    let lengths = header["payload_lengths"].as_array().unwrap();
+    let hashes = header["owned"]["selected_range_sha256"].as_array().unwrap();
+    assert_eq!(lengths.len(), 9);
+    let mut at = 16 + len;
+    for role in 0..3 {
+        for component in 0..3 {
+            let i = role * 3 + component;
+            let n = lengths[i].as_u64().unwrap() as usize;
+            assert_eq!(n as u64, plan.record().planes[role].ranges[component].len);
+            let raw = &bytes[at..at + n];
+            assert!(raw.iter().all(|b| *b == marker(role, 0, component)));
+            assert_eq!(hashes[i], format!("{:x}", Sha256::digest(raw)));
+            at += n;
+        }
+    }
+    assert_eq!(at, bytes.len());
+    assert_eq!(
+        receipt.requested_payload_bytes,
+        plan.record().selected_bytes
+    );
+    assert_eq!(receipt.payload_read_calls, 9);
+    assert_eq!(fs::metadata(&output).unwrap().mode() & 0o777, 0o400);
+}
+
+#[test]
+fn snapshot_refusals_preserve_existing_output_and_avoid_payload() {
+    use mlx_expert_ranges::snapshot::freeze_selected;
+    let f = fixture(64, 64, 3, false, 0, true);
+    let source = BoundedSource::open(&f.root).unwrap();
+    let plan = source.plan(f.request.clone()).unwrap();
+    let path = f.root.join("selected.snapshot");
+    expect_phase(
+        freeze_selected(&plan, &"0".repeat(64), &path),
+        "FREEZE_ADMISSION",
+    );
+    assert!(!path.exists());
+    expect_phase(
+        freeze_selected(
+            &plan,
+            &plan.record().metadata_snapshot_sha256,
+            &PathBuf::from("relative.snapshot"),
+        ),
+        "FREEZE_ADMISSION",
+    );
+    fs::write(&path, b"existing artifact").unwrap();
+    expect_phase(
+        freeze_selected(&plan, &plan.record().metadata_snapshot_sha256, &path),
+        "FREEZE_OUTPUT",
+    );
+    assert_eq!(fs::read(&path).unwrap(), b"existing artifact");
+    let link = f.root.join("link.snapshot");
+    symlink(&path, &link).unwrap();
+    expect_phase(
+        freeze_selected(&plan, &plan.record().metadata_snapshot_sha256, &link),
+        "FREEZE_OUTPUT",
+    );
+    assert_eq!(fs::read(&path).unwrap(), b"existing artifact");
+    assert_eq!(source.requested_payload_bytes(), 0);
+    assert_eq!(source.payload_read_calls(), 0);
+}
+
+#[test]
+fn snapshot_mutation_failure_retains_private_empty_artifact() {
+    use mlx_expert_ranges::snapshot::freeze_selected;
+    let f = fixture(64, 64, 3, false, 0, true);
+    let source = BoundedSource::open(&f.root).unwrap();
+    let plan = source.plan(f.request.clone()).unwrap();
+    let changed = OpenOptions::new()
+        .write(true)
+        .open(f.root.join("model.safetensors"))
+        .unwrap();
+    distinct_mtime(&changed);
+    let output = f.root.join("failed.snapshot");
+    expect_phase(
+        freeze_selected(&plan, &plan.record().metadata_snapshot_sha256, &output),
+        "MUTATION",
+    );
+    assert_eq!(fs::metadata(&output).unwrap().len(), 0);
+    assert_eq!(fs::metadata(&output).unwrap().mode() & 0o777, 0o600);
+    assert_eq!(source.requested_payload_bytes(), 0);
+}
+
+#[test]
+fn snapshot_real_storage_geometry_is_bounded_on_sparse_synthetic_shard() {
+    use mlx_expert_ranges::snapshot::freeze_selected;
+    if !sparse_supported() {
+        println!("SKIP snapshot real storage geometry: sparse files unsupported");
+        return;
+    }
+    let f = fixture(4096, 2048, 288, false, 0, false);
+    assert!(
+        fs::metadata(f.root.join("model.safetensors"))
+            .unwrap()
+            .blocks()
+            * 512
+            < 1024 * 1024
+    );
+    let source = BoundedSource::open(&f.root).unwrap();
+    let plan = source.plan(f.request.clone()).unwrap();
+    assert_eq!(plan.record().selected_bytes, 14_155_776);
+    let receipt = freeze_selected(
+        &plan,
+        &plan.record().metadata_snapshot_sha256,
+        &f.root.join("real-shape.snapshot"),
+    )
+    .unwrap();
+    assert_eq!(receipt.requested_payload_bytes, 14_155_776);
+    assert_eq!(receipt.payload_read_calls, 9);
+    assert_eq!(receipt.snapshot_payload_bytes_written, 14_155_776);
+    assert_eq!(receipt.native_calls, 0);
+    println!(
+        "synthetic real storage geometry: selected={} bytes, calls={}, native={}",
+        receipt.requested_payload_bytes, receipt.payload_read_calls, receipt.native_calls
+    );
+}
