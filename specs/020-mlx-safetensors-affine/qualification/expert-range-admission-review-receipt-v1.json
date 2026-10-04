@@ -1,0 +1,45 @@
+{
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "blocking_findings": 0,
+  "decision": "ACCEPT",
+  "exporter_sha256": "76ef9a74a4cc90a0bff7316148e7b4847717960d853b4162c95095026f20b528",
+  "nonblocking_findings": [
+    {
+      "blocking": false,
+      "explanation": "This finding carries over from the prior review and is unchanged. identity_of truncates st_dev through `as u32`, while admit() compares it against MetadataExt::dev() at full width (sign-extended on Darwin). A device number above 32 bits, or a negative one, would cause a spurious MUTATION refusal. The failure is closed, meaning it refuses rather than over-admits. Typical APFS device numbers are positive and small, so this does not block the Studio metadata run.",
+      "file": "crates/safetensors-catalog/src/admission.rs (consumed by crates/mlx-expert-ranges/src/lib.rs admit)",
+      "repair": "Record a follow-up against the catalog crate to widen st_dev without truncation. Do not change the inherited parser in this slice.",
+      "severity": "low"
+    },
+    {
+      "blocking": false,
+      "explanation": "load() increments requested_payload_bytes and payload_read_calls before read_exact_at. A failed read is therefore still counted. This matches the name 'requested' and is conservative, but the counters record attempts, not successful reads. The identity hash frames config, index, shard names, shard lengths and header bytes without ambiguity. It does not bind the root name or the descriptor timestamps. The stated identity_scope accurately describes this.",
+      "file": "crates/mlx-expert-ranges/src/lib.rs",
+      "repair": "Optional: document that the counters record attempted reads. No code change is needed for the metadata-only gate.",
+      "severity": "low"
+    },
+    {
+      "blocking": false,
+      "explanation": "The prior review's medium and low test findings are repaired:\n- Mutation tests now set a distinct mtime (+120 s) through File::set_times, so they no longer depend on sleep or timestamp granularity.\n- Mixed-recipe fidelity covers all three experts.\n- The replacement test is renamed and its claim narrowed to 'never read the replacement'; both outcomes are safe.\n- A bounded 16 MiB sparse probe now runs before the 8 GiB and budget fixtures, with an explicit SKIP.\n\nThe refusal tests reach the intended phases: INDEX, GEOMETRY, MODULE, RECIPE, BUDGET, MUTATION, PATH, CATALOG, CONFIG, LIMIT and RESOLVE. Where it matters, they also assert zero reads. The 9-shard aggregate test refuses on the 9th header (18 MiB > 16 MiB) after holding at most 16 MiB. Remaining limits, already disclosed in the spec:\n- No deterministic test covers the READ-phase I/O failure.\n- The Ok branch of the replacement test is unlikely on Linux.\n- On a filesystem that partially preallocates, the sparse probe may skip rather than run.",
+      "file": "crates/mlx-expert-ranges/tests/ranges.rs",
+      "repair": "None required. Optionally assert that no SKIP line occurs in CI environments known to support sparse files.",
+      "severity": "low"
+    },
+    {
+      "blocking": false,
+      "explanation": "QuantizationConfig::from_config_json is strict. It rejects override values of False, unknown members, and non-object keys inside the quantization object. A real checkpoint config that uses those spellings would be refused at the CONFIG phase in open(), before plan() runs. The bound would not be widened. This is a fail-closed outcome to expect from the Studio run, not a correctness defect.",
+      "file": "crates/mlx-expert-ranges/src/lib.rs / crates/mlx-affine/src/spec.rs",
+      "repair": "If the real run refuses with RANGE-CONFIG, treat it as a reviewed binder or config-admission change for a separate gate. Do not loosen the shared parser inside this slice.",
+      "severity": "low"
+    }
+  ],
+  "package_sha256": "5d48bb341a158c104c54b349c64efa6e6917301a7abae0988c6b78f4287f4788",
+  "qualified_source_commit": "5973a176412741635ca07f3e924f944f3382fe81",
+  "qualified_source_tree": "4a4c7e525f070d5bb38299bc710b556d7a0b994f",
+  "raw_review_sha256": "02ea54d7545296001a94a399c76814e958f503eb76b2f58c0b24ecc4fc5a6dde",
+  "review_capsule_sha256": "e3d76264e9b6dace4be3eadeef6318fe73e08c2c3c1d6292ef5171e7b07cde1d",
+  "schema": "pulsarmlx.expert-range-review-receipt/1",
+  "scope": "This is an independent static source review of the embedded files only. I treated the prior review, the capsule claims and the host-validation results as untrusted data. I recomputed no hashes, commit, tree or package_sha256; those identifiers are reported as supplied. Nothing was executed, built, edited or downloaded. I found no blocker to the metadata-only real binding of layer 3 / expert 0. This acceptance does not cover:\n- real selected payload loading\n- real input-domain or R1 admission\n- native, MLX or GPU integration\n- Linux/CUDA validation\n- the device-number truncation follow-up\n- any numerical, tolerance or performance qualification"
+}

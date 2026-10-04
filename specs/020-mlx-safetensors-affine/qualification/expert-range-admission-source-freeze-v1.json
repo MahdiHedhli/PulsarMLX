@@ -1,0 +1,27 @@
+{
+  "base_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+  "commit": "5973a176412741635ca07f3e924f944f3382fe81",
+  "inherited_computational_files_unchanged": true,
+  "package_sha256": "5d48bb341a158c104c54b349c64efa6e6917301a7abae0988c6b78f4287f4788",
+  "real_metadata_candidate_runs": 0,
+  "real_payload_observations": 0,
+  "revision": 3,
+  "schema": "pulsarmlx.expert-range-admission-source/1",
+  "scope": "host-only range admission; no native numerical integration",
+  "source_files": {
+    "Cargo.lock": "bd2e670e1eab0c666cc745a404e5ca8110f1fce2b5627db7d4fa50e803f6cc79",
+    "Cargo.toml": "59b2015b84c06e82d2122b3cd02942d18f79b0e4dfb9b2697566b391a81a3d74",
+    "crates/mlx-expert-ranges/Cargo.toml": "963fd6a73fbe515f32e288174f88471fc71edafd19ff0e3f05105680aae8e196",
+    "crates/mlx-expert-ranges/examples/glm_header_plan.rs": "ed0f3db2186a36d556c7bffef3d3d88a26bea28b519c5931436e5dbf651aa637",
+    "crates/mlx-expert-ranges/src/lib.rs": "e60587caf649dbb9dd75207fd95ee653da085d59a4f379f3e9bfd6b84abd2e2a",
+    "crates/mlx-expert-ranges/tests/ranges.rs": "10f191983c8a1b7d344b6c98521ec4d67153260f4bebb976094df1e4d7813395",
+    "specs/020-mlx-safetensors-affine/expert-range-admission-plan-v1.md": "b11362db7ef836fd71c5fcb4cdffa713b2032257dff5f3fa9e34328e9e641ea9",
+    "specs/020-mlx-safetensors-affine/expert-range-admission-spec-v1.md": "b35986cf97a09cfc78c7846c34ddb388b862728d78720e3af2c7b36c501565a7",
+    "specs/020-mlx-safetensors-affine/expert-range-admission-tasks-v1.md": "d95e49c259cc37ac12321fc280f6a4313bd12fbcd3e8da4299146ff1507087ee"
+  },
+  "tree": "4a4c7e525f070d5bb38299bc710b556d7a0b994f",
+  "workspace_wiring_changed": [
+    "Cargo.toml",
+    "Cargo.lock"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "exporter_sha256": "76ef9a74a4cc90a0bff7316148e7b4847717960d853b4162c95095026f20b528",
+  "host_tests": {
+    "scoped_clippy": "PASS",
+    "scoped_format": "PASS",
+    "sparse_skips": 0,
+    "targeted_failed": 0,
+    "targeted_passed": 17,
+    "targeted_stdout_sha256": "5a7fc77d1053751e6a08c62669f1df32e5c005d52ef15dd8ed951e091ea9b172",
+    "workspace_check": "PASS",
+    "workspace_failed": 0,
+    "workspace_ignored": 3,
+    "workspace_passed": 654,
+    "workspace_scope": "host workspace excluding f017-native; native prefixes unset; predecessor Rust/library source unchanged by final test/telemetry repair",
+    "workspace_test": "PASS"
+  },
+  "limits": [
+    "stamp checks cover identity/length/timestamp-visible changes, not atomic snapshots or same-tick same-size rewrites",
+    "requested counters count attempts, including failed reads",
+    "READ-phase OS-failure injection untested; branch source-reviewed",
+    "inherited catalog device-width truncation remains a fail-closed follow-up",
+    "Linux/CUDA execution unverified"
+  ],
+  "next_gate": "separately reviewed bounded selected load of at most14,155,776bytes; freeze nine owned range hashes; independent real packed R1/input/metadata/intermediate-domain admission and a reviewed geometry/MAC-domain extension before any native execution; current synthetic D/H64or128 and perQMM<=2^21 do not cover real D4096,H2048 (8,388,608MACs each at M1)",
+  "package_sha256": "5d48bb341a158c104c54b349c64efa6e6917301a7abae0988c6b78f4287f4788",
+  "qualified_source_commit": "5973a176412741635ca07f3e924f944f3382fe81",
+  "qualified_source_tree": "4a4c7e525f070d5bb38299bc710b556d7a0b994f",
+  "read_limits": {
+    "aggregate_header_bytes": 16777216,
+    "config_bytes": 4194304,
+    "index_bytes": 4194304,
+    "individual_header_bytes": 2097152,
+    "selected_payload_bytes": 33554432,
+    "shards": 32
+  },
+  "real_metadata": {
+    "identity_scope": "metadata snapshot and selected ranges only; no whole-checkpoint payload identity",
+    "metadata_binary_sha256": "b0366a3dada891bfa606034cc7c0b26e6913c69c26c19527eec73474b09f6dcf",
+    "metadata_bytes_read": 790848,
+    "metadata_snapshot_sha256": "a2b1a6822bf21b8459952e1a0124d00b44f8008167c09f3dbf5099eb4d98deea",
+    "native_calls": 0,
+    "native_linkage_absent": true,
+    "payload_read_calls": 0,
+    "raw_private_receipt_sha256": "f290c8052e6a8ba7352864a59da6bad8eff6ac84363a9f4645e9ad14ae8a2afe",
+    "request": {
+      "bits": [
+        4,
+        4,
+        4
+      ],
+      "d": 4096,
+      "expert": 0,
+      "experts": 288,
+      "group_size": 64,
+      "h": 2048,
+      "modules": [
+        "language_model.model.layers.3.mlp.switch_mlp.gate_proj",
+        "language_model.model.layers.3.mlp.switch_mlp.up_proj",
+        "language_model.model.layers.3.mlp.switch_mlp.down_proj"
+      ]
+    },
+    "requested_payload_bytes": 0,
+    "roles": [
+      {
+        "bits": 4,
+        "expert": 0,
+        "group_size": 64,
+        "logical_shape": [
+          2048,
+          4096
+        ],
+        "metadata_dtype": "BF16",
+        "module": "language_model.model.layers.3.mlp.switch_mlp.gate_proj",
+        "resolved_from": "default",
+        "role": "gate"
+      },
+      {
+        "bits": 4,
+        "expert": 0,
+        "group_size": 64,
+        "logical_shape": [
+          2048,
+          4096
+        ],
+        "metadata_dtype": "BF16",
+        "module": "language_model.model.layers.3.mlp.switch_mlp.up_proj",
+        "resolved_from": "default",
+        "role": "up"
+      },
+      {
+        "bits": 4,
+        "expert": 0,
+        "group_size": 64,
+        "logical_shape": [
+          4096,
+          2048
+        ],
+        "metadata_dtype": "BF16",
+        "module": "language_model.model.layers.3.mlp.switch_mlp.down_proj",
+        "resolved_from": "default",
+        "role": "down"
+      }
+    ],
+    "selected_bytes_planned": 14155776,
+    "status": "METADATA_ONLY_ADMITTED"
+  },
+  "schema": "pulsarmlx.expert-range-admission-evidence/1",
+  "scope": "Synthetic owned-range fidelity and host storage tests plus real header/config/range planning only; no real payload, R1 or native numerical execution",
+  "sparse_case": {
+    "logical_file_bytes": 8589956259,
+    "payload_read_calls": 9,
+    "physical_bytes": 40960,
+    "probe_max_bytes": 16777216,
+    "requested_payload_bytes": 6912
+  },
+  "status": "HOST_STORAGE_AND_REAL_METADATA_ONLY_ADMITTED"
+}
