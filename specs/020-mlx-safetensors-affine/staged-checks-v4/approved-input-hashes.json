@@ -1,0 +1,10 @@
+{
+  "glm53-exact-stage-checks-reviewed-20261004.md": "4fa47e52628515af5ef561f226497480649f2f5b7ff7afe6a08b2a7ebd129f1e",
+  "glm53-final-proof-decision-reviewed-20261004.md": "3f5003701769c8fe82a2b0754ef8a853850bfd4242fc89ac4cb84e9a686527bb",
+  "glm53-integration-traces-reviewed-20261004.md": "004b01d73523b75a312249b76d999efa77a7658487b33c9bcda1a38e0869e2d4",
+  "glm53-metal-source-applicability-reviewed-20261004.md": "96f3dcb1b2a7b452e93753749f8332c2e24e96b4c289c1330de25665a4f9b65d",
+  "glm53-metal-source-theorem-reviewed-20261004.md": "8e57cc3fdfb0195feb61d228f376843ceba4905e4a48c5651247592183108fae",
+  "glm53-option-a-decision-reviewed-20261004.md": "acba9ef5513c2b033e711077b8e52a208ecdb513b668600a8377ebeae4d3faeb",
+  "glm53-preparation-integration-plan-reviewed-20261004.md": "92e36e882e9b23d0a473fc9812c13374a6edfedb020877e4d67ddb132e1e1ab6",
+  "glm53-uniform-certificate-reviewed-20261004.md": "5bc1b69fba5b97b4c8da57169495c506b561efc209951f09975ad568b07d99cd"
+}
