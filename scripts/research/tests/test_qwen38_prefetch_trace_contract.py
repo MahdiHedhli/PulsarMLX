@@ -70,6 +70,15 @@ class TraceContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "overtook queued demand"):
             validate(trace(events))
 
+    def test_promoted_inflight_hint_blocks_unrelated_prefetch(self):
+        events = [self.valid[0], event(1, "hint"), event(2, "prefetch_start", bytes=32),
+                  event(3, "demand_queued"), event(4, "demand_start"),
+                  event(5, "hint", "L1:E3"), event(6, "prefetch_start", "L1:E3", bytes=16)]
+        candidate = trace(events)
+        candidate["max_prefetch_requests"] = 2
+        with self.assertRaisesRegex(ContractError, "overtook waiting demand"):
+            validate(candidate)
+
     def test_caps_include_inflight_buffer(self):
         events = self.valid[:3] + [event(3, "hint", "L1:E3"), event(4, "prefetch_start", "L1:E3", bytes=33)]
         candidate = trace(events)

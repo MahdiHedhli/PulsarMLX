@@ -115,6 +115,9 @@ def validate(trace: dict) -> None:
             _require(not cancelled, "prefetch after cancellation")
             _require(key in hints and key not in buffers, "stale or duplicate prefetch")
             _require(not pending_demands, "prefetch overtook queued demand")
+            _require(not any(waiting_key in started_demands and buffer.io_done_at is None
+                             for waiting_key, buffer in buffers.items()),
+                     "prefetch overtook waiting demand")
             _require(type(size) is int and size > 0, "invalid prefetch size")
             _require(len(buffers) < request_cap and used_bytes + size <= byte_cap, "prefetch cap exceeded")
             buffers[key] = Buffer(size=size)

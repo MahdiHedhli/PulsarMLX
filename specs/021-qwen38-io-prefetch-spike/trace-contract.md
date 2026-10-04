@@ -10,7 +10,7 @@ Each trace is a JSON object with `schema`, `base_commit`, `model_revision`, `tok
 | `demand_queued`, `demand_start` | `key` | A pending demand blocks admission of a new speculative read. A demand starts once per key. |
 | `hint`, `hint_invalidate` | `key` | Hints may be invalidated when the route/window changes. |
 | `cancel` | none | Invalidates all hints. In-flight reads must complete and release buffers before the request ends. |
-| `prefetch_start` | `key`, positive `bytes` | Requires a live hint, no pending demand, and room under both caps. |
+| `prefetch_start` | `key`, positive `bytes` | Requires a live hint, no queued demand or demand waiting on an in-flight hint, and room under both caps. |
 | `prefetch_io_done` | `key` | The read has completed, including failure/cancellation handling. |
 | `prefetch_use`, `prefetch_gpu_done` | `key` | Optional GPU use; only completed, valid hints with a real started demand may be used. |
 | `buffer_release` | `key` | Allowed only after I/O and any GPU use complete. This releases reserved capacity. |
