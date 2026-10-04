@@ -8,6 +8,7 @@ It is not a qualified production allocator or GPU residency implementation.
 from __future__ import annotations
 
 import os
+import stat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -18,6 +19,7 @@ from qwen38_page_catalog import PageKey, PageSpec
 
 MARKER = ".qwen38-synthetic-fixture"
 MARKER_CONTENT = "qwen38-synthetic-fixture-v1\n"
+MAX_FIXTURE_BYTES = 16 * 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -31,6 +33,8 @@ class FixturePageStore:
 
     def __init__(self, root: Path, file_sizes: dict[str, int], pager: BoundedPager,
                  observe: Callable[[], Observation]):
+        if root.is_symlink():
+            raise PagerProtocolError("symlinked fixture root refused")
         root = root.resolve(strict=True)
         marker = root / MARKER
         if marker.is_symlink() or not marker.is_file() or marker.read_text() != MARKER_CONTENT:
@@ -44,20 +48,43 @@ class FixturePageStore:
         self.pager = pager
         self.observe_sample = observe
         self.fds: dict[str, int] = {}
+        self.file_identity: dict[str, tuple[int, ...]] = {}
         self.buffers: dict[PageKey, bytearray] = {}
         self.closed = False
+        total_fixture_bytes = 0
         try:
             for name, expected_size in file_sizes.items():
                 if (Path(name).name != name or type(expected_size) is not int or expected_size <= 0
-                        or (root / name).is_symlink()):
+                        or expected_size > MAX_FIXTURE_BYTES or (root / name).is_symlink()):
                     raise PagerProtocolError("invalid fixture file identity")
-                fd = os.open(root / name, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+                total_fixture_bytes += expected_size
+                if total_fixture_bytes > MAX_FIXTURE_BYTES:
+                    raise PagerProtocolError("synthetic fixture exceeds size cap")
+                fd = os.open(root / name, os.O_RDONLY | os.O_CLOEXEC |
+                             os.O_NOFOLLOW | os.O_NONBLOCK)
                 self.fds[name] = fd
-                if os.fstat(fd).st_size != expected_size:
-                    raise PagerProtocolError("fixture file size mismatch")
+                info = os.fstat(fd)
+                if not stat.S_ISREG(info.st_mode) or info.st_size != expected_size:
+                    raise PagerProtocolError("fixture file type or size mismatch")
+                self.file_identity[name] = self._identity(info)
         except BaseException:
             self.close()
             raise
+
+    @staticmethod
+    def _identity(info: os.stat_result) -> tuple[int, ...]:
+        return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
+                info.st_mtime_ns, info.st_ctime_ns)
+
+    def _verify_file(self, name: str) -> None:
+        try:
+            opened = os.fstat(self.fds[name])
+            current = os.stat(self.root / name, follow_symlinks=False)
+        except OSError as exc:
+            raise PagerProtocolError("fixture file changed during use") from exc
+        expected = self.file_identity[name]
+        if self._identity(opened) != expected or self._identity(current) != expected:
+            raise PagerProtocolError("fixture file changed during use")
 
     def _reconcile(self) -> None:
         for key in list(self.buffers):
@@ -92,6 +119,7 @@ class FixturePageStore:
                     span.offset + span.length > self.file_sizes[span.filename]):
                 raise PagerProtocolError("page span outside admitted fixture")
             seen.add(span.tensor)
+            self._verify_file(span.filename)
             target = memoryview(buffer)[cursor:cursor + span.length]
             done = 0
             while done < span.length:
@@ -99,6 +127,7 @@ class FixturePageStore:
                 if count <= 0 or count > span.length - done:
                     raise PagerProtocolError("short or invalid page read")
                 done += count
+            self._verify_file(span.filename)
             cursor += span.length
         if cursor != len(buffer):
             raise PagerProtocolError("page buffer length mismatch")

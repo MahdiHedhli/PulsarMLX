@@ -114,11 +114,30 @@ class FixtureIoTests(unittest.TestCase):
         with FixturePageStore(self.root, self.files, p, lambda: GOOD) as store:
             (self.root / "synthetic.safetensors").write_bytes(self.blob[:32])
             p.demand(E1)
-            with self.assertRaisesRegex(PagerProtocolError, "short or invalid"):
+            with self.assertRaisesRegex(PagerProtocolError, "file changed"):
                 store.pump_one()
             self.assertTrue(p.closed)
             self.assertEqual(p.accounting()["staging_bytes"], 0)
             self.assertFalse(store.buffers)
+
+    def test_same_size_rewrite_and_path_replacement_stop_before_read(self):
+        for replace in (False, True):
+            with self.subTest(replace=replace):
+                p = pager(self.catalog)
+                with FixturePageStore(self.root, self.files, p, lambda: GOOD) as store:
+                    path = self.root / "synthetic.safetensors"
+                    if replace:
+                        replacement = self.root / "replacement.bin"
+                        replacement.write_bytes(self.blob)
+                        replacement.replace(path)
+                    else:
+                        path.write_bytes(bytes(len(self.blob)))
+                    p.demand(E1)
+                    with self.assertRaisesRegex(PagerProtocolError, "file changed"):
+                        store.pump_one()
+                    self.assertTrue(p.closed)
+                    self.assertEqual(p.accounting()["staging_bytes"], 0)
+                path.write_bytes(self.blob)
 
     def test_out_of_range_span_is_rejected_before_read(self):
         bad = PageSpec(E0, (ByteSpan("synthetic.safetensors", len(self.blob), 4, "bad.weight"),))
