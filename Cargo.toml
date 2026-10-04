@@ -15,7 +15,7 @@ members = [
     "crates/mlx-affine",
     "crates/mlx-native-affine",
     "crates/mlx-expert-mlp",
-  "crates/mlx-expert-ranges",
+    "crates/mlx-expert-ranges",
 ]
 
 [workspace.package]
