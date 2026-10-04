@@ -6,7 +6,7 @@ Status: design and synthetic admission only, 2026-10-04 UTC. This slice does not
 
 The acquired mixed 4/8-bit checkpoint is 98.924 GiB, larger than the M2 Max's 64 GiB unified memory. Paging only the approximately 32 GB PLE n-gram table still leaves more than physical memory. A full-checkpoint run requires a separate page catalog and scheduler whose demand path preserves the converted checkpoint's exact tensor bytes and whose resource use can be bounded and observed.
 
-This slice admits exact, header-derived file spans for one routed expert (all three affine projection triples) or one PLE shard row block (one affine triple). It exercises demand priority, hint invalidation, in-flight reservation, and GPU lease lifetime on synthetic pages. It provides no model execution path and makes no throughput claim.
+This slice admits exact, header-derived file spans for one routed expert (all three affine projection triples) or one PLE shard row block (one affine triple). It exercises demand priority, hint invalidation, in-flight reservation, and GPU lease lifetime on synthetic pages. A fixture-only adapter performs real `preadv` calls against tiny synthetic files and retains host page buffers. It provides no checkpoint or MLX execution path and makes no throughput claim.
 
 ## Requirements and exclusion
 
@@ -16,7 +16,8 @@ This slice admits exact, header-derived file spans for one routed expert (all th
 4. In-flight bytes reserve weight and staging capacity before I/O. Idle resident pages may be evicted; active demand pages and GPU-leased pages cannot. An unsuccessful speculative admission does not evict a useful page.
 5. Cancellation invalidates hints and waits for I/O completion to release buffers. A GPU lease cannot be released until completion is acknowledged.
 6. Process memory, system headroom, swap growth, and memory pressure are monitored stop conditions. Scheduler counters alone do not prove physical residency or prevent an allocator from overshooting between samples.
-7. The stock `mlx_lm.load()`/`generate` path remains blocked on this host. No full-checkpoint inference, checkpoint Python import, package installation, or benchmark belongs to this slice.
+7. The fixture I/O adapter refuses directories without a marker, symlinked or changed files, out-of-bounds spans, short reads, and accounting divergence. It admits only synthetic test files; its memory callback is injected and does not qualify a macOS production monitor.
+8. The stock `mlx_lm.load()`/`generate` path remains blocked on this host. No full-checkpoint inference, checkpoint Python import, package installation, or benchmark belongs to this slice.
 
 ## Success evidence
 

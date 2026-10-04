@@ -95,6 +95,9 @@ class BoundedPager:
         self._drain_unpinned()
         raise PagerStop(reason)
 
+    def stop(self, reason: str) -> None:
+        self._stop(reason)
+
     def _drain_unpinned(self) -> None:
         for key in list(self.resident):
             if not self._pinned(key):
@@ -222,6 +225,15 @@ class BoundedPager:
         self.resident[ticket.spec.key] = ticket.spec
         self.resident_bytes += ticket.spec.size_bytes
         self.resident.move_to_end(ticket.spec.key)
+
+    def fail_io(self, ticket: IoTicket) -> None:
+        """A synchronous failed read ended; release its reservation and stop."""
+        current = self.pending.get(ticket.spec.key)
+        if current != ticket:
+            raise PagerProtocolError("unmatched I/O failure")
+        del self.pending[ticket.spec.key]
+        self.staging_bytes -= ticket.spec.size_bytes
+        self._stop("page I/O failed")
 
     def acquire(self, key: PageKey) -> int:
         """Return a lease only for a page demanded by actual model computation."""
