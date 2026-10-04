@@ -202,6 +202,24 @@ class SchedulerTests(unittest.TestCase):
         with self.assertRaises(PagerStop):
             q.observe(Observation(300, 160, 1, False))
 
+    def test_pressure_stop_drains_idle_pages_but_waits_for_gpu_lease(self):
+        p = pager()
+        p.hint(E0)
+        first = p.next_io()
+        p.complete_io(first)
+        p.demand(E1)
+        second = p.next_io()
+        p.complete_io(second)
+        lease = p.acquire(E1)
+        with self.assertRaises(PagerStop):
+            p.observe(Observation(481, 160, 0, False))
+        self.assertNotIn(E0, p.resident)
+        self.assertIn(E1, p.resident)
+        self.assertEqual(p.accounting()["resident_bytes"], 48)
+        p.mark_gpu_done(lease)
+        p.release(lease)
+        self.assertEqual(p.accounting()["resident_bytes"], 0)
+
     def test_active_demand_count_is_bounded(self):
         p = pager()
         for key in (E0, E1, E2):

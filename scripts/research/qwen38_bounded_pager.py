@@ -92,7 +92,13 @@ class BoundedPager:
     def _stop(self, reason: str) -> None:
         self.cancel_request()
         self.closed = True
+        self._drain_unpinned()
         raise PagerStop(reason)
+
+    def _drain_unpinned(self) -> None:
+        for key in list(self.resident):
+            if not self._pinned(key):
+                self.resident_bytes -= self.resident.pop(key).size_bytes
 
     def _spec(self, key: PageKey) -> PageSpec:
         spec = self.catalog(key)
@@ -239,6 +245,8 @@ class BoundedPager:
         if lease is None or not lease.gpu_done:
             raise PagerProtocolError("release before GPU completion")
         del self.leases[lease_id]
+        if self.closed:
+            self._drain_unpinned()
 
     def finish_demand(self, key: PageKey) -> None:
         if key not in self.actual_demands or self._pinned(key) or key in self.pending or key in self.demand_queue:
