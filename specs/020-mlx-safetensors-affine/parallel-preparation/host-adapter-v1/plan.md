@@ -1,0 +1,12 @@
+# Plan
+
+1. Verify base adda03ad9097372fe7e9d8fa59d2853281af6c1f ancestry and no path overlap; verify candidate and30 reference pins. Freeze exact inventories, approved inputs and immutable integration contract.
+2. Manually prepare this nested spec/interface/plan/tasks/constitution-analysis/test population using local Speckit workflows without metadata-mutating setup. Review exact population with installed tool-free Claude Opus5.5 before implementation. Retain all provider errors, rejection and acceptance receipts.
+3. Import32 exact files by pinned git show from model bd7078054d92373bedb1759dfbab533d0fde1a23 and storage316c82627a04b0c21669ffb1a8237d1ca323b1db; never edit them. New code only scripts/research/glm53_flash/host_adapter_v1/, test scripts/research/tests/test_glm53_host_adapter_v1.py and this doc prefix.
+4. Author tests/literal oracle before adapter.py. Implement stdlib serial Adapter with sealed source grants, active intent registry and phase methods (reserve/read/admit/dispatch/prepare/complete/commit), bounded outbox, cancellation/reset and quiescent cleanup. Frozen private storage entry inspection is a trusted serial fixture seam, not security/physical proof. Private model is the only computation path.
+5. Run targeted test populations and compile sources offline; no MLX import or Cargo/native execution. Freeze final source, tests, exact commands/results and history cutoff. Independent reviewer must report constitution check, complete descriptor/hash match, actual model and ACCEPT/0 exit0. Fix findings within ownership and repeat.
+6. Own-branch commit with constitution-compliance citation; verify committed/current/reviewed hashes. Audit handoff.json and REPORT.md record limitations and coordinator/integration gates. No push/merge.
+
+Source definitions and test inventory are frozen with a versioned manifest for each review. A review history freeze cutoff includes all receipts existing when the capsule is constructed; its own future verdict is appended only to private audit, avoiding circular review requirements. No historical error is erased.
+
+Constitution-compliance check: PASS for this bounded specification, under .specify/memory/constitution.md Governance lines166–168 and principles I, III, VIII, X, XI, XII. Only additive stdlib host synthetic code is planned; no production/native claim, weights, shared metadata or frozen-source modification. Tests, exact independent reviews, failures and commands remain explicit. No Rust changes; workspace/native checks are outside this slice.
