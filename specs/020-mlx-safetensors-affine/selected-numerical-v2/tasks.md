@@ -45,3 +45,5 @@ Preliminary host review ACCEPT/0 from actual claude-opus-5-5, source hashes
 independently matched; subsequent source changes require final exact review.
 
 T009: allocation ledger, measured native/RSS gates and owned watchdog implemented; measurements pending final reviewed qualification. T010: independent Rust/Python provider validators and host report controls pass; source/build freeze and final review remain open.
+
+Final review 01 BLOCKED/2 preserved at 9d286b0c. T010 reopened: actual decoder/native nibble witness, fixed issued-real ledger, raw population/build bindings and re-review required. All numerical gates remain closed.

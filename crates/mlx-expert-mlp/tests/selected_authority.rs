@@ -8,8 +8,8 @@ fn docs() -> (Value, Value) {
     let hashes = json!({"source.py":hash});
     let mut encoded = serde_json::to_vec(&hashes).unwrap();
     encoded.push(b'\n');
-    let d = json!({"commit":"1".repeat(40),"tree":"2".repeat(40),"source_sha256":hashes,"package_sha256":sha256_hex(&encoded),"executable_sha256":"3".repeat(64),"contract_sha256":"4".repeat(64),"population_sha256":"5".repeat(64),"input_sha256":"6".repeat(64),"build":{"test":true},"pre_review_selected_numerical_observations":0});
-    let c = json!({"schema":SCHEMA,"purpose":"FINAL_EXECUTION_REVIEW","descriptor":d,"source_files":{"source.py":{"sha256":hash,"text":text}}});
+    let d = json!({"commit":"1".repeat(40),"tree":"2".repeat(40),"source_sha256":hashes,"package_sha256":sha256_hex(&encoded),"executable_sha256":"3".repeat(64),"contract_sha256":"4".repeat(64),"population_sha256":sha256_hex(b"{}"),"input_sha256":"6".repeat(64),"build":{"test":true},"pre_review_selected_numerical_observations":0});
+    let c = json!({"schema":SCHEMA,"purpose":"FINAL_EXECUTION_REVIEW","descriptor":d,"source_files":{"source.py":{"sha256":hash,"text":text}},"synthetic_population":{"text":"{}","sha256":sha256_hex(b"{}")}});
     let verdict = json!({"schema":SCHEMA,"decision":"ACCEPT","blockers":0,"assessed":d});
     let p = json!({"type":"result","subtype":"success","is_error":false,"modelUsage":{"claude-opus-5-5":{"outputTokens":1}},"result":verdict.to_string()});
     (c, p)
@@ -59,5 +59,12 @@ fn boolean_zero_is_not_a_verdict_or_observation_count() {
     assert!(validate(&c, &p).is_err());
     let (mut c, p) = docs();
     c["descriptor"]["pre_review_selected_numerical_observations"] = json!(false);
+    assert!(validate(&c, &p).is_err());
+}
+
+#[test]
+fn reviewed_population_text_is_bound() {
+    let (mut c, p) = docs();
+    c["synthetic_population"]["text"] = json!("changed");
     assert!(validate(&c, &p).is_err());
 }

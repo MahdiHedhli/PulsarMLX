@@ -90,18 +90,13 @@ def host_controls(manifest,base_path,binding,input_bytes,reference_document,posi
         elif ident=='expert-swap':h['owned']['plan']['request']['expert']=1;expected='integer binding'
         else:h['owned']['plan']['planes'][0]['bits']=8;expected='integer binding'
         add(ident,refusal(lambda:S.decode_header(json.dumps(h).encode(),binding),expected))
-    word=0x76543210;x=[1]+[0]*4095
-    correct=sum(x[j]*((word>>(4*j))&15) for j in range(8))
-    reversed_value=sum(x[j]*((word>>(4*(7-j)))&15) for j in range(8))
-    A.require(correct==0 and reversed_value==7,'reversed nibble semantic witness')
-    add('nibble-order',{'original':correct,'mutant':reversed_value,'original_local_budget':0})
     reference=C.deserialize(reference_document['reference'])
     identity={k:reference_document[k] for k in ('commit','tree','snapshot_sha256','input_sha256','review_sha256')}
     report=copy.deepcopy(positive_report);report.pop('down_admission')
     add('skip-down-admission',refusal(lambda:C.compare(report,reference,original,identity),'actual down admission record required'))
     doc=copy.deepcopy(reference_document);doc['authority']='candidate-hidden'
     add('candidate-fed-reference',refusal(lambda:reference_authority(doc,identity),'independent R1 authority'))
-    expected=[v['id'] for v in manifest['refusals']]+[v['id'] for v in manifest['mutations'] if v['kind'] in ('host-custody','packed-code-witness','report-audit','authority-audit')]
+    expected=[v['id'] for v in manifest['refusals']]+[v['id'] for v in manifest['mutations'] if v['kind'] in ('host-custody','report-audit','authority-audit')]
     A.require(len(results)==len(expected) and {r['id'] for r in results}==set(expected),'complete host controls')
     private_json(out/'host-controls.json',{'schema':'pulsarmlx.selected-host-controls/2','status':'PASS','results':results})
     return results
@@ -114,6 +109,30 @@ def native_control(report,ident,reference,parts,input_bytes):
         m=stage['resources']
         A.require(m['active_bytes']<=64*1024*1024 and m['allocator_peak_bytes']<=64*1024*1024
             and m['process_peak_rss_bytes']<=1024*1024*1024,'control native resources')
+    if ident=='nibble-order':
+        stage=report['projection_control'];resources(stage)
+        A.require(stage['role']==0 and stage['after'][0]-stage['before'][0]==5
+            and stage['after'][1]-stage['before'][1]==4,'packing witness QMM calls')
+        witness=(struct.pack('<I',0x76543210)*1048576,struct.pack('<H',0x3f80)*131072,bytes(262144))
+        basis=struct.pack('<f',1)+bytes(4095*4)
+        A.require(stage['input_sha256']==A.sha(basis) and stage['component_sha256']==[A.sha(v) for v in witness],
+                  'original synthetic packing witness bytes')
+        original,budget=R.affine(R.Plane('gate',witness),R.original_input(basis,4096))
+        actual,_=C.decode(stage['output'],2048)
+        # Independent reversed-U32-nibble decoder on the same immutable bytes.
+        # Basis x has only j=0 nonzero: all remaining contraction terms vanish.
+        mutant=[];mutant_budget=[]
+        for row in range(2048):
+            word=struct.unpack_from('<I',witness[0],row*2048)[0]
+            q=(word>>28)&15
+            mutant.append(F(q));mutant_budget.append(R.gamma(4096)*q)
+        A.require(all(v==0 and b==0 for v,b in zip(original,budget,strict=True)),'original decoder basis result')
+        A.require(all(v==7 for v in mutant),'reversed decoder basis result')
+        A.require(all(abs(a-o)<=b for a,o,b in zip(actual,original,budget,strict=True)),'candidate original packing')
+        A.require(all(abs(m-o)>b+mb for m,o,b,mb in zip(mutant,original,budget,mutant_budget,strict=True)),
+                  'packing mutation survives local budgets')
+        return {'id':ident,'status':'PASS','detected_lanes':2048,'native_qmm_calls':1,
+                'original_r1':'Plane/affine/code from original packed bytes','mutant':'reverse nibble positions within original U32'}
     if ident in ('omit-gate-bias','omit-up-bias'):
         role='gate' if ident=='omit-gate-bias' else 'up';index=0 if role=='gate' else 1
         stage=report['projection_control'];A.require(stage['role']==index,'bias role')

@@ -86,3 +86,30 @@ create-only attempt files prevent silent retries in the chosen attempt directory
 Inherited summaries are checked before new synthetic execution, with their
 separate primitive/plane schemas and raw-child digests. No missing evidence can
 be repaired by treating a partial synthetic run as qualification.
+
+### Final review 01 remediation (before any numerical observation)
+
+Exact source 9d286b0c received BLOCKED/2. Preserve that checkpoint and raw review.
+Replace the inline nibble witness by one full-shape synthetic native gate QMM:
+all packed words 0x76543210, BF16 scales=1, biases=0, basis input x[0]=1 and
+all other lanes zero. Original R1 uses Plane/affine/code; mutant R1 reverses
+nibbles within each original U32 word. Candidate must match original R1 under
+its unchanged local bound; mutant must separate by more than both budgets.
+This control is not a positive case. Native-control count becomes eight,
+host mutations five; population remains 2+24+13. New selected synthetic total
+is nine QMM calls (75,497,472 MAC), twelve activation calls (24,576 lanes).
+
+Issue-real is a reviewed mode following full synthetic qualification. A fixed
+per-user audit ledger root (resolved from operating-system account home, never
+capability/out or HOME environment) contains a create-only directory keyed by
+commit/contract/snapshot. Its private ledger binds canonical issued capability
+JSON (only the later hash-bound pre_admission receipt is excluded). Reference
+and native entry independently validate it and create distinct once-only start
+records before any snapshot access. A fresh out directory cannot bypass them.
+No deletion or reset is provided. Refusal consumes the R1 attempt.
+
+Also bind inherited child executable/native libraries to the reviewed build;
+label floor controls as R1-admission (Rust candidate guard coverage is separate);
+validate synthetic manifest text in both review parsers; include test headers
+and native build source scripts. Review build records use repository/prefix
+relative labels, excluding absolute host paths.

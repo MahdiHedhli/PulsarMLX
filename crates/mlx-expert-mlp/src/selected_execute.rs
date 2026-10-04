@@ -188,24 +188,24 @@ pub(crate) fn control(
     native::set_default_device_gpu().map_err(|e| e.to_string())?;
     selected_resources::initialize()?;
     report["control_id"] = json!(id);
-    if id == "omit-gate-bias" || id == "omit-up-bias" {
+    if id == "omit-gate-bias" || id == "omit-up-bias" || id == "nibble-order" {
         let role = usize::from(id == "omit-up-bias");
         let mut parts = adapter.stage(role)?;
         parts[2].bytes.fill(0);
-        selected_preflight(role, adapter.input(), &parts)?;
+        let mut input = adapter.input().clone();
+        if id == "nibble-order" {
+            parts[0].bytes = 0x76543210u32.to_le_bytes().repeat(1048576);
+            parts[1].bytes = 0x3f80u16.to_le_bytes().repeat(131072);
+            input.bytes.fill(0);
+            input.bytes[..4].copy_from_slice(&1f32.to_le_bytes());
+        }
+        selected_preflight(role, &input, &parts)?;
         let gpu = native::NativeContext::new(native::DeviceKind::Gpu).map_err(|e| e.to_string())?;
         let before = ffi::call_counts();
         let guard = cpu()?;
-        let (_, copy, stats) = bridge::quantized_matmul(
-            &gpu,
-            adapter.input(),
-            &parts[0],
-            &parts[1],
-            &parts[2],
-            4,
-            64,
-        )
-        .map_err(|(e, _)| format!("{e:?}"))?;
+        let (_, copy, stats) =
+            bridge::quantized_matmul(&gpu, &input, &parts[0], &parts[1], &parts[2], 4, 64)
+                .map_err(|(e, _)| format!("{e:?}"))?;
         if cpu()? != guard
             || stats.numerical_before_decision != 0
             || stats.imports_before_decision != 0
@@ -213,7 +213,7 @@ pub(crate) fn control(
             return Err("control guard failure".into());
         }
         let out = host(copy, 2048)?;
-        report["projection_control"] = json!({"role":role,"output":bits(&out),"before":before,"after":ffi::call_counts(),"resources":selected_resources::sample()?});
+        report["projection_control"] = json!({"role":role,"output":bits(&out),"before":before,"after":ffi::call_counts(),"input_sha256":sha256_hex(&input.bytes),"component_sha256":parts.iter().map(|p|sha256_hex(&p.bytes)).collect::<Vec<_>>(),"resources":selected_resources::sample()?});
         drop(gpu);
         return Ok(());
     }

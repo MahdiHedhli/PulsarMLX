@@ -52,3 +52,15 @@ population has8 QMM calls (67,108,864 MACs) and12 activation calls (24,576 lane
 instances), before inherited regressions. Numeric bias/swap controls compare
 against original reference budgets and separately bounded mutant rounding.
 Host custody/refusal/authority controls never dispatch inadmissible kernels.
+
+### Revision after final review 01 (no observations)
+
+The earlier inline nibble witness was rejected as vacuous and is not credited.
+`nibble-order` now executes the full native gate projection and original-byte
+Plane/affine/code with repeated U32=0x76543210, scales=1, biases=0 and x=e0.
+The independent reversed-nibble interpretation of those original words gives7;
+the original gives0 with zero local budget. This is a control, never a positive.
+Native controls are now eight; host mutations five; total population stays39.
+Total selected synthetic QMM work becomes nine projections /75,497,472 MAC.
+Activation work remains twelve calls /24,576 lanes. Floor entries explicitly
+cover R1 admission; the separate Rust preflight tests cover candidate guards.

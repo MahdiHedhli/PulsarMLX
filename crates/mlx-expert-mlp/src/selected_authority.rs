@@ -82,6 +82,15 @@ pub fn review_descriptor(
         verdict["assessed"] == *descriptor,
         "exact assessed version/build",
     )?;
+    let population = &capsule["synthetic_population"];
+    let population_text = population["text"]
+        .as_str()
+        .ok_or("AUTHORITY: synthetic population text")?;
+    require(
+        population["sha256"] == sha256_hex(population_text.as_bytes())
+            && population["sha256"] == descriptor["population_sha256"],
+        "synthetic population digest",
+    )?;
     let source = capsule["source_files"]
         .as_object()
         .ok_or("AUTHORITY: source files")?;

@@ -148,6 +148,61 @@ fn bound_receipt(cap: &Value, key: &str) -> Result<Value, String> {
     strict(&raw)
 }
 
+fn begin_real_native(
+    cap: &Value,
+    descriptor: &Value,
+    binding: &Value,
+    admission: &Value,
+) -> Result<(), String> {
+    use mlx_expert_mlp::selected_ledger as ledger;
+    // Account home is independent of HOME and the capability's output/repo.
+    let home = unsafe {
+        let account = libc::getpwuid(libc::geteuid());
+        need(!account.is_null(), "OS account home")?;
+        let dir = (*account).pw_dir;
+        need(!dir.is_null(), "OS account home path")?;
+        std::ffi::CStr::from_ptr(dir)
+            .to_str()
+            .map_err(|e| e.to_string())?
+            .to_owned()
+    };
+    let root = PathBuf::from(home).join(ledger::RELATIVE_ROOT);
+    let dir = root.join(ledger::key(descriptor, binding)?);
+    for path in [&root, &dir] {
+        let m = path.symlink_metadata().map_err(|e| e.to_string())?;
+        need(
+            m.is_dir() && m.uid() == unsafe { libc::geteuid() } && m.mode() & 0o077 == 0,
+            "private fixed ledger directory",
+        )?;
+    }
+    let raw = read(&dir.join("ledger.json"), 1024 * 1024, true)?;
+    let record = strict(&raw)?;
+    ledger::validate(&record, cap, descriptor, binding)?;
+    need(
+        admission["real_attempt_sha256"] == record["capability_sha256"],
+        "real admission ledger identity",
+    )?;
+    let start = strict(&read(&dir.join("reference-start.json"), 1024 * 1024, true)?)?;
+    need(
+        start["schema"] == "pulsarmlx.selected-real-start/2"
+            && start["phase"] == "reference"
+            && start["ledger_sha256"] == sha256_hex(&raw)
+            && start["capability_sha256"] == record["capability_sha256"],
+        "original R1 attempt ledger",
+    )?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(dir.join("native-start.json"))
+        .map_err(|e| e.to_string())?;
+    let start = json!({"schema":"pulsarmlx.selected-real-start/2","phase":"native","ledger_sha256":sha256_hex(&raw),"capability_sha256":record["capability_sha256"]});
+    file.write_all(&serde_json::to_vec(&start).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())?;
+    file.sync_all().map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 pub fn main() -> Result<(), String> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
     need(
@@ -369,6 +424,9 @@ pub fn main() -> Result<(), String> {
             && !out.starts_with(&repo),
         "private output directory outside Git",
     )?;
+    if kind == "real" {
+        begin_real_native(&cap, &descriptor, &binding_value, &admission)?;
+    }
     let mut result_file = OpenOptions::new()
         .write(true)
         .create_new(true)

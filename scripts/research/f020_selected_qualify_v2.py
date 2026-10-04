@@ -18,6 +18,7 @@ from f020_selected_process_v2 import private_json, owned_child
 import f020_selected_snapshot_v2 as S
 import f020_selected_r1_v2 as R
 import f020_selected_compare_v2 as C
+import f020_selected_ledger_v2 as L
 from f020_selected_controls_v2 import reference_authority, host_controls, native_control
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -29,6 +30,22 @@ def receipt(cap,key):
     record=cap[key];raw=A.bounded(record['path'],private=True)
     A.require(A.sha(raw)==record['sha256'],'private receipt binding '+key)
     return A.strict(raw)
+
+
+def qualified_real(cap,d,contract,manifest):
+    ids=[v['id'] for k in ('cases','refusals','mutations') for v in manifest[k]]
+    binding=cap['real_binding']
+    for key in ('snapshot_sha256','snapshot_bytes','metadata_sha256','ranges_sha256'):
+        A.require(binding[key]==contract[key],'fixed original capture '+key)
+    q=receipt(cap,'synthetic_qualification')
+    A.require(q['schema']=='pulsarmlx.selected-synthetic-qualification/2' and q['status']=='PASS','synthetic qualification')
+    for key in ('commit','tree','executable_sha256','population_sha256'):
+        A.require(q[key]==d[key],'synthetic exact version '+key)
+    A.require(q['review_sha256']==cap['review_sha256'] and q['positive_count']==2 and q['refusal_count']==24
+        and q['mutation_count']==13 and q['mutation_survivors']==0 and q['primitive_regressions']==363
+        and q['plane_regressions']==32,'full synthetic/regression gate')
+    A.require(q['passed_ids']==ids,'exact full population ID evidence')
+    return binding
 
 
 def verified(cap):
@@ -51,17 +68,8 @@ def verified(cap):
         binding=cases[0]['binding']
     elif cap['kind']=='real':
         A.require(not cap.get('control_id'),'no real mutation controls')
-        binding=cap['real_binding']
-        for key in ('snapshot_sha256','snapshot_bytes','metadata_sha256','ranges_sha256'):
-            A.require(binding[key]==contract[key],'fixed original capture '+key)
-        q=receipt(cap,'synthetic_qualification')
-        A.require(q['schema']=='pulsarmlx.selected-synthetic-qualification/2' and q['status']=='PASS','synthetic qualification')
-        for key in ('commit','tree','executable_sha256','population_sha256'):
-            A.require(q[key]==d[key],'synthetic exact version '+key)
-        A.require(q['review_sha256']==cap['review_sha256'] and q['positive_count']==2 and q['refusal_count']==24
-            and q['mutation_count']==13 and q['mutation_survivors']==0 and q['primitive_regressions']==363
-            and q['plane_regressions']==32,'full synthetic/regression gate')
-        A.require(q['passed_ids']==ids,'exact full population ID evidence')
+        binding=qualified_real(cap,d,contract,manifest)
+        L.verify(cap,d,binding)
     else:raise ValueError('unknown selected scope')
     out=Path(cap['out']).resolve();repo=Path(cap['repo']).resolve()
     A.require(out.is_dir() and not out.is_relative_to(repo) and out.stat().st_mode&0o077==0
@@ -71,7 +79,8 @@ def verified(cap):
 
 def identity(cap,d,binding):
     return {**{k:d[k] for k in ('commit','tree','executable_sha256','contract_sha256','population_sha256','input_sha256')},
-            'snapshot_sha256':binding['snapshot_sha256'],'review_sha256':cap['review_sha256']}
+            'snapshot_sha256':binding['snapshot_sha256'],'review_sha256':cap['review_sha256'],
+            **({'real_attempt_sha256':L.capability_sha(cap)} if cap['kind']=='real' else {})}
 
 
 def resource_record(start):
@@ -86,6 +95,7 @@ def resource_record(start):
 def reference_worker(cap):
     d,contract,manifest,binding,out=verified(cap)
     started=time.monotonic();base=identity(cap,d,binding)
+    if cap['kind']=='real':L.begin_reference(cap,d,binding)
     # Create-only attempt marker precedes any selected snapshot read. A refused
     # fixed real attempt cannot silently be rerun in this audit directory.
     private_json(out/'reference-started.json',{'schema':'pulsarmlx.selected-reference-start/2',**base,'kind':cap['kind']})
@@ -159,7 +169,7 @@ def run_positive(cap):
 
 
 
-NATIVE_CONTROLS=('omit-gate-bias','omit-up-bias','gate-up-swap','lower-gate-clamp',
+NATIVE_CONTROLS=('omit-gate-bias','omit-up-bias','nibble-order','gate-up-swap','lower-gate-clamp',
                  'missing-upper-gate-clamp','missing-up-upper-clamp','missing-up-lower-clamp')
 
 
@@ -207,6 +217,16 @@ def regression_summaries(cap,descriptor):
         A.require(summary.get('failures')==[],'regression failures')
         raw_child=A.bounded(record['report_path'])
         A.require(A.sha(raw_child)==summary['child']['report_sha256'],'regression raw child digest')
+        child=A.strict(raw_child);provenance=child['provenance']
+        expected_build=descriptor['build']
+        A.require(provenance['build']['qualify_executable_sha256']==expected_build['regression_executables']['qualify']['sha256'],
+                  'reviewed regression child executable')
+        parent='native_qualification' if key=='primitives' else 'composition_qualification'
+        A.require(record['parent_executable_sha256']==expected_build['regression_executables'][parent]['sha256'],
+                  'reviewed regression parent executable')
+        for library in ('libmlx','libmlxc','metallib'):
+            A.require(provenance[library]['sha256']==expected_build['native_libraries'][library]['sha256'],
+                      'reviewed regression native library')
         records[key]={'count':count,'summary_sha256':A.sha(raw),'child_sha256':A.sha(raw_child)}
     return records
 

@@ -29,3 +29,23 @@ f017-native excluded; sandbox failure preserved. Since then host source/tests
 changed:14 Python and7 Rust tests pass plus selected activation stub test.
 The selected execution core is written but intentionally not wired into a
 binary: final capability/resource/provenance/cleanup wrapper remains incomplete.
+
+## Final exact review 01 at 9d286b0c: BLOCKED/2
+
+Actual reviewer claude-opus-5-5; exact assessed descriptor matched. No numerical
+observation preceded or followed this rejected verdict. Preserved raw review
+and capsule privately. B1 inline nibble witness replaced by actual original-byte
+R1/native full gate projection, independent reversed-nibble mutant and immutable
+component/input hashes. B2 output-directory guard replaced by reviewed issue-real
+and fixed OS-account-home ledger, canonical capability binding and separate
+create-only R1/native starts. Out-directory changes cannot reuse authority.
+
+Medium follow-ups: inherited child executable and native library identities
+are checked against reviewed build; parent executable digest is required;
+floor entries are explicitly R1-admission controls with Rust guard tests separate.
+Low follow-ups: both parsers validate reviewed synthetic manifest text/hash;
+source package includes .h stubs and native CI install/compare scripts, and build
+paths are repository/prefix-relative in the external capsule.
+Revalidation: 31 Python host tests, 15 Rust/ownership tests, pinned native compile
+PASS. Full synthetic/R1/native selected calls remain zero. Another final exact
+review is required; these tests do not authorize execution.

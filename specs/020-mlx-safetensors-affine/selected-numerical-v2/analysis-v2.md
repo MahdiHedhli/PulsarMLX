@@ -35,3 +35,5 @@ Source-only validation: 28 Python tests; 7 Rust snapshot/preflight tests;
 Clippy PASS. Workspace formatting check detects existing unrelated formatting
 and is not a source-change mandate; changed Rust files formatted separately.
 T010 final build/source review and T011/T012 execution remain open gates.
+
+Final review 01 found B1 vacuous packing witness and B2 out-directory-only once guard. Both are execution blockers; no numerical observation occurred. Remediation above is prospective, keeps input/tolerances unchanged, and requires another exact review.

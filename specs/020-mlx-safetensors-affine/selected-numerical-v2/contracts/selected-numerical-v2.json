@@ -80,5 +80,26 @@
     "poll_ms": 100,
     "deadline_seconds": 900,
     "hard_global_ram_claim": false
+  },
+  "prospective_revision": 2,
+  "execution_authority": {
+    "real_issuer": "f020_selected_freeze_v2.py issue-real",
+    "ledger_root": "OS-account-home / Library/Application Support/PulsarMLX-handoff/20261004-real-expert-numerical-execution/native-attempt-04/real-ledgers",
+    "ledger_key": "SHA256 canonical commit/contract_sha256/snapshot_sha256 JSON+newline",
+    "capability_binding": "SHA256 sorted compact UTF-8 JSON+newline; exclude only derived pre_admission receipt",
+    "once_only": "create-only reference-start and native-start before respective snapshot reads; no reset or alternate root"
+  },
+  "synthetic_work": {
+    "positive": 2,
+    "host_refusal_and_guard": 24,
+    "mutation": 13,
+    "native_controls": 8,
+    "host_mutations": 5,
+    "qmm_projections": 9,
+    "qmm_macs": 75497472,
+    "activation_calls": 12,
+    "activation_lanes": 24576,
+    "floor_control_scope": "R1-admission; Rust candidate guard tested separately",
+    "nibble_control": "full gate projection with U32 0x76543210, BF16 s1 b0, F32 x=e0; original R1/native vs reversed original-byte decoder"
   }
 }

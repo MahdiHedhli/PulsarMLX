@@ -104,6 +104,10 @@ def check_documents(capsule_raw,review_raw,expected_capsule_sha,expected_review_
             and type(d.get('pre_review_selected_numerical_observations')) is int,'pre-review observation boundary')
     verdict=provider_verdict(review_raw)
     require(verdict['assessed']==d,'exact assessed version/build')
+    population=capsule.get('synthetic_population')
+    require(type(population) is dict and type(population.get('text')) is str,'reviewed synthetic population')
+    require(sha(population['text'].encode())==population.get('sha256')==d.get('population_sha256'),
+            'reviewed synthetic population digest')
     files=capsule.get('source_files');require(type(files) is dict and bool(files),'complete source capsule')
     require(set(files)==set(d.get('source_sha256',{})),'source file coverage')
     for name,record in files.items():

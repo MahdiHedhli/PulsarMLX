@@ -13,9 +13,9 @@ def documents():
     files['source.py']['sha256']=a.sha(files['source.py']['text'].encode())
     hashes={name:r['sha256'] for name,r in files.items()}
     d={'commit':'1'*40,'tree':'2'*40,'source_sha256':hashes,'package_sha256':a.sha(a.canonical(hashes)),
-       'executable_sha256':'3'*64,'contract_sha256':'4'*64,'population_sha256':'5'*64,
+       'executable_sha256':'3'*64,'contract_sha256':'4'*64,'population_sha256':a.sha(b'{}'),
        'input_sha256':'6'*64,'build':{'scope':'synthetic parser test'},'pre_review_selected_numerical_observations':0}
-    c={'schema':a.SCHEMA,'purpose':'FINAL_EXECUTION_REVIEW','descriptor':d,'source_files':files}
+    c={'schema':a.SCHEMA,'purpose':'FINAL_EXECUTION_REVIEW','descriptor':d,'source_files':files,'synthetic_population':{'text':'{}','sha256':a.sha(b'{}')}}
     verdict={'schema':a.SCHEMA,'decision':'ACCEPT','blockers':0,'assessed':copy.deepcopy(d)}
     provider={'type':'result','subtype':'success','is_error':False,
               'modelUsage':{'claude-opus-5-5':{'outputTokens':100}},'result':json.dumps(verdict)}
@@ -59,6 +59,10 @@ class Authority(unittest.TestCase):
         c,p=documents();cr,pr=a.canonical(c),a.canonical(p)
         with self.assertRaisesRegex(ValueError,'digest'):a.check_documents(cr,pr,'0'*64,a.sha(pr))
         with self.assertRaisesRegex(ValueError,'duplicate'):a.strict(b'{"x":0,"x":1}')
+
+    def test_reviewed_population_text_cannot_differ(self):
+        c,p=documents();c['synthetic_population']['text']='{"changed":true}'
+        with self.assertRaisesRegex(ValueError,'population digest'):validate(c,p)
 
     def test_prior_observations_fail_closed(self):
         for value in (False,1,-1):

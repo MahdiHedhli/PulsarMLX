@@ -47,16 +47,20 @@ class Gates(unittest.TestCase):
     def test_inherited_summary_formats_and_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);records={}
+            build={'regression_executables':{n:{'sha256':n} for n in ('qualify','native_qualification','composition_qualification')},
+                   'native_libraries':{n:{'sha256':n} for n in ('libmlx','libmlxc','metallib')}}
+            child_doc={'provenance':{'build':{'qualify_executable_sha256':'qualify'},**build['native_libraries']}}
+            child_raw=A.canonical(child_doc)
             for key,count in [('primitives',363),('planes',32)]:
-                child=root/(key+'-child.json');child.write_bytes(b'{}')
+                child=root/(key+'-child.json');child.write_bytes(child_raw)
                 summary={'result':'PASS','candidate_commit':'a'*40,'worktree_dirty':False,
                          'gate_counts':{'gate':{'cases':count,'passed':count}},'failures':[],
-                         'child':{'report_sha256':A.sha(b'{}')}}
+                         'child':{'report_sha256':A.sha(child_raw)}}
                 if key=='primitives':summary.update(cases=[{}]*count,frozen={'case_count':count})
                 else:summary['case_accounting']={'case_ids':count}
                 path=root/(key+'.json');path.write_bytes(A.canonical(summary))
-                records[key]={'summary_path':str(path),'summary_sha256':A.sha(path.read_bytes()),'report_path':str(child)}
-            cap={'regressions':records};descriptor={'commit':'a'*40}
+                records[key]={'summary_path':str(path),'summary_sha256':A.sha(path.read_bytes()),'report_path':str(child),'parent_executable_sha256':'native_qualification' if key=='primitives' else 'composition_qualification'}
+            cap={'regressions':records};descriptor={'commit':'a'*40,'build':build}
             self.assertEqual(Q.regression_summaries(cap,descriptor)['primitives']['count'],363)
             Path(records['planes']['report_path']).write_bytes(b'{"changed":true}')
             with self.assertRaisesRegex(ValueError,'child digest'):Q.regression_summaries(cap,descriptor)

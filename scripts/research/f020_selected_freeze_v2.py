@@ -23,8 +23,9 @@ def source_paths():
     for name in tracked:
         p=Path(name)
         include=name in ('Cargo.toml','Cargo.lock','CONTRIBUTING.md','.specify/memory/constitution.md')
-        include |= any(name.startswith('crates/'+c+'/') and p.suffix in ('.rs','.cpp','.c','.py','.toml') for c in CRATES)
+        include |= any(name.startswith('crates/'+c+'/') and p.suffix in ('.rs','.cpp','.c','.h','.py','.toml') for c in CRATES)
         include |= name.startswith(SPEC+'selected-numerical-v2/')
+        include |= name.startswith('scripts/ci/') and ('mlx' in p.name or 'f020' in p.name)
         include |= name.startswith('scripts/research/') and (p.name.startswith('f020_selected_') or p.name.startswith('test_f020_selected_'))
         include |= p.name in ('f020_expert_mlp_r1_v1.py','f020_expert_mlp_qualify_v1.py','f020_expert_mlp_fixtures_v1.py',
             'f020_native_primitives_fixtures_v1.py','f020_native_composition_fixtures_v1.py',
@@ -47,6 +48,12 @@ def freeze(args):
         A.require(A.file_sha(Path(entry['path']).resolve(),256*1024*1024)==entry['sha256'],'regression executable hash')
     for entry in build['native_libraries'].values():
         A.require(A.file_sha(Path(entry['path']).resolve(),256*1024*1024)==entry['sha256'],'native library hash')
+    # Review source/build identities, not private host filesystem locations.
+    for entry in build['regression_executables'].values():
+        entry['path']=str(Path(entry['path']).resolve().relative_to(ROOT))
+    for name,entry in build['native_libraries'].items():
+        entry['path']={'libmlx':'lib/libmlx.dylib','libmlxc':'lib/libmlxc.dylib','metallib':'lib/mlx.metallib'}[name]
+    for key in ('MLX_PREFIX','MLX_C_PREFIX'):build['environment'][key]='PINNED_NATIVE_PREFIX'
     build.update(interpreter_optimize=sys.flags.optimize,interpreter_version=sys.version,
                  interpreter_sha256=A.file_sha(Path(sys._base_executable).resolve(),128*1024*1024))
     A.require(sys.flags.optimize==0,'unoptimized reference interpreter')
@@ -71,30 +78,42 @@ def freeze(args):
 
 def issue(args):
     capsule=A.bounded(args.capsule,private=True);review=A.bounded(args.review,private=True)
-    A.verify_current(ROOT,args.capsule,args.review,A.sha(capsule),A.sha(review),args.executable,
+    d=A.verify_current(ROOT,args.capsule,args.review,A.sha(capsule),A.sha(review),args.executable,
                      ROOT/CONTRACT,args.population,args.input)
     manifest=A.strict(A.bounded(args.population));case=manifest['cases'][0]
-    args.out.mkdir(mode=0o700,exist_ok=False)
     cap={'schema':'pulsarmlx.selected-capability/2','repo':str(ROOT),'capsule_path':str(args.capsule.resolve()),
          'review_path':str(args.review.resolve()),'capsule_sha256':A.sha(capsule),'review_sha256':A.sha(review),
          'executable':str(args.executable.resolve()),'population_path':str(args.population.resolve()),
          'input_path':str(args.input.resolve()),'kind':'synthetic','case_id':case['id'],
          'snapshot_path':str(args.population.resolve().parent/case['snapshot']),'out':str(args.out.resolve()),
-         'regressions':A.strict(A.bounded(args.regressions,private=True))}
+         'regressions':A.strict(A.bounded(args.regressions,private=True)) if args.mode=='issue-synthetic' else {}}
+    if args.mode=='issue-real':
+        import f020_selected_qualify_v2 as Q
+        import f020_selected_ledger_v2 as L
+        raw=A.bounded(args.synthetic_qualification,private=True)
+        cap.update(kind='real',case_id='selected-layer3-expert0',snapshot_path=str(args.snapshot.resolve()),
+            real_binding=A.strict(A.bounded(args.real_binding,private=True)),
+            synthetic_qualification={'path':str(args.synthetic_qualification.resolve()),'sha256':A.sha(raw)})
+        binding=Q.qualified_real(cap,d,A.strict(A.bounded(ROOT/CONTRACT)),manifest)
+        # No snapshot access here. Once-only ledger is outside the output dir.
+        L.issue(cap,d,binding)
+    args.out.mkdir(mode=0o700,exist_ok=False)
     private_json(args.out/'capability.json',cap)
-    print('Synthetic capability issued; no numerical execution.')
+    print('Issued '+cap['kind']+' capability; no numerical execution.')
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode',choices=('freeze','issue-synthetic'))
+    parser.add_argument('mode',choices=('freeze','issue-synthetic','issue-real'))
     for arg in ('executable','population','input','out'):parser.add_argument('--'+arg,type=Path,required=True)
-    for arg in ('build','capsule','review','regressions'):parser.add_argument('--'+arg,type=Path)
+    for arg in ('build','capsule','review','regressions','real-binding','synthetic-qualification','snapshot'):parser.add_argument('--'+arg,type=Path)
     args=parser.parse_args()
     if args.mode=='freeze':
         A.require(args.build is not None,'build record required');freeze(args)
     else:
-        A.require(all((args.capsule,args.review,args.regressions)),'review/regression records required');issue(args)
+        A.require(all((args.capsule,args.review)),'review records required')
+        required=(args.regressions,) if args.mode=='issue-synthetic' else (args.real_binding,args.synthetic_qualification,args.snapshot)
+        A.require(all(required),'scope evidence required');issue(args)
 
 
 if __name__=='__main__':main()

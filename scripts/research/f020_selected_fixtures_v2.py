@@ -106,12 +106,12 @@ def snapshot_case(out, case, entry):
 def control_population():
     """Concrete edits/predicates. No unsafe native refusal dispatch."""
     refusals = [
-        {'id':'input-floor','kind':'host-preflight','edit':{'input_f32_index':0,'bits':0x2f000000},'expected':'R-DOMAIN-X-RANGE'},
+        {'id':'input-floor','kind':'r1-admission','edit':{'input_f32_index':0,'bits':0x2f000000},'expected':'R-DOMAIN-X-RANGE'},
         {'id':'metadata-floor','kind':'host-preflight','edit':{'role':'gate','component':'scales','bf16_index':0,'bits':0x2f00},'expected':'R-DOMAIN-META-RANGE'},
         {'id':'gate-margin','kind':'original-r1-admission','edit':{'role':'gate','row':0,'all_scales':0,'all_biases':8.5},'expected':'prospective activation margin'},
         {'id':'up-margin','kind':'original-r1-admission','edit':{'role':'up','row':0,'all_scales':0,'all_biases':8.5},'expected':'prospective activation margin'},
         {'id':'computed-hidden-margin','kind':'original-r1-admission','edit':{'gate_row0':{'s':0,'b':2**-21},'up_row0':{'s':0,'b':0.5}},'expected':'prospective down nonzero floor margin'},
-        {'id':'down-floor-guard','kind':'injected-host-guard','edit':{'down_input_f32_index':0,'bits':0x2f000000},'expected':'R-DOMAIN-X-RANGE'},
+        {'id':'down-floor-guard','kind':'r1-admission','edit':{'down_input_f32_index':0,'bits':0x2f000000},'expected':'R-DOMAIN-X-RANGE'},
     ]
     for name,pointer,value in [
         ('source','/owned/plan/metadata_snapshot_sha256','f'*64),
@@ -129,7 +129,7 @@ def control_population():
     for name,kind,predicate in [
         ('omit-gate-bias','projection','gate separation exceeds Bg plus mutant QMM bound'),
         ('omit-up-bias','projection','up separation exceeds Bu plus mutant QMM bound'),
-        ('nibble-order','packed-code-witness','e0 times0x76543210 s1 b0: original0 reversed7'),
+        ('nibble-order','native-packing-witness','full gate M1 N2048 K4096; every U32=0x76543210; s=1 b=0; basis x=e0; actual Plane/affine/code original0; native QMM original0; reversed original-byte decoder7 outside both local budgets'),
         ('gate-up-swap','activation','interval separation exceeds Bh plus swapped-input hidden bound'),
         ('lower-gate-clamp','clamp-stage','G=-15 U=1: clamp bits differ, balanced handles'),
         ('missing-upper-gate-clamp','clamp-stage','G=12 U=2: clamp bits differ, balanced handles'),
