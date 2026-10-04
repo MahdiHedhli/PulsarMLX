@@ -38,8 +38,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "{}",
         serde_json::to_string_pretty(&json!({"schema":"pulsarmlx.glm-expert-header-plan/1",
-        "status":"METADATA_ONLY_ADMITTED","plan":plan.record(),"payload_read_calls":0,
-        "requested_payload_bytes":0,"native_calls":0,"scope":"real header/config/role/range binding only; no payload or numerical qualification"}))?
+        "status":"METADATA_ONLY_ADMITTED","plan":plan.record(),"payload_read_calls":source.payload_read_calls(),
+        "requested_payload_bytes":source.requested_payload_bytes(),"native_calls":0,"scope":"real header/config/role/range binding only; no payload or numerical qualification"}))?
     );
     Ok(())
 }

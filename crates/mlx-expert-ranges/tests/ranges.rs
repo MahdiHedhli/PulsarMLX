@@ -162,7 +162,11 @@ fn mixed_overrides_are_bound_per_role() {
             .collect::<Vec<_>>(),
         ["override", "default", "override"]
     );
-    fidelity(&source, f.request.clone());
+    for expert in 0..3 {
+        let mut req = f.request.clone();
+        req.expert = expert;
+        fidelity(&source, req);
+    }
     let mut wrong = f.request.clone();
     wrong.bits = [4, 4, 4];
     expect_phase(source.plan(wrong), "RECIPE");
@@ -208,6 +212,10 @@ fn invalid_binding_refuses_before_payload() {
 }
 #[test]
 fn selected_budget_refuses_without_reading_large_sparse_planes() {
+    if !sparse_supported() {
+        println!("SKIP selected budget sparse fixture: sparse files unsupported");
+        return;
+    }
     let f = fixture(8192, 8192, 1, false, 0, false);
     let s = BoundedSource::open(&f.root).unwrap();
     expect_phase(s.plan(f.request.clone()), "BUDGET");
@@ -230,8 +238,9 @@ fn same_size_payload_mutation_refuses_before_first_read() {
         .write(true)
         .open(f.root.join("model.safetensors"))
         .unwrap();
-    std::thread::sleep(std::time::Duration::from_millis(2));
+
     file.write_all_at(&[200], at).unwrap();
+    distinct_mtime(&file);
     expect_phase(p.load(), "MUTATION");
     assert_eq!(s.payload_read_calls(), 0);
 }
@@ -254,13 +263,13 @@ fn changed_config_refuses_before_first_read() {
     let f = fixture(64, 64, 3, false, 0, true);
     let s = BoundedSource::open(&f.root).unwrap();
     let p = s.plan(f.request.clone()).unwrap();
-    std::thread::sleep(std::time::Duration::from_millis(2));
-    OpenOptions::new()
+
+    let changed = OpenOptions::new()
         .write(true)
         .open(f.root.join("config.json"))
-        .unwrap()
-        .write_all_at(b" ", 0)
         .unwrap();
+    changed.write_all_at(b" ", 0).unwrap();
+    distinct_mtime(&changed);
     expect_phase(p.load(), "MUTATION");
     assert_eq!(s.requested_payload_bytes(), 0);
 }
@@ -311,6 +320,10 @@ fn metadata_limits_refuse_before_large_allocation() {
 }
 #[test]
 fn huge_sparse_decoy_is_never_loaded_or_hashed() {
+    if !sparse_supported() {
+        println!("SKIP huge sparse fixture: sparse files unsupported");
+        return;
+    }
     let gap = 8 * 1024 * 1024 * 1024u64;
     let f = fixture(64, 64, 3, false, gap, true);
     let m = fs::metadata(f.root.join("model.safetensors")).unwrap();
@@ -331,7 +344,7 @@ fn huge_sparse_decoy_is_never_loaded_or_hashed() {
     );
 }
 #[test]
-fn descriptor_stays_bound_after_shard_name_replacement() {
+fn replacement_path_is_never_read() {
     let f = fixture(64, 64, 3, false, 0, true);
     let s = BoundedSource::open(&f.root).unwrap();
     let p = s.plan(f.request.clone()).unwrap();
@@ -410,4 +423,20 @@ fn shard_count_and_aggregate_header_limits_are_checked() {
         .unwrap();
         expect_phase(BoundedSource::open(&f.root), "LIMIT");
     }
+}
+
+fn distinct_mtime(file: &File) {
+    let before = file.metadata().unwrap().modified().unwrap();
+    file.set_times(
+        std::fs::FileTimes::new().set_modified(before + std::time::Duration::from_secs(120)),
+    )
+    .unwrap();
+}
+fn sparse_supported() -> bool {
+    let probe = fixture(64, 64, 3, false, 16 * 1024 * 1024, false);
+    fs::metadata(probe.root.join("model.safetensors"))
+        .unwrap()
+        .blocks()
+        * 512
+        < 64 * 1024
 }

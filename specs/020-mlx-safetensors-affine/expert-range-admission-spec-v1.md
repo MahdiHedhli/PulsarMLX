@@ -29,8 +29,10 @@ retaining packed U32/BF16 bytes without decoding. Ownership survives dropping th
 source and moving the returned tuple. The receipt binds the metadata identity,
 declared roles, recipes, ranges and each owned range's SHA-256. This identity is
 scoped to metadata and selected content; it is not a whole-checkpoint checksum.
-Descriptor stamp checks detect ordinary mutation, not an atomic filesystem
-snapshot or an adversarial writer able to bypass filesystem metadata. Before
+Descriptor stamp checks detect identity, length and timestamp-visible changes,
+not an atomic filesystem snapshot. Same-size rewrites within filesystem timestamp
+granularity and an adversarial writer able to bypass metadata are outside that
+detection claim. Selected-range SHA-256 values identify the captured bytes. Before
 future candidate execution, freeze the selected owned content and its receipt.
 
 Refuse wrong geometry, recipe, dtype, index rank/range, arithmetic overflow,
@@ -46,6 +48,11 @@ must place the selected expert behind a large unrelated gap represented by a
 separate tiled tensor, read only selected ranges, and verify the exact byte count.
 The test creates sparse storage privately and removes it through ordinary test
 fixture lifetime; it does not copy model data.
+Large sparse fixtures require a small bounded sparse-support probe first and
+report an explicit skip on unsupported filesystems. Deterministic mutation tests
+set a distinct modification time rather than depending on clock tick granularity.
+The READ-phase OS-error branch is source-reviewed; deterministic mid-read I/O
+failure injection is not claimed by this test population.
 
 The first real metadata-only binding targets layer 3's
 `language_model.model.layers.3.mlp.switch_mlp.{gate_proj,up_proj,down_proj}`,
