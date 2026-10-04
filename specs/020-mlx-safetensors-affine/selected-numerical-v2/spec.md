@@ -55,3 +55,12 @@ full-model/generation/serving/performance or general real-model support claim.
 ## Contract v3 framing continuation
 
 See [framing-correction-v3.md](framing-correction-v3.md) and [contract v3](contracts/selected-numerical-v3.json). The real header refusal is retained; no packed real bytes or real numerical observations occurred. T004/T006/T010/T011/T012 reopen for the strict scope-field correction and41-case population. Numerical definitions and inputv2 are unchanged. No constitution conflict: original writer/artifacts and failed ledger preserved, no admission relaxation or claim from metadata.
+
+## Observed contract v3 boundary
+
+Source d9639737 passed exact review04 ACCEPT/0, full41+363/32 synthetic
+qualification and requiredCI37184777213. The original selected-byte R1 attempt
+then refused the unchanged prospective down nonzero-floor margin. Native real
+execution did not occur; complete real expert numerical qualification remains
+unmet. See [sanitized evidence](qualification.json). Preserve the refusal and
+all prior attempts; do not retune input/budgets or relabel it as a native failure.
