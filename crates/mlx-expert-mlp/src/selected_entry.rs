@@ -330,7 +330,7 @@ pub fn main() -> Result<(), String> {
                 && qualified["population_sha256"] == descriptor["population_sha256"]
                 && qualified["review_sha256"] == cap["review_sha256"]
                 && qualified["positive_count"] == 2
-                && qualified["refusal_count"] == 24
+                && qualified["refusal_count"] == 26
                 && qualified["mutation_count"] == 13
                 && qualified["mutation_survivors"] == 0
                 && qualified["primitive_regressions"] == 363

@@ -25,6 +25,7 @@ fn document() -> Value {
           "resolved_from":"default","metadata_dtype":"BF16","logical_shape":if i==2 {[4096,2048]} else {[2048,4096]},"ranges":ranges})
     }).collect();
     json!({"schema":"pulsarmlx.selected-expert-snapshot/1",
+      "scope":"selected packed content only; no numerical qualification",
       "payload_lengths":lengths.repeat(3),"owned":{
         "schema":"pulsarmlx.bounded-expert-owned/1","owned_bytes":PAYLOAD_BYTES,
         "packed_weights_unchanged":true,"native_calls":0,"whole_shard_reads":0,"whole_shard_hashes":0,
@@ -100,6 +101,7 @@ fn semantic_manifest_controls_refuse_before_payload() {
         ("/owned/plan/planes/0/ranges/0/shard", json!("../escape")),
         ("/owned/native_calls", json!(1)),
         ("/payload_lengths/0", json!(1)),
+        ("/scope", json!("numerically qualified")),
     ];
     for (pointer, value) in changes {
         let mut doc = document();
@@ -220,4 +222,12 @@ fn each_payload_digest_and_equal_length_role_swap_are_detected() {
         SelectedSnapshot::read(&p, &b).err().unwrap(),
         "SELECTED-R-CUSTODY: original range digest"
     );
+}
+
+#[test]
+fn missing_capture_scope_refused() {
+    let mut doc = document();
+    doc.as_object_mut().unwrap().remove("scope");
+    let (p, b) = snapshot(&doc, None);
+    assert!(SelectedSnapshot::read(&p, &b).is_err());
 }

@@ -47,3 +47,12 @@ independently matched; subsequent source changes require final exact review.
 T009: allocation ledger, measured native/RSS gates and owned watchdog implemented; measurements pending final reviewed qualification. T010: independent Rust/Python provider validators and host report controls pass; source/build freeze and final review remain open.
 
 Final review 01 BLOCKED/2 preserved at 9d286b0c. T010 reopened: actual decoder/native nibble witness, fixed issued-real ledger, raw population/build bindings and re-review required. All numerical gates remain closed.
+
+## Contract v3 framing continuation
+
+See [framing-correction-v3.md](framing-correction-v3.md) and [contract v3](contracts/selected-numerical-v3.json). The real header refusal is retained; no packed real bytes or real numerical observations occurred. T004/T006/T010/T011/T012 reopen for the strict scope-field correction and41-case population. Numerical definitions and inputv2 are unchanged. No constitution conflict: original writer/artifacts and failed ledger preserved, no admission relaxation or claim from metadata.
+
+V3 implementation: strict Rust/Python scope validation and actual original-writer
+small synthetic schema regression complete. Full-shape generator now includes
+scope and both new refusal IDs. Host32Python and17Rust/ownership tests pass;
+new full41 numerical qualification remains pending exact-version review.

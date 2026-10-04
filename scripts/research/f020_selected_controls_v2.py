@@ -74,6 +74,11 @@ def host_controls(manifest,base_path,binding,input_bytes,reference_document,posi
             i=control['edit']['range'];offset=16+size+sum(S.LENGTHS[:i]);mutated=bytearray(raw);mutated[offset]^=255
             path=out/(ident+'.snapshot');path.write_bytes(mutated);path.chmod(0o400)
             add(ident,refusal(lambda:S.read_snapshot(path,binding),'range digest'))
+        elif ident in ('framing-missing-scope','framing-wrong-scope'):
+            h=copy.deepcopy(header)
+            if ident=='framing-missing-scope':del h['scope'];expected='strict keys'
+            else:h['scope']='numerically qualified';expected='snapshot scope'
+            add(ident,refusal(lambda:S.decode_header(json.dumps(h).encode(),binding),expected))
         elif ident=='framing-length':
             h=copy.deepcopy(header);h['payload_lengths'][0]=1
             add(ident,refusal(lambda:S.decode_header(json.dumps(h).encode(),binding),'integer binding'))

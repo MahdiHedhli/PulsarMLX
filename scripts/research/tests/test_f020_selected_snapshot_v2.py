@@ -31,7 +31,7 @@ def document():
     owned=dict(schema='pulsarmlx.bounded-expert-owned/1',plan=plan,selected_range_sha256=hashes,
         owned_bytes=reader.PAYLOAD,packed_weights_unchanged=True,native_calls=0,whole_shard_reads=0,whole_shard_hashes=0,
         scope='host owned range bytes only; no numerical or full-checkpoint qualification')
-    h=dict(schema='pulsarmlx.selected-expert-snapshot/1',owned=owned,payload_lengths=list(lens))
+    h=dict(schema='pulsarmlx.selected-expert-snapshot/1',owned=owned,payload_lengths=list(lens),scope='selected packed content only; no numerical qualification')
     expected=dict(snapshot_sha256='b'*64,snapshot_bytes=0,metadata_sha256='a'*64,checkpoint='synthetic',ranges_sha256=hashes)
     return h,expected
 
@@ -46,6 +46,15 @@ class Snapshot(unittest.TestCase):
         with self.assertRaises(ValueError):reader.decode_header(b'{"schema":0,'+raw[1:],e)
         h['unknown']=1
         with self.assertRaises(ValueError):reader.decode_header(json.dumps(h).encode(),e)
+
+    def test_capture_scope_is_required_and_exact(self):
+        h,e=document()
+        bad=copy.deepcopy(h);del bad['scope']
+        with self.assertRaisesRegex(ValueError,'strict keys'):
+            reader.decode_header(json.dumps(bad).encode(),e)
+        h['scope']='numerically qualified'
+        with self.assertRaisesRegex(ValueError,'snapshot scope'):
+            reader.decode_header(json.dumps(h).encode(),e)
 
     def test_full_synthetic_framing_and_corruption(self):
         h,e=document();raw=json.dumps(h).encode()

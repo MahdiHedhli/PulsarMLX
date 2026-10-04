@@ -705,6 +705,7 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "libc",
+ "mlx-expert-ranges",
  "mlx-native-affine",
  "safetensors-catalog",
  "serde",

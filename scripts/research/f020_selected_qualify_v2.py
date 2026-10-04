@@ -22,7 +22,7 @@ import f020_selected_ledger_v2 as L
 from f020_selected_controls_v2 import reference_authority, host_controls, native_control
 
 ROOT=Path(__file__).resolve().parents[2]
-CONTRACT='specs/020-mlx-safetensors-affine/selected-numerical-v2/contracts/selected-numerical-v2.json'
+CONTRACT='specs/020-mlx-safetensors-affine/selected-numerical-v2/contracts/selected-numerical-v3.json'
 REAL_SHA='43e251a64d1d475900214d3c51b9b21ca988e7b6634d3891fbc6c3a0d5733305'
 
 
@@ -41,7 +41,7 @@ def qualified_real(cap,d,contract,manifest):
     A.require(q['schema']=='pulsarmlx.selected-synthetic-qualification/2' and q['status']=='PASS','synthetic qualification')
     for key in ('commit','tree','executable_sha256','population_sha256'):
         A.require(q[key]==d[key],'synthetic exact version '+key)
-    A.require(q['review_sha256']==cap['review_sha256'] and q['positive_count']==2 and q['refusal_count']==24
+    A.require(q['review_sha256']==cap['review_sha256'] and q['positive_count']==2 and q['refusal_count']==26
         and q['mutation_count']==13 and q['mutation_survivors']==0 and q['primitive_regressions']==363
         and q['plane_regressions']==32,'full synthetic/regression gate')
     A.require(q['passed_ids']==ids,'exact full population ID evidence')
@@ -58,10 +58,10 @@ def verified(cap):
     A.require(contract['fixed']['E_act']=='1/128' and contract['fixed']['beta_B']=='5201/4194304'
               and contract['fixed']['down_floor']=='1/2^32','fixed numerical definitions')
     manifest=A.strict(A.bounded(cap['population_path']))
-    A.require(manifest['population']=={'full_shape_positive':2,'host_refusal_and_guard':24,'mutation':13,'total':39},'complete population counts')
-    A.require(len(manifest['cases'])==2 and len(manifest['refusals'])==24 and len(manifest['mutations'])==13,'complete population lengths')
+    A.require(manifest['population']=={'full_shape_positive':2,'host_refusal_and_guard':26,'mutation':13,'total':41},'complete population counts')
+    A.require(len(manifest['cases'])==2 and len(manifest['refusals'])==26 and len(manifest['mutations'])==13,'complete population lengths')
     ids=[v['id'] for k in ('cases','refusals','mutations') for v in manifest[k]]
-    A.require(len(set(ids))==39,'unique complete population IDs')
+    A.require(len(set(ids))==41,'unique complete population IDs')
     if cap['kind']=='synthetic':
         cases=[v for v in manifest['cases'] if v['id']==cap['case_id']]
         A.require(len(cases)==1,'synthetic positive identity')
@@ -270,10 +270,10 @@ def full_synthetic(cap):
     for case in manifest['refusals']+manifest['mutations']:
         A.require(case['id'] in outcomes and outcomes[case['id']]['status']=='PASS','missing/surviving control')
         passed.append(case['id'])
-    A.require(len(passed)==39 and len(set(passed))==39 and len(outcomes)==37,'exact full synthetic population')
+    A.require(len(passed)==41 and len(set(passed))==41 and len(outcomes)==39,'exact full synthetic population')
     summary={'schema':'pulsarmlx.selected-synthetic-qualification/2','status':'PASS',
        **{k:d[k] for k in ('commit','tree','executable_sha256','population_sha256')},
-       'review_sha256':cap['review_sha256'],'positive_count':2,'refusal_count':24,'mutation_count':13,
+       'review_sha256':cap['review_sha256'],'positive_count':2,'refusal_count':26,'mutation_count':13,
        'mutation_survivors':0,'primitive_regressions':363,'plane_regressions':32,
        'passed_ids':passed,'positive_evidence':evidence,'controls':outcomes,'regressions':regressions}
     private_json(out/'synthetic-qualification.json',summary)

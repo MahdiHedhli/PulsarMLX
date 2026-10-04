@@ -56,7 +56,8 @@ def decode_header(raw, expected):
             depth+=1;require(depth<=16,'JSON depth')
         elif byte in (93,125): depth-=1
     h=json.loads(raw,object_pairs_hook=unique,parse_constant=reject_constant)
-    keys(h,'schema owned payload_lengths')
+    keys(h,'schema owned payload_lengths scope')
+    require(h['scope']=='selected packed content only; no numerical qualification','snapshot scope')
     require(h['schema']=='pulsarmlx.selected-expert-snapshot/1','schema')
     require(type(h['payload_lengths']) is list and len(h['payload_lengths'])==9,'nine lengths')
     for got,want in zip(h['payload_lengths'],LENGTHS,strict=True):integer(got,want)

@@ -13,8 +13,8 @@ from f020_selected_process_v2 import private_json
 
 ROOT=Path(__file__).resolve().parents[2]
 SPEC='specs/020-mlx-safetensors-affine/'
-CONTRACT=SPEC+'selected-numerical-v2/contracts/selected-numerical-v2.json'
-CRATES=('mlx-expert-mlp','mlx-native-affine','safetensors-catalog','mlx-affine','backend')
+CONTRACT=SPEC+'selected-numerical-v2/contracts/selected-numerical-v3.json'
+CRATES=('mlx-expert-ranges','mlx-expert-mlp','mlx-native-affine','safetensors-catalog','mlx-affine','backend')
 
 
 def source_paths():
@@ -61,7 +61,7 @@ def freeze(args):
     for r in files.values():r['sha256']=A.sha(r['text'].encode())
     hashes={name:r['sha256'] for name,r in files.items()}
     population_raw=A.bounded(args.population);manifest=A.strict(population_raw)
-    A.require(manifest['population']=={'full_shape_positive':2,'host_refusal_and_guard':24,'mutation':13,'total':39},'synthetic population')
+    A.require(manifest['population']=={'full_shape_positive':2,'host_refusal_and_guard':26,'mutation':13,'total':41},'synthetic population')
     input_raw=A.bounded(args.input,16384)
     d={'commit':A.git(ROOT,'rev-parse','HEAD'),'tree':A.git(ROOT,'rev-parse','HEAD^{tree}'),
        'source_sha256':hashes,'package_sha256':A.sha(A.canonical(hashes)),
@@ -71,7 +71,7 @@ def freeze(args):
        'pre_review_selected_numerical_observations':0}
     capsule={'schema':A.SCHEMA,'purpose':'FINAL_EXECUTION_REVIEW','descriptor':d,'source_files':files,
              'synthetic_population':{'text':population_raw.decode(),'sha256':A.sha(population_raw)},
-             'request':"Independent adversarial final exact-version review. Source/proof/test/synthetic definitions only; no real values or raw private capture receipts. Check prospective input affine-bias observability, full-shape positive/control completeness, original-byte R1 independence and exact intervals, unchanged fixed budgets/domains, scoped geometry, owned adapter/custody, resource claims/enforcement, raw review/capability authority, regression evidence and one real probe ordering. Source tests and generation are not numerical qualification. All selected numerical observations are zero. Build and source hashes identify the intended executable; reviewer has no tools. Return JSON only with schema pulsarmlx.selected-execution-review/2, decision ACCEPT or BLOCKED, blockers integer, findings array (severity/path/reason/fix), and assessed equal to the COMPLETE descriptor object verbatim as JSON. ACCEPT requires zero blockers. Do not omit assessed fields or source hashes. Any correctness/resource/authority gap is blocking. Established inherited source boundaries are preserved; review the bounded extension, without treating existing passing evidence as new numerical qualification."}
+             'request':"Independent adversarial final exact-version review. Source/proof/test/synthetic definitions only; no real values or raw private capture receipts. Check prospective input affine-bias observability, full-shape positive/control completeness, original-byte R1 independence and exact intervals, unchanged fixed budgets/domains, scoped geometry, owned adapter/custody, resource claims/enforcement, raw review/capability authority, regression evidence and one real probe ordering. Source tests and generation are not numerical qualification. No numerical observations have occurred under this new exact version. Prior source33b6e450 passed its synthetic population but its real attempt refused the accepted capture header before reading packed payload or computing R1/native values; this version repairs that framing incompatibility without changing input or numerical budgets. Build and source hashes identify the intended executable; reviewer has no tools. Return JSON only with schema pulsarmlx.selected-execution-review/2, decision ACCEPT or BLOCKED, blockers integer, findings array (severity/path/reason/fix), and assessed equal to the COMPLETE descriptor object verbatim as JSON. ACCEPT requires zero blockers. Do not omit assessed fields or source hashes. Any correctness/resource/authority gap is blocking. Established inherited source boundaries are preserved; review the bounded extension, without treating existing passing evidence as new numerical qualification."}
     private_json(args.out,capsule)
     print(A.sha(A.bounded(args.out)))
 

@@ -51,3 +51,7 @@ all resource bounds and ownership evidence pass. Real refusal is useful evidence
 but does not satisfy SC01. An original-weight submatrix requires separate review
 and does not complete this objective. No routing/top8/shared-expert/attention,
 full-model/generation/serving/performance or general real-model support claim.
+
+## Contract v3 framing continuation
+
+See [framing-correction-v3.md](framing-correction-v3.md) and [contract v3](contracts/selected-numerical-v3.json). The real header refusal is retained; no packed real bytes or real numerical observations occurred. T004/T006/T010/T011/T012 reopen for the strict scope-field correction and41-case population. Numerical definitions and inputv2 are unchanged. No constitution conflict: original writer/artifacts and failed ledger preserved, no admission relaxation or claim from metadata.

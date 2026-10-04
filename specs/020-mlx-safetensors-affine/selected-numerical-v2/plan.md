@@ -113,3 +113,7 @@ label floor controls as R1-admission (Rust candidate guard coverage is separate)
 validate synthetic manifest text in both review parsers; include test headers
 and native build source scripts. Review build records use repository/prefix
 relative labels, excluding absolute host paths.
+
+## Contract v3 framing continuation
+
+See [framing-correction-v3.md](framing-correction-v3.md) and [contract v3](contracts/selected-numerical-v3.json). The real header refusal is retained; no packed real bytes or real numerical observations occurred. T004/T006/T010/T011/T012 reopen for the strict scope-field correction and41-case population. Numerical definitions and inputv2 are unchanged. No constitution conflict: original writer/artifacts and failed ledger preserved, no admission relaxation or claim from metadata.

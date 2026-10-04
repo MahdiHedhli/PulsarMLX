@@ -22,3 +22,6 @@ cc = "1"
 name = "qualify-expert-mlp"
 path = "src/main.rs"
 test = false
+
+[dev-dependencies]
+mlx-expert-ranges = { path = "../mlx-expert-ranges" }

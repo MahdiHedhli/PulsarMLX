@@ -29,6 +29,7 @@ struct Header {
     schema: String,
     owned: Owned,
     payload_lengths: [usize; 9],
+    scope: String,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -158,7 +159,8 @@ impl SelectedSnapshot {
         let header: Header = serde_json::from_slice(&raw).map_err(|e| e.to_string())?;
         check(
             header.schema == "pulsarmlx.selected-expert-snapshot/1"
-                && header.payload_lengths == LENGTHS,
+                && header.payload_lengths == LENGTHS
+                && header.scope == "selected packed content only; no numerical qualification",
             "header schema/lengths",
         )?;
         let owned = &header.owned;
@@ -258,3 +260,7 @@ impl SelectedSnapshot {
         self.buffers.get(role * 3 + component).map(|b| b.as_ref())
     }
 }
+
+#[cfg(test)]
+#[path = "selected_snapshot_compat_test.rs"]
+mod capture_compatibility;

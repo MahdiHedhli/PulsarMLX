@@ -87,7 +87,8 @@ def snapshot_case(out, case, entry):
         'packed_weights_unchanged': True, 'native_calls': 0, 'whole_shard_reads': 0,
         'whole_shard_hashes': 0, 'scope': 'host owned range bytes only; no numerical or full-checkpoint qualification'}
     header = canonical({'schema': 'pulsarmlx.selected-expert-snapshot/1',
-                         'owned': owned, 'payload_lengths': lengths})
+                         'owned': owned, 'payload_lengths': lengths,
+                         'scope': 'selected packed content only; no numerical qualification'})
     framing = b'PLSEX001'+struct.pack('<Q',len(header))+header
     digest = hashlib.sha256(framing)
     name = 'full-positive-'+case+'.snapshot'
@@ -123,7 +124,7 @@ def control_population():
         refusals.append({'id':'identity-'+name,'kind':'host-custody','pointer':pointer,'value':value,'expected':'identity/recipe/shape refusal before payload import'})
     for i in range(9):
         refusals.append({'id':f'range-digest-{i}','kind':'host-custody','edit':{'range':i,'byte_offset':0,'xor':255},'expected':'original range digest'})
-    for name,operation in [('framing-length','set first declared length to1'),('framing-trailing','append byte0'),('framing-duplicate','duplicate top-level schema key')]:
+    for name,operation in [('framing-missing-scope','remove top-level scope'),('framing-wrong-scope','replace top-level scope'),('framing-length','set first declared length to1'),('framing-trailing','append byte0'),('framing-duplicate','duplicate top-level schema key')]:
         refusals.append({'id':name,'kind':'host-custody','edit':operation,'expected':'framing/strict-schema refusal'})
     mutations=[]
     for name,kind,predicate in [
@@ -142,7 +143,7 @@ def control_population():
         ('candidate-fed-reference','authority-audit','reference input authority/hash mismatch refuses acceptance')]:
         mutations.append({'id':name,'kind':kind,'expected':predicate})
     ids=[c['id'] for c in refusals+mutations]
-    if len(ids)!=len(set(ids)) or len(refusals)!=24 or len(mutations)!=13:
+    if len(ids)!=len(set(ids)) or len(refusals)!=26 or len(mutations)!=13:
         raise ValueError('complete unique control population')
     return refusals,mutations
 
@@ -177,7 +178,7 @@ def generate(out):
         manifest['cases'].append(entry)
     refusals,mutations=control_population()
     manifest['refusals']=refusals;manifest['mutations']=mutations
-    manifest['population']={'full_shape_positive':2,'host_refusal_and_guard':24,'mutation':13,'total':39}
+    manifest['population']={'full_shape_positive':2,'host_refusal_and_guard':26,'mutation':13,'total':41}
     (out / 'manifest.json').write_bytes(canonical(manifest))
     receipt = {'schema': 'pulsarmlx.selected-input-freeze/2',
                'formula': '(2+(-1)^popcount(j))/4096; j=0..4095',
