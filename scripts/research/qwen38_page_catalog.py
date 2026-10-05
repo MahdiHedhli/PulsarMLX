@@ -72,7 +72,10 @@ class PageCatalog:
 
     def __init__(self, tensors: dict[str, TensorRef], *, layers: int, experts: int,
                  ple_layer: int, ple_shards: int, ple_rows_per_page: int = 8192):
-        if min(layers, experts, ple_shards, ple_rows_per_page) <= 0 or not 0 <= ple_layer < layers:
+        if (any(type(value) is not int for value in
+                (layers, experts, ple_layer, ple_shards, ple_rows_per_page)) or
+                min(layers, experts, ple_shards, ple_rows_per_page) <= 0 or
+                not 0 <= ple_layer < layers):
             raise CatalogError("invalid catalog geometry")
         self.tensors = tensors
         self.layers = layers
@@ -120,6 +123,9 @@ class PageCatalog:
         return refs
 
     def page(self, key: PageKey) -> PageSpec:
+        if (type(key) is not PageKey or type(key.kind) is not str or
+                any(type(value) is not int for value in (key.layer, key.index, key.block))):
+            raise CatalogError("invalid page key fields")
         if key.kind == "expert":
             if not 0 <= key.layer < self.layers or not 0 <= key.index < self.experts or key.block != 0:
                 raise CatalogError("expert page key out of range")
@@ -145,8 +151,8 @@ class PageCatalog:
         raise CatalogError("unknown page kind")
 
     def ple_key_for_global_row(self, global_row: int) -> PageKey:
-        if global_row < 0:
-            raise CatalogError("negative PLE global row")
+        if type(global_row) is not int or global_row < 0:
+            raise CatalogError("invalid PLE global row")
         # The pinned conversion uses equal rows per shard, including tail padding.
         rows_per_shard = self.ple_rows[0]
         if any(rows != rows_per_shard for rows in self.ple_rows.values()):
@@ -185,7 +191,7 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
                      ple_rows_per_page: int = 8192) -> PageCatalog:
     manifest = json.loads(manifest_path.read_text())
     receipt = json.loads((root / "acquisition-receipt.json").read_text())
-    if (not receipt.get("complete") or receipt.get("revision") != manifest["revision"] or
+    if (receipt.get("complete") is not True or receipt.get("revision") != manifest["revision"] or
             receipt.get("repo") != manifest.get("repo") or
             manifest.get("repo") != "pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit"):
         raise CatalogError("unverified checkpoint revision")
@@ -198,6 +204,9 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
             raise CatalogError(f"unsafe or changed file: {filename}")
     config = json.loads((root / "config.json").read_text())
     index = json.loads((root / "model.safetensors.index.json").read_text())["weight_map"]
+    expected_shards = {name for name in expected_files if name.endswith(".safetensors")}
+    if set(index.values()) != expected_shards:
+        raise CatalogError("index shard set disagrees with manifest")
     if config.get("model_type") != "qwen4_exp" or config.get("model_file") != "qwen4_exp.py":
         raise CatalogError("unexpected checkpoint architecture")
     text = config["text_config"]

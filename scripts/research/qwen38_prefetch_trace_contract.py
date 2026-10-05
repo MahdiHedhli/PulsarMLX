@@ -6,9 +6,12 @@ No model, MLX, Strata code, or I/O is imported or executed here.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
 
-SCHEMA = "pulsarmlx.qwen38.prefetch-trace/0.2"
+SCHEMA = "pulsarmlx.qwen38.prefetch-trace/0.3"
+EXPERT_KEY = re.compile(r"L(\d+):E(\d+)\Z")
+PLE_KEY = re.compile(r"L(\d+):P(\d+):(\d+)\Z")
 METRICS = (
     "logical_expert_read_bytes",
     "prefetch_useful_bytes_before_demand",
@@ -71,6 +74,12 @@ def validate(trace: dict) -> None:
     wasted_bytes = 0
     previous_time = -1
     routes = 0
+    routed: dict[tuple[int, int], set[int]] = {}
+    ple_lookups: set[tuple[int, str]] = set()
+    demand_io_started: set[str] = set()
+    demand_io_done: set[str] = set()
+    served_demands: set[str] = set()
+    peak_used_bytes = 0
     cancelled = False
     for event in events:
         _require(isinstance(event, dict), "event is not an object")
@@ -79,30 +88,64 @@ def validate(trace: dict) -> None:
         previous_time = now
         if kind == "route":
             _require(not cancelled, "route after cancellation")
+            layer, step = event.get("layer"), event.get("step")
+            _require(type(layer) is int and layer >= 0 and type(step) is int and step >= 0,
+                     "invalid route address")
+            _require((step, layer) not in routed, "duplicate route address")
             selected, executed = event.get("selected"), event.get("executed")
             _require(isinstance(selected, list) and selected == executed, "prefetch changed route")
             _require(all(type(expert) is int and expert >= 0 for expert in selected), "invalid route ID")
             _require(isinstance(event.get("weights_digest"), str) and bool(event["weights_digest"]), "missing weight digest")
+            routed[(step, layer)] = set(selected)
             routes += 1
+            continue
+        if kind == "ple_lookup":
+            _require(not cancelled and type(event.get("step")) is int and event["step"] >= 0 and
+                     type(event.get("global_row")) is int and event["global_row"] >= 0 and
+                     isinstance(key, str) and PLE_KEY.fullmatch(key) is not None,
+                     "invalid PLE lookup")
+            ple_lookups.add((event["step"], key))
             continue
         if kind == "cancel":
             _require(not cancelled, "duplicate cancellation")
             cancelled = True
             invalid.update(hints)
             hints.clear()
+            pending_demands.clear()
+            started_demands.clear()
+            demand_io_started.clear()
+            demand_io_done.clear()
+            served_demands.clear()
             continue
         _require(isinstance(key, str) and bool(key), "missing key")
         if kind == "demand_queued":
             _require(not cancelled and key not in pending_demands and key not in started_demands,
                      "duplicate or cancelled demand")
+            step = event.get("step")
+            _require(type(step) is int and step >= 0, "invalid demand step")
+            expert = EXPERT_KEY.fullmatch(key)
+            ple = PLE_KEY.fullmatch(key)
+            _require((expert is not None and
+                      int(expert[2]) in routed.get((step, int(expert[1])), set())) or
+                     (ple is not None and (step, key) in ple_lookups),
+                     "demand lacks matching route or PLE lookup")
             pending_demands.add(key)
         elif kind == "demand_start":
             _require(not cancelled and key in pending_demands, "demand was not queued")
             pending_demands.remove(key)
             started_demands[key] = now
+        elif kind == "demand_finish":
+            _require(key in started_demands and key in served_demands,
+                     "demand finished before page use")
+            del started_demands[key]
+            served_demands.remove(key)
+            demand_io_started.discard(key)
+            demand_io_done.discard(key)
         elif kind == "hint":
             _require(not cancelled, "hint after cancellation")
-            _require(key not in hints and key not in buffers, "duplicate hint")
+            _require(key not in hints and key not in buffers and
+                     key not in pending_demands and key not in started_demands,
+                     "duplicate or already demanded hint")
             hints.add(key)
             invalid.discard(key)
         elif kind == "hint_invalidate":
@@ -115,14 +158,25 @@ def validate(trace: dict) -> None:
             _require(not cancelled, "prefetch after cancellation")
             _require(key in hints and key not in buffers, "stale or duplicate prefetch")
             _require(not pending_demands, "prefetch overtook queued demand")
-            _require(not any(waiting_key in started_demands and buffer.io_done_at is None
-                             for waiting_key, buffer in buffers.items()),
+            _require(not any((waiting_key not in demand_io_done and
+                              (waiting_key not in buffers or buffers[waiting_key].io_done_at is None))
+                             for waiting_key in started_demands),
                      "prefetch overtook waiting demand")
             _require(type(size) is int and size > 0, "invalid prefetch size")
             _require(len(buffers) < request_cap and used_bytes + size <= byte_cap, "prefetch cap exceeded")
             buffers[key] = Buffer(size=size)
             used_bytes += size
+            peak_used_bytes = max(peak_used_bytes, used_bytes)
             admitted_bytes += size
+        elif kind == "demand_io_start":
+            _require(key in started_demands and key not in demand_io_started and
+                     key not in buffers, "invalid demand I/O start")
+            demand_io_started.add(key)
+        elif kind == "demand_io_done":
+            _require(key in demand_io_started and key not in demand_io_done,
+                     "unmatched demand I/O completion")
+            demand_io_done.add(key)
+            served_demands.add(key)
         elif kind == "prefetch_io_done":
             _require(key in buffers and buffers[key].io_done_at is None, "unmatched I/O completion")
             buffers[key].io_done_at = now
@@ -132,6 +186,7 @@ def validate(trace: dict) -> None:
             _require(key in started_demands, "prefetch used without actual demand")
             _require(not buffers[key].gpu_used, "duplicate GPU use")
             buffers[key].gpu_used = True
+            served_demands.add(key)
             if buffers[key].io_done_at <= started_demands[key]:
                 useful_bytes += buffers[key].size
             else:
@@ -152,7 +207,8 @@ def validate(trace: dict) -> None:
             raise ContractError(f"unknown event {kind!r}")
 
     _require(routes > 0, "no actual routing event")
-    _require(not pending_demands and not buffers, "request ended with pending work")
+    _require(not pending_demands and not started_demands and not buffers,
+             "request ended with pending work")
     metrics = trace.get("metrics")
     _require(isinstance(metrics, dict), "missing metrics")
     for field in METRICS:
@@ -162,6 +218,9 @@ def validate(trace: dict) -> None:
              "useful bytes disagree with events")
     _require(metrics["prefetch_late_bytes"] == late_bytes, "late bytes disagree with events")
     _require(metrics["prefetch_wasted_bytes"] == wasted_bytes, "wasted bytes disagree with events")
+    _require(metrics["peak_footprint_bytes"] >= peak_used_bytes,
+             "peak footprint below admitted buffers")
+    _require(metrics["swap_delta_bytes"] == 0, "successful trace reports swap growth")
     _require(useful_bytes + late_bytes + wasted_bytes == admitted_bytes,
              "prefetch byte accounting is incomplete")
     state = metrics.get("physical_ssd_measurement")
@@ -183,7 +242,8 @@ def compare_pair(baseline: dict, candidate: dict) -> None:
     for field in ("base_commit", "model_revision", "tokenizer_revision", "runtime_revision",
                   "prompt_digest", "decode_settings_digest", "warmth", "output_token_ids", "logits_digest"):
         _require(baseline[field] == candidate[field], f"A/B mismatch: {field}")
-    def routes(trace: dict) -> list[tuple[tuple[int, ...], str]]:
-        return [(tuple(event["selected"]), event["weights_digest"])
+    def routes(trace: dict) -> list[tuple[int, int, tuple[int, ...], str]]:
+        return [(event["step"], event["layer"], tuple(event["selected"]),
+                 event["weights_digest"])
                 for event in trace["events"] if event["type"] == "route"]
     _require(routes(baseline) == routes(candidate), "A/B routing or weights differ")

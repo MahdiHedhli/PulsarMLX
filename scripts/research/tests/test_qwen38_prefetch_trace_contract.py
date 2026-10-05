@@ -45,6 +45,11 @@ def trace(events):
 
 
 def event(t, kind, key="L1:E2", **extra):
+    if kind == "route":
+        extra.setdefault("layer", 1)
+        extra.setdefault("step", 0)
+    if kind == "demand_queued":
+        extra.setdefault("step", 0)
     return {"t_ns": t, "type": kind, "key": key, **extra}
 
 
@@ -59,7 +64,8 @@ class TraceContractTests(unittest.TestCase):
             event(5, "demand_start"),
             event(6, "prefetch_use"),
             event(7, "prefetch_gpu_done"),
-            event(8, "buffer_release"),
+            event(8, "demand_finish"),
+            event(9, "buffer_release"),
         ]
 
     def test_complete_valid_trace(self):
@@ -69,6 +75,65 @@ class TraceContractTests(unittest.TestCase):
         events = [self.valid[0], event(1, "hint"), event(2, "demand_queued", "L1:E7"), self.valid[2]]
         with self.assertRaisesRegex(ContractError, "overtook queued demand"):
             validate(trace(events))
+
+    def test_demand_must_match_routed_expert_or_declared_ple_lookup(self):
+        events = [self.valid[0], event(1, "demand_queued", "L1:E5")]
+        with self.assertRaisesRegex(ContractError, "matching route"):
+            validate(trace(events))
+        events = [self.valid[0], event(1, "demand_queued", "L2:E2")]
+        with self.assertRaisesRegex(ContractError, "matching route"):
+            validate(trace(events))
+        events = [self.valid[0], event(1, "demand_queued", "L1:P0:0")]
+        with self.assertRaisesRegex(ContractError, "matching route"):
+            validate(trace(events))
+        events = [self.valid[0], event(1, "ple_lookup", "L1:P0:0", step=0,
+                                      global_row=3), event(2, "demand_queued", "L1:P0:0"),
+                  event(3, "demand_start", "L1:P0:0"),
+                  event(4, "demand_io_start", "L1:P0:0"),
+                  event(5, "demand_io_done", "L1:P0:0"),
+                  event(6, "demand_finish", "L1:P0:0")]
+        candidate = trace(events)
+        candidate["metrics"]["prefetch_useful_bytes_before_demand"] = 0
+        validate(candidate)
+
+    def test_unserved_demand_blocks_hints_and_speculative_io(self):
+        events = [self.valid[0], event(1, "demand_queued"), event(2, "demand_start"),
+                  event(3, "hint", "L1:E3"), event(4, "prefetch_start", "L1:E3", bytes=1)]
+        with self.assertRaisesRegex(ContractError, "overtook waiting demand"):
+            validate(trace(events))
+        events = [self.valid[0], event(1, "demand_queued"), event(2, "demand_start"),
+                  event(3, "hint")]
+        with self.assertRaisesRegex(ContractError, "already demanded hint"):
+            validate(trace(events))
+        events = [self.valid[0], event(1, "demand_queued"), event(2, "demand_start"),
+                  event(3, "demand_io_start"), event(4, "demand_io_done"),
+                  event(5, "demand_finish"), event(6, "hint", "L1:E3"),
+                  event(7, "prefetch_start", "L1:E3", bytes=1),
+                  event(8, "prefetch_io_done", "L1:E3"), event(9, "buffer_release", "L1:E3")]
+        candidate = trace(events)
+        candidate["metrics"]["prefetch_useful_bytes_before_demand"] = 0
+        candidate["metrics"]["prefetch_wasted_bytes"] = 1
+        validate(candidate)
+
+    def test_repeated_demand_after_finish_is_valid(self):
+        events = [self.valid[0], event(1, "demand_queued"), event(2, "demand_start"),
+                  event(3, "demand_io_start"), event(4, "demand_io_done"),
+                  event(5, "demand_finish"), event(6, "demand_queued"),
+                  event(7, "demand_start"), event(8, "demand_io_start"),
+                  event(9, "demand_io_done"), event(10, "demand_finish")]
+        candidate = trace(events)
+        candidate["metrics"]["prefetch_useful_bytes_before_demand"] = 0
+        validate(candidate)
+
+    def test_successful_trace_rejects_swap_growth_and_impossible_peak(self):
+        candidate = trace(self.valid)
+        candidate["metrics"]["swap_delta_bytes"] = 1
+        with self.assertRaisesRegex(ContractError, "swap growth"):
+            validate(candidate)
+        candidate["metrics"]["swap_delta_bytes"] = 0
+        candidate["metrics"]["peak_footprint_bytes"] = 31
+        with self.assertRaisesRegex(ContractError, "peak footprint"):
+            validate(candidate)
 
     def test_promoted_inflight_hint_blocks_unrelated_prefetch(self):
         events = [self.valid[0], event(1, "hint"), event(2, "prefetch_start", bytes=32),
@@ -137,7 +202,7 @@ class TraceContractTests(unittest.TestCase):
         events = self.valid[:2] + [event(2, "prefetch_start", bytes=32), event(3, "demand_queued"),
                                    event(4, "demand_start"), event(5, "prefetch_io_done"),
                                    event(6, "prefetch_use"), event(7, "prefetch_gpu_done"),
-                                   event(8, "buffer_release")]
+                                   event(8, "demand_finish"), event(9, "buffer_release")]
         candidate = trace(events)
         candidate["metrics"]["prefetch_useful_bytes_before_demand"] = 0
         candidate["metrics"]["prefetch_late_bytes"] = 32
@@ -154,6 +219,10 @@ class TraceContractTests(unittest.TestCase):
             compare_pair(baseline, candidate)
         candidate["output_token_ids"] = [1, 2]
         candidate["events"][0]["weights_digest"] = "weights:different"
+        with self.assertRaisesRegex(ContractError, "routing or weights differ"):
+            compare_pair(baseline, candidate)
+        candidate["events"][0]["weights_digest"] = "weights:real"
+        baseline["events"][0]["layer"] = 2
         with self.assertRaisesRegex(ContractError, "routing or weights differ"):
             compare_pair(baseline, candidate)
 

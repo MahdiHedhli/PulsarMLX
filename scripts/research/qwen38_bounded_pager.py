@@ -117,13 +117,17 @@ class BoundedPager:
 
     def _spec(self, key: PageKey) -> PageSpec:
         spec = self.catalog(key)
-        if spec.key != key or not spec.spans or any(span.length <= 0 for span in spec.spans):
+        if (spec.key != key or not spec.spans or
+                any(type(span.offset) is not int or type(span.length) is not int or
+                    span.offset < 0 or span.length <= 0 for span in spec.spans)):
             raise PagerProtocolError("catalog returned an invalid page")
         return spec
 
     def observe(self, sample: Observation) -> None:
         """Stop on sampled pressure; this is not an allocation hard limit."""
         self._open()
+        if type(sample) is not Observation:
+            self._stop("invalid memory observation")
         if (any(type(v) is not int or v < 0 for v in
                 (sample.process_bytes, sample.system_headroom_bytes, sample.swap_delta_bytes))
                 or type(sample.memory_pressure) is not bool):
@@ -220,6 +224,16 @@ class BoundedPager:
             return None
         if not self._evict_for(spec.size_bytes):
             if purpose == "demand":
+                if spec.size_bytes > self.limits.weight_bytes - self.limits.fixed_model_bytes:
+                    self._stop("demand page exceeds weight budget")
+                speculative = [pending_key for pending_key, pending_ticket in self.pending.items()
+                               if pending_ticket.purpose == "hint" and pending_key not in self.actual_demands]
+                if speculative:
+                    # Their reservations cannot be reclaimed until I/O completes.
+                    # Drop their results and retry the real demand afterward.
+                    for pending_key in speculative:
+                        self.invalidate_hint(pending_key)
+                    return None
                 self._stop("demand page exceeds available weight/staging budget")
             return None
         source.popleft()

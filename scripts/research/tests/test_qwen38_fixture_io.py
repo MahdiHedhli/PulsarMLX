@@ -57,6 +57,7 @@ class FixtureIoTests(unittest.TestCase):
                 self.assertEqual(bytes(view), self.blob[span.offset:span.offset + span.length])
             with self.assertRaisesRegex(PagerProtocolError, "before GPU"):
                 store.release(borrow)
+            self.assertTrue(all(view.nbytes > 0 for view in borrow.segments.values()))
             with self.assertRaisesRegex(PagerProtocolError, "cannot close"):
                 store.close()
             store.gpu_done(borrow)
@@ -181,6 +182,48 @@ class FixtureIoTests(unittest.TestCase):
                 store.pump_one()
             self.assertTrue(p.closed)
             self.assertEqual(p.accounting()["inflight_requests"], 0)
+
+    def test_failed_observation_after_residency_releases_idle_buffer(self):
+        p = pager(self.catalog)
+        observations = iter([GOOD, GOOD])
+
+        def observe():
+            return next(observations)
+
+        with FixturePageStore(self.root, self.files, p, observe) as store:
+            p.demand(E1)
+            store.pump_one()
+            p.finish_demand(E1)
+            with self.assertRaisesRegex(PagerStop, "observation failed"):
+                store.pump_one()
+            self.assertTrue(p.closed)
+            self.assertFalse(store.buffers)
+
+    def test_malformed_observation_fails_closed(self):
+        p = pager(self.catalog)
+        with FixturePageStore(self.root, self.files, p, lambda: None) as store:
+            p.demand(E0)
+            with self.assertRaisesRegex(PagerStop, "invalid memory observation"):
+                store.pump_one()
+            self.assertTrue(p.closed)
+
+    def test_context_exception_closes_descriptors_and_preserves_lease(self):
+        p = pager(self.catalog)
+        store = FixturePageStore(self.root, self.files, p, lambda: GOOD)
+        borrow = None
+        with self.assertRaisesRegex(RuntimeError, "original failure"):
+            with store:
+                p.demand(E1)
+                store.pump_one()
+                borrow = store.borrow(E1)
+                raise RuntimeError("original failure")
+        self.assertTrue(store.closed)
+        self.assertFalse(store.fds)
+        self.assertTrue(p.closed)
+        self.assertEqual(set(store.buffers), {E1})
+        store.gpu_done(borrow)
+        store.release(borrow)
+        self.assertFalse(store.buffers)
 
     def test_eviction_releases_store_owned_idle_buffer(self):
         p = pager(self.catalog, weight=96)

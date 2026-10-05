@@ -1,6 +1,8 @@
 """Adversarial synthetic page tests; no model, MLX, or checkpoint payload."""
 
 import sys
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -9,7 +11,7 @@ from qwen38_bounded_pager import (  # noqa: E402
     BoundedPager, Limits, Observation, PagerProtocolError, PagerStop,
 )
 from qwen38_page_catalog import (  # noqa: E402
-    CatalogError, PageCatalog, PageKey, TensorRef,
+    ByteSpan, CatalogError, PageCatalog, PageKey, PageSpec, TensorRef, admit_checkpoint,
 )
 
 
@@ -50,6 +52,48 @@ P1 = PageKey("ple", 1, 0, 1)
 
 
 class CatalogTests(unittest.TestCase):
+    def test_noninteger_page_coordinates_are_rejected(self):
+        catalog = synthetic_catalog()
+        for key in (PageKey("ple", 1, 0, 0.5), PageKey("expert", True, 0),
+                    PageKey("expert", 0, 1.0), PageKey("ple", 1, 0, False)):
+            with self.subTest(key=key), self.assertRaisesRegex(CatalogError, "invalid page key"):
+                catalog.page(key)
+        for row in (0.5, True):
+            with self.subTest(row=row), self.assertRaisesRegex(CatalogError, "invalid PLE global row"):
+                catalog.ple_key_for_global_row(row)
+        with self.assertRaisesRegex(CatalogError, "invalid catalog geometry"):
+            PageCatalog(catalog.tensors, layers=2, experts=3, ple_layer=1,
+                        ple_shards=2, ple_rows_per_page=4.0)
+
+    def test_receipt_and_index_shard_set_fail_closed(self):
+        with tempfile.TemporaryDirectory(prefix="qwen38-admission-synthetic-") as temp:
+            root = Path(temp)
+            manifest_path = root / "manifest.json"
+            manifest = {"repo": "pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit",
+                        "revision": "synthetic", "files": [
+                            {"path": "a.safetensors", "size_bytes": 1},
+                            {"path": "b.safetensors", "size_bytes": 1},
+                            {"path": "config.json", "size_bytes": 2},
+                            {"path": "model.safetensors.index.json", "size_bytes": 44}]}
+            config = "{}"
+            index = json.dumps({"weight_map": {"x": "a.safetensors"}})
+            manifest["files"][-1]["size_bytes"] = len(index)
+            manifest_path.write_text(json.dumps(manifest))
+            (root / "config.json").write_text(config)
+            (root / "model.safetensors.index.json").write_text(index)
+            (root / "a.safetensors").write_bytes(b"a")
+            (root / "b.safetensors").write_bytes(b"b")
+            receipt = {"complete": "true", "repo": manifest["repo"],
+                       "revision": "synthetic", "verified_files": [
+                           item["path"] for item in manifest["files"]]}
+            (root / "acquisition-receipt.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(CatalogError, "unverified checkpoint"):
+                admit_checkpoint(root, manifest_path=manifest_path)
+            receipt["complete"] = True
+            (root / "acquisition-receipt.json").write_text(json.dumps(receipt))
+            with self.assertRaisesRegex(CatalogError, "index shard set"):
+                admit_checkpoint(root, manifest_path=manifest_path)
+
     def test_expert_spans_are_exact_rows_of_all_nine_affine_tensors(self):
         catalog = synthetic_catalog()
         first = catalog.page(E0)
@@ -85,6 +129,14 @@ class CatalogTests(unittest.TestCase):
 
 
 class SchedulerTests(unittest.TestCase):
+    def test_catalog_span_offsets_and_lengths_are_integral(self):
+        for span in (ByteSpan("synthetic", 0.5, 4, "x"),
+                     ByteSpan("synthetic", 0, 4.0, "x")):
+            p = BoundedPager(lambda key: PageSpec(key, (span,)),
+                             Limits(96, 96, 1, 1, 1, 480, 160))
+            with self.subTest(span=span), self.assertRaisesRegex(PagerProtocolError, "invalid page"):
+                p.demand(E0)
+
     def test_demand_precedes_hint_and_only_real_demand_can_acquire(self):
         p = pager()
         self.assertTrue(p.hint(E0))
@@ -167,6 +219,19 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(p.accounting()["resident_bytes"], 96)
         p.mark_gpu_done(lease)
         p.release(lease)
+
+    def test_inflight_hint_waits_instead_of_stopping_demand(self):
+        p = pager(weight=96, staging=96)
+        p.demand(E0)
+        p.complete_io(p.next_io())
+        p.hint(E1)
+        hint_ticket = p.next_io()
+        p.demand(E2)
+        self.assertIsNone(p.next_io())
+        self.assertFalse(p.closed)
+        p.complete_io(hint_ticket)
+        demand_ticket = p.next_io()
+        self.assertEqual(demand_ticket.spec.key, E2)
 
     def test_oversize_hint_is_rejected_before_queue_and_does_not_starve_demand(self):
         p = pager(weight=96, staging=48)

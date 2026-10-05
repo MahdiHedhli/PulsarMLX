@@ -91,7 +91,12 @@ class FixturePageStore:
             if key not in self.pager.resident:
                 del self.buffers[key]
         if sum(len(buffer) for buffer in self.buffers.values()) != self.pager.resident_bytes:
-            self.pager.stop("host buffer accounting mismatch")
+            try:
+                self.pager.stop("host buffer accounting mismatch")
+            finally:
+                for key in list(self.buffers):
+                    if key not in self.pager.resident:
+                        del self.buffers[key]
 
     def accounting(self) -> dict[str, int]:
         self._reconcile()
@@ -102,8 +107,10 @@ class FixturePageStore:
         try:
             sample = self.observe_sample()
         except Exception:
-            self._reconcile()
-            self.pager.stop("memory observation failed")
+            try:
+                self.pager.stop("memory observation failed")
+            finally:
+                self._reconcile()
         try:
             self.pager.observe(sample)
         finally:
@@ -177,9 +184,14 @@ class FixturePageStore:
         self.pager.mark_gpu_done(borrow.lease_id)
 
     def release(self, borrow: PageBorrow) -> None:
-        self.pager.release(borrow.lease_id)
+        lease = self.pager.leases.get(borrow.lease_id)
+        if lease is None or not lease.gpu_done:
+            raise PagerProtocolError("release before GPU completion")
+        # If an extension refuses to release an exported view, keep the page
+        # pinned. Derived views may still outlive these parent views.
         for view in borrow.segments.values():
             view.release()
+        self.pager.release(borrow.lease_id)
         borrow.segments.clear()
         self._reconcile()
 
@@ -202,4 +214,20 @@ class FixturePageStore:
         return self
 
     def __exit__(self, *_exc: object) -> None:
-        self.close()
+        if _exc[0] is None:
+            self.close()
+            return
+        # Preserve the original exception while dropping file descriptors.
+        # A borrowed page remains pinned until its GPU lease is acknowledged.
+        try:
+            self.close()
+        except PagerProtocolError:
+            self.closed = True
+            try:
+                self.pager.stop("fixture context exited with unfinished work")
+            except PagerStop:
+                pass
+            self._reconcile()
+            for fd in self.fds.values():
+                os.close(fd)
+            self.fds.clear()
