@@ -1,0 +1,115 @@
+"""Exact one-shot runner for Mahdi's authorized 2026-10-05 local admission.
+
+Invoke only with explicit real-checkpoint read authorization:
+python3 -I -S -B <this file>
+No page materialization or checkpoint-code execution is performed.
+"""
+import errno
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+WORKTREE = Path(__file__).resolve().parents[3]
+ROOT = WORKTREE.parent / "models/Qwen3.8-Flash-Next-MLX-mixed-4_8bit-b2c422f3"
+SOURCE_COMMIT = "f2705d30b2288dec9c314bc6803ca64a28864766"
+RESULT = Path(__file__).with_name("bound-admission-local-result-2026-10-05.json")
+sys.path.insert(0, str(WORKTREE / "scripts/research"))
+from qwen38_page_catalog import admit_checkpoint_bound
+from admit_qwen38_static import MANIFEST
+from qwen38_verified_files import CHUNK_BYTES
+
+
+def utc_now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def closed(fd):
+    try:
+        os.fstat(fd)
+    except OSError as exc:
+        if exc.errno == errno.EBADF:
+            return True
+        raise
+    return False
+
+
+def main():
+    assert not RESULT.exists(), "Refuse to replace evidence or repeat this run"
+    assert subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=WORKTREE, text=True).strip() == SOURCE_COMMIT
+    manifest_bytes = MANIFEST.read_bytes()
+    manifest = json.loads(manifest_bytes)
+    assert len(manifest["files"]) == 25
+    assert manifest["total_size_bytes"] == 106218444193
+    result = {
+        "schema": "pulsarmlx.qwen38.local-bound-admission/1",
+        "authorization": "Mahdi: one local read-only digest verification, 2026-10-05",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest(),
+        "repo": manifest["repo"],
+        "revision": manifest["revision"],
+        "root": str(ROOT),
+        "python_version": sys.version,
+        "python_executable": sys.executable,
+        "started_at_utc": utc_now(),
+        "chunk_bytes": CHUNK_BYTES,
+        "checkpoint_code_executed": False,
+        "model_loaded": False,
+        "inference_run": False,
+        "benchmark_run": False,
+        "page_payload_materialized": False,
+        "planning_gates_gib": {"process": 48, "all_weights": 40, "os_reserve": 16},
+    }
+    print(json.dumps({"event": "bound-admission-started", "at": result["started_at_utc"]}), flush=True)
+    bound = None
+    try:
+        with admit_checkpoint_bound(ROOT) as bound:
+            result["root_identity"] = list(bound.files.root_identity)
+            result["verified_files"] = []
+            descriptors = [bound.files.root_fd]
+            for name, file in bound.files.files.items():
+                bound.files.check(name)
+                descriptors.append(file.fd)
+                result["verified_files"].append({
+                    "path": name,
+                    "size_bytes": file.size,
+                    "algorithm": file.algorithm,
+                    "matched_manifest_digest": file.expected_digest,
+                    "identity": list(file.identity),
+                    "chunk_count": len(file.chunk_hashes) // 32,
+                })
+            result["catalog"] = bound.catalog.summary()
+            result["tensor_count"] = len(bound.catalog.tensors)
+            result["verified_bytes"] = sum(f["size_bytes"] for f in result["verified_files"])
+            assert result["verified_bytes"] == manifest["total_size_bytes"]
+            assert len(result["verified_files"]) == 25
+            assert result["tensor_count"] == 3215
+        result["descriptor_cleanup_verified"] = (
+            bound.files.closed and bound.files.root_fd == -1 and
+            not bound.files.files and all(closed(fd) for fd in descriptors))
+        assert result["descriptor_cleanup_verified"]
+        result["status"] = "passed"
+    except BaseException as exc:
+        result["status"] = "failed"
+        result["error_type"] = type(exc).__name__
+        result["error"] = str(exc)
+        if bound is not None:
+            result["file_set_closed"] = bound.files.closed
+        raise
+    finally:
+        result["finished_at_utc"] = utc_now()
+        result["process_peak_rss_bytes_macos"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        result["rss_observation_scope"] = "This standard-library verifier only; not production MLX memory qualification"
+        RESULT.write_text(json.dumps(result, indent=2) + "\n")
+        print(json.dumps({"event": "bound-admission-finished", "status": result["status"],
+                          "evidence": str(RESULT), "at": result["finished_at_utc"]}), flush=True)
+
+
+if __name__ == "__main__":
+    main()

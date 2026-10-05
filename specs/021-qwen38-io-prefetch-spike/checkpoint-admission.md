@@ -2,7 +2,7 @@
 
 Status: one pinned checkpoint copy acquired and statically inspected on 2026-10-04 UTC. All repository files passed pinned digests; all Safetensors headers and centered norm tensors passed the bounded checks below. No checkpoint-provided Python or model forward was executed. This is file/format admission, not numerical or generated-output qualification.
 
-A later [source-only bound admission slice](checkpoint-file-integrity.md) implements repeat full-file digest verification, retained file descriptors, and authenticated per-page reads. It has passed only tiny synthetic fixtures. The 106,218,444,193-byte pinned copy has **not** been read through that new path; its first bound verification is a separate authorization gate.
+A later [bound admission slice](checkpoint-file-integrity.md) implements repeat full-file digest verification, retained file descriptors, and authenticated per-page reads. On 2026-10-05, Mahdi authorized one local read-only verification: all 25 files and 106,218,444,193 bytes passed the new bound path, its catalog parsed 3,215 tensors, and descriptor cleanup passed. See the [exact runner and result](evidence/bound-admission-local-verification-2026-10-05.md). Real page reads and model/runtime qualification remain separate gates; a saved result does not grant a later session access to the files.
 
 ## Frozen identities and compatibility boundary
 

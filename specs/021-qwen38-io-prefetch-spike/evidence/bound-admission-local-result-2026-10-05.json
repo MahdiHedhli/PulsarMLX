@@ -1,0 +1,430 @@
+{
+  "schema": "pulsarmlx.qwen38.local-bound-admission/1",
+  "authorization": "Mahdi: one local read-only digest verification, 2026-10-05",
+  "source_commit": "f2705d30b2288dec9c314bc6803ca64a28864766",
+  "runner_sha256": "076fbd66aff4398a9698f0dad150d4ae9dc509e3935e11e47fd729bbac1edc13",
+  "manifest_sha256": "afe5b9b7ec19375c6815eceed6a1607212463c5c6525c6fdd67385db30e6f06f",
+  "repo": "pipenetwork/Qwen3.8-Flash-Next-MLX-mixed-4_8bit",
+  "revision": "b2c422f3c643e36f04227a64d61796b44a4b1029",
+  "root": "/Users/mhedhli/Documents/Codex/2026-10-03/task/models/Qwen3.8-Flash-Next-MLX-mixed-4_8bit-b2c422f3",
+  "python_version": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "python_executable": "/opt/homebrew/bin/python3",
+  "started_at_utc": "2026-10-05T22:46:43.532814+00:00",
+  "chunk_bytes": 1048576,
+  "checkpoint_code_executed": false,
+  "model_loaded": false,
+  "inference_run": false,
+  "benchmark_run": false,
+  "page_payload_materialized": false,
+  "planning_gates_gib": {
+    "process": 48,
+    "all_weights": 40,
+    "os_reserve": 16
+  },
+  "root_identity": [
+    16777232,
+    1598881439,
+    16877,
+    928,
+    1791074695000000000,
+    1791074702745078246
+  ],
+  "verified_files": [
+    {
+      "path": ".gitattributes",
+      "size_bytes": 1570,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "52373fe24473b1aa44333d318f578ae6bf04b49b",
+      "identity": [
+        16777232,
+        1598881560,
+        33188,
+        1570,
+        1791071837399978767,
+        1791071843651469988
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "LICENSE",
+      "size_bytes": 3235,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "9557a8961782792814714b7488346732c043793d",
+      "identity": [
+        16777232,
+        1598881563,
+        33188,
+        3235,
+        1791071837469350383,
+        1791071843648647274
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 6195,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "13e78e2d40f39e8250978ec9cd884facc11e8539",
+      "identity": [
+        16777232,
+        1598881566,
+        33188,
+        6195,
+        1791071837559019400,
+        1791071843682944094
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "chat_template.jinja",
+      "size_bytes": 8952,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "c0c686f9c38d70d179fb7b5f5aa7530bc913dda3",
+      "identity": [
+        16777232,
+        1598881576,
+        33188,
+        8952,
+        1791071837641188228,
+        1791071843666720241
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "config.json",
+      "size_bytes": 135742,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "68fe65b6bf0e45639dfd429048c489bbf195a4d5",
+      "identity": [
+        16777232,
+        1598881578,
+        33188,
+        135742,
+        1791071837741730210,
+        1791071843661365277
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "generation_config.json",
+      "size_bytes": 202,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "023756cfadf88e5bf69eefeee3e172f38c448d64",
+      "identity": [
+        16777232,
+        1598881587,
+        33188,
+        202,
+        1791071837841236338,
+        1791071843677335168
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "merges.txt",
+      "size_bytes": 3353259,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "a494e019ca1502219fd0128658b979e5f05ae8e8",
+      "identity": [
+        16777232,
+        1598881589,
+        33188,
+        3353259,
+        1791071837994979452,
+        1791071843680559721
+      ],
+      "chunk_count": 4
+    },
+    {
+      "path": "model-00001.safetensors",
+      "size_bytes": 10131671103,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "f944a290da33b369aca7af4d1d2ac7f35421917cd354e94b2c84104d06589e4f",
+      "identity": [
+        16777232,
+        1598881617,
+        33188,
+        10131671103,
+        1791071941775965047,
+        1791072570664842641
+      ],
+      "chunk_count": 9663
+    },
+    {
+      "path": "model-00002.safetensors",
+      "size_bytes": 10000066971,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "48f925c8652fd3210bd8593b41b9fbd66f02567e0e1e7abc28b75e2601f8af26",
+      "identity": [
+        16777232,
+        1598882742,
+        33188,
+        10000066971,
+        1791072056378603433,
+        1791073260799052068
+      ],
+      "chunk_count": 9537
+    },
+    {
+      "path": "model-00003.safetensors",
+      "size_bytes": 10000066984,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "cb0a951b9aed16ddad882a75c4c07b2615fa364db7c83cfcf7166dc481def85a",
+      "identity": [
+        16777232,
+        1598883827,
+        33188,
+        10000066984,
+        1791072170455653861,
+        1791073260909948308
+      ],
+      "chunk_count": 9537
+    },
+    {
+      "path": "model-00004.safetensors",
+      "size_bytes": 10314427650,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "1b5375ca95f7537986d3d4b04a631d02c5733ec3f51ede0c86af2778fdf2aef5",
+      "identity": [
+        16777232,
+        1598885342,
+        33188,
+        10314427650,
+        1791072293849160065,
+        1791074323640516439
+      ],
+      "chunk_count": 9837
+    },
+    {
+      "path": "model-00005.safetensors",
+      "size_bytes": 10008047700,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "001a119e0e7397bcacffd91b20d246ccfc1260c5fc4f9508925f1b718fd272a4",
+      "identity": [
+        16777232,
+        1598886556,
+        33188,
+        10008047700,
+        1791072428792595976,
+        1791074697273219301
+      ],
+      "chunk_count": 9545
+    },
+    {
+      "path": "model-00006.safetensors",
+      "size_bytes": 10412855614,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "c03d042c95831b6e79eb2e5cb361423d681f55ebecb7905688015ecf8cb47bb5",
+      "identity": [
+        16777232,
+        1598887855,
+        33188,
+        10412855614,
+        1791072728812326718,
+        1791074323620732085
+      ],
+      "chunk_count": 9931
+    },
+    {
+      "path": "model-00007.safetensors",
+      "size_bytes": 10003320652,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "11c2e0ba7d8c24430a1cc3b16f6c127315d16f18109b4871c0ccb7d50203c4e4",
+      "identity": [
+        16777232,
+        1598890333,
+        33188,
+        10003320652,
+        1791072857465833807,
+        1791074665298848846
+      ],
+      "chunk_count": 9540
+    },
+    {
+      "path": "model-00008.safetensors",
+      "size_bytes": 10022166479,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "ebb07a5d262f2627225a72d6dd594b79e88e7291a0f56b0351d56e57b542f5f8",
+      "identity": [
+        16777232,
+        1598892569,
+        33188,
+        10022166479,
+        1791072978158945139,
+        1791074295930994616
+      ],
+      "chunk_count": 9558
+    },
+    {
+      "path": "model-00009.safetensors",
+      "size_bytes": 10413658096,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "750853b2812719c2b76136677f1378bca9c316c3c350588bb50ccce8bdfde187",
+      "identity": [
+        16777232,
+        1598893098,
+        33188,
+        10413658096,
+        1791073113585600123,
+        1791074694342192317
+      ],
+      "chunk_count": 9932
+    },
+    {
+      "path": "model-00010.safetensors",
+      "size_bytes": 10011809426,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "f68e9de983c1cd2cbd56ec4fad8f6da15ee09e3c79732347d63e87021b3d7e3f",
+      "identity": [
+        16777232,
+        1598894253,
+        33188,
+        10011809426,
+        1791073463864189810,
+        1791074688310443257
+      ],
+      "chunk_count": 9549
+    },
+    {
+      "path": "model-00011.safetensors",
+      "size_bytes": 4876940562,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "8e7b68292208146a0298e8e07548efd25889ba1c36d39a5ed27ab46b0d635436",
+      "identity": [
+        16777232,
+        1598914445,
+        33188,
+        4876940562,
+        1791073655469791550,
+        1791074697298688536
+      ],
+      "chunk_count": 4652
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "size_bytes": 317973,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "884931de799eac873214add7c9c0416b95f30686",
+      "identity": [
+        16777232,
+        1598918322,
+        33188,
+        317973,
+        1791073658335165712,
+        1791074694318737947
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "preprocessor_config.json",
+      "size_bytes": 390,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "2ea84a437d448ff71b08df68fdd949d5cc4ebb64",
+      "identity": [
+        16777232,
+        1598918324,
+        33188,
+        390,
+        1791073658409863130,
+        1791074699984621408
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "qwen4_exp.py",
+      "size_bytes": 35046,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "433dbf15299d2793a7167ad5c97a374c194609d8",
+      "identity": [
+        16777232,
+        1598918326,
+        33188,
+        35046,
+        1791073658478766657,
+        1791074697290355363
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "tokenizer.json",
+      "size_bytes": 12809320,
+      "algorithm": "sha256",
+      "matched_manifest_digest": "0997f410c57a1f4e53b09e4be8f4a172d90edd9564368fb0847030937229b9f3",
+      "identity": [
+        16777232,
+        1598918329,
+        33188,
+        12809320,
+        1791073659050888246,
+        1791074688316374600
+      ],
+      "chunk_count": 13
+    },
+    {
+      "path": "tokenizer_config.json",
+      "size_bytes": 17928,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "5de744b3fca2129d7186979ae47c06be33903243",
+      "identity": [
+        16777232,
+        1598918332,
+        33188,
+        17928,
+        1791073659144182685,
+        1791074699995321201
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "video_preprocessor_config.json",
+      "size_bytes": 385,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "3ba673a5ad7d4d13f54155ecd38b2a94a6dac8fe",
+      "identity": [
+        16777232,
+        1598918334,
+        33188,
+        385,
+        1791073659222239512,
+        1791074688285930537
+      ],
+      "chunk_count": 1
+    },
+    {
+      "path": "vocab.json",
+      "size_bytes": 6722759,
+      "algorithm": "git_blob_sha1",
+      "matched_manifest_digest": "0aa0ce0658d60ac4a5d609f4eadb0e8e43514176",
+      "identity": [
+        16777232,
+        1598918336,
+        33188,
+        6722759,
+        1791073659441531593,
+        1791074691230503319
+      ],
+      "chunk_count": 7
+    }
+  ],
+  "catalog": {
+    "layers": 48,
+    "experts_per_layer": 512,
+    "expert_page_count": 24576,
+    "ple_layer": 1,
+    "ple_shards": 128,
+    "ple_rows_per_page": 8192,
+    "ple_page_count": 39168,
+    "example_expert_page_bytes": 2764800,
+    "example_ple_page_bytes": 819200,
+    "fixed_text_tensor_bytes": 5348837400,
+    "excluded_vision_tensor_bytes": 897862112,
+    "scope": "header-only affine spans; no payload or execution"
+  },
+  "tensor_count": 3215,
+  "verified_bytes": 106218444193,
+  "descriptor_cleanup_verified": true,
+  "status": "passed",
+  "finished_at_utc": "2026-10-05T22:48:27.189837+00:00",
+  "process_peak_rss_bytes_macos": 34062336,
+  "rss_observation_scope": "This standard-library verifier only; not production MLX memory qualification"
+}

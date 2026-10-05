@@ -1,6 +1,6 @@
 # Feature 021: bounded Qwen3.8 page admission
 
-Status: design and synthetic admission only, 2026-10-04 UTC. This slice does not load the acquired model or execute checkpoint-supplied Python.
+Status: design, synthetic admission, and one separately authorized real-file digest admission, 2026-10-05 UTC. The [local evidence](evidence/bound-admission-local-verification-2026-10-05.md) qualifies file integrity and catalog binding only. This slice does not load the acquired model or execute checkpoint-supplied Python.
 
 ## Problem and outcome
 
