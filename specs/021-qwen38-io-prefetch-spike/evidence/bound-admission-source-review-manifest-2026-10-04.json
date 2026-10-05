@@ -1,0 +1,37 @@
+[
+  {
+    "path": "scripts/research/qwen38_verified_files.py",
+    "bytes": 9230,
+    "sha256": "c70f0c8c1e88d3ee4ee5dd16298e7b597cc5888c2b8affefafc31fbe99d77050"
+  },
+  {
+    "path": "scripts/research/qwen38_page_catalog.py",
+    "bytes": 15023,
+    "sha256": "bd8aabe9153edc9c25f9379b3ba1c7982e4bc2a1035f84994d3247c65272bd2d"
+  },
+  {
+    "path": "scripts/research/qwen38_fixture_io.py",
+    "bytes": 10270,
+    "sha256": "80fcd6cc5453c5bd3b342e4ffa3bb2111dbec718b2541b3fe59ae5aaa7b94b9b"
+  },
+  {
+    "path": "scripts/research/admit_qwen38_static.py",
+    "bytes": 11728,
+    "sha256": "7ae78883832baca4d2ada9e43ba94f4a6bcc86314fe00dc1707646a1d9e26d63"
+  },
+  {
+    "path": "scripts/research/tests/test_qwen38_verified_files.py",
+    "bytes": 8199,
+    "sha256": "51fc18681195d8f9872b9912f1205c1d77b770464c041160330aa9d1be89ce8b"
+  },
+  {
+    "path": "scripts/research/tests/test_qwen38_fixture_io.py",
+    "bytes": 12280,
+    "sha256": "1a85b686900935cbddebd85df7d0349eae16a8052f07fec71e674088d10ea8a1"
+  },
+  {
+    "path": "specs/021-qwen38-io-prefetch-spike/checkpoint-file-integrity.md",
+    "bytes": 2687,
+    "sha256": "b49e3118f0bd22c2ee09b2f0eb9f189d282f06d3322bc20e1d4d308b597ffb25"
+  }
+]

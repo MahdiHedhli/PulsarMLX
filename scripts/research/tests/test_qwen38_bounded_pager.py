@@ -127,6 +127,17 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(CatalogError, "unrecognized"):
             PageCatalog(broken, layers=2, experts=3, ple_layer=1, ple_shards=2)
 
+    def test_scalar_or_empty_ple_tensor_fails_as_catalog_error(self):
+        catalog = synthetic_catalog()
+        name = "language_model.model.layers.1.ple.ple_embedding.ngram_embedding.shard_0.weight"
+        original = catalog.tensors[name]
+        for shape in ((), (original.shape[0], 0)):
+            broken = dict(catalog.tensors)
+            broken[name] = TensorRef(original.filename, original.data_start, original.dtype,
+                                     shape, original.start, original.end)
+            with self.subTest(shape=shape), self.assertRaises(CatalogError):
+                PageCatalog(broken, layers=2, experts=3, ple_layer=1, ple_shards=2)
+
 
 class SchedulerTests(unittest.TestCase):
     def test_catalog_span_offsets_and_lengths_are_integral(self):

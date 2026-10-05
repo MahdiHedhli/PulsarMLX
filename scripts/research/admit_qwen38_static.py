@@ -12,6 +12,7 @@ import json
 import math
 import os
 import struct
+import tempfile
 from pathlib import Path
 
 
@@ -41,11 +42,11 @@ def read_header(path: Path) -> tuple[int, dict]:
     return 8 + length, header
 
 
-def inspect_shard(path: Path, expected_names: set[str]) -> tuple[dict, int]:
-    data_start, header = read_header(path)
+def inspect_shard_data(data_start: int, header: dict, file_size: int,
+                       expected_names: set[str]) -> tuple[dict, int]:
     metadata = header.pop("__metadata__", None)
-    require(metadata is None or isinstance(metadata, dict), f"invalid header metadata: {path}")
-    require(set(header) == expected_names, f"index/header tensor mismatch: {path.name}")
+    require(metadata is None or isinstance(metadata, dict), "invalid header metadata")
+    require(set(header) == expected_names, "index/header tensor mismatch")
     spans = []
     for name, item in header.items():
         require(isinstance(item, dict) and item.get("dtype") in DTYPE_BYTES,
@@ -63,9 +64,13 @@ def inspect_shard(path: Path, expected_names: set[str]) -> tuple[dict, int]:
     for start, end, name in sorted(spans):
         require(start == cursor, f"gap or overlap before tensor: {name}")
         cursor = end
-    require(data_start + cursor == path.stat().st_size,
-            f"unaccounted shard bytes: {path.name}")
+    require(data_start + cursor == file_size, "unaccounted shard bytes")
     return header, data_start
+
+
+def inspect_shard(path: Path, expected_names: set[str]) -> tuple[dict, int]:
+    data_start, header = read_header(path)
+    return inspect_shard_data(data_start, header, path.stat().st_size, expected_names)
 
 
 def bf16_summary(path: Path, data_start: int, info: dict) -> dict:
@@ -80,6 +85,22 @@ def bf16_summary(path: Path, data_start: int, info: dict) -> dict:
     require(values and all(math.isfinite(v) for v in values), "nonfinite or empty norm")
     return {"count": len(values), "mean": sum(values) / len(values), "min": min(values),
             "max": max(values), "negative_count": sum(v < 0 for v in values)}
+
+
+def write_admission_result(output: Path, result: dict) -> None:
+    """Replace a report atomically without following an attacker-chosen temp link."""
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=output.parent,
+                                         prefix=".static-admission-", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(json.dumps(result, indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, output)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def main() -> None:
@@ -202,9 +223,7 @@ def main() -> None:
         "verdict": "metadata/header admission; centered norm values support pre-folded layout; no model execution",
     }
     output = root / "static-admission.json"
-    temporary = output.with_name(output.name + ".tmp")
-    temporary.write_text(json.dumps(result, indent=2) + "\n")
-    os.replace(temporary, output)
+    write_admission_result(output, result)
     print(json.dumps({k: v for k, v in result.items() if k != "norm_samples"}, indent=2))
     for suffix, sample in norm_samples.items():
         print(f"{suffix}: mean={sample['mean']:.4f} min={sample['min']:.4f} max={sample['max']:.4f}")

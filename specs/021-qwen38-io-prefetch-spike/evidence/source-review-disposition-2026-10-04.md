@@ -19,7 +19,8 @@ The [frozen source review](claude-opus-source-review-2026-10-04.md) covered comm
 
 ## Open gates and risks
 
-- The receipt is self-attested in a writable checkpoint directory. The catalog rechecks sizes and headers but not complete file digests, and it does not bind later I/O to a file identity token. Repeat digest verification and an identity-bound runtime adapter are required before real checkpoint reads. Treat replacement or tampering between admission and use as an unresolved security risk.
+- The header-only catalog path still treats a receipt in the writable checkpoint directory as evidence. It does not repeat full-file digests or bind later reads. Do not use that path as a runtime admission gate. The separate bound path described below addresses this in source, pending real-file qualification.
+- A later source-only slice implemented [bound file admission](../checkpoint-file-integrity.md), including repeat full-file digests and verified per-read chunk checks. It has been exercised only on tiny synthetic files. The actual pinned copy has not passed this new gate, and no production adapter consumes it yet; treat real-checkpoint use as unqualified.
 - Trace events, PLE key derivation, byte sizes, process footprint, swap, and GPU completion are self-reported until an instrumented adapter and independent observation bind them to real operations. Trace validation alone cannot authorize model execution.
 - The fixture counts retained `bytearray` payloads, not all host allocations or child views. A production adapter needs measured process and MLX allocations plus explicit buffer ownership through device completion.
 - No checkpoint Python, inference, package install, benchmark, or full-model load occurred in this review-remediation slice. The 64 GiB host remains unsuitable for the stock full-model load.

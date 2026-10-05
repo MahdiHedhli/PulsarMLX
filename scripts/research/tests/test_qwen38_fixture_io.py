@@ -1,6 +1,7 @@
 """Actual preadv on tiny synthetic files; never points at model weights."""
 
 import sys
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,8 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from qwen38_bounded_pager import (  # noqa: E402
     BoundedPager, Limits, Observation, PagerProtocolError, PagerStop,
 )
-from qwen38_fixture_io import FixturePageStore, MARKER, MARKER_CONTENT  # noqa: E402
+from qwen38_fixture_io import FixturePageStore, MARKER, MARKER_CONTENT, PageBorrow  # noqa: E402
 from qwen38_page_catalog import ByteSpan, PageKey, PageSpec  # noqa: E402
+from qwen38_verified_files import VerifiedFiles, VerificationError  # noqa: E402
 from test_qwen38_bounded_pager import E0, E1, E2, P0, synthetic_catalog  # noqa: E402
 
 
@@ -64,6 +66,21 @@ class FixtureIoTests(unittest.TestCase):
             store.release(borrow)
             self.assertFalse(borrow.segments)
             p.finish_demand(E1)
+
+    def test_bound_fixture_read_fails_closed_after_content_change(self):
+        manifest = [{"path": "synthetic.safetensors", "size_bytes": len(self.blob),
+                     "sha256": hashlib.sha256(self.blob).hexdigest()}]
+        p = pager(self.catalog)
+        with VerifiedFiles(self.root, manifest) as files:
+            with FixturePageStore(self.root, self.files, p, lambda: GOOD,
+                                  verified_files=files) as store:
+                p.demand(E1)
+                (self.root / "synthetic.safetensors").write_bytes(bytes(len(self.blob)))
+                with self.assertRaises(VerificationError):
+                    store.pump_one()
+                self.assertTrue(p.closed)
+                self.assertEqual(p.accounting()["staging_bytes"], 0)
+                self.assertFalse(store.buffers)
 
     def test_hint_bytes_cannot_be_borrowed_without_actual_demand(self):
         p = pager(self.catalog)
@@ -224,6 +241,37 @@ class FixtureIoTests(unittest.TestCase):
         store.gpu_done(borrow)
         store.release(borrow)
         self.assertFalse(store.buffers)
+
+    def test_normal_context_exit_with_live_lease_closes_descriptors(self):
+        p = pager(self.catalog)
+        store = FixturePageStore(self.root, self.files, p, lambda: GOOD)
+        borrow = None
+        with self.assertRaisesRegex(PagerProtocolError, "cannot close"):
+            with store:
+                p.demand(E1)
+                store.pump_one()
+                borrow = store.borrow(E1)
+        self.assertTrue(store.closed)
+        self.assertFalse(store.fds)
+        self.assertEqual(set(store.buffers), {E1})
+        store.gpu_done(borrow)
+        store.release(borrow)
+        self.assertFalse(store.buffers)
+
+    def test_forged_borrow_cannot_acknowledge_or_release_a_lease(self):
+        p = pager(self.catalog)
+        with FixturePageStore(self.root, self.files, p, lambda: GOOD) as store:
+            p.demand(E1)
+            store.pump_one()
+            borrow = store.borrow(E1)
+            forged = PageBorrow(borrow.lease_id, dict(borrow.segments))
+            with self.assertRaisesRegex(PagerProtocolError, "unknown fixture borrow"):
+                store.gpu_done(forged)
+            store.gpu_done(borrow)
+            with self.assertRaisesRegex(PagerProtocolError, "unknown fixture borrow"):
+                store.release(forged)
+            self.assertIn(borrow.lease_id, p.leases)
+            store.release(borrow)
 
     def test_eviction_releases_store_owned_idle_buffer(self):
         p = pager(self.catalog, weight=96)

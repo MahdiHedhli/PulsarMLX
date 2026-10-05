@@ -2,6 +2,8 @@
 
 Status: one pinned checkpoint copy acquired and statically inspected on 2026-10-04 UTC. All repository files passed pinned digests; all Safetensors headers and centered norm tensors passed the bounded checks below. No checkpoint-provided Python or model forward was executed. This is file/format admission, not numerical or generated-output qualification.
 
+A later [source-only bound admission slice](checkpoint-file-integrity.md) implements repeat full-file digest verification, retained file descriptors, and authenticated per-page reads. It has passed only tiny synthetic fixtures. The 106,218,444,193-byte pinned copy has **not** been read through that new path; its first bound verification is a separate authorization gate.
+
 ## Frozen identities and compatibility boundary
 
 | Item | Pin and observation |
