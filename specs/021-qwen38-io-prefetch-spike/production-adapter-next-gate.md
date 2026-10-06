@@ -1,6 +1,6 @@
 # Next Qwen production adapter gate
 
-Status: source-only contract and acceptance plan, 2026-10-05. The [single local file-admission pass](evidence/bound-admission-local-verification-2026-10-05.md) succeeded and closed its handles. This document prepares eligible source and tiny synthetic work; it does not authorize another real-checkpoint read, checkpoint Python, dependency installation, MLX execution, numerical runtime probes, inference or benchmarks.
+Status: steps 1–3 implemented and accepted on generated fixtures after local source review, 2026-10-06. See the [review/disposition](evidence/adapter-contract-source-review-2026-10-06.md) and [exact source/test evidence](evidence/adapter-contract-validation-2026-10-06.json). The [single local file-admission pass](evidence/bound-admission-local-verification-2026-10-05.md) succeeded and closed its handles. This slice does not authorize another real-checkpoint read, checkpoint Python, dependency installation, MLX execution, numerical runtime probes, inference, benchmarks, external source transmission or push.
 
 ## Source contract to implement before execution
 
@@ -35,6 +35,8 @@ Before binding a real allocator, define observation provenance, units, sample ti
 | 6. Real paged correctness gate | Only after earlier evidence and explicit execution authorization: new bound admission plus a no-prefetch paged path, actual memory/swap observations, fixed prompt/token IDs, both stop IDs, routes, layer probes and logits. A stock full-model loader is unsafe on this host. |
 | 7. Performance gate | Only after parity and residency pass: controlled cache strata and I/O-only hint comparison; no timing claim based on synthetic events or the digest pass. |
 
-The current branch supplies file admission, address mapping, scheduler and fixture protocol evidence. It does not supply a Qwen graph, production owning allocator, real GPU fences, independent memory sampler or qualified reference fixtures. Steps 1–3 are source/tiny-synthetic candidates for the next implementation slice. Steps 5–7 remain execution gates; their evidence must not be inferred from file hashes or passing trace validators.
+The additive `qwen38_adapter_session.py`, `qwen38_adapter_memory.py` and `qwen38_adapter_trace.py` implement the step 1–3 fixture contracts. The session checks a live catalog/verified-handle binding and authenticated fixture marker, owns fixed and pageable data, rechecks payload identity on acquisition, counts retained exports and duplicates, and emits operation-bound traces with complete hint retirement accounting. The original reviewed modules and 16 MiB fixture boundary are unchanged. The new fixture trace schema is separate from production trace v0.3.
+
+The branch does not supply a Qwen graph, production allocator, real GPU fences, actual independent memory sampler or qualified reference fixtures. Step 4 independent review remains unperformed for this new slice because external transmission is not authorized; the retained audit is explicitly local. Steps 5–7 remain execution gates; their evidence must not be inferred from file hashes or passing trace validators. New source is locally reviewable and requires separate authorization before push.
 
 Constitution check: the proposed work stays additive and Qwen-local, preserves Linux/CUDA and GLM Studio, retains the correctness oracle before optimization, distinguishes synthetic/file/backend evidence, and requires source review and diff/secret/large-file checks before publication.

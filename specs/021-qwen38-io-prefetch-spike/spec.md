@@ -22,3 +22,13 @@ This slice admits exact, header-derived file spans for one routed expert (all th
 ## Success evidence
 
 Run the exact header-only catalog admission against the pinned checkpoint and the synthetic contract tests. Report model bytes separately from process bytes and physical SSD reads. Source review and synthetic acceptance do not establish numerical parity, real page residency, SSD attribution, or 20+ tokens/s.
+
+## Authorized adapter contract slice, 2026-10-06
+
+This continuation implements steps 1–3 of `production-adapter-next-gate.md` on generated fixtures only. The prior real-file admission is historical evidence; do not repeat that read in this slice. No packages, backend/MLX execution, model downloads, external source transmission or push are authorized.
+
+- **US1 (P1): Bound session and owning leases.** A caller can consume a live catalog/verified-handle binding through a separate synthetic adapter, with authenticated fixed/page bytes and original-object ticket/completion identity. Cancellation and failure drain operations, close all file handles, preserve retained views/owners, and never adopt previous-request work.
+- **US2 (P1): Reservation and fresh observation.** Before explicit payload allocations, reserve all fixed/page/device duplicates, staging and runtime scratch; validate independent injected process/MLX/runtime/headroom/swap observations, byte units, provenance, monotonic sample sequence/time and maximum age. Preserve the 48/40/16 GiB stops and 8 GiB other-process allowance. Derived views keep owners counted until they no longer export the buffer. These injected observations do not qualify a real sampler.
+- **US3 (P1): Operation-bound trace.** Actual deterministic synthetic route and PLE operations alone create demand. Trace exact catalog spans, real verified reads, owning leases and synthetic completion objects. Every admitted hint ends as useful, late or wasted, including eviction, cancellation and failure. Reject forged operations, tickets/completions, altered keys/spans/byte counts and incomplete terminal accounting. Physical SSD attribution remains unavailable.
+
+Acceptance uses tiny generated cross-file data, malformed/freshness/boundary samples, retained child views, read/cleanup failures, demand/hint interleavings and independent trace replay against the synthetic operation table and immutable catalog snapshot. Source review is local in this scope; independent external review and production qualification remain future gates. Preserve existing reviewed Qwen modules and frozen evidence; additions must not relax the fixture marker or 16 MiB cap.

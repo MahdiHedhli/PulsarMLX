@@ -1,0 +1,97 @@
+{
+  "schema": "pulsarmlx.qwen38.adapter-contract-validation/1",
+  "at_utc": "2026-10-06T23:47:18.801394+00:00",
+  "base_commit": "ca7c88e762ef63f593165480562f3d136111892a",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "python_executable": "/opt/homebrew/bin/python3",
+  "source_files": [
+    {
+      "path": "scripts/research/qwen38_adapter_memory.py",
+      "size_bytes": 8649,
+      "sha256": "260358c60265cf636d6ebe6749c26d3a667d027cbea75b64fc8ae8c235fbe77b"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_session.py",
+      "size_bytes": 20322,
+      "sha256": "fe4ab1f614ff39994b75b6f95aba2cff725c4d6203afcbf37ecc9a19155787f3"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_trace.py",
+      "size_bytes": 15489,
+      "sha256": "044445775f462eaa2dd46b36bdbaa07f844022a1b772369d2fb457e075719e4d"
+    },
+    {
+      "path": "scripts/research/tests/qwen38_adapter_fixture.py",
+      "size_bytes": 3874,
+      "sha256": "f56ff4646942ee87d2ede3e26884a090b9715268a4e273c4929c1a5d7ef5b5c6"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_adapter_contract.py",
+      "size_bytes": 27359,
+      "sha256": "707de718a2a606a268369858349f13d4dc2ab24ee856dec9b63798a047f8c476"
+    }
+  ],
+  "source_review": {
+    "path": "specs/021-qwen38-io-prefetch-spike/evidence/adapter-contract-source-review-2026-10-06.md",
+    "kind": "implementation-owner local self-review; no independent qualification",
+    "sha256": "7e7406dc1a30cf4836836a200a9b633f04a8f7cef086f786a7dad1a2fe0d18bd"
+  },
+  "test_commands": [
+    {
+      "command": [
+        "python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_adapter_contract.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 38,
+      "output": "specs/021-qwen38-io-prefetch-spike/evidence/adapter-contract-focused-2026-10-06.txt",
+      "sha256": "0dd42a74ba9e3ffd8f58458a4d7c898a56098b035bd326b236c7a9a9478d1dba"
+    },
+    {
+      "command": [
+        "python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 110,
+      "output": "specs/021-qwen38-io-prefetch-spike/evidence/adapter-contract-qwen-regression-2026-10-06.txt",
+      "sha256": "a089102a5aaab20333ce500db3e7a79907816ef4e40cac4d67de706c27c53c3e"
+    }
+  ],
+  "scope": "tiny generated fixtures, independent injected observations and synthetic CPU completion/duplicate owners only",
+  "real_checkpoint_read": false,
+  "checkpoint_python_executed": false,
+  "packages_installed": false,
+  "backend_executed": false,
+  "inference_run": false,
+  "benchmark_run": false,
+  "external_review_transmission": false,
+  "push_performed": false,
+  "planning_gates_gib": {
+    "process": 48,
+    "all_weights": 40,
+    "os_reserve": 16,
+    "other_process": 8
+  },
+  "initial_red_evidence": "Before implementation: ModuleNotFoundError for qwen38_adapter_memory. First integrated run: 15 passes and four FrozenInstanceError mock errors; fault injection was corrected to patch the class. Further concrete findings and fixes are recorded in local review."
+}
