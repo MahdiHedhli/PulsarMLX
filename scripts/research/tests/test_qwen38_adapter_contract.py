@@ -88,6 +88,17 @@ class MemoryTests(unittest.TestCase):
         grandchild.release(); self.ledger.collect()
         self.assertEqual(self.ledger.counts()["total_bytes"], 0)
 
+    def test_retire_all_reports_exported_owner_and_retires_other_owners(self):
+        retained = self.ledger.reserve("page", 32); self.ledger.allocate(retained)
+        free = self.ledger.reserve("page", 16); self.ledger.allocate(free)
+        child = self.ledger.view(retained)[1:]
+        with self.assertRaisesRegex(BufferError, "retains exported views"):
+            self.ledger.retire_all()
+        self.assertEqual(self.ledger.counts()["total_bytes"], 32)
+        self.assertEqual(self.ledger.counts()["retired_bytes"], 32)
+        child.release(); self.ledger.collect()
+        self.assertEqual(self.ledger.counts()["total_bytes"], 0)
+
     def test_identity_and_allocator_failure_cleanup(self):
         owner = self.ledger.reserve("fixed", 4)
         with self.assertRaises(ValueError): self.ledger.allocate(copy.copy(owner))

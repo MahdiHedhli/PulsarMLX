@@ -1,6 +1,6 @@
 # Tasks: Qwen adapter contract steps 1–3
 
-Input: `spec.md`, `plan.md`, `production-adapter-next-gate.md`. Scope is the 2026-10-06 generated-fixture continuation, not the full runtime roadmap. Tests and local review are required. External transmission and push remain unapproved.
+Input: `spec.md`, `plan.md`, `production-adapter-next-gate.md`. Scope is the 2026-10-06 generated-fixture continuation, not the full runtime roadmap. Tests and local review were required for that initial slice. A later [independent static review and repair](evidence/adapter-contract-independent-review-2026-10-07.md) covers the additive code; real/backend execution remains separately gated.
 
 ## Setup and foundation
 

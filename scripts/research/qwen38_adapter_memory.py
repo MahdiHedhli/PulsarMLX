@@ -206,7 +206,8 @@ class MemoryLedger:
         errors = []
         for owner in tuple(self._owners.values()):
             try:
-                self.retire(owner.token)
+                if not self.retire(owner.token):
+                    errors.append(BufferError(f"allocation {owner.token.number} retains exported views"))
             except Exception as exc:
                 errors.append(exc)
         if errors:
