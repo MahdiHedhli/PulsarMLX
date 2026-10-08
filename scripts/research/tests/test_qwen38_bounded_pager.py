@@ -193,12 +193,14 @@ class SchedulerTests(unittest.TestCase):
         p.complete_io(second)
         second_lease = p.acquire(E1)
         p.demand(E2)
-        with self.assertRaisesRegex(PagerStop, "available weight"):
-            p.next_io()
+        self.assertIsNone(p.next_io())
+        self.assertFalse(p.closed)
         p.mark_gpu_done(lease)
         p.mark_gpu_done(second_lease)
         p.release(lease)
         p.release(second_lease)
+        p.finish_demand(E0)
+        self.assertEqual(p.next_io().spec.key, E2)
 
     def test_idle_resident_page_is_evicted_for_demand(self):
         p = pager(weight=96, staging=96)
@@ -322,8 +324,11 @@ class SchedulerTests(unittest.TestCase):
         p.complete_io(first)
         self.assertEqual(p.accounting()["reserved_weight_bytes"], 96)
         p.demand(E1)
-        with self.assertRaises(PagerStop):
-            p.next_io()  # E0 is a live demand; fixed tensors cannot be evicted.
+        self.assertIsNone(p.next_io())  # E0 temporarily holds the only page slot.
+        self.assertFalse(p.closed)
+        p.finish_demand(E0)
+        self.assertEqual(p.next_io().spec.key, E1)
+        self.assertEqual(p.accounting()["reserved_weight_bytes"], 96)
 
     def test_cancel_keeps_gpu_lease_until_completion(self):
         p = pager()

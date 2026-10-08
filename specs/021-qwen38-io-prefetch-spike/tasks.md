@@ -1,5 +1,18 @@
 # Tasks: Qwen adapter contract steps 1–3
 
+## Authorized bounded-wait continuation, 2026-10-08
+
+The [resumable objective](bounded-wait-objective.md) preserves the full current task and separate publication/CI gates. It explicitly authorizes the previously deferred scheduler contract change; no real/backend execution follows.
+
+- [X] T012 Record checkpoint, graph and authority in specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md.
+- [X] T013 [US1] Write transient-demand, impossible-page, expiry/cancel, priority, identity and generated verified-file acceptance in scripts/research/tests/test_qwen38_bounded_wait.py.
+- [X] T014 [US1] Implement bounded monotonic wait and original ticket/lease identity in scripts/research/qwen38_bounded_pager.py; update superseded contention assertions in scripts/research/tests/test_qwen38_bounded_pager.py.
+- [X] T015 Run focused and applicable Qwen regression tests; retain exact source/result evidence in specs/021-qwen38-io-prefetch-spike/evidence/.
+- [X] T016 Obtain permitted Gemini/Grok static review, triage/repair and preserve packet/report/disposition in specs/021-qwen38-io-prefetch-spike/evidence/.
+- [ ] T017 Validate and checkpoint, recognize current push authority, normal-push and verify exact-commit CI in specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md.
+
+Dependencies: T012 → T013 → T014 → T015 → T016 → T017. Complete every authorized node; historical tasks below remain complete.
+
 Input: `spec.md`, `plan.md`, `production-adapter-next-gate.md`. Scope is the 2026-10-06 generated-fixture continuation, not the full runtime roadmap. Tests and local review were required for that initial slice. A later [independent static review and repair](evidence/adapter-contract-independent-review-2026-10-07.md) covers the additive code; real/backend execution remains separately gated.
 
 ## Setup and foundation

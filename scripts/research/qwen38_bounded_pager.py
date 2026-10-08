@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import OrderedDict, deque
 from dataclasses import dataclass
+from time import monotonic_ns
 from typing import Callable
 
 from qwen38_page_catalog import PageKey, PageSpec
@@ -32,11 +33,12 @@ class Limits:
     process_bytes: int
     system_headroom_bytes: int
     fixed_model_bytes: int = 0
+    demand_wait_ns: int = 5_000_000_000
 
     def __post_init__(self) -> None:
         if any(type(value) is not int or value <= 0 for name, value in vars(self).items()
                if name != "fixed_model_bytes"):
-            raise ValueError("limits must be positive integer bytes/counts")
+            raise ValueError("limits must be positive integer bytes/counts/nanoseconds")
         if (type(self.fixed_model_bytes) is not int or self.fixed_model_bytes < 0 or
                 self.fixed_model_bytes >= self.weight_bytes or
                 self.staging_bytes > self.weight_bytes - self.fixed_model_bytes or
@@ -59,18 +61,30 @@ class IoTicket:
     purpose: str  # demand or hint at admission time
 
 
+class _LeaseId(int):
+    """Int-compatible observation value; only the original object controls it."""
+    pass
+
+
 @dataclass
 class Lease:
     key: PageKey
     gpu_done: bool = False
+    handle: int | None = None
 
 
 class BoundedPager:
     """Demand-first scheduler with explicit in-flight, resident, and GPU leases."""
 
-    def __init__(self, catalog: Callable[[PageKey], PageSpec], limits: Limits):
+    def __init__(self, catalog: Callable[[PageKey], PageSpec], limits: Limits,
+                 *, clock: Callable[[], int] = monotonic_ns):
+        if not callable(clock):
+            raise ValueError("monotonic wait clock required")
         self.catalog = catalog
         self.limits = limits
+        self.clock = clock
+        self._clock_time = -1
+        self.wait_deadlines: dict[PageKey, int] = {}
         self.demand_queue: deque[PageKey] = deque()
         self.hint_queue: deque[PageKey] = deque()
         self.actual_demands: set[PageKey] = set()
@@ -95,6 +109,27 @@ class BoundedPager:
         self._open()
         if self.cancel_draining:
             raise PagerProtocolError("request cancellation still draining")
+
+    def check_waits(self) -> None:
+        """Cooperative watchdog: caller must poll while blocked, even at IO cap.
+
+        Deadlines start at unresident actual demand, never reset on retries or
+        unrelated activity. Admission/completion is the relevant progress. A
+        stopped pager still accepts original IO/GPU drainage callbacks.
+        """
+        self._open()
+        try:
+            now = self.clock()
+        except Exception as exc:
+            try:
+                self._stop("demand wait clock unavailable")
+            except PagerStop as stop:
+                raise stop from exc
+        if type(now) is not int or now < 0 or now < self._clock_time:
+            self._stop("invalid demand wait clock")
+        self._clock_time = now
+        if any(now >= deadline for deadline in self.wait_deadlines.values()):
+            self._stop("actual demand wait expired")
 
     def _finish_cancel_if_drained(self) -> None:
         if self.cancel_draining and not self.pending and not self.leases:
@@ -136,14 +171,18 @@ class BoundedPager:
                 sample.system_headroom_bytes < self.limits.system_headroom_bytes or
                 sample.swap_delta_bytes > 0 or sample.memory_pressure):
             self._stop("observed process, headroom, swap, or pressure limit")
+        self.check_waits()
 
     def demand(self, key: PageKey) -> None:
         """Only the actual router or PLE lookup may call this method."""
         self._accepting_work()
+        self.check_waits()
         self._spec(key)
         if key not in self.actual_demands and len(self.actual_demands) >= self.limits.active_demands:
             self._stop("active demand limit exceeded")
         self.actual_demands.add(key)
+        if key not in self.resident:
+            self.wait_deadlines.setdefault(key, self._clock_time + self.limits.demand_wait_ns)
         self.hint_resident.discard(key)
         self.cancelled.discard(key)
         if key in self.resident or key in self.pending or key in self.demand_queue:
@@ -156,6 +195,7 @@ class BoundedPager:
 
     def hint(self, key: PageKey) -> bool:
         self._accepting_work()
+        self.check_waits()
         spec = self._spec(key)
         if spec.size_bytes > self.limits.staging_bytes or spec.size_bytes > self.limits.weight_bytes - self.limits.fixed_model_bytes:
             return False
@@ -184,6 +224,11 @@ class BoundedPager:
     def _pinned(self, key: PageKey) -> bool:
         return any(lease.key == key for lease in self.leases.values())
 
+    def _invalidate_speculative_pending(self) -> None:
+        for key, ticket in tuple(self.pending.items()):
+            if ticket.purpose == "hint" and key not in self.actual_demands:
+                self.invalidate_hint(key)
+
     def _evict_for(self, size: int) -> bool:
         if size > self.limits.weight_bytes:
             return False
@@ -205,6 +250,7 @@ class BoundedPager:
     def next_io(self) -> IoTicket | None:
         """Reserve bytes before I/O; never admit a hint ahead of a queued demand."""
         self._accepting_work()
+        self.check_waits()
         # A demand promoted from an in-flight hint is still waiting. New hints
         # must not take I/O slots until that actual demand has completed.
         waiting_on_io = any(key in self.actual_demands and key not in self.resident
@@ -212,15 +258,26 @@ class BoundedPager:
         if not self.demand_queue and waiting_on_io:
             return None
         source = self.demand_queue if self.demand_queue else self.hint_queue
-        if not source or len(self.pending) >= self.limits.inflight_requests:
+        if not source:
             return None
         key = source[0]
         spec = self._spec(key)
         purpose = "demand" if source is self.demand_queue else "hint"
+        if purpose == "demand":
+            if spec.size_bytes > self.limits.staging_bytes:
+                self._stop("demand page exceeds staging budget")
+            if spec.size_bytes > self.limits.weight_bytes - self.limits.fixed_model_bytes:
+                self._stop("demand page exceeds weight budget")
+        if len(self.pending) >= self.limits.inflight_requests:
+            if purpose == "demand":
+                self._invalidate_speculative_pending()
+            return None
         if (spec.size_bytes > self.limits.staging_bytes or
                 self.staging_bytes + spec.size_bytes > self.limits.staging_bytes):
             if purpose == "demand" and spec.size_bytes > self.limits.staging_bytes:
                 self._stop("demand page exceeds staging budget")
+            if purpose == "demand":
+                self._invalidate_speculative_pending()
             return None
         if not self._evict_for(spec.size_bytes):
             if purpose == "demand":
@@ -234,21 +291,27 @@ class BoundedPager:
                     for pending_key in speculative:
                         self.invalidate_hint(pending_key)
                     return None
-                self._stop("demand page exceeds available weight/staging budget")
+                # Remaining bytes are held by actual IO, GPU leases or actual
+                # resident demands. They may drain/finish; do not destroy a
+                # fit-capable waiting demand. Its fixed deadline bounds retries.
+                return None
             return None
         source.popleft()
         ticket = IoTicket(self.next_ticket, spec, purpose)
         self.next_ticket += 1
         self.pending[key] = ticket
+        if purpose == "demand":
+            self.wait_deadlines.pop(key, None)
         self.staging_bytes += spec.size_bytes
         return ticket
 
     def complete_io(self, ticket: IoTicket) -> None:
         """An adapter must call this only after the read and copy have completed."""
         current = self.pending.get(ticket.spec.key)
-        if current != ticket:
+        if current is not ticket:
             raise PagerProtocolError("unmatched I/O completion")
         del self.pending[ticket.spec.key]
+        self.wait_deadlines.pop(ticket.spec.key, None)
         self.staging_bytes -= ticket.spec.size_bytes
         if ticket.spec.key in self.cancelled and ticket.spec.key not in self.actual_demands:
             self.cancelled.remove(ticket.spec.key)
@@ -265,7 +328,7 @@ class BoundedPager:
     def fail_io(self, ticket: IoTicket) -> None:
         """A synchronous failed read ended; release its reservation and stop."""
         current = self.pending.get(ticket.spec.key)
-        if current != ticket:
+        if current is not ticket:
             raise PagerProtocolError("unmatched I/O failure")
         del self.pending[ticket.spec.key]
         self.staging_bytes -= ticket.spec.size_bytes
@@ -277,20 +340,26 @@ class BoundedPager:
         if key not in self.actual_demands or key not in self.resident:
             raise PagerProtocolError("page is not demanded and resident")
         self.resident.move_to_end(key)
-        lease_id = self.next_lease
+        lease_id = _LeaseId(self.next_lease)
         self.next_lease += 1
-        self.leases[lease_id] = Lease(key)
+        self.leases[lease_id] = Lease(key, handle=lease_id)
         return lease_id
 
+    def _lease(self, lease_id: int) -> Lease:
+        lease = self.leases.get(lease_id) if type(lease_id) is _LeaseId else None
+        if lease is None or lease.handle is not lease_id:
+            raise PagerProtocolError("unknown or foreign GPU lease")
+        return lease
+
     def mark_gpu_done(self, lease_id: int) -> None:
-        lease = self.leases.get(lease_id)
-        if lease is None or lease.gpu_done:
+        lease = self._lease(lease_id)
+        if lease.gpu_done:
             raise PagerProtocolError("unknown or completed GPU lease")
         lease.gpu_done = True
 
     def release(self, lease_id: int) -> None:
-        lease = self.leases.get(lease_id)
-        if lease is None or not lease.gpu_done:
+        lease = self._lease(lease_id)
+        if not lease.gpu_done:
             raise PagerProtocolError("release before GPU completion")
         del self.leases[lease_id]
         if self.closed:
@@ -301,11 +370,13 @@ class BoundedPager:
         if key not in self.actual_demands or self._pinned(key) or key in self.pending or key in self.demand_queue:
             raise PagerProtocolError("demand has unfinished work")
         self.actual_demands.remove(key)
+        self.wait_deadlines.pop(key, None)
 
     def cancel_request(self) -> None:
         """Drop queued hints/demands; in-flight buffers still await I/O completion."""
         self.cancel_draining = True
         self.demand_queue.clear()
+        self.wait_deadlines.clear()
         self.hint_queue.clear()
         self.cancelled.update(self.pending)
         for key in tuple(self.hint_resident):
@@ -321,6 +392,7 @@ class BoundedPager:
                                           self.resident_bytes + self.staging_bytes),
                 "inflight_requests": len(self.pending),
                 "queued_demands": len(self.demand_queue),
+                "waiting_demands": len(self.wait_deadlines),
                 "queued_hints": len(self.hint_queue),
                 "gpu_leases": len(self.leases),
                 "invalidated_hint_bytes": self.hint_waste_bytes}

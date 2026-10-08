@@ -1,0 +1,43 @@
+{
+  "provider": "Gemini",
+  "model": "gemini-3.8-flash-high",
+  "packet_bytes": 82068,
+  "packet_sha256": "f3c48b5e29e2626f09fe2a4c9665918eaa555910fc79c2b4abe4cf797be8c3aa",
+  "files": [
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md",
+      "sha256": "24ac89c829db0478657d366c6aaf65ad4c9efc37cd577d12ecd48e7841ad78e1",
+      "size_bytes": 3415
+    },
+    {
+      "path": "scripts/research/qwen38_bounded_pager.py",
+      "sha256": "a465af9d86ecb698e756f1db7fa0e4f9dbd542c828132b94fe971a18195906fb",
+      "size_bytes": 16685
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_wait.py",
+      "sha256": "e1533dd13fff987b7183b5eaa3e73c6e55a0bb66c4f03583a8c984f4e5a007a1",
+      "size_bytes": 8465
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_pager.py",
+      "sha256": "d85ac05b55c7a9e98cf02f56c9e87646c60c82766041af11cf4d5648c37af00f",
+      "size_bytes": 15515
+    },
+    {
+      "path": "scripts/research/qwen38_fixture_io.py",
+      "sha256": "8e4fe8a5661ef0642e19a7e2c91fa8be05a6b18e7ab809e53f262c41d6283340",
+      "size_bytes": 12164
+    },
+    {
+      "path": "scripts/research/qwen38_page_catalog.py",
+      "sha256": "3f697d3a0712af0d6c57982b86d781f4000983d0ae8ac60d2451c2c1a0d0f2d4",
+      "size_bytes": 17097
+    }
+  ],
+  "credential_pattern_findings": 0,
+  "scope": "project source/spec/tests only; no weights, credentials, checkpoint Python or unrelated data",
+  "stored_packet": "specs/021-qwen38-io-prefetch-spike/evidence/bounded-wait-review-packet-2026-10-08.json",
+  "stored_packet_sha256": "52bbf1aef92f39248be8d0a8b3fbd9375dab81f05bbaadefd99f748542ac8bdd",
+  "reconstruction": "Decode exact_submitted_text as UTF-8; packet_sha256 and packet_bytes apply to those reconstructed bytes."
+}

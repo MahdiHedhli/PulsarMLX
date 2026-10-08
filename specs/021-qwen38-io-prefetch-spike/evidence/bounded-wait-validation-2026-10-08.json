@@ -1,0 +1,84 @@
+{
+  "schema": "pulsarmlx.qwen38.bounded-wait-validation/1",
+  "base_commit": "ebe7ddfe47bbb85ff85074981cad2363a382bf2a",
+  "at_utc": "2026-10-08T13:59:10.887200+00:00",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "source_files": [
+    {
+      "path": "scripts/research/qwen38_bounded_pager.py",
+      "sha256": "a465af9d86ecb698e756f1db7fa0e4f9dbd542c828132b94fe971a18195906fb",
+      "size_bytes": 16685
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_wait.py",
+      "sha256": "e1533dd13fff987b7183b5eaa3e73c6e55a0bb66c4f03583a8c984f4e5a007a1",
+      "size_bytes": 8465
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_pager.py",
+      "sha256": "d85ac05b55c7a9e98cf02f56c9e87646c60c82766041af11cf4d5648c37af00f",
+      "size_bytes": 15515
+    }
+  ],
+  "test_runs": [
+    {
+      "command": [
+        "python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_bounded_wait.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 13,
+      "output": "specs/021-qwen38-io-prefetch-spike/evidence/bounded-wait-focused-2026-10-08.txt",
+      "sha256": "38b018d066942984ba873fbfdbd1bb7d8e0663df78267b3f223f32b73147ac5b"
+    },
+    {
+      "command": [
+        "python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "test_count": 124,
+      "output": "specs/021-qwen38-io-prefetch-spike/evidence/bounded-wait-qwen-regression-2026-10-08.txt",
+      "sha256": "e2ad9556520029eab289282911ab9d087979f9d192becf86ebf026d374c063ce"
+    }
+  ],
+  "scope": "cooperative scheduler, fake clocks, tiny generated verified files; no numerical/backend qualification",
+  "initial_red": "13 tests ran with 16 errors due to missing demand_wait_ns; resource-default preservation case passed.",
+  "planning_gates_gib": {
+    "process": 48,
+    "all_weights": 40,
+    "os_reserve": 16
+  },
+  "prohibited_actions_performed": [],
+  "independent_review": {
+    "provider": "Gemini",
+    "model": "gemini-3.8-flash-high",
+    "conversation_id": "130bebf3-a1d8-4e0e-bc77-7611b1e0fc38",
+    "verdict": "ACCEPT",
+    "raw_report": "specs/021-qwen38-io-prefetch-spike/evidence/bounded-wait-gemini-resumed-review-2026-10-08.json",
+    "raw_report_sha256": "33100b2054498d3902f65e39209c8613acd33e95ddb20b5f4960f2ca58ab9405",
+    "manifest": "specs/021-qwen38-io-prefetch-spike/evidence/bounded-wait-review-manifest-2026-10-08.json",
+    "confirmed_defects": 0,
+    "nonblocking_suggestions": 2
+  }
+}

@@ -19,6 +19,10 @@ This slice admits exact, header-derived file spans for one routed expert (all th
 7. The fixture I/O adapter refuses directories without a marker, symlinked or changed files, out-of-bounds spans, short reads, and accounting divergence. It admits only synthetic test files; its memory callback is injected and does not qualify a macOS production monitor.
 8. The stock `mlx_lm.load()`/`generate` path remains blocked on this host. No full-checkpoint inference, checkpoint Python import, package installation, or benchmark belongs to this slice.
 
+## Authorized bounded-wait scheduler slice, 2026-10-08
+
+Transient actual demands may defer while prior IO, GPU leases or unfinished actual demands hold a fit-capable allowance; after prior completion/release/finish, the next demand must become admissible with unchanged bytes and priority. A page exceeding staging or weight-minus-fixed capacity still stops terminally, including when IO slots are occupied. Fixed monotonic deadlines and explicit cancellation prevent indefinite cooperative wait; duplicate demand and unrelated activity cannot extend deadlines. Preserve original tickets/lease handles, reservations and buffers through completion. Acceptance uses fake clocks and generated files only. The [objective graph](bounded-wait-objective.md) includes independent permitted-provider review, repair, checkpoint, separately recognized normal push and exact-commit CI. Numerical and 48/40/16 GiB gates are unchanged.
+
 ## Success evidence
 
 Run the exact header-only catalog admission against the pinned checkpoint and the synthetic contract tests. Report model bytes separately from process bytes and physical SSD reads. Source review and synthetic acceptance do not establish numerical parity, real page residency, SSD attribution, or 20+ tokens/s.

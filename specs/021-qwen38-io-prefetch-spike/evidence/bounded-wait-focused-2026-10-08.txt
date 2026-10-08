@@ -1,0 +1,18 @@
+test_bad_clock_and_wait_configuration_fail_closed (test_qwen38_bounded_wait.BoundedWaitTests.test_bad_clock_and_wait_configuration_fail_closed) ... ok
+test_demands_keep_priority_and_speculative_reservation_drains (test_qwen38_bounded_wait.BoundedWaitTests.test_demands_keep_priority_and_speculative_reservation_drains) ... ok
+test_duplicate_and_unrelated_hint_activity_cannot_extend_deadline (test_qwen38_bounded_wait.BoundedWaitTests.test_duplicate_and_unrelated_hint_activity_cannot_extend_deadline) ... ok
+test_explicit_cancellation_drains_then_allows_new_request (test_qwen38_bounded_wait.BoundedWaitTests.test_explicit_cancellation_drains_then_allows_new_request) ... ok
+test_generated_verified_fixture_competing_demand_preserves_exact_bytes (test_qwen38_bounded_wait.BoundedWaitTests.test_generated_verified_fixture_competing_demand_preserves_exact_bytes) ... ok
+test_gpu_lease_and_fixed_allowance_wait_for_release_and_finish (test_qwen38_bounded_wait.BoundedWaitTests.test_gpu_lease_and_fixed_allowance_wait_for_release_and_finish) ... ok
+test_impossible_page_stops_even_when_io_slot_is_occupied (test_qwen38_bounded_wait.BoundedWaitTests.test_impossible_page_stops_even_when_io_slot_is_occupied) ... ok
+test_inflight_actual_demand_defers_then_admits_after_finish (test_qwen38_bounded_wait.BoundedWaitTests.test_inflight_actual_demand_defers_then_admits_after_finish) ... ok
+test_original_ticket_and_lease_identity_are_scope_bound (test_qwen38_bounded_wait.BoundedWaitTests.test_original_ticket_and_lease_identity_are_scope_bound) ... ok
+test_promoted_hint_has_bounded_wait_until_io_completion (test_qwen38_bounded_wait.BoundedWaitTests.test_promoted_hint_has_bounded_wait_until_io_completion) ... ok
+test_resource_planning_gates_remain_unchanged (test_qwen38_bounded_wait.BoundedWaitTests.test_resource_planning_gates_remain_unchanged) ... ok
+test_wait_expiry_keeps_gpu_owner_until_original_completion (test_qwen38_bounded_wait.BoundedWaitTests.test_wait_expiry_keeps_gpu_owner_until_original_completion) ... ok
+test_wait_expiry_keeps_original_pending_io_until_completion (test_qwen38_bounded_wait.BoundedWaitTests.test_wait_expiry_keeps_original_pending_io_until_completion) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.005s
+
+OK
