@@ -1,0 +1,62 @@
+{
+  "schema": "pulsarmlx.qwen38.bounded-wait-publication/1",
+  "verified_at_utc": "2026-10-08T15:15:12.039718+00:00",
+  "repository": "MahdiHedhli/PulsarMLX",
+  "branch": "research/qwen38-strata-pager-m2-20261003",
+  "implementation_commit": "713f9727f3558ff7236f1f85169c8f54ca8b4568",
+  "remote_head_verified": "713f9727f3558ff7236f1f85169c8f54ca8b4568",
+  "normal_non_force_push": true,
+  "ci": {
+    "run_id": 37793068021,
+    "url": "https://github.com/MahdiHedhli/PulsarMLX/actions/runs/37793068021",
+    "head_sha": "713f9727f3558ff7236f1f85169c8f54ca8b4568",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Classify committed change",
+        "status": "completed",
+        "conclusion": "success",
+        "exceptional_steps": []
+      },
+      {
+        "name": "Apple Silicon workspace baseline",
+        "status": "completed",
+        "conclusion": "success",
+        "exceptional_steps": []
+      },
+      {
+        "name": "Apple MLX small-fixture validation",
+        "status": "completed",
+        "conclusion": "success",
+        "exceptional_steps": []
+      },
+      {
+        "name": "Evidence integrity",
+        "status": "completed",
+        "conclusion": "skipped",
+        "exceptional_steps": []
+      },
+      {
+        "name": "Documentation integrity",
+        "status": "completed",
+        "conclusion": "skipped",
+        "exceptional_steps": []
+      },
+      {
+        "name": "Closed F017 branch guard",
+        "status": "completed",
+        "conclusion": "skipped",
+        "exceptional_steps": []
+      },
+      {
+        "name": "CI aggregate status",
+        "status": "completed",
+        "conclusion": "success",
+        "exceptional_steps": []
+      }
+    ]
+  },
+  "scope": "Published implementation passed exact-commit CI. This receipt/graph closure commit changes documentation only; its final SHA and CI are verified separately before goal completion.",
+  "qualification": "synthetic/source contract only; no real checkpoint, numerical, residency or performance qualification"
+}

@@ -9,7 +9,7 @@ The [resumable objective](bounded-wait-objective.md) preserves the full current 
 - [X] T014 [US1] Implement bounded monotonic wait and original ticket/lease identity in scripts/research/qwen38_bounded_pager.py; update superseded contention assertions in scripts/research/tests/test_qwen38_bounded_pager.py.
 - [X] T015 Run focused and applicable Qwen regression tests; retain exact source/result evidence in specs/021-qwen38-io-prefetch-spike/evidence/.
 - [X] T016 Obtain permitted Gemini/Grok static review, triage/repair and preserve packet/report/disposition in specs/021-qwen38-io-prefetch-spike/evidence/.
-- [ ] T017 Validate and checkpoint, recognize current push authority, normal-push and verify exact-commit CI in specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md.
+- [X] T017 Validate and checkpoint, recognize current push authority, normal-push and verify exact-commit CI in specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md.
 
 Dependencies: T012 → T013 → T014 → T015 → T016 → T017. Complete every authorized node; historical tasks below remain complete.
 

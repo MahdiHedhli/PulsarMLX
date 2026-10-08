@@ -9,10 +9,10 @@ Base: `ebe7ddfe47bbb85ff85074981cad2363a382bf2a`, existing `research/qwen38-stra
 | M2 Tests | M1 | Complete | Focused fake-clock/generated-file acceptance and applicable Qwen regression; retain exact commands and results. |
 | M3 Independent review | M2 | Complete | Freeze and scan scoped source/test/spec packet, select permitted Gemini or Grok; retain raw report and packet hashes. No Anthropic identity, new credentials, purchase or approval bypass. |
 | M4 Repair | M3 | Complete | Triage findings locally; repair confirmed defects, test and seek follow-up review when warranted. |
-| M5 Validate/checkpoint | M4 | Ready | Final source/result hashes and scope/secret/large-file checks; clean local commit. |
-| P1 Push authority | M5 | Recognized, conditional | Separately recognize the current active goal's explicit normal-push instruction at action time; do not reuse the prior one-time checkpoint/push approval. |
-| M6 Publish | P1 | Pending | Normal non-force push of existing branch to MahdiHedhli/PulsarMLX; verify remote SHA. No extra merge or rewrite. |
-| M7 CI/completion | M6 | Pending | Observe the specific run for that SHA, triage failures, verify terminal conclusions, final remote SHA and clean checkout before completion. |
+| M5 Validate/checkpoint | M4 | Complete | Final source/result hashes and scope/secret/large-file checks; clean local commit. |
+| P1 Push authority | M5 | Recognized | Separately recognize the current active goal's explicit normal-push instruction at action time; do not reuse the prior one-time checkpoint/push approval. |
+| M6 Publish | P1 | Complete | Normal non-force push of existing branch to MahdiHedhli/PulsarMLX; verify remote SHA. No extra merge or rewrite. |
+| M7 CI/completion | M6 | Complete for implementation | Observe the specific run for that SHA, triage failures, verify terminal conclusions, final remote SHA and clean checkout before completion. |
 
 Graph: `M0 → M1 → M2 → M3 → M4 → M5 → P1 → M6 → M7`. Continue the next ready authorized node after each batch. Record a live review/CI handle and re-poll it rather than restarting after an observation timeout. Stop on genuine missing authority/resources or approval denial. No additional owner, worktree or implementation worker.
 
@@ -24,6 +24,10 @@ Numerical/reference behavior and tolerances are unchanged. Preserve the 48 GiB p
 
 ## Review and checkpoint status
 
-Gemini static review accepted the frozen packet with no confirmed defects; [disposition](evidence/bounded-wait-review-disposition-2026-10-08.md). Nonblocking cleanup suggestions are deferred. M6/M7 are external-state milestones: this file captures pre-publication state; resume by querying the actual remote SHA and its CI rather than treating this snapshot as proof of unfinished or completed execution. No native goal-text update is claimed.
+Gemini static review accepted the frozen packet with no confirmed defects; [disposition](evidence/bounded-wait-review-disposition-2026-10-08.md). Nonblocking cleanup suggestions are deferred. M6/M7 are external-state milestones: the original checkpoint captured pre-publication state; resume by querying the actual remote SHA and its CI rather than treating this snapshot as proof of unfinished or completed execution. No native goal-text update is claimed.
 
-Publication authority: the current active bounded-wait goal expressly requests a normal non-force push of this existing branch after source tests and permitted review, followed by exact-commit CI. That instruction is recognized separately from the old one-time checkpoint/push grant. It covers the existing CI verification requested by the goal, not extra manual hardware/model qualification. No instruction has revoked it. Source and review gates have passed; final scope checks and commit remain before push.
+Publication authority: the current active bounded-wait goal expressly requests a normal non-force push of this existing branch after source tests and permitted review, followed by exact-commit CI. That instruction is recognized separately from the old one-time checkpoint/push grant. It covers the existing CI verification requested by the goal, not extra manual hardware/model qualification. No instruction has revoked it. Source and review gates have passed; final scope checks and normal publication were completed as recorded below.
+
+## Verified publication result
+
+Implementation commit `713f9727f3558ff7236f1f85169c8f54ca8b4568` was normally pushed and matched the remote head. [Exact-commit CI run 37793068021](https://github.com/MahdiHedhli/PulsarMLX/actions/runs/37793068021) completed successfully: workspace, MLX small-fixture, classifier and aggregate jobs passed; three routed integrity jobs were skipped. The [publication receipt](evidence/bounded-wait-publication-ci-2026-10-08.json) preserves terminal conclusions. This ledger closure adds no source change; final goal completion still requires exact-commit CI and remote-head verification for the documentation checkpoint itself. All real/runtime gates remain unchanged.
