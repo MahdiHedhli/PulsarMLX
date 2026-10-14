@@ -1,0 +1,236 @@
+{
+  "schema": "pulsarmlx.qwen38.analytic-probes/1",
+  "provenance": "Original project analytic inputs; Decimal 60-digit norm and rational boundary goldens. Not upstream model goldens.",
+  "seed": 1234,
+  "stop_ids": [
+    248046,
+    248044
+  ],
+  "analytic_tolerance": {
+    "atol": 1e-12,
+    "rtol": 1e-12
+  },
+  "norm": {
+    "x": [
+      3,
+      4
+    ],
+    "raw_hf": [
+      0.25,
+      -0.25
+    ],
+    "converted": [
+      1.25,
+      0.75
+    ],
+    "epsilon": 1e-06,
+    "expected": [
+      1.060660129353417,
+      0.8485281034827336
+    ]
+  },
+  "gated_norm": {
+    "x": [
+      3,
+      4
+    ],
+    "weights": [
+      0.25,
+      -0.25
+    ],
+    "epsilon": 1e-06,
+    "expected": [
+      0.2121320258706834,
+      -0.2828427011609112
+    ]
+  },
+  "l2": [
+    {
+      "x": [
+        3,
+        4
+      ],
+      "expected": [
+        0.6,
+        0.8
+      ]
+    },
+    {
+      "x": [
+        1,
+        -2,
+        2
+      ],
+      "expected": [
+        0.3333333333333333,
+        -0.6666666666666666,
+        0.6666666666666666
+      ]
+    },
+    {
+      "x": [
+        0,
+        0
+      ],
+      "expected": [
+        0,
+        0
+      ]
+    },
+    {
+      "x": [
+        1e-14,
+        0
+      ],
+      "expected": [
+        0.01,
+        0
+      ]
+    }
+  ],
+  "resets": [
+    {
+      "tokens": [
+        7,
+        8,
+        248046,
+        9,
+        10,
+        248044,
+        11
+      ],
+      "expected": [
+        [
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [],
+        [
+          9
+        ],
+        [
+          9,
+          10
+        ],
+        [],
+        [
+          11
+        ]
+      ]
+    },
+    {
+      "tokens": [
+        248044,
+        248046,
+        12,
+        13,
+        14
+      ],
+      "expected": [
+        [],
+        [],
+        [
+          12
+        ],
+        [
+          12,
+          13
+        ],
+        [
+          13,
+          14
+        ]
+      ]
+    }
+  ],
+  "boundary": [
+    {
+      "query": 2047,
+      "candidates": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049,
+        2078,
+        2079
+      ],
+      "expected_keys": [
+        0,
+        2046,
+        2047
+      ],
+      "expected_uniform_attention": -3.6666666666666665
+    },
+    {
+      "query": 2048,
+      "candidates": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049,
+        2078,
+        2079
+      ],
+      "expected_keys": [
+        0,
+        2046,
+        2047,
+        2048
+      ],
+      "expected_uniform_attention": -2.75
+    },
+    {
+      "query": 2049,
+      "candidates": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049,
+        2078,
+        2079
+      ],
+      "expected_keys": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049
+      ],
+      "expected_uniform_attention": -2.0
+    },
+    {
+      "query": 2079,
+      "candidates": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049,
+        2078,
+        2079
+      ],
+      "expected_keys": [
+        0,
+        2046,
+        2047,
+        2048,
+        2049,
+        2078,
+        2079
+      ],
+      "expected_uniform_attention": -2.4285714285714284
+    }
+  ],
+  "generated_boundary_tokens": {
+    "length": 2080,
+    "encoding": "compact-json-ascii",
+    "size_bytes": 6518,
+    "sha256": "458474724b923b2bf392f1f223e2cb7543dad4c3d0dfadc152cfc8438c86122f"
+  }
+}

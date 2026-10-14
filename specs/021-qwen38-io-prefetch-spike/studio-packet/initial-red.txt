@@ -1,0 +1,45 @@
+test_both_stops_and_repeated_resets (test_qwen38_studio_packet.StudioPacketTests.test_both_stops_and_repeated_resets) ... ok
+test_boundary_future_leak_and_current_partial_key (test_qwen38_studio_packet.StudioPacketTests.test_boundary_future_leak_and_current_partial_key) ... ok
+test_bounded_reader_refuses_symlink_large_and_directory (test_qwen38_studio_packet.StudioPacketTests.test_bounded_reader_refuses_symlink_large_and_directory) ... ok
+test_comparison_fails_on_shape_nonfinite_or_tolerance (test_qwen38_studio_packet.StudioPacketTests.test_comparison_fails_on_shape_nonfinite_or_tolerance) ... ok
+test_deltanet_rms_shortcut_is_detected (test_qwen38_studio_packet.StudioPacketTests.test_deltanet_rms_shortcut_is_detected) ... ok
+test_duplicate_and_nonfinite_json_rejected (test_qwen38_studio_packet.StudioPacketTests.test_duplicate_and_nonfinite_json_rejected) ... ok
+test_fixed_fixture_seed_is_not_a_hash_oracle (test_qwen38_studio_packet.StudioPacketTests.test_fixed_fixture_seed_is_not_a_hash_oracle) ... ERROR
+test_frozen_manifest_changed_source_and_escape (test_qwen38_studio_packet.StudioPacketTests.test_frozen_manifest_changed_source_and_escape) ... ok
+test_frozen_manifest_duplicate_paths (test_qwen38_studio_packet.StudioPacketTests.test_frozen_manifest_duplicate_paths) ... ok
+test_literal_analytic_fixture_and_generated_identity (test_qwen38_studio_packet.StudioPacketTests.test_literal_analytic_fixture_and_generated_identity) ... ERROR
+test_no_second_shift_for_converted_or_gated_norm (test_qwen38_studio_packet.StudioPacketTests.test_no_second_shift_for_converted_or_gated_norm) ... ok
+test_zero_and_near_zero_l2_are_policy_only (test_qwen38_studio_packet.StudioPacketTests.test_zero_and_near_zero_l2_are_policy_only) ... ok
+
+======================================================================
+ERROR: test_fixed_fixture_seed_is_not_a_hash_oracle (test_qwen38_studio_packet.StudioPacketTests.test_fixed_fixture_seed_is_not_a_hash_oracle)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/tests/test_qwen38_studio_packet.py", line 86, in test_fixed_fixture_seed_is_not_a_hash_oracle
+    fixture = p.load_json(p.PACKET / "analytic-fixtures.json")
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/qwen38_studio_packet.py", line 73, in load_json
+    return json.loads(bounded_bytes(path), object_pairs_hook=pairs, parse_constant=invalid)
+                      ~~~~~~~~~~~~~^^^^^^
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/qwen38_studio_packet.py", line 42, in bounded_bytes
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-fixtures.json'
+
+======================================================================
+ERROR: test_literal_analytic_fixture_and_generated_identity (test_qwen38_studio_packet.StudioPacketTests.test_literal_analytic_fixture_and_generated_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/tests/test_qwen38_studio_packet.py", line 16, in test_literal_analytic_fixture_and_generated_identity
+    result = p.selfcheck()
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/qwen38_studio_packet.py", line 157, in selfcheck
+    fixture = load_json(PACKET / "analytic-fixtures.json")
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/qwen38_studio_packet.py", line 73, in load_json
+    return json.loads(bounded_bytes(path), object_pairs_hook=pairs, parse_constant=invalid)
+                      ~~~~~~~~~~~~~^^^^^^
+  File "/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/scripts/research/qwen38_studio_packet.py", line 42, in bounded_bytes
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/mhedhli/Documents/Codex/2026-10-03/task/PulsarMLX-qwen38-pager/specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-fixtures.json'
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.006s
+
+FAILED (errors=2)

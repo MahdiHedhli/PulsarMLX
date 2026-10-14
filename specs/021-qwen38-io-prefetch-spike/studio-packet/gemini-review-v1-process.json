@@ -1,0 +1,20 @@
+{
+  "argv_without_payload": [
+    "/Users/mhedhli/.local/bin/agy",
+    "--model",
+    "gemini-3.8-flash-high",
+    "--mode",
+    "plan",
+    "--sandbox",
+    "--disable-slash-commands",
+    "--print-timeout",
+    "0",
+    "--output-format",
+    "json",
+    "-p",
+    "<exact frozen payload>"
+  ],
+  "exit_code": 0,
+  "payload_sha256": "83d731a63bcd13ff0d52a78bd78b25260e0c47bf21b4028d60e631115b836920",
+  "isolated_workspace_only_sanitized_packet": true
+}

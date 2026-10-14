@@ -1,0 +1,73 @@
+{
+  "schema": "pulsarmlx.qwen38.studio-packet-validation/1",
+  "base_commit": "7768692bd19e639d06deb9da925bc88cc6f83c9f",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "python_executable": "/opt/homebrew/bin/python3",
+  "local_scope": "Tiny stdlib CPU fixtures only; existing host Python, not Python3.13 qualification.",
+  "results": [
+    {
+      "command": [
+        "/opt/homebrew/bin/python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_studio_packet.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "focused.txt",
+      "sha256": "e2d18c55bd689a64d0438c0a6464159d1f2182a2078ed3a2c06f451afa39e0f0",
+      "tests": 14
+    },
+    {
+      "command": [
+        "/opt/homebrew/bin/python3",
+        "-I",
+        "-S",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/research/tests",
+        "-p",
+        "test_qwen38_*.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "log": "regression.txt",
+      "sha256": "0ac7a289733d1d3ec149535d277c70959ceb5adbd3e99392230adc041a254f32",
+      "tests": 138
+    },
+    {
+      "command": [
+        "/opt/homebrew/bin/python3",
+        "-I",
+        "-S",
+        "-B",
+        "scripts/research/qwen38_studio_packet.py",
+        "selfcheck"
+      ],
+      "exit_code": 0,
+      "log": "analytic-result.json",
+      "sha256": "cd3d49fa3c3be7ceda3ecb8dcaf30e8c7e1218c8b9720fa00d10d06dd7f8a89e",
+      "tests": null
+    }
+  ],
+  "identity_check": {
+    "status": "PASS_IDENTITIES_ONLY",
+    "files": 33,
+    "runtime_authorized": false
+  },
+  "source_manifest_sha256": "2d8159e850176ed92611801898a71e74cac2609ad9d56e4d71ddd0d48beeba61",
+  "no_checkpoint_reads": true,
+  "no_install_or_download": true,
+  "no_device_or_model_execution": true,
+  "no_other_worktree_changes": true
+}

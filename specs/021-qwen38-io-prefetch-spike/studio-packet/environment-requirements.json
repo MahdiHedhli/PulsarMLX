@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.qwen38.environment-requirements/1",
+  "status": "BLOCKED_NOT_A_LOCK",
+  "target": {
+    "python": "3.13.13",
+    "implementation": "CPython",
+    "platform": "macOS-arm64",
+    "macos_build": "MUST_RECORD_AND_REVIEW_STUDIO_ACTUAL_BUILD"
+  },
+  "candidate_direct_pins_from_prior_source_audit": {
+    "mlx": "0.32.0",
+    "mlx-metal": "0.32.0",
+    "mlx-lm": "0.31.3",
+    "numpy": "2.4.5",
+    "transformers": "5.16.0",
+    "huggingface-hub": "1.5.0",
+    "safetensors": "0.8.0",
+    "tokenizers": "0.23.1"
+  },
+  "reference_only_torch_pin": null,
+  "pin_status": "Historical candidates; availability, metadata and target compatibility not reverified this turn.",
+  "requirements": [
+    "Separate runtime and CPU-reference Python 3.13.13 environments outside Pulsar .venv and all GLM directories; no system-site-packages.",
+    "Record interpreter binary SHA-256, origin, signature verification, sys.version and sysconfig platform; interpreter download/install needs separate permission.",
+    "Resolve all active transitive dependencies and environment markers for actual macOS/arm64/cp313 target; pin reference Torch version and immutable upstream implementation revision.",
+    "Freeze exact wheel filename, version, size, SHA-256, authoritative index metadata SHA-256, URL, tag, Requires-Python and Requires-Dist metadata for every distribution. Wheels only; no sdist or build hooks.",
+    "Validate closure against every selected wheel METADATA and independent resolver output; conflicting, missing, extra, unpinned, yanked or incompatible distributions fail.",
+    "Freeze pip/resolver versions and artifacts too. No unbounded index selection, floating Git references, remote code discovery, extra indexes or credentials.",
+    "Before any install, independently review requirements-runtime.lock.txt and requirements-reference.lock.txt, artifact manifests and resolver/verification report with exact hashes.",
+    "Future permitted install: isolated offline wheelhouse, --no-index --only-binary=:all: --require-hashes; all wheels preverified. No current installation or acquisition authority.",
+    "After permitted install: pip check plus import origin/version inventory, RECORD verification and full environment artifact hash manifest. No model import or device execution during inventory.",
+    "Do not claim uv.lock covers mlx-lm, Transformers, Torch or Qwen reference closure; current root lock is a different worker environment."
+  ],
+  "required_artifacts": [
+    "interpreter-receipt.json",
+    "requirements-runtime.lock.txt",
+    "requirements-reference.lock.txt",
+    "wheel-artifacts.json",
+    "resolver-metadata.json",
+    "environment-verification.json"
+  ],
+  "present_artifacts": []
+}

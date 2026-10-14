@@ -1,0 +1,172 @@
+{
+  "schema": "pulsarmlx.qwen38.studio-packet-files/1",
+  "base_commit": "7768692bd19e639d06deb9da925bc88cc6f83c9f",
+  "files": [
+    {
+      "path": "scripts/research/acquire_qwen38_pinned.py",
+      "size_bytes": 6255,
+      "sha256": "aec483e82bb3352acc581ab3c877ced229235f007b7985a4236ddfc5a2dcb643"
+    },
+    {
+      "path": "scripts/research/admit_qwen38_static.py",
+      "size_bytes": 12301,
+      "sha256": "f2488734a30c66dc8023f5f8d7d7eca4e36f39de6c9eaaa714a6e57cc36f400e"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_memory.py",
+      "size_bytes": 8763,
+      "sha256": "1f3443f8b299a298364b38457b4f6508b7c3e3ee62554b137b17c8d49af48198"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_session.py",
+      "size_bytes": 20322,
+      "sha256": "fe4ab1f614ff39994b75b6f95aba2cff725c4d6203afcbf37ecc9a19155787f3"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_trace.py",
+      "size_bytes": 15489,
+      "sha256": "044445775f462eaa2dd46b36bdbaa07f844022a1b772369d2fb457e075719e4d"
+    },
+    {
+      "path": "scripts/research/qwen38_bounded_pager.py",
+      "size_bytes": 16685,
+      "sha256": "a465af9d86ecb698e756f1db7fa0e4f9dbd542c828132b94fe971a18195906fb"
+    },
+    {
+      "path": "scripts/research/qwen38_fixture_io.py",
+      "size_bytes": 12164,
+      "sha256": "8e4fe8a5661ef0642e19a7e2c91fa8be05a6b18e7ab809e53f262c41d6283340"
+    },
+    {
+      "path": "scripts/research/qwen38_page_catalog.py",
+      "size_bytes": 17097,
+      "sha256": "3f697d3a0712af0d6c57982b86d781f4000983d0ae8ac60d2451c2c1a0d0f2d4"
+    },
+    {
+      "path": "scripts/research/qwen38_prefetch_trace_contract.py",
+      "size_bytes": 12252,
+      "sha256": "48fa3b74798fe5b3cf1650313ec57e36e4f906398a4a838d18fa6028d84620aa"
+    },
+    {
+      "path": "scripts/research/qwen38_studio_packet.py",
+      "size_bytes": 11926,
+      "sha256": "4dee92974f7e2bd68c89e420dd6a67d399f6a367d4483e3948040e87b46d2783"
+    },
+    {
+      "path": "scripts/research/qwen38_verified_files.py",
+      "size_bytes": 10299,
+      "sha256": "5e13de67468f30423e74e2f25dbf46d1876110f8edbeb67a3ffb5c19c5c2494b"
+    },
+    {
+      "path": "scripts/research/tests/qwen38_adapter_fixture.py",
+      "size_bytes": 3874,
+      "sha256": "f56ff4646942ee87d2ede3e26884a090b9715268a4e273c4929c1a5d7ef5b5c6"
+    },
+    {
+      "path": "scripts/research/tests/qwen38_studio_fixture.py",
+      "size_bytes": 2475,
+      "sha256": "e0e1e5ac9607aa5fb80341fa722bf61d1e841bdbab9568b44258402df39c621a"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_adapter_contract.py",
+      "size_bytes": 28003,
+      "sha256": "49b1e8089e71b7d1a73ee7208409d73173ba93828e1b425f321657aada930331"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_pager.py",
+      "size_bytes": 15515,
+      "sha256": "d85ac05b55c7a9e98cf02f56c9e87646c60c82766041af11cf4d5648c37af00f"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_bounded_wait.py",
+      "size_bytes": 8465,
+      "sha256": "e1533dd13fff987b7183b5eaa3e73c6e55a0bb66c4f03583a8c984f4e5a007a1"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_fixture_io.py",
+      "size_bytes": 13644,
+      "sha256": "e2f61a83d58d064cd7ea217981402a77ced405e4bdba688e3b2c7f45c834b6f1"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_prefetch_trace_contract.py",
+      "size_bytes": 11080,
+      "sha256": "347b089a6f1fd34aef805eafcb2eab213412833814ed7f4c227b28f4c33c4825"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_studio_packet.py",
+      "size_bytes": 7129,
+      "sha256": "64eb53ee0f822d88ef56438870b16f8350090582c36b954b1349cc4815c791ef"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_verified_files.py",
+      "size_bytes": 14967,
+      "sha256": "34f3107d1f63ded84e00d9ed598789c5084bd6e3eccf084086cb18f1bbd9a722"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/bounded-wait-objective.md",
+      "size_bytes": 5175,
+      "sha256": "9af59c2938157a8beec1d4c8278eeb4556132a5d9a389d4a16de2c748a000a44"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/checkpoint-admission.md",
+      "size_bytes": 17125,
+      "sha256": "25f123297e56c461495dbd2a900fba1a32f837c0378dfad572b52a9cb30528c4"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/checkpoint-file-integrity.md",
+      "size_bytes": 3921,
+      "sha256": "41f2f1f0125b16f90fbb595be0c22489c765eac1ac038e54e138a6675faf6149"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/checkpoint-manifest.json",
+      "size_bytes": 4079,
+      "sha256": "afe5b9b7ec19375c6815eceed6a1607212463c5c6525c6fdd67385db30e6f06f"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/plan.md",
+      "size_bytes": 14737,
+      "sha256": "7c1bcc589a8d60ca7cb1696457d76184051ce9ec00c5834ca0124db248917526"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/production-adapter-next-gate.md",
+      "size_bytes": 7824,
+      "sha256": "f7f84bfe6fe50e0e7d934f2525b7e0458a6b67a47bf177487b54456744acb37f"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/runtime-execution-plan.md",
+      "size_bytes": 7544,
+      "sha256": "e5308129e18467e5d506abf6be01aa3e8e4e931b9da6906fb081d63e8db28f8b"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/spec.md",
+      "size_bytes": 6388,
+      "sha256": "0b1e26e26c2d4a2053313031afc40da3614f496ebe29c07be27cb65ba0eeccdf"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/README.md",
+      "size_bytes": 19076,
+      "sha256": "46f4fb39847f56b598d4aff1637c5e78d3ebcfe439e9f1263cac8b2efcdedde3"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-fixtures.json",
+      "size_bytes": 3399,
+      "sha256": "d1cc86853feed2da79a4ce3649fa77bf9d62fa6f91f39e51c2e60efcaa330e6f"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/environment-requirements.json",
+      "size_bytes": 2733,
+      "sha256": "43be675360a744799f1bab644b62b48e696468197af55fc5b342fbb8f6596865"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/runtime-requests.json",
+      "size_bytes": 3443,
+      "sha256": "c8e1dea28a0ca761db5652f9c17c530a7f1b7ad8be5c64e9b02210190ba1bbde"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/trace-contract.md",
+      "size_bytes": 4316,
+      "sha256": "c7f5d2fd8e6612919298bb225cf83edb63b214b274b8c4424b0837cf9729fb3b"
+    }
+  ],
+  "scope": "Exact local source/spec/fixture identities only; no runtime or permission qualification."
+}

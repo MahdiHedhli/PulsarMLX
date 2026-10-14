@@ -1,0 +1,12 @@
+{
+  "status": "PASS_ANALYTIC_ONLY",
+  "probes": 27,
+  "generated_boundary_tokens": {
+    "length": 2080,
+    "encoding": "compact-json-ascii",
+    "size_bytes": 6518,
+    "sha256": "458474724b923b2bf392f1f223e2cb7543dad4c3d0dfadc152cfc8438c86122f"
+  },
+  "upstream_parity": "BLOCKED",
+  "runtime_executed": false
+}

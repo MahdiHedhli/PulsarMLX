@@ -1,0 +1,48 @@
+{
+  "schema": "pulsarmlx.qwen38.studio-local-audit/1",
+  "source_identity_count": 33,
+  "fixture_regeneration_byte_exact": true,
+  "existing_scheduler_adapter_manifest_goal_graph_selector_unchanged": true,
+  "no_runtime_entry_point_added": true,
+  "largest_review_input_bytes": 110654,
+  "pre_review_credential_scan": "PASS; private-key/provider-token/assignment patterns; no raw matches printed",
+  "no_push_or_merge": true,
+  "final_review": {
+    "status": "SUCCESS",
+    "conversation_id": "24816d64-7321-4be5-b46b-8568c8853d58",
+    "verdict": "ACCEPT_FOR_STATIC_PACKET",
+    "report_sha256": "b47b017dfd343fb58f59ca5f46084cc2609262801a42a8056d3ccd2efc9464c8",
+    "reviewed_file_bytes_unchanged": true
+  },
+  "final_scope_review": {
+    "staged_files": [
+      "scripts/research/qwen38_studio_packet.py",
+      "scripts/research/tests/qwen38_studio_fixture.py",
+      "scripts/research/tests/test_qwen38_studio_packet.py",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/README.md",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-fixtures.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-result.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/environment-requirements.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/focused.txt",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/frozen-files.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/gemini-review-v1-process.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/gemini-review-v1-stderr.txt",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/gemini-review-v1.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/identity-result.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/initial-red.txt",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/local-audit.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/regression.txt",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/review-disposition.md",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/review-input-v1.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/review-manifest-v1.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/runtime-requests.json",
+      "specs/021-qwen38-io-prefetch-spike/studio-packet/validation.json"
+    ],
+    "only_additions_in_qwen_scope": true,
+    "credential_pattern_findings": [],
+    "all_new_files_below_1_mib": true,
+    "largest_new_file_bytes": 110654,
+    "staged_diff_check_exit_code": 0,
+    "evidence_log_hashes_match": true
+  }
+}

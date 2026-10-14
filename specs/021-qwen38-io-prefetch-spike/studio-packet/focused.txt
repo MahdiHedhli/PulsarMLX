@@ -1,0 +1,19 @@
+test_both_stops_and_repeated_resets (test_qwen38_studio_packet.StudioPacketTests.test_both_stops_and_repeated_resets) ... ok
+test_boundary_future_leak_and_current_partial_key (test_qwen38_studio_packet.StudioPacketTests.test_boundary_future_leak_and_current_partial_key) ... ok
+test_bounded_reader_refuses_symlink_large_and_directory (test_qwen38_studio_packet.StudioPacketTests.test_bounded_reader_refuses_symlink_large_and_directory) ... ok
+test_comparison_fails_on_shape_nonfinite_or_tolerance (test_qwen38_studio_packet.StudioPacketTests.test_comparison_fails_on_shape_nonfinite_or_tolerance) ... ok
+test_deltanet_rms_shortcut_is_detected (test_qwen38_studio_packet.StudioPacketTests.test_deltanet_rms_shortcut_is_detected) ... ok
+test_duplicate_and_nonfinite_json_rejected (test_qwen38_studio_packet.StudioPacketTests.test_duplicate_and_nonfinite_json_rejected) ... ok
+test_fixed_fixture_seed_is_not_a_hash_oracle (test_qwen38_studio_packet.StudioPacketTests.test_fixed_fixture_seed_is_not_a_hash_oracle) ... ok
+test_fixture_generator_matches_frozen_values (test_qwen38_studio_packet.StudioPacketTests.test_fixture_generator_matches_frozen_values) ... ok
+test_frozen_manifest_changed_source_and_escape (test_qwen38_studio_packet.StudioPacketTests.test_frozen_manifest_changed_source_and_escape) ... ok
+test_frozen_manifest_duplicate_paths (test_qwen38_studio_packet.StudioPacketTests.test_frozen_manifest_duplicate_paths) ... ok
+test_literal_analytic_fixture_and_generated_identity (test_qwen38_studio_packet.StudioPacketTests.test_literal_analytic_fixture_and_generated_identity) ... ok
+test_no_second_shift_for_converted_or_gated_norm (test_qwen38_studio_packet.StudioPacketTests.test_no_second_shift_for_converted_or_gated_norm) ... ok
+test_resource_and_execution_gate_drift_rejected (test_qwen38_studio_packet.StudioPacketTests.test_resource_and_execution_gate_drift_rejected) ... ok
+test_zero_and_near_zero_l2_are_policy_only (test_qwen38_studio_packet.StudioPacketTests.test_zero_and_near_zero_l2_are_policy_only) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.008s
+
+OK

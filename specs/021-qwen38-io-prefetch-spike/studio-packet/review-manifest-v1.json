@@ -1,0 +1,67 @@
+{
+  "schema": "pulsarmlx.qwen38.studio-static-review/1",
+  "provider": "Gemini via existing agy",
+  "model": "gemini-3.8-flash-high",
+  "authorization": "Current owner explicitly requested Gemini/Grok static review; automatic denial must not be rerouted.",
+  "payload": "review-input-v1.json",
+  "payload_size_bytes": 110654,
+  "payload_sha256": "83d731a63bcd13ff0d52a78bd78b25260e0c47bf21b4028d60e631115b836920",
+  "files": [
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/README.md",
+      "size_bytes": 19076,
+      "sha256": "46f4fb39847f56b598d4aff1637c5e78d3ebcfe439e9f1263cac8b2efcdedde3"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/environment-requirements.json",
+      "size_bytes": 2733,
+      "sha256": "43be675360a744799f1bab644b62b48e696468197af55fc5b342fbb8f6596865"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/runtime-requests.json",
+      "size_bytes": 3443,
+      "sha256": "c8e1dea28a0ca761db5652f9c17c530a7f1b7ad8be5c64e9b02210190ba1bbde"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/analytic-fixtures.json",
+      "size_bytes": 3399,
+      "sha256": "d1cc86853feed2da79a4ce3649fa77bf9d62fa6f91f39e51c2e60efcaa330e6f"
+    },
+    {
+      "path": "specs/021-qwen38-io-prefetch-spike/studio-packet/frozen-files.json",
+      "size_bytes": 6566,
+      "sha256": "2d8159e850176ed92611801898a71e74cac2609ad9d56e4d71ddd0d48beeba61"
+    },
+    {
+      "path": "scripts/research/qwen38_studio_packet.py",
+      "size_bytes": 11926,
+      "sha256": "4dee92974f7e2bd68c89e420dd6a67d399f6a367d4483e3948040e87b46d2783"
+    },
+    {
+      "path": "scripts/research/tests/qwen38_studio_fixture.py",
+      "size_bytes": 2475,
+      "sha256": "e0e1e5ac9607aa5fb80341fa722bf61d1e841bdbab9568b44258402df39c621a"
+    },
+    {
+      "path": "scripts/research/tests/test_qwen38_studio_packet.py",
+      "size_bytes": 7129,
+      "sha256": "64eb53ee0f822d88ef56438870b16f8350090582c36b954b1349cc4815c791ef"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_memory.py",
+      "size_bytes": 8763,
+      "sha256": "1f3443f8b299a298364b38457b4f6508b7c3e3ee62554b137b17c8d49af48198"
+    },
+    {
+      "path": "scripts/research/qwen38_adapter_session.py",
+      "size_bytes": 20322,
+      "sha256": "fe4ab1f614ff39994b75b6f95aba2cff725c4d6203afcbf37ecc9a19155787f3"
+    },
+    {
+      "path": "scripts/research/qwen38_bounded_pager.py",
+      "size_bytes": 16685,
+      "sha256": "a465af9d86ecb698e756f1db7fa0e4f9dbd542c828132b94fe971a18195906fb"
+    }
+  ],
+  "no_weights_or_checkpoint_python_or_credentials": true
+}

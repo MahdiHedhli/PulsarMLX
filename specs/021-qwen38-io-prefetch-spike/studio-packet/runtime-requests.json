@@ -1,0 +1,87 @@
+{
+  "schema": "pulsarmlx.qwen38.studio-requests/1",
+  "status": "BLOCKED_NO_RUNTIME_DRIVER",
+  "authority": "Packet preparation and tiny stdlib probes only. No execution authority.",
+  "seed": 1234,
+  "greedy": true,
+  "stop_ids": [
+    248046,
+    248044
+  ],
+  "concurrency": 1,
+  "gates_bytes": {
+    "process_tree": 51539607552,
+    "all_weight_owners": 42949672960,
+    "other_owners": 8589934592,
+    "system_reserve": 17179869184
+  },
+  "bounded_execution": {
+    "wall_deadline_seconds_per_request": 120,
+    "wait_deadline_ns": 5000000000,
+    "io_slots": 2,
+    "staging_slot_bytes": 16777216,
+    "staging_total_bytes": 33554432,
+    "authenticated_read_chunk_bytes": 1048576,
+    "sampler_max_age_ns": 10000000,
+    "sampler_cadence_candidate_ns": 5000000,
+    "max_receipt_bytes": 1048576,
+    "max_fixture_total_bytes": 16777216
+  },
+  "requests": [
+    {
+      "id": "tiny-device-ownership",
+      "input": "generated fixture owners only",
+      "max_device_live_bytes": 16777216,
+      "required": "real completion fence, retained views/duplicates, cancellation, injected allocation/sampler failure; independent footprint returns to baseline envelope"
+    },
+    {
+      "id": "tiny-reference-capture",
+      "input": "analytic-fixtures.json plus independently defined tiny Qwen fixture",
+      "device": "CPU only",
+      "tiny_configuration_status": "MISSING_INDEPENDENT_UPSTREAM_CONFIG_AND_GOLDENS",
+      "required": "norm families, q/k L2 and recurrence, hash rows seed1234, both EOS and cache reset, causal sparse prefill2047/2048/2049/2080; canonical named tensor dumps"
+    },
+    {
+      "id": "tiny-mlx-parity",
+      "input": "reviewed upstream tiny fixture and frozen goldens",
+      "max_fixture_total_bytes": 16777216,
+      "required": "apply fixed tolerances in README; exact integer IDs/masks; no full checkpoint"
+    },
+    {
+      "id": "paged-short",
+      "input": "tokenizer-admitted token IDs to be frozen later",
+      "max_prompt_tokens": 64,
+      "max_output_tokens": 4,
+      "prefetch": false,
+      "required": "live bound checkpoint session, fixed weights, real sampler/fences and numerical reference"
+    },
+    {
+      "id": "paged-eos",
+      "input": "two independently frozen stop/reset sequences plus two fresh-session suffix controls",
+      "max_prompt_tokens": 64,
+      "max_output_tokens": 4,
+      "prefetch": false,
+      "required": "stop detection and fresh request resets agree; packed-sequence EOS placement agrees with reference"
+    },
+    {
+      "id": "paged-boundary",
+      "input": "frozen synthetic token IDs for lengths2047,2048,2049,2080 plus later tokenizer-admitted long prompt",
+      "max_prompt_tokens": 2080,
+      "max_output_tokens": 2,
+      "prefetch": false,
+      "required": "current partial block, per-query causality, future-token perturbation invariance, chunked vs whole prefill parity"
+    },
+    {
+      "id": "io-hint-parity",
+      "input": "same admitted requests and live catalog",
+      "prefetch": true,
+      "required": "same token/routes and bitwise named probes as no-prefetch same-backend arm; hints stage only; reconciled useful/late/wasted bytes"
+    }
+  ],
+  "never_commands": [
+    "stock mlx_lm.load(full_checkpoint)",
+    "mlx_lm.generate(full_checkpoint)",
+    "full-checkpoint lazy=True loader"
+  ],
+  "missing_runtime_entry_point": "No production Qwen runner exists on this branch; do not substitute an unbounded stock loader."
+}
