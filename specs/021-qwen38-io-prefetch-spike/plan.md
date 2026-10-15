@@ -1,5 +1,15 @@
 # Feature 021 bounded pager design and handoff
 
+## MacBook affine fixture continuation, 2026-10-15
+
+The [tiny affine probe](evidence/affine-probe-macbook-2026-10-15.md) checks
+4-bit/group-32 and 8-bit/group-64 BF16 affine partner geometry against an
+independent scalar decoder on CPU MLX 0.31.2/Python 3.14.6. It reads no
+checkpoint and does not qualify the pinned Python 3.13 runtime, Metal device
+fences, model parity or throughput. External source review was denied by
+automatic approval review; the isolated probe has local review only and does
+not advance the production adapter execution gate.
+
 ## Bounded-wait continuation, 2026-10-08
 
 The [resumable graph](bounded-wait-objective.md) tracks the full authorized scheduler/review/publication/CI chain on the existing owner branch. `Limits.demand_wait_ns` defaults to five seconds as an unqualified source-contract setting; a caller may provide another positive finite integer and must calibrate it before production. An unresident actual demand receives an absolute monotonic deadline at submission. Duplicate demand and unrelated events do not extend it. Admission clears a queued wait; completion clears a promoted hint's wait. A cooperative caller must invoke `check_waits`, `next_io` or `observe` during stalls. These source tests are not an autonomous timer, latency benchmark or real backend timeout qualification.
