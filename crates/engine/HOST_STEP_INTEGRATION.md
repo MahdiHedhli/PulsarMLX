@@ -39,9 +39,10 @@ process/thread at a time. Reuse unchanged source-bound receipts where possible.
 
 The storage docs distinguish initialization from confidentiality: retaining
 policies can expose earlier initialized lease bytes, and clearing a logical
-surface is not secure erasure. Telemetry records request attempts before later
-refusals; only overflow of the request counters leaves both attempts unchanged.
-Existing counter tests now assert this ordering explicitly.
+surface is not secure erasure. `StableSlabTelemetry` records acquisition attempts
+before later refusals; overflow of either request counter leaves both request
+counters unchanged. Existing counter tests now assert this ordering explicitly.
+`PositionalSource` leaves `ReadTelemetry` unchanged on prevalidated refusals.
 
 The added public `SourceError` and `SlabAllocatorError` variants are additive API
 changes that can break downstream exhaustive matches. Actual macOS consumers
