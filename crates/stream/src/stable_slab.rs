@@ -1,4 +1,4 @@
-use std::alloc::{alloc, alloc_zeroed, dealloc, Layout};
+use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::fmt;
 use std::ptr::{self, NonNull};
 use std::sync::{Arc, Mutex};
@@ -7,14 +7,16 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SlotId(pub u64);
 
-/// Slot zeroing strategy.
+/// Slot zeroing strategy. Fresh initialization prevents uninitialized reads;
+/// it does not prevent disclosure of a previous lease's initialized bytes.
+/// None of these policies guarantees secure erasure or multi-tenant isolation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZeroingPolicy {
-    /// No automatic zeroing.
+    /// Initialize fresh storage; reuse may expose the previous lease's bytes.
     NoZero,
-    /// Zero buffers the first time a slot is allocated.
+    /// Initialize fresh storage; reuse may expose the previous lease's bytes.
     ZeroInitialize,
-    /// Zero buffer on every acquire.
+    /// Clear the logical leased surface on every acquire; not secure erasure.
     ZeroOnAcquire,
 }
 
@@ -49,11 +51,15 @@ impl StableSlabConfig {
     }
 }
 
+/// Acquisition attempts are counted before capacity and later accounting checks.
+/// Overflow of either request counter leaves both request counters unchanged.
+/// Later refusals retain those attempt counts but do not transfer a lease.
+/// Allocation, reuse and peak residency counters describe completed work.
 #[derive(Debug, Clone, Copy)]
 pub struct StableSlabTelemetry {
-    /// Requested logical bytes requested from the allocator.
+    /// Logical bytes requested by counted acquisition attempts, including refusals.
     pub requested_bytes: u64,
-    /// Number of allocation calls.
+    /// Counted acquisition attempts, including capacity and later accounting refusals.
     pub requested_slots: u64,
     /// Reserved capacity across all allocated slots.
     pub allocated_bytes: u64,
@@ -67,7 +73,7 @@ pub struct StableSlabTelemetry {
     pub peak_logical_residency: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SlabAllocatorError {
     InvalidAlignment {
         alignment: usize,
@@ -78,6 +84,12 @@ pub enum SlabAllocatorError {
     InvalidMaxSlots {
         max_slots: usize,
     },
+    InvalidCapacity {
+        slot_size: usize,
+        alignment: usize,
+        max_slots: usize,
+    },
+    CounterOverflow,
     AllocationPressure {
         requested_slots: usize,
         max_slots: usize,
@@ -93,7 +105,10 @@ impl fmt::Display for SlabAllocatorError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidAlignment { alignment } => {
-                write!(formatter, "alignment {alignment} is invalid (must be power-of-two)")
+                write!(
+                    formatter,
+                    "alignment {alignment} is invalid (must be power-of-two)"
+                )
             }
             Self::InvalidSlotSize { slot_size } => {
                 write!(formatter, "slot size {slot_size} must be > 0")
@@ -101,6 +116,15 @@ impl fmt::Display for SlabAllocatorError {
             Self::InvalidMaxSlots { max_slots } => {
                 write!(formatter, "max_slots {max_slots} must be > 0")
             }
+            Self::InvalidCapacity {
+                slot_size,
+                alignment,
+                max_slots,
+            } => write!(
+                formatter,
+                "invalid slab capacity: size={slot_size}, alignment={alignment}, slots={max_slots}"
+            ),
+            Self::CounterOverflow => write!(formatter, "slab accounting overflow"),
             Self::AllocationPressure {
                 requested_slots,
                 max_slots,
@@ -118,9 +142,7 @@ impl fmt::Display for SlabAllocatorError {
                 write!(
                     formatter,
                     "slot id {:?} mapped to {} but allocator has {} slots",
-                    id,
-                    expected,
-                    actual,
+                    id, expected, actual,
                 )
             }
         }
@@ -129,45 +151,30 @@ impl fmt::Display for SlabAllocatorError {
 
 struct SlotAllocation {
     ptr: NonNull<u8>,
-    cap: usize,
-    align: usize,
+    layout: Layout,
 }
 
 impl SlotAllocation {
-    fn new(size: usize, align: usize, zero: bool) -> Option<Self> {
-        // Safety: alignment is validated before construction.
-        let layout = Layout::from_size_align(size, align).ok()?;
-        // Safety: layout was validated.
-        let raw = unsafe {
-            if zero {
-                alloc_zeroed(layout)
-            } else {
-                alloc(layout)
-            }
-        };
+    fn new(layout: Layout) -> Option<Self> {
+        // SAFETY: construction validated a nonzero representable layout. Fresh
+        // storage is initialized under EVERY policy before any safe slice exists.
+        let raw = unsafe { alloc_zeroed(layout) };
         Some(Self {
             ptr: NonNull::new(raw)?,
-            cap: size,
-            align,
+            layout,
         })
     }
 
     fn zero(&mut self) {
-        // Safety: `ptr` is valid for writes by construction.
-        unsafe { ptr::write_bytes(self.ptr.as_ptr(), 0, self.cap) }
+        // SAFETY: the retained layout describes this entire owned allocation.
+        unsafe { ptr::write_bytes(self.ptr.as_ptr(), 0, self.layout.size()) }
     }
-
 }
 
 impl Drop for SlotAllocation {
     fn drop(&mut self) {
-        // Safety: pointer was allocated with this layout.
-        unsafe {
-            dealloc(
-                self.ptr.as_ptr(),
-                Layout::from_size_align(self.cap, self.align).expect("layout validated on allocation"),
-            )
-        }
+        // SAFETY: use the exact original allocation layout.
+        unsafe { dealloc(self.ptr.as_ptr(), self.layout) }
     }
 }
 
@@ -178,6 +185,7 @@ struct SlotEntry {
 
 struct StableSlabAllocatorInner {
     config: StableSlabConfig,
+    layout: Layout,
     slots: Vec<SlotEntry>,
     free: Vec<SlotId>,
     in_use: usize,
@@ -189,11 +197,6 @@ struct StableSlabAllocatorInner {
 }
 
 impl StableSlabAllocatorInner {
-    fn align_size(&self) -> usize {
-        let align_mask = self.config.alignment - 1;
-        (self.config.slot_size + align_mask) & !align_mask
-    }
-
     fn telemetry(&self) -> StableSlabTelemetry {
         StableSlabTelemetry {
             requested_bytes: self.requested_bytes,
@@ -207,11 +210,13 @@ impl StableSlabAllocatorInner {
     }
 
     fn validate_id(&self, id: SlotId) -> Result<usize, SlabAllocatorError> {
-        let index = id.0.try_into().map_err(|_| SlabAllocatorError::InternalSlotMismatch {
-            id,
-            expected: self.slots.len(),
-            actual: self.slots.len(),
-        })?;
+        let index =
+            id.0.try_into()
+                .map_err(|_| SlabAllocatorError::InternalSlotMismatch {
+                    id,
+                    expected: self.slots.len(),
+                    actual: self.slots.len(),
+                })?;
         if index >= self.slots.len() {
             return Err(SlabAllocatorError::InternalSlotMismatch {
                 id,
@@ -257,12 +262,12 @@ impl StableSlab {
     }
 
     pub fn as_slice(&self) -> &[u8] {
-        // Safety: pointer is valid and length is fixed for this slot lifecycle.
+        // SAFETY: every allocation is initialized, remains live, and is leased exclusively.
         unsafe { std::slice::from_raw_parts(self.ptr.as_ptr(), self.len) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
-        // Safety: pointer is valid and unique to this borrow.
+        // SAFETY: every byte is initialized; this lease and mutable borrow are exclusive.
         unsafe { std::slice::from_raw_parts_mut(self.ptr.as_ptr(), self.len) }
     }
 
@@ -303,9 +308,30 @@ impl StableSlabAllocator {
             });
         }
 
+        let invalid_capacity = || SlabAllocatorError::InvalidCapacity {
+            slot_size: config.slot_size,
+            alignment: config.alignment,
+            max_slots: config.max_slots,
+        };
+        let aligned = config
+            .slot_size
+            .checked_add(config.alignment - 1)
+            .map(|size| size & !(config.alignment - 1))
+            .ok_or_else(invalid_capacity)?;
+        let layout =
+            Layout::from_size_align(aligned, config.alignment).map_err(|_| invalid_capacity())?;
+        // Bound all pool and logical-residency arithmetic before allocating.
+        if aligned
+            .checked_mul(config.max_slots)
+            .filter(|&size| size <= isize::MAX as usize)
+            .is_none()
+        {
+            return Err(invalid_capacity());
+        }
         Ok(Self {
             inner: Arc::new(Mutex::new(StableSlabAllocatorInner {
                 config,
+                layout,
                 slots: Vec::new(),
                 free: Vec::new(),
                 in_use: 0,
@@ -318,11 +344,11 @@ impl StableSlabAllocator {
         })
     }
 
-    fn with_inner<R>(
-        &self,
-        op: impl FnOnce(&mut StableSlabAllocatorInner) -> R,
-    ) -> R {
-        let mut inner = self.inner.lock().expect("stable slab allocator mutex poisoned");
+    fn with_inner<R>(&self, op: impl FnOnce(&mut StableSlabAllocatorInner) -> R) -> R {
+        let mut inner = self
+            .inner
+            .lock()
+            .expect("stable slab allocator mutex poisoned");
         op(&mut inner)
     }
 
@@ -332,76 +358,78 @@ impl StableSlabAllocator {
 
     pub fn acquire(&self) -> Result<StableSlab, SlabAllocatorError> {
         self.with_inner(|inner| {
-            let request_size = inner.config.slot_size;
-            inner.requested_slots += 1;
-            inner.requested_bytes += request_size as u64;
-
-            let id = if let Some(reused) = inner.free.pop() {
-                inner.reuse_count += 1;
-                reused
-            } else if inner.slots.len() < inner.config.max_slots {
-                let cap = inner.align_size();
-                let mut allocation = SlotAllocation::new(
-                    cap,
-                    inner.config.alignment,
-                    inner.config.zeroing == ZeroingPolicy::ZeroInitialize,
-                )
-                .ok_or(SlabAllocatorError::AllocationPressure {
-                    requested_slots: inner.slots.len() + 1,
-                    max_slots: inner.config.max_slots,
-                })?;
-
-                if inner.config.zeroing == ZeroingPolicy::ZeroOnAcquire {
-                    allocation.zero();
+            let requested_slots = inner
+                .requested_slots
+                .checked_add(1)
+                .ok_or(SlabAllocatorError::CounterOverflow)?;
+            let requested_bytes = inner
+                .requested_bytes
+                .checked_add(inner.config.slot_size as u64)
+                .ok_or(SlabAllocatorError::CounterOverflow)?;
+            inner.requested_slots = requested_slots;
+            inner.requested_bytes = requested_bytes;
+            let refused_slots = inner.slots.len() + 1;
+            let max_slots = inner.config.max_slots;
+            let pressure = || SlabAllocatorError::AllocationPressure {
+                requested_slots: refused_slots,
+                max_slots,
+            };
+            let next_in_use = inner
+                .in_use
+                .checked_add(1)
+                .ok_or(SlabAllocatorError::CounterOverflow)?;
+            let residency = next_in_use
+                .checked_mul(inner.config.slot_size)
+                .ok_or(SlabAllocatorError::CounterOverflow)?;
+            let (id, index, reuse_count) = if let Some(&id) = inner.free.last() {
+                let index = inner.validate_id(id)?;
+                if inner.slots[index].in_use {
+                    return Err(SlabAllocatorError::InternalSlotMismatch {
+                        id,
+                        expected: index,
+                        actual: index,
+                    });
                 }
-
+                let count = inner
+                    .reuse_count
+                    .checked_add(1)
+                    .ok_or(SlabAllocatorError::CounterOverflow)?;
+                (id, index, count)
+            } else {
+                if inner.slots.len() >= inner.config.max_slots {
+                    return Err(pressure());
+                }
+                let allocated = inner
+                    .allocated_bytes
+                    .checked_add(inner.layout.size())
+                    .ok_or(SlabAllocatorError::CounterOverflow)?;
+                // Reserve the release-list entry now, so Drop never allocates.
+                inner.slots.try_reserve(1).map_err(|_| pressure())?;
+                inner
+                    .free
+                    .try_reserve(inner.slots.len() + 1 - inner.free.len())
+                    .map_err(|_| pressure())?;
+                let allocation = SlotAllocation::new(inner.layout).ok_or_else(pressure)?;
+                let index = inner.slots.len();
                 inner.slots.push(SlotEntry {
                     allocation,
                     in_use: false,
                 });
-                inner.allocated_bytes += cap;
-
-                SlotId(inner.slots.len() as u64 - 1)
-            } else {
-                return Err(SlabAllocatorError::AllocationPressure {
-                    requested_slots: inner.slots.len() + 1,
-                    max_slots: inner.config.max_slots,
-                });
+                inner.allocated_bytes = allocated;
+                (SlotId(index as u64), index, inner.reuse_count)
             };
-
-            let index = usize::try_from(id.0)
-                .map_err(|_| SlabAllocatorError::AllocationPressure {
-                    requested_slots: inner.slots.len() + 1,
-                    max_slots: inner.config.max_slots,
-                })?;
-            if index >= inner.slots.len() {
-                return Err(SlabAllocatorError::InternalSlotMismatch {
-                    id,
-                    expected: inner.slots.len(),
-                    actual: index,
-                });
+            // All fallible preparation has completed before lease/free-list mutation.
+            if inner.free.last() == Some(&id) {
+                inner.free.pop();
             }
-
             let slot = &mut inner.slots[index];
-            if slot.in_use {
-                return Err(SlabAllocatorError::InternalSlotMismatch {
-                    id,
-                    expected: index,
-                    actual: index,
-                });
-            }
-            slot.in_use = true;
-            inner.in_use += 1;
             if inner.config.zeroing == ZeroingPolicy::ZeroOnAcquire {
                 slot.allocation.zero();
             }
-
-            let requested_in_use = inner.in_use;
-            let current_peak = requested_in_use
-                .saturating_mul(inner.config.slot_size)
-                .max(inner.peak_logical_residency);
-            inner.peak_logical_residency = current_peak;
-
+            slot.in_use = true;
+            inner.in_use = next_in_use;
+            inner.reuse_count = reuse_count;
+            inner.peak_logical_residency = inner.peak_logical_residency.max(residency);
             Ok(StableSlab {
                 id,
                 ptr: slot.allocation.ptr,
@@ -496,8 +524,9 @@ mod tests {
 
     #[test]
     fn errors_cleanly_on_allocation_pressure() {
-        let allocator = StableSlabAllocator::new(StableSlabConfig::new(64, 4096, 1, ZeroingPolicy::NoZero))
-            .expect("allocator");
+        let allocator =
+            StableSlabAllocator::new(StableSlabConfig::new(64, 4096, 1, ZeroingPolicy::NoZero))
+                .expect("allocator");
         let _first = allocator.acquire().expect("bounded slot");
 
         match allocator.acquire() {
@@ -506,5 +535,120 @@ mod tests {
             }
             _ => panic!("expected allocation pressure"),
         }
+    }
+}
+
+#[cfg(test)]
+mod boundary_regressions {
+    use super::*;
+
+    #[test]
+    fn every_policy_initializes_full_safe_slices_and_preserves_reuse_contract() {
+        for policy in [
+            ZeroingPolicy::NoZero,
+            ZeroingPolicy::ZeroInitialize,
+            ZeroingPolicy::ZeroOnAcquire,
+        ] {
+            let allocator =
+                StableSlabAllocator::new(StableSlabConfig::new(17, 64, 1, policy)).unwrap();
+            let mut first = allocator.acquire().unwrap();
+            assert_eq!(first.as_slice(), &[0; 17]);
+            assert_eq!(first.as_mut_slice(), &mut [0; 17]);
+            first.as_mut_slice()[0..3].copy_from_slice(&[1, 2, 3]);
+            assert_eq!(&first.as_slice()[3..], &[0; 14]);
+            let id = first.id();
+            let ptr = first.as_ptr();
+            drop(first);
+            let reused = allocator.acquire().unwrap();
+            assert_eq!(reused.id(), id);
+            assert_eq!(reused.as_ptr(), ptr);
+            assert_eq!(reused.len(), 17);
+            if policy == ZeroingPolicy::ZeroOnAcquire {
+                assert_eq!(reused.as_slice(), &[0; 17]);
+            } else {
+                assert_eq!(&reused.as_slice()[..3], &[1, 2, 3]);
+                assert_eq!(&reused.as_slice()[3..], &[0; 14]);
+            }
+        }
+    }
+
+    #[test]
+    fn unrepresentable_layout_and_pool_sizes_are_refused_without_allocating() {
+        for (size, align, slots) in [
+            (usize::MAX, 4096, 1),
+            (isize::MAX as usize, 4096, 1),
+            (isize::MAX as usize + 1, 1, 1),
+            (1, 1, usize::MAX),
+            (4096, 4096, usize::MAX / 4096),
+            (1, 1usize << (usize::BITS - 1), 1),
+        ] {
+            assert!(matches!(
+                StableSlabAllocator::new(StableSlabConfig::new(
+                    size,
+                    align,
+                    slots,
+                    ZeroingPolicy::NoZero
+                )),
+                Err(SlabAllocatorError::InvalidCapacity { .. })
+            ));
+        }
+        assert!(matches!(
+            StableSlabAllocator::new(StableSlabConfig::new(1, 3, 1, ZeroingPolicy::NoZero)),
+            Err(SlabAllocatorError::InvalidAlignment { alignment: 3 })
+        ));
+    }
+
+    #[test]
+    fn exhaustion_preserves_leases_and_counters_are_checked() {
+        let allocator =
+            StableSlabAllocator::new(StableSlabConfig::new(3, 16, 1, ZeroingPolicy::NoZero))
+                .unwrap();
+        let first = allocator.acquire().unwrap();
+        assert!(matches!(
+            allocator.acquire(),
+            Err(SlabAllocatorError::AllocationPressure {
+                requested_slots: 2,
+                max_slots: 1
+            })
+        ));
+        assert_eq!(first.as_slice(), &[0; 3]);
+        assert_eq!(allocator.telemetry().allocated_bytes, 16);
+        assert_eq!(allocator.telemetry().requested_slots, 2);
+        assert_eq!(allocator.telemetry().requested_bytes, 6);
+        allocator.with_inner(|inner| {
+            assert_eq!(inner.in_use, 1);
+            assert!(inner.free.is_empty());
+        });
+        drop(first);
+        allocator.with_inner(|inner| {
+            inner.requested_bytes = u64::MAX;
+        });
+        let attempts = allocator.telemetry().requested_slots;
+        assert!(matches!(
+            allocator.acquire(),
+            Err(SlabAllocatorError::CounterOverflow)
+        ));
+        assert_eq!(allocator.telemetry().requested_slots, attempts);
+        assert_eq!(allocator.telemetry().requested_bytes, u64::MAX);
+        allocator.with_inner(|inner| {
+            assert_eq!(inner.in_use, 0);
+            assert_eq!(inner.free, [SlotId(0)]);
+            inner.requested_bytes = 0;
+            inner.reuse_count = u64::MAX;
+        });
+        assert!(matches!(
+            allocator.acquire(),
+            Err(SlabAllocatorError::CounterOverflow)
+        ));
+        assert_eq!(allocator.telemetry().requested_slots, attempts + 1);
+        assert_eq!(allocator.telemetry().requested_bytes, 3);
+        assert_eq!(allocator.telemetry().allocated_bytes, 16);
+        allocator.with_inner(|inner| {
+            assert_eq!(inner.in_use, 0);
+            assert_eq!(inner.free, [SlotId(0)]);
+            inner.reuse_count = 0;
+        });
+        let reused = allocator.acquire().unwrap();
+        assert_eq!(reused.id(), SlotId(0));
     }
 }

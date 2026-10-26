@@ -255,6 +255,14 @@ pub struct GenerationState {
 
 impl GenerationState {
     pub fn push_token(&mut self, token: u32) -> Result<(), ContractError> {
+        let next_position = self.prepare_next_token()?;
+        self.commit_prepared_token(token, next_position);
+        Ok(())
+    }
+
+    // Crate-private preparation lets the host coordinator put its final
+    // cancellation check AFTER all fallible work and BEFORE publication.
+    pub(crate) fn prepare_next_token(&mut self) -> Result<u64, ContractError> {
         let next_position = self.position.checked_add(1).ok_or_else(|| {
             contract_error(
                 ErrorCategory::ArithmeticOverflow,
@@ -262,9 +270,23 @@ impl GenerationState {
                 "generation position overflow",
             )
         })?;
+        self.tokens.try_reserve(1).map_err(|_| {
+            contract_error(
+                ErrorCategory::ResourceLimit,
+                "generation_allocation_denied",
+                "generation token allocation refused",
+            )
+        })?;
+        Ok(next_position)
+    }
+
+    // Caller holds exclusive state ownership, has prepared capacity, and has
+    // checked the expected position. This does no allocation or fallible work.
+    pub(crate) fn commit_prepared_token(&mut self, token: u32, next_position: u64) {
+        debug_assert_eq!(self.position.checked_add(1), Some(next_position));
+        debug_assert!(self.tokens.len() < self.tokens.capacity());
         self.tokens.push(token);
         self.position = next_position;
-        Ok(())
     }
 
     pub fn tokens(&self) -> &[u32] {
@@ -396,11 +418,72 @@ mod tests {
             tokens: vec![9703],
             position: u64::MAX,
         };
+        let before = state.clone();
         let error = state.push_token(21615).unwrap_err();
+        assert_eq!(state, before);
         assert_eq!(error.category(), ErrorCategory::ArithmeticOverflow);
         assert_eq!(error.code(), "generation_position_overflow");
         assert_eq!(state.tokens(), [9703]);
         assert_eq!(state.position(), u64::MAX);
+    }
+
+    #[test]
+    fn host_coordinator_rejects_state_overflow_before_storage_or_backend() {
+        use crate::step::{HostTensorStore, StepCoordinator, StepRequest, U32FixtureBackend};
+        struct NoIo;
+        impl TensorCatalog for NoIo {
+            fn tensor(&self, _: &str) -> Result<Option<RuntimeTensor>, ContractError> {
+                panic!("overflow must preflight before catalog")
+            }
+        }
+        impl TensorStore for NoIo {
+            fn read_range(
+                &self,
+                _: &RuntimeTensor,
+                _: &mut [u8],
+                _: &CancellationToken,
+            ) -> Result<usize, ContractError> {
+                panic!("overflow must preflight before read")
+            }
+        }
+        impl HostTensorStore for NoIo {
+            fn validate_range(&self, _: &RuntimeTensor) -> Result<(), ContractError> {
+                panic!("overflow must preflight before range validation")
+            }
+        }
+        let state = GenerationState {
+            tokens: vec![7],
+            position: u64::MAX,
+        };
+        let before = state.clone();
+        let checkpoint = CheckpointIdentity::try_new(CHECKPOINT, "fixture-v1").unwrap();
+        let request = StepRequest {
+            id: "overflow".into(),
+            checkpoint: checkpoint.clone(),
+            expected_position: u64::MAX,
+            inputs: vec![],
+            layers: vec![0],
+            scratch_bytes: 4,
+            output_bytes: 4,
+        };
+        let mut host = StepCoordinator::new(
+            checkpoint,
+            MemoryBudget::try_new(128, 32, 64).unwrap(),
+            state,
+            U32FixtureBackend::default(),
+        )
+        .unwrap();
+        let error = host
+            .execute(&request, &NoIo, &NoIo, &CancellationToken::new(), |_| {
+                panic!("overflow cannot deliver")
+            })
+            .unwrap_err();
+        assert_eq!(error.error.code(), "generation_position_overflow");
+        assert_eq!(error.error.category(), ErrorCategory::ArithmeticOverflow);
+        assert_eq!(host.state(), &before);
+        assert_eq!(host.backend().dispatches(), 0);
+        assert_eq!(host.active_reservations(), 0);
+        assert!(host.retained().is_none());
     }
 
     #[test]

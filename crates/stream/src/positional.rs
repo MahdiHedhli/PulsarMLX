@@ -160,88 +160,90 @@ impl PositionalSource {
         Self::from_readers(readers)
     }
 
+    /// Read whole-row chunks. A zero cap means the entire matrix is one request;
+    /// a nonzero cap smaller than one row is refused before any reader call.
+    /// Chunks are all prevalidated in a bounded-memory first pass. The returned
+    /// vector retains the complete matrix: the cap bounds I/O, not total residency.
     pub fn fetch_matrix_whole(
         &mut self,
         spec: MatrixReadSpec,
         max_request_bytes: u64,
         telemetry: &mut ReadTelemetry,
     ) -> Result<Vec<OwnedSlab>, SourceError> {
-        let row_bytes = usize::try_from(spec.row_bytes)
-            .map_err(|_| SourceError::MatrixParameterTooLarge {
-                rows: spec.rows,
-                row_bytes: spec.row_bytes,
-            })?;
-        let rows = usize::try_from(spec.rows).map_err(|_| SourceError::MatrixParameterTooLarge {
+        let too_large = || SourceError::MatrixParameterTooLarge {
             rows: spec.rows,
             row_bytes: spec.row_bytes,
-        })?;
-        if row_bytes == 0 || rows == 0 {
+        };
+        if spec.rows == 0 || spec.row_bytes == 0 {
             return Err(SourceError::ZeroLengthMatrix {
                 tensor_offset: spec.tensor_offset,
             });
         }
-
-        let total_bytes = spec
-            .total_bytes()
-            .and_then(|total| usize::try_from(total).ok())
-            .ok_or(SourceError::MatrixParameterTooLarge {
-                rows: spec.rows,
-                row_bytes: spec.row_bytes,
+        let total = spec.total_bytes().ok_or_else(too_large)?;
+        let end = spec
+            .tensor_offset
+            .checked_add(total)
+            .ok_or(SourceError::RangeOverflow {
+                offset: spec.tensor_offset,
+                len: total,
             })?;
-
-        let max_request_bytes = if max_request_bytes == 0 {
-            total_bytes
-        } else {
-            usize::try_from(max_request_bytes).map_err(|_| SourceError::MatrixParameterTooLarge {
-                rows: spec.rows,
-                row_bytes: spec.row_bytes,
-            })?
-        };
-
-        let max_rows = if max_request_bytes >= row_bytes {
-            max_request_bytes / row_bytes
-        } else {
-            0
+        let rows = usize::try_from(spec.rows).map_err(|_| too_large())?;
+        let row_bytes = usize::try_from(spec.row_bytes).map_err(|_| too_large())?;
+        if total > isize::MAX as u64 {
+            return Err(too_large());
         }
-        .max(1);
-
-        let mut offset = spec.tensor_offset;
-        let mut remaining_rows = rows;
+        if max_request_bytes != 0 && max_request_bytes < spec.row_bytes {
+            return Err(SourceError::MatrixRequestLimit {
+                row_bytes: spec.row_bytes,
+                max_request_bytes,
+            });
+        }
+        let rows_per_chunk = if max_request_bytes == 0 {
+            rows
+        } else {
+            usize::try_from((max_request_bytes / spec.row_bytes).min(spec.rows))
+                .map_err(|_| too_large())?
+        };
+        if spec.tensor_offset < self.first_base {
+            return Err(SourceError::BelowBase {
+                offset: spec.tensor_offset,
+                first_base: self.first_base,
+            });
+        }
+        if end > self.virtual_end {
+            return Err(SourceError::BeyondEnd {
+                offset: spec.tensor_offset,
+                len: total,
+                virtual_end: self.virtual_end,
+            });
+        }
+        // Total/end arithmetic above proves intermediate offsets and lengths fit.
+        // Recreate this iterator for the I/O pass rather than storing per-row plans.
+        let chunks = || {
+            (0..rows).step_by(rows_per_chunk).map(|row| Read {
+                offset: spec.tensor_offset + (row * row_bytes) as u64,
+                len: ((rows - row).min(rows_per_chunk) * row_bytes) as u64,
+            })
+        };
+        for read in chunks() {
+            self.validate(read)?;
+        }
+        let chunk_count = (rows - 1) / rows_per_chunk + 1;
+        telemetry
+            .request_count
+            .checked_add(chunk_count as u64)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        telemetry
+            .requested_bytes
+            .checked_add(total)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        telemetry
+            .actual_bytes
+            .checked_add(total)
+            .ok_or(SourceError::TelemetryOverflow)?;
         let mut out = Vec::new();
-
-        while remaining_rows > 0 {
-            let chunk_rows = remaining_rows.min(max_rows);
-            let chunk_bytes = chunk_rows
-                .checked_mul(row_bytes)
-                .ok_or(SourceError::MatrixParameterTooLarge {
-                    rows: chunk_rows as u64,
-                    row_bytes: spec.row_bytes,
-                })?;
-            if chunk_bytes == 0 {
-                return Err(SourceError::ZeroLengthMatrix {
-                    tensor_offset: spec.tensor_offset,
-                });
-            }
-
-            out.push(self.fetch_exact_with_telemetry(
-                Read {
-                    offset,
-                    len: chunk_bytes as u64,
-                },
-                telemetry,
-            )?);
-            remaining_rows -= chunk_rows;
-            let chunk_offset = u64::try_from(chunk_bytes)
-                .map_err(|_| SourceError::MatrixParameterTooLarge {
-                    rows: chunk_rows as u64,
-                    row_bytes: spec.row_bytes,
-                })?;
-            offset = offset
-                .checked_add(chunk_offset)
-                .ok_or(SourceError::MatrixParameterTooLarge {
-                    rows: chunk_rows as u64,
-                    row_bytes: spec.row_bytes,
-                })?;
+        for read in chunks() {
+            out.push(self.fetch_exact_with_telemetry(read, telemetry)?);
         }
         Ok(out)
     }
@@ -373,6 +375,14 @@ impl PositionalSource {
     }
 
     fn fetch_validated(&self, read: ValidatedRead) -> Result<OwnedSlab, SourceError> {
+        self.fetch_validated_tracked(read, None)
+    }
+
+    fn fetch_validated_tracked(
+        &self,
+        read: ValidatedRead,
+        mut telemetry: Option<&mut ReadTelemetry>,
+    ) -> Result<OwnedSlab, SourceError> {
         let mut bytes = vec![0_u8; read.len].into_boxed_slice();
         let mut actual = 0_usize;
         while actual < read.len {
@@ -396,7 +406,13 @@ impl PositionalSource {
                         actual: count,
                     });
                 }
-                Ok(count) => actual += count,
+                Ok(count) => {
+                    actual += count;
+                    if let Some(traffic) = telemetry.as_deref_mut() {
+                        // The full request's accounting capacity was prechecked.
+                        traffic.actual_bytes += count as u64;
+                    }
+                }
                 Err(source) if source.kind() == io::ErrorKind::Interrupted => continue,
                 Err(source) => {
                     return Err(SourceError::Io {
@@ -420,11 +436,22 @@ impl PositionalSource {
         read: Read,
         telemetry: &mut ReadTelemetry,
     ) -> Result<OwnedSlab, SourceError> {
-        telemetry.request_count += 1;
-        telemetry.requested_bytes += read.len;
-        let slab = self.fetch_exact(read)?;
-        telemetry.actual_bytes += slab.payload().len() as u64;
-        Ok(slab)
+        let count = telemetry
+            .request_count
+            .checked_add(1)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        let requested = telemetry
+            .requested_bytes
+            .checked_add(read.len)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        telemetry
+            .actual_bytes
+            .checked_add(read.len)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        let validated = self.validate(read)?;
+        telemetry.request_count = count;
+        telemetry.requested_bytes = requested;
+        self.fetch_validated_tracked(validated, Some(telemetry))
     }
 }
 
@@ -457,6 +484,7 @@ struct ValidatedRead {
 
 #[derive(Debug)]
 pub enum SourceError {
+    TelemetryOverflow,
     EmptyShardSet,
     ZeroLengthShard {
         shard: usize,
@@ -515,6 +543,10 @@ pub enum SourceError {
     ZeroLengthMatrix {
         tensor_offset: u64,
     },
+    MatrixRequestLimit {
+        row_bytes: u64,
+        max_request_bytes: u64,
+    },
     MatrixParameterTooLarge {
         rows: u64,
         row_bytes: u64,
@@ -530,6 +562,7 @@ pub enum SourceError {
 impl fmt::Display for SourceError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::TelemetryOverflow => write!(formatter, "read telemetry counter overflow"),
             Self::EmptyShardSet => write!(formatter, "the shard set is empty"),
             Self::ZeroLengthShard { shard } => {
                 write!(formatter, "shard {shard} has zero length")
@@ -601,6 +634,7 @@ impl fmt::Display for SourceError {
             Self::ZeroLengthMatrix { tensor_offset } => {
                 write!(formatter, "matrix read with zero logical length at tensor offset {tensor_offset}")
             }
+            Self::MatrixRequestLimit { row_bytes, max_request_bytes } => write!(formatter, "matrix row {row_bytes} exceeds request limit {max_request_bytes}"),
             Self::MatrixParameterTooLarge { rows, row_bytes } => {
                 write!(formatter, "matrix params overflow: rows {rows}, row_bytes {row_bytes}")
             }
