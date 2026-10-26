@@ -7,14 +7,16 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SlotId(pub u64);
 
-/// Slot zeroing strategy.
+/// Slot zeroing strategy. Fresh initialization prevents uninitialized reads;
+/// it does not prevent disclosure of a previous lease's initialized bytes.
+/// None of these policies guarantees secure erasure or multi-tenant isolation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZeroingPolicy {
-    /// Initialize fresh storage; retain initialized bytes on reuse.
+    /// Initialize fresh storage; reuse may expose the previous lease's bytes.
     NoZero,
-    /// Initialize fresh storage; retain initialized bytes on reuse.
+    /// Initialize fresh storage; reuse may expose the previous lease's bytes.
     ZeroInitialize,
-    /// Zero buffer on every acquire.
+    /// Clear the logical leased surface on every acquire; not secure erasure.
     ZeroOnAcquire,
 }
 
@@ -49,11 +51,15 @@ impl StableSlabConfig {
     }
 }
 
+/// Acquisition attempts are counted before capacity and later accounting checks.
+/// Overflow of either request counter leaves both request counters unchanged.
+/// Later refusals retain those attempt counts but do not transfer a lease.
+/// Allocation, reuse and peak residency counters describe completed work.
 #[derive(Debug, Clone, Copy)]
 pub struct StableSlabTelemetry {
-    /// Requested logical bytes requested from the allocator.
+    /// Logical bytes requested by counted acquisition attempts, including refusals.
     pub requested_bytes: u64,
-    /// Acquisition attempts, including refusals; counter overflow changes neither counter.
+    /// Counted acquisition attempts, including capacity and later accounting refusals.
     pub requested_slots: u64,
     /// Reserved capacity across all allocated slots.
     pub allocated_bytes: u64,
@@ -607,6 +613,8 @@ mod boundary_regressions {
         ));
         assert_eq!(first.as_slice(), &[0; 3]);
         assert_eq!(allocator.telemetry().allocated_bytes, 16);
+        assert_eq!(allocator.telemetry().requested_slots, 2);
+        assert_eq!(allocator.telemetry().requested_bytes, 6);
         allocator.with_inner(|inner| {
             assert_eq!(inner.in_use, 1);
             assert!(inner.free.is_empty());
@@ -621,6 +629,7 @@ mod boundary_regressions {
             Err(SlabAllocatorError::CounterOverflow)
         ));
         assert_eq!(allocator.telemetry().requested_slots, attempts);
+        assert_eq!(allocator.telemetry().requested_bytes, u64::MAX);
         allocator.with_inner(|inner| {
             assert_eq!(inner.in_use, 0);
             assert_eq!(inner.free, [SlotId(0)]);
@@ -631,6 +640,9 @@ mod boundary_regressions {
             allocator.acquire(),
             Err(SlabAllocatorError::CounterOverflow)
         ));
+        assert_eq!(allocator.telemetry().requested_slots, attempts + 1);
+        assert_eq!(allocator.telemetry().requested_bytes, 3);
+        assert_eq!(allocator.telemetry().allocated_bytes, 16);
         allocator.with_inner(|inner| {
             assert_eq!(inner.in_use, 0);
             assert_eq!(inner.free, [SlotId(0)]);

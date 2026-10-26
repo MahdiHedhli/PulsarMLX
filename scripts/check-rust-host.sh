@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# CPU-only checks: compile the exact storage modules without stream/build.rs,
-# which otherwise compiles/links Apple native bridges on macOS. No source copy.
+# CPU-only checks: use the production storage module sources and an equivalent
+# local Read type, without stream/build.rs and its Apple native linkage.
+# This isolates storage regressions; it does not qualify the stream package.
+# engine/tests/host_step_package.rs supplements it with real public package types
+# and must be compiled/linked separately with --no-run on native-linked hosts.
 # Preserve all logs/targets in the printed private temporary directory.
 set -euo pipefail
 rust_host_repo="$(cd "$(dirname "$0")/.." && pwd)"
