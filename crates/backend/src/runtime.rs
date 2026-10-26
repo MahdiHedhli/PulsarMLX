@@ -396,7 +396,9 @@ mod tests {
             tokens: vec![9703],
             position: u64::MAX,
         };
+        let before = state.clone();
         let error = state.push_token(21615).unwrap_err();
+        assert_eq!(state, before);
         assert_eq!(error.category(), ErrorCategory::ArithmeticOverflow);
         assert_eq!(error.code(), "generation_position_overflow");
         assert_eq!(state.tokens(), [9703]);

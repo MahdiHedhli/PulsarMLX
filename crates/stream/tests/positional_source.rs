@@ -6,8 +6,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 use stream::{
-    ExpertSource, OwnedSlab, PositionalRead, PositionalSource, Read, ReaderShard, ShardPath,
-    MatrixReadSpec, ReadTelemetry, SourceError,
+    ExpertSource, MatrixReadSpec, OwnedSlab, PositionalRead, PositionalSource, Read, ReadTelemetry,
+    ReaderShard, ShardPath, SourceError,
 };
 
 static NEXT_TEMP_FILE: AtomicUsize = AtomicUsize::new(0);
@@ -648,9 +648,221 @@ fn matrix_read_honors_request_sizing_and_chunks() {
         .expect("fetch matrix in chunks");
 
     assert!(chunks.len() >= 2);
-    let chunk_rows = chunks.iter().map(|slab| slab.payload().len()).collect::<Vec<_>>();
+    let chunk_rows = chunks
+        .iter()
+        .map(|slab| slab.payload().len())
+        .collect::<Vec<_>>();
     assert_eq!(chunk_rows.iter().sum::<usize>(), 90);
     assert_eq!(telemetry.request_count, chunk_rows.len() as u64);
     assert_eq!(telemetry.requested_bytes, 90);
     assert_eq!(telemetry.actual_bytes, 90);
+}
+
+#[test]
+fn matrix_caps_cover_below_equal_above_zero_and_partial_reads() {
+    for (cap, expected_chunks) in [(0, vec![20]), (4, vec![4, 4, 4, 4, 4]), (10, vec![8, 8, 4])] {
+        let (reader, probe) = ScriptedReader::new(&[7; 20], []);
+        let mut source =
+            PositionalSource::from_readers(vec![reader_shard(0, 20, "cap", reader)]).unwrap();
+        let mut telemetry = ReadTelemetry::default();
+        let slabs = source
+            .fetch_matrix_whole(
+                MatrixReadSpec {
+                    tensor_offset: 0,
+                    rows: 5,
+                    row_bytes: 4,
+                },
+                cap,
+                &mut telemetry,
+            )
+            .unwrap();
+        assert_eq!(
+            slabs.iter().map(|s| s.payload().len()).collect::<Vec<_>>(),
+            expected_chunks
+        );
+        assert_eq!(
+            probe.requests().iter().map(|(_, n)| *n).collect::<Vec<_>>(),
+            expected_chunks
+        );
+        if cap != 0 {
+            assert!(probe.requests().iter().all(|(_, n)| *n as u64 <= cap));
+        }
+    }
+    let (reader, probe) = ScriptedReader::new(&[7; 20], []);
+    let mut source =
+        PositionalSource::from_readers(vec![reader_shard(0, 20, "below-cap", reader)]).unwrap();
+    let mut telemetry = ReadTelemetry::default();
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: 5,
+                row_bytes: 4
+            },
+            3,
+            &mut telemetry
+        ),
+        Err(SourceError::MatrixRequestLimit {
+            row_bytes: 4,
+            max_request_bytes: 3
+        })
+    ));
+    assert_eq!(probe.calls(), 0);
+    assert_eq!(telemetry.request_count, 0);
+    let (reader, probe) = ScriptedReader::new(
+        &[7; 20],
+        [
+            ReadAction::Limit(2),
+            ReadAction::Interrupted,
+            ReadAction::Limit(1),
+        ],
+    );
+    let mut source =
+        PositionalSource::from_readers(vec![reader_shard(0, 20, "partial", reader)]).unwrap();
+    let slabs = source
+        .fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: 5,
+                row_bytes: 4,
+            },
+            8,
+            &mut ReadTelemetry::default(),
+        )
+        .unwrap();
+    assert_eq!(
+        slabs.iter().map(|s| s.payload().len()).collect::<Vec<_>>(),
+        [8, 8, 4]
+    );
+    assert!(probe.requests().iter().all(|(_, n)| *n <= 8));
+}
+
+#[test]
+fn matrix_preflight_refuses_invalid_later_chunks_before_any_io() {
+    let (a, probe_a) = ScriptedReader::new(&[0; 12], []);
+    let (b, probe_b) = ScriptedReader::new(&[0; 12], []);
+    let mut source = PositionalSource::from_readers(vec![
+        reader_shard(0, 12, "a", a),
+        reader_shard(12, 12, "b", b),
+    ])
+    .unwrap();
+    let mut telemetry = ReadTelemetry::default();
+    // First chunk 0..8 fits; second 8..16 straddles a retained shard boundary.
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: 6,
+                row_bytes: 4
+            },
+            8,
+            &mut telemetry
+        ),
+        Err(SourceError::StraddlesShard {
+            offset: 8,
+            len: 8,
+            shard_end: 12
+        })
+    ));
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: 7,
+                row_bytes: 4
+            },
+            8,
+            &mut telemetry
+        ),
+        Err(SourceError::BeyondEnd {
+            offset: 0,
+            len: 28,
+            virtual_end: 24
+        })
+    ));
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: u64::MAX - 3,
+                rows: 2,
+                row_bytes: 4
+            },
+            4,
+            &mut telemetry
+        ),
+        Err(SourceError::RangeOverflow { .. })
+    ));
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: u64::MAX,
+                row_bytes: 4
+            },
+            4,
+            &mut telemetry
+        ),
+        Err(SourceError::MatrixParameterTooLarge { .. })
+    ));
+    assert_eq!((probe_a.calls(), probe_b.calls()), (0, 0));
+    assert_eq!(
+        (
+            telemetry.request_count,
+            telemetry.requested_bytes,
+            telemetry.actual_bytes
+        ),
+        (0, 0, 0)
+    );
+    // Respect the existing rule: chunk boundaries may coincide with shard ends.
+    assert_eq!(
+        source
+            .fetch_matrix_whole(
+                MatrixReadSpec {
+                    tensor_offset: 0,
+                    rows: 6,
+                    row_bytes: 4
+                },
+                12,
+                &mut telemetry
+            )
+            .unwrap()
+            .len(),
+        2
+    );
+}
+
+#[test]
+fn matrix_genuine_mid_read_failure_remains_distinct_from_preflight_refusal() {
+    let (reader, probe) = ScriptedReader::new(
+        &[0; 16],
+        [ReadAction::Limit(8), ReadAction::Limit(2), ReadAction::Zero],
+    );
+    let mut source =
+        PositionalSource::from_readers(vec![reader_shard(0, 16, "failure", reader)]).unwrap();
+    let mut telemetry = ReadTelemetry::default();
+    assert!(matches!(
+        source.fetch_matrix_whole(
+            MatrixReadSpec {
+                tensor_offset: 0,
+                rows: 2,
+                row_bytes: 8
+            },
+            8,
+            &mut telemetry
+        ),
+        Err(SourceError::ShortRead {
+            expected: 8,
+            actual: 2,
+            ..
+        })
+    ));
+    assert_eq!(probe.calls(), 3);
+    assert_eq!(
+        (
+            telemetry.request_count,
+            telemetry.requested_bytes,
+            telemetry.actual_bytes
+        ),
+        (2, 16, 10)
+    );
 }
