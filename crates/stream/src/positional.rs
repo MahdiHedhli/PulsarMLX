@@ -228,6 +228,19 @@ impl PositionalSource {
         for read in chunks() {
             self.validate(read)?;
         }
+        let chunk_count = (rows - 1) / rows_per_chunk + 1;
+        telemetry
+            .request_count
+            .checked_add(chunk_count as u64)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        telemetry
+            .requested_bytes
+            .checked_add(total)
+            .ok_or(SourceError::TelemetryOverflow)?;
+        telemetry
+            .actual_bytes
+            .checked_add(total)
+            .ok_or(SourceError::TelemetryOverflow)?;
         let mut out = Vec::new();
         for read in chunks() {
             out.push(self.fetch_exact_with_telemetry(read, telemetry)?);

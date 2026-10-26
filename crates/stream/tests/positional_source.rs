@@ -866,3 +866,54 @@ fn matrix_genuine_mid_read_failure_remains_distinct_from_preflight_refusal() {
         (2, 16, 10)
     );
 }
+
+#[test]
+fn matrix_preflights_all_telemetry_arithmetic_before_io() {
+    let (reader, probe) = ScriptedReader::new(&[0; 16], []);
+    let mut source =
+        PositionalSource::from_readers(vec![reader_shard(0, 16, "telemetry", reader)]).unwrap();
+    for mut telemetry in [
+        ReadTelemetry {
+            request_count: u64::MAX - 1,
+            requested_bytes: 0,
+            actual_bytes: 0,
+        },
+        ReadTelemetry {
+            request_count: 0,
+            requested_bytes: u64::MAX - 8,
+            actual_bytes: 0,
+        },
+        ReadTelemetry {
+            request_count: 0,
+            requested_bytes: 0,
+            actual_bytes: u64::MAX - 8,
+        },
+    ] {
+        let before = (
+            telemetry.request_count,
+            telemetry.requested_bytes,
+            telemetry.actual_bytes,
+        );
+        assert!(matches!(
+            source.fetch_matrix_whole(
+                MatrixReadSpec {
+                    tensor_offset: 0,
+                    rows: 2,
+                    row_bytes: 8
+                },
+                8,
+                &mut telemetry
+            ),
+            Err(SourceError::TelemetryOverflow)
+        ));
+        assert_eq!(
+            (
+                telemetry.request_count,
+                telemetry.requested_bytes,
+                telemetry.actual_bytes
+            ),
+            before
+        );
+    }
+    assert_eq!(probe.calls(), 0);
+}
