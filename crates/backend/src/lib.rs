@@ -6,6 +6,7 @@ pub mod evidence;
 pub mod generation;
 pub mod routing;
 pub mod runtime;
+pub mod step;
 pub mod tensor;
 
 pub use capability::{BackendCapabilityReport, BackendSelection, CapabilityProbe, DeviceState};

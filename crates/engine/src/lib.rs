@@ -13,6 +13,9 @@
 //! always receive explicit per-slot device pointers, wherever the bytes
 //! ended up.
 
+/// CPU host orchestration; native backend attachment remains separately gated.
+pub use backend::step as host_step;
+
 mod f017_oracle_generated;
 pub mod f017_parity;
 pub mod f017_soak;
