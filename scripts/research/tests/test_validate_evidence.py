@@ -162,7 +162,8 @@ def _summary(
 
 def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str, object]:
     model_identity = json.loads(MODEL_MANIFEST.read_text(encoding="utf-8"))["model_identity"]
-    protocol_sha256 = _sha256(PROTOCOL)
+    protocol = validator.fresh_protocol(REPOSITORY_ROOT)
+    protocol_sha256 = protocol["sha256"]
     observations = [
         _observation(f"warmup-{index:02d}", index, "warmup", 900 + index)
         for index in range(5)
@@ -199,13 +200,7 @@ def valid_evidence(experiment_id: str = "f002-router-fixture-0001") -> dict[str,
             "state": "declared_evidence_outputs_only",
             "paths": [f"docs/research/raw/002-router-parity/{experiment_id}.json"],
         },
-        "protocol": {
-            "protocol_id": "f002-router-protocol-amendment-002",
-            "protocol_version": "1.2.0",
-            "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-            "sha256": protocol_sha256,
-            "order_seed": 22002,
-        },
+        "protocol": protocol,
         "execution": {
             "shell": "zsh",
             "command": "python3 scripts/research/run_router_experiment.py --model $PULSARMLX_MODEL_GGUF",
@@ -1084,7 +1079,7 @@ def _passing_external_record(
         {
             "kind": "frozen_protocol",
             "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-            "sha256": _sha256(PROTOCOL),
+            "sha256": validator.frozen_protocol_digest(REPOSITORY_ROOT),
         },
         {
             "kind": "model_manifest",
@@ -1601,7 +1596,7 @@ class EvidenceValidatorContractTests(unittest.TestCase):
             {
                 "kind": "frozen_protocol",
                 "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-                "sha256": _sha256(PROTOCOL),
+                "sha256": validator.frozen_protocol_digest(REPOSITORY_ROOT),
             },
             {
                 "kind": "model_manifest",
@@ -2235,12 +2230,12 @@ class EvidenceValidatorContractTests(unittest.TestCase):
             "evidence_scope": "external_checkpoint",
             "evidence_schema_version": "1.2.0",
             "source_commit": SOURCE_COMMIT,
-            "protocol": {"sha256": _sha256(PROTOCOL)},
+            "protocol": {"sha256": validator.frozen_protocol_digest(REPOSITORY_ROOT)},
             "artifacts": [
                 {
                     "kind": "frozen_protocol",
                     "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-                    "sha256": _sha256(PROTOCOL),
+                    "sha256": validator.frozen_protocol_digest(REPOSITORY_ROOT),
                 },
                 {
                     "kind": "model_manifest",

@@ -61,6 +61,12 @@ FROZEN_PROTOCOL_ID = "f002-router-protocol-amendment-002"
 FROZEN_PROTOCOL_VERSION = "1.2.0"
 FROZEN_PROTOCOL_ORDER_SEED = 22_002
 FROZEN_PROTOCOL_SHA256 = "c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423"
+FROZEN_PROTOCOL_SOURCE_COMMIT = "7721525af437a97a9ae733c4b8171e082205e5ea"
+PROTOCOL_VIEW_ID = "f002-router-protocol-public-view-001"
+PROTOCOL_VIEW_SHA256 = "badfd9be51cfb6f5c67422112533993124c7c52813419906141bd40770fdac15"
+PROTOCOL_VIEW_SOURCE_COMMIT = "f5894dea5a0923170f563c8f2d4a1b4ca2fd82cf"
+PROTOCOL_VIEW_ADMISSION_PATH = "docs/research/F002_PROTOCOL_VIEW_ADMISSION_V1.json"
+PROTOCOL_VIEW_ADMISSION_SHA256 = "9afd12ce0d6e0c79f3e9b250d794931482fa0c738dfb3e1d64a0f65df5c95e94"
 LEGACY_PROTOCOL_ID = "f002-router-protocol-amendment-001"
 LEGACY_PROTOCOL_VERSION = "1.1.0"
 LEGACY_PROTOCOL_SHA256 = "c4bc12eb294a5849cc1a88ec7e9820af5cd4387722536565697a30fdf8fe3863"
@@ -565,7 +571,7 @@ def _hash_repository_file(
 
 
 def _hash_historical_protocol(repository_root: Path, source_commit: str) -> str:
-    """Resolve legacy protocol bytes from the immutable source commit."""
+    """Hash protocol bytes from one local immutable object; never fetch or print."""
 
     if not COMMIT_RE.fullmatch(source_commit):
         _fail("semantic_relationship", "historical protocol commit is invalid")
@@ -586,6 +592,75 @@ def _hash_historical_protocol(repository_root: Path, source_commit: str) -> str:
     ):
         _fail("semantic_relationship", "historical protocol bytes are unavailable")
     return hashlib.sha256(completed.stdout).hexdigest()
+
+
+def _admit_protocol_public_view(repository_root: Path) -> dict[str, str]:
+    """Check the exact privacy relation and current view, independently of history."""
+
+    admission_bytes, admission_sha256 = _read_repository_file(
+        repository_root,
+        PROTOCOL_VIEW_ADMISSION_PATH,
+        allowed_prefixes=(("docs", "research"),),
+        maximum_bytes=16 * 1024,
+    )
+    if admission_sha256 != PROTOCOL_VIEW_ADMISSION_SHA256:
+        _fail("semantic_relationship", "protocol public-view admission identity does not match")
+    admission = json.loads(admission_bytes)
+    if admission["original_method"] != {
+        "protocol_id": FROZEN_PROTOCOL_ID,
+        "protocol_version": FROZEN_PROTOCOL_VERSION,
+        "path": FROZEN_PROTOCOL_PATH,
+        "sha256": FROZEN_PROTOCOL_SHA256,
+        "order_seed": FROZEN_PROTOCOL_ORDER_SEED,
+        "source_commit": FROZEN_PROTOCOL_SOURCE_COMMIT,
+    } or admission["public_view"] != {
+        "view_id": PROTOCOL_VIEW_ID,
+        "path": FROZEN_PROTOCOL_PATH,
+        "sha256": PROTOCOL_VIEW_SHA256,
+        "source_commit": PROTOCOL_VIEW_SOURCE_COMMIT,
+    }:
+        _fail("semantic_relationship", "protocol public-view relation does not match")
+    current_sha256 = _hash_repository_file(
+        repository_root,
+        FROZEN_PROTOCOL_PATH,
+        allowed_prefixes=(("docs", "research"),),
+        maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
+    )
+    if current_sha256 != PROTOCOL_VIEW_SHA256:
+        _fail("semantic_relationship", "protocol public-view content identity does not match")
+    return {
+        "view_id": PROTOCOL_VIEW_ID,
+        "path": FROZEN_PROTOCOL_PATH,
+        "sha256": current_sha256,
+        "source_commit": PROTOCOL_VIEW_SOURCE_COMMIT,
+        "original_source_commit": FROZEN_PROTOCOL_SOURCE_COMMIT,
+        "admission_path": PROTOCOL_VIEW_ADMISSION_PATH,
+        "admission_sha256": admission_sha256,
+    }
+
+
+def frozen_protocol_digest(repository_root: Path = REPOSITORY_ROOT) -> str:
+    """Resolve the original 1.2 method and independently admit its current view."""
+
+    _admit_protocol_public_view(repository_root)
+    digest = _hash_historical_protocol(repository_root, FROZEN_PROTOCOL_SOURCE_COMMIT)
+    if digest != FROZEN_PROTOCOL_SHA256:
+        _fail("semantic_relationship", "historical protocol content identity does not match")
+    return digest
+
+
+def fresh_protocol(repository_root: Path = REPOSITORY_ROOT) -> dict[str, Any]:
+    """Produce truthful provenance after verifying both distinct representations."""
+
+    digest = frozen_protocol_digest(repository_root)
+    return {
+        "protocol_id": FROZEN_PROTOCOL_ID,
+        "protocol_version": FROZEN_PROTOCOL_VERSION,
+        "path": FROZEN_PROTOCOL_PATH,
+        "sha256": digest,
+        "order_seed": FROZEN_PROTOCOL_ORDER_SEED,
+        "public_view": _admit_protocol_public_view(repository_root),
+    }
 
 
 def _load_model_manifest(repository_root: Path) -> dict[str, Any]:
@@ -879,8 +954,14 @@ def _validate_structure(record: dict[str, Any]) -> None:
     )
     _closed_object(
         record["protocol"],
-        allowed={"protocol_id", "protocol_version", "path", "sha256", "order_seed"},
+        allowed={"protocol_id", "protocol_version", "path", "sha256", "order_seed", "public_view"},
+        required={"protocol_id", "protocol_version", "path", "sha256", "order_seed"},
     )
+    if "public_view" in record["protocol"]:
+        _closed_object(
+            record["protocol"]["public_view"],
+            allowed={"view_id", "path", "sha256", "source_commit", "original_source_commit", "admission_path", "admission_sha256"},
+        )
     _closed_object(
         record["execution"],
         allowed={
@@ -1417,6 +1498,11 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
         != FROZEN_PROTOCOL_ORDER_SEED
     ):
         _fail("semantic_relationship", "protocol identity is invalid")
+    admitted_view = _admit_protocol_public_view(repository_root)
+    if "public_view" in protocol and (
+        legacy_envelope or protocol["public_view"] != admitted_view
+    ):
+        _fail("semantic_relationship", "protocol public-view declaration does not match")
     if legacy_envelope:
         actual_protocol_sha256 = _hash_historical_protocol(
             repository_root, source_commit
@@ -1424,14 +1510,7 @@ def _validate_semantics(record: dict[str, Any], repository_root: Path) -> None:
         if actual_protocol_sha256 != LEGACY_PROTOCOL_SHA256:
             _fail("semantic_relationship", "historical protocol content identity does not match")
     else:
-        actual_protocol_sha256 = _hash_repository_file(
-            repository_root,
-            protocol["path"],
-            allowed_prefixes=(("docs", "research"),),
-            maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
-        )
-        if actual_protocol_sha256 != FROZEN_PROTOCOL_SHA256:
-            _fail("semantic_relationship", "protocol content identity does not match")
+        frozen_protocol_digest(repository_root)
 
     execution = record["execution"]
     _plain_int(execution["exit_code"], nonnegative=True)
@@ -1589,17 +1668,21 @@ def _validate_artifacts(record: dict[str, Any], repository_root: Path) -> None:
         if path in paths:
             _fail("semantic_relationship", "an artifact path is linked more than once")
         paths.add(path)
-        historical_protocol = artifact["kind"] == "frozen_protocol" and legacy_envelope
-        actual_sha256 = (
-            _hash_historical_protocol(repository_root, record["source_commit"])
-            if historical_protocol
-            else _hash_repository_file(
+        if artifact["kind"] == "frozen_protocol":
+            # Only this protocol-specific artifact resolves immutable history.
+            # Every other artifact still uses its exact current repository bytes.
+            _admit_protocol_public_view(repository_root)
+            actual_sha256 = (
+                _hash_historical_protocol(repository_root, record["source_commit"])
+                if legacy_envelope else frozen_protocol_digest(repository_root)
+            )
+        else:
+            actual_sha256 = _hash_repository_file(
                 repository_root,
                 path,
                 allowed_prefixes=(("docs", "research"), ("fixtures", "research")),
                 maximum_bytes=MAX_LINKED_ARTIFACT_BYTES,
             )
-        )
         if artifact["sha256"] != actual_sha256:
             _fail("semantic_relationship", "an artifact content identity does not match")
         if artifact["kind"] == "frozen_protocol":

@@ -2352,7 +2352,7 @@ def _artifacts(root: Path) -> list[dict[str, str]]:
         {
             "kind": "frozen_protocol",
             "path": PROTOCOL_PATH,
-            "sha256": _hash_repository_artifact(root, PROTOCOL_PATH),
+            "sha256": validator.frozen_protocol_digest(root),
         },
         {
             "kind": "model_manifest",
@@ -2403,13 +2403,7 @@ def _build_record(
             "state": "clean" if candidate["source_worktree_after"] == "clean" else "unknown",
             "paths": [],
         },
-        "protocol": {
-            "protocol_id": validator.FROZEN_PROTOCOL_ID,
-            "protocol_version": validator.FROZEN_PROTOCOL_VERSION,
-            "path": PROTOCOL_PATH,
-            "sha256": _hash_repository_artifact(root, PROTOCOL_PATH),
-            "order_seed": 22_002,
-        },
+        "protocol": validator.fresh_protocol(root),
         "execution": {
             "shell": "zsh",
             "command": PUBLIC_COMMAND,
