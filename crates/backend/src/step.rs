@@ -60,6 +60,12 @@ pub struct LayerOutput {
 /// a discardable proposal. `finish` must discard staged resources on every path.
 /// Native/KV state is NOT qualified by implementing this host interface.
 pub trait HostLayerExecutor: LayerExecutor {
+    /// Additional bounded logical payload owned by the executor, beyond loaded
+    /// inputs, the coordinator's scratch Vec and returned output. Preflight only:
+    /// no I/O, allocation or mutation. Existing adapters retain their contract.
+    fn working_bytes(&self) -> u64 {
+        0
+    }
     fn stage(
         &mut self,
         request: &StepRequest,
@@ -258,6 +264,12 @@ impl<B: HostLayerExecutor> StepCoordinator<B> {
         self.retained.as_ref().map(|(_, output)| output)
     }
 
+    /// Borrow the exact retained request for a pending-delivery protocol. This
+    /// avoids another owning request/history copy in a generation driver.
+    pub fn retained_request(&self) -> Option<&StepRequest> {
+        self.retained.as_ref().map(|(request, _)| request)
+    }
+
     /// Run one host step. `deliver` is a post-commit hook for transport and/or
     /// telemetry; any returned hook error is reported with retained COMMITTED
     /// output. It never converts the completed step into a precommit failure.
@@ -388,6 +400,7 @@ impl<B: HostLayerExecutor> StepCoordinator<B> {
             return Err(error("invalid_step_shape"));
         }
         let mut bytes = checked_sum(request.scratch_bytes, request.output_bytes)?;
+        bytes = checked_sum(bytes, self.adapter.backend.working_bytes())?;
         let history = (self.state.tokens().len() as u64)
             .checked_add(1)
             .and_then(|n| n.checked_mul(4))
