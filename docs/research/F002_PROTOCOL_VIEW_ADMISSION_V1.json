@@ -1,0 +1,23 @@
+{
+  "schema": "pulsarmlx.f002.protocol-public-view-admission/1.0.0",
+  "original_method": {
+    "protocol_id": "f002-router-protocol-amendment-002",
+    "protocol_version": "1.2.0",
+    "path": "docs/research/EXPERIMENT_PROTOCOL.md",
+    "sha256": "c75d8d4d372bf54dffbd1687986f09d65b0eace68c89555630ddfcbfd662d423",
+    "order_seed": 22002,
+    "source_commit": "7721525af437a97a9ae733c4b8171e082205e5ea"
+  },
+  "public_view": {
+    "view_id": "f002-router-protocol-public-view-001",
+    "path": "docs/research/EXPERIMENT_PROTOCOL.md",
+    "sha256": "badfd9be51cfb6f5c67422112533993124c7c52813419906141bd40770fdac15",
+    "source_commit": "f5894dea5a0923170f563c8f2d4a1b4ca2fd82cf"
+  },
+  "privacy_relation": {
+    "disposition": "NOTIFICATION_PRESENTATION_ONLY_METHOD_UNCHANGED",
+    "cleanup_commit": "f5894dea5a0923170f563c8f2d4a1b4ca2fd82cf",
+    "original_parent": "7721525af437a97a9ae733c4b8171e082205e5ea",
+    "original_lines": [60, 652]
+  }
+}
