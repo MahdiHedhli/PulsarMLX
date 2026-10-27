@@ -60,7 +60,7 @@ fn independent_intermediates_routes_ties_max_and_eos() {
             clean(&host);
             assert!(!host.coordinator().backend().has_staged_resources());
         }
-        assert_eq!(host.stop(), Some(stop));
+        assert_eq!(host.stop().unwrap(), Some(stop));
         assert_eq!(fixture.reads(), expected.len() as u64 * 11);
         assert_eq!(
             host.coordinator().backend().stats(),
@@ -152,10 +152,10 @@ fn pending_delivery_is_explicit_at_both_stop_boundaries() {
             Err(err("delivery_offline"))
         })
         .unwrap();
-        assert_eq!(host.stop(), None);
+        assert_eq!(host.stop().unwrap(), None);
         assert!(host.pending_request().is_some());
         advance_fixture(&mut host, &fixture, &CancellationToken::new(), |_| Ok(())).unwrap();
-        assert_eq!(host.stop(), Some(stop));
+        assert_eq!(host.stop().unwrap(), Some(stop));
         assert_eq!(host.generated_tokens().len(), 1);
         assert_eq!(fixture.reads(), 11);
     }
@@ -341,6 +341,7 @@ enum Fault {
     OriginalLayerTwo,
     SkipLayer,
     Logits,
+    Token,
 }
 struct Injected {
     inner: TinyMoeCpuBackend,
@@ -392,6 +393,9 @@ impl HostLayerExecutor for Injected {
             let mut trace = RoutedTrace::decode(&output.bytes)?;
             trace.logits[0] += 0.25;
             output.bytes = trace.encode()?;
+        }
+        if self.fault.get() == Fault::Token {
+            output.token = 8;
         }
         Ok(output)
     }
@@ -686,4 +690,75 @@ fn driver_configuration_and_executor_working_overflow_refuse_before_io() {
     assert_eq!(fixture.reads(), 0);
     assert!(host.generated_tokens().is_empty());
     clean(&host);
+}
+
+#[test]
+fn forged_backend_token_stays_committed_but_refuses_future_advance() {
+    for pending in [false, true] {
+        let mode = Rc::new(Cell::new(Fault::Token));
+        let mut host = driver(Injected::new(mode), 0, 8, None);
+        let fixture = TinyFixture::new(FIXTURE_WEIGHTS).unwrap();
+        let result = advance_fixture(&mut host, &fixture, &CancellationToken::new(), |_| {
+            if pending {
+                Err(err("delivery_offline"))
+            } else {
+                Ok(())
+            }
+        })
+        .unwrap();
+        assert_eq!(result.committed.token, 8);
+        assert_eq!(host.generated_tokens(), [8]);
+        assert_eq!(host.coordinator().state().position(), 2);
+        if pending {
+            assert_eq!(host.stop().unwrap(), None);
+            let cancel = CancellationToken::new();
+            cancel.cancel();
+            let replay = advance_fixture(&mut host, &fixture, &cancel, |_| Ok(())).unwrap();
+            assert!(replay.replayed);
+            assert!(Arc::ptr_eq(&result.committed, &replay.committed));
+        }
+        assert_eq!(
+            host.stop().unwrap_err().code(),
+            "host_token_out_of_vocabulary"
+        );
+        assert_eq!(
+            host.next_input_token().unwrap_err().code(),
+            "host_token_out_of_vocabulary"
+        );
+        assert_eq!(
+            advance_fixture(&mut host, &fixture, &CancellationToken::new(), |_| panic!(
+                "must refuse next delivery"
+            ))
+            .unwrap_err()
+            .error
+            .code(),
+            "host_token_out_of_vocabulary"
+        );
+        let input = fixture.inputs(0).unwrap();
+        assert_eq!(
+            host.advance(
+                &fixture_request(2),
+                &input,
+                &input,
+                &CancellationToken::new(),
+                |_| Ok(())
+            )
+            .unwrap_err()
+            .error
+            .code(),
+            "host_token_out_of_vocabulary"
+        );
+        assert_eq!(fixture.reads(), 11);
+        assert_eq!(
+            host.coordinator().backend().inner.stats(),
+            CpuStats {
+                stages: 1,
+                layers: 2,
+                routes: 2,
+                experts: 4
+            }
+        );
+        assert_eq!(host.generated_tokens(), [8]);
+        clean(&host);
+    }
 }

@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             eos,
         )?;
         let mut delivery_fault = case == "max";
-        while driver.stop().is_none() {
+        while driver.stop()?.is_none() {
             let outcome =
                 advance_fixture(&mut driver, &fixture, &CancellationToken::new(), |_| {
                     if delivery_fault {
@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             assert_eq!(driver.coordinator().active_reservations(), 0);
             assert!(!driver.coordinator().backend().has_staged_resources());
         }
-        assert_eq!(driver.stop(), Some(expected_stop));
+        assert_eq!(driver.stop()?, Some(expected_stop));
         println!(
             "case={case} stop={expected_stop:?} tokens={:?} reads={} stats={:?}",
             driver.generated_tokens(),

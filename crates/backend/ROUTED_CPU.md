@@ -22,6 +22,10 @@ exposes the retained request and blocks advancing. Matching retries, including
 cancelled ones, reuse the exact retained result; stop rules apply after delivery.
 The low-level generic `advance` requires the caller to bind its own input source
 to `next_input_token`; backends enforce their vocabulary/output contract.
+If another backend violates that contract, the driver preserves its already
+committed result and any pending delivery, then returns
+`host_token_out_of_vocabulary` from stop/input/advance checks. It never silently
+uses the invalid token for a new step or claims that the commit rolled back.
 The bounded driver admits 1..8 new tokens; zero is refused. EOS takes precedence
 when EOS and the maximum count coincide on the same delivered commit.
 

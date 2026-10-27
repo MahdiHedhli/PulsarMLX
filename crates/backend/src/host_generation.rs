@@ -21,6 +21,7 @@ pub struct HostGeneration<B> {
     coordinator: StepCoordinator<B>,
     maximum: u32,
     eos: Option<u32>,
+    vocabulary: u32,
     pending_delivery: bool,
 }
 
@@ -49,6 +50,7 @@ impl<B: HostLayerExecutor> HostGeneration<B> {
             coordinator: StepCoordinator::new(checkpoint, memory, state, backend)?,
             maximum,
             eos,
+            vocabulary,
             pending_delivery: false,
         })
     }
@@ -66,24 +68,31 @@ impl<B: HostLayerExecutor> HostGeneration<B> {
             None
         }
     }
-    pub fn stop(&self) -> Option<HostStop> {
+    /// A backend contract violation never rewinds an existing commit. Refuse
+    /// future advancement explicitly, after any pending delivery is resolved.
+    pub fn stop(&self) -> Result<Option<HostStop>, ContractError> {
         if self.pending_delivery {
-            return None;
+            return Ok(None);
         }
         let tokens = self.generated_tokens();
-        if tokens.last().is_some_and(|token| Some(*token) == self.eos) {
-            Some(HostStop::Eos)
-        } else if tokens.len() >= self.maximum as usize {
-            Some(HostStop::MaxTokens)
-        } else {
-            None
+        if tokens.last().is_some_and(|token| *token >= self.vocabulary) {
+            return Err(driver_error("host_token_out_of_vocabulary"));
         }
+        Ok(
+            if tokens.last().is_some_and(|token| Some(*token) == self.eos) {
+                Some(HostStop::Eos)
+            } else if tokens.len() >= self.maximum as usize {
+                Some(HostStop::MaxTokens)
+            } else {
+                None
+            },
+        )
     }
     pub fn next_input_token(&self) -> Result<u32, ContractError> {
         if self.pending_delivery {
             return Err(driver_error("host_delivery_pending"));
         }
-        if self.stop().is_some() {
+        if self.stop()?.is_some() {
             return Err(driver_error("host_generation_stopped"));
         }
         self.coordinator
@@ -111,7 +120,7 @@ impl<B: HostLayerExecutor> HostGeneration<B> {
             if self.coordinator.retained_request() != Some(request) {
                 return Err(driver_error("host_delivery_pending").into());
             }
-        } else if self.stop().is_some() {
+        } else if self.stop()?.is_some() {
             return Err(driver_error("host_generation_stopped").into());
         }
         let result = self
