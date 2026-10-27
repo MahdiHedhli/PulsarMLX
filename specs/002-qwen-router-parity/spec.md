@@ -274,7 +274,7 @@ measurement, synchronization, statistics, environment, load, and caveat data.
 - **FR-029**: External-checkpoint execution MUST remain an explicit local-only
   command. CI MUST cover all schema, oracle-contract, malformed-input, synthetic,
   and generated-output checks that do not require the checkpoint.
-- **FR-030**: The operator MUST be notified on NTFY topic `Mahdi-Dev` immediately
+- **FR-030**: The operator MUST be notified on NTFY topic `<private-notification-topic>` immediately
   before external model access and after Feature 002 completes or blocks.
 - **FR-031**: Model weights, extracted tensors, private data, secrets, local
   caches, and large generated outputs MUST remain outside Git; precommit review

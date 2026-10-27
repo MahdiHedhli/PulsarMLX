@@ -57,7 +57,7 @@ External access remains prohibited until all of these conditions hold:
    workspace/Python/research gates, admissible resources, and mutually distinct
    absolute external model, oracle, work, and candidate-output locations
    outside Git.
-3. T073 sends the required start message to NTFY topic `Mahdi-Dev` and receives
+3. T073 sends the required start message to NTFY topic `<private-notification-topic>` and receives
    a successful HTTP response.
 
 If resource admission fails, work pauses before model access and the operator
@@ -649,7 +649,7 @@ any of these occurs:
   behavior change.
 
 After T073, every terminal stop sends a best-effort blocker notification to
-NTFY topic `Mahdi-Dev` stating that local inference may resume. A terminal stop
+NTFY topic `<private-notification-topic>` stating that local inference may resume. A terminal stop
 before access states that model access never began and local inference was
 never paused. Notification failure is reported accurately and never authorizes
 access or hides the blocker.

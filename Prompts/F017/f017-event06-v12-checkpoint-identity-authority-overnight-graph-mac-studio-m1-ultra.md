@@ -1987,11 +1987,11 @@ Every case has:
 
 Use topic:
 
-`Mahdi-Dev`
+`<private-notification-topic>`
 
 Use:
 
-`scripts/research/ntfy_mahdidev.sh`
+`scripts/research/notify_status.sh`
 
 or the established equivalent.
 

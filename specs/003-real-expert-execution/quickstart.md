@@ -30,7 +30,7 @@ curl -fsS \
   -H 'Title: PulsarMLX Feature 003 model work starting' \
   -H 'Priority: high' \
   -d 'Please pause local inference. Single-expert MLP validation starting.' \
-  https://ntfy.sh/Mahdi-Dev
+  "${PULSAR_NTFY_URL:?set a private HTTPS notification endpoint}"
 
 export PULSARMLX_MODEL_GGUF='<external>/Qwen3-30B-A3B-Q8_0.gguf'
 # verify size/hash against Feature 001/002 identity

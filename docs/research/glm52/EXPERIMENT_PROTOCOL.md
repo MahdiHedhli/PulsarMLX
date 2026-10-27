@@ -193,7 +193,7 @@ through P1 is committed. This changes experiment order, not P2 acceptance.
 
 Before opening the tensor store:
 
-1. notify `Mahdi-Dev` that local inference hardware is required;
+1. notify `<private-notification-topic>` that local inference hardware is required;
 2. confirm the six local filenames and sizes against
    `docs/validation/glm52-checkpoint.json` (do not re-download or duplicate);
 3. record the checkpoint-set SHA-256 and the post-acquisition content binding

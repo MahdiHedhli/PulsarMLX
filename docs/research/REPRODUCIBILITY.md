@@ -150,7 +150,7 @@ This section defines order, not current capability. Do not execute a model
 command until tasks T022, T038, T049, T060, and T071 are pushed with green CI;
 T072 passes its clean-tree, resource, load, pressure, thermal, disk, and
 external-path checks; and T073 receives an acknowledged start notification on
-NTFY topic `Mahdi-Dev`.
+NTFY topic `<private-notification-topic>`.
 
 After those gates, the operator supplies explicit, pairwise-disjoint absolute
 paths through the variables documented in the [Feature 002
@@ -229,5 +229,5 @@ Fixture-only success proves only the schema, validator, statistical method,
 deterministic generators, and publication boundary. It proves no checkpoint
 routing or performance. A nonzero command result must be reported with its
 bounded error; files are not deleted, tolerances are not widened, and claims
-are not promoted. After any terminal real-work blocker, notify `Mahdi-Dev` that
+are not promoted. After any terminal real-work blocker, notify `<private-notification-topic>` that
 local inference may resume.

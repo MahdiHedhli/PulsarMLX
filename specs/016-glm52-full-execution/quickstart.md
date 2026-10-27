@@ -9,7 +9,7 @@ uv run --frozen python -m unittest discover \
 ```
 
 The real-matrix qualification is run only from a clean committed worktree,
-after notifying `Mahdi-Dev` and confirming the admitted checkpoint, storage,
+after notifying `<private-notification-topic>` and confirming the admitted checkpoint, storage,
 memory pressure, and competing load:
 
 ```sh

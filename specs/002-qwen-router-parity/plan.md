@@ -233,7 +233,7 @@ are:
    Keep minimally instrumented totals separate from stage-instrumented timings;
    label first-process reads OS-cache-uncontrolled rather than filesystem-cold.
 6. Commit and push methodology, schema, validators, and tests before any model
-   access or measurement. Notify `Mahdi-Dev` immediately before that later
+   access or measurement. Notify `<private-notification-topic>` immediately before that later
    access and when Feature 002 completes or blocks.
 
 ## Phase 1: Design Outputs
@@ -264,7 +264,7 @@ are:
 3. Complete malformed-input, evidence-publication, and timing-instrumentation
    coverage against fixture-only data; commit, push, and confirm CI without
    resolving or opening the checkpoint.
-4. Verify the clean offline gate, notify `Mahdi-Dev`, inventory the external
+4. Verify the clean offline gate, notify `<private-notification-topic>`, inventory the external
    F32 router tensor, and commit its bounded admission result without Apple
    execution.
 5. Build the pinned CPU-only llama.cpp capture helper outside Git, produce two

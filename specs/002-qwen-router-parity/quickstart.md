@@ -194,7 +194,7 @@ curl -fsS \
   -H 'Title: PulsarMLX Feature 002 model work starting' \
   -H 'Priority: high' \
   -d 'Please pause local inference. Router inventory/oracle/MLX validation is starting; completion or blocker notice will follow.' \
-  https://ntfy.sh/Mahdi-Dev
+  "${PULSAR_NTFY_URL:?set a private HTTPS notification endpoint}"
 ```
 
 Then set local-only absolute paths without writing them to committed evidence:
@@ -516,7 +516,7 @@ say that model access never began and local inference was never paused.
 curl -fsS \
   -H 'Title: PulsarMLX Feature 002 complete' \
   -d 'Router feature reached its documented verified or blocked boundary. Local inference may resume; see the committed Feature 002 report.' \
-  https://ntfy.sh/Mahdi-Dev
+  "${PULSAR_NTFY_URL:?set a private HTTPS notification endpoint}"
 ```
 
 ## Exact continuation instruction
@@ -525,7 +525,7 @@ curl -fsS \
 Use $speckit-implement for specs/002-qwen-router-parity after $speckit-analyze
 reports no critical inconsistency. Implement only the dependency-ordered task
 list. Freeze, commit, push, and confirm the publication methodology before any
-external checkpoint access or timing. Notify Mahdi-Dev immediately before that
+external checkpoint access or timing. Notify `<private-notification-topic>` immediately before that
 access and after completion or any terminal blocker. Stop rather than
 substituting a synthetic input, changing a frozen tolerance, accepting an
 expert-ID mismatch, or promoting router evidence to a deeper capability.

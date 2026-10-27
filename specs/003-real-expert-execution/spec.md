@@ -153,7 +153,7 @@ reviewer index; clean-checkout reproduction matches promotion identity.
 - **FR-011**: MUST publish append-only public-safe raw evidence, regenerate
   tables/figures, update claims ledger and reviewer index, and support
   clean-checkout reproduction.
-- **FR-012**: MUST notify NTFY topic `Mahdi-Dev` before first model access for
+- **FR-012**: MUST notify NTFY topic `<private-notification-topic>` before first model access for
   this feature and on completion or exact blocker.
 - **FR-013**: MUST keep CI-safe fixture-only validation green without the
   external checkpoint.

@@ -748,7 +748,7 @@ real-model output.
 ### T061 trusted-reference execution
 
 Before the first numerical model operation, an NTFY message to topic
-`Mahdi-Dev` asked the operator to pause concurrent local inference. The server
+`<private-notification-topic>` asked the operator to pause concurrent local inference. The server
 acknowledged the notification. The source worktree was clean at commit
 `fc77d57b8542757c238c637718712ba99fcc2ffd`; memory pressure was normal.
 
@@ -1263,7 +1263,7 @@ device test. Fresh generated records were written only below a temporary
 directory outside Git.
 
 Before the external-model block, an acknowledged NTFY message to topic
-`Mahdi-Dev` asked the operator to pause local inference. The exact external
+`<private-notification-topic>` asked the operator to pause local inference. The exact external
 artifact remained 32,483,931,648 bytes with SHA-256
 `4ad960d180b16f56024f5b704697e5dd5b0837167c2e515ef0569abfc599743c`;
 the source was clean and memory pressure was normal. Read-only inspection
@@ -1338,7 +1338,7 @@ There is no next incomplete task in feature 001. The recommended next bounded
 milestone is a newly specified feature for the same immutable checkpoint's
 layer-0 router projection and deterministic top-8 expert IDs and normalized
 weights, gated by an independent frozen CPU oracle and exact tensor/memory
-admission. Before any external-model access, notify NTFY topic `Mahdi-Dev`.
+admission. Before any external-model access, notify NTFY topic `<private-notification-topic>`.
 The exact continuation instruction is:
 
 ```text
@@ -2690,7 +2690,7 @@ recursive byte diff and independently sorted SHA-256 diff were empty. The
 temporary output was removed; `git diff --check` passed; and the worktree was
 clean afterward.
 
-Immediately before active MLX evaluation, NTFY topic `Mahdi-Dev` acknowledged
+Immediately before active MLX evaluation, NTFY topic `<private-notification-topic>` acknowledged
 the high-priority hardware-pause message. After every synthetic MLX check
 passed, the topic acknowledged the completion message permitting local
 inference to resume. The attached Python crash report was also inspected: it
@@ -2886,7 +2886,7 @@ git diff --check
 # passed
 ```
 
-Immediately before the native regression, NTFY topic `Mahdi-Dev` acknowledged
+Immediately before the native regression, NTFY topic `<private-notification-topic>` acknowledged
 the requested high-priority pause notice. The first command used Homebrew's
 system Python and stopped before MLX initialization because that interpreter
 does not contain the pinned package. The repository's existing `uv` environment
@@ -3173,7 +3173,7 @@ The collector and tests did not resolve, stat, hash, open, or execute the
 checkpoint. They did not import the MLX runtime, initialize a device, launch a
 Python worker, or execute GPU work. No hardware pause or NTFY message was
 needed for this T067 model-free implementation. The next hardware-using step
-is T068; it requires the requested `Mahdi-Dev` pause notification before the
+is T068; it requires the requested `<private-notification-topic>` pause notification before the
 generated MLX microbenchmark runs.
 
 The complete recovered stack plus T067 was published at commit
@@ -3200,7 +3200,7 @@ gauges remain in the external candidate; a failed result retains the exact
 failure and all earlier observations. The evidence explicitly records that no
 stage-sum claim is made.
 
-The pre-hardware NTFY request to topic `Mahdi-Dev` was acknowledged at
+The pre-hardware NTFY request to topic `<private-notification-topic>` was acknowledged at
 `2026-08-06T06:01:45Z`. Its message asked the operator to pause local inference
 for the model-free 5+30 MLX/GPU run and promised a resume notice. This was not
 the later T073 external-checkpoint notification, and no checkpoint path was
@@ -3291,7 +3291,7 @@ checkpoint, token-generation, full-layer, throughput, or performance claim.
 T069 must still validate the closed candidate contract and independently
 reproduce its statistics before any timing summary is accepted. No checkpoint
 path was resolved, statted, hashed, opened, or read. The completion/resume NTFY
-to `Mahdi-Dev` was acknowledged at `2026-08-06T06:26:41Z`; local inference may
+to `<private-notification-topic>` was acknowledged at `2026-08-06T06:26:41Z`; local inference may
 resume until the separate T073 checkpoint notification.
 
 ### T069 generated-candidate validation and T070 timing documentation
@@ -3974,7 +3974,7 @@ The blocker documentation was committed and pushed as
 the GitHub `main` head all resolved to that exact commit with a clean worktree
 and zero divergence before notification.
 
-The required exact-blocker NTFY was acknowledged by `Mahdi-Dev` at
+The required exact-blocker NTFY was acknowledged by `<private-notification-topic>` at
 `2026-08-06T15:42:04Z` with event ID `XpxArb45zCUp`. It stated precisely that
 model access did begin in two earlier authorized Feature 002 attempts, while
 the fresh T083 attempt stopped before reopening the checkpoint because the
@@ -3986,7 +3986,7 @@ the notification. T097 is complete; T083 remains the first incomplete task.
 
 ### T083-T088 fresh candidate admission (2026-08-06)
 
-Resumed after the earlier resource-admission blocker with a new Mahdi-Dev
+Resumed after the earlier resource-admission blocker with a new `<private-notification-topic>`
 hardware-window notification (`VD4TY5Xp9sGh`). Host admission passed with
 one-minute load about 7.4 and five-minute load about 7.4, normal memory
 pressure, and nominal thermal state. The immutable checkpoint SHA-256

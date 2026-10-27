@@ -242,7 +242,7 @@ This feature plan is closed; there is no next incomplete task in its 78-task
 list. The recommended follow-on is a new Spec Kit feature for the same immutable
 Qwen checkpoint's layer-0 router projection and deterministic top-8 expert IDs
 and weights. It must freeze an independent CPU oracle and exact tensor/memory
-admission before Apple output, notify `Mahdi-Dev` before model access, and stop
+admission before Apple output, notify `<private-notification-topic>` before model access, and stop
 short of expert MLP execution, a complete layer/model, generation, serving,
 performance work, custom Metal, or a Linux/CUDA parity claim.
 

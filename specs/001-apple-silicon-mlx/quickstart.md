@@ -256,7 +256,7 @@ pinned CPU reference with zero mismatches. It did not execute tokenization,
 embeddings, routing, a complete expert or layer, attention, logits, tokens,
 generation, giant-model inference, or serving.
 
-T077 notified the operator through `Mahdi-Dev`, then replayed this block from
+T077 notified the operator through `<private-notification-topic>`, then replayed this block from
 clean commit `31a8bf9` with evidence written to a fresh temporary directory
 outside Git. Size, SHA-256, read-only inventory, normal memory pressure, and
 source cleanliness passed. The Apple slice ran from `2026-08-05T16:35:16Z` to
@@ -329,7 +329,7 @@ deterministic top-8 expert IDs and normalized weights against a frozen,
 independent CPU oracle, with exact tensor and memory admission. Preserve every
 verified 001 scope and exclude expert MLP execution, a complete layer/model,
 generation, serving, performance work, custom Metal, and Linux/CUDA parity.
-Notify NTFY topic Mahdi-Dev before accessing the external model. Then use
+Notify NTFY topic `<private-notification-topic>` before accessing the external model. Then use
 $speckit-plan and $speckit-tasks; do not implement until those artifacts pass
 their review gates.
 ```

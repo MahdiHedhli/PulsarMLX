@@ -622,7 +622,7 @@ External-checkpoint experiments are local-only and require all of these gates:
 3. the external file matches the Feature 001 immutable identity and remains
    outside Git;
 4. the memory, storage, load, and no-fallback admission checks pass;
-5. NTFY topic `Mahdi-Dev` is notified immediately before model access; and
+5. NTFY topic `<private-notification-topic>` is notified immediately before model access; and
 6. completion or blocker notification is sent after the feature result.
 
 The local command first writes a complete candidate package to an external

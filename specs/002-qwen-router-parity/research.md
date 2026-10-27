@@ -399,7 +399,7 @@ data.
 
 The following facts remain deliberately unresolved because this Phase 0 work
 did not access the external checkpoint. They must be recorded from a read-only
-inventory after notifying NTFY topic `Mahdi-Dev` and before any Apple result:
+inventory after notifying NTFY topic `<private-notification-topic>` and before any Apple result:
 
 - exactly one `blk.0.ffn_gate_inp.weight` occurrence;
 - its exact GGUF type, `[2048, 128]` dimensions, absolute offset, encoded

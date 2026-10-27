@@ -28,7 +28,7 @@ T074 is the first task permitted to access external model data.
 
 After T073 succeeds, any stop condition before Feature 002 completion MUST
 preserve safe raw attempts outside Git, sanitize and commit only bounded legal
-evidence, send a blocker notification to NTFY topic `Mahdi-Dev` stating that
+evidence, send a blocker notification to NTFY topic `<private-notification-topic>` stating that
 local inference may resume, update the session/results/limitations documents,
 and stop without weakening tolerances, changing the oracle, relabeling a
 synthetic input, or continuing into a deeper graph.
@@ -253,7 +253,7 @@ oracle, run bounded Apple correctness, and only then retain timing evidence.
 CI.
 
 - [X] T072 Append the actual T071 CI result, create and push a scanned non-recursive documentation-only CI attestation, wait for it, then verify clean `main`, `HEAD == origin/main`, green CI, methodology ancestry, exact workspace/Python/research gates, normal resource admission, and external candidate directories outside Git using `specs/002-qwen-router-parity/quickstart.md`
-- [X] T073 Send the pre-access NTFY to `https://ntfy.sh/Mahdi-Dev`, require an acknowledged success response, and stop before model access if it fails as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
+- [X] T073 Send the pre-access NTFY to `"${PULSAR_NTFY_URL:?set a private HTTPS notification endpoint}"`, require an acknowledged success response, and stop before model access if it fails as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 - [X] T074 [US1] Only after T073, verify exact external filename, size, SHA-256, immutable identity, and run read-only `inspect-router` into an external candidate according to `specs/002-qwen-router-parity/quickstart.md`
 - [X] T075 [US1] Validate the inspection and stop on unresolved occurrence, F32 type, dimensions, offset, range, hash, orientation, top-k, scale, bias, license, memory, disk, pressure, thermal, or workload facts before updating `docs/research/MODEL_MANIFEST.json`
 - [X] T076 [US1] Record that inspection performed no MLX/router execution, update task/session state, scan the staged inventory, commit/push immutable admission, and wait for CI using `docs/apple-silicon/SESSION_LOG.md` and `specs/002-qwen-router-parity/tasks.md`
@@ -288,7 +288,7 @@ push a clean branch, and release the operator's hardware.
 - [X] T094 Run research tests, package verification, Python discovery, focused router tests, `cargo check --workspace --all-targets`, `cargo test --workspace --no-fail-fast`, and `git diff --check`, then record actual counts in `docs/apple-silicon/SESSION_LOG.md`
 - [X] T095 Mark final Spec Kit task state, record commits/CI/commands/limitations, and perform staged scans for secrets, private paths, identifiers, model/tensor bytes, caches, binaries, large files, and Linux/CUDA changes in `specs/002-qwen-router-parity/tasks.md` and `docs/apple-silicon/SESSION_LOG.md`
 - [X] T096 Commit final reconciliation, push `main` without force, wait for every `.github/workflows/macos.yml` job, and verify a clean worktree with `HEAD == origin/main` using `docs/apple-silicon/SESSION_LOG.md`
-- [X] T097 After T096 is green OR immediately after any documented Feature 002 stop condition in any phase, send the completion or exact-blocker NTFY to `https://ntfy.sh/Mahdi-Dev`, state whether model access began and that local inference may continue/resume, require an acknowledged response, and leave the clean branch unchanged as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
+- [X] T097 After T096 is green OR immediately after any documented Feature 002 stop condition in any phase, send the completion or exact-blocker NTFY to `"${PULSAR_NTFY_URL:?set a private HTTPS notification endpoint}"`, state whether model access began and that local inference may continue/resume, require an acknowledged response, and leave the clean branch unchanged as specified in `specs/002-qwen-router-parity/contracts/commands-v1.md`
 
 **Current disposition (2026-08-06)**: Feature 002 tasks T001 through T097
 are complete. T083-T088 admitted primary Apple evidence; T089-T091 published

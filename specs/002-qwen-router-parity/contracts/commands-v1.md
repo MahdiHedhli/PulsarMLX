@@ -280,7 +280,7 @@ duplicating one path or relabeling a manifest as the real input.
 | Evidence/schema/privacy/generation failure | Nonzero | No public claim promoted; prior files remain unchanged |
 
 Every terminal Feature 002 blocker, including one reached before external model
-access, requires a best-effort NTFY message to topic `Mahdi-Dev`. A pre-access
+access, requires a best-effort NTFY message to topic `<private-notification-topic>`. A pre-access
 blocker states that model access never began and local inference was never
 paused. A blocker after the start notification states that local inference may
 resume. Notification failure is reported accurately and does not authorize
