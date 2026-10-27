@@ -103,6 +103,26 @@ class ProtocolPublicViewTests(unittest.TestCase):
             self.assert_rejected(lambda: validator.frozen_protocol_digest(root), "public-view content identity")
             self.assert_rejected(lambda: validator.fresh_protocol(root), "public-view content identity")
 
+    def test_production_sanitizer_emits_distinct_verified_public_view(self):
+        from scripts.research.tests import test_sanitize_router_candidate as inputs
+
+        candidate = inputs._abort_candidate()
+        environment = inputs._combined_environment(candidate)
+        records = inputs.sanitizer.build_public_records(
+            candidate, environment,
+            source_candidate_sha256="1" * 64,
+            repository_root=ROOT,
+        )
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record["actual_status"], "aborted")
+        self.assertEqual(record["protocol"], validator.fresh_protocol(ROOT))
+        self.assertEqual(record["protocol"]["public_view"]["sha256"], validator.PROTOCOL_VIEW_SHA256)
+        link = next(a for a in record["artifacts"] if a["kind"] == "frozen_protocol")
+        self.assertEqual(link["sha256"], validator.FROZEN_PROTOCOL_SHA256)
+        self.assertNotEqual(link["sha256"], record["protocol"]["public_view"]["sha256"])
+        validator.validate_record(record)
+
     def test_scientific_text_changes_do_not_inherit_privacy_admission(self):
         with self.view_root() as root:
             path = root / validator.FROZEN_PROTOCOL_PATH
