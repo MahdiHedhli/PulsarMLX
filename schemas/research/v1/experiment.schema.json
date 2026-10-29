@@ -85,6 +85,17 @@
   "allOf": [
     {
       "if": {
+        "properties": { "evidence_schema_version": { "const": "1.1.0" } },
+        "required": ["evidence_schema_version"]
+      },
+      "then": {
+        "properties": {
+          "protocol": { "not": { "required": ["public_view"] } }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "evidence_scope": { "const": "external_checkpoint" },
           "record_kind": { "enum": ["timing", "combined"] }
@@ -151,7 +162,43 @@
         "protocol_version": { "enum": ["1.1.0", "1.2.0"] },
         "path": { "const": "docs/research/EXPERIMENT_PROTOCOL.md" },
         "sha256": { "$ref": "#/$defs/sha256" },
-        "order_seed": { "type": "integer", "minimum": 0 }
+        "order_seed": { "type": "integer", "minimum": 0 },
+        "public_view": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "view_id",
+            "path",
+            "sha256",
+            "source_commit",
+            "original_source_commit",
+            "admission_path",
+            "admission_sha256"
+          ],
+          "properties": {
+            "view_id": {
+              "$ref": "#/$defs/stableId"
+            },
+            "path": {
+              "const": "docs/research/EXPERIMENT_PROTOCOL.md"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "source_commit": {
+              "$ref": "#/$defs/commit"
+            },
+            "original_source_commit": {
+              "$ref": "#/$defs/commit"
+            },
+            "admission_path": {
+              "const": "docs/research/F002_PROTOCOL_VIEW_ADMISSION_V1.json"
+            },
+            "admission_sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
       }
     },
     "execution": {

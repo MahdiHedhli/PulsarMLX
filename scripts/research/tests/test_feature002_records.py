@@ -18,7 +18,7 @@ import tempfile
 from typing import Callable
 import unittest
 
-from scripts.research.validate_evidence import summarize_nanoseconds
+from scripts.research.validate_evidence import fresh_protocol, summarize_nanoseconds
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -50,12 +50,12 @@ def _record() -> dict[str, object]:
     model = record["model"]
     for field in ("repository", "revision", "filename", "size_bytes", "sha256"):
         model[field] = model_identity[field]
-    record["protocol"]["sha256"] = _sha256(PROTOCOL)
+    record["protocol"] = fresh_protocol(REPOSITORY_ROOT)
     record["artifacts"] = [
         {
             "kind": "frozen_protocol",
             "path": "docs/research/EXPERIMENT_PROTOCOL.md",
-            "sha256": _sha256(PROTOCOL),
+            "sha256": record["protocol"]["sha256"],
         },
         {
             "kind": "router_fixture_manifest",
