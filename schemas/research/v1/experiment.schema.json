@@ -85,6 +85,17 @@
   "allOf": [
     {
       "if": {
+        "properties": { "evidence_schema_version": { "const": "1.1.0" } },
+        "required": ["evidence_schema_version"]
+      },
+      "then": {
+        "properties": {
+          "protocol": { "not": { "required": ["public_view"] } }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "evidence_scope": { "const": "external_checkpoint" },
           "record_kind": { "enum": ["timing", "combined"] }

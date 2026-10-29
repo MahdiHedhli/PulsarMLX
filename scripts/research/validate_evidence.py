@@ -579,6 +579,7 @@ def _hash_historical_protocol(repository_root: Path, source_commit: str) -> str:
         completed = subprocess.run(
             ["git", "show", f"{source_commit}:{FROZEN_PROTOCOL_PATH}"],
             cwd=repository_root,
+            env={**os.environ, "GIT_NO_LAZY_FETCH": "1", "GIT_NO_REPLACE_OBJECTS": "1"},
             check=False,
             capture_output=True,
             timeout=10,

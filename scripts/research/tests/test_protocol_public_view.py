@@ -4,11 +4,13 @@ from contextlib import contextmanager
 from copy import deepcopy
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 from scripts.research.tests import test_validate_evidence as fixtures
 
@@ -134,6 +136,7 @@ class ProtocolPublicViewTests(unittest.TestCase):
             self.assert_rejected(lambda: validator.frozen_protocol_digest(root), "public-view content identity")
 
     def test_admission_source_path_disposition_and_hash_mutations_refuse(self):
+        # The exact-byte digest pin is the controlling predicate for these inputs.
         mutations = [
             ("original_method", "source_commit", "f" * 40),
             ("original_method", "path", "docs/research/MODEL_MANIFEST.json"),
@@ -151,6 +154,50 @@ class ProtocolPublicViewTests(unittest.TestCase):
                 path.write_text(json.dumps(relation) + "\n")
                 self.assertNotEqual(before, path.read_bytes())
                 self.assert_rejected(lambda: validator.frozen_protocol_digest(root), "public-view admission identity")
+
+    def test_structural_relation_refuses_even_if_a_different_digest_were_admitted(self):
+        with self.view_root() as root:
+            path = root / validator.PROTOCOL_VIEW_ADMISSION_PATH
+            relation = json.loads(path.read_bytes())
+            self.assertNotEqual(relation["original_method"]["source_commit"], "f" * 40)
+            relation["original_method"]["source_commit"] = "f" * 40
+            changed = (json.dumps(relation) + "\n").encode()
+            path.write_bytes(changed)
+            # Exercise the independent relation predicate beyond the stronger pin.
+            with mock.patch.object(validator, "PROTOCOL_VIEW_ADMISSION_SHA256", hashlib.sha256(changed).hexdigest()):
+                self.assert_rejected(lambda: validator.frozen_protocol_digest(root), "public-view relation does not match")
+
+    def test_missing_promisor_blob_refuses_without_lazy_fetch(self):
+        with tempfile.TemporaryDirectory(prefix="f002-promisor-control-") as temp:
+            root = Path(temp).resolve()
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            path = root / validator.FROZEN_PROTOCOL_PATH
+            path.parent.mkdir(parents=True)
+            path.write_text("Synthetic protocol fixture, not historical method bytes.\n")
+            subprocess.run(["git", "add", validator.FROZEN_PROTOCOL_PATH], cwd=root, check=True)
+            subprocess.run(["git", "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "commit", "--quiet", "-m", "synthetic promisor fixture"], cwd=root, check=True)
+            commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+            expected = hashlib.sha256(path.read_bytes()).hexdigest()
+            self.assertEqual(validator._hash_historical_protocol(root, commit), expected)
+            blob = subprocess.check_output(["git", "rev-parse", commit + ":" + validator.FROZEN_PROTOCOL_PATH], cwd=root, text=True).strip()
+            loose = root / ".git" / "objects" / blob[:2] / blob[2:]
+            self.assertTrue(loose.is_file())
+            loose.unlink()
+            self.assertFalse(loose.exists())
+            subprocess.run(["git", "config", "core.repositoryformatversion", "1"], cwd=root, check=True)
+            subprocess.run(["git", "config", "extensions.partialClone", "missing"], cwd=root, check=True)
+            subprocess.run(["git", "config", "remote.missing.promisor", "true"], cwd=root, check=True)
+            subprocess.run(["git", "config", "remote.missing.url", (root / "absent-remote").as_uri()], cwd=root, check=True)
+            trace = root / "git-trace.jsonl"
+            original_run = subprocess.run
+            with mock.patch.dict(os.environ, {"GIT_TRACE2_EVENT": str(trace), "GIT_NO_LAZY_FETCH": "0", "GIT_NO_REPLACE_OBJECTS": "0"}), mock.patch.object(validator.subprocess, "run", wraps=original_run) as launched:
+                self.assert_rejected(lambda: validator._hash_historical_protocol(root, commit), "historical protocol bytes are unavailable")
+            launched.assert_called_once()
+            self.assertEqual(launched.call_args.kwargs["env"]["GIT_NO_LAZY_FETCH"], "1")
+            self.assertEqual(launched.call_args.kwargs["env"]["GIT_NO_REPLACE_OBJECTS"], "1")
+            events = [json.loads(line) for line in trace.read_text().splitlines()]
+            self.assertTrue(any(e.get("event") == "start" and "show" in e.get("argv", []) for e in events))
+            self.assertFalse(any(e.get("event") == "child_start" and "fetch" in e.get("argv", []) for e in events))
 
     def test_missing_original_object_refuses_without_fetch_or_substitute(self):
         with self.view_root(with_history=False) as root:
