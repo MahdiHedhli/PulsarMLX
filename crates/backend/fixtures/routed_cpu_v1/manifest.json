@@ -1,0 +1,19 @@
+{
+  "schema": "routed_cpu_v1.freeze/1",
+  "sha256": {
+    "weights.bin": "cb25d125e2878086f5fd0edf6822979c76789d652ad35b1754104071736c9251",
+    "goldens.tsv": "f1677611e6095696d3652b8291461e8b94a00c90d8c1451c79d897e745f728ae",
+    "reference_summary.json": "0292035e4b4a3ae9746b2c44b2a7a2975cad9485b6694f361d351057f9bdf825",
+    "reference.py": "80aa693efdcdd61589de124fcc6fd7e86166a810599255cc5e7c545829271696",
+    "SPEC.md": "027600fdc7a73237c5be5123f10cc458db75f2bddbf5518beffd3c18e5c9c75a"
+  },
+  "weights_bytes": 3840,
+  "cases": 2,
+  "steps": 10,
+  "comparison": {
+    "absolute": "2^-35",
+    "relative": "2^-35",
+    "reference_uncertainty": "2^-180",
+    "identity_and_selected": "EXACT"
+  }
+}

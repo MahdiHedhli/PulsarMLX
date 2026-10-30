@@ -1,0 +1,23 @@
+{
+  "reference_digits": 80,
+  "stability_digits": 100,
+  "max_reference_difference": "4.66179154018433109221E-80",
+  "stability_threshold": "1e-70",
+  "generated_tokens": {
+    "max": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      0
+    ],
+    "eos": [
+      6,
+      7
+    ]
+  },
+  "distinct_layer0_routes": 4
+}

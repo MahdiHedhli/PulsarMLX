@@ -39,6 +39,7 @@ pub use positional::*;
 ''')
 PY
 printf 'Private CPU check output: %s\n' "$rust_host_checks"
+python3 "$rust_host_repo/crates/backend/fixtures/routed_cpu_v1/reference.py" --check
 cargo generate-lockfile --offline --manifest-path "$rust_host_checks/Cargo.toml"
 for rust_host_profile in debug release; do
     rust_host_flags=(--profile dev)
@@ -46,4 +47,5 @@ for rust_host_profile in debug release; do
     cargo test --locked --offline --manifest-path "$rust_host_repo/Cargo.toml" -p backend "${rust_host_flags[@]}" -- --test-threads=1 2>&1 | tee "$rust_host_checks/backend-$rust_host_profile.log"
     cargo test --locked --offline --manifest-path "$rust_host_checks/Cargo.toml" --lib --test positional_source "${rust_host_flags[@]}" -- --test-threads=1 2>&1 | tee "$rust_host_checks/storage-$rust_host_profile.log"
     cargo run --locked --offline --manifest-path "$rust_host_repo/Cargo.toml" -p backend --example host_lifecycle "${rust_host_flags[@]}" 2>&1 | tee "$rust_host_checks/example-$rust_host_profile.log"
+    cargo run --locked --offline --manifest-path "$rust_host_repo/Cargo.toml" -p backend --example routed_host_lifecycle "${rust_host_flags[@]}" 2>&1 | tee "$rust_host_checks/routed-example-$rust_host_profile.log"
 done

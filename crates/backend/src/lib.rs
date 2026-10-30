@@ -1,9 +1,14 @@
 //! Backend-neutral contracts for PulsarMLX inference runtimes.
 
+#[cfg(test)]
+extern crate self as backend;
+
 pub mod capability;
 pub mod error;
 pub mod evidence;
 pub mod generation;
+pub mod host_generation;
+pub mod routed_cpu;
 pub mod routing;
 pub mod runtime;
 pub mod step;
