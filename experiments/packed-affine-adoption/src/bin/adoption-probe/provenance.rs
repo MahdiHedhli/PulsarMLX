@@ -1,10 +1,9 @@
 //! Observe loaded images, not merely filenames in the selected installation.
-use mlx_native_affine::fixture::sha256_hex;
+use packed_affine_adoption::file_sha256;
 use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,
     ffi::{c_char, CStr},
-    fs,
     path::{Path, PathBuf},
 };
 extern "C" {
@@ -52,12 +51,7 @@ pub fn collect(config: &Value) -> Result<Value, String> {
         }
         let real = path.canonicalize().map_err(|e| e.to_string())?;
         if !real.starts_with(prefix.join("lib"))
-            || images
-                .insert(
-                    name.clone(),
-                    sha256_hex(&fs::read(real).map_err(|e| e.to_string())?),
-                )
-                .is_some()
+            || images.insert(name.clone(), file_sha256(real)?).is_some()
         {
             return Err("loaded library outside prefix or duplicate".into());
         }
@@ -72,17 +66,11 @@ pub fn collect(config: &Value) -> Result<Value, String> {
     if !metal.starts_with(prefix.join("lib")) {
         return Err("metallib outside prefix".into());
     }
-    images.insert(
-        "mlx.metallib".into(),
-        sha256_hex(&fs::read(metal).map_err(|e| e.to_string())?),
-    );
+    images.insert("mlx.metallib".into(), file_sha256(metal)?);
     if serde_json::to_value(&images).unwrap() != config["native_libraries"] {
         return Err("actual loaded native identities differ from freeze".into());
     }
-    let binary = sha256_hex(
-        &fs::read(std::env::current_exe().map_err(|e| e.to_string())?)
-            .map_err(|e| e.to_string())?,
-    );
+    let binary = file_sha256(std::env::current_exe().map_err(|e| e.to_string())?)?;
     if config["binary_sha256"] != binary {
         return Err("child executable differs from frozen binary".into());
     }

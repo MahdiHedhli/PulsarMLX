@@ -52,7 +52,7 @@ fn child(root: &Path, prefix: &Path, label: &str, mut config: Value, seconds: u6
     );
     create(
         &root.join(format!("{label}.outcome.json")),
-        &json!({"outcome":run.outcome.describe(),"elapsed_ms":run.elapsed_ms,"binary_sha256":sha256_hex(&fs::read(env!("CARGO_BIN_EXE_adoption-probe")).unwrap()),"config_sha256":sha256_hex(&fs::read(input).unwrap())}),
+        &json!({"outcome":run.outcome.describe(),"elapsed_ms":run.elapsed_ms,"binary_sha256":packed_affine_adoption::file_sha256(env!("CARGO_BIN_EXE_adoption-probe")).unwrap(),"config_sha256":sha256_hex(&fs::read(input).unwrap())}),
     );
     if config["mode"] == "raw-length" {
         let events = fs::read_to_string(out.join("events.jsonl")).unwrap_or_default();
@@ -159,7 +159,7 @@ fn required_native_m1a() {
         .expect("frozen native library hashes")
     {
         assert_eq!(
-            sha256_hex(&fs::read(prefix.join("lib").join(name)).unwrap()),
+            packed_affine_adoption::file_sha256(prefix.join("lib").join(name)).unwrap(),
             record.as_str().unwrap()
         );
     }
@@ -173,7 +173,7 @@ fn required_native_m1a() {
     );
     assert_eq!(
         freeze["binary_sha256"],
-        sha256_hex(&fs::read(env!("CARGO_BIN_EXE_adoption-probe")).unwrap())
+        packed_affine_adoption::file_sha256(env!("CARGO_BIN_EXE_adoption-probe")).unwrap()
     );
     if std::env::var("PULSAR_ADOPTION_PHASE").as_deref() == Ok("m1b") {
         performance::run(&campaign, &prefix, &freeze);

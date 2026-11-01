@@ -53,3 +53,41 @@ pub fn require_retired(
         Ok(())
     }
 }
+
+/// Hash provenance inputs with a fixed 64 KiB buffer, including large metallibs.
+pub fn hash_reader(mut reader: impl std::io::Read) -> Result<String, String> {
+    use sha2::{Digest, Sha256};
+    let mut digest = Sha256::new();
+    let mut buffer = [0u8; 65536];
+    loop {
+        let count = reader.read(&mut buffer).map_err(|e| e.to_string())?;
+        if count == 0 {
+            break;
+        }
+        digest.update(&buffer[..count]);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
+pub fn file_sha256(path: impl AsRef<std::path::Path>) -> Result<String, String> {
+    hash_reader(std::fs::File::open(path).map_err(|e| e.to_string())?)
+}
+#[cfg(test)]
+mod hash_tests {
+    #[test]
+    fn provenance_hash_has_bounded_reads_and_handles_short_reads() {
+        struct Source(usize);
+        impl std::io::Read for Source {
+            fn read(&mut self, b: &mut [u8]) -> std::io::Result<usize> {
+                assert!(b.len() <= 65536);
+                let n = self.0.min(b.len()).min(7919);
+                b[..n].fill(0xa5);
+                self.0 -= n;
+                Ok(n)
+            }
+        }
+        assert_eq!(
+            super::hash_reader(Source(131073)).unwrap(),
+            "1219d3f8aafba3fd065ea4944ea9c659bf8142f72a6be324ad608955dd2270bc"
+        );
+    }
+}
