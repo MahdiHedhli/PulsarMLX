@@ -1,0 +1,144 @@
+{
+  "baseline": "aaf076f17b2e71c60e6309aa560df876d28a84d4",
+  "files": [
+    {
+      "source_commit": "8932939e9db0ceaa05337db8c65f5c1c03fa94fa",
+      "path": "crates/mlx-expert-ranges/Cargo.toml",
+      "git_blob": "d371162b77a67e4c639b121f7f16d65542d1abdb",
+      "sha256": "963fd6a73fbe515f32e288174f88471fc71edafd19ff0e3f05105680aae8e196",
+      "bytes": 422
+    },
+    {
+      "source_commit": "8932939e9db0ceaa05337db8c65f5c1c03fa94fa",
+      "path": "crates/mlx-expert-ranges/src/lib.rs",
+      "git_blob": "cea55a0f2a3170b5156f8c7553b64b6c00f4419c",
+      "sha256": "e60587caf649dbb9dd75207fd95ee653da085d59a4f379f3e9bfd6b84abd2e2a",
+      "bytes": 15389
+    },
+    {
+      "source_commit": "8932939e9db0ceaa05337db8c65f5c1c03fa94fa",
+      "path": "crates/mlx-expert-ranges/tests/ranges.rs",
+      "git_blob": "0f5da2469aa52e243ecda7ef9a098197c242a32d",
+      "sha256": "10f191983c8a1b7d344b6c98521ec4d67153260f4bebb976094df1e4d7813395",
+      "bytes": 16047
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/manifest.json",
+      "git_blob": "5986653c6becb05bd83df5654dc4cffc3bf8b782",
+      "sha256": "2a63e04cb3e690a5b9b4b7c6440e279fad51b0b697771904ac22fbbef84d2a3d",
+      "bytes": 91520
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "scripts/research/f020_expert_mlp_r1_v1.py",
+      "git_blob": "61040ae63382e8b2d481d4d04d6bb950f78d70df",
+      "sha256": "3aad179cda4d4fe054d4a4b52fd3ef4911956559ac2cdad131b435bb03d81f01",
+      "bytes": 6171
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/checkpoints/d128-h64-default/config.json",
+      "git_blob": "0b84adf5789d4435843cb8d32105e9d6851a5510",
+      "sha256": "bdc396d53df64d0d1f851b2ffe174939268650888ed5521a126de621620c4060",
+      "bytes": 104
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/checkpoints/d128-h64-default/model.safetensors",
+      "git_blob": "3a30518a41cf311fef038388526d2b75599da371",
+      "sha256": "86c25ac2d5cdb69a3ef8381b09f6d9002d398f1d28f9845ce835c0bdabf79c00",
+      "bytes": 42408
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/checkpoints/d128-h64-mixed/config.json",
+      "git_blob": "c09b9a1ac324924a16208c31d889758e91dd9a6d",
+      "sha256": "3897701680dbf9d543c1835c95015c05b9dd703057e315dfb92125b07e447892",
+      "bytes": 262
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/checkpoints/d128-h64-mixed/model.safetensors",
+      "git_blob": "aa7f425eead782a24dd1a7669af02fc6eb313f95",
+      "sha256": "fbdf919b356b87def22abcffee0bf5446bd3a1ee569bbb402fc47a6e6af3d50f",
+      "bytes": 66984
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e0-default.f32",
+      "git_blob": "42c4aa7a1b507bfbf4a35a45d6bbcc45cad1dec8",
+      "sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "bytes": 512
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e1-default.f32",
+      "git_blob": "42c4aa7a1b507bfbf4a35a45d6bbcc45cad1dec8",
+      "sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "bytes": 512
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m32-e0-default.f32",
+      "git_blob": "51db92694623ce6e93ca0e1e6da579f112e21612",
+      "sha256": "f69cc71f779587c944cade9a5d602fa676ee12001587050b2d40c35070602dcf",
+      "bytes": 16384
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m32-e1-default.f32",
+      "git_blob": "51db92694623ce6e93ca0e1e6da579f112e21612",
+      "sha256": "f69cc71f779587c944cade9a5d602fa676ee12001587050b2d40c35070602dcf",
+      "bytes": 16384
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e0-mixed.f32",
+      "git_blob": "42c4aa7a1b507bfbf4a35a45d6bbcc45cad1dec8",
+      "sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "bytes": 512
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e1-mixed.f32",
+      "git_blob": "42c4aa7a1b507bfbf4a35a45d6bbcc45cad1dec8",
+      "sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "bytes": 512
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m32-e0-mixed.f32",
+      "git_blob": "51db92694623ce6e93ca0e1e6da579f112e21612",
+      "sha256": "f69cc71f779587c944cade9a5d602fa676ee12001587050b2d40c35070602dcf",
+      "bytes": 16384
+    },
+    {
+      "source_commit": "79e5de15271b2b27439fcc3b2404c5026ac2584a",
+      "path": "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m32-e1-mixed.f32",
+      "git_blob": "51db92694623ce6e93ca0e1e6da579f112e21612",
+      "sha256": "f69cc71f779587c944cade9a5d602fa676ee12001587050b2d40c35070602dcf",
+      "bytes": 16384
+    },
+    {
+      "source_commit": "98440154bdcfda2ea0d5d0d3ad8c17419b90d66a",
+      "path": "scripts/research/f020_selected_fixtures_v2.py",
+      "git_blob": "c2fc1e7b1e5b4ca08cd1b62ff08204555ee280f4",
+      "sha256": "3c271cb6b981b1079ea601b426784bb773555eb3e54e1a8f604499ddefc775c5",
+      "bytes": 11448
+    },
+    {
+      "source_commit": "98440154bdcfda2ea0d5d0d3ad8c17419b90d66a",
+      "path": "scripts/research/f020_selected_r1_v2.py",
+      "git_blob": "bd9fe699f7fac56204f3719fd6334739161f2eaa",
+      "sha256": "1d7276286f400ae2026c32b996c1269b9947abad95f60e33f255f89f1541a913",
+      "bytes": 7187
+    }
+  ],
+  "deferred": [
+    "selected real capture/attempt",
+    "MLP execution/activation requalification",
+    "dependency branch integration",
+    "M2-M4"
+  ]
+}
