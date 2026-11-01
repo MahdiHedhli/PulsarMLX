@@ -140,5 +140,15 @@
     "MLP execution/activation requalification",
     "dependency branch integration",
     "M2-M4"
+  ],
+  "extracted_helpers": [
+    {
+      "source_commit": "98440154bdcfda2ea0d5d0d3ad8c17419b90d66a",
+      "source_path": "crates/mlx-expert-mlp/src/selected_adapter.rs",
+      "source_sha256": "5354af95f7d0bc3662ddccb533956de0c656c764a44baa21e61d886c390e227a",
+      "function": "selected_preflight",
+      "destination": "experiments/packed-affine-adoption/src/selected_preflight.rs",
+      "disposition": "function body preserved; imports adapted to experiment dependencies"
+    }
   ]
 }

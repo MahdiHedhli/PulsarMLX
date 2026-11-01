@@ -1,0 +1,36 @@
+[package]
+name = "packed-affine-adoption"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+build = "build.rs"
+
+[workspace]
+
+[features]
+default = []
+native-adoption = []
+
+[dependencies]
+mlx-expert-ranges = { path = "../../crates/mlx-expert-ranges" }
+mlx-native-affine = { path = "../../crates/mlx-native-affine" }
+mlx-affine = { path = "../../crates/mlx-affine" }
+safetensors-catalog = { path = "../../crates/safetensors-catalog" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+libc = "0.2"
+
+[build-dependencies]
+cc = "1"
+
+[[bin]]
+name = "adoption-probe"
+path = "src/bin/adoption-probe/main.rs"
+required-features = ["native-adoption"]
+test = false
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
