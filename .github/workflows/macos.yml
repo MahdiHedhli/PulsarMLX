@@ -14,6 +14,11 @@ on:
           - auto
           - full
           - evidence
+      packed_affine_m1a:
+        description: Run the single designated frozen packed-affine M1a campaign (full mode only)
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -1320,6 +1325,28 @@ jobs:
           assert synthetic["fallback_used"] is False
           assert os.environ.get("PULSARMLX_MODEL_GGUF", "") == ""
           PY
+
+      - name: Qualify frozen packed-affine M1a
+        if: github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full'
+        env:
+          PULSAR_ADOPTION_PHASE: m1a
+        run: |
+          .venv/bin/python -B scripts/ci/packed_affine_m1a_v1.py run \
+            --root "$RUNNER_TEMP/packed-affine-m1a"
+      - name: Prepare sanitized packed-affine evidence and explicit outcome
+        id: packed_affine_evidence
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full'
+        run: |
+          python3 -B scripts/ci/packed_affine_m1a_v1.py export \
+            --root "$RUNNER_TEMP/packed-affine-m1a" \
+            --public "$RUNNER_TEMP/packed-affine-m1a-public"
+      - name: Upload packed-affine M1a outcome including failures
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full' && steps.packed_affine_evidence.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: packed-affine-m1a-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/packed-affine-m1a-public
+          if-no-files-found: error
 
   aggregate:
     name: CI aggregate status
