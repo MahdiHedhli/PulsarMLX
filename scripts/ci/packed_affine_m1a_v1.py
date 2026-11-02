@@ -178,6 +178,12 @@ def run_native_ci(root):
                            "run_id": env["GITHUB_RUN_ID"], "workflow_commit": sha})
         env.update(CARGO_BUILD_JOBS="2", RUST_TEST_THREADS="1", CARGO_TARGET_DIR=str(root / "target-native"),
                    PYTHONDONTWRITEBYTECODE="1", PULSAR_ADOPTION_PHASE="m1a")
+        # This separate workspace has five locked versions absent from the root
+        # lockfile. Prepare those exact inputs on the authorized hosted installer
+        # route, then build offline. This is never a Studio cache-repair command.
+        summary["stage"] = "frozen-Cargo-inputs"
+        capture(root, "dependency-fetch", ["cargo", "fetch", "--locked", "--manifest-path",
+                "experiments/packed-affine-adoption/Cargo.toml"], source, env)
         cargo = ["cargo", "test", "--offline", "--locked", "--release", "--manifest-path",
                  "experiments/packed-affine-adoption/Cargo.toml", "--features", "native-adoption",
                  "--test", "adoption_parent", "--no-run", "--message-format=json"]
