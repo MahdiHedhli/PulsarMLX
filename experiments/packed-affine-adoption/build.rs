@@ -4,6 +4,7 @@ fn main() {
         println!("cargo:rerun-if-env-changed={k}");
     }
     println!("cargo:rerun-if-changed=native/adoption_bridge.mm");
+    println!("cargo:rerun-if-changed=native/adoption_bridge_core.h");
     if env::var_os("CARGO_FEATURE_NATIVE_ADOPTION").is_none() {
         return;
     }
