@@ -25,6 +25,8 @@ REPOSITORY = "MahdiHedhli/PulsarMLX"
 ARCHIVE_SHA = "8836fac6de10d2af682c21b3c1d9a1699e6a9121f120fd3f890de59d071662d2"
 CONTROLLER = Path(__file__).resolve().parents[2]
 STEM = "packed_affine_m1_inputs_v1"
+RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v1.json"
+RECONCILIATION_SHA = "ee0492eeeae56eca9e435bcb4649e21bd128cc7a2e6e816d260d9dc463ba756f"
 
 
 def digest(path):
@@ -50,33 +52,140 @@ def require_route(env, event):
         raise ValueError("actual run ID required")
 
 
-def require_only_campaign(runs, run_id, controller_sha):
-    # More conservative than attempt=1: even a prior failed manual dispatch on
-    # this dedicated branch requires operator reconciliation, never a new probe.
-    if len(runs) != 1 or str(runs[0]["id"]) != run_id:
-        raise ValueError("prior/unknown designated campaign; allowance not reset")
-    r = runs[0]
-    if (r["head_sha"] != controller_sha or r["event"] != "workflow_dispatch"
-            or r["head_branch"] != BRANCH or r["run_attempt"] != 1
-            or r["path"] != ".github/workflows/macos.yml"):
+def load_reconciliation():
+    raw = (CONTROLLER / RECONCILIATION).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != RECONCILIATION_SHA:
+        raise ValueError("missing or changed Rust009 reconciliation authority")
+    record = json.loads(raw)
+    if record["candidate"] != CANDIDATE or record["candidate_tree"] != TREE:
+        raise ValueError("reconciliation candidate mismatch")
+    return record
+
+
+def exact_fields(value, expected):
+    return all(type(value.get(k)) is type(v) and value[k] == v for k, v in expected.items())
+
+
+def require_predecessor_run(run, predecessor):
+    expected = {"id": predecessor["run_id"], "run_attempt": 1,
+                "workflow_id": predecessor["workflow_id"], "path": predecessor["workflow_path"],
+                "head_sha": predecessor["controller_commit"], "head_branch": BRANCH,
+                "event": "workflow_dispatch", "status": "completed", "conclusion": "failure"}
+    if not exact_fields(run, expected):
+        raise ValueError("predecessor is not the exact completed attempt-1 failure")
+
+
+def require_only_campaign(runs, run_id, controller_sha, reconciliation):
+    predecessor = reconciliation["predecessor"]
+    ids = [str(r["id"]) for r in runs]
+    old_id = str(predecessor["run_id"])
+    if run_id == old_id or len(runs) != 2 or set(ids) != {old_id, run_id}:
+        raise ValueError("exact predecessor/current pair required; allowance not reset")
+    require_predecessor_run(runs[ids.index(old_id)], predecessor)
+    r = runs[ids.index(run_id)]
+    if not exact_fields(r, {"id": int(run_id), "head_sha": controller_sha, "event": "workflow_dispatch",
+                            "head_branch": BRANCH, "run_attempt": 1, "path": ".github/workflows/macos.yml",
+                            "workflow_id": predecessor["workflow_id"]}):
         raise ValueError("actual workflow run identity mismatch")
 
 
-def read_campaign_history():
-    rows = []
-    for page in range(1, 1001):
-        query = urllib.parse.urlencode({"branch": BRANCH, "event": "workflow_dispatch",
-                                       "per_page": 100, "page": page})
-        url = f"https://api.github.com/repos/{REPOSITORY}/actions/workflows/macos.yml/runs?{query}"
-        request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json",
-                                                       "User-Agent": "packed-affine-m1a"})
-        # Public read only. No credential source or retry/provider substitution.
+def fetch_admission_json(path, evidence, private_dir):
+    # Original responses may contain nonessential public actor/profile fields.
+    # Retain them privately; the unchanged exporter uploads only root files and
+    # campaign evidence. Published projections and raw-byte hashes are distinct.
+    receipt = {"request_path": path, "status": "fetch_in_progress"}
+    evidence["fetches"].append(receipt)
+    request = urllib.request.Request(f"https://api.github.com/repos/{REPOSITORY}/{path}",
+                                    headers={"Accept": "application/vnd.github+json",
+                                             "User-Agent": "packed-affine-m1a"})
+    try:
         with urllib.request.urlopen(request, timeout=30) as response:
-            data = json.load(response)
-        rows.extend(data["workflow_runs"])
-        if len(rows) >= data["total_count"]:
+            body = response.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise ValueError("admission response exceeds capture bound")
+        name = f"response-{len(evidence['fetches'])}.json"
+        with (private_dir / name).open("xb") as f:
+            f.write(body)
+        receipt.update(status="received", bytes=len(body), raw_sha256=hashlib.sha256(body).hexdigest(),
+                       retained_private=name, public_representation="selected admission fields only")
+        return json.loads(body)
+    except Exception as e:
+        receipt.update(status="fetch_failed", error_type=type(e).__name__, error=str(e))
+        raise
+
+
+def read_complete_pages(path, key, evidence, private_dir):
+    rows = []
+    total = None
+    for page in range(1, 1001):
+        separator = "&" if "?" in path else "?"
+        data = fetch_admission_json(f"{path}{separator}per_page=100&page={page}", evidence, private_dir)
+        count = data["total_count"]
+        if type(count) is not int or count < 0 or (total is not None and total != count):
+            raise ValueError("invalid/changing API population")
+        total = count
+        batch = data[key]
+        if not isinstance(batch, list) or (not batch and len(rows) < total):
+            raise ValueError("incomplete API history")
+        rows.extend(batch)
+        if len(rows) > total or len({r["id"] for r in rows}) != len(rows):
+            raise ValueError("duplicate/excess API rows")
+        if len(rows) == total:
             return rows
-    raise ValueError("incomplete campaign history")
+    raise ValueError("incomplete API history")
+
+
+def read_campaign_history(evidence, private_dir):
+    query = urllib.parse.urlencode({"branch": BRANCH, "event": "workflow_dispatch"})
+    return read_complete_pages(f"actions/workflows/macos.yml/runs?{query}", "workflow_runs", evidence, private_dir)
+
+
+def reconcile_admission(root, run_id, controller_sha):
+    evidence = {"fetches": [], "observations": {}, "admitted": False}
+    try:
+        record = load_reconciliation()
+        evidence["reconciliation_sha256"] = RECONCILIATION_SHA
+        private_dir = root / "admission-api.private"
+        private_dir.mkdir()
+        runs = read_campaign_history(evidence, private_dir)
+        fields = ("id", "head_sha", "event", "head_branch", "run_attempt", "path", "workflow_id", "status", "conclusion")
+        evidence["observations"]["history"] = [{k: r.get(k) for k in fields} for r in runs]
+        require_only_campaign(runs, run_id, controller_sha, record)
+        old = record["predecessor"]
+        endpoint = f"actions/runs/{old['run_id']}"
+        run = fetch_admission_json(endpoint, evidence, private_dir)
+        evidence["observations"]["predecessor_run"] = {k: run.get(k) for k in fields}
+        require_predecessor_run(run, old)
+        jobs = read_complete_pages(endpoint + "/attempts/1/jobs", "jobs", evidence, private_dir)
+        job_fields = ("id", "run_id", "run_attempt", "head_sha", "head_branch", "name", "status", "conclusion", "runner_id", "steps")
+        evidence["observations"]["attempt_1_jobs"] = [{k: j.get(k) for k in job_fields} for j in jobs]
+        native = [j for j in jobs if j["id"] == old["native_job_id"]]
+        expected = {"id": old["native_job_id"], "run_id": old["run_id"], "run_attempt": 1,
+                    "head_sha": old["controller_commit"], "head_branch": BRANCH,
+                    "name": "Apple MLX small-fixture validation", "status": "completed",
+                    "conclusion": "cancelled", "runner_id": 0, "steps": []}
+        if len(native) != 1 or not exact_fields(native[0], expected):
+            raise ValueError("predecessor native job has changed or may have executed")
+        artifacts = read_complete_pages(endpoint + "/artifacts", "artifacts", evidence, private_dir)
+        evidence["observations"]["artifact_ids"] = [a["id"] for a in artifacts]
+        if artifacts:
+            raise ValueError("unexpected predecessor artifacts")
+        commit = fetch_admission_json("git/commits/" + old["controller_commit"], evidence, private_dir)
+        evidence["observations"]["predecessor_controller"] = {"commit": commit["sha"], "tree": commit["tree"]["sha"]}
+        if commit["sha"] != old["controller_commit"] or commit["tree"]["sha"] != old["controller_tree"]:
+            raise ValueError("predecessor controller identity")
+        # A rerun/extra dispatch during these reads must also close admission.
+        final_runs = read_campaign_history(evidence, private_dir)
+        require_only_campaign(final_runs, run_id, controller_sha, record)
+        evidence["observations"]["final_history"] = [{k: r.get(k) for k in fields} for r in final_runs]
+        evidence["admitted"] = True
+        return {"reconciliation": record, "reconciliation_sha256": RECONCILIATION_SHA,
+                "predecessor_run_id": old["run_id"], "current_run_id": run_id,
+                "designated_dispatches_cumulative": 2, "additional_designated_dispatches": 1,
+                "additional_raw_probe_allowances": 0, "predecessor_raw_probe_used": 0,
+                "raw_probe_allowed": 1, "fetched_evidence": evidence}
+    finally:
+        write_new(root / "admission-evidence.json", evidence)
 
 
 def extract_inputs(archive, manifest, destination):
@@ -145,17 +254,16 @@ def run_native_ci(root):
     sha = git(CONTROLLER, "rev-parse", "HEAD")
     if sha != env["GITHUB_SHA"] or git(CONTROLLER, "status", "--porcelain", "--untracked-files=no"):
         raise ValueError("workflow checkout drift")
-    runs = read_campaign_history()
-    require_only_campaign(runs, env["GITHUB_RUN_ID"], sha)
     root.mkdir()
     summary = {"candidate": CANDIDATE, "candidate_tree": TREE, "controller_commit": sha,
                "event": env["GITHUB_EVENT_NAME"], "ref": env["GITHUB_REF"], "inputs": event["inputs"],
                "run_id": env["GITHUB_RUN_ID"], "run_attempt": 1, "host_role": "native-ci",
                "M1a_ran": False, "M1a_passed": False, "raw_probe_used": 0,
-               "shipping_default": "copied", "M1b_ran": False, "stage": "prepare"}
-    history = [{key: r[key] for key in ("id", "head_sha", "event", "head_branch", "run_attempt", "path")} for r in runs]
-    write_new(root / "campaign-claim.json", {**summary, "raw_probe_allowed": 1, "history": history})
+               "shipping_default": "copied", "M1b_ran": False, "stage": "admission"}
     try:
+        summary["admission"] = reconcile_admission(root, env["GITHUB_RUN_ID"], sha)
+        write_new(root / "campaign-claim.json", summary)
+        summary["stage"] = "prepare"
         source = root / "source"
         subprocess.run(["git", "-C", str(CONTROLLER), "worktree", "add", "--detach", str(source), CANDIDATE], check=True)
         if git(source, "rev-parse", "HEAD^{tree}") != TREE or git(source, "status", "--porcelain"):
@@ -219,6 +327,8 @@ def run_native_ci(root):
         summary["failure"] = str(e)
         raise
     finally:
+        if (root / "admission-evidence.json").exists():
+            summary["admission_evidence_sha256"] = digest(root / "admission-evidence.json")
         summary["raw_probe_used"] = int((root / "campaign/raw-probe.intent.json").exists())
         summary["raw_probe_outcome_known"] = (root / "campaign/m1a/raw-probe-summary.json").exists()
         write_new(root / "result.json", summary)

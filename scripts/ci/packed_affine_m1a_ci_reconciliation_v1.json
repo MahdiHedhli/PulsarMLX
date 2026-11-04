@@ -1,0 +1,38 @@
+{
+  "additional_designated_dispatches": 1,
+  "additional_raw_probe_allowances": 0,
+  "authority": {
+    "commit": "12247ca6fb02879adcc1471d099f12f3977cdec2",
+    "path": "Prompts/RUST-ENGINE/MacBook-Pro-M2-Max/009__RUST-ENGINE__MacBook-Pro-M2-Max__m1a-ci-capacity-continuation__prompt.md",
+    "repository": "MahdiHedhli/PulsarMLX-Prompts",
+    "sha256": "6df902759ae2837c068de2aff95c48549dce3d94cf13ee127232183a9501e109"
+  },
+  "candidate": "190c64213135a756f5e3d61059036b9af2d78d7a",
+  "candidate_tree": "1bd6cf2f01d5a921fd9c402a109f36072721274f",
+  "cumulative_designated_dispatches_after_continuation": 2,
+  "disposition": "preserved completed zero-execution hosted-capacity failure; not accepted, skipped or erased",
+  "host_role": "native-ci",
+  "original_raw_probe_allowance": 1,
+  "predecessor": {
+    "aggregate_observation": "NATIVE_RESULT='abandoned'",
+    "branch": "codex/rust-expert-streaming-m0-m1",
+    "controller_commit": "015d748fe14ed555027ead7c0a2fb2a84a39fa35",
+    "controller_tree": "de7afb423e274a41e37fa06cc475b10c5b4ca345",
+    "event": "workflow_dispatch",
+    "native_conclusion": "cancelled",
+    "native_job_id": 125402293053,
+    "native_runner_id": 0,
+    "native_status": "completed",
+    "native_steps": [],
+    "run_attempt": 1,
+    "run_conclusion": "failure",
+    "run_id": 41481802750,
+    "run_status": "completed",
+    "workflow_artifact_count": 0,
+    "workflow_id": 327547523,
+    "workflow_path": ".github/workflows/macos.yml"
+  },
+  "predecessor_raw_probe_used": 0,
+  "schema": "pulsarmlx.packed-affine-ci-reconciliation/1",
+  "shipping_default": "copied"
+}
