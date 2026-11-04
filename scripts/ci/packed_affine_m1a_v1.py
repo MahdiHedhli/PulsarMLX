@@ -18,19 +18,19 @@ import tarfile
 import urllib.parse
 import urllib.request
 
-CANDIDATE = "f5b273bda7abd396d519f4d6b636f04855df3de8"
-TREE = "1efa0a0e744f618880dfe321bab0a5b0c446ce9e"
+CANDIDATE = "f61a8c19d6aad2265a12f417ddbe842024fe32f2"
+TREE = "5f8a8c55f4e0067b10dcd6606fe05935e8e47659"
 BRANCH = "codex/rust-expert-streaming-m0-m1"
 REPOSITORY = "MahdiHedhli/PulsarMLX"
 ARCHIVE_SHA = "8836fac6de10d2af682c21b3c1d9a1699e6a9121f120fd3f890de59d071662d2"
 CONTROLLER = Path(__file__).resolve().parents[2]
 STEM = "packed_affine_m1_inputs_v1"
 RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v2.json"
-RECONCILIATION_SHA = "c93382180303afb3ed74f6b673af383df26200053be55c225040901ee85762be"
+RECONCILIATION_SHA = "0d323a72d3775d0d6a1631867d7b78b7163db8dc07a1d369f3b5f776e05e0991"
 ORIGINAL_RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v1.json"
 ORIGINAL_RECONCILIATION_SHA = "ee0492eeeae56eca9e435bcb4649e21bd128cc7a2e6e816d260d9dc463ba756f"
 INVENTORY = "scripts/ci/packed_affine_m1a_continuation_source_v1.json"
-INVENTORY_SHA = "9378a7ae1c8cec55e1f6a68048e78ffe714c9beb4e276d8d45a9314accd960d4"
+INVENTORY_SHA = "0fba859129320b062a909d0039f7d79af81d510676d18410376676081a6b60e6"
 AUTHORITY = {"M0_sha256": "943e0a9e2358985038f2fba31831fa302d3aeae3dd8f50e85970a4760931a49b",
              "contract_sha256": "eb96edd30be70ecf1b06ed3506ed964f7ffe24b7bf234b09664930f256155033",
              "prompt_commit": "9d8f1a3663b0ae40aff8ab42c2cd28a52f150052",

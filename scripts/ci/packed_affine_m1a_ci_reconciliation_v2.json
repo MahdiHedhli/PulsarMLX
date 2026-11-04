@@ -8,9 +8,9 @@
     "sha256": "c7a99cf33d98ee9dfe0aa87d62c13b17e9446f3cddb1a060642ec09f6c44cf4d"
   },
   "campaign_identity": "f020-packed-affine-adoption-m1-v1",
-  "candidate": "f5b273bda7abd396d519f4d6b636f04855df3de8",
-  "candidate_inventory_sha256": "9378a7ae1c8cec55e1f6a68048e78ffe714c9beb4e276d8d45a9314accd960d4",
-  "candidate_tree": "1efa0a0e744f618880dfe321bab0a5b0c446ce9e",
+  "candidate": "f61a8c19d6aad2265a12f417ddbe842024fe32f2",
+  "candidate_inventory_sha256": "0fba859129320b062a909d0039f7d79af81d510676d18410376676081a6b60e6",
+  "candidate_tree": "5f8a8c55f4e0067b10dcd6606fe05935e8e47659",
   "cumulative_designated_dispatches_after_continuation": 2,
   "disposition": "preserved completed zero-execution hosted-capacity failure; not accepted, skipped or erased",
   "existing_held_opportunity_released_conditionally": 1,
