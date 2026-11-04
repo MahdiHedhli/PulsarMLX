@@ -36,6 +36,15 @@ def qualify(campaign, rust_grader):
         else:g=grade(reference,report)
         rows.append({'report':entry['report'],'report_sha256':sha(report.read_bytes()),'rust_gates_sha256':sha(rust_path.read_bytes()),'exact_gates':g})
     result={'contract_sha256':freeze['contract_sha256'],'source_commit':freeze['source_commit'],'source_tree':freeze['source_tree'],'native_libraries':freeze['native_libraries'],'mechanism_sha256':sha((root/'mechanism.json').read_bytes()),'binary_sha256':freeze['binary_sha256'],'fixture_manifest_sha256':freeze['fixture_manifest_sha256'],'host_role':freeze['host_role'],'reference_envelope':reference_budget.check(),'mechanism':'PASS','correctness':'PASS','reports':rows,'M1b_released':False,'note':'Both required host acceptances must bind identical source and fixture identities before Studio timing release.'}
+    if freeze.get('schema') == 'pulsarmlx.m1a-continuation/1':
+        from m1a_continuation import binding, equal
+        final_freeze,final_mechanism,final_entries=check_campaign(campaign)
+        equal(final_freeze,freeze,'receipt changed during qualification')
+        equal(final_mechanism,mechanism,'mechanism changed during qualification')
+        for row in rows:
+            if sha((root/row['report']).read_bytes())!=row['report_sha256']:raise ValueError('report changed during qualification')
+        result['continuation']=binding(campaign)
+        result['shipping_default']='copied'
     with (campaign/'m1a-acceptance.json').open('xb') as f:f.write(canonical(result))
     return {'host_role':freeze['host_role'],'correctness':'PASS','reports':len(rows)}
 if __name__=='__main__':

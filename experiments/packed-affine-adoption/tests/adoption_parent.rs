@@ -11,8 +11,44 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
+#[path = "support/continuation.rs"]
+mod continuation;
 #[path = "support/performance.rs"]
 mod performance;
+
+fn continuation_call(campaign: &Path, freeze: &Value, command: &str, extra: &[&str]) -> Value {
+    let helper = Path::new(env!("CARGO_MANIFEST_DIR")).join("tools/m1a_continuation.py");
+    let python = Path::new(freeze["python"].as_str().expect("bound interpreter"));
+    assert_eq!(
+        packed_affine_adoption::file_sha256(python).unwrap(),
+        freeze["python_sha256"]
+    );
+    let relative = "experiments/packed-affine-adoption/tools/m1a_continuation.py";
+    let row = freeze["source_inventory"]["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["path"] == relative)
+        .expect("bound helper source");
+    assert_eq!(
+        packed_affine_adoption::file_sha256(&helper).unwrap(),
+        row["sha256"]
+    );
+    let result = std::process::Command::new(python)
+        .arg("-B")
+        .arg(helper)
+        .arg(command)
+        .arg(campaign)
+        .args(extra)
+        .output()
+        .expect("host admission helper");
+    assert!(
+        result.status.success(),
+        "continuation admission refused: {}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    serde_json::from_slice(&result.stdout).expect("continuation admission result")
+}
 
 fn create(path: &Path, value: &Value) {
     let mut f = fs::OpenOptions::new()
@@ -28,6 +64,14 @@ fn read(path: &Path) -> Value {
 }
 fn child(root: &Path, prefix: &Path, label: &str, mut config: Value, seconds: u64) -> Value {
     let freeze = read(&root.parent().unwrap().join("freeze.json"));
+    if freeze["schema"] == continuation::SCHEMA {
+        continuation_call(
+            root.parent().unwrap(),
+            &freeze,
+            "before-child",
+            &["--label", label],
+        );
+    }
     for key in [
         "native_libraries",
         "binary_sha256",
@@ -136,10 +180,33 @@ fn required_native_m1a() {
         std::env::var_os("PULSAR_ADOPTION_CAMPAIGN").expect("existing frozen campaign required"),
     );
     let freeze = read(&campaign.join("freeze.json"));
+    let phase = std::env::var("PULSAR_ADOPTION_PHASE").ok();
+    let continuation_raw = continuation::raw_allowed(&freeze, phase.as_deref())
+        .expect("freeze policy refused before launch");
+    if continuation_raw.is_some() {
+        let parent = std::env::current_exe().expect("actual parent path");
+        continuation_call(
+            &campaign,
+            &freeze,
+            "admit",
+            &[
+                "--parent",
+                parent.to_str().unwrap(),
+                "--binary",
+                env!("CARGO_BIN_EXE_adoption-probe"),
+            ],
+        );
+    }
     assert_eq!(freeze["contract_sha256"], packed_affine_adoption::CONTRACT);
     assert_eq!(freeze["host_role"], role);
     let root = campaign.join("m1a");
     let prefix = PathBuf::from(std::env::var_os("MLX_C_PREFIX").unwrap());
+    if continuation_raw.is_some() {
+        assert_eq!(
+            prefix.canonicalize().unwrap(),
+            PathBuf::from(freeze["native_prefix"].as_str().unwrap())
+        );
+    }
     assert_eq!(
         prefix,
         PathBuf::from(std::env::var_os("MLX_PREFIX").unwrap()),
@@ -189,18 +256,20 @@ fn required_native_m1a() {
     );
     // Intent is create-only, before dispatch. An unknown result is spent until
     // reconciled. This campaign root is carried forward across host handoffs.
-    create(
-        &campaign.join("raw-probe.intent.json"),
-        &json!({"binary_sha256":freeze["binary_sha256"],"host_role":role,"attempt":1}),
-    );
-    let raw = child(
-        &root,
-        &prefix,
-        "raw-probe",
-        json!({"mode":"raw-length"}),
-        60,
-    );
-    create(&root.join("raw-probe-summary.json"), &raw);
+    if continuation_raw != Some(false) {
+        create(
+            &campaign.join("raw-probe.intent.json"),
+            &json!({"binary_sha256":freeze["binary_sha256"],"host_role":role,"attempt":1}),
+        );
+        let raw = child(
+            &root,
+            &prefix,
+            "raw-probe",
+            json!({"mode":"raw-length"}),
+            60,
+        );
+        create(&root.join("raw-probe-summary.json"), &raw);
+    }
     let fixtures = PathBuf::from(freeze["fixture_root"].as_str().unwrap());
     let manifest = packed_affine_adoption::cases::manifest(
         &fixtures,
@@ -280,8 +349,9 @@ fn required_native_m1a() {
     }
     // This is a mechanism receipt only. The independent reference wrapper and
     // original Slice 2C gates must accept every saved output before M1b release.
-    create(
-        &root.join("mechanism.json"),
-        &json!({"contract_sha256":packed_affine_adoption::CONTRACT,"host_role":role,"fixture_manifest_sha256":freeze["fixture_manifest_sha256"],"source_commit":freeze["source_commit"],"source_tree":freeze["source_tree"],"binary_sha256":freeze["binary_sha256"],"reports":rows,"mechanism":"PASS","correctness":"PENDING_REFERENCE_GATES","M1b_released":false}),
-    );
+    let mut mechanism = json!({"contract_sha256":packed_affine_adoption::CONTRACT,"host_role":role,"fixture_manifest_sha256":freeze["fixture_manifest_sha256"],"source_commit":freeze["source_commit"],"source_tree":freeze["source_tree"],"binary_sha256":freeze["binary_sha256"],"reports":rows,"mechanism":"PASS","correctness":"PENDING_REFERENCE_GATES","M1b_released":false});
+    if continuation_raw.is_some() {
+        mechanism["continuation"] = continuation_call(&campaign, &freeze, "seal", &[]);
+    }
+    create(&root.join("mechanism.json"), &mechanism);
 }

@@ -70,7 +70,13 @@ def check_campaign(campaign):
     expected=expected_population(read(fixture),read(inherited));entries=admit_entries(mechanism,expected)
     controls=read(root/'injected-controls.json')
     if controls!={'C-GEOMETRY':{'reached':True,'native_calls':0},'C-CALLBACK':{'reached':True,'injected':True,'native_fallback_claim':False}}: raise ValueError('unreached injected gate')
-    admit_raw(root)
+    if freeze.get('schema') == 'pulsarmlx.m1a-continuation/1':
+        from m1a_continuation import validate_reports
+        validate_reports(campaign,freeze,mechanism)
+    elif freeze.get('schema') == 'pulsarmlx.adoption-host-freeze/1':
+        admit_raw(root)
+    else:
+        raise ValueError('unknown campaign schema')
     pairs={}
     for entry in entries:
         label=entry['label'];path=confined(root,entry['report']);config_path=confined(root,label+'.config.json');config=read(config_path)

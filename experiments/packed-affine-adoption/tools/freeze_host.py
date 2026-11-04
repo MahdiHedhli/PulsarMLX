@@ -12,7 +12,7 @@ REPO=Path(__file__).resolve().parents[3]
 def run(*args):return subprocess.check_output(args,cwd=REPO,text=True).strip()
 def file_sha(path):
     with path.open("rb") as f:return hashlib.file_digest(f,"sha256").hexdigest()
-def freeze(a):
+def prepare(a):
     if run('git','status','--porcelain'):raise ValueError('freeze requires clean source; preserve newer work')
     source=run('git','rev-parse','HEAD');tree=run('git','rev-parse','HEAD^{tree}')
     if source!=a.source_commit:raise ValueError('source drift')
@@ -50,6 +50,10 @@ def freeze(a):
         acceptance=json.loads(a.native_ci_acceptance.read_bytes())
         if a.host_role!='m1-ultra-studio' or acceptance['host_role']!='native-ci' or acceptance['source_commit']!=source or acceptance['source_tree']!=tree or acceptance['fixture_manifest_sha256']!=mh or acceptance['correctness']!='PASS' or acceptance['mechanism']!='PASS':raise ValueError('CI acceptance identity')
         record['native_ci_acceptance']=str(a.native_ci_acceptance.resolve());record['native_ci_acceptance_sha256']=sha(a.native_ci_acceptance.read_bytes())
+    return record
+def freeze(a):
+    record=prepare(a)
+    source=record['source_commit'];tree=record['source_tree']
     a.campaign.mkdir() # never replace a spent/unknown campaign
     with (a.campaign/'freeze.json').open('x') as f:json.dump(record,f,sort_keys=True,indent=2);f.write('\n')
     print(json.dumps({'source_commit':source,'source_tree':tree,'freeze_sha256':sha((a.campaign/'freeze.json').read_bytes()),'host_role':a.host_role}))

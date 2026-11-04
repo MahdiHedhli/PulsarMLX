@@ -1,0 +1,78 @@
+{
+  "diagnostic_check": {
+    "bytes": 2042,
+    "sha256": "7f6118e2ec6b83cccc6b6807e6a0d24e049f06ded7b8642310883d5c638d492e"
+  },
+  "diagnostic_check_intent": {
+    "bytes": 265,
+    "sha256": "1e4e6aa8289357ee39b0e271b034815aff57dcb175409235496425d0055eec9a"
+  },
+  "diagnostic_config": {
+    "bytes": 2130,
+    "sha256": "93f225a3415d8191267079c8fcc5b4f033f85bd1ad6533f2da2cab09d4b17fee"
+  },
+  "diagnostic_intent": {
+    "bytes": 434,
+    "sha256": "66e77fa42a502b96ab1db8bad6392cc50b1c1d903a4c463cc5deb06411f6311e"
+  },
+  "diagnostic_outcome": {
+    "bytes": 339,
+    "sha256": "9e892f8a603cc682acd4d15c1b9d66718a0aaaf91f568c35828e1bb7ddf4106b"
+  },
+  "diagnostic_receipt": {
+    "bytes": 16978,
+    "sha256": "d867b245b6be75e62cf352ba5c73cf376a2b2b3fa9b66943e8beb062c3d8f920"
+  },
+  "diagnostic_report": {
+    "bytes": 6051,
+    "sha256": "adfe31209101e1f3e8c0031a7c6d244480b704db5308bf151f03aeb53d1ca2a7"
+  },
+  "diagnostic_rust_gates": {
+    "bytes": 12116,
+    "sha256": "3e9f78ee7172d8122f1819d7e699884213eecb99be89428f9447a9f33712090d"
+  },
+  "failure": {
+    "bytes": 1832,
+    "sha256": "92df14656fc1ba9fee6407e46e5b086d022dbed80e3530a616bee9fc8e0e9607"
+  },
+  "freeze": {
+    "bytes": 2824,
+    "sha256": "3066d1259eff69f174854f26656ef35980365063710709090939cba2adde668a"
+  },
+  "host001": {
+    "bytes": 924,
+    "sha256": "a366b2159c0053ecdd20190944938cb62c8904e2d762b74b5daeec00cf7a68c6"
+  },
+  "host002": {
+    "bytes": 3721,
+    "sha256": "c1fd6e6496ab959bacbd3a3fe48a30fe8b20617e8dd0ca90b4aec619a52c5ab8"
+  },
+  "native_install": {
+    "bytes": 4533,
+    "sha256": "7c2301eb59c037191cd296e3139a7ca4a93e61e27c5e8b05b1ae717888b16523"
+  },
+  "raw_config": {
+    "bytes": 1308,
+    "sha256": "2065672478b9e47dccacdb446f10bb3ff044cabc4097653ed92b555221e004d7"
+  },
+  "raw_events": {
+    "bytes": 783,
+    "sha256": "af4d86d421ececfddb6a7e7dea8ba42c2fb06e1cca44766ebe6048b56a468635"
+  },
+  "raw_intent": {
+    "bytes": 140,
+    "sha256": "3f51c7ec0dbf97f454a8290005eb1810148af1986c33f6d9c13ec9fa26a7d5a2"
+  },
+  "raw_outcome": {
+    "bytes": 229,
+    "sha256": "a427a8b7250757122a523d09caa4bda890865aed540ac7fd6d7c878972b69ea9"
+  },
+  "raw_report": {
+    "bytes": 1820,
+    "sha256": "32bd5be256ee4ee58b62c085527e80e455ce777ae3875aa3f461a7ec29dbc086"
+  },
+  "raw_summary": {
+    "bytes": 1821,
+    "sha256": "a2f9d4679e82769f9dd91b6f6269e77791da39aaa1b49a2e09f8edddb4378b11"
+  }
+}
