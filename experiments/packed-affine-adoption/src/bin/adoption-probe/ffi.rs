@@ -1,5 +1,7 @@
 use std::ffi::c_void;
 extern "C" {
+    pub fn pa_diagnostic_enable(fd: i32) -> i32;
+    pub fn pa_diagnostic_snapshot(out: *mut u64, count: usize, error: *mut u8, cap: usize) -> i32;
     pub fn pa_page() -> usize;
     pub fn pa_max_buffer() -> usize;
     pub fn pa_open() -> *mut c_void;

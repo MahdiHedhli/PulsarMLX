@@ -1,6 +1,7 @@
 //! Portable admission/lease/report logic. This library never calls MLX.
 #![forbid(unsafe_code)]
 pub mod cases;
+pub mod copied_diagnostic;
 pub mod lease;
 pub mod policy;
 pub mod selected_preflight;

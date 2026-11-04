@@ -153,3 +153,9 @@ Live working data is bounded at 32 MiB; requested MLX memory/cache limits are
 bounded host instrumentation. Raw native counters and adopted capacity are
 reported separately. They are not proof of process RSS, physical wiring, exact
 allocator overlap or zero hidden materialization. Physical device I/O is unknown.
+
+## Copied-control source continuation
+
+The [copied diagnostic documentation](COPIED_DIAGNOSTIC.md) describes the output-handle
+repair, host-only regression and separate prospective copied-only route. It grants
+no native execution, raw-probe retry, full-M1a acceptance or timing release.

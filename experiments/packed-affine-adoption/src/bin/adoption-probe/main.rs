@@ -13,7 +13,7 @@ use packed_affine_adoption::{
 };
 use serde_json::{json, Value};
 use slab::Slab;
-use std::{fs, io::Write, path::Path, sync::atomic::Ordering, time::Instant};
+use std::{fs, io::Write, os::fd::AsRawFd, path::Path, sync::atomic::Ordering, time::Instant};
 fn event(f: &mut fs::File, value: Value) -> Result<(), String> {
     writeln!(f, "{value}").map_err(|e| e.to_string())
 }
@@ -102,7 +102,8 @@ fn run(config: &Value, out: &Path, events: &mut fs::File) -> Result<Value, Strin
         Some("copied") => false,
         _ => return Err("arm".into()),
     };
-    let diagnostic = config["mode"] == "diagnostic";
+    let diagnostic = config["mode"] == "diagnostic"
+        || config["mode"] == packed_affine_adoption::copied_diagnostic::MODE;
     let resident = config["mode"] == "resident";
     if !diagnostic && !resident && config["mode"] != "fill" {
         return Err("mode".into());
@@ -194,6 +195,14 @@ fn run(config: &Value, out: &Path, events: &mut fs::File) -> Result<Value, Strin
             };
             if receipt.plane.expert != c.expert || receipt.actual_sha256 != c.expected_hashes {
                 return Err("receipt identity".into());
+            }
+            if diagnostic {
+                event(
+                    events,
+                    json!({"phase":"source-read-verified-before-native","id":c.id,
+                    "slot":slot,"generation":generation.number(),"receipt":receipt}),
+                )?;
+                events.sync_data().map_err(|e| e.to_string())?;
             }
             let view_started = Instant::now();
             // No payload reference survives into native preparation.
@@ -306,6 +315,21 @@ fn main() {
             .map_err(|e| e.to_string())?;
         let config: Value = serde_json::from_slice(&fs::read(&args[1]).map_err(|e| e.to_string())?)
             .map_err(|e| e.to_string())?;
+        let copied_only = config["mode"] == packed_affine_adoption::copied_diagnostic::MODE;
+        if copied_only || config.get("diagnostic_receipt").is_some() {
+            packed_affine_adoption::copied_diagnostic::admit_child(&config)?;
+        }
+        let bridge_events = if copied_only || config["mode"] == "diagnostic" {
+            let file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(out.join("bridge-events.jsonl"))
+                .map_err(|e| e.to_string())?;
+            native::enable_diagnostic(file.as_raw_fd())?;
+            Some(file)
+        } else {
+            None
+        };
         let provenance = provenance::collect(&config)?;
         event(
             &mut events,
@@ -318,6 +342,19 @@ fn main() {
                 json!({"error":e,"quarantine":true,"native_qualification":"FAILED","shipping_default":"copied"})
             }
         };
+        if bridge_events.is_some() {
+            report["bridge_diagnostic"] = native::diagnostic_snapshot();
+            bridge_events
+                .as_ref()
+                .unwrap()
+                .sync_all()
+                .map_err(|e| e.to_string())?;
+        }
+        if copied_only {
+            report["diagnostic_only"] = json!(true);
+            report["diagnostic_receipt_sha256"] = config["diagnostic_receipt_sha256"].clone();
+            report["decision"] = json!({"M1a_acceptance":false,"performance_claim":false,"shipping_default":"copied"});
+        }
         report["provenance"] = provenance;
         report["frozen_host"] = config["host"].clone();
         report["source_binding"] = json!({"source_commit":config["source_commit"],"source_tree":config["source_tree"],"dependency_manifest_sha256":config["dependency_manifest_sha256"],"generator_hashes":config["generator_hashes"]});
