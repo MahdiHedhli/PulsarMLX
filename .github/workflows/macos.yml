@@ -14,11 +14,6 @@ on:
           - auto
           - full
           - evidence
-      packed_affine_m1a:
-        description: Run the single designated frozen packed-affine M1a campaign (full mode only)
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -1326,22 +1321,23 @@ jobs:
           assert os.environ.get("PULSARMLX_MODEL_GGUF", "") == ""
           PY
 
-      - name: Qualify frozen packed-affine M1a
-        if: github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full'
+      - name: Qualify frozen packed-affine M1a continuation
+        if: github.event_name == 'workflow_dispatch'
         env:
           PULSAR_ADOPTION_PHASE: m1a
         run: |
-          .venv/bin/python -B scripts/ci/packed_affine_m1a_v1.py run \
+          .venv/bin/python -B scripts/ci/packed_affine_m1a_v1.py run-selected \
             --root "$RUNNER_TEMP/packed-affine-m1a"
-      - name: Prepare sanitized packed-affine evidence and explicit outcome
+      - name: Prepare sanitized packed-affine continuation evidence
         id: packed_affine_evidence
-        if: always() && github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full'
+        if: always()
         run: |
-          python3 -B scripts/ci/packed_affine_m1a_v1.py export \
+          python3 -B scripts/ci/packed_affine_m1a_v1.py export-selected \
             --root "$RUNNER_TEMP/packed-affine-m1a" \
             --public "$RUNNER_TEMP/packed-affine-m1a-public"
-      - name: Upload packed-affine M1a outcome including failures
-        if: always() && github.event_name == 'workflow_dispatch' && inputs.packed_affine_m1a == true && inputs.mode == 'full' && steps.packed_affine_evidence.outcome == 'success'
+      - name: Upload packed-affine M1a continuation outcome
+        if: >-
+          ${{ always() && steps.packed_affine_evidence.outputs.selected == 'true' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: packed-affine-m1a-${{ github.run_id }}-${{ github.run_attempt }}

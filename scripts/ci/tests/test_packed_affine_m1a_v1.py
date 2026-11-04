@@ -31,7 +31,7 @@ class Controls(unittest.TestCase):
         self.env = {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "workflow_dispatch",
                     "GITHUB_REPOSITORY": m.REPOSITORY, "GITHUB_REF": "refs/heads/" + m.BRANCH,
                     "GITHUB_RUN_ATTEMPT": "1", "PULSAR_ADOPTION_PHASE": "m1a", "GITHUB_RUN_ID": "123"}
-        self.event = {"inputs": {"mode": "full", "packed_affine_m1a": "true"}}
+        self.event = {"inputs": {"mode": "full"}}
         self.authority = m.load_reconciliation()
         old = self.authority["predecessor"]
         self.run = {"id": 123, "head_sha": "controller", "event": "workflow_dispatch", "head_branch": m.BRANCH,
@@ -90,7 +90,7 @@ class Controls(unittest.TestCase):
             with self.assertRaises(CheckoutBoundary if allowed else (ValueError, FileNotFoundError, FileExistsError, OSError)):
                 m.run_native_ci(root)
             if allowed:
-                launch.assert_called_once_with(["git", "-C", str(m.CONTROLLER), "worktree", "add", "--detach", str(root / "source"), m.CANDIDATE], check=True)
+                launch.assert_called_once_with(["git", "-C", str(m.CONTROLLER), "fetch", "--no-tags", "origin", m.CANDIDATE], check=True)
             else:
                 launch.assert_not_called()
             capture.assert_not_called()
@@ -116,6 +116,39 @@ class Controls(unittest.TestCase):
         for inputs in ({}, {"mode": "full", "packed_affine_m1a": "false"}, {"mode": "auto", "packed_affine_m1a": "true"}):
             with self.subTest(inputs=inputs), self.assertRaises(ValueError):
                 m.require_route(self.env, {"inputs": inputs})
+
+    def test_only_exact_full_manual_selection(self):
+        self.assertTrue(m.selected(self.env,self.event))
+        for event in ('push','pull_request'):
+            self.assertFalse(m.selected({**self.env,'GITHUB_EVENT_NAME':event},self.event))
+        for mode in ('auto','evidence'):
+            self.assertFalse(m.selected(self.env,{'inputs':{'mode':mode}}))
+        for inputs in ({},{'mode':'full','packed_affine_m1a':'true'},{'mode':'unknown'}):
+            with self.assertRaises(ValueError):m.selected(self.env,{'inputs':inputs})
+        with self.assertRaises(ValueError):m.selected({**self.env,'GITHUB_REF':'refs/heads/main'},self.event)
+
+    def test_original_authority_preserved_and_successor_bound(self):
+        self.assertEqual(m.digest(m.CONTROLLER/m.ORIGINAL_RECONCILIATION),m.ORIGINAL_RECONCILIATION_SHA)
+        self.assertEqual(self.authority['candidate_inventory_sha256'],m.INVENTORY_SHA)
+        self.assertEqual(self.authority['additional_designated_dispatches_added'],0)
+        self.assertEqual(self.authority['existing_held_opportunity_released_conditionally'],1)
+
+    def test_actual_C_and_inventory_refused_before_build(self):
+        source=self.root/'source';source.mkdir()
+        for head,tree,dirty in [('wrong',m.TREE,''),(m.CANDIDATE,'wrong',''),(m.CANDIDATE,m.TREE,' M changed')]:
+            def git(root,*args):
+                return head if args==('rev-parse','HEAD') else tree if args==('rev-parse','HEAD^{tree}') else dirty
+            with patch.object(m,'git',side_effect=git),patch.object(m,'capture') as build:
+                with self.assertRaises(ValueError):m.verify_candidate(source)
+                build.assert_not_called()
+
+    def test_H_checkout_drift_refused_before_history_or_launch(self):
+        event=self.root/'event.json';event.write_text(json.dumps(self.event))
+        with patch.dict(os.environ,{**self.env,'GITHUB_EVENT_PATH':str(event),'GITHUB_SHA':'H'},clear=True),\
+             patch.object(m.platform,'system',return_value='Darwin'),patch.object(m.platform,'machine',return_value='arm64'),\
+             patch.object(m,'git',return_value='different'),patch.object(m,'reconcile_admission') as api,patch.object(m.subprocess,'run') as launch:
+            with self.assertRaises(ValueError):m.run_native_ci(self.root/'out')
+            api.assert_not_called();launch.assert_not_called()
 
     def test_wrong_host_ref_or_m1b_cannot_enter(self):
         for key, value in (("GITHUB_ACTIONS", "false"), ("GITHUB_REPOSITORY", "fork/repo"),
@@ -305,6 +338,27 @@ class Controls(unittest.TestCase):
     def test_credential_like_content_refuses_export(self):
         with self.assertRaises(ValueError):
             m.public_text("Bearer " + "synthetic_test_sentinel", [])
+
+    def test_relative_source_paths_survive_publication(self):
+        text=json.dumps({'path':'experiments/packed-affine-adoption/src/bin/adoption-probe/main.rs',
+                         'source':'/Users/test-owner/source/experiments/packed-affine-adoption/src/bin/grade-rust.rs'})
+        value=json.loads(m.public_text(text,[('/Users/test-owner/source','<SOURCE>')]))
+        self.assertEqual(value['path'],'experiments/packed-affine-adoption/src/bin/adoption-probe/main.rs')
+        self.assertEqual(value['source'],'<SOURCE>/experiments/packed-affine-adoption/src/bin/grade-rust.rs')
+
+    def test_failed_export_does_not_relaunch_or_erase_claims(self):
+        root=self.root/'failed';root.mkdir();m.write_new(root/'campaign-claim.json',{'spent':True})
+        m.write_new(root/'result.json',{'M1a_ran':False,'M1a_passed':False,'failure':'Bearer '+'test_sentinel'})
+        with patch.object(m,'run_native_ci') as run,patch.object(m,'capture') as launch:
+            with self.assertRaises(ValueError):m.export_public(root,self.root/'public')
+            run.assert_not_called();launch.assert_not_called()
+        self.assertTrue((root/'campaign-claim.json').exists())
+
+    def test_absent_campaign_exports_truthful_no_execution(self):
+        with patch.dict(os.environ,{'GITHUB_STEP_SUMMARY':str(self.root/'summary')}):
+            m.export_public(self.root/'not-started',self.root/'public')
+        result=json.loads((self.root/'public/export-outcome.json').read_text())
+        self.assertFalse(result['M1a_ran']);self.assertFalse(result['M1a_passed'])
 
     def test_ambiguous_build_artifacts_refused(self):
         p = self.root / "cargo.jsonl"

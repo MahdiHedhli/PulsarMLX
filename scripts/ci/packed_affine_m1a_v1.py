@@ -18,15 +18,24 @@ import tarfile
 import urllib.parse
 import urllib.request
 
-CANDIDATE = "190c64213135a756f5e3d61059036b9af2d78d7a"
-TREE = "1bd6cf2f01d5a921fd9c402a109f36072721274f"
+CANDIDATE = "f5b273bda7abd396d519f4d6b636f04855df3de8"
+TREE = "1efa0a0e744f618880dfe321bab0a5b0c446ce9e"
 BRANCH = "codex/rust-expert-streaming-m0-m1"
 REPOSITORY = "MahdiHedhli/PulsarMLX"
 ARCHIVE_SHA = "8836fac6de10d2af682c21b3c1d9a1699e6a9121f120fd3f890de59d071662d2"
 CONTROLLER = Path(__file__).resolve().parents[2]
 STEM = "packed_affine_m1_inputs_v1"
-RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v1.json"
-RECONCILIATION_SHA = "ee0492eeeae56eca9e435bcb4649e21bd128cc7a2e6e816d260d9dc463ba756f"
+RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v2.json"
+RECONCILIATION_SHA = "c93382180303afb3ed74f6b673af383df26200053be55c225040901ee85762be"
+ORIGINAL_RECONCILIATION = "scripts/ci/packed_affine_m1a_ci_reconciliation_v1.json"
+ORIGINAL_RECONCILIATION_SHA = "ee0492eeeae56eca9e435bcb4649e21bd128cc7a2e6e816d260d9dc463ba756f"
+INVENTORY = "scripts/ci/packed_affine_m1a_continuation_source_v1.json"
+INVENTORY_SHA = "9378a7ae1c8cec55e1f6a68048e78ffe714c9beb4e276d8d45a9314accd960d4"
+AUTHORITY = {"M0_sha256": "943e0a9e2358985038f2fba31831fa302d3aeae3dd8f50e85970a4760931a49b",
+             "contract_sha256": "eb96edd30be70ecf1b06ed3506ed964f7ffe24b7bf234b09664930f256155033",
+             "prompt_commit": "9d8f1a3663b0ae40aff8ab42c2cd28a52f150052",
+             "prompt_sha256": "c7a99cf33d98ee9dfe0aa87d62c13b17e9446f3cddb1a060642ec09f6c44cf4d"}
+CAMPAIGN = "f020-packed-affine-adoption-m1-v1"
 
 
 def digest(path):
@@ -46,20 +55,65 @@ def require_route(env, event):
                 "GITHUB_RUN_ATTEMPT": "1", "PULSAR_ADOPTION_PHASE": "m1a"}
     if any(env.get(k) != v for k, v in required.items()):
         raise ValueError("designated native CI M1a route/attempt required")
-    if event.get("inputs") != {"mode": "full", "packed_affine_m1a": "true"}:
+    if event.get("inputs") != {"mode": "full"}:
         raise ValueError("explicit full/M1a inputs required")
     if not env.get("GITHUB_RUN_ID", "").isdigit():
         raise ValueError("actual run ID required")
 
 
 def load_reconciliation():
+    original = (CONTROLLER / ORIGINAL_RECONCILIATION).read_bytes()
+    if hashlib.sha256(original).hexdigest() != ORIGINAL_RECONCILIATION_SHA:
+        raise ValueError("historical Rust009 authority changed")
     raw = (CONTROLLER / RECONCILIATION).read_bytes()
     if hashlib.sha256(raw).hexdigest() != RECONCILIATION_SHA:
         raise ValueError("missing or changed Rust009 reconciliation authority")
     record = json.loads(raw)
     if record["candidate"] != CANDIDATE or record["candidate_tree"] != TREE:
         raise ValueError("reconciliation candidate mismatch")
+    if record["predecessor"] != json.loads(original)["predecessor"] or record["prior_reconciliation_sha256"] != ORIGINAL_RECONCILIATION_SHA:
+        raise ValueError("historical ledger changed")
+    if record["candidate_inventory_sha256"] != INVENTORY_SHA or digest(CONTROLLER / INVENTORY) != INVENTORY_SHA:
+        raise ValueError("C inventory authority changed")
     return record
+
+
+def selected(env, event):
+    if env.get("GITHUB_EVENT_NAME") != "workflow_dispatch":
+        return False
+    if event.get("inputs") in ({"mode": "auto"}, {"mode": "evidence"}):
+        return False
+    require_route(env, event)  # malformed full/manual selection is a refusal
+    return True
+
+
+def verify_candidate(source):
+    if git(source, "rev-parse", "HEAD") != CANDIDATE or git(source, "rev-parse", "HEAD^{tree}") != TREE or git(source, "status", "--porcelain", "--untracked-files=all"):
+        raise ValueError("actual C commit/tree/cleanliness")
+    if digest(CONTROLLER / INVENTORY) != INVENTORY_SHA:
+        raise ValueError("inventory pin")
+    rows = json.loads((CONTROLLER / INVENTORY).read_bytes())
+    if len(rows) != 70 or len({r["path"] for r in rows}) != 70:
+        raise ValueError("complete C source inventory")
+    for row in rows:
+        p = source / row["path"]
+        if not p.resolve(strict=True).is_relative_to(source.resolve(strict=True)) or p.stat().st_size != row["bytes"] or digest(p) != row["sha256"]:
+            raise ValueError("C source bytes changed")
+
+
+def write_ci_grant(root, env, controller_sha):
+    grant = root / "continuation-grant.json"
+    write_new(grant, {"schema": "pulsarmlx.m1a-ci-continuation-grant/1", "authority": AUTHORITY,
+                     "candidate": CANDIDATE, "candidate_tree": TREE, "inventory_sha256": INVENTORY_SHA,
+                     "controller_commit": controller_sha, "controller_tree": git(CONTROLLER, "rev-parse", "HEAD^{tree}"),
+                     "campaign_identity": CAMPAIGN, "run_id": int(env["GITHUB_RUN_ID"]), "run_attempt": 1,
+                     "raw_budget": {"allowed": 1, "used": 0, "additional": 0},
+                     "historical_run_ids": [41481802750], "current_history_ids": [41481802750, int(env["GITHUB_RUN_ID"])],
+                     "predecessor": {"attempt": 1, "job_id": 125402293053, "runner_id": 0, "steps": [], "artifacts": 0,
+                                     "head": "015d748fe14ed555027ead7c0a2fb2a84a39fa35", "tree": "de7afb423e274a41e37fa06cc475b10c5b4ca345"},
+                     "admission_evidence": str(root / "admission-evidence.json"),
+                     "admission_sha256": digest(root / "admission-evidence.json")})
+    return grant
 
 
 def exact_fields(value, expected):
@@ -252,7 +306,7 @@ def run_native_ci(root):
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise ValueError("required Apple native CI host")
     sha = git(CONTROLLER, "rev-parse", "HEAD")
-    if sha != env["GITHUB_SHA"] or git(CONTROLLER, "status", "--porcelain", "--untracked-files=no"):
+    if sha != env["GITHUB_SHA"] or git(CONTROLLER, "status", "--porcelain", "--untracked-files=all"):
         raise ValueError("workflow checkout drift")
     root.mkdir()
     summary = {"candidate": CANDIDATE, "candidate_tree": TREE, "controller_commit": sha,
@@ -265,9 +319,10 @@ def run_native_ci(root):
         write_new(root / "campaign-claim.json", summary)
         summary["stage"] = "prepare"
         source = root / "source"
+        subprocess.run(["git", "-C", str(CONTROLLER), "fetch", "--no-tags", "origin", CANDIDATE], check=True)
         subprocess.run(["git", "-C", str(CONTROLLER), "worktree", "add", "--detach", str(source), CANDIDATE], check=True)
-        if git(source, "rev-parse", "HEAD^{tree}") != TREE or git(source, "status", "--porcelain"):
-            raise ValueError("compiled candidate tree/cleanliness")
+        verify_candidate(source)
+        grant = write_ci_grant(root, env, sha)
         inputs = root / "inputs"
         manifest = json.loads((CONTROLLER / "scripts/ci" / (STEM + ".json")).read_text())
         extract_inputs(CONTROLLER / "scripts/ci" / (STEM + ".tar.gz"), manifest, inputs)
@@ -307,7 +362,8 @@ def run_native_ci(root):
             capture(root, label + "-linkage", ["/usr/bin/otool", "-L", binary], source, env)
         campaign = root / "campaign"
         summary["stage"] = "freeze"
-        capture(root, "freeze", [sys.executable, "-B", "experiments/packed-affine-adoption/tools/freeze_host.py",
+        capture(root, "freeze", [sys.executable, "-B", "experiments/packed-affine-adoption/tools/m1a_continuation.py", "freeze",
+                "--phase", "m1a", "--raw-policy", "CI_FRESH_ONCE", "--ci-grant", grant,
                 "--host-role", "native-ci", "--source-commit", CANDIDATE, "--campaign", campaign,
                 "--fixture-root", inputs / "fixtures", "--portable", inputs / "portable.json", "--reference", inputs / "reference.json",
                 "--native-prefix", prefix, "--native-build-receipt", receipt, "--binary", child, "--parent", parent, "--rust-grader", grader], source, env)
@@ -321,7 +377,15 @@ def run_native_ci(root):
         acceptance = json.loads((campaign / "m1a-acceptance.json").read_text())
         if acceptance["correctness"] != "PASS" or acceptance["mechanism"] != "PASS" or len(acceptance["reports"]) != 52:
             raise ValueError("incomplete M1a acceptance")
-        summary.update(stage="complete", M1a_passed=True, acceptance_sha256=digest(campaign / "m1a-acceptance.json"))
+        continuation = acceptance["continuation"]
+        if acceptance["source_commit"] != CANDIDATE or acceptance["source_tree"] != TREE or continuation["authority"] != AUTHORITY or continuation["raw_policy"] != "CI_FRESH_ONCE" or continuation["raw_provenance"]["run_id"] != int(env["GITHUB_RUN_ID"]) or continuation["raw_provenance"]["controller_commit"] != sha or continuation["current_raw_children"] != 1 or continuation["ordinary_children"] != 52 or continuation["projections"] != 84 or acceptance["M1b_released"] is not False:
+            raise ValueError("continuation acceptance binding")
+        reports = [json.loads((campaign / "m1a" / row["report"]).read_bytes()) for row in acceptance["reports"]]
+        projections = sum(len(r["outputs"]) if "outputs" in r else 1 for r in reports)
+        if projections != 84:
+            raise ValueError("actual saved projection population")
+        summary.update(stage="complete", M1a_passed=True, accepted_ordinary_reports=len(reports),
+                       accepted_saved_projections=projections, acceptance_sha256=digest(campaign / "m1a-acceptance.json"))
     except BaseException as e:
         summary["failure_type"] = type(e).__name__
         summary["failure"] = str(e)
@@ -331,6 +395,8 @@ def run_native_ci(root):
             summary["admission_evidence_sha256"] = digest(root / "admission-evidence.json")
         summary["raw_probe_used"] = int((root / "campaign/raw-probe.intent.json").exists())
         summary["raw_probe_outcome_known"] = (root / "campaign/m1a/raw-probe-summary.json").exists()
+        summary["stable_continuation_claim_exists"] = (root / "f020-m1a-continuation.claim.json").exists()
+        summary["observed_ordinary_outcome_files"] = len(list((root / "campaign/m1a").glob("group-*.outcome.json"))) + len(list((root / "campaign/m1a").glob("inherited-*.outcome.json")))
         write_new(root / "result.json", summary)
 
 
@@ -371,6 +437,7 @@ def export_public(root, destination):
         rows.append({"path": str(relative), "original_sha256": digest(p), "public_sha256": digest(out), "changed": data != p.read_bytes()})
     result = json.loads((root / "result.json").read_text()) if (root / "result.json").exists() else {"M1a_ran": False, "M1a_passed": False, "reason": "controller not entered; inspect required preceding steps"}
     write_new(destination / "public-view-manifest.json", {"files": rows, "note": "Original-byte qualification precedes path sanitization. Changed views do not satisfy original-byte hashes."})
+    write_new(destination / "export-outcome.json", json.loads(public_text(json.dumps(result), roots)))
     summary = public_text(json.dumps(result, sort_keys=True), roots)
     with open(os.environ.get("GITHUB_STEP_SUMMARY", os.devnull), "a") as f:
         f.write("\nPacked-affine M1a: `" + summary + "`\n")
@@ -379,11 +446,30 @@ def export_public(root, destination):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("run", "export"))
+    parser.add_argument("command", choices=("run", "export", "run-selected", "export-selected"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--public", type=Path)
     args = parser.parse_args()
-    if args.command == "run":
+    if args.command == "run-selected":
+        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+        if selected(os.environ, event):
+            run_native_ci(args.root)
+        else:
+            print("M1a not selected; no experiment launch")
+    elif args.command == "export-selected":
+        event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+        # Evidence export is read-only with respect to the campaign and never
+        # re-enters run/admission. Preserve failed full/manual selections too.
+        export = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch" and event.get("inputs") not in ({"mode": "auto"}, {"mode": "evidence"})
+        if export:
+            if args.public is None:
+                parser.error("--public required")
+            export_public(args.root, args.public)
+            with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+                out.write("selected=true\n")
+        else:
+            print("M1a not selected; no experimental evidence upload")
+    elif args.command == "run":
         run_native_ci(args.root)
     else:
         if args.public is None:
