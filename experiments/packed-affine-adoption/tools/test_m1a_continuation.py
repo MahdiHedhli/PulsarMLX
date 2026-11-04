@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import io
 import unittest
 from unittest.mock import patch
 import m1a_continuation as m
@@ -52,6 +53,32 @@ class ContinuationTests(unittest.TestCase):
                           ('raw_execution_authorized',True),('authority',{}),('shipping_default','adopted')]:
             r=copy.deepcopy(self.r);r[key]=value
             with self.subTest(key=key),self.assertRaises(ValueError):m.scope(r)
+
+    def test_receipt_size_refused_before_unbounded_read(self):
+        class Oversized(io.BytesIO):
+            def read(self, size=-1):
+                self.assertion(size)
+                return b'x'*size
+        stream=Oversized();stream.assertion=lambda size:self.assertEqual(size,8*1024*1024+1)
+        with patch.object(Path,'open',return_value=stream),patch.object(Path,'read_bytes',side_effect=AssertionError('unbounded read')):
+            with self.assertRaisesRegex(ValueError,'size bound'):m.read(self.root/'oversized')
+
+    def test_original_file_read_bounded_by_immutable_length(self):
+        # The pins file is the only JSON metadata read; the first original is
+        # read at its exact immutable size + one overflow byte, never read-all.
+        first=sorted(self.pins)[0]
+        class TooLarge(io.BytesIO):
+            def read(stream,size=-1):
+                self.assertEqual(size,self.pins[first]['bytes']+1)
+                return b'x'*size
+        with patch.object(m,'read',return_value=self.pins),patch.object(Path,'open',return_value=TooLarge()),\
+             patch.object(Path,'read_bytes',side_effect=AssertionError('unbounded original read')):
+            with self.assertRaises(ValueError):m.original_studio(self.paths)
+
+    def test_changed_input_refused_before_legacy_preparation(self):
+        fixture=self.root/'fixture';fixture.mkdir();(fixture/'manifest.json').write_text('{}')
+        args=m.argparse.Namespace(fixture_root=fixture,portable=self.root/'portable',reference=self.root/'reference')
+        with self.assertRaises(ValueError):m.original_input_admission(args)
 
     def test_historical_cannot_be_relabelled_current(self):
         for key,value in [('applies_to_current_binary',True),('evidence_kind','current_binary')]:

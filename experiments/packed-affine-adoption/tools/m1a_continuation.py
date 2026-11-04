@@ -49,8 +49,10 @@ MUTABLE = {EXP+p for p in ('tests/adoption_parent.rs', 'tools/freeze_host.py',
 
 
 def read(path):
-    raw = Path(path).read_bytes()
-    if len(raw) > 8*1024*1024:
+    limit = 8*1024*1024
+    with Path(path).open('rb') as stream:
+        raw = stream.read(limit+1)
+    if len(raw) > limit:
         raise ValueError('receipt size bound')
     return json.loads(raw)
 
@@ -159,7 +161,9 @@ def original_studio(paths):
     equal(sorted(paths), sorted(pins), 'all actual original Studio files required')
     values = {}
     for name, pin in pins.items():
-        path = Path(paths[name]); raw = path.read_bytes()
+        path = Path(paths[name])
+        with path.open('rb') as stream:
+            raw = stream.read(pin['bytes']+1)
         equal([len(raw), hashlib.sha256(raw).hexdigest()], [pin['bytes'], pin['sha256']], 'original bytes missing/changed: '+name)
         values[name] = [json.loads(s) for s in raw.splitlines()] if name == 'raw_events' else json.loads(raw)
     return validate_studio_values(values, pins, paths)
@@ -284,6 +288,7 @@ def revalidate(r):
     a = argparse.Namespace(**{k: Path(r[k]) for k in ('fixture_root', 'native_prefix', 'native_build_receipt', 'binary', 'parent', 'rust_grader')},
                            host_role=r['host_role'], source_commit=r['source_commit'], portable=Path(r['portable_report']),
                            reference=Path(r['reference']), native_ci_acceptance=None)
+    original_input_admission(a)
     prepared = freeze_host.prepare(a)
     for key in ('contract_sha256', 'source_tree', 'native_libraries', 'fixture_manifest_sha256', 'portable_report_sha256',
                 'reference_sha256', 'inherited_root', 'inherited_manifest_sha256', 'generator_hashes', 'dependency_manifest_sha256'):
@@ -319,6 +324,7 @@ def freeze(a):
     destination = a.campaign.resolve()
     if destination.is_relative_to(REPO) or any(destination.is_relative_to(p.resolve()) for p in (a.fixture_root, a.native_prefix)):
         raise ValueError('new campaign must be outside source, native prefix and immutable inputs')
+    original_input_admission(a)
     r = freeze_host.prepare(a)
     inventory = source_inventory(r['source_commit'], r['source_tree'])
     role = r['host_role']; policy = a.raw_policy
@@ -352,6 +358,14 @@ def freeze(a):
     a.campaign.mkdir()
     create(a.campaign/'freeze.json', r)
     return {'receipt_sha256': sha(a.campaign/'freeze.json'), 'native_executions': 0}
+
+
+def original_input_admission(a):
+    # Bound reads and verify exact retained JSON bytes before the shared legacy
+    # preparer parses them. No caller-supplied digest can widen this admission.
+    for path, key in ((a.fixture_root/'manifest.json', 'fixture_manifest_sha256'),
+                      (a.portable, 'portable_report_sha256'), (a.reference, 'reference_sha256')):
+        checked(path, FIXED_INPUTS[key])
 
 
 def binding(campaign):
