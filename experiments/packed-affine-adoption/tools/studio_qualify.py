@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Future original-byte Studio prepare/bind/qualify; no native launcher.
 
-Production requires a separately pinned later operator-authority file. Rust012
-is implementation authority only. Tests mock physical/execution boundaries.
+Production requires a separately pinned later operator-authority file. Rust012,
+Rust013 and its recovery amendment are implementation authority only. Tests
+substitute synthetic external physical/execution boundaries.
 """
 import argparse
 import hashlib
@@ -50,16 +51,23 @@ def authority(path, expected_hash):
     for k, v in {'schema': GRANT, 'purpose': 'STUDIO_FULL_M1A_ONCE', 'evidence_role': 'OPERATOR_AUTHORITY',
                  'launch_authorized': True, 'synthetic': False, 'phase': 'm1a', 'host_role': ROLE,
                  'raw_policy': POLICY, 'contract_sha256': b.CONTRACT,
+                 'correction_contract_sha256': b.CORRECTION, 'source_profile_sha256': b.PROFILE_SHA256,
                  'native_parent_allowance': 1, 'numerical_allowance': 1, 'new_raw_allowance': 0,
                  'M1b_released': False, 'shipping_default': 'copied'}.items():
         b.equal(a.get(k), v, 'later Studio authority: '+k)
     prompt = a['prompt']
-    b.require(prompt['commit'] != '30943cefe903b464b8b5ab57debfebc578bc4862' and prompt['sha256'] != b.IMPLEMENTATION_PROMPT, 'Rust012 cannot authorize Studio')
+    b.require(prompt['commit'] not in b.FORBIDDEN_PROMPTS and prompt['sha256'] not in b.FORBIDDEN_PROMPTS.values(), 'Rust012/Rust013/Studio003 cannot authorize corrected Studio')
     b.require(len(prompt['commit']) == 40 and all(c in '0123456789abcdef' for c in prompt['commit']), 'prompt commit identity')
     prompt_bytes = b.bounded(prompt['path'])
     b.equal(hashlib.sha256(prompt_bytes).hexdigest(), prompt['sha256'], 'later prompt bytes')
     b.equal(b.bounded(prompt['path']+'.sha256', 512).decode().split(), [prompt['sha256'], Path(prompt['path']).name], 'later prompt sidecar')
     b.exact_file(a['contract_path'], (15561, b.CONTRACT))
+    b.exact_file(a['correction_contract_path'], (20370, b.CORRECTION))
+    b.equal(b.bounded(a['correction_contract_path']+'.sha256', 512).decode().split(),
+            [b.CORRECTION, Path(a['correction_contract_path']).name], 'correction contract sidecar')
+    b.source_profile()
+    b.equal(a['historical_sources'], {'C': {'commit': b.CI_C, 'tree': b.CI_CT},
+                                     'R': {'commit': b.ORIGINAL_R, 'tree': b.ORIGINAL_RT}}, 'historical authority source identities')
     b.equal(a['sources']['C'], {'commit': b.C, 'tree': b.CT}, 'authority C')
     b.equal(a['sources']['Q'], {'commit': b.Q, 'tree': b.QT}, 'authority Q')
     b.require(a['sources']['R']['commit'] not in (b.C, b.Q), 'distinct committed orchestration R')
@@ -87,6 +95,13 @@ def expected_population(ctx):
     a = ctx['authority']; modules = ctx['modules']
     return modules['report_checks'].expected_population(b.read(Path(a['paths']['fixture_root'])/'manifest.json'),
                                                        b.read(ctx['roots']['C']/'fixtures/native-composition/manifest.json'))
+
+
+def correction_binding(ctx):
+    return {'contract_sha256': b.CORRECTION, 'source_profile_sha256': b.PROFILE_SHA256,
+            'historical_C': {'commit': b.CI_C, 'tree': b.CI_CT},
+            'current_C2': {'commit': b.C, 'tree': b.CT}, 'current_R2': ctx['authority']['sources']['R'],
+            'source_delta': ctx['source']['source_delta'], 'C2_experimental_CI_acceptance': False}
 
 
 def claim_paths(a):
@@ -127,8 +142,9 @@ def readiness(ctx):
     for name in ('binary', 'parent', 'grader'):
         guard.link_paths.add(p[name])
     python = str(Path(sys.executable).resolve()); guard.link_paths.add(python)
-    for lib in ('libmlx.dylib', 'libmlxc.dylib'):
-        guard.link_paths.add(str(Path(p['native_prefix'])/'lib'/lib))
+    for lib in ('libmlx.dylib', 'libmlxc.dylib', 'libjaccl.dylib'):
+        image = str(Path(p['native_prefix'])/'lib'/lib)
+        guard.link_paths.add(image); guard.load_paths.add(image)
     executable = {name: {'path': p[name], 'sha256': b.sha(p[name])} for name in ('binary', 'parent', 'grader')}
     executable['python'] = {'path': python, 'sha256': b.sha(python)}
     b.equal(executable, a['executables'], 'fresh executable/build pins')
@@ -152,19 +168,22 @@ def readiness(ctx):
     raw = live.original_studio(originals)
     b.equal(raw['native_libraries'], prepared['native_libraries'], 'retained current native stack')
     inventory = live.source_inventory(b.C, b.CT)
-    b.equal(hashlib.sha256(live.canonical(inventory['files'])).hexdigest(), '0fba859129320b062a909d0039f7d79af81d510676d18410376676081a6b60e6', '70-row native source inventory')
+    profile = b.source_profile()
+    b.equal(inventory['files'], profile['C2_experiment_inventory'], '72-row corrected native source inventory')
+    b.equal(hashlib.sha256(live.canonical(inventory['files'])).hexdigest(), profile['C2_experiment_inventory_sha256'], 'corrected inventory digest')
     expected = expected_population(ctx)
     _, census = m['retained_rational'].frozen_view(b.bounded(p['reference']), b.read(Path(p['fixture_root'])/'manifest.json'))
     ci = b.ci_prerequisite(a['ci_files'], expected)
     return {'source': ctx['source'], 'origins': origins, 'executables': executable, 'linkage': linkage,
             'host_facts': facts, 'native_state': native, 'native_preparation': prepared, 'raw_provenance': raw,
             'normalization': census, 'ci_prerequisite': ci, 'originals': originals,
-            'build_identity': a['build_identity'], 'population': expected}
+            'build_identity': a['build_identity'], 'population': expected, 'correction': correction_binding(ctx)}
 
 
 def outer(ctx, ready):
     return {'schema': SCHEMA, 'authority_path': ctx['authority_path'], 'authority_sha256': ctx['authority_sha256'],
             'authority': ctx['authority'], 'readiness': ready, 'contract_sha256': b.CONTRACT,
+            'correction': correction_binding(ctx),
             'native_claim': str(claim_paths(ctx['authority'])[0]), 'numerical_claim': str(claim_paths(ctx['authority'])[1]),
             'M1b_released': False, 'shipping_default': 'copied'}
 
@@ -212,6 +231,7 @@ def bind(ctx, ready_hash):
     for name in ('continuation-attempt.json', 'm1a', 'raw-probe.intent.json', 'm1a-acceptance.json'):
         b.require(not os.path.lexists(campaign/name), 'parent already started before bridge binding')
     bound = {'schema': SCHEMA, 'ready_sha256': ready_hash, 'authority_sha256': ctx['authority_sha256'],
+             'correction': correction_binding(ctx),
              'receipt_sha256': b.sha(campaign/'freeze.json'), 'native_claim_sha256': b.sha(ready['native_claim']),
              'native_claim': ready['native_claim'], 'numerical_claim': ready['numerical_claim'], 'receipt': r}
     b.create(state/'bound.json', bound)
@@ -285,6 +305,7 @@ def qualify(ctx, bound_hash, completion_path):
     freeze = live_receipt(ctx, ready)
     b.equal(bound['receipt'], freeze, 'post-bind receipt drift')
     b.equal(bound['authority_sha256'], ctx['authority_sha256'], 'bound authority')
+    b.equal(bound['correction'], correction_binding(ctx), 'bound correction/source proof')
     b.equal(b.sha(campaign/'freeze.json'), bound['receipt_sha256'], 'bound original receipt hash')
     b.equal(b.sha(ready['native_claim']), bound['native_claim_sha256'], 'bound stable native claim')
     completion = parent_completion(ctx, bound_hash, bound, completion_path)
@@ -353,6 +374,7 @@ def qualify(ctx, bound_hash, completion_path):
         signal.setitimer(signal.ITIMER_REAL, 0)
         ctx['guard'].child = None
     result = {'schema': 'pulsarmlx.studio-live-m1a-acceptance/1', 'verdict': 'PASS' if failure is None else 'FAILED_NO_RETRY',
+              'correction': correction_binding(ctx), 'combined_cross_host_decision': 'PENDING',
               'failure': failure, 'authority': a, 'readiness': ready, 'bound_sha256': bound_hash, 'native_receipt': freeze,
               'native_claim_sha256': bound['native_claim_sha256'], 'numerical_intent_sha256': intent_hash,
               'parent_completion': completion, 'mechanism': mechanism, 'outputs': outputs, 'reports': rows, 'counts': counts,

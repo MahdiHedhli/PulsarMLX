@@ -14,15 +14,29 @@ import subprocess
 import sys
 import zlib
 
-C = 'f61a8c19d6aad2265a12f417ddbe842024fe32f2'
-CT = '5f8a8c55f4e0067b10dcd6606fe05935e8e47659'
+CI_C = 'f61a8c19d6aad2265a12f417ddbe842024fe32f2'
+CI_CT = '5f8a8c55f4e0067b10dcd6606fe05935e8e47659'
+C = 'bd6ee8c462a0e3a253523676e3c899946128647e'
+CT = '992339daabaef727f4c0e553cd8820ce996fedc6'
+ORIGINAL_R = 'b9c6255121264787cf3bb9e4208117ea1bc326ef'
+ORIGINAL_RT = '24d41a8dba1593ff19935ef7e184f583378f6783'
 Q = '14ac1c7e1ffaf8c25b160bcca7cdbe9abf57cd41'
 QT = 'b611e3dd7f40947b8409ca574d5f6ccdcd67ee02'
 H = '8a21f17bdea7b9d04f7ac54b070fa0a4f12762a2'
 HT = 'f08812602debc2fce192e2035339844c6c284ef0'
 CONTRACT = '7d28d6a427606dd622d3e00d362757365b51990972be8a4e7ee17131d5297d2d'
 IMPLEMENTATION_PROMPT = '9aea22c7b7008ac34d90eeca0f8a4c196e6f08f619e067cbc083b056a72b2295'
+CORRECTION = '8b5b8d0270a2f76c48b2e39485dd334a2282629b11a02b2b701d6237a0da35c2'
+PROFILE_SHA256 = 'a493e57c471bd11445057b64a479e078d7e93e39cf02b7ecc859a84b3ae79d24'
+FORBIDDEN_PROMPTS = {
+    '30943cefe903b464b8b5ab57debfebc578bc4862': IMPLEMENTATION_PROMPT,
+    '5d36e9dccb596de625772068d21d0a752258b277': 'cdbddcc0bd46ecd17f33330869d838ed48ccc71c2d502d53e16a0bd2ab334754',
+    '56de3b66d424a8158c41927ea8a22af156d52dac': '3c26c657bc554bd8f7052f026a4b339ec2c28e7d8062714706ea1a9b24428f98',
+    '37413f92275b251e73ccadc5a04f6a301cbcbb9a': '1f74912fe2046f7aad65702fc077a1665c2fedb8b4c6c2bd7515913589add4fc',
+}
 EXP = 'experiments/packed-affine-adoption/'
+C_PATHS = {EXP+p for p in ('tools/m1a_continuation.py', 'tools/test_retained_runtime.py', 'RETAINED_RUNTIME_CORRECTION.md')}
+R_PATHS = {EXP+p for p in ('tools/studio_bridge.py', 'tools/studio_qualify.py', 'tools/test_studio_qualify.py', 'STUDIO_QUALIFICATION.md', 'runtime-correction-source-v1.json')}
 COUNTS = {'rust_invocations': 52, 'exact_projections': 84, 'rust_checks': 76, 'rust_deferrals': 8, 'self_checks': 76}
 FULL = {'full-positive-A-gate', 'full-positive-A-up', 'full-positive-B-gate', 'full-positive-B-up'}
 CI_FILES = {
@@ -36,7 +50,7 @@ PINS = {
     'report_checks': ('C', EXP+'tools/report_checks.py', 'e73a515555d639b29c49bf7559a2a9a6e88b6ff54bf0203b822ab4113b597624'),
     'freeze_host': ('C', EXP+'tools/freeze_host.py', 'ca5146fb46ab3e4328ae0754ea3b21a0cee15011fe6c51f2f2c00c96518a0e25'),
     'copied_diagnostic': ('C', EXP+'tools/copied_diagnostic.py', '14ed17730621e475b4851aa3513367b08ee8226609efcc95f88af84d4647320e'),
-    'm1a_continuation': ('C', EXP+'tools/m1a_continuation.py', '3ccf57039df11f88851e4b96897e66feb399b76788274dc73ae997ccdd93c9fe'),
+    'm1a_continuation': ('C', EXP+'tools/m1a_continuation.py', 'f500c25a9f9ff7cc2681d84bfd9f4d90d788f74162d953ca03fb2a902204fcbd'),
     'reference_budget': ('C', EXP+'tools/reference_budget.py', 'cedbbe26c8f813aa165d567354fb9628e870a6a66f7504dec5aedb6c398543a6'),
     'f020_expert_mlp_r1_v1': ('C', 'scripts/research/f020_expert_mlp_r1_v1.py', '3aad179cda4d4fe054d4a4b52fd3ef4911956559ac2cdad131b435bb03d81f01'),
     'f020_selected_r1_v2': ('C', 'scripts/research/f020_selected_r1_v2.py', '1d7276286f400ae2026c32b996c1269b9947abad95f60e33f255f89f1541a913'),
@@ -103,7 +117,22 @@ def exact_file(path, identity):
 
 
 def git(root, *args):
-    return subprocess.check_output(['git', '-C', str(root), *args], timeout=45).decode().strip()
+    return git_bytes(root, *args).decode().strip()
+
+
+def git_bytes(root, *args):
+    return subprocess.check_output(['git', '--no-optional-locks', '-C', str(root), *args], timeout=45)
+
+
+def objects(root, commit):
+    result = {}
+    for entry in git_bytes(root, 'ls-tree', '-rz', '--full-tree', commit).split(b'\0'):
+        if not entry:
+            continue
+        meta, name = entry.split(b'\t', 1); mode, kind, blob = meta.decode().split()
+        require(kind == 'blob' and mode in ('100644', '100755', '120000'), 'unsupported tracked type')
+        result[name.decode()] = {'mode': mode, 'blob': blob}
+    return result
 
 
 def inventory(root, commit):
@@ -122,8 +151,74 @@ def inventory(root, commit):
             require(stat.S_ISREG(info.st_mode) and bool(info.st_mode & 0o111) == (mode == '100755'), 'tracked file mode/type changed')
             data = path.read_bytes()
         equal(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(), blob, 'tracked source bytes changed: '+name)
-        result[name] = {'mode': mode, 'blob': blob, 'sha256': hashlib.sha256(data).hexdigest()}
+        result[name] = {'mode': mode, 'blob': blob, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
     return result
+
+
+def source_profile():
+    path = Path(__file__).resolve().parents[1]/'runtime-correction-source-v1.json'
+    profile = parse(exact_file(path, (13345, PROFILE_SHA256)))
+    for key, expected in {
+        'schema': 'pulsarmlx.runtime-correction-source/1',
+        'C': {'commit': CI_C, 'tree': CI_CT}, 'C2': {'commit': C, 'tree': CT},
+        'Q': {'commit': Q, 'tree': QT}, 'R': {'commit': ORIGINAL_R, 'tree': ORIGINAL_RT},
+        'correction_contract_sha256': CORRECTION, 'protected_C_files': 5084, 'C2_file_count': 5087,
+    }.items():
+        equal(profile[key], expected, 'fixed source profile: '+key)
+    equal(profile['C2_changes'][EXP+'tools/m1a_continuation.py']['after']['sha256'], PINS['m1a_continuation'][2], 'profile/live helper pin')
+    equal(profile['C2_experiment_inventory_sha256'], hashlib.sha256((json.dumps(profile['C2_experiment_inventory'], sort_keys=True, indent=2)+'\n').encode()).hexdigest(), 'profile inventory binding')
+    equal(len(profile['C2_experiment_inventory']), 72, 'corrected experiment population')
+    return profile
+
+
+def original_inventory(root, commit, verified_q):
+    """Historical Git objects, with unchanged Q supplying old-C byte identities."""
+    result = {}
+    for name, obj in objects(root, commit).items():
+        if name in verified_q:
+            row = verified_q[name]
+            equal(obj, {k: row[k] for k in ('mode', 'blob')}, 'historical/Q object mismatch: '+name)
+        else:
+            # Only R's four original additive host files use this path.
+            require(commit == ORIGINAL_R and name in R_PATHS and name != EXP+'runtime-correction-source-v1.json', 'unexpected historical addition')
+            raw = git_bytes(root, 'show', commit+':'+name)
+            equal(hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest(), obj['blob'], 'historical blob bytes')
+            row = {**obj, 'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}
+        result[name] = row
+    return result
+
+
+def source_delta(old_c, current_c, q, old_r, current_r, profile):
+    """One fixed comparison, not an extensible compatibility rule."""
+    equal([len(old_c), len(current_c), len(q), len(old_r), len(current_r)], [5085, 5087, 5090, 5094, 5095], 'source populations')
+    for name, row in old_c.items():
+        equal(q.get(name), row, 'original C not unchanged in Q: '+name)
+    for name, row in q.items():
+        equal(old_r.get(name), row, 'historical R/Q mismatch: '+name)
+        equal(current_r.get(name), row, 'protected Q source changed: '+name)
+    def delta(old, new, allowed):
+        require(set(old) <= set(new), 'source deletion/rename refused')
+        changes = {name: {'before': old.get(name), 'after': row} for name, row in new.items() if old.get(name) != row}
+        equal(sorted(changes), sorted(allowed), 'exact allowed source delta')
+        for name, change in changes.items():
+            equal(change['after']['mode'], '100644', 'changed source mode')
+            if change['before'] is not None:
+                equal(change['before']['mode'], change['after']['mode'], 'source mode change')
+        return changes
+    c_changes = delta(old_c, current_c, C_PATHS)
+    r_changes = delta(old_r, current_r, R_PATHS)
+    equal(c_changes, profile['C2_changes'], 'frozen C2 delta profile')
+    protected_c = {n: r for n, r in old_c.items() if n not in c_changes}
+    for name, row in protected_c.items():
+        equal(current_c[name], row, 'protected C source changed: '+name)
+    digest = hashlib.sha256(canonical(protected_c)).hexdigest()
+    equal([len(protected_c), digest], [profile['protected_C_files'], profile['protected_C_equality_sha256']], 'protected C equality proof')
+    equal(current_c['crates/mlx-native-affine/src/harness.rs']['sha256'], profile['harness_sha256'], 'fixed child harness')
+    return {'schema': 'pulsarmlx.runtime-correction-source-delta/1', 'C2_changes': c_changes, 'R2_changes': r_changes,
+            'protected_C_files': len(protected_c), 'protected_C_equality_sha256': digest,
+            'protected_Q_files': len(q), 'protected_Q_equality_sha256': hashlib.sha256(canonical(q)).hexdigest(),
+            'protected_R_files': len(old_r)-4,
+            'protected_R_equality_sha256': hashlib.sha256(canonical({n: r for n, r in old_r.items() if n not in R_PATHS})).hexdigest()}
 
 
 def source_identity(roots, r_pin):
@@ -135,16 +230,18 @@ def source_identity(roots, r_pin):
         equal(git(root, 'status', '--porcelain=v1', '--untracked-files=all'), '', role+' source drift')
         inventories[role] = inventory(root, pin['commit'])
         records[role] = {**pin, 'root': str(root)}
-    equal(len(inventories['C']), 5085, 'C tracked population')
-    equal(len(inventories['Q']), 5090, 'Q tracked population')
-    for parent, child in [('C', 'Q'), ('Q', 'R')]:
-        for name, row in inventories[parent].items():
-            equal(inventories[child].get(name), row, 'protected source changed: '+name)
-    equal(git(roots['R'], 'merge-base', Q, r_pin['commit']), Q, 'R must descend from Q')
-    delta = {p: v for p, v in inventories['R'].items() if p not in inventories['Q']}
-    require(delta and all(p.startswith(EXP) and (p.endswith('.py') or p.endswith('.md')) for p in delta), 'R additive host scope')
     require(Path(__file__).resolve() == roots['R']/EXP/'tools/studio_bridge.py', 'R actual module origin')
-    return {'roles': records, 'delta': delta, 'protected_C_files': 5085, 'protected_Q_files': 5}
+    equal(git(roots['C'], 'rev-parse', CI_C+'^{tree}'), CI_CT, 'original C Git tree')
+    equal(git(roots['R'], 'rev-parse', ORIGINAL_R+'^{tree}'), ORIGINAL_RT, 'original R Git tree')
+    equal(git(roots['C'], 'merge-base', CI_C, C), CI_C, 'C2 must descend from C')
+    equal(git(roots['R'], 'merge-base', ORIGINAL_R, r_pin['commit']), ORIGINAL_R, 'R2 must descend from R')
+    old_c = original_inventory(roots['C'], CI_C, inventories['Q'])
+    old_r = original_inventory(roots['R'], ORIGINAL_R, inventories['Q'])
+    profile = source_profile()
+    proof = source_delta(old_c, inventories['C'], inventories['Q'], old_r, inventories['R'], profile)
+    return {'roles': records, 'historical_C': {'commit': CI_C, 'tree': CI_CT},
+            'historical_R': {'commit': ORIGINAL_R, 'tree': ORIGINAL_RT}, 'source_delta': proof,
+            'source_profile_sha256': PROFILE_SHA256, 'correction_contract_sha256': CORRECTION}
 
 
 def load_modules(roots):
@@ -183,6 +280,7 @@ class Guard:
         self.git = str(Path(shutil.which('git')).resolve(strict=True))
         self.git_hash = sha(self.git)
         self.link_paths = set()
+        self.load_paths = set()
         self.child = None
 
     def check(self, event, args):
@@ -200,7 +298,9 @@ class Guard:
             equal(sha(exe), self.child['sha256'], 'grader changed before spawn')
             return
         if exe == '/usr/bin/otool':
-            require(len(argv) == 3 and argv[:2] == ['/usr/bin/otool', '-L'] and str(Path(argv[2]).resolve()) in self.link_paths, 'otool inspection target')
+            require(len(argv) == 3 and argv[0] == exe and
+                    ((argv[1] == '-L' and argv[2] in self.link_paths) or
+                     (argv[1] == '-l' and argv[2] in self.load_paths)), 'otool inspection target')
             return
         if exe == '/usr/sbin/sysctl':
             require(argv[:2] == ['/usr/sbin/sysctl', '-n'] and len(argv) == 3 and argv[2] in ('machdep.cpu.brand_string', 'hw.model', 'hw.memsize', 'hw.pagesize'), 'sysctl read-only allowlist')
@@ -210,6 +310,8 @@ class Guard:
             return
         require(exe == 'git' and sha(self.git) == self.git_hash and str(Path(shutil.which('git')).resolve()) == self.git, 'unapproved executable')
         tail = list(argv[1:]); root = str(Path(cwd).resolve()) if cwd else None
+        if tail[:1] == ['--no-optional-locks']:
+            tail = tail[1:]
         if tail[:1] == ['-C']:
             require(len(tail) >= 3, 'git root required'); root = str(Path(tail[1]).resolve()); tail = tail[2:]
         require(root in self.roots, 'git outside admitted source')
@@ -281,7 +383,7 @@ def ci_prerequisite(paths, expected):
                        'new_native_executions': 0, 'raw_calls': 0, 'shipping_default': 'copied'}.items():
         equal(result[key], value, 'CI prerequisite release boundary: '+key)
     equal([result['Q']['commit'], result['Q']['tree']], [Q, QT], 'CI rational source')
-    equal(result['native_execution'], {'C': C, 'C_tree': CT, 'H': H, 'H_tree': HT, 'run': 41933197121, 'attempt': 1, 'CI_conclusion': 'failure'}, 'original CI execution')
+    equal(result['native_execution'], {'C': CI_C, 'C_tree': CI_CT, 'H': H, 'H_tree': HT, 'run': 41933197121, 'attempt': 1, 'CI_conclusion': 'failure'}, 'original CI execution')
     counts = gate_counts(result['reports'], expected)
     equal(result['counts'], {k: v for k, v in counts.items() if k != 'self_checks'}, 'declared CI counts')
     summaries = []
@@ -297,7 +399,7 @@ def ci_prerequisite(paths, expected):
     equal(admission['original_attempts'], 17, 'historical attempts')
     equal(admission['native_executable_bytes_available'], False, 'unavailable native bytes')
     equal(admission['historical_CI_conclusion'], 'failure', 'historical CI failure preserved')
-    equal([admission['C'], admission['C_tree'], admission['H'], admission['H_tree'], admission['run'], admission['run_attempt']], [C, CT, H, HT, 41933197121, 1], 'admission source/run bindings')
+    equal([admission['C'], admission['C_tree'], admission['H'], admission['H_tree'], admission['run'], admission['run_attempt']], [CI_C, CI_CT, H, HT, 41933197121, 1], 'admission source/run bindings')
     equal([admission['artifact_id'], admission['archive_sha256'], admission['public_manifest_sha256']], [13375695310, 'ce6cb205f07c1e759adb39499457e6c21fd9285bce6ff1f341ff00b8b05b609f', '3bd3581767b34e010b10291c5a118fe0726582420b958d79bcad77fcf9f0ad19'], 'artifact chain')
     equal([r['label'] for r in admission['reports']], list(expected), 'admitted report order')
     for gate, report in zip(result['reports'], admission['reports'], strict=True):
