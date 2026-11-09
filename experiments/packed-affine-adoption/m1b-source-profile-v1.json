@@ -1,0 +1,59 @@
+{
+  "R2_files": 5095,
+  "acceptance": "4fd8add96a76bc5a4237a49d1f52c8eac7dfd5c2a864dd16783b63c36938caa6",
+  "additions": [
+    "M1B_CONTROLLER.md",
+    "m1b-source-profile-v1.json",
+    "src/bin/m1b-controller.rs",
+    "src/bin/m1b-controller/tests.rs",
+    "tools/m1b_admission.py",
+    "tools/test_m1b_admission.py"
+  ],
+  "build": "a03d98087a6e8e6798bd3bd9b3b14398a0ea8927e7aa3ecc821580360bd67cdc",
+  "child": "012b6f301662dbbf429ac277ec930e71c566c99ab666bd478047e4bca828cd1b",
+  "contract": "3ed9d087382886b3837da45dd21758b0b1e93eca19c0d7b60f35519af392abd8",
+  "decision": "85f8a95fdd11632c7faa5b07cfd4000879ea6926ea42b7662521e6ba51993373",
+  "historical": {
+    "C": {
+      "commit": "f61a8c19d6aad2265a12f417ddbe842024fe32f2",
+      "tree": "5f8a8c55f4e0067b10dcd6606fe05935e8e47659"
+    },
+    "H": {
+      "commit": "8a21f17bdea7b9d04f7ac54b070fa0a4f12762a2",
+      "tree": "f08812602debc2fce192e2035339844c6c284ef0"
+    },
+    "Q": {
+      "commit": "14ac1c7e1ffaf8c25b160bcca7cdbe9abf57cd41",
+      "tree": "b611e3dd7f40947b8409ca574d5f6ccdcd67ee02"
+    },
+    "R": {
+      "commit": "b9c6255121264787cf3bb9e4208117ea1bc326ef",
+      "tree": "24d41a8dba1593ff19935ef7e184f583378f6783"
+    }
+  },
+  "profile_pins": {
+    "Cargo.lock": "ea27c3ae65151272882f1836eafae529ef5c771833daf174ba0c63ed85b4454e",
+    "Cargo.toml": "5d365d3f3d72a3adac66702625f1700361e8e23e58cae9e5ad1a7075277065e7",
+    "build.rs": "cddab23a4de4dc813de5db050771fb4c42320922941efb914821103d396f9401",
+    "runtime-correction-source-v1.json": "a493e57c471bd11445057b64a479e078d7e93e39cf02b7ecc859a84b3ae79d24",
+    "src/policy.rs": "c3908150cfc7387c9a5da5173b4cc45d50c6615622ca892a64b18e732f1912d3",
+    "tools/studio_bridge.py": "f8b68e9801133dd2c49927e581fc1a8a2675faa7b395e45e8a64a1b17b9e9a45"
+  },
+  "public_handoff": "eb994cdbc80c4ee3360e6d7fbdeeae384167d6db67319a72123a40461e91b48c",
+  "python": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+  "schema": "pulsarmlx.m1b-source-profile/1",
+  "sources": {
+    "C": {
+      "commit": "bd6ee8c462a0e3a253523676e3c899946128647e",
+      "tree": "992339daabaef727f4c0e553cd8820ce996fedc6"
+    },
+    "Q": {
+      "commit": "14ac1c7e1ffaf8c25b160bcca7cdbe9abf57cd41",
+      "tree": "b611e3dd7f40947b8409ca574d5f6ccdcd67ee02"
+    },
+    "R": {
+      "commit": "4a584bb0e6d2d769f7de543c8af83b92e00e0c0b",
+      "tree": "8fe909542d41f8c49a2d57b1b38eac864eb518bc"
+    }
+  }
+}
