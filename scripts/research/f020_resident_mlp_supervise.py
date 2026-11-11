@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import time
+import f020_resident_mlp_runtime as runtime
 import f020_resident_mlp_check as check
 from f020_resident_mlp_fixtures import (
     ROOT,
@@ -171,7 +172,32 @@ def source():
 
 
 def links(binary):
-    return cmd("/usr/bin/otool", "-L", str(binary)).decode().splitlines()[1:]
+    listing = runtime.inspect_image("-L", binary).splitlines()
+    require(listing and listing[0] == str(binary) + ":", "binary linkage image")
+    return listing[1:]
+
+
+def child_environment(prefix):
+    return {
+        "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        "HOME": os.environ["HOME"],
+        "MLX_C_PREFIX": str(prefix),
+        "DYLD_LIBRARY_PATH": str(prefix / "lib"),
+        "MLX_ENABLE_TF32": "0",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+
+
+def runtime_source_bindings():
+    return {
+        name: hashed(ROOT / name)
+        for name in (
+            "scripts/research/f020_resident_mlp_runtime.py",
+            "scripts/research/f020_resident_mlp_supervise.py",
+            "crates/mlx-expert-mlp/src/resident_native.rs",
+            "crates/mlx-expert-mlp/src/resident_verifier.rs",
+        )
+    }
 
 
 def installed(config):
@@ -211,29 +237,48 @@ def installed(config):
         f["native_libraries"],
         "original runtime data",
     )
-    runtimes = set()
-    for k in ("libmlx", "libmlxc"):
-        for line in links(libs / names[k]):
-            lib = line.strip().split(" (compatibility")[0]
-            if lib.startswith("/") and not lib.startswith(
-                ("/System/Library/", "/usr/lib/")
-            ):
-                real = Path(lib).resolve(strict=True)
-                if not real.is_relative_to(prefix):
-                    runtimes.add((str(real), hashed(real)))
-    require(len(runtimes) == 1, "retained external runtime")
-    ((_, runtime_hash),) = runtimes
-    equal(runtime_hash, r["extra_runtime_library_sha256"], "static runtime identity")
+    static = runtime.retained_runtime(
+        prefix, child_environment(prefix), runtime_source_bindings()
+    )
+    equal(
+        r["extra_runtime_library_sha256"],
+        runtime.RUNTIME_SHA256,
+        "original runtime pin",
+    )
+    for role in ("libmlx", "libmlxc"):
+        equal(
+            static["files"][names[role]]["sha256"],
+            actual[role],
+            "inspected MLX file identity",
+        )
     return {
         **actual,
         "mlx_commit": PINS["mlx"],
         "mlx_c_commit": PINS["mlx-c"],
         "install_sha256": INSTALL,
-        "static_runtime_sha256": runtime_hash,
+        "static_runtime_sha256": runtime.RUNTIME_SHA256,
+        "static_inspection": static,
+    }
+
+
+VERIFIER_MODULES = (
+    "f020_expert_mlp_r1_v1",
+    "f020_expert_mlp_qualify_v1",
+    "f020_resident_mlp_fixtures",
+    "f020_resident_mlp_runtime",
+    "f020_resident_mlp_check",
+    "f020_resident_mlp_supervise",
+)
+
+
+def verifier_modules():
+    return {
+        n: hashed(ROOT / "scripts/research" / (n + ".py")) for n in VERIFIER_MODULES
     }
 
 
 def physical_identity(config):
+    runtime.clean_inspector()
     require(
         sys.platform == "darwin" and not os.environ.get("GITHUB_ACTIONS"),
         "physical target",
@@ -308,6 +353,14 @@ def physical_identity(config):
         [src["commit"], src["tree"], hashed(binary), config["prefix"]],
         "build/source identity",
     )
+    modules = verifier_modules()
+    equal(build["verifier_modules"], modules, "compiled verifier helper set")
+    stamp = build["accounting_abi_stamp"]
+    accounting = check.accounting_proof(ROOT, stamp)
+    require(
+        stamp.encode("ascii") in raw(binary, 128 << 20),
+        "compiled accounting ABI witness",
+    )
     actual = links(binary)
     equal(actual, build["linkage"], "current child linkage")
     require(
@@ -320,6 +373,8 @@ def physical_identity(config):
     identity = {
         **src,
         "host": host,
+        "verifier_modules": modules,
+        "accounting": accounting,
         "native": installed(config),
         "binary_sha256": hashed(binary),
         "build_sha256": hashed(path(config["build"])),
@@ -356,6 +411,7 @@ def describe(cfg):
 
 
 def admit(config):
+    runtime.clean_inspector()
     grant = operator(config["operator"])
     identity = physical_identity(config)
     equal(
@@ -435,27 +491,35 @@ def wait_child(command, env, arm, deadline, limit):
 
 def sequence(cfg, config, identity, output, claim, launch, grade):
     require(not output.exists(), "original output already exists")
-    exclusive(claim, authorization(cfg, identity))
+    claim_record = authorization(cfg, identity)
+    claim_hash = sha(canonical(claim_record))
+    intents = [
+        dict(
+            schema="resident-mlp-intent-v1",
+            supervisor_pid=os.getpid(),
+            repo=str(ROOT),
+            config=str(cfg),
+            claim=str(claim),
+            claim_sha256=claim_hash,
+            identity=identity,
+            profile=profile,
+            arm=arm,
+        )
+        for profile, arm in check.ARMS
+    ]
+    require(
+        all(len(canonical(record)) <= 65536 for record in intents),
+        "native child intent size",
+    )
+    exclusive(claim, claim_record)
     output.mkdir(mode=0o700)
     deadline = time.monotonic() + 900
-    for i, (profile, arm) in enumerate(check.ARMS):
-        directory = output / f"{i}-{profile}-{arm}"
+    for i, record in enumerate(intents):
+        directory = output / f"{i}-{record['profile']}-{record['arm']}"
         directory.mkdir(mode=0o700)
         intent = directory / "intent.json"
-        exclusive(
-            intent,
-            dict(
-                schema="resident-mlp-intent-v1",
-                supervisor_pid=os.getpid(),
-                repo=str(ROOT),
-                config=str(cfg),
-                claim=str(claim),
-                claim_sha256=hashed(claim),
-                identity=identity,
-                profile=profile,
-                arm=arm,
-            ),
-        )
+        equal(hashed(claim), claim_hash, "original stable claim")
+        exclusive(intent, record)
         launch(intent, directory, deadline)
     require(time.monotonic() <= deadline, "campaign deadline")
     exclusive(output / "grading-intent.json", dict(claim_sha256=hashed(claim), count=1))
@@ -527,17 +591,11 @@ def launch(cfg):
         "existing physical claim or original output",
     )
     identity = admit(config)
-    env = {
-        "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
-        "HOME": os.environ["HOME"],
-        "MLX_C_PREFIX": config["prefix"],
-        "DYLD_LIBRARY_PATH": str(path(config["prefix"]) / "lib"),
-        "MLX_ENABLE_TF32": "0",
-        "PYTHONDONTWRITEBYTECODE": "1",
-    }
+    env = child_environment(path(config["prefix"]))
 
     # Use the existing repository login. Never forward a credential in the intent or child environment.
     def run(intent, armdir, deadline):
+        equal(admit(config), identity, "before-child source/build/install admission")
         wait_child(
             [config["binary"], "--intent", str(intent)], env, armdir, deadline, 300
         )

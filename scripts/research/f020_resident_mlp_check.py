@@ -3,6 +3,8 @@
 import hashlib
 import json
 import struct
+import platform
+import sys
 from pathlib import Path
 import f020_expert_mlp_qualify_v1 as donor
 import f020_expert_mlp_r1_v1 as r1
@@ -249,13 +251,142 @@ def read(root, name, limit):
     return json.loads(block), len(block)
 
 
-def expect_ledger(profile, arm, recipe):
+ABI_STAMP = "pulsarmlx.resident-layout/1|aarch64-apple-darwin|rustc 1.95.0 (59807616e 2026-04-14)|end"
+
+# Bytes measured for the locked Darwin arm64 build with size_of; the private
+# held row is String plus File and seven u64/i64 stamp fields, including padding.
+LAYOUT = dict(
+    source=368,
+    shard=80,
+    optional_file=4,
+    header=72,
+    string_pair=48,
+    header_row=112,
+    u64=8,
+    catalog_row=112,
+    override_row=32,
+    held_row=88,
+    json_row=56,
+    json_value=32,
+)
+
+
+def checked_sum(*terms):
+    require(all(type(x) is int and x >= 0 for x in terms), "nonnegative ledger terms")
+    n = sum(terms)
+    require(n <= (1 << 64) - 1, "ledger u64 overflow")
+    return n
+
+
+def text_bytes(value):
+    return len(value.encode("utf-8"))
+
+
+def json_payload(value):
+    if isinstance(value, str):
+        return text_bytes(value)
+    if isinstance(value, list):
+        return checked_sum(
+            len(value) * LAYOUT["json_value"], *(json_payload(v) for v in value)
+        )
+    if isinstance(value, dict):
+        return checked_sum(
+            len(value) * LAYOUT["json_row"],
+            *(text_bytes(k) + json_payload(v) for k, v in value.items()),
+        )
+    return 0
+
+
+def metadata_terms(repo, profile):
+    require(
+        profile in ("default", "mixed") and repo == repo.resolve(strict=True),
+        "canonical accounting root",
+    )
+    view = repo / "fixtures/resident-expert-mlp"
+    manifest_raw = fixtures.contents(view, "manifest.json", 1 << 20)
+    require(sha(manifest_raw) == VIEW_SHA, "accounting fixture manifest")
+    recipe = json.loads(manifest_raw)["recipes"][profile]
+    root = view / recipe["name"]
+    require(root == root.resolve(strict=True), "canonical fixture root")
+
+    def fixed(file, role):
+        b = fixtures.contents(root, file, 1 << 20)
+        require(sha(b) == recipe["files"][role], "accounting " + role)
+        return b
+
+    config = json.loads(fixed("config.json", "config"))
+    index = json.loads(fixed("model.safetensors.index.json", "index"))["weight_map"]
+    shard = "model.safetensors"
+    raw = fixed(shard, "shard")
+    tensors = json.loads(raw[8 : 8 + int.from_bytes(raw[:8], "little")])
+    meta = tensors.pop("__metadata__")
+    require(
+        set(index) == set(tensors)
+        and set(index.values()) == {shard}
+        and len(tensors) == 9,
+        "fixed accounting catalog",
+    )
+    names = sum(text_bytes(k) for k in tensors)
+    dims = sum(len(v["shape"]) * LAYOUT["u64"] for v in tensors.values())
+    overrides = [k for k, v in config["quantization"].items() if isinstance(v, dict)]
+    held = ("config.json", "model.safetensors.index.json", shard)
+    terms = dict(
+        bounded_source=LAYOUT["source"],
+        identity_string=64,
+        checkpoint_name=text_bytes(root.name),
+        shard_row=LAYOUT["shard"] + LAYOUT["optional_file"] + text_bytes(shard),
+        header=LAYOUT["header"],
+        header_metadata=sum(
+            LAYOUT["string_pair"] + text_bytes(k) + text_bytes(v)
+            for k, v in meta.items()
+        ),
+        header_tensors=len(tensors) * LAYOUT["header_row"] + 2 * names + dims,
+        catalog=len(tensors) * LAYOUT["catalog_row"] + 2 * names + dims,
+        index=sum(
+            LAYOUT["string_pair"] + text_bytes(k) + text_bytes(v)
+            for k, v in index.items()
+        ),
+        overrides=len(overrides) * LAYOUT["override_row"]
+        + sum(text_bytes(k) for k in overrides),
+        held_files=len(held) * LAYOUT["held_row"] + sum(text_bytes(k) for k in held),
+        config_document=json_payload(config),
+    )
+    fixed_sum = checked_sum(*terms.values())
+    root_bytes = str(root).encode("utf-8")
+    return dict(
+        terms=terms,
+        fixed_bytes=fixed_sum,
+        root_bytes=len(root_bytes),
+        root_sha256=sha(root_bytes),
+        M=checked_sum(fixed_sum, len(root_bytes)),
+    )
+
+
+def accounting_proof(repo, stamp):
+    require(
+        stamp == ABI_STAMP
+        and sys.platform == "darwin"
+        and platform.machine() == "arm64"
+        and sys.byteorder == "little"
+        and struct.calcsize("P") == 8,
+        "unsupported resident accounting ABI",
+    )
+    return dict(
+        schema="resident-accounting/1",
+        abi_stamp=stamp,
+        layout=LAYOUT.copy(),
+        checker_sha256=sha(Path(__file__).read_bytes()),
+        view_sha256=VIEW_SHA,
+        profiles={p: metadata_terms(repo, p) for p in ("default", "mixed")},
+    )
+
+
+def expect_ledger(profile, arm, recipe, repo=None):
     size = binding(recipe, 0)[1]
-    # Exact logical metadata charge of the admitted, fixed two-view population.
-    meta = {"default": 5791, "mixed": 6303}[profile]
+    meta = metadata_terms(fixtures.ROOT if repo is None else repo, profile)["M"]
     control_meta = meta if arm == "allocating" else 0
     control = size if arm == "allocating" else 0
-    base = 2 * size + meta + (1 << 20) + (64 << 10)
+    base = checked_sum(2 * size, meta, 1 << 20, 64 << 10)
     parts = []
     for i, p in enumerate(recipe["planes"][0]):
         n, k = p["logical_shape"]
@@ -296,8 +427,8 @@ def expect_ledger(profile, arm, recipe):
         W_cache=base,
         H_extra=1 << 20,
         N_native=NATIVE,
-        W_total=base + (1 << 20) + NATIVE,
-        host_bound=sum(extra.values()),
+        W_total=checked_sum(base, 1 << 20, NATIVE),
+        host_bound=checked_sum(*extra.values()),
         native=native,
         **extra,
     )
@@ -347,6 +478,10 @@ def admit_arm(root, profile, arm, identity, reference, intent_hash):
             for k in ("cache_limit", "initial_clear", "initial_cache")
         ),
         "cache initialization",
+    )
+    require(
+        identity["accounting"] == accounting_proof(fixtures.ROOT, ABI_STAMP),
+        "current root and accounting proof",
     )
     ledger = report["ledger"]
     require(ledger == expect_ledger(profile, arm, recipe), "exact fixed reservation")

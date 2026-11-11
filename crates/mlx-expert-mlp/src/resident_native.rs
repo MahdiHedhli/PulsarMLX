@@ -1,3 +1,5 @@
+#[path = "resident_verifier.rs"]
+mod verifier;
 use crate::{bridge, ffi, native, provenance};
 use mlx_expert_mlp::{
     resident,
@@ -10,7 +12,7 @@ use mlx_native_affine::{
     refusal::DeviceFacts,
 };
 use serde_json::{json, Value};
-use std::{fs, path::Path, process::Command};
+use std::{fs, path::Path};
 
 extern "C" {
     fn pulsar_mlp_cpu_guard(fpcr: *mut u64) -> i32;
@@ -254,6 +256,12 @@ pub fn run() -> Result<(), String> {
             )),
         ),
         (
+            "f020_resident_mlp_runtime",
+            sha256_hex(include_bytes!(
+                "../../../scripts/research/f020_resident_mlp_runtime.py"
+            )),
+        ),
+        (
             "f020_resident_mlp_check",
             sha256_hex(include_bytes!(
                 "../../../scripts/research/f020_resident_mlp_check.py"
@@ -281,12 +289,19 @@ for name,digest in mods:
  mod=types.ModuleType(key);mod.__file__=str(p);sys.modules[key]=mod
  exec(compile(raw,str(p),'exec'),mod.__dict__)
 "#;
-    let verify = Command::new("/usr/bin/python3")
-        .args(["-I", "-S", "-B", "-c", bootstrap])
-        .arg(serde_json::to_string(&modules).map_err(|e| e.to_string())?)
-        .arg(path)
-        .status()
-        .map_err(|e| e.to_string())?;
+    let compiled: std::collections::BTreeMap<_, _> = modules.iter().map(|(n, h)| (*n, h)).collect();
+    if cap["identity"]["verifier_modules"] != json!(compiled)
+        || cap["identity"]["accounting"]["abi_stamp"] != verifier::layout_stamp()
+    {
+        return Err("compiled resident verifier/accounting identity".into());
+    }
+    let verify = verifier::verifier_command(
+        bootstrap,
+        &serde_json::to_string(&modules).map_err(|e| e.to_string())?,
+        path,
+    )?
+    .status()
+    .map_err(|e| e.to_string())?;
     if !verify.success() {
         return Err("child admission".into());
     }

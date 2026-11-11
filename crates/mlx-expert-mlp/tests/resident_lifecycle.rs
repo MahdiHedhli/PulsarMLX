@@ -1,3 +1,5 @@
+#[path = "../src/resident_verifier.rs"]
+mod verifier;
 use backend::{step::HostLayerExecutor, CancellationToken};
 use mlx_expert_mlp::{resident::*, resident_fixture::*, resident_pipeline::*};
 use mlx_native_affine::{dtype::Dtype, fixture::HostTensor, refusal::DeviceFacts};
@@ -359,4 +361,118 @@ fn changed_selected_payload_and_oversized_input_stop_before_driver() {
         drop(h);
         fs::remove_dir_all(tmp).unwrap();
     }
+}
+#[test]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn independent_metadata_proof_at_relocated_canonical_roots() {
+    use std::{
+        fs,
+        process::Command,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+    let source = root();
+    let temp = std::env::temp_dir().canonicalize().unwrap().join(format!(
+        "resident-ledger-{}-{}",
+        std::process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let script = r#"import json,sys,pathlib
+source,repo=map(pathlib.Path,sys.argv[1:3])
+sys.path.append(str(source/'scripts/research'))
+import f020_resident_mlp_check as check
+view=repo/'fixtures/resident-expert-mlp'
+recipes=json.loads((view/'manifest.json').read_bytes())['recipes']
+print(json.dumps({p:{a:check.expect_ledger(p,a,r,repo) for a in ('allocating','cached')} for p,r in recipes.items()}))
+"#;
+    for suffix in ["s", "a-longer-checkout-root", "é-東京"] {
+        let repo = temp.join(suffix);
+        let view = Path::new("fixtures/resident-expert-mlp");
+        fs::create_dir_all(repo.join(view)).unwrap();
+        fs::copy(
+            source.join(view).join("manifest.json"),
+            repo.join(view).join("manifest.json"),
+        )
+        .unwrap();
+        for profile in ["default", "mixed"] {
+            let pop = Population::load(profile).unwrap();
+            let rel = view.join(&pop.name);
+            fs::create_dir_all(repo.join(&rel)).unwrap();
+            for name in [
+                "config.json",
+                "model.safetensors.index.json",
+                "model.safetensors",
+            ] {
+                fs::copy(source.join(&rel).join(name), repo.join(&rel).join(name)).unwrap();
+            }
+            for e in 0..3 {
+                let dst = pop.input(&repo, e);
+                fs::create_dir_all(dst.parent().unwrap()).unwrap();
+                fs::copy(pop.input(&source, e), dst).unwrap();
+            }
+        }
+        let cmd = Command::new("/usr/bin/python3")
+            .args(["-I", "-S", "-B", "-c", script])
+            .arg(&source)
+            .arg(&repo)
+            .output()
+            .unwrap();
+        assert!(
+            cmd.status.success(),
+            "{}",
+            String::from_utf8_lossy(&cmd.stderr)
+        );
+        let expected: serde_json::Value = serde_json::from_slice(&cmd.stdout).unwrap();
+        for profile in ["default", "mixed"] {
+            for arm in [Arm::Cached, Arm::Allocating] {
+                let (driver, _, _) = fake("");
+                let (mut step, store, cp) = setup(&repo, profile, arm, driver, None).unwrap();
+                let ledger = step.backend().ledger().clone();
+                assert_eq!(expected[profile][arm.name()], ledger);
+                let seq = run_sequence(&mut step, &store, &cp, arm).unwrap();
+                let w = step.backend().working_bytes();
+                assert_eq!(seq["peak_reservation"], w + 5128);
+                assert_eq!(seq["first"], seq["replay"]);
+                for (offset, position) in [(512 + 3072 + 4, 0), (5128, 1)] {
+                    let (driver, events, t) = fake("");
+                    let (mut bounded, s, cp) =
+                        setup(&repo, profile, arm, driver, Some(w + offset - 1)).unwrap();
+                    if position == 1 {
+                        bounded
+                            .execute(&request(&cp, 0), &s, &s, &t, |_| Ok(()))
+                            .unwrap();
+                    }
+                    let before = (
+                        bounded.backend().snapshot(),
+                        s.reads(),
+                        events.borrow().len(),
+                    );
+                    assert!(bounded
+                        .execute(&request(&cp, position), &s, &s, &t, |_| Ok(()))
+                        .is_err());
+                    assert_eq!(
+                        before,
+                        (
+                            bounded.backend().snapshot(),
+                            s.reads(),
+                            events.borrow().len()
+                        )
+                    );
+                    assert_eq!(bounded.state().position(), position);
+                }
+                let bytes = repo
+                    .join(view)
+                    .join(Population::load(profile).unwrap().name)
+                    .as_os_str()
+                    .len();
+                println!(
+                    "relocated host {}",
+                    serde_json::json!({"root_case":suffix,"root_utf8_bytes":bytes,"profile":profile,"arm":arm.name(),"ledger":ledger,"sequence":seq,"short_refusals":2})
+                );
+            }
+        }
+    }
+    fs::remove_dir_all(temp).unwrap();
 }
