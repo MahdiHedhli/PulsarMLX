@@ -1,0 +1,1514 @@
+{
+  "attempts": [
+    "Initial debug selection passed 11 tests. Added an oversized input and modified selected-payload regression, then ran final debug and release selections.",
+    "Initial Python selection passed 11 tests. Added complete report, crossed source, replay and missing-record controls, then checked the final source with the target-compatible system interpreter.",
+    "The initial staging command would have omitted ignored synthetic checkpoint files. The exact registered import and the two indexed fixture shards were individually named and byte-checked."
+  ],
+  "commands": {
+    "cargo": "cargo test --offline --locked -p mlx-expert-mlp --no-run --message-format=json [--release]",
+    "native_type": "cargo check --offline --locked -p mlx-expert-mlp --features resident-native --bin qualify-resident-mlp",
+    "python": "/usr/bin/python3 -B scripts/research/tests/f020_resident_mlp_checks.py",
+    "rust": "inspect actual executable hash and otool -L; invoke --test-threads=1 --nocapture"
+  },
+  "headers": {
+    "activation_stub": "compiled controlled stub header, no native library",
+    "compared": 29,
+    "complete_pinned_C_CPP_syntax_check": "unavailable; installed header closure differs",
+    "matching": 21,
+    "pinned_mlx_c": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "unmatched": [
+      "mlx/c/compile.h",
+      "mlx/c/distributed_group.h",
+      "mlx/c/fft.h",
+      "mlx/c/graph_utils.h",
+      "mlx/c/io.h",
+      "mlx/c/io_types.h",
+      "mlx/c/mlx.h",
+      "mlx/c/ops.h"
+    ]
+  },
+  "host_process_limit": {
+    "cargo_jobs": 2,
+    "test_processes": 1,
+    "test_threads": 1
+  },
+  "metadata_type_check": {
+    "bytes": 30830,
+    "git_blob": "94d89902fc9685340039ec55283699bc6fd4850c",
+    "sha256": "ad55f274c9f0898d06f98eb4fba5580df191ae3d59b73512a2530958f06ed5e4"
+  },
+  "no_capability_child": {
+    "links": [
+      "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+      "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+    ],
+    "sha256": "753658ba393dee24261fd55d731da108e946e99e0a4c4117463b2e14554c0e10",
+    "source_checked": true,
+    "status": 69
+  },
+  "python": {
+    "capture": {
+      "bytes": 1762,
+      "git_blob": "a630950a8d1d7e964dc729ef8521068282471463",
+      "sha256": "cd4d3131200464a11eb90d8025e8de449f393ef52eb28241e36b9a64d225a336"
+    },
+    "failed": 0,
+    "max_rss_bytes": 31703040,
+    "runtime_seconds": 5.98,
+    "six_independent_synthetic_cases": true,
+    "tests": 12,
+    "tests_run": [
+      "test_binding_matches_real_cache_plan",
+      "test_complete_report_and_fresh_custody",
+      "test_corrupted_values_with_recomputed_hashes_and_clamps",
+      "test_parity_requires_matching_bytes_per_stage",
+      "test_six_original_references_and_complete_ordered_population",
+      "test_wrong_identity_guards_coverage_and_ownership",
+      "test_final_refusal_preserves_grading_claim",
+      "test_local_or_old_work_order_rejected",
+      "test_nonzero_exit_preserved_and_no_next_arm",
+      "test_output_escape_and_symlink_refused",
+      "test_serial_intents_completions_and_no_new_output_refund",
+      "test_timeout_terminates_and_reaps"
+    ]
+  },
+  "rust": [
+    {
+      "activation_stub": {
+        "links": [
+          "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)",
+          "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+        ],
+        "sha256": "4496fdd97fce8c1631780fcc48c5ca8641e73ec7ba2a5336c11bea0e46ebc971"
+      },
+      "build_output": {
+        "bytes": 41602,
+        "git_blob": "6a1aa6349df2fc337e7d4770299e469a332afeeb",
+        "sha256": "3d1f7e18d4b1904818a274f210ae88113248b072d1b7cfe1f1896b682995cfe9"
+      },
+      "packages": [
+        "backend",
+        "block-buffer",
+        "cc",
+        "cfg-if",
+        "cpufeatures",
+        "crypto-common",
+        "digest",
+        "expert-residency-core",
+        "find-msvc-tools",
+        "generic-array",
+        "itoa",
+        "libc",
+        "memchr",
+        "mlx-affine",
+        "mlx-expert-mlp",
+        "mlx-expert-ranges",
+        "mlx-native-affine",
+        "proc-macro2",
+        "quote",
+        "safetensors-catalog",
+        "serde",
+        "serde_core",
+        "serde_derive",
+        "serde_json",
+        "sha2",
+        "shlex",
+        "syn",
+        "typenum",
+        "unicode-ident",
+        "version_check",
+        "zmij"
+      ],
+      "profile": "debug",
+      "targets": [
+        {
+          "counts": [
+            0,
+            0,
+            0
+          ],
+          "executable_sha256": "025f8e6ebeb19813e321f4c33b2314839c0126710948500a9abc4d2676b69f7c",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 1916928,
+          "observed_runtime_seconds": 0.19,
+          "package": "mlx-expert-mlp",
+          "passed": [],
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "target": "mlx_expert_mlp"
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "351d869c96a61702fe05bdc79b55cca606a78545e541d83ba133cb90ac015920",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 3457024,
+          "observed_runtime_seconds": 0.22,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "catalog_recipe_and_geometry_cannot_be_overridden_by_caller",
+            "default_and_overridden_expert_tuples_bind_real_catalog_selection",
+            "dropping_explicit_override_refuses_tuple_before_any_native_bridge",
+            "individually_valid_selected_planes_do_not_authorize_cross_expert_or_role_tuple",
+            "same_shape_from_another_checkpoint_cannot_be_bound_to_source"
+          ],
+          "stdout_sha256": "e5e02721288e00aca3f43ef5e1ac1dc1fedb73313f844f57085c5cc56d7a153f",
+          "target": "tuple_tests"
+        },
+        {
+          "counts": [
+            1,
+            0,
+            0
+          ],
+          "executable_sha256": "194977d970d14218388181e92470987331d65f18af0f26ead0e4ba277cce7530",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 96419840,
+          "observed_runtime_seconds": 1.59,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "activation_result_slots_and_error_cleanup_with_no_mlx_linkage"
+          ],
+          "stdout_sha256": "5bb2b96b2a38dd7fbbe4036230683f238fedcb943b721331c590836fedf2448c",
+          "target": "activation_ownership_test"
+        },
+        {
+          "counts": [
+            6,
+            0,
+            0
+          ],
+          "executable_sha256": "5957ae657c44e745176a229d6e3f95e0e1f386072940aee91c181c16dd92f56f",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 5341184,
+          "observed_runtime_seconds": 0.83,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "changed_selected_payload_and_oversized_input_stop_before_driver",
+            "clean_domain_refusals_and_cancellation_drain_before_return",
+            "copied_and_allocating_order_replay_and_warm_step",
+            "per_owner_reservation_short_and_overflow_refuse_before_reads",
+            "typed_staging_matches_all_original_components_and_rejects_crossed_geometry",
+            "unresolved_boundaries_stop_quarantine_and_prevent_reuse"
+          ],
+          "stdout_sha256": "78778a4527db80354adc8575e1629b77b78a14ba7b3089ceab216d182818d77d",
+          "target": "resident_lifecycle"
+        }
+      ],
+      "total": 12,
+      "traces": [
+        {
+          "arm": "cached",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 5791,
+            "N_native": 33554432,
+            "S": 13824,
+            "W_cache": 1147551,
+            "W_total": 35750559,
+            "activation_temporaries": 1280,
+            "control_metadata": 0,
+            "control_tuple": 0,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 541440,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4200704,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 4096
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 13824
+          },
+          "profile": "default",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35750559
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 9,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 5,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 27648,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35750559
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 27648,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35755687,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 27648,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "allocating",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 5791,
+            "N_native": 33554432,
+            "S": 13824,
+            "W_cache": 1147551,
+            "W_total": 35750559,
+            "activation_temporaries": 1280,
+            "control_metadata": 5791,
+            "control_tuple": 13824,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 561055,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4200704,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 4096
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 13824
+          },
+          "profile": "default",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35750559
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 81,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 0,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35750559
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35755687,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "cached",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 6303,
+            "N_native": 33554432,
+            "S": 22016,
+            "W_cache": 1164447,
+            "W_total": 35767455,
+            "activation_temporaries": 1280,
+            "control_metadata": 0,
+            "control_tuple": 0,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 549632,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4204800,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 10496,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 8192
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 10496,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 8192
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 22016
+          },
+          "profile": "mixed",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35767455
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 9,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 5,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 44032,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35767455
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 44032,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35772583,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 44032,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "allocating",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 6303,
+            "N_native": 33554432,
+            "S": 22016,
+            "W_cache": 1164447,
+            "W_total": 35767455,
+            "activation_temporaries": 1280,
+            "control_metadata": 6303,
+            "control_tuple": 22016,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 577951,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4204800,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 10496,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 8192
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 10496,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 8192
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 22016
+          },
+          "profile": "mixed",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35767455
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 81,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 0,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35767455
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35772583,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "replay_same_commit": true
+          }
+        }
+      ]
+    },
+    {
+      "activation_stub": {
+        "links": [
+          "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)",
+          "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+        ],
+        "sha256": "4496fdd97fce8c1631780fcc48c5ca8641e73ec7ba2a5336c11bea0e46ebc971"
+      },
+      "build_output": {
+        "bytes": 42101,
+        "git_blob": "cbadb2754fdcc2f7beef3a71aa4a620a53b85ca6",
+        "sha256": "b664886acd12918d93d5d038fe83193c328b985b631ceecf683d5d0cad4dfc6c"
+      },
+      "packages": [
+        "backend",
+        "block-buffer",
+        "cc",
+        "cfg-if",
+        "cpufeatures",
+        "crypto-common",
+        "digest",
+        "expert-residency-core",
+        "find-msvc-tools",
+        "generic-array",
+        "itoa",
+        "libc",
+        "memchr",
+        "mlx-affine",
+        "mlx-expert-mlp",
+        "mlx-expert-ranges",
+        "mlx-native-affine",
+        "proc-macro2",
+        "quote",
+        "safetensors-catalog",
+        "serde",
+        "serde_core",
+        "serde_derive",
+        "serde_json",
+        "sha2",
+        "shlex",
+        "syn",
+        "typenum",
+        "unicode-ident",
+        "version_check",
+        "zmij"
+      ],
+      "profile": "release",
+      "targets": [
+        {
+          "counts": [
+            0,
+            0,
+            0
+          ],
+          "executable_sha256": "2639fa1c71a624086feb1d65c4d0d2438cdf1f7b083a3cd1c97479746c83036c",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 1916928,
+          "observed_runtime_seconds": 0.18,
+          "package": "mlx-expert-mlp",
+          "passed": [],
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "target": "mlx_expert_mlp"
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "e9a8c05cd620baa54d33d66f9dd7cf891042889fed2d545fa7ec8ce4d127fc58",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 3031040,
+          "observed_runtime_seconds": 0.17,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "catalog_recipe_and_geometry_cannot_be_overridden_by_caller",
+            "default_and_overridden_expert_tuples_bind_real_catalog_selection",
+            "dropping_explicit_override_refuses_tuple_before_any_native_bridge",
+            "individually_valid_selected_planes_do_not_authorize_cross_expert_or_role_tuple",
+            "same_shape_from_another_checkpoint_cannot_be_bound_to_source"
+          ],
+          "stdout_sha256": "df9aa774d9dfecb35a4aa8ed8ffb3df2f6a1ca9be2bd3c795af67ef3b42ed45c",
+          "target": "tuple_tests"
+        },
+        {
+          "counts": [
+            1,
+            0,
+            0
+          ],
+          "executable_sha256": "3383dd3078676973eeef7de26d861814cd8f5dfc79802c962190b9f96a8b5243",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 96354304,
+          "observed_runtime_seconds": 1.27,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "activation_result_slots_and_error_cleanup_with_no_mlx_linkage"
+          ],
+          "stdout_sha256": "839a13d2e537ac3d85a37772bd7615a8a07749734e1495b9f8f792a8f3a68596",
+          "target": "activation_ownership_test"
+        },
+        {
+          "counts": [
+            6,
+            0,
+            0
+          ],
+          "executable_sha256": "713d754120316b3a6adb15cab5a6f1609bf3ce0f8b42bdfc384798a8143059b4",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "max_rss_bytes": 4636672,
+          "observed_runtime_seconds": 0.23,
+          "package": "mlx-expert-mlp",
+          "passed": [
+            "changed_selected_payload_and_oversized_input_stop_before_driver",
+            "clean_domain_refusals_and_cancellation_drain_before_return",
+            "copied_and_allocating_order_replay_and_warm_step",
+            "per_owner_reservation_short_and_overflow_refuse_before_reads",
+            "typed_staging_matches_all_original_components_and_rejects_crossed_geometry",
+            "unresolved_boundaries_stop_quarantine_and_prevent_reuse"
+          ],
+          "stdout_sha256": "324014f9ec62acf1059a10a13281cc93af7aafb73ceec6cbcf5df13d673c1512",
+          "target": "resident_lifecycle"
+        }
+      ],
+      "total": 12,
+      "traces": [
+        {
+          "arm": "cached",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 5791,
+            "N_native": 33554432,
+            "S": 13824,
+            "W_cache": 1147551,
+            "W_total": 35750559,
+            "activation_temporaries": 1280,
+            "control_metadata": 0,
+            "control_tuple": 0,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 541440,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4200704,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 4096
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 13824
+          },
+          "profile": "default",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35750559
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 9,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 5,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 27648,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35750559
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 27648,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35755687,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 27648,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "allocating",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 5791,
+            "N_native": 33554432,
+            "S": 13824,
+            "W_cache": 1147551,
+            "W_total": 35750559,
+            "activation_temporaries": 1280,
+            "control_metadata": 5791,
+            "control_tuple": 13824,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 561055,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4200704,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 6400,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 4096
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 13824
+          },
+          "profile": "default",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35750559
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 81,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 0,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35750559
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35755687,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35750559
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "cached",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 6303,
+            "N_native": 33554432,
+            "S": 22016,
+            "W_cache": 1164447,
+            "W_total": 35767455,
+            "activation_temporaries": 1280,
+            "control_metadata": 0,
+            "control_tuple": 0,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 549632,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4204800,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 10496,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 8192
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 10496,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 8192
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 22016
+          },
+          "profile": "mixed",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35767455
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 9,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 5,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 44032,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35767455
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 44032,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35772583,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 6,
+              "cache_evictions": 2,
+              "cache_fills": 4,
+              "cache_hits": 2,
+              "cache_reads": 36,
+              "control_reads": 0,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 44032,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "replay_same_commit": true
+          }
+        },
+        {
+          "arm": "allocating",
+          "ledger": {
+            "H_extra": 1048576,
+            "M": 6303,
+            "N_native": 33554432,
+            "S": 22016,
+            "W_cache": 1164447,
+            "W_total": 35767455,
+            "activation_temporaries": 1280,
+            "control_metadata": 6303,
+            "control_tuple": 22016,
+            "descriptor_key_and_shape_allowance": 32768,
+            "host_bound": 577951,
+            "input_copy": 512,
+            "native": {
+              "activation": 1800,
+              "bound": 4204800,
+              "cache_limit": 0,
+              "envelope": 33554432,
+              "qmm": [
+                {
+                  "bytes": 10496,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 8192
+                },
+                {
+                  "bytes": 6400,
+                  "input": 512,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 256,
+                  "packed": 4096
+                },
+                {
+                  "bytes": 10496,
+                  "input": 256,
+                  "metadata_f32": 1024,
+                  "metadata_raw": 512,
+                  "output": 512,
+                  "packed": 8192
+                }
+              ],
+              "temporary_headroom": 4194304
+            },
+            "qmm_readbacks": 1536,
+            "record_and_serialization_workspace": 196608,
+            "saved_row_capacity": 294912,
+            "staging_tuple": 22016
+          },
+          "profile": "mixed",
+          "sequence": {
+            "activation_reads": [
+              1,
+              1,
+              2
+            ],
+            "active_reservation": 0,
+            "before": {
+              "activations": 0,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 0,
+              "dispatches": 0,
+              "mlp_calls": 0,
+              "occupied": 0,
+              "projections": 0,
+              "qmm_imports": 0,
+              "quarantined": false,
+              "records": 0,
+              "working_bytes": 35767455
+            },
+            "delivery_failed": true,
+            "final": {
+              "activations": 9,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 81,
+              "dispatches": 2,
+              "mlp_calls": 9,
+              "occupied": 0,
+              "projections": 27,
+              "qmm_imports": 108,
+              "quarantined": false,
+              "records": 9,
+              "working_bytes": 35767455
+            },
+            "first": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "output_sha256": [
+              "e80232b4d18d0bb7e794be263ba937626f383f9917d4b8a737ba893a8f752293",
+              "80422bc3d307b4a25bdafcc84ac7fb01cb55a09810e8b0f37bb12e0edb5c48ca"
+            ],
+            "peak_reservation": 35772583,
+            "positions": [
+              1,
+              1,
+              2
+            ],
+            "replay": {
+              "activations": 6,
+              "cache_consumed": 0,
+              "cache_evictions": 0,
+              "cache_fills": 0,
+              "cache_hits": 0,
+              "cache_reads": 0,
+              "control_reads": 54,
+              "dispatches": 1,
+              "mlp_calls": 6,
+              "occupied": 0,
+              "projections": 18,
+              "qmm_imports": 72,
+              "quarantined": false,
+              "records": 6,
+              "working_bytes": 35767455
+            },
+            "replay_same_commit": true
+          }
+        }
+      ]
+    }
+  ],
+  "schema": "pulsarmlx.resident-mlp-host-evidence/1",
+  "scope": "Host-only. All native-looking row values in local controls are synthetic.",
+  "unqualified": [
+    "physical binary and loaded images",
+    "native ownership and numerical results",
+    "resident performance"
+  ]
+}
