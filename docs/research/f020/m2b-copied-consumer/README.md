@@ -33,6 +33,14 @@ python3 -B scripts/research/tests/f020_resident_mlp_checks.py
 
 The independent checker starts at the six original input/checkpoint pairs. It verifies gate, up, hidden, actual-hidden local down and original-input end-to-end output, using the unchanged rational reference, gamma selection, clamp bits and E_act=1/128. The historical beta_B=5201/4194304 remains proof provenance. After every row passes, the checker compares corresponding allocating and cached stage bytes. Synthetic structured records and the test driver exercise these gates locally.
 
+## Readiness repair
+
+The retained runtime is admitted through the actual child's fixed library directory. Static inspection uses bounded `otool -L` and `-l` observations, distinguishes imports from own IDs and records the lexical entry, symlink chain, canonical target, file stamps and content digest. An MLX image must actually import the retained runtime. Its expected SHA-256 is `36d3439033afa76443943a1a6967623cde063e435283ccf3b4e6a4e93a8755ca`. Alternate search routes, competing system overrides and drift fail admission. The native child retains its fixed library path. Its isolated Python verifier starts with the system path and the existing home directory for the ordinary authenticated client. The build binds the six project Python modules embedded in the child. A source or installation change after an exclusive claim leaves that claim spent.
+
+For the locked little-endian Darwin arm64 layout, exact source metadata is the fixed term plus the UTF-8 byte count of the canonical **fixture directory**. Default has a fixed term of 5,681 bytes and mixed has 6,195. The proof charges the bounded source, identity, shard/header/catalog/index, held files, overrides and retained JSON from the original fixture. Every root has its own identity, including paths of equal byte length. `W_cache = 2*S + M + 1 MiB + 64 KiB`. Both arms reserve `W_cache + 1 MiB + 32 MiB`, and the allocating arm charges the second source's actual metadata. The second-step admission adds 5,128 bytes. The checked host controls compare both arms and recipes at short, long and non-ASCII roots against the actual Rust executor.
+
+The accounting proof binds the measured layout, checker bytes, fixture authority and native build witness for Rust 1.95.0 (59807616e 2026-04-14). A different build/layout requires its own verified correspondence. The C and C++ syntax check used the pinned MLX-C headers with the four previously accepted patches in a separate inspection root. All 29 included MLX-C headers matched the patched closure. The [host evidence](readiness-evidence.json) records the term table, header provenance, observed relocated charges, commands, tests and limits.
+
 ## Future physical interface
 
 A separately authorized physical build must supply its actual child, Cargo artifact message, linkage and SHA-256. Those physical identities are pending. The supervisor and checker use the ordinary CPU Python runtime. The native child alone receives the explicit retained prefixes and its separate feature.
@@ -44,7 +52,23 @@ CARGO_BUILD_JOBS=2 MLX_PREFIX="$RETAINED_PREFIX" MLX_C_PREFIX="$RETAINED_PREFIX"
   --message-format=json > "$BUILD_CAPTURE"
 ```
 
-Save the complete single matching release `compiler-artifact` JSON message as a separate original file. The build receipt is a JSON object with `commit`, `tree`, `prefix`, `binary_sha256`, `artifact`, `artifact_sha256` and `linkage`. The last value is the ordered array of actual `otool -L` dependency lines after the first line, retaining indentation. The binary must be the emitted release executable at the exact location in the artifact. Keep receipts and reports outside the source tree.
+Save the complete single matching release `compiler-artifact` JSON message as a separate original file. The build receipt is a JSON object with `commit`, `tree`, `prefix`, `binary_sha256`, `artifact`, `artifact_sha256` and `linkage`, plus the two witness fields below. The linkage value is the ordered array of actual `otool -L` dependency lines after the first line, retaining indentation. The binary must be the emitted release executable at the exact location in the artifact. Keep receipts and reports outside the source tree.
+
+During the separately authorized preparation, include `verifier_modules` (module names mapped to SHA-256 of the exact build source) and `accounting_abi_stamp` in the original build receipt. The stamp uses the actual build compiler, target and layout. From the clean source tree, with the build toolchain selected, these commands print the prospective receipt additions. The physical child must contain the matching compiled witness and independently checks its embedded module set before its first native call.
+
+```sh
+python3 -B - <<'PYTHON'
+import json, subprocess, sys
+from pathlib import Path
+sys.path.append(str(Path("scripts/research").resolve()))
+import f020_resident_mlp_supervise as supervisor
+compiler = subprocess.check_output(["rustc", "-V"], text=True).strip()
+stamp = "pulsarmlx.resident-layout/1|aarch64-apple-darwin|" + compiler + "|end"
+print(json.dumps(dict(accounting_abi_stamp=stamp, verifier_modules=supervisor.verifier_modules()), sort_keys=True))
+PYTHON
+```
+
+Preparation ends with the original physical build receipt and read-only `describe` output. A later committed grant binds those observed identities before `run`. Physical child/build hashes remain pending.
 
 A private configuration names canonical absolute paths in `repo`, `binary`, `build`, `prefix`, `installation` (original install receipt), `freeze`, `diagnostic_receipt` and `output` (a fresh location). The original historical receipts bind the prefix and stable installation location. The later work order supplies `operator` with its exact `commit`, `path` and `sha256`. The configuration digest excludes only that operator object so the physical build can be bound without a self-reference. The supervisor reads the immutable prompt and sidecar through the existing authenticated GitHub client. A later Studio prompt must include exactly one fenced `resident-mlp-grant` block containing the one-line JSON produced by the read-only description command.
 

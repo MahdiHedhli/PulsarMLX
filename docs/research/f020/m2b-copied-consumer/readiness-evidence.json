@@ -1,0 +1,1507 @@
+{
+  "commands": {
+    "build": "cargo test --offline --locked -p mlx-expert-mlp --no-run --message-format=json [--release]",
+    "process_limits": "two Cargo jobs, one test process and thread",
+    "python": "/usr/bin/python3 -B scripts/research/tests/f020_resident_mlp_checks.py",
+    "run": "inspect Cargo artifact linkage and hashes; run each admitted test with --test-threads=1 --nocapture",
+    "type_check": "cargo check --offline --locked -p mlx-expert-mlp --features resident-native --bin qualify-resident-mlp; native prefixes absent"
+  },
+  "corrective_attempts": [
+    "The first extended Python run passed 18 of 19 controls. A refactored test still referenced its old local snapshot helper. Restoring the saved first-step snapshot fixed it.",
+    "A strengthened Rust verifier-command test retained a borrow of its command while appending arguments. The compiler rejected it before execution. Comparing against independent expected keys corrected the test."
+  ],
+  "header_syntax": {
+    "closure": {
+      "mlx/c/array.h": {
+        "bytes": 10297,
+        "clean_blob": "a3b382bb2a5d4a338c459730f99d1b13db0acd7e",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "d2205ba0ce146ff722f2ca97c170facb19b28784e7ffa47a07cdad69651c9801",
+        "final_blob": "a3b382bb2a5d4a338c459730f99d1b13db0acd7e",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "d2205ba0ce146ff722f2ca97c170facb19b28784e7ffa47a07cdad69651c9801"
+      },
+      "mlx/c/closure.h": {
+        "bytes": 5792,
+        "clean_blob": "33f71157291480386adc131c6a699e377ba8951f",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "b43a6d7c0e943a8df0f67377d49d92f4fa76eea79eed049adaff80e05ed854f7",
+        "final_blob": "33f71157291480386adc131c6a699e377ba8951f",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "b43a6d7c0e943a8df0f67377d49d92f4fa76eea79eed049adaff80e05ed854f7"
+      },
+      "mlx/c/compile.h": {
+        "bytes": 1319,
+        "clean_blob": "04567fb3a22460afecc8558c85d77478ed4a4180",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "448c6aafe37d52c82f63311a8ab3e1b876f7b0d7fcdc250d91a0ac1105a4b531",
+        "final_blob": "2892a1f0b8b2c1bbafd5aa9a368e442eea2c0aad",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "fba4470b89073180056c9ea46c443051375f7399",
+            "patch_sha256": "5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609",
+            "result_blob": "2892a1f0b8b2c1bbafd5aa9a368e442eea2c0aad",
+            "upstream_commit_blob": "2892a1f0b8b2c1bbafd5aa9a368e442eea2c0aad"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "3f068621057ab97a557c2bdfa206b6bc3532eaf900ae0ebe39d24e6955c80971"
+      },
+      "mlx/c/cuda.h": {
+        "bytes": 733,
+        "clean_blob": "4734f8c513eaca8f44b17afab901ba1ba9a05114",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "ee99d74dc4131dca3ec7ab7d9015ff109481ee6fbcf3c015de7ebfdcc7df2644",
+        "final_blob": "4734f8c513eaca8f44b17afab901ba1ba9a05114",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "ee99d74dc4131dca3ec7ab7d9015ff109481ee6fbcf3c015de7ebfdcc7df2644"
+      },
+      "mlx/c/device.h": {
+        "bytes": 3440,
+        "clean_blob": "4b74e39d399bb921beb2117ae75c262957abbc85",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "3e7556aab2f97fddf943b8f6e30b62064ee589705ad1643716bdd7ea37d6fe2f",
+        "final_blob": "4b74e39d399bb921beb2117ae75c262957abbc85",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "3e7556aab2f97fddf943b8f6e30b62064ee589705ad1643716bdd7ea37d6fe2f"
+      },
+      "mlx/c/distributed.h": {
+        "bytes": 2031,
+        "clean_blob": "c3b0baeeec770125c234da5709cd919b47754ad1",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "68b1dcbdc8dc8c1b4d58220caa7aec2396776282691e99999ff6547b52f7e28e",
+        "final_blob": "c3b0baeeec770125c234da5709cd919b47754ad1",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "68b1dcbdc8dc8c1b4d58220caa7aec2396776282691e99999ff6547b52f7e28e"
+      },
+      "mlx/c/distributed_group.h": {
+        "bytes": 1211,
+        "clean_blob": "43aa2ae5693f6a54cd15cf855690374dd750f56e",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "26334e23cabc877a77a85ee212f8c498f35ae9426036b99957a106afe28a0c0e",
+        "final_blob": "bfbaa80ebc06bc9b686914872d2c6d458874d83f",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "1e3c24ffebfdfbeecca054c51637fc4381d98aab",
+            "patch_sha256": "24831d5bc44b72a0fd027572a4e4eaf754ed9805ffed86185bb8dbdfb6284818",
+            "result_blob": "bfbaa80ebc06bc9b686914872d2c6d458874d83f",
+            "upstream_commit_blob": "bfbaa80ebc06bc9b686914872d2c6d458874d83f"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "af45861a8f71dae21cf88ed581f64cd3008e3c1c4045487b2dbe56934f7df470"
+      },
+      "mlx/c/error.h": {
+        "bytes": 693,
+        "clean_blob": "8c063a4038d520c8fbfcc7a60ca98c2b6d7d6471",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "80090e79eb9add61961885e7aa491b9f47d1b838d188303734490e528b0db2c2",
+        "final_blob": "8c063a4038d520c8fbfcc7a60ca98c2b6d7d6471",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "80090e79eb9add61961885e7aa491b9f47d1b838d188303734490e528b0db2c2"
+      },
+      "mlx/c/export.h": {
+        "bytes": 1880,
+        "clean_blob": "52cb2835c5daf11027af80272a70fa40e9b4396b",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "723346c34761fb87c9a03a133ecff8f9fd8f83a3d80e680d63557c58739e11c1",
+        "final_blob": "52cb2835c5daf11027af80272a70fa40e9b4396b",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "723346c34761fb87c9a03a133ecff8f9fd8f83a3d80e680d63557c58739e11c1"
+      },
+      "mlx/c/fast.h": {
+        "bytes": 5545,
+        "clean_blob": "c825d00e52ac440cf8417537bdb46a3b9b4dc363",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "b24116ec6a5558e976cbdb14474c2e8f88710bf68f7cb5da02d5ba3fa4b385be",
+        "final_blob": "c825d00e52ac440cf8417537bdb46a3b9b4dc363",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "b24116ec6a5558e976cbdb14474c2e8f88710bf68f7cb5da02d5ba3fa4b385be"
+      },
+      "mlx/c/fft.h": {
+        "bytes": 3252,
+        "clean_blob": "779803e9b4b35186c2464de97cd8ce90cfad60ff",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "21a73e39cb7a8f3a69590fff88017f524ff0a9761027c9bf0441f97afb88ffec",
+        "final_blob": "7140b601f92ee1939f5161da8f320097cc935154",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "fba4470b89073180056c9ea46c443051375f7399",
+            "patch_sha256": "5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609",
+            "result_blob": "7140b601f92ee1939f5161da8f320097cc935154",
+            "upstream_commit_blob": "7140b601f92ee1939f5161da8f320097cc935154"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "38c87a460e1338e8f5f1d9ee1159bfb274c8bc08ade66ffa6ebbe1c9d5fccad2"
+      },
+      "mlx/c/graph_utils.h": {
+        "bytes": 1270,
+        "clean_blob": null,
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "final_blob": "81eec7a87904b72d5e8e4c450f6ad83f43a57270",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "782d4712862b247a094086419ce130fd82cf3c53",
+            "patch_sha256": "4469b3ec2836efeadce98a192ae26f423cdbbd182edcd2126f4a6ef36891ce58",
+            "result_blob": "81eec7a87904b72d5e8e4c450f6ad83f43a57270",
+            "upstream_commit_blob": "81eec7a87904b72d5e8e4c450f6ad83f43a57270"
+          }
+        ],
+        "route": "addition from accepted patch",
+        "sha256": "5896da889e0c85f70594395498ed46ec401798d6bd3c9bdb53c0b3e937fcfeb3"
+      },
+      "mlx/c/half.h": {
+        "bytes": 440,
+        "clean_blob": "958d555f58fcb4a7c207043c3dec1bdd5189eeca",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "90d57285c4b8436fbea18758661e84bf962c13179d545bbaac52b176de899ed8",
+        "final_blob": "958d555f58fcb4a7c207043c3dec1bdd5189eeca",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "90d57285c4b8436fbea18758661e84bf962c13179d545bbaac52b176de899ed8"
+      },
+      "mlx/c/io.h": {
+        "bytes": 1682,
+        "clean_blob": "6eb205c9a89784705456da4f552195f8bd0c52a3",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "3a076e00fbfbec9d45160b61695e19b72377389cde4d79e0a317cc58abb2a4bd",
+        "final_blob": "e1a0c0a7d779852e26f76df219e59e0bb95884dd",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "89d3454ac3f46ff68668dd9f7817c6d47650e47c",
+            "patch_sha256": "411749fd1908fdee783c3b378471603606852ce3a0ee0011ca5b66f47187b9d3",
+            "result_blob": "e1a0c0a7d779852e26f76df219e59e0bb95884dd",
+            "upstream_commit_blob": "e1a0c0a7d779852e26f76df219e59e0bb95884dd"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "4b69ffcfea5a96b635228e2384bf6ac0bedb6e1fbd6df4f4a3371cacdcae22eb"
+      },
+      "mlx/c/io_types.h": {
+        "bytes": 3561,
+        "clean_blob": "88349b57c8003fd409f75a7222db524f0cc34f1c",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "892e3108eb50b8414091b67d01241ad6b1ccd815fca60cdc707e5e96dbb226f6",
+        "final_blob": "5382e73423d424d6b5d147784a5ff37f788ec58a",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "89d3454ac3f46ff68668dd9f7817c6d47650e47c",
+            "patch_sha256": "411749fd1908fdee783c3b378471603606852ce3a0ee0011ca5b66f47187b9d3",
+            "result_blob": "5382e73423d424d6b5d147784a5ff37f788ec58a",
+            "upstream_commit_blob": "5382e73423d424d6b5d147784a5ff37f788ec58a"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "fbbed4ddae3de912799cd9158d39593492ad03ac470ae4efc998607e9cc1a712"
+      },
+      "mlx/c/linalg.h": {
+        "bytes": 2981,
+        "clean_blob": "91d5d661ec8887dfd4b99005551e904d041f9d6c",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "10512f19bfcf3f1f6ed9e3de07d43f84dd3492833e7b0ab6e0288ba552f73266",
+        "final_blob": "91d5d661ec8887dfd4b99005551e904d041f9d6c",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "10512f19bfcf3f1f6ed9e3de07d43f84dd3492833e7b0ab6e0288ba552f73266"
+      },
+      "mlx/c/map.h": {
+        "bytes": 3386,
+        "clean_blob": "56abe84f1d6c843c1a19cf8218b7d99d47559750",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "4d5df4eef2757ca76b83dea06935568611d439ad3a8687c3b0df739902377a4d",
+        "final_blob": "56abe84f1d6c843c1a19cf8218b7d99d47559750",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "4d5df4eef2757ca76b83dea06935568611d439ad3a8687c3b0df739902377a4d"
+      },
+      "mlx/c/memory.h": {
+        "bytes": 1067,
+        "clean_blob": "bae9e08ec392561a46ae50f995bd7a9294648d01",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "850ae0be9ac300cfae23ee259441dca2a1e2055606427ac26f3d967b5c03a6e8",
+        "final_blob": "bae9e08ec392561a46ae50f995bd7a9294648d01",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "850ae0be9ac300cfae23ee259441dca2a1e2055606427ac26f3d967b5c03a6e8"
+      },
+      "mlx/c/metal.h": {
+        "bytes": 819,
+        "clean_blob": "5877b224bf1f61e9a59ce1a537b3306f06652bae",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "58ebd8b50add425f046d5fb5ef1bc747eff347b79db8a2b01f6af3967435b8be",
+        "final_blob": "5877b224bf1f61e9a59ce1a537b3306f06652bae",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "58ebd8b50add425f046d5fb5ef1bc747eff347b79db8a2b01f6af3967435b8be"
+      },
+      "mlx/c/mlx.h": {
+        "bytes": 833,
+        "clean_blob": "ffadac89a9ec3bb6754c6b0dacfc6566050f4df7",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "aeb941792b77d0de4101d3299f8f24bebfaa478965c466151adbf02702249c76",
+        "final_blob": "2aa9077c6b259b4defec6555c182fe237351a132",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "782d4712862b247a094086419ce130fd82cf3c53",
+            "patch_sha256": "4469b3ec2836efeadce98a192ae26f423cdbbd182edcd2126f4a6ef36891ce58",
+            "result_blob": "2aa9077c6b259b4defec6555c182fe237351a132",
+            "upstream_commit_blob": "2aa9077c6b259b4defec6555c182fe237351a132"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "ab688925d76cff3805235c2dd3f5985d1d41a8a23b5ecdef0bde0ac8d9b52582"
+      },
+      "mlx/c/ops.h": {
+        "bytes": 31461,
+        "clean_blob": "64d70e2f4b3ca090dfcc48428ca2a7498639089f",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "d540165d1321768a4039d0d436e004959e197026b6f9ec964730e3a03746d586",
+        "final_blob": "44fc09c4de4a7b1b734460ee0716b99928ba9639",
+        "matches_installed": true,
+        "patches": [
+          {
+            "commit": "fba4470b89073180056c9ea46c443051375f7399",
+            "patch_sha256": "5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609",
+            "result_blob": "44fc09c4de4a7b1b734460ee0716b99928ba9639",
+            "upstream_commit_blob": "44fc09c4de4a7b1b734460ee0716b99928ba9639"
+          }
+        ],
+        "route": "authenticated immutable source blob",
+        "sha256": "52b6be191a84372b44d0e81c199900f4e52e821793768f9802f6890077f3994b"
+      },
+      "mlx/c/optional.h": {
+        "bytes": 687,
+        "clean_blob": "ff9ea14e5616e09aa9ad6c11d1eec7d9cea5c530",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "b0f20e24bd02cba4c2f624cd83f68a096a9d4ae6b2e4c4eb30d13719660ecf36",
+        "final_blob": "ff9ea14e5616e09aa9ad6c11d1eec7d9cea5c530",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "b0f20e24bd02cba4c2f624cd83f68a096a9d4ae6b2e4c4eb30d13719660ecf36"
+      },
+      "mlx/c/random.h": {
+        "bytes": 4010,
+        "clean_blob": "dbce0be379353579e8da84d74abb281dacd4b89e",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "7b21eea9c4b0b19636365b114f36d54ed1e534d9b353446b37aae8f9c3ef4df3",
+        "final_blob": "dbce0be379353579e8da84d74abb281dacd4b89e",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "7b21eea9c4b0b19636365b114f36d54ed1e534d9b353446b37aae8f9c3ef4df3"
+      },
+      "mlx/c/stream.h": {
+        "bytes": 1603,
+        "clean_blob": "d5865b80616abe468f58acf39f129f024020d105",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "560e537e50cdc313c6651ab55e9a116721c591efff778de7b293440ee39cabaf",
+        "final_blob": "d5865b80616abe468f58acf39f129f024020d105",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "560e537e50cdc313c6651ab55e9a116721c591efff778de7b293440ee39cabaf"
+      },
+      "mlx/c/string.h": {
+        "bytes": 858,
+        "clean_blob": "0d2a356ba921dfbf029cb4b8905baa5591dbb1f0",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "29b3cfafb60b536a27c2ad96f9868c892e9242754868e1b770f55b7cf34ef598",
+        "final_blob": "0d2a356ba921dfbf029cb4b8905baa5591dbb1f0",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "29b3cfafb60b536a27c2ad96f9868c892e9242754868e1b770f55b7cf34ef598"
+      },
+      "mlx/c/transforms.h": {
+        "bytes": 1712,
+        "clean_blob": "b2434619b72561c41e7c68ae95ff2e296ff28568",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "2cf31bbda041fdf60a83243cff2f9d000cff148b153f406158f8e77ff2072ceb",
+        "final_blob": "b2434619b72561c41e7c68ae95ff2e296ff28568",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "2cf31bbda041fdf60a83243cff2f9d000cff148b153f406158f8e77ff2072ceb"
+      },
+      "mlx/c/transforms_impl.h": {
+        "bytes": 1197,
+        "clean_blob": "2b1356ebcbfda806d661ab83c7718cdcc154c32a",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "2700a13d26aa07339a815b4762b74d9bd6ffa0a9a21298be828ca367b5817701",
+        "final_blob": "2b1356ebcbfda806d661ab83c7718cdcc154c32a",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "2700a13d26aa07339a815b4762b74d9bd6ffa0a9a21298be828ca367b5817701"
+      },
+      "mlx/c/vector.h": {
+        "bytes": 4270,
+        "clean_blob": "81bcf7495524cff29a6d9870961683714108f971",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "b75108edace10f99f01da0dcb08a146d1449dcfcaaa24aa7b66e48e9f227e2c7",
+        "final_blob": "81bcf7495524cff29a6d9870961683714108f971",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "b75108edace10f99f01da0dcb08a146d1449dcfcaaa24aa7b66e48e9f227e2c7"
+      },
+      "mlx/c/version.h": {
+        "bytes": 225,
+        "clean_blob": "96dd23877d44ac5cf5b41b5b4c1743ed04b64c9f",
+        "clean_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+        "clean_sha256": "d1c9aecddd98ad6c16b7c56c056f5b1040a633c4548fe97297481fd625450810",
+        "final_blob": "96dd23877d44ac5cf5b41b5b4c1743ed04b64c9f",
+        "matches_installed": true,
+        "patches": [],
+        "route": "unchanged installed bytes matched immutable Git blob",
+        "sha256": "d1c9aecddd98ad6c16b7c56c056f5b1040a633c4548fe97297481fd625450810"
+      }
+    },
+    "installed_header_inventory_sha256": "2295a532061b01ce536f86a773766cc65389e09ad3f1c051e9fc3fcfe6751192",
+    "installed_headers_before_after_match": true,
+    "mlx_c_commit": "0726ca922fc902c4c61ef9c27d94132be418e945",
+    "mlx_source": {
+      "commit": "68cf2fddd8de5edd8ab3d926391772b2e2cedad8",
+      "tree": "daeca1f087e8437eb1a00ed96876728a47e5923a"
+    },
+    "native_link_load_run": false,
+    "patches": [
+      {
+        "commit": "1e3c24ffebfdfbeecca054c51637fc4381d98aab",
+        "headers": [
+          "mlx/c/distributed_group.h"
+        ],
+        "sha256": "24831d5bc44b72a0fd027572a4e4eaf754ed9805ffed86185bb8dbdfb6284818"
+      },
+      {
+        "commit": "89d3454ac3f46ff68668dd9f7817c6d47650e47c",
+        "headers": [
+          "mlx/c/io.h",
+          "mlx/c/io_types.h"
+        ],
+        "sha256": "411749fd1908fdee783c3b378471603606852ce3a0ee0011ca5b66f47187b9d3"
+      },
+      {
+        "commit": "782d4712862b247a094086419ce130fd82cf3c53",
+        "headers": [
+          "mlx/c/graph_utils.h",
+          "mlx/c/mlx.h"
+        ],
+        "sha256": "4469b3ec2836efeadce98a192ae26f423cdbbd182edcd2126f4a6ef36891ce58"
+      },
+      {
+        "commit": "fba4470b89073180056c9ea46c443051375f7399",
+        "headers": [
+          "mlx/c/compile.h",
+          "mlx/c/fft.h",
+          "mlx/c/ops.h"
+        ],
+        "sha256": "5102eafc68ea94cbe8cabb4acaa9905e17d1c92cb6a1b8c7f0f73dc863c09609"
+      }
+    ],
+    "units": {
+      "C": {
+        "compiler": "clang",
+        "diagnostic_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "flags": [
+          "-std=c11",
+          "-Wall",
+          "-Werror",
+          "-I",
+          "<INSPECTION_HEADERS>",
+          "-I",
+          "<SOURCE>/scripts/research",
+          "-isysroot",
+          "<MACOS_SDK>",
+          "-fsyntax-only"
+        ],
+        "project_headers": [
+          "mlx/c/array.h",
+          "mlx/c/closure.h",
+          "mlx/c/compile.h",
+          "mlx/c/cuda.h",
+          "mlx/c/device.h",
+          "mlx/c/distributed.h",
+          "mlx/c/distributed_group.h",
+          "mlx/c/error.h",
+          "mlx/c/export.h",
+          "mlx/c/fast.h",
+          "mlx/c/fft.h",
+          "mlx/c/graph_utils.h",
+          "mlx/c/half.h",
+          "mlx/c/io.h",
+          "mlx/c/io_types.h",
+          "mlx/c/linalg.h",
+          "mlx/c/map.h",
+          "mlx/c/memory.h",
+          "mlx/c/metal.h",
+          "mlx/c/mlx.h",
+          "mlx/c/ops.h",
+          "mlx/c/optional.h",
+          "mlx/c/random.h",
+          "mlx/c/stream.h",
+          "mlx/c/string.h",
+          "mlx/c/transforms.h",
+          "mlx/c/transforms_impl.h",
+          "mlx/c/vector.h",
+          "mlx/c/version.h"
+        ],
+        "project_support": [],
+        "status": 0,
+        "system_headers": 103,
+        "unit": "crates/mlx-native-affine/src/abi_check.c",
+        "unit_sha256": "f5f58ff4c810dbbe1a7a25aa3e3ec0c1de1606af073d23fbb2e8932c54560a81",
+        "version": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+      },
+      "C++": {
+        "compiler": "clang++",
+        "diagnostic_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "flags": [
+          "-std=c++17",
+          "-fno-fast-math",
+          "-ffp-contract=off",
+          "-Wall",
+          "-Werror",
+          "-I",
+          "<INSPECTION_HEADERS>",
+          "-I",
+          "<SOURCE>/scripts/research",
+          "-isysroot",
+          "<MACOS_SDK>",
+          "-fsyntax-only"
+        ],
+        "project_headers": [
+          "mlx/c/array.h",
+          "mlx/c/closure.h",
+          "mlx/c/compile.h",
+          "mlx/c/cuda.h",
+          "mlx/c/device.h",
+          "mlx/c/distributed.h",
+          "mlx/c/distributed_group.h",
+          "mlx/c/error.h",
+          "mlx/c/export.h",
+          "mlx/c/fast.h",
+          "mlx/c/fft.h",
+          "mlx/c/graph_utils.h",
+          "mlx/c/half.h",
+          "mlx/c/io.h",
+          "mlx/c/io_types.h",
+          "mlx/c/linalg.h",
+          "mlx/c/map.h",
+          "mlx/c/memory.h",
+          "mlx/c/metal.h",
+          "mlx/c/mlx.h",
+          "mlx/c/ops.h",
+          "mlx/c/optional.h",
+          "mlx/c/random.h",
+          "mlx/c/stream.h",
+          "mlx/c/string.h",
+          "mlx/c/transforms.h",
+          "mlx/c/transforms_impl.h",
+          "mlx/c/vector.h",
+          "mlx/c/version.h"
+        ],
+        "project_support": [
+          {
+            "blob": "32ff44e2d9ad65ddfbd0d3231ee6635ba7b952a6",
+            "path": "scripts/research/f020_fused_swiglu_cpu_guard_v2_4.h",
+            "sha256": "1c1faf61df852e9140ec6c643d5986f7521b1d39125d15626f94589a53027332"
+          }
+        ],
+        "status": 0,
+        "system_headers": 837,
+        "unit": "crates/mlx-expert-mlp/src/activation.cpp",
+        "unit_sha256": "5ef20e05e0415eb3bf9c1b113ed435bdd2ea8f62910630e627943c3da90cbc4d",
+        "version": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+      }
+    }
+  },
+  "held_file_layout_derivation": "File is 4 bytes. Stamp contains seven 8-byte fields. Alignment 8 rounds HeldFile to 64 bytes; its String row is 24 + 64 = 88 bytes.",
+  "layout_helper_source": "use std::{mem::size_of,fs::File};\nuse mlx_expert_ranges::BoundedSource;\nuse safetensors_catalog::{ShardProvenance,ShardHeader,HeaderTensor,TensorMeta};\nuse mlx_affine::QuantSpec;\nuse serde_json::Value;\nfn main() {\n println!(\"{:?}\",[size_of::<BoundedSource>(),size_of::<ShardProvenance>(),size_of::<Option<File>>(),size_of::<ShardHeader>(),size_of::<(String,String)>(),size_of::<(String,HeaderTensor)>(),size_of::<u64>(),size_of::<(String,TensorMeta)>(),size_of::<(String,QuantSpec)>(),size_of::<(String,Value)>(),size_of::<Value>(),size_of::<File>(),size_of::<String>()]);\n}\n",
+  "layout_observation": {
+    "links": [
+      "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+      "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+    ],
+    "rustc": [
+      "rustc 1.95.0 (59807616e 2026-04-14)",
+      "binary: rustc",
+      "commit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "commit-date: 2026-04-14",
+      "host: aarch64-apple-darwin",
+      "release: 1.95.0",
+      "LLVM version: 22.1.2"
+    ],
+    "sizes": [
+      368,
+      80,
+      4,
+      72,
+      48,
+      112,
+      8,
+      112,
+      32,
+      56,
+      32,
+      4,
+      24
+    ]
+  },
+  "native_rust_metadata_check": {
+    "bytes": 31410,
+    "git_blob": "b81fbed994f244295517f36fd00c8c99d385e8ad",
+    "sha256": "12ab53ea95a583e8943f4132ee549ea9c61e54042076a776067cd34ae8adbfe1"
+  },
+  "original_local_capture_hashes": {
+    "final-check-2.log": {
+      "bytes": 30830,
+      "git_blob": "f78fbc59a6c8cc91bffe2bd9bfc07e3a801dd5a6",
+      "sha256": "079c514706a3c5d1f70c350ed7eb7a6f532d999bcc804e991f7e34cc143908d8"
+    },
+    "final-check-3.log": {
+      "bytes": 31410,
+      "git_blob": "b81fbed994f244295517f36fd00c8c99d385e8ad",
+      "sha256": "12ab53ea95a583e8943f4132ee549ea9c61e54042076a776067cd34ae8adbfe1"
+    },
+    "final-host-check.log": {
+      "bytes": 32308,
+      "git_blob": "e01ad583642cb3698376370d208ff84ba9420da1",
+      "sha256": "abc5f8e9b4128ca23af0c4acf3bef7a7e7d34970553b9291616209971bccfc91"
+    },
+    "final-host-python.log": {
+      "bytes": 2527,
+      "git_blob": "5268d34bc7663ef1f69b1c1932e4462fd38c2c01",
+      "sha256": "2cf3efaed682da2dd0e93eaa520b1a984c78dce62a054f4d5c5c7dd924d13892"
+    },
+    "final-python-2.log": {
+      "bytes": 2639,
+      "git_blob": "b3ac27f471efd36b008fa04226583340b5c4214d",
+      "sha256": "fb484b11da3b141814342aee02fbb59108123a051a5482e0921fab88b8e17d68"
+    },
+    "final-python-3.log": {
+      "bytes": 2639,
+      "git_blob": "5377bb631d953deeabedb471106c0248c016b2f3",
+      "sha256": "ab78a1143bc3ee2ceaaac1da598950e20120a0908b619b7dfe2e2f7492bd1254"
+    },
+    "host-debug-1.log": {
+      "bytes": 517,
+      "git_blob": "da7ad671f8807674e91770c23c40974ff2d20812",
+      "sha256": "74cd11e4f254018e599f7db39bed5b4a928414765e30850d02b01a3fbaf23853"
+    },
+    "host-debug-2.log": {
+      "bytes": 1515,
+      "git_blob": "7cd6bc109bad5a450a7128458c4f37377cb7cb69",
+      "sha256": "ab829df8643d7d4ed7aa882a3ced88ca2817292b66f4e1476379c96f73a51890"
+    },
+    "host-debug-3.log": {
+      "bytes": 517,
+      "git_blob": "b9d82712bd75adf7515a5b4fcb8563ce98f1f69e",
+      "sha256": "7e4e13ca27ddd226a57bc661fed021687a897f8984eba367a6e7d9ce38c83b8b"
+    },
+    "host-debug-4.log": {
+      "bytes": 517,
+      "git_blob": "f9c3cfdb8e08d03038852c0906927503795b795c",
+      "sha256": "97c1b86d46f69405e686868184a44a41793759b7dc7981d01029185d60c1e339"
+    },
+    "host-release-1.log": {
+      "bytes": 517,
+      "git_blob": "2cc5e645d9a5ae225a2a37cb36e0e9422aab8de8",
+      "sha256": "bd6159e95f3d9f0f99d46e4bc370d375e1abf3816501bbcb33d89ccecd8262fd"
+    },
+    "host-release-2.log": {
+      "bytes": 517,
+      "git_blob": "5d387d72028c673a5298776b57d37daffbfe355f",
+      "sha256": "823acbd32b4df3a7f1e677e7bf33d074fbd850ce3425d8e98be4bd6caf05521f"
+    },
+    "host-release-3.log": {
+      "bytes": 517,
+      "git_blob": "10b59848e20020d2410f40d1aae9c604bb820316",
+      "sha256": "20f6c5c10ce9ab72f09d34aa4474d289e748c821fe567aa0779efdc6d0e94c35"
+    },
+    "python-1.log": {
+      "bytes": 2940,
+      "git_blob": "42e4342a2ecc50bf97ca28f6ad179126ed2e6a84",
+      "sha256": "6bfc2553ee3618762b6fd35c4ee19c7b0d2b1b34d90fe95c706ea6ab0b132e05"
+    },
+    "validation-final.log": {
+      "bytes": 33,
+      "git_blob": "cee753a35bb46291a8fd9adf289e2c49dc91f8eb",
+      "sha256": "2f8f87fb9cc2765a99ced7da6f2412faecba68bef85154e83e06c82edd1272a6"
+    },
+    "validation-qualified.log": {
+      "bytes": 33,
+      "git_blob": "c11ef6894941579447d30d9ba0b99b118576f1de",
+      "sha256": "df42e16e345e5d506d05f1b1240287e7e894490bf1f0dc85ccdacae8b31ef0ae"
+    }
+  },
+  "proof": {
+    "abi_stamp": "pulsarmlx.resident-layout/1|aarch64-apple-darwin|rustc 1.95.0 (59807616e 2026-04-14)|end",
+    "checker_sha256": "006a4440e1028b9d85ede45fd9a9f16abd474a51e6ce6ebe47f068174c0d0530",
+    "layout": {
+      "catalog_row": 112,
+      "header": 72,
+      "header_row": 112,
+      "held_row": 88,
+      "json_row": 56,
+      "json_value": 32,
+      "optional_file": 4,
+      "override_row": 32,
+      "shard": 80,
+      "source": 368,
+      "string_pair": 48,
+      "u64": 8
+    },
+    "profiles": {
+      "default": {
+        "M": 5791,
+        "fixed_bytes": 5681,
+        "root_bytes": 110,
+        "root_sha256": "e4a06a76e7f76ad77783fc9646d6df934c058ddf7f40061dc518fe56efaf39fb",
+        "terms": {
+          "bounded_source": 368,
+          "catalog": 1734,
+          "checkpoint_name": 16,
+          "config_document": 280,
+          "header": 72,
+          "header_metadata": 152,
+          "header_tensors": 1734,
+          "held_files": 320,
+          "identity_string": 64,
+          "index": 840,
+          "overrides": 0,
+          "shard_row": 101
+        }
+      },
+      "mixed": {
+        "M": 6303,
+        "fixed_bytes": 6195,
+        "root_bytes": 108,
+        "root_sha256": "09ce9cb994f72ae84de227431839a4702ccc895eace517a061f2ea304b5e66c5",
+        "terms": {
+          "bounded_source": 368,
+          "catalog": 1734,
+          "checkpoint_name": 14,
+          "config_document": 688,
+          "header": 72,
+          "header_metadata": 152,
+          "header_tensors": 1734,
+          "held_files": 320,
+          "identity_string": 64,
+          "index": 840,
+          "overrides": 108,
+          "shard_row": 101
+        }
+      }
+    },
+    "schema": "resident-accounting/1",
+    "view_sha256": "23bad0b4c40086dfec75eda1273a7af999c3cca98027f17aed0d4a61690507d8"
+  },
+  "runtime": {
+    "evidence": "synthetic external inspection, original receipt/hash boundaries, source facts and child process. The real installation, physical identity, operator admission, child verifier, final gate and stored inspection paths executed.",
+    "expected_runtime_sha256": "36d3439033afa76443943a1a6967623cde063e435283ccf3b4e6a4e93a8755ca",
+    "physical_loaded_libjaccl_observed": false,
+    "policy": "fixed-prefix-child-library-path/1",
+    "reference_commit": "bd6ee8c462a0e3a253523676e3c899946128647e",
+    "reference_tree": "992339daabaef727f4c0e553cd8820ce996fedc6"
+  },
+  "schema": "pulsarmlx.m2b.readiness-host-evidence/1",
+  "source_base": "e6b64faddc9342754ebb5ec34f4b7e0afc4e6e56",
+  "source_scope": {
+    "crates/mlx-expert-mlp/src/resident_native.rs": {
+      "bytes": 13654,
+      "git_blob": "4fd0e4860a0c88e23df4a7d876b3dd783f8cfae2",
+      "mode": "100644",
+      "sha256": "d6c2abfe16e43d535f9e6d528ff51608eaddbd2c552088569f54113885285f08"
+    },
+    "crates/mlx-expert-mlp/src/resident_verifier.rs": {
+      "bytes": 3221,
+      "git_blob": "3401cf06895c1ceca7be3f333e1ad7d50fea908c",
+      "mode": "100644",
+      "sha256": "82104aa622ccdf874968a01a64f27cc98d02e96dee412063e2345801b39b8417"
+    },
+    "crates/mlx-expert-mlp/tests/resident_lifecycle.rs": {
+      "bytes": 17890,
+      "git_blob": "257f17e88c88694781cbd674517e41df00fc062a",
+      "mode": "100644",
+      "sha256": "2e19a1d899ea5c517b304fc7e564a76fa76ecc23673d6e0a3e91588a90d8af80"
+    },
+    "scripts/research/f020_resident_mlp_check.py": {
+      "bytes": 19391,
+      "git_blob": "3680359b232e778a18fac9eb5651223d5b7c4f2f",
+      "mode": "100644",
+      "sha256": "006a4440e1028b9d85ede45fd9a9f16abd474a51e6ce6ebe47f068174c0d0530"
+    },
+    "scripts/research/f020_resident_mlp_runtime.py": {
+      "bytes": 13320,
+      "git_blob": "e0f5883553fb2c3a311b53dbf9ebedc6078e9409",
+      "mode": "100644",
+      "sha256": "3dbffb97f61665a7152764b3481d5077aaf2e4ca635f1b10e468ff18f712213a"
+    },
+    "scripts/research/f020_resident_mlp_supervise.py": {
+      "bytes": 22163,
+      "git_blob": "605925ad24d561d867b246df1776f6d48cb66761",
+      "mode": "100644",
+      "sha256": "00509e05f935ea35b8c899e57effb48cb25f32f4c8182196321c996df859bfe4"
+    },
+    "scripts/research/tests/f020_resident_mlp_checks.py": {
+      "bytes": 34113,
+      "git_blob": "8cd46aae06e4686431392a3ec175f2afbe82ad17",
+      "mode": "100644",
+      "sha256": "f1fa76cb2a8b19aed145be490b3da4c404726fe57cac6db611077ffa005217ca"
+    }
+  },
+  "source_tree_base": "b9916b7ad2f53f5e6c54a02bc8d435f054c46d15",
+  "status": "CPU host controls and pinned header syntax passed; physical preparation pending",
+  "tests": {
+    "debug": {
+      "cargo_capture": {
+        "bytes": 41601,
+        "git_blob": "edd584cbcc2f2dc80f8c3f2d188bd2277a97c747",
+        "sha256": "0049cf272d309eed9d091a41a53c1444071b8833bf302f26a78e0653f308ac31"
+      },
+      "relocated": [
+        {
+          "M": 5841,
+          "S": 13824,
+          "W_cache": 1147601,
+          "W_total": 35750609,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755737,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 160,
+          "root_case": "s"
+        },
+        {
+          "M": 5841,
+          "S": 13824,
+          "W_cache": 1147601,
+          "W_total": 35750609,
+          "arm": "allocating",
+          "control_metadata": 5841,
+          "first_second_short_refusals": 2,
+          "host_bound": 561105,
+          "peak": 35755737,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 160,
+          "root_case": "s"
+        },
+        {
+          "M": 6353,
+          "S": 22016,
+          "W_cache": 1164497,
+          "W_total": 35767505,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772633,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 158,
+          "root_case": "s"
+        },
+        {
+          "M": 6353,
+          "S": 22016,
+          "W_cache": 1164497,
+          "W_total": 35767505,
+          "arm": "allocating",
+          "control_metadata": 6353,
+          "first_second_short_refusals": 2,
+          "host_bound": 578001,
+          "peak": 35772633,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 158,
+          "root_case": "s"
+        },
+        {
+          "M": 5862,
+          "S": 13824,
+          "W_cache": 1147622,
+          "W_total": 35750630,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755758,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 181,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 5862,
+          "S": 13824,
+          "W_cache": 1147622,
+          "W_total": 35750630,
+          "arm": "allocating",
+          "control_metadata": 5862,
+          "first_second_short_refusals": 2,
+          "host_bound": 561126,
+          "peak": 35755758,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 181,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 6374,
+          "S": 22016,
+          "W_cache": 1164518,
+          "W_total": 35767526,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772654,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 179,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 6374,
+          "S": 22016,
+          "W_cache": 1164518,
+          "W_total": 35767526,
+          "arm": "allocating",
+          "control_metadata": 6374,
+          "first_second_short_refusals": 2,
+          "host_bound": 578022,
+          "peak": 35772654,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 179,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 5849,
+          "S": 13824,
+          "W_cache": 1147609,
+          "W_total": 35750617,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755745,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 168,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 5849,
+          "S": 13824,
+          "W_cache": 1147609,
+          "W_total": 35750617,
+          "arm": "allocating",
+          "control_metadata": 5849,
+          "first_second_short_refusals": 2,
+          "host_bound": 561113,
+          "peak": 35755745,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 168,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 6361,
+          "S": 22016,
+          "W_cache": 1164505,
+          "W_total": 35767513,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772641,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 166,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 6361,
+          "S": 22016,
+          "W_cache": 1164505,
+          "W_total": 35767513,
+          "arm": "allocating",
+          "control_metadata": 6361,
+          "first_second_short_refusals": 2,
+          "host_bound": 578009,
+          "peak": 35772641,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 166,
+          "root_case": "\u00e9-\u6771\u4eac"
+        }
+      ],
+      "rows": [
+        {
+          "counts": [
+            0,
+            0,
+            0
+          ],
+          "executable_sha256": "6e419351aa91c2b5673d6593ac26bd913ceebee3d8b6db4e68d19d7a8c2c630c",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 1900544,
+          "names": [],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "target": "mlx_expert_mlp",
+          "wall_seconds": 0.25
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "a3932d6f11e7f72667896dba1f4289fc2cd37b134a33b34453b094020a3f2929",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 3522560,
+          "names": [
+            "catalog_recipe_and_geometry_cannot_be_overridden_by_caller",
+            "default_and_overridden_expert_tuples_bind_real_catalog_selection",
+            "dropping_explicit_override_refuses_tuple_before_any_native_bridge",
+            "individually_valid_selected_planes_do_not_authorize_cross_expert_or_role_tuple",
+            "same_shape_from_another_checkpoint_cannot_be_bound_to_source"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "e5e02721288e00aca3f43ef5e1ac1dc1fedb73313f844f57085c5cc56d7a153f",
+          "target": "tuple_tests",
+          "wall_seconds": 0.19
+        },
+        {
+          "counts": [
+            1,
+            0,
+            0
+          ],
+          "executable_sha256": "fa99ea1d56cab1da5d2b870febf7e94f33fa06d073df06b95cbc11d58d29e309",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 96567296,
+          "names": [
+            "activation_result_slots_and_error_cleanup_with_no_mlx_linkage"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "a5f0775f8440d14b601ab4ec1d5bf4913e2f7f58dbf06b4f8f331223f9b27ed4",
+          "target": "activation_ownership_test",
+          "wall_seconds": 1.49
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "96d8f330d668d6f98d577372ee14242478dfc1cb24820716c4df75b3753b394f",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 20660224,
+          "names": [
+            "changed_selected_payload_and_oversized_input_stop_before_driver",
+            "clean_domain_refusals_and_cancellation_drain_before_return",
+            "copied_and_allocating_order_replay_and_warm_step",
+            "independent_metadata_proof_at_relocated_canonical_roots",
+            "per_owner_reservation_short_and_overflow_refuse_before_reads",
+            "typed_staging_matches_all_original_components_and_rejects_crossed_geometry",
+            "unresolved_boundaries_stop_quarantine_and_prevent_reuse",
+            "verifier::tests::verifier_scrubs_native_loader_python_git_and_credential_overrides"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "588ce5746ac01a1cc51d2915f4040c83d3a43e280b92f6e80b0c9d7c4837cceb",
+          "target": "resident_lifecycle",
+          "wall_seconds": 3.12
+        }
+      ],
+      "stub": {
+        "links": [
+          "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)",
+          "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+        ],
+        "sha256": "4496fdd97fce8c1631780fcc48c5ca8641e73ec7ba2a5336c11bea0e46ebc971"
+      },
+      "total": 14
+    },
+    "python": {
+      "capture": {
+        "bytes": 2639,
+        "git_blob": "5377bb631d953deeabedb471106c0248c016b2f3",
+        "sha256": "ab78a1143bc3ee2ceaaac1da598950e20120a0908b619b7dfe2e2f7492bd1254"
+      },
+      "max_rss_bytes": 43270144,
+      "names": [
+        "test_binding_matches_real_cache_plan",
+        "test_complete_report_and_fresh_custody",
+        "test_corrupted_values_with_recomputed_hashes_and_clamps",
+        "test_parity_requires_matching_bytes_per_stage",
+        "test_relocated_report_stale_equal_length_root_and_tampered_ledger",
+        "test_six_original_references_and_complete_ordered_population",
+        "test_wrong_identity_guards_coverage_and_ownership",
+        "test_after_first_child_drift_preserves_spent_claim",
+        "test_fixed_alias_reobservation_and_drift",
+        "test_no_claim_for_own_id_unknown_dependency_or_bad_runtime",
+        "test_pinned_original_refusal_and_current_production_acceptance",
+        "test_preclaim_build_operator_helper_and_abi_mismatches",
+        "test_production_verify_child_final_admission_and_inspect",
+        "test_sole_grade_and_final_source_drift",
+        "test_typed_inspection_refuses_truncated_command_and_fixed_system_override",
+        "test_final_refusal_preserves_grading_claim",
+        "test_local_or_old_work_order_rejected",
+        "test_nonzero_exit_preserved_and_no_next_arm",
+        "test_output_escape_and_symlink_refused",
+        "test_serial_intents_completions_and_no_new_output_refund",
+        "test_timeout_terminates_and_reaps"
+      ],
+      "passed": 21,
+      "wall_seconds": 19.51
+    },
+    "release": {
+      "cargo_capture": {
+        "bytes": 42061,
+        "git_blob": "42bbd7ecd4035382b3dca2967d2bb29ab9cdd948",
+        "sha256": "ec59c5aeb505b223df375d72ebe3f1bc6f4f12270198bd745ba62bfe86ca9da4"
+      },
+      "relocated": [
+        {
+          "M": 5843,
+          "S": 13824,
+          "W_cache": 1147603,
+          "W_total": 35750611,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755739,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 162,
+          "root_case": "s"
+        },
+        {
+          "M": 5843,
+          "S": 13824,
+          "W_cache": 1147603,
+          "W_total": 35750611,
+          "arm": "allocating",
+          "control_metadata": 5843,
+          "first_second_short_refusals": 2,
+          "host_bound": 561107,
+          "peak": 35755739,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 162,
+          "root_case": "s"
+        },
+        {
+          "M": 6355,
+          "S": 22016,
+          "W_cache": 1164499,
+          "W_total": 35767507,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772635,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 160,
+          "root_case": "s"
+        },
+        {
+          "M": 6355,
+          "S": 22016,
+          "W_cache": 1164499,
+          "W_total": 35767507,
+          "arm": "allocating",
+          "control_metadata": 6355,
+          "first_second_short_refusals": 2,
+          "host_bound": 578003,
+          "peak": 35772635,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 160,
+          "root_case": "s"
+        },
+        {
+          "M": 5864,
+          "S": 13824,
+          "W_cache": 1147624,
+          "W_total": 35750632,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755760,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 183,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 5864,
+          "S": 13824,
+          "W_cache": 1147624,
+          "W_total": 35750632,
+          "arm": "allocating",
+          "control_metadata": 5864,
+          "first_second_short_refusals": 2,
+          "host_bound": 561128,
+          "peak": 35755760,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 183,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 6376,
+          "S": 22016,
+          "W_cache": 1164520,
+          "W_total": 35767528,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772656,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 181,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 6376,
+          "S": 22016,
+          "W_cache": 1164520,
+          "W_total": 35767528,
+          "arm": "allocating",
+          "control_metadata": 6376,
+          "first_second_short_refusals": 2,
+          "host_bound": 578024,
+          "peak": 35772656,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 181,
+          "root_case": "a-longer-checkout-root"
+        },
+        {
+          "M": 5851,
+          "S": 13824,
+          "W_cache": 1147611,
+          "W_total": 35750619,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 541440,
+          "peak": 35755747,
+          "profile": "default",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 170,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 5851,
+          "S": 13824,
+          "W_cache": 1147611,
+          "W_total": 35750619,
+          "arm": "allocating",
+          "control_metadata": 5851,
+          "first_second_short_refusals": 2,
+          "host_bound": 561115,
+          "peak": 35755747,
+          "profile": "default",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 170,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 6363,
+          "S": 22016,
+          "W_cache": 1164507,
+          "W_total": 35767515,
+          "arm": "cached",
+          "control_metadata": 0,
+          "first_second_short_refusals": 2,
+          "host_bound": 549632,
+          "peak": 35772643,
+          "profile": "mixed",
+          "read_counts": [
+            36,
+            0
+          ],
+          "replay_equal": true,
+          "root_bytes": 168,
+          "root_case": "\u00e9-\u6771\u4eac"
+        },
+        {
+          "M": 6363,
+          "S": 22016,
+          "W_cache": 1164507,
+          "W_total": 35767515,
+          "arm": "allocating",
+          "control_metadata": 6363,
+          "first_second_short_refusals": 2,
+          "host_bound": 578011,
+          "peak": 35772643,
+          "profile": "mixed",
+          "read_counts": [
+            0,
+            81
+          ],
+          "replay_equal": true,
+          "root_bytes": 168,
+          "root_case": "\u00e9-\u6771\u4eac"
+        }
+      ],
+      "rows": [
+        {
+          "counts": [
+            0,
+            0,
+            0
+          ],
+          "executable_sha256": "2639fa1c71a624086feb1d65c4d0d2438cdf1f7b083a3cd1c97479746c83036c",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 1933312,
+          "names": [],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+          "target": "mlx_expert_mlp",
+          "wall_seconds": 0.19
+        },
+        {
+          "counts": [
+            1,
+            0,
+            0
+          ],
+          "executable_sha256": "3383dd3078676973eeef7de26d861814cd8f5dfc79802c962190b9f96a8b5243",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 96583680,
+          "names": [
+            "activation_result_slots_and_error_cleanup_with_no_mlx_linkage"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "5d6b3e417b2238ca520f1868abbf4c9f5c16eb1331be6a918f042268ea7ff043",
+          "target": "activation_ownership_test",
+          "wall_seconds": 1.32
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "e9a8c05cd620baa54d33d66f9dd7cf891042889fed2d545fa7ec8ce4d127fc58",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 2932736,
+          "names": [
+            "catalog_recipe_and_geometry_cannot_be_overridden_by_caller",
+            "default_and_overridden_expert_tuples_bind_real_catalog_selection",
+            "dropping_explicit_override_refuses_tuple_before_any_native_bridge",
+            "individually_valid_selected_planes_do_not_authorize_cross_expert_or_role_tuple",
+            "same_shape_from_another_checkpoint_cannot_be_bound_to_source"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "67b35f4b10304acfcac6a9e2aa69f3c8c669c023912aae299cbcf57c16a50e0a",
+          "target": "tuple_tests",
+          "wall_seconds": 0.13
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "4a42a177a7ce997d29dd055fb6eb105f90e6cfe44472a35b9f867f93a8d95e52",
+          "exit": 0,
+          "links": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "maximum_rss_bytes": 20692992,
+          "names": [
+            "changed_selected_payload_and_oversized_input_stop_before_driver",
+            "clean_domain_refusals_and_cancellation_drain_before_return",
+            "copied_and_allocating_order_replay_and_warm_step",
+            "independent_metadata_proof_at_relocated_canonical_roots",
+            "per_owner_reservation_short_and_overflow_refuse_before_reads",
+            "typed_staging_matches_all_original_components_and_rejects_crossed_geometry",
+            "unresolved_boundaries_stop_quarantine_and_prevent_reuse",
+            "verifier::tests::verifier_scrubs_native_loader_python_git_and_credential_overrides"
+          ],
+          "package": "mlx-expert-mlp",
+          "stdout_sha256": "d0d6a96a8d5c2e0e3fe5e14ae543ccd6f745428bccef56835cd7f2a6cdebd4c2",
+          "target": "resident_lifecycle",
+          "wall_seconds": 1.08
+        }
+      ],
+      "stub": {
+        "links": [
+          "\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)",
+          "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+        ],
+        "sha256": "4496fdd97fce8c1631780fcc48c5ca8641e73ec7ba2a5336c11bea0e46ebc971"
+      },
+      "total": 14
+    }
+  },
+  "unchanged": {
+    "unchanged_checker_AST": {
+      "binding": "89020658f37a6c17053ef2c7861acdc92ee83771dc4c9a9ac17fef9d276ce770",
+      "compare": "6650dad12569ebb308ccb88113817c79303684ed86780c836d14c2063f000522",
+      "row_check": "ca2c0d4244c5b02e1fb611426e6414089b7666af7c0b084cc039fed23cd1313e"
+    },
+    "unchanged_driver_bytes_sha256": "73a80d8d4808f7d2df82f5ec5bbd1e2755c7acdf386052df8246b6557a0f3b8f"
+  }
+}
