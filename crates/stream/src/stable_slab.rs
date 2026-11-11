@@ -4,8 +4,7 @@ use std::ptr::{self, NonNull};
 use std::sync::{Arc, Mutex};
 
 /// Stable identity for a reusable slot in the allocator.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SlotId(pub u64);
+pub use expert_residency_core::SlotId;
 
 /// Slot zeroing strategy. Fresh initialization prevents uninitialized reads;
 /// it does not prevent disclosure of a previous lease's initialized bytes.

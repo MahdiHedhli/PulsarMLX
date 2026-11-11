@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/gguf",
     "crates/stream",
+    "crates/expert-residency-core",
     "crates/kernels",
     "crates/tokenizer",
     "crates/engine",
