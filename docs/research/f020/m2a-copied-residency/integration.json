@@ -1,0 +1,234 @@
+{
+  "base": "aaf076f17b2e71c60e6309aa560df876d28a84d4",
+  "base_tree": "90ad1a83f63789d3afb009969441ae942886d583",
+  "comparison_at_implementation": {
+    "added": {
+      "crates/expert-residency-core/Cargo.toml": {
+        "blob": "a2af0dd5385744a20fb17a7b43ba96543f485879",
+        "bytes": 109,
+        "mode": "100644",
+        "sha256": "8460bae1b52970f332f5831dbbbfc2db078e764f6c7721f16714e05337f9a41f"
+      },
+      "crates/expert-residency-core/src/expert_residency.rs": {
+        "blob": "db320f8a6386e73faa4cf867cff272c8577b0ec3",
+        "bytes": 11781,
+        "mode": "100644",
+        "sha256": "cdecb290e5c8d7695cbf8b0868256dc526b08c35d83ab9052c6694ad74542059"
+      },
+      "crates/expert-residency-core/src/lib.rs": {
+        "blob": "909b876ae8709e887e2a34a3e8259e3cb5984e74",
+        "bytes": 172,
+        "mode": "100644",
+        "sha256": "462beebe9035f8bc659e108facbdfa64f85beb63a7f1361b49dc5e5463c5bc17"
+      },
+      "crates/mlx-expert-ranges/Cargo.toml": {
+        "blob": "fd812329b6ec8daa492bcf9ae4d663aafb9878f1",
+        "bytes": 538,
+        "mode": "100644",
+        "sha256": "cfd43a5c1f76f7d6201b17fcc8d198cb312fbfe38604dd1c5986e1425a08e5a7"
+      },
+      "crates/mlx-expert-ranges/README.md": {
+        "blob": "ada1e2e2ff9554cea36a859ce325ed61d78dfaef",
+        "bytes": 6270,
+        "mode": "100644",
+        "sha256": "28f0b8dd1ce793c5c50ee335f7ac90767d42ff9ed74eec2617caa23db7824977"
+      },
+      "crates/mlx-expert-ranges/src/lib.rs": {
+        "blob": "3d3a6f7f51cc2b3ae890d0a297a9955e68c1e85f",
+        "bytes": 15912,
+        "mode": "100644",
+        "sha256": "fa4995597a60b1e18549756a9c610233fa5c353b56573f186dd0009cf6bbb14f"
+      },
+      "crates/mlx-expert-ranges/src/metadata.rs": {
+        "blob": "f5e1b788cc23b08bd7dc130d4cc95025d8992661",
+        "bytes": 4154,
+        "mode": "100644",
+        "sha256": "ea61a34c0b27b523944f7cb3edaeb427d0c614302c750cc2840eaeb108ac1582"
+      },
+      "crates/mlx-expert-ranges/src/read_into.rs": {
+        "blob": "8a8eaa14f6f9cee83f5653899fbe0c8338bf9ae9",
+        "bytes": 6179,
+        "mode": "100644",
+        "sha256": "335cd8aedaafdf7419bb2943b469bee5252007172001be0074e9e71a3b64dc1f"
+      },
+      "crates/mlx-expert-ranges/src/residency.rs": {
+        "blob": "c3be0f32fc6c24521d829a447021f4ff2910981f",
+        "bytes": 24524,
+        "mode": "100644",
+        "sha256": "ac2a8017ed80164ce14196150d3887aa16ca12239d1b877a2f954a73d835f254"
+      },
+      "crates/mlx-expert-ranges/src/residency/tests.rs": {
+        "blob": "0a5cae9d722b80a78953c8d3f83d5eed16975f20",
+        "bytes": 4274,
+        "mode": "100644",
+        "sha256": "bccea8d81351e340164675030ce2985ef837894b3f3d1667698001227a9b58ea"
+      },
+      "crates/mlx-expert-ranges/tests/copied_residency.rs": {
+        "blob": "930bf3de35f6ff5ef832d57f7daedaed396beecd",
+        "bytes": 14437,
+        "mode": "100644",
+        "sha256": "7144ccf048e94b14dc371ba27eb54f10dc87d7af9766b190d5c8a8ccdca1c6b6"
+      },
+      "crates/mlx-expert-ranges/tests/ranges.rs": {
+        "blob": "0f5da2469aa52e243ecda7ef9a098197c242a32d",
+        "bytes": 16047,
+        "mode": "100644",
+        "sha256": "10f191983c8a1b7d344b6c98521ec4d67153260f4bebb976094df1e4d7813395"
+      },
+      "crates/mlx-expert-ranges/tests/read_into.rs": {
+        "blob": "3cf217f2652dea05cf065ec238568d23d2c91fa1",
+        "bytes": 4310,
+        "mode": "100644",
+        "sha256": "deef66a328f0ef4a910fb598c4519573ed1f29734c0ea017db0edca0081ee95c"
+      },
+      "crates/mlx-expert-ranges/tests/residency_coordinator.rs": {
+        "blob": "34f53f97185764e5a2d361c7dd125ddf1356a7a4",
+        "bytes": 9269,
+        "mode": "100644",
+        "sha256": "a83dede396a6a64e72cd92ea7fd72aa9981db4c040551ba6824ee05a4ee1cec4"
+      },
+      "crates/mlx-expert-ranges/tests/residency_support/mod.rs": {
+        "blob": "0b917d695fd525a6d9dcb761d00eb76c21ae5dd5",
+        "bytes": 1324,
+        "mode": "100644",
+        "sha256": "825f8873889af297f696d94c380579dccda7a0e686261d84e960e80a04d8eaa8"
+      },
+      "crates/mlx-expert-ranges/tests/support/mod.rs": {
+        "blob": "9270d3d1c60d0bf3030bfa857b11c57f5bb3b453",
+        "bytes": 4257,
+        "mode": "100644",
+        "sha256": "71bfd195905f23464c648c643923140012a379d062c7bb5a05bde48b6c7d3918"
+      }
+    },
+    "changed": {
+      "Cargo.lock": {
+        "after": {
+          "blob": "5fba62ad23f25c6b552aafbcb5af3a36d6389dac",
+          "bytes": 39899,
+          "mode": "100644",
+          "sha256": "b6a3ca7b1da6ec5454ffbc72783ddd053aeaef91b75e91d9f61142e8de0a03a3"
+        },
+        "before": [
+          "100644",
+          "d835466a50bb91ffffd8390a921f3df1bd034a1d"
+        ]
+      },
+      "Cargo.toml": {
+        "after": {
+          "blob": "23ac7654963fad3141090bfab411ad1d36b8604c",
+          "bytes": 581,
+          "mode": "100644",
+          "sha256": "06f82ad663d697b4f7dcc13c1e2334af2e335f3dac16e10016f3c95ddc8cfd52"
+        },
+        "before": [
+          "100644",
+          "88339b76bc7f285db10f071835c131fdb2c4bc1c"
+        ]
+      },
+      "crates/backend/src/step.rs": {
+        "after": {
+          "blob": "14ff6eae7c05fae8a5bc0478cb180abff03181d5",
+          "bytes": 21825,
+          "mode": "100644",
+          "sha256": "cc907ff0a3434e81941e725e238cfc497b548cb381b8cfb2c9b11533ff46ccc7"
+        },
+        "before": [
+          "100644",
+          "f99962d81a4d2cc998a3554e82dce188adb23998"
+        ]
+      },
+      "crates/stream/Cargo.toml": {
+        "after": {
+          "blob": "8a9d6da3c1e4e3088b99e32ae81a5ba5d031d791",
+          "bytes": 480,
+          "mode": "100644",
+          "sha256": "d462ffff8f1603e01b8beab62b25870845841ccb536b2912326ddf956ca7da03"
+        },
+        "before": [
+          "100644",
+          "b717e17a699908b45fd4fc78eecee9547ef36e42"
+        ]
+      },
+      "crates/stream/src/expert_residency.rs": {
+        "after": {
+          "blob": "3d001f04d5978c307fc6b7b458675d19fd8a0151",
+          "bytes": 52,
+          "mode": "100644",
+          "sha256": "7adb579b266f4c83913fe8b56d03022d187f8bd63ca9a75bb5f042d57868c7fd"
+        },
+        "before": [
+          "100644",
+          "db320f8a6386e73faa4cf867cff272c8577b0ec3"
+        ]
+      },
+      "crates/stream/src/stable_slab.rs": {
+        "after": {
+          "blob": "6089530059cf07044e03a954c13c0d39a4df7716",
+          "bytes": 22276,
+          "mode": "100644",
+          "sha256": "1e0ef4556b88b78acf5f5dd4f2d5f7d8c4c80c408c5bf1c92fc1bcfaeebee82e"
+        },
+        "before": [
+          "100644",
+          "fb0b0fb4b83885f5e1edecba34b690d70686c3e3"
+        ]
+      }
+    },
+    "protected_inventory_sha256": "2c49fb576d8f64598203adcb8ec8739117335560d8eed2f663a660c54234a159",
+    "protected_symlinks": 3,
+    "unchanged_count": 5011
+  },
+  "exact_imports": {
+    "crates/mlx-expert-ranges/Cargo.toml": {
+      "blob": "d371162b77a67e4c639b121f7f16d65542d1abdb",
+      "bytes": 422,
+      "mode": "100644",
+      "sha256": "963fd6a73fbe515f32e288174f88471fc71edafd19ff0e3f05105680aae8e196"
+    },
+    "crates/mlx-expert-ranges/src/lib.rs": {
+      "blob": "5f80a3a7d9cdc030e9ade9c7a7328a89bd3feb66",
+      "bytes": 15611,
+      "mode": "100644",
+      "sha256": "332c357c56879a8f2eb4a4d325b85b9bb5b75ce131de64c3dd6082f3ec09d29a"
+    },
+    "crates/mlx-expert-ranges/src/read_into.rs": {
+      "blob": "8a8eaa14f6f9cee83f5653899fbe0c8338bf9ae9",
+      "bytes": 6179,
+      "mode": "100644",
+      "sha256": "335cd8aedaafdf7419bb2943b469bee5252007172001be0074e9e71a3b64dc1f"
+    },
+    "crates/mlx-expert-ranges/tests/ranges.rs": {
+      "blob": "0f5da2469aa52e243ecda7ef9a098197c242a32d",
+      "bytes": 16047,
+      "mode": "100644",
+      "sha256": "10f191983c8a1b7d344b6c98521ec4d67153260f4bebb976094df1e4d7813395"
+    },
+    "crates/mlx-expert-ranges/tests/read_into.rs": {
+      "blob": "3cf217f2652dea05cf065ec238568d23d2c91fa1",
+      "bytes": 4310,
+      "mode": "100644",
+      "sha256": "deef66a328f0ef4a910fb598c4519573ed1f29734c0ea017db0edca0081ee95c"
+    },
+    "crates/mlx-expert-ranges/tests/support/mod.rs": {
+      "blob": "9270d3d1c60d0bf3030bfa857b11c57f5bb3b453",
+      "bytes": 4257,
+      "mode": "100644",
+      "sha256": "71bfd195905f23464c648c643923140012a379d062c7bb5a05bde48b6c7d3918"
+    }
+  },
+  "extraction": "f4f33f833f4e65d51063070ca8846c241d5e93a6",
+  "implementation": "7117ae1594d86a6d676c061ddd4e042b79f7be61",
+  "implementation_tree": "abdc6a27e3edd09bdb98abfd7aff38540dbcf13c",
+  "reader_donor": "bd6ee8c462a0e3a253523676e3c899946128647e",
+  "reader_donor_tree": "992339daabaef727f4c0e553cd8820ce996fedc6",
+  "reader_import": "5a986d9bae548f100cae66965ece5ef7d71c29a6",
+  "registry_entries_equal": true,
+  "schema": "pulsarmlx.copied-residency-integration/1",
+  "stream_reexports_shared_SlotId": true,
+  "table": {
+    "blob": "db320f8a6386e73faa4cf867cff272c8577b0ec3",
+    "bytes": 11781,
+    "mode": "100644",
+    "sha256": "cdecb290e5c8d7695cbf8b0868256dc526b08c35d83ab9052c6694ad74542059"
+  }
+}

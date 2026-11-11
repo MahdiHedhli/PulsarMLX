@@ -1,0 +1,617 @@
+{
+  "executed": "Individual admitted Cargo test artifacts in their package working directories, one at a time.",
+  "implementation_commit": "7117ae1594d86a6d676c061ddd4e042b79f7be61",
+  "machine": "MacBook Pro M2 Max",
+  "platform": "macOS arm64",
+  "read_result": {
+    "control_reads": 54,
+    "evictions": 2,
+    "fills": 4,
+    "hits": 2,
+    "reads": 36,
+    "sequence": [
+      0,
+      1,
+      0,
+      2,
+      1,
+      0
+    ],
+    "waves": [
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        0
+      ]
+    ]
+  },
+  "schema": "pulsarmlx.copied-residency-host-evidence/1",
+  "scope": "Synthetic host storage and coordinator. Native attachment held.",
+  "source_checks": {
+    "link_inspector": "otool -L",
+    "locked": true,
+    "max_jobs": 2,
+    "native_prefix_and_loader_overrides_absent": true,
+    "offline": true,
+    "test_threads": 1
+  },
+  "tests": {
+    "debug": {
+      "cargo_build_capture": {
+        "bytes": 44715,
+        "sha256": "e848ba9dd77a3516d29237e4a9c65e69a406d7f44527bbd40e0b7bcc918c5c46"
+      },
+      "compiled_packages": [
+        "backend",
+        "block-buffer",
+        "cfg-if",
+        "cpufeatures",
+        "crypto-common",
+        "digest",
+        "expert-residency-core",
+        "generic-array",
+        "itoa",
+        "libc",
+        "memchr",
+        "mlx-affine",
+        "mlx-expert-ranges",
+        "proc-macro2",
+        "quote",
+        "safetensors-catalog",
+        "serde",
+        "serde_core",
+        "serde_derive",
+        "serde_json",
+        "sha2",
+        "syn",
+        "typenum",
+        "unicode-ident",
+        "version_check",
+        "zmij"
+      ],
+      "failed": 0,
+      "fixture_ledgers": [
+        {
+          "M": 5074,
+          "S": 13824,
+          "W": 1146834,
+          "allocated_slots": 2,
+          "allocating_reader_control_reads": 54,
+          "bits": [
+            4,
+            4,
+            4
+          ],
+          "control_bound": 71488,
+          "source_reads": 36
+        },
+        {
+          "M": 5550,
+          "S": 22016,
+          "W": 1163694,
+          "allocated_slots": 2,
+          "allocating_reader_control_reads": 54,
+          "bits": [
+            8,
+            4,
+            8
+          ],
+          "control_bound": 71488,
+          "source_reads": 36
+        }
+      ],
+      "ignored": 0,
+      "profile": "debug",
+      "targets": [
+        {
+          "counts": [
+            7,
+            0,
+            0
+          ],
+          "executable_sha256": "9db89e6699048d92add6eef714c9258b79a1cf24a0a34984e76fc5967cfaddaf",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "78333612cd35b05a622f093165f9ec804b6313469775b7e6ce6fb1effd766fc4",
+          "target": "validation_records"
+        },
+        {
+          "counts": [
+            6,
+            0,
+            0
+          ],
+          "executable_sha256": "e2dcdc80fbc02dff70fdc84e0b80a79615eabf5c5abfdb33c321ba3615148dfe",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "479524231a35957d2f743a820239bc87d337caf94a96c8765404538b6f0012aa",
+          "target": "mlx_expert_ranges"
+        },
+        {
+          "counts": [
+            3,
+            0,
+            0
+          ],
+          "executable_sha256": "20164cf9049f72cb86d8ccad4daadc355a193940773f4781a68fd77b095cbf44",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "b42b51643164705f8cfa899a2b3add6bd3821826acf7bed99c3f0fd2036a2b46",
+          "target": "residency_coordinator"
+        },
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "7a87ca940884cfd91d4a6f6b168555352be53a515f87fa8c49eed9c4cec704ca",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "4ea25874b5dd3d457d764f03e8a623b8c5418134e47a2f9f5e1de0d40c4bc8fa",
+          "target": "copied_residency"
+        },
+        {
+          "counts": [
+            3,
+            0,
+            0
+          ],
+          "executable_sha256": "f64a07d9a709723f6050163ff7c01d7edc34876e92b08858c9e95ea5c369545b",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "87233541ac19a31c17488a7a823519ed22a78952187a4dff1b756626f61bce0e",
+          "target": "read_into"
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "941cf262001ed9b5a9a482dd2c5595f397571b87056f7812975454482dfaa207",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "f50579ce5eccbee516b5db85d00edd405c1875ad0626b15b26a25227a51bb54a",
+          "target": "routing_contract"
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "34c2ff8d3c65da50b220a49fda152bc246e5bb3e56064735a0e36c861c148cc9",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "48d5d09251276a67eefe1894a0dfa2f269d87b2170018585975217105bc8052b",
+          "target": "evidence_contract"
+        },
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "b5c5d1476ffdb63b65abab244ac82837bdee48342d0054a3780ed0b20855a82c",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "9dcd096753a3ad17b9fb446432b1c15207b7d91040b7d54553746ba33cf57dd2",
+          "target": "compatibility_matrix"
+        },
+        {
+          "counts": [
+            13,
+            0,
+            0
+          ],
+          "executable_sha256": "8a8722b1ae3e445423a94feb3e97bf3615053d8b06f2d0a54766c0d326dc451e",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "a3ae49c8fa7ac1b5d20edf1cf0d3d22d8c6e38c7899e81f788a759fe352b67fe",
+          "target": "tensor_contract"
+        },
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "22a263c69f45d0b304b6478b19bed54997f044969dc8dce439275e0d41f45b41",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "24ae2c894ec1ede22dc0814095cec07870f4401df44f21cc1f63a2348ab95cf3",
+          "target": "host_step"
+        },
+        {
+          "counts": [
+            9,
+            0,
+            0
+          ],
+          "executable_sha256": "40223fb08e171dbd5df6dc6f226de8f1a0d0d4d510dc233869637cdf2cbb86cf",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "54bd005b55972bfbe8ab9335459fb3de4002581c4186226ba09c6d808b58c173",
+          "target": "capability_contract"
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "88e8d88cb681a92711197ab60179dcc5ba377374d94a71da9a831d961034be1b",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "expert-residency-core",
+          "stdout_sha256": "7424a95b0c81366803a2fda8af1d215bd28e3617f07ede356cec41ffd12708aa",
+          "target": "expert_residency_core"
+        },
+        {
+          "counts": [
+            26,
+            0,
+            0
+          ],
+          "executable_sha256": "81e77c8ce44ee84919180ff1b3e9be75977101c53ccd0f05e366257316f2b173",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "9b558e4e8d4afd87124e7294d54c75e6441d8aeed7d86a1d279f78319964d51f",
+          "target": "backend"
+        },
+        {
+          "counts": [
+            17,
+            0,
+            0
+          ],
+          "executable_sha256": "49ae3af836b5d85c6ca01f4ac210d3e6d8ef925ac19996ae2bb338eedc4f05a2",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "d30847664b6ae8175fe82970036fbae742a550d121b28560fbf65d0b9567df48",
+          "target": "ranges"
+        }
+      ],
+      "total_passed": 135
+    },
+    "release": {
+      "cargo_build_capture": {
+        "bytes": 45211,
+        "sha256": "e8eeda157597ef223ecfb37bd88aa5a654f4eb95ef16e7b2490be8cb389c9dcf"
+      },
+      "compiled_packages": [
+        "backend",
+        "block-buffer",
+        "cfg-if",
+        "cpufeatures",
+        "crypto-common",
+        "digest",
+        "expert-residency-core",
+        "generic-array",
+        "itoa",
+        "libc",
+        "memchr",
+        "mlx-affine",
+        "mlx-expert-ranges",
+        "proc-macro2",
+        "quote",
+        "safetensors-catalog",
+        "serde",
+        "serde_core",
+        "serde_derive",
+        "serde_json",
+        "sha2",
+        "syn",
+        "typenum",
+        "unicode-ident",
+        "version_check",
+        "zmij"
+      ],
+      "failed": 0,
+      "fixture_ledgers": [
+        {
+          "M": 5074,
+          "S": 13824,
+          "W": 1146834,
+          "allocated_slots": 2,
+          "allocating_reader_control_reads": 54,
+          "bits": [
+            4,
+            4,
+            4
+          ],
+          "control_bound": 71488,
+          "source_reads": 36
+        },
+        {
+          "M": 5550,
+          "S": 22016,
+          "W": 1163694,
+          "allocated_slots": 2,
+          "allocating_reader_control_reads": 54,
+          "bits": [
+            8,
+            4,
+            8
+          ],
+          "control_bound": 71488,
+          "source_reads": 36
+        }
+      ],
+      "ignored": 0,
+      "profile": "release",
+      "targets": [
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "3adf151609614e0fdca60903d9956a5685e7dab7bff2ad30c01c7b54cefc856c",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "24ae2c894ec1ede22dc0814095cec07870f4401df44f21cc1f63a2348ab95cf3",
+          "target": "host_step"
+        },
+        {
+          "counts": [
+            6,
+            0,
+            0
+          ],
+          "executable_sha256": "47d0f8c6b3ded737aea197c9cab4c1ee9dca74de55b3c2602878e19116095035",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "c28c1623746f310187cc8619d61b4f8283e163472f2798fe11e1fdef8abe7ad9",
+          "target": "mlx_expert_ranges"
+        },
+        {
+          "counts": [
+            3,
+            0,
+            0
+          ],
+          "executable_sha256": "266c53f5eb02c18f73bd534648e03726e056138e3b7f1c5a46a40f028555a83e",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "2d119b65f1e10c5f94d3ea08ea30147fd5f82489644d8b22d9dd2c376284cea9",
+          "target": "residency_coordinator"
+        },
+        {
+          "counts": [
+            17,
+            0,
+            0
+          ],
+          "executable_sha256": "12011ce22ada02c205aa54b09d8a51789ff8e421917a766cd52d891121d46060",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "0982b2a516d235b81159c7cf7051a6ebf9ca07304840dd934771866aa1266a18",
+          "target": "ranges"
+        },
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "2f20863d4ba260ed46f0ac727af7cc70575e3c59f4c7090a9a43d26a459dce84",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "419f6862a465f8ed4763a8d0207f622728e27777636f67b0cc8d8fe5017ddd90",
+          "target": "copied_residency"
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "bf2519e876bd93ed85fa20da0b9235d93377ae2ff5d6dda6d76a512202deae04",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "f50579ce5eccbee516b5db85d00edd405c1875ad0626b15b26a25227a51bb54a",
+          "target": "routing_contract"
+        },
+        {
+          "counts": [
+            9,
+            0,
+            0
+          ],
+          "executable_sha256": "23ef3b166b8e3c74c2714edcfd2efcdbd38c4faaa11c28e01ff06b8c3ae5aa3a",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "54bd005b55972bfbe8ab9335459fb3de4002581c4186226ba09c6d808b58c173",
+          "target": "capability_contract"
+        },
+        {
+          "counts": [
+            7,
+            0,
+            0
+          ],
+          "executable_sha256": "a6d8be4fac02cf2a312767a0966b4ef0ff469a1561ca5d7df03a1f6b169db623",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "78333612cd35b05a622f093165f9ec804b6313469775b7e6ce6fb1effd766fc4",
+          "target": "validation_records"
+        },
+        {
+          "counts": [
+            8,
+            0,
+            0
+          ],
+          "executable_sha256": "34afbc03fc400b41996d38c05b959f968f57663f07c2be5d01bb8cc7241619e4",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "48d5d09251276a67eefe1894a0dfa2f269d87b2170018585975217105bc8052b",
+          "target": "evidence_contract"
+        },
+        {
+          "counts": [
+            10,
+            0,
+            0
+          ],
+          "executable_sha256": "aef8e506c654905c21379401073aa8c869e9f0775e43d351c511abd70191df64",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "9dcd096753a3ad17b9fb446432b1c15207b7d91040b7d54553746ba33cf57dd2",
+          "target": "compatibility_matrix"
+        },
+        {
+          "counts": [
+            13,
+            0,
+            0
+          ],
+          "executable_sha256": "e91eaf87085d449065b37d70f3268c8910f28ebb80ff3459f08a22e25d48e4eb",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "a3ae49c8fa7ac1b5d20edf1cf0d3d22d8c6e38c7899e81f788a759fe352b67fe",
+          "target": "tensor_contract"
+        },
+        {
+          "counts": [
+            26,
+            0,
+            0
+          ],
+          "executable_sha256": "0c97bcc5331ebcf1e94aa041b6cf00e1fd1366f62efac392a26571bba9f04157",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "backend",
+          "stdout_sha256": "8169a6b95ef647d4f98ee4bc10923a618d6e636ee742c6de683d7077fc74715e",
+          "target": "backend"
+        },
+        {
+          "counts": [
+            5,
+            0,
+            0
+          ],
+          "executable_sha256": "cd4011b4d90aa4c4171bb76eb27cc51929da25904d04c726b1672483682b1167",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "expert-residency-core",
+          "stdout_sha256": "7424a95b0c81366803a2fda8af1d215bd28e3617f07ede356cec41ffd12708aa",
+          "target": "expert_residency_core"
+        },
+        {
+          "counts": [
+            3,
+            0,
+            0
+          ],
+          "executable_sha256": "a27b9b823b17d4c4c660e9478f758d33eeed300d59fa6c99d5b1331f7f462bcb",
+          "exit": 0,
+          "linkage": [
+            "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "package": "mlx-expert-ranges",
+          "stdout_sha256": "155883f386d5ae2f0afff84303b7ffca07f9e646c5d7c6975ada8b56df9a31ff",
+          "target": "read_into"
+        }
+      ],
+      "total_passed": 135
+    }
+  }
+}
