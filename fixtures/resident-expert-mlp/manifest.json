@@ -1,0 +1,811 @@
+{
+  "recipes": {
+    "default": {
+      "content": "5d80254c9a88fdacf176189a7c1bdfabc98552c1440a435dbfbda82d2e65721c",
+      "files": {
+        "config": "bdc396d53df64d0d1f851b2ffe174939268650888ed5521a126de621620c4060",
+        "index": "e1f3d8596745cfd938381ea7bf0f21db4bb5b379aee7cac22c8b6f8c1e737cbf",
+        "original_manifest": "2a63e04cb3e690a5b9b4b7c6440e279fad51b0b697771904ac22fbbef84d2a3d",
+        "shard": "86c25ac2d5cdb69a3ef8381b09f6d9002d398f1d28f9845ce835c0bdabf79c00"
+      },
+      "input_sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "inputs": [
+        "inputs/mlp-d128-h64-m1-e0-default.f32",
+        "inputs/mlp-d128-h64-m1-e1-default.f32",
+        "inputs/mlp-d128-h64-m1-e2-default.f32"
+      ],
+      "metadata": "eaaa4c3e9d41cc1723882497812dd768a73cbd239e9917181a61dd1ad853ba29",
+      "name": "d128-h64-default",
+      "planes": [
+        [
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 16296,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 15528,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 14760,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "e1974a08fb33f9f57ac860eb9c8a0d12acbc21aa0aa673bd4308a6e317ca9042",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "0b5a0c468a2a168da8bf36ea09104aad3a9d8decd2261100d302cd838a17e491"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 30120,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 29352,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 28584,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "5b625903a650f2fe4780be9ec23c9c1c880fdd60654cfb529dbca1b1d1bd1bd0",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "ddc0a20810027c381c419cef4498a6f90395c0d82f5ed16f6e7368a2cb840040"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              8
+            ],
+            "ranges": [
+              {
+                "begin": 2472,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 1704,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 936,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "854a26acb4e259820942990348268d7c7c904d7db85baf3ed1d67cb18a04cdc2",
+              "c0ad9515376763b73e41d24a04d343d7c88232426226d5c06f6a7d79a92d14ce",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ],
+        [
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 20392,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 15784,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 15016,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "f45e28d73419f9780d38f063c1f43ae37e1e2c55f4a4b94bc69b864e57b8ea41",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "cd7ed01eab4b40ecaebbd3f16f4c9b7aeb0696d0b275333c29cc4edd065c9473"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 34216,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 29608,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 28840,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "713eb6e0716e0b1a48d6a91d87cd02c724ee96a5a68ac68144b17de8936fcc5e",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "42ae59c70641d54f57af3d5ff8974b1d9e04ec46bcbe6312d9750226a2773c37"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              8
+            ],
+            "ranges": [
+              {
+                "begin": 6568,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 1960,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 1192,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "5975ab8d0590537a39a4bc5518c909c9deec4f3400f33fdaecdd7ee707cbaf6a",
+              "94db0fae1410ff7a113dcd9c611d72ba28198e11f635941653c42ad3521be145",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ],
+        [
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 24488,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 16040,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 15272,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "10345bc9c6d2be8a7926680a74c0743feede788ea4c4e75e51dfceb502e29988",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "a637c95527afc847d62bf5653425e0002e5ff645d854899a6bc9868aab5f8e8b"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 38312,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 29864,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 29096,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "e043ce24c9b382ea1ffe35d3f237df52fb2b334f09a517f7796888b9e8d7c55c",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "861a279e686d18110038ccf62107009170c2b5276c5535e0552c50f4be1cf8ea"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              8
+            ],
+            "ranges": [
+              {
+                "begin": 10664,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 2216,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 1448,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "d902aa3cdde186a1f2f36e4c46a38f6efef069dc51318af150c502a77b4b4d0c",
+              "03f58aa1ec541ca63e4c5f1cf438e4adc9a3bf620beb93c16c4765f2c1b300c3",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ]
+      ]
+    },
+    "mixed": {
+      "content": "81160166022172c5a70e3c76d6fc68fa7bb8b98908679ea4619bef2378a8e889",
+      "files": {
+        "config": "3897701680dbf9d543c1835c95015c05b9dd703057e315dfb92125b07e447892",
+        "index": "e1f3d8596745cfd938381ea7bf0f21db4bb5b379aee7cac22c8b6f8c1e737cbf",
+        "original_manifest": "2a63e04cb3e690a5b9b4b7c6440e279fad51b0b697771904ac22fbbef84d2a3d",
+        "shard": "fbdf919b356b87def22abcffee0bf5446bd3a1ee569bbb402fc47a6e6af3d50f"
+      },
+      "input_sha256": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+      "inputs": [
+        "inputs/mlp-d128-h64-m1-e0-mixed.f32",
+        "inputs/mlp-d128-h64-m1-e1-mixed.f32",
+        "inputs/mlp-d128-h64-m1-e2-mixed.f32"
+      ],
+      "metadata": "657122e3ecf05c2b40cf04697c4587c2669e0abbaad7b23643ba692cc78fb20c",
+      "name": "d128-h64-mixed",
+      "planes": [
+        [
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              32
+            ],
+            "ranges": [
+              {
+                "begin": 28584,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 27816,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 27048,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "d5bd4e15c4c79c55de8067ee59ab4dfb5b28ed45058b0287e060b8b8e30422b1",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "0b5a0c468a2a168da8bf36ea09104aad3a9d8decd2261100d302cd838a17e491"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 54696,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 53928,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 53160,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "5b625903a650f2fe4780be9ec23c9c1c880fdd60654cfb529dbca1b1d1bd1bd0",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "ddc0a20810027c381c419cef4498a6f90395c0d82f5ed16f6e7368a2cb840040"
+            ]
+          },
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 2472,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 1704,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 936,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "d79c0ab955d14d208b1e947a0d3d6bce95945f53564f1c60534d2f0eab688992",
+              "cbd25d1d0aa0041f7a1e3328867e89c6de3dfcc2b7e15e78003e4080737c2460",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ],
+        [
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              32
+            ],
+            "ranges": [
+              {
+                "begin": 36776,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 28072,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 27304,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "9b2dc3321914c1a4fb005e8f3f50246e41aa735968a09264c55d1faae9383a6c",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "cd7ed01eab4b40ecaebbd3f16f4c9b7aeb0696d0b275333c29cc4edd065c9473"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 58792,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 54184,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 53416,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "713eb6e0716e0b1a48d6a91d87cd02c724ee96a5a68ac68144b17de8936fcc5e",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "42ae59c70641d54f57af3d5ff8974b1d9e04ec46bcbe6312d9750226a2773c37"
+            ]
+          },
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 10664,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 1960,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 1192,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "8cc87f790b41057053ac4b867f21a83694941d8d5181de3fff6f3ad14cebafec",
+              "4a8a60363117a86d35f4e7e04bf051ad8d84082abd19ebb40bdf5d2c7d1336b3",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ],
+        [
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.gate",
+            "packed_shape": [
+              64,
+              32
+            ],
+            "ranges": [
+              {
+                "begin": 44968,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.weight"
+              },
+              {
+                "begin": 28328,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.scales"
+              },
+              {
+                "begin": 27560,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.gate.biases"
+              }
+            ],
+            "sha256": [
+              "46acd5a2277c88b23183d95c11e20b25968f17c959045907e05cf39a4deeb6c8",
+              "71cecb33687d3f5e48e3a0d4749062723ec387ee4ff408cb58757a93fc0ee740",
+              "a637c95527afc847d62bf5653425e0002e5ff645d854899a6bc9868aab5f8e8b"
+            ]
+          },
+          {
+            "bits": 4,
+            "group_size": 64,
+            "logical_shape": [
+              64,
+              128
+            ],
+            "metadata_shape": [
+              64,
+              2
+            ],
+            "module": "synthetic.experts.up",
+            "packed_shape": [
+              64,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 62888,
+                "len": 4096,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.weight"
+              },
+              {
+                "begin": 54440,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.scales"
+              },
+              {
+                "begin": 53672,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.up.biases"
+              }
+            ],
+            "sha256": [
+              "e043ce24c9b382ea1ffe35d3f237df52fb2b334f09a517f7796888b9e8d7c55c",
+              "b1f4d509cd629c08ef52aa4b1a773178f83a816c68205009bec4d9ce6dcc0435",
+              "861a279e686d18110038ccf62107009170c2b5276c5535e0552c50f4be1cf8ea"
+            ]
+          },
+          {
+            "bits": 8,
+            "group_size": 64,
+            "logical_shape": [
+              128,
+              64
+            ],
+            "metadata_shape": [
+              128,
+              1
+            ],
+            "module": "synthetic.experts.down",
+            "packed_shape": [
+              128,
+              16
+            ],
+            "ranges": [
+              {
+                "begin": 18856,
+                "len": 8192,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.weight"
+              },
+              {
+                "begin": 2216,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.scales"
+              },
+              {
+                "begin": 1448,
+                "len": 256,
+                "shard": "model.safetensors",
+                "tensor": "synthetic.experts.down.biases"
+              }
+            ],
+            "sha256": [
+              "4b0e54d5cc5c35581594582b84fe03cbcc987a1c146668a388b8a8734d94c5dd",
+              "a1fea97ed9f18f79d6e0d6bb0de7874fd57dc15260d56bcd4949f760b7ddc235",
+              "9cca05d66c255c7b3e212cf9e67ed317f590ffb04e43b05f361ba13b5319d3ed"
+            ]
+          }
+        ]
+      ]
+    }
+  },
+  "schema": "pulsarmlx.resident-mlp-fixtures/1"
+}

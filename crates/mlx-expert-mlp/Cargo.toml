@@ -7,7 +7,13 @@ repository.workspace = true
 description = "F020 bounded synthetic expert MLP qualification; no serving or performance claim"
 build = "build.rs"
 
+[features]
+default = []
+resident-native = []
+
 [dependencies]
+mlx-expert-ranges = { path = "../mlx-expert-ranges" }
+backend = { path = "../backend" }
 mlx-native-affine = { path = "../mlx-native-affine" }
 serde_json = "1"
 libc = "0.2"
@@ -18,4 +24,10 @@ cc = "1"
 [[bin]]
 name = "qualify-expert-mlp"
 path = "src/main.rs"
+test = false
+
+[[bin]]
+name = "qualify-resident-mlp"
+path = "src/bin/qualify-resident-mlp.rs"
+required-features = ["resident-native"]
 test = false

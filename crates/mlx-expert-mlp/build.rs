@@ -58,25 +58,30 @@ fn main() {
         .cargo_metadata(false)
         .compile("expert_mlp_activation");
     let out = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let bin = "qualify-expert-mlp";
-    for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
-        println!(
-            "cargo:rustc-link-arg-bin={bin}={}",
-            out.join(format!("lib{lib}.a")).display()
-        );
+    let mut bins = vec!["qualify-expert-mlp"];
+    if std::env::var_os("CARGO_FEATURE_RESIDENT_NATIVE").is_some() {
+        bins.push("qualify-resident-mlp");
     }
-    for prefix in [&c, &m] {
-        println!(
-            "cargo:rustc-link-arg-bin={bin}=-L{}",
-            prefix.join("lib").display()
-        );
-        println!(
-            "cargo:rustc-link-arg-bin={bin}=-Wl,-rpath,{}",
-            prefix.join("lib").display()
-        );
-    }
-    for lib in ["mlxc", "mlx", "c++"] {
-        println!("cargo:rustc-link-arg-bin={bin}=-l{lib}");
+    for bin in bins {
+        for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
+            println!(
+                "cargo:rustc-link-arg-bin={bin}={}",
+                out.join(format!("lib{lib}.a")).display()
+            );
+        }
+        for prefix in [&c, &m] {
+            println!(
+                "cargo:rustc-link-arg-bin={bin}=-L{}",
+                prefix.join("lib").display()
+            );
+            println!(
+                "cargo:rustc-link-arg-bin={bin}=-Wl,-rpath,{}",
+                prefix.join("lib").display()
+            );
+        }
+        for lib in ["mlxc", "mlx", "c++"] {
+            println!("cargo:rustc-link-arg-bin={bin}=-l{lib}");
+        }
     }
     println!("cargo:rustc-cfg=pulsar_native_mlx");
 }

@@ -5,6 +5,7 @@ members = [
     "crates/stream",
     "crates/expert-residency-core",
     "crates/mlx-expert-ranges",
+    "crates/mlx-expert-mlp",
     "crates/kernels",
     "crates/tokenizer",
     "crates/engine",

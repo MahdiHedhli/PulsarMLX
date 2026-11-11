@@ -1,0 +1,13 @@
+{
+  "weight_map": {
+    "synthetic.experts.down.biases": "model.safetensors",
+    "synthetic.experts.down.scales": "model.safetensors",
+    "synthetic.experts.down.weight": "model.safetensors",
+    "synthetic.experts.gate.biases": "model.safetensors",
+    "synthetic.experts.gate.scales": "model.safetensors",
+    "synthetic.experts.gate.weight": "model.safetensors",
+    "synthetic.experts.up.biases": "model.safetensors",
+    "synthetic.experts.up.scales": "model.safetensors",
+    "synthetic.experts.up.weight": "model.safetensors"
+  }
+}

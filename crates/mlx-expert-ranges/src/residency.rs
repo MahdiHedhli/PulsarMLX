@@ -352,6 +352,11 @@ impl CopiedResidency {
         })
     }
 
+    /// Geometry and layer admitted together with the immutable content bindings.
+    pub fn admitted_class(&self) -> (u32, &ExpertRequest) {
+        (self.layer, &self.class)
+    }
+
     pub fn check_workspace(bytes: u64) -> Result<()> {
         bounded(bytes, WORKSPACE_BYTES, "executor workspace")
     }

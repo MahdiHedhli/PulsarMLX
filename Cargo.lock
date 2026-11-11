@@ -704,6 +704,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-expert-mlp"
+version = "0.1.0"
+dependencies = [
+ "backend",
+ "cc",
+ "libc",
+ "mlx-expert-ranges",
+ "mlx-native-affine",
+ "serde_json",
+]
+
+[[package]]
 name = "mlx-expert-ranges"
 version = "0.1.0"
 dependencies = [
