@@ -422,3 +422,16 @@ impl OwnedExpertTuple {
             "scope":"host owned range bytes only; no numerical or full-checkpoint qualification"})
     }
 }
+
+mod metadata;
+pub mod residency;
+
+impl ExpertPlan<'_> {
+    /// Recheck the descriptors retained at source admission without reading payload.
+    pub fn validate_source(&self) -> Result<()> {
+        for file in self.source.held.values() {
+            file.check()?;
+        }
+        Ok(())
+    }
+}

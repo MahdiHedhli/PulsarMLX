@@ -56,8 +56,10 @@ pub struct LayerOutput {
     pub bytes: Vec<u8>,
 }
 
-/// Explicit future backend attachment: implementations must be stateless or own
-/// a discardable proposal. `finish` must discard staged resources on every path.
+/// Executors may retain a rederivable immutable weight cache across steps.
+/// Its standing allocation is charged once in `working_bytes()`, including while idle.
+/// Generation/KV state must not enter this cache. `finish` releases all per-step
+/// staging and leases on every path. Uncertain cleanup must quarantine the cache.
 /// Native/KV state is NOT qualified by implementing this host interface.
 pub trait HostLayerExecutor: LayerExecutor {
     /// Additional bounded logical payload owned by the executor, beyond loaded

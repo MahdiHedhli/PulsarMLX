@@ -229,6 +229,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "expert-residency-core"
+version = "0.1.0"
+
+[[package]]
 name = "f017-native"
 version = "0.1.0"
 dependencies = [
@@ -700,6 +704,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mlx-expert-ranges"
+version = "0.1.0"
+dependencies = [
+ "backend",
+ "expert-residency-core",
+ "mlx-affine",
+ "safetensors-catalog",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "mlx-native-affine"
 version = "0.1.0"
 dependencies = [
@@ -1089,6 +1106,7 @@ name = "stream"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "expert-residency-core",
  "gguf",
  "io-uring",
  "libc",
