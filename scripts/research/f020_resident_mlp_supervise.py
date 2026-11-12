@@ -4,11 +4,13 @@ import argparse
 import base64
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -92,6 +94,181 @@ def equal(a, b, why):
     require(canonical(a) == canonical(b), why)
 
 
+FULL_SCHEMA = "resident-mlp-physical-grant-v1"
+DIGEST_SCHEMA = "resident-mlp-description-grant-v1"
+DESCRIPTION_FORMAT = "resident-description-json-ascii-lf/1"
+DESCRIPTION_LIMIT = 1 << 20
+
+
+def strict_json(data):
+    def unique(pairs):
+        result = {}
+        for name, value in pairs:
+            require(name not in result, "duplicate JSON key")
+            result[name] = value
+        return result
+
+    def finite(token):
+        value = float(token)
+        require(math.isfinite(value), "non-finite JSON value")
+        return value
+
+    return json.loads(
+        data.decode("utf-8"),
+        object_pairs_hook=unique,
+        parse_constant=finite,
+        parse_float=finite,
+    )
+
+
+def compact_line(value):
+    return (
+        json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ).encode("utf-8")
+        + b"\n"
+    )
+
+
+def description_bytes(full):
+    # JSON member names must already be strings; coercion could collapse distinct identities.
+    def check_keys(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                require(isinstance(key, str), "description JSON key")
+                check_keys(child)
+        elif isinstance(value, (tuple, list)):
+            for child in value:
+                check_keys(child)
+
+    check_keys(full)
+    data = compact_line(full)
+    require(len(data) <= DESCRIPTION_LIMIT, "full description exceeds 1 MiB")
+    return data
+
+
+def exact_keys(value, expected, label):
+    require(isinstance(value, dict) and value.keys() == set(expected.split()), label)
+
+
+def hex_field(value, width):
+    require(
+        isinstance(value, str) and re.fullmatch("[0-9a-f]{%d}" % width, value),
+        "invalid grant digest or Git identity",
+    )
+
+
+def validate_grant(grant):
+    require(isinstance(grant, dict), "grant object")
+    schema = grant.get("schema")
+    if schema == FULL_SCHEMA:
+        exact_keys(
+            grant, "schema identity config_binding arms budget", "full grant fields"
+        )
+        require(isinstance(grant["identity"], dict), "full grant identity")
+    elif schema == DIGEST_SCHEMA:
+        exact_keys(
+            grant,
+            "schema description source binary_sha256 build_sha256 config_binding arms budget",
+            "digest grant fields",
+        )
+        desc = grant["description"]
+        exact_keys(desc, "schema format bytes sha256", "description fields")
+        require(
+            desc["schema"] == FULL_SCHEMA and desc["format"] == DESCRIPTION_FORMAT,
+            "description schema/format",
+        )
+        require(
+            type(desc["bytes"]) is int and 0 < desc["bytes"] <= DESCRIPTION_LIMIT,
+            "description length",
+        )
+        exact_keys(grant["source"], "commit tree", "source fields")
+        for n in ("commit", "tree"):
+            hex_field(grant["source"][n], 40)
+        for digest in (desc["sha256"], grant["binary_sha256"], grant["build_sha256"]):
+            hex_field(digest, 64)
+    else:
+        raise ValueError("unsupported resident grant schema")
+    hex_field(grant["config_binding"], 64)
+    equal(grant["arms"], check.ARMS, "resident arm order")
+    equal(grant["budget"], BUDGET, "resident campaign budget")
+
+
+def parse_grant_block(markdown):
+    # Count all grant openers first: a malformed second block must not disappear.
+    openers = list(
+        re.finditer(
+            rb"(?m)^[ \t]*(?:`{3,}|~{3,})[ \t]*resident-mlp-grant\b[^\n]*$", markdown
+        )
+    )
+    require(
+        len(openers) == 1 and openers[0][0] == b"```resident-mlp-grant",
+        "one exact resident grant fence",
+    )
+    enclosing = None
+    for line in markdown[: openers[0].start()].splitlines():
+        fence = re.match(rb"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if fence is None:
+            continue
+        mark, tail = fence.groups()
+        if enclosing is None:
+            enclosing = mark
+        elif mark.startswith(enclosing) and not tail.strip():
+            enclosing = None
+    require(enclosing is None, "grant inside another fence")
+    payload = re.match(rb"\n([^\n]+)\n```(?:\n|\Z)", markdown[openers[0].end() :])
+    require(payload is not None, "malformed resident grant fence")
+    grant = strict_json(payload[1])
+    validate_grant(grant)
+    return grant
+
+
+def description_binding(full):
+    validate_grant(full)
+    data = description_bytes(full)
+    identity = full["identity"]
+    envelope = dict(
+        schema=DIGEST_SCHEMA,
+        description=dict(
+            schema=full["schema"],
+            format=DESCRIPTION_FORMAT,
+            bytes=len(data),
+            sha256=sha(data),
+        ),
+        source=dict(commit=identity["commit"], tree=identity["tree"]),
+        binary_sha256=identity["binary_sha256"],
+        build_sha256=identity["build_sha256"],
+        config_binding=full["config_binding"],
+        arms=full["arms"],
+        budget=full["budget"],
+    )
+    validate_grant(envelope)
+    return data, envelope
+
+
+def match_grant(grant, full):
+    # The authenticated parser has already validated the committed schema.
+    if grant["schema"] == DIGEST_SCHEMA:
+        _, expected = description_binding(full)
+        equal(grant, expected, "operator description and scope")
+    elif grant["schema"] == FULL_SCHEMA:
+        require(
+            description_bytes(grant) == description_bytes(full),
+            "operator population and current bindings",
+        )
+    else:
+        raise ValueError("unsupported resident grant schema")
+
+
+def emit_line(data):
+    require(sys.stdout.buffer.write(data) == len(data), "incomplete standard output")
+    sys.stdout.buffer.flush()
+
+
 def operator(spec):
     commit, name, digest = spec["commit"], spec["path"], spec["sha256"]
     require(
@@ -125,9 +302,7 @@ def operator(spec):
         [digest, Path(name).name],
         "operator checksum",
     )
-    markers = re.findall(rb"(?m)^`{3}resident-mlp-grant\n([^\n]+)\n`{3}$", b)
-    require(len(markers) == 1, "one committed resident grant")
-    return json.loads(markers[0])
+    return parse_grant_block(b)
 
 
 def source():
@@ -401,22 +576,115 @@ def grant_for(config, identity):
 
 def describe(cfg):
     config = doc(cfg)
-    print(
-        json.dumps(
-            grant_for(config, physical_identity(config)),
-            sort_keys=True,
-            separators=(",", ":"),
-        )
+    full = grant_for(config, physical_identity(config))
+    emit_line(description_bytes(full))
+
+
+def preparation_paths(cfg, config, destination):
+    exact_keys(
+        config,
+        "repo prefix binary build installation freeze diagnostic_receipt output",
+        "preparation configuration paths (operator must be absent)",
     )
+    equal(config["repo"], str(ROOT), "working source")
+    output, claim = locations(config)
+    require(
+        not os.path.lexists(claim) and not os.path.lexists(output),
+        "existing physical claim or original output",
+    )
+    dest = path(destination, False)
+    require(not os.path.lexists(dest), "description destination already exists")
+    require(
+        dest != cfg and dest != path(config["build"]),
+        "description overlaps config/build",
+    )
+    for protected in (
+        ROOT,
+        path(config["prefix"]),
+        path(config["installation"]).parent,
+        path(config["freeze"]).parent,
+        path(config["diagnostic_receipt"]).parent,
+        path(config["binary"]).parent,
+        output,
+    ):
+        require(
+            not dest.is_relative_to(protected) and not protected.is_relative_to(dest),
+            "description destination overlaps protected location",
+        )
+    return dest, output, claim
+
+
+def write_private_description(parent_fd, name, data):
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
+    fd = os.open(name, flags, 0o600, dir_fd=parent_fd)
+    try:
+        with os.fdopen(fd, "wb", closefd=False) as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            require(
+                stream.write(data) == len(data), "incomplete private description write"
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+            saved = os.fstat(stream.fileno())
+            require(
+                stat.S_ISREG(saved.st_mode)
+                and stat.S_IMODE(saved.st_mode) == 0o600
+                and saved.st_size == len(data),
+                "private description file",
+            )
+    finally:
+        os.close(fd)
+    return saved
+
+
+def describe_binding(cfg, destination):
+    config_data = raw(cfg, DESCRIPTION_LIMIT)
+    config = strict_json(config_data)
+    dest, output, claim = preparation_paths(cfg, config, destination)
+    # Pin the checked parent across the potentially lengthy identity observation.
+    parent_fd = os.open(dest.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        require(
+            dest.parent.resolve(strict=True) == dest.parent
+            and os.path.samestat(os.fstat(parent_fd), dest.parent.lstat()),
+            "description parent changed",
+        )
+        full = grant_for(config, physical_identity(config))
+        data, envelope = description_binding(full)
+        public = compact_line(envelope)
+        require(
+            raw(cfg, DESCRIPTION_LIMIT) == config_data,
+            "preparation configuration changed",
+        )
+        preparation_paths(cfg, config, destination)
+        require(
+            os.path.samestat(os.fstat(parent_fd), dest.parent.lstat()),
+            "description parent changed",
+        )
+        saved = write_private_description(parent_fd, dest.name, data)
+        observed = dest.lstat()
+        require(
+            dest.resolve(strict=True) == dest
+            and os.path.samestat(saved, observed)
+            and observed.st_nlink == 1
+            and saved.st_size == observed.st_size
+            and saved.st_ctime_ns == observed.st_ctime_ns,
+            "private description location changed",
+        )
+        require(
+            not os.path.lexists(claim) and not os.path.lexists(output),
+            "preparation custody changed",
+        )
+    finally:
+        os.close(parent_fd)
+    emit_line(public)
 
 
 def admit(config):
     runtime.clean_inspector()
     grant = operator(config["operator"])
     identity = physical_identity(config)
-    equal(
-        grant, grant_for(config, identity), "operator population and current bindings"
-    )
+    match_grant(grant, grant_for(config, identity))
     return identity
 
 
@@ -707,16 +975,29 @@ def verify_child(intent):
     equal(installed(config), v["identity"]["native"], "child installation")
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "action", choices=("describe", "run", "inspect", "verify-child")
+        "action",
+        choices=("describe", "describe-binding", "run", "inspect", "verify-child"),
     )
-    parser.add_argument("file", type=Path)
-    args = parser.parse_args()
-    {
-        "describe": describe,
-        "run": launch,
-        "inspect": inspect,
-        "verify-child": verify_child,
-    }[args.action](path(args.file))
+    parser.add_argument("file")
+    parser.add_argument("description_output", nargs="?")
+    args = parser.parse_args(argv)
+    if args.action == "describe-binding":
+        if args.description_output is None:
+            parser.error("describe-binding requires CONFIG DESCRIPTION_OUTPUT")
+        describe_binding(path(args.file), args.description_output)
+    else:
+        if args.description_output is not None:
+            parser.error("unexpected description output")
+        {
+            "describe": describe,
+            "run": launch,
+            "inspect": inspect,
+            "verify-child": verify_child,
+        }[args.action](path(args.file))
+
+
+if __name__ == "__main__":
+    main()

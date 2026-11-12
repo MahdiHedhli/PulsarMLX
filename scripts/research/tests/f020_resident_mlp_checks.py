@@ -9,6 +9,9 @@ from functools import lru_cache
 from contextlib import ExitStack
 from unittest.mock import patch
 import json
+import io
+import stat
+from types import SimpleNamespace
 import os
 from pathlib import Path
 import struct
@@ -900,6 +903,487 @@ class ProductionAdmission(SyntheticRows):
         self.assertEqual(starts.call_count, 4)
         s.inspect(self.cfg)
         self.assertEqual(s.doc(self.output / "result.json")["identity"], self.identity)
+
+    def issue_markdown(self, markdown):
+        self.markdown = markdown
+        self.spec["sha256"] = c.sha(markdown)
+        self.cfg.write_bytes(s.canonical(self.config))
+
+    def issue_digest(self):
+        full = s.grant_for(self.config, self.identity)
+        data, envelope = s.description_binding(full)
+        self.issue_markdown(
+            b"Synthetic work order\n```resident-mlp-grant\n"
+            + s.compact_line(envelope)
+            + b"```\n"
+        )
+        return data, envelope
+
+    def prep_config(self):
+        config = {k: v for k, v in self.config.items() if k != "operator"}
+        self.cfg.write_bytes(s.canonical(config))
+        return config
+
+    def move_private_stamp(self):
+        before = self.runtime.stat()
+        os.utime(
+            self.runtime, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000_000)
+        )
+
+    def test_digest_legacy_bytes_unicode_and_one_mib_bound(self):
+        config = self.prep_config()
+        legacy = s.grant_for(config, self.identity)
+        real_legacy = (
+            json.dumps(legacy, sort_keys=True, separators=(",", ":")) + "\n"
+        ).encode()
+        out = io.BytesIO()
+        with patch.object(sys, "stdout", SimpleNamespace(buffer=out)):
+            s.main(["describe", str(self.cfg)])
+        self.assertEqual(out.getvalue(), real_legacy)
+        legacy["identity"]["example"] = "/synthetic/é/東京"
+        raw = s.description_bytes(legacy)
+        self.assertTrue(raw.endswith(b"}\n") and raw.isascii())
+        self.assertEqual(
+            raw,
+            (json.dumps(legacy, sort_keys=True, separators=(",", ":")) + "\n").encode(),
+        )
+        legacy["identity"]["pad"] = ""
+        legacy["identity"]["pad"] = "x" * (
+            s.DESCRIPTION_LIMIT - len(s.description_bytes(legacy))
+        )
+        self.assertEqual(len(s.description_bytes(legacy)), s.DESCRIPTION_LIMIT)
+        legacy["identity"]["pad"] += "x"
+        with self.assertRaisesRegex(ValueError, "1 MiB"):
+            s.description_binding(legacy)
+        for value in [float("inf"), float("nan"), object(), {1: "ambiguous key"}]:
+            legacy["identity"]["pad"] = value
+            with self.assertRaises((ValueError, TypeError)):
+                s.description_binding(legacy)
+
+    def test_digest_rejects_all_43_private_positions_with_scope_unchanged(self):
+        # Synthetic values at the four categories of preparation redactions.
+        full = s.grant_for(self.config, copy.deepcopy(self.identity))
+        inspect = full["identity"]["native"]["static_inspection"]
+        paths = [("child_environment", "DYLD_LIBRARY_PATH")]
+        inspect["edges"] = [{"image": ""} for _ in range(23)]
+        paths += [("edges", i, "image") for i in range(23)]
+        paths += [
+            ("edges", i, k)
+            for i in (5, 11)
+            for k in ("canonical_target", "lexical_candidate")
+        ]
+        paths += [("edges", i, "value") for i in (9, 18, 22)]
+        paths += [
+            ("files", n, k)
+            for n in ("libmlx.dylib", "libmlxc.dylib", "libjaccl.dylib")
+            for k in ("canonical", "lexical")
+        ]
+        inspect["inspections"] = [
+            {"image": "", "commands": [{} for _ in range(n + 1)]} for n in (9, 8, 3)
+        ]
+        paths += [("inspections", i, "image") for i in range(3)]
+        paths += [
+            ("inspections", i, "commands", n, "value") for i, n in enumerate((9, 8, 3))
+        ]
+        self.assertEqual(len(set(paths)), 43)
+
+        def set_value(obj, path, value):
+            for step in path[:-1]:
+                obj = obj[step]
+            obj[path[-1]] = value
+
+        for n, path in enumerate(paths):
+            set_value(inspect, path, f"/synthetic/private/path-{n:02d}-A")
+        raw, envelope = s.description_binding(full)
+        sanitized = copy.deepcopy(full)
+        for n, path in enumerate(paths):
+            with self.subTest(path=path):
+                set_value(inspect, path, f"/synthetic/private/path-{n:02d}-B")
+                changed, digest = s.description_binding(full)
+                self.assertEqual(len(changed), len(raw))
+                self.assertEqual(
+                    {**digest, "description": envelope["description"]}, envelope
+                )
+                with self.assertRaisesRegex(ValueError, "description and scope"):
+                    s.match_grant(envelope, full)
+                set_value(inspect, path, f"/synthetic/private/path-{n:02d}-A")
+                set_value(
+                    sanitized["identity"]["native"]["static_inspection"],
+                    path,
+                    "<PRIVATE_PATH>",
+                )
+        for alternate in [
+            s.canonical(full),
+            raw[:-1],
+            raw + b"\n",
+            s.description_bytes(sanitized),
+        ]:
+            forged = copy.deepcopy(envelope)
+            forged["description"].update(bytes=len(alternate), sha256=c.sha(alternate))
+            with self.assertRaisesRegex(ValueError, "description and scope"):
+                s.match_grant(forged, full)
+
+    def test_digest_authenticated_parser_and_crossed_envelopes(self):
+        _, env = self.issue_digest()
+        self.assertEqual(s.admit(self.config), self.identity)
+
+        def refused(value):
+            self.issue_markdown(
+                b"```resident-mlp-grant\n" + s.compact_line(value) + b"```\n"
+            )
+            with self.assertRaises(ValueError):
+                s.admit(self.config)
+
+        for keys, value in [
+            (("schema",), "future"),
+            (("source", "tree"), "0" * 40),
+            (("source", "commit"), "0" * 40),
+            (("source", "commit"), "A" * 40),
+            (("source", "tree"), 0),
+            (("description", "schema"), s.DIGEST_SCHEMA),
+            (("description", "format"), "pretty"),
+            (("description", "bytes"), True),
+            (("description", "bytes"), 1.0),
+            (("description", "bytes"), 0),
+            (("description", "bytes"), s.DESCRIPTION_LIMIT + 1),
+            (("description", "bytes"), env["description"]["bytes"] + 1),
+            (("description", "sha256"), "g" * 64),
+            (("description", "sha256"), "0" * 64),
+            (("binary_sha256",), "0" * 64),
+            (("build_sha256",), "0" * 64),
+            (("config_binding",), "0" * 64),
+            (("arms",), list(reversed(c.ARMS))),
+            (("budget", "raw"), True),
+            (("budget", "grades"), True),
+            (("budget", "children"), 4.0),
+            (("extra",), "ignored?"),
+            (("source", "extra"), None),
+            (("description", "extra"), None),
+        ]:
+            with self.subTest(keys=keys, value=value):
+                altered = copy.deepcopy(env)
+                target = altered
+                for k in keys[:-1]:
+                    target = target[k]
+                target[keys[-1]] = value
+                refused(altered)
+        for k in s.BUDGET:
+            altered = copy.deepcopy(env)
+            altered["budget"] = dict(s.BUDGET)
+            altered["budget"][k] += 1
+            refused(altered)
+        for k in env:
+            altered = dict(env)
+            del altered[k]
+            refused(altered)
+        full = s.grant_for(self.config, copy.deepcopy(self.identity))
+        for k in ("verifier_modules", "accounting", "native"):
+            altered = copy.deepcopy(full)
+            altered["identity"][k]["synthetic_drift"] = 1
+            with self.assertRaisesRegex(ValueError, "description and scope"):
+                s.match_grant(env, altered)
+        crossed = dict(self.config, synthetic_new_key="must-be-bound")
+        with self.assertRaisesRegex(ValueError, "description and scope"):
+            s.match_grant(env, s.grant_for(crossed, self.identity))
+        self.assertFalse(self.claim.exists())
+
+    def test_grant_block_rejects_ambiguity_duplicate_keys_and_nonfinite_numbers(self):
+        _, env = self.issue_digest()
+        line = s.compact_line(env)
+
+        def block(data):
+            return b"```resident-mlp-grant\n" + data + b"```\n"
+
+        legacy = s.compact_line(s.grant_for(self.config, self.identity))
+        for bad in [
+            block(line) + block(line),
+            block(line) + block(legacy),
+            block(legacy) + block(line),
+            block(line) + b"```resident-mlp-grant\n",
+            b"````example\n" + block(line) + b"````\n",
+            block(line.replace(b'"source":{', b'"source":{"tree":"duplicate",', 1)),
+            block(
+                legacy.replace(b'"identity":{', b'"identity":{"tree":"duplicate",', 1)
+            ),
+            block(line.replace(b'"schema":', b'"schema":"duplicate","schema":', 1)),
+            *[
+                block(line.replace(b'"bytes":', b'"wrong":' + v + b',"bytes":', 1))
+                for v in [b"NaN", b"Infinity", b"-Infinity", b"1e99999"]
+            ],
+        ]:
+            with self.subTest(example=bad[:38]):
+                self.issue_markdown(bad)
+                with self.assertRaises(ValueError):
+                    s.operator(self.spec)
+        for token in (b"NaN", b"Infinity", b"-Infinity", b"1e99999"):
+            ambiguous = legacy.replace(
+                b'"identity":{', b'"identity":{"probe":' + token + b",", 1
+            )
+            self.issue_markdown(block(ambiguous))
+            with self.assertRaisesRegex(ValueError, "non-finite JSON"):
+                s.operator(self.spec)
+        self.issue_markdown(block(legacy))
+        self.assertEqual(s.admit(self.config), self.identity)
+        self.spec["sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "operator identity"):
+            s.operator(self.spec)
+
+    def test_describe_binding_single_snapshot_raw_private_file_and_public_line(self):
+        config = self.prep_config()
+        dest = self.build.parent / "description-é.json"
+        out = io.BytesIO()
+        before = self.source_calls()
+        with patch.object(sys, "stdout", SimpleNamespace(buffer=out)):
+            s.main(["describe-binding", str(self.cfg), str(dest)])
+        self.assertEqual(self.source_calls() - before, 1)
+        raw = dest.read_bytes()
+        envelope = json.loads(out.getvalue())
+        full = s.grant_for(config, self.identity)
+        self.assertEqual(
+            raw,
+            (json.dumps(full, sort_keys=True, separators=(",", ":")) + "\n").encode(
+                "utf-8"
+            ),
+        )
+        self.assertEqual(stat.S_IMODE(dest.stat().st_mode), 0o600)
+        self.assertEqual(envelope["description"]["bytes"], len(raw))
+        self.assertEqual(envelope["description"]["sha256"], c.sha(raw))
+        self.assertEqual(out.getvalue(), s.compact_line(envelope))
+        self.assertNotIn(str(self.temp).encode(), out.getvalue())
+        self.assertNotIn(b"static_inspection", out.getvalue())
+        self.assertFalse(self.claim.exists())
+        self.assertFalse(self.output.exists())
+
+    def source_calls(self):
+        return s.source.call_count
+
+    def test_preparation_refuses_before_snapshot_at_protected_or_occupied_paths(self):
+        config = self.prep_config()
+        dest = self.build.parent / "description"
+        dangling = self.temp / "dangling"
+        dangling.symlink_to(dest)
+        symlink = self.temp / "linked"
+        symlink.symlink_to(self.build.parent, target_is_directory=True)
+        paths = [
+            self.cfg,
+            self.build,
+            dangling,
+            symlink / "fresh",
+            s.ROOT / "fresh",
+            self.prefix / "fresh",
+            self.freeze.parent / "fresh",
+            self.binary.parent / "fresh",
+            self.output,
+            self.output / "nested",
+            self.temp / "missing-parent/file",
+        ]
+        before = self.source_calls()
+        out = io.BytesIO()
+        with patch.object(sys, "stdout", SimpleNamespace(buffer=out)):
+            for candidate in paths:
+                with (
+                    self.subTest(candidate=candidate.name),
+                    self.assertRaises((ValueError, OSError)),
+                ):
+                    s.describe_binding(self.cfg, candidate)
+            for occupied in (self.claim, self.output):
+                occupied.write_bytes(b"keep")
+                with self.assertRaises(ValueError):
+                    s.describe_binding(self.cfg, dest)
+                self.assertEqual(occupied.read_bytes(), b"keep")
+                occupied.unlink()
+            for config_with_extra in [
+                dict(config, operator=self.spec),
+                dict(config, description_output=str(dest)),
+            ]:
+                self.cfg.write_bytes(s.canonical(config_with_extra))
+                with self.assertRaises(ValueError):
+                    s.describe_binding(self.cfg, dest)
+        self.assertEqual(self.source_calls(), before)
+        self.assertEqual(out.getvalue(), b"")
+        self.assertFalse(dest.exists())
+
+    def test_config_changed_during_observation_preserves_empty_preparation(self):
+        config = self.prep_config()
+        dest = self.build.parent / "description"
+
+        def external_source():
+            self.cfg.write_bytes(s.canonical(dict(config, operator=self.spec)))
+            return self.src.copy()
+
+        with (
+            patch.object(s, "source", side_effect=external_source),
+            self.assertRaisesRegex(ValueError, "configuration changed"),
+        ):
+            s.describe_binding(self.cfg, dest)
+        self.assertFalse(dest.exists())
+        self.assertFalse(self.claim.exists())
+        self.assertFalse(self.output.exists())
+
+    def test_preparation_write_flush_fsync_and_stdout_fail_closed(self):
+        self.prep_config()
+        actual_fdopen = os.fdopen
+        for fault in ("create", "write", "short", "flush", "fsync", "stdout"):
+            with self.subTest(fault=fault), ExitStack() as stack:
+                dest = self.build.parent / ("description-" + fault)
+                out = io.BytesIO()
+                stack.enter_context(
+                    patch.object(sys, "stdout", SimpleNamespace(buffer=out))
+                )
+
+                class Stream:
+                    def __init__(self, fd, mode, **kwargs):
+                        self.stream = actual_fdopen(fd, mode, **kwargs)
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, *args):
+                        self.stream.close()
+
+                    def fileno(self):
+                        return self.stream.fileno()
+
+                    def write(self, b):
+                        if fault in ("write", "short"):
+                            partial = self.stream.write(b[:8])
+                            if fault == "write":
+                                raise OSError("synthetic partial write")
+                            return partial
+                        return self.stream.write(b)
+
+                    def flush(self):
+                        if fault == "flush":
+                            raise OSError("synthetic flush")
+                        self.stream.flush()
+
+                stack.enter_context(patch.object(s.os, "fdopen", Stream))
+                if fault == "fsync":
+                    stack.enter_context(
+                        patch.object(
+                            s.os, "fsync", side_effect=OSError("synthetic fsync")
+                        )
+                    )
+                if fault == "stdout":
+                    stack.enter_context(
+                        patch.object(
+                            out,
+                            "write",
+                            side_effect=BrokenPipeError("synthetic stdout"),
+                        )
+                    )
+                if fault == "create":
+                    real_open = os.open
+
+                    def race(name, flags, *args, **kw):
+                        if flags & os.O_CREAT:
+                            self.assertTrue(flags & os.O_EXCL and flags & os.O_NOFOLLOW)
+                            dest.symlink_to(self.cfg)
+                        return real_open(name, flags, *args, **kw)
+
+                    stack.enter_context(patch.object(os, "open", side_effect=race))
+                with self.assertRaises((ValueError, OSError)):
+                    s.describe_binding(self.cfg, dest)
+                self.assertEqual(out.getvalue(), b"")
+                kept = dest.read_bytes()
+                with self.assertRaises((ValueError, OSError)):
+                    s.describe_binding(self.cfg, dest)
+                self.assertEqual(dest.read_bytes(), kept)
+                if fault == "create":
+                    self.assertTrue(dest.is_symlink())
+                if fault in ("write", "short"):
+                    self.assertEqual(len(kept), 8)
+                if fault == "stdout":
+                    self.assertEqual(json.loads(kept)["schema"], s.FULL_SCHEMA)
+                self.assertFalse(self.claim.exists())
+                self.assertFalse(self.output.exists())
+
+    def test_digest_initial_refusal_before_claim_on_private_stamp_only(self):
+        _, envelope = self.issue_digest()
+        self.move_private_stamp()
+        current = s.description_binding(
+            s.grant_for(self.config, s.physical_identity(self.config))
+        )[1]
+        self.assertEqual({**current, "description": envelope["description"]}, envelope)
+        self.assertNotEqual(
+            current["description"]["sha256"], envelope["description"]["sha256"]
+        )
+        with self.assertRaisesRegex(ValueError, "description and scope"):
+            s.launch(self.cfg)
+        self.assertFalse(self.claim.exists())
+        self.assertFalse(self.output.exists())
+
+    def test_digest_real_initial_per_child_verifier_final_and_postgrade(self):
+        self.issue_digest()
+        before = self.source_calls()
+        with patch.object(s, "wait_child", side_effect=self.synthetic_child) as started:
+            s.launch(self.cfg)
+        self.assertEqual(started.call_count, 4)
+        self.assertEqual(self.source_calls() - before, 1 + 4 + 4 + 2)
+        s.inspect(self.cfg)
+        self.assertTrue((self.output / "result.json").exists())
+
+    def test_digest_before_second_child_private_drift_preserves_claim(self):
+        self.issue_digest()
+
+        def first(*args):
+            self.synthetic_child(*args)
+            self.move_private_stamp()
+
+        with (
+            patch.object(s, "wait_child", side_effect=first) as starts,
+            self.assertRaisesRegex(ValueError, "description and scope"),
+        ):
+            s.launch(self.cfg)
+        self.assertEqual(starts.call_count, 1)
+        self.assertTrue(self.claim.exists())
+        self.assertFalse((self.output / "1-default-cached/started.json").exists())
+        with self.assertRaisesRegex(ValueError, "existing physical claim"):
+            s.launch(self.cfg)
+
+    def test_digest_child_verifier_refusal_keeps_started_receipt(self):
+        self.issue_digest()
+
+        def changed(*args):
+            self.move_private_stamp()
+            self.synthetic_child(*args)
+
+        with (
+            patch.object(s, "wait_child", side_effect=changed),
+            self.assertRaisesRegex(ValueError, "description and scope"),
+        ):
+            s.launch(self.cfg)
+        self.assertTrue(self.claim.exists())
+        self.assertTrue((self.output / "0-default-allocating/started.json").is_file())
+        self.assertFalse((self.output / "0-default-allocating/out").exists())
+
+    def digest_grade_drift(self, stage):
+        self.issue_digest()
+        observations = []
+
+        def git_observation():
+            if (self.output / "grading-intent.json").exists():
+                observations.append(True)
+                if len(observations) == stage:
+                    self.move_private_stamp()
+            return self.src.copy()
+
+        with (
+            patch.object(s, "wait_child", side_effect=self.synthetic_child),
+            patch.object(s, "source", side_effect=git_observation),
+            self.assertRaisesRegex(ValueError, "description and scope"),
+        ):
+            s.launch(self.cfg)
+        self.assertEqual(len(observations), stage)
+        self.assertTrue(self.claim.exists())
+        self.assertEqual(len(list(self.output.glob("*/completed.json"))), 4)
+        self.assertFalse((self.output / "result.json").exists())
+
+    def test_digest_final_admission_drift(self):
+        self.digest_grade_drift(1)
+
+    def test_digest_postgrade_admission_drift(self):
+        self.digest_grade_drift(2)
 
 
 if __name__ == "__main__":
