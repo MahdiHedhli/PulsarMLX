@@ -68,17 +68,42 @@ print(json.dumps(dict(accounting_abi_stamp=stamp, verifier_modules=supervisor.ve
 PYTHON
 ```
 
-Preparation ends with the original physical build receipt and read-only `describe` output. A later committed grant binds those observed identities before `run`. Physical child/build hashes remain pending.
+The Studio006 executable and original description belong to the earlier Rust017 commit. This supervisor is embedded in the native child's six-module hash closure. The next separately authorized preparation must check out the exact new reviewed source, build it offline with the retained prefix as above, and create fresh binary, Cargo artifact, build receipt and helper identities. The new physical identities are pending.
 
-A private configuration names canonical absolute paths in `repo`, `binary`, `build`, `prefix`, `installation` (original install receipt), `freeze`, `diagnostic_receipt` and `output` (a fresh location). The original historical receipts bind the prefix and stable installation location. The later work order supplies `operator` with its exact `commit`, `path` and `sha256`. The configuration digest excludes only that operator object so the physical build can be bound without a self-reference. The supervisor reads the immutable prompt and sidecar through the existing authenticated GitHub client. A later Studio prompt must include exactly one fenced `resident-mlp-grant` block containing the one-line JSON produced by the read-only description command.
+The preparation configuration contains the eight canonical absolute paths `repo`, `binary`, `build`, `prefix`, `installation`, `freeze`, `diagnostic_receipt` and `output`. The last is the absent future campaign directory. Omit `operator` during preparation. Supply the private description destination as a command-line argument. Choose two fresh, distinct files in a private external preparation directory. The directory may also hold the build receipt. Keep it outside source, native installation, historical custody roots, executable directory and future campaign output.
 
 ```sh
-python3 -B scripts/research/f020_resident_mlp_supervise.py describe "$CONFIG"
+(
+  umask 077
+  set -C
+  python3 -B scripts/research/f020_resident_mlp_supervise.py \
+    describe-binding "$CONFIG" "$PRIVATE_DESCRIPTION" > "$PUBLIC_ENVELOPE"
+) && wc -c "$PRIVATE_DESCRIPTION" "$PUBLIC_ENVELOPE" && \
+  shasum -a 256 "$PRIVATE_DESCRIPTION" "$PUBLIC_ENVELOPE"
+```
+
+One successful call obtains one physical identity. It exclusively creates the private file with mode 0600, writes the complete description, flushes and fsyncs it, then writes one prospective envelope to standard output. Record the byte count and SHA-256 of both artifacts and the exit status. Preserve any partial files on failure. The private evidence and legacy `describe CONFIG` output contain machine-local paths and remain private. Only a successful, reviewed envelope belongs in the later grant.
+
+Both outputs use sorted compact JSON with ASCII escapes, UTF-8 bytes and exactly one final LF. The description format is `resident-description-json-ascii-lf/1`, with a 1 MiB limit. The committed envelope has exactly these fields:
+
+| Field | Binding |
+| --- | --- |
+| `schema` | `resident-mlp-description-grant-v1` |
+| `description` | `schema` = `resident-mlp-physical-grant-v1`, `format`, and the exact full description's `bytes` and `sha256` |
+| `source` | Full Git `commit` and `tree` |
+| `binary_sha256`, `build_sha256`, `config_binding` | Exact executable, build receipt and existing configuration digest |
+| `arms`, `budget` | Existing four ordered arms and original campaign limits |
+
+A separately committed launch prompt carries the complete one-line envelope inside exactly one `resident-mlp-grant` fence. Add that prompt's `operator` commit, repository path and SHA-256 to the configuration. This remains the sole field excluded from the existing configuration digest. Valid legacy full-object grants still use full equality. The digest route independently regenerates the complete private description and compares the entire expected envelope on each live admission. Changing a private path or file stamp invalidates the grant even if the visible source and build fields match. Preparation evidence creates no campaign claim.
+
+Only after a separate physical launch order:
+
+```sh
 python3 -B scripts/research/f020_resident_mlp_supervise.py run "$CONFIG"
 python3 -B scripts/research/f020_resident_mlp_supervise.py inspect "$CONFIG"
 ```
 
-`describe` identifies the current source tree and complete file/mode inventory, build, retained installation, host, fixture, checker and supervisor. `run` requires the grant, creates the stable exclusive claim beside the original installation receipt, and records intent, actual PID, exit and reap for each serial child. The ordered pairs are default allocating, default cached, mixed allocating and mixed cached. Each child receives at most 300 seconds within a 900-second campaign. Failure stops the sequence and retains the original files. Changing output roots cannot create a second claim. The single grading intent covers all 36 occurrences. `inspect` verifies the saved result and its component hashes without another grade.
+The stable installation-anchored claim, four serial children, single grade, 300-second per-child and 900-second total limits continue to apply. An issued claim remains spent after a failure. The [description binding host evidence](description-binding-evidence.json) records both local interpreter executions and the exercised refusal paths.
 
 Each arm saves a summary and nine bounded `occ-NN.json` records. The summary binds the intent, identity, provenance, fixture, allocation policy, ledger and coordinator snapshots. Rows bind ordinal, step, recipe, expert, slot/generation, complete component hashes, copy counts, gate/up/activation/down bits and hashes, actual down input, allocator intervals and observed cleanup census. Partial or crossed evidence fails admission. Static runtime identity is separate from observations of loaded libraries and the metallib read from its admitted installation path.
 
