@@ -108,3 +108,7 @@ The stable installation-anchored claim, four serial children, single grade, 300-
 Each arm saves a summary and nine bounded `occ-NN.json` records. The summary binds the intent, identity, provenance, fixture, allocation policy, ledger and coordinator snapshots. Rows bind ordinal, step, recipe, expert, slot/generation, complete component hashes, copy counts, gate/up/activation/down bits and hashes, actual down input, allocator intervals and observed cleanup census. Partial or crossed evidence fails admission. Static runtime identity is separate from observations of loaded libraries and the metallib read from its admitted installation path.
 
 Source publication and ordinary CI do not start this physical campaign.
+
+## Subsequent M2 decision
+
+The preceding readiness snapshots describe their original dates. Studio008 completed bounded synthetic copied residency on Rust018 `e7f0bd6bf24d7a7a93d1032ed942c77c53e6e15c`. The original result commitment is `a0f52ed23847ff5019583cf3bcc70e0301ca4f85c822d00e5cf1e75d101a628d`. The sanitized publication at `9e6a6075e652abe009f5f94072af3a4814c7a231` has result SHA-256 `eaffc9e536c2a61590b6458db4635b242e6012c3a79fdfec251a66e8a5393c67`. [Acceptance record and limits](../m2-acceptance/README.md)
