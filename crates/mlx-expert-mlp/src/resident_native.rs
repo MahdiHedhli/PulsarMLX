@@ -50,10 +50,15 @@ fn census() -> [u64; 3] {
     let (a, b, c) = native::result_census();
     [a, b, c]
 }
-struct Copied {
+pub(super) struct Copied {
     ctx: Option<native::NativeContext>,
     freed: u64,
     results: [u64; 3],
+}
+impl Copied {
+    pub(super) fn new() -> Self {
+        Self { ctx: None, freed: native::handle_census().1, results: census() }
+    }
 }
 impl Driver for Copied {
     fn begin(&mut self) -> StageResult<DeviceFacts> {

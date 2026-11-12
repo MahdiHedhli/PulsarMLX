@@ -62,6 +62,9 @@ fn main() {
     if std::env::var_os("CARGO_FEATURE_RESIDENT_NATIVE").is_some() {
         bins.push("qualify-resident-mlp");
     }
+    if std::env::var_os("CARGO_FEATURE_WEIGHTED_NATIVE").is_some() {
+        bins.push("qualify-weighted-mlp");
+    }
     for bin in bins {
         for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
             println!(
