@@ -435,3 +435,6 @@ impl ExpertPlan<'_> {
         Ok(())
     }
 }
+
+/// Bounded metadata-only comparison of two serial admission policies.
+pub mod admission_screen;
