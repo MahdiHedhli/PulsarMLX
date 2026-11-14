@@ -107,10 +107,31 @@ impl FixedDescriptor {
         original: &File,
         policy: Policy,
     ) -> Result<Self, SetupFailure> {
+        Self::open_platform(root, name, original, policy, None)
+    }
+
+    /// Require the stamp captured at admission before issuing the policy request.
+    pub fn open_with_expected_stamp(
+        root: &RootDirectory,
+        name: &str,
+        original: &File,
+        policy: Policy,
+        expected: [u8; 32],
+    ) -> Result<Self, SetupFailure> {
+        Self::open_platform(root, name, original, policy, Some(expected))
+    }
+
+    fn open_platform(
+        root: &RootDirectory,
+        name: &str,
+        original: &File,
+        policy: Policy,
+        expected: Option<[u8; 32]>,
+    ) -> Result<Self, SetupFailure> {
         #[cfg(target_os = "macos")]
         {
             use std::os::fd::AsRawFd;
-            Self::open_with(root, name, original, policy, |fresh, arg| {
+            Self::open_with(root, name, original, policy, expected, |fresh, arg| {
                 // SAFETY: fresh is the independently opened, live read-only file owned by this
                 // constructor. Darwin F_NOCACHE accepts the promoted integer argument 0 or 1.
                 let returned = unsafe { libc::fcntl(fresh.as_raw_fd(), libc::F_NOCACHE, arg) };
@@ -130,7 +151,7 @@ impl FixedDescriptor {
         }
         #[cfg(not(target_os = "macos"))]
         {
-            let _ = (root, name, original, policy);
+            let _ = (root, name, original, policy, expected);
             Err(SetupFailure {
                 reason: "UNSUPPORTED_PLATFORM",
                 observation: Setup::default(),
@@ -144,6 +165,7 @@ impl FixedDescriptor {
         name: &str,
         original: &File,
         policy: Policy,
+        expected: Option<[u8; 32]>,
         set: impl FnOnce(&File, i32) -> Setter,
     ) -> Result<Self, SetupFailure> {
         let mut setup = Setup::default();
@@ -171,6 +193,11 @@ impl FixedDescriptor {
             setup.matched = Some(matched);
             if !matched {
                 return Err("IDENTITY");
+            }
+            // All three current samples agree here. Compare their full-stamp digest
+            // to the caller's immutable admission witness before invoking the setter.
+            if expected.is_some() && setup.original_stamp != expected {
+                return Err("EXPECTED_STAMP");
             }
             let call = set(&fresh, policy.argument());
             setup.setter = Some(call);

@@ -122,7 +122,7 @@ impl<'w, 'p, 's> PreparedPolicy<'w, 'p, 's> {
             policy,
             budget,
             platform::page_size(),
-            FixedDescriptor::open,
+            FixedDescriptor::open_with_expected_stamp,
         )
     }
     fn prepare_with(
@@ -135,6 +135,7 @@ impl<'w, 'p, 's> PreparedPolicy<'w, 'p, 's> {
             &str,
             &File,
             Policy,
+            [u8; 32],
         ) -> std::result::Result<FixedDescriptor, SetupFailure>,
     ) -> std::result::Result<Self, PrepareFailure> {
         let mut setup = Preparation {
@@ -179,7 +180,7 @@ impl<'w, 'p, 's> PreparedPolicy<'w, 'p, 's> {
                 let slot = setup.live;
                 setup.map[i] = Some(slot);
                 held.check()?;
-                match open(root, &ranges[i].shard, &held.file, policy) {
+                match open(root, &ranges[i].shard, &held.file, policy, window.stamps[i]) {
                     Ok(fresh) => {
                         let obs = fresh.setup();
                         setup.slots[slot] = Some(obs);

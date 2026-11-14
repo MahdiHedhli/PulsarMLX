@@ -77,7 +77,7 @@ fn platform_page_and_short_preparation_budget_refuse_before_open() {
                 Policy::NoCacheRequested,
                 budget,
                 page,
-                |_, _, _, _| panic!("unexpected open"),
+                |_, _, _, _, _| panic!("unexpected open"),
             )
             .err()
             .unwrap();
@@ -106,7 +106,7 @@ fn three_shard_setup_preserves_failed_positions_and_releases_ownership() {
             Policy::NoCacheRequested,
             budget,
             Ok(wp.a),
-            |root, name, file, policy| {
+            |root, name, file, policy, expected| {
                 let pos = i;
                 i += 1;
                 if pos == stop {
@@ -128,7 +128,7 @@ fn three_shard_setup_preserves_failed_positions_and_releases_ownership() {
                         },
                     });
                 }
-                FixedDescriptor::open(root, name, file, policy)
+                FixedDescriptor::open_with_expected_stamp(root, name, file, policy, expected)
             },
         );
         let obs = if stop < 3 {
@@ -145,6 +145,72 @@ fn three_shard_setup_preserves_failed_positions_and_releases_ownership() {
         assert_eq!(obs.released, i);
         assert_eq!(src.payload_read_calls(), 0);
         emit("three-shard-setup", json!([stop, obs]));
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn stale_window_witness_refuses_before_setter_and_releases_all_opened_slots() {
+    for stale_slot in 0..3 {
+        let f = owned();
+        three_shards(&f);
+        let src = BoundedSource::open(&f.root).unwrap();
+        let plan = src.plan(f.request.clone()).unwrap();
+        let page = platform::page_size().unwrap();
+        let window = WindowPlan::new(&plan, ExpertRole::Gate, page).unwrap();
+        let admitted = window.stamps;
+        let mut opens = 0;
+        let failure = PreparedPolicy::prepare_with(
+            &window,
+            Policy::NoCacheRequested,
+            PreparedPolicy::minimum_budget(&window),
+            Ok(page),
+            |root, name, file, policy, expected| {
+                let slot = opens;
+                opens += 1;
+                assert_eq!(expected, admitted[slot]);
+                if slot == stale_slot {
+                    // The outer held-file check has already succeeded. Change the length
+                    // on the same inode before the strict constructor takes its samples.
+                    fs::OpenOptions::new()
+                        .write(true)
+                        .open(f.root.join(name))
+                        .unwrap()
+                        .set_len(file.metadata().unwrap().len() + 1)
+                        .unwrap();
+                }
+                FixedDescriptor::open_with_expected_stamp(root, name, file, policy, expected)
+            },
+        )
+        .err()
+        .unwrap();
+        assert_eq!(failure.cause.detail, "EXPECTED_STAMP");
+        assert_eq!(opens, stale_slot + 1);
+        let setup = failure.setup;
+        assert_eq!(setup.original_stamps, admitted);
+        assert_eq!((setup.live, setup.released), (0, opens));
+        assert_eq!(setup.kernel_close_observed, None);
+        for (i, prior) in setup.slots[..stale_slot].iter().enumerate() {
+            let prior = prior.unwrap();
+            assert!(prior.open_attempted && prior.fresh_owned && prior.configured);
+            assert_eq!(prior.matched, Some(true));
+            assert_eq!(prior.original_stamp, Some(admitted[i]));
+            assert_eq!(prior.fresh_stamp, Some(admitted[i]));
+            let call = prior.setter.unwrap();
+            assert_eq!((call.argument, call.returned, call.errno), (1, 0, None));
+        }
+        let stale = setup.slots[stale_slot].unwrap();
+        assert!(stale.open_attempted && stale.fresh_owned);
+        assert_eq!(stale.matched, Some(true));
+        assert!(stale.original_stamp.is_some());
+        assert_eq!(stale.original_stamp, stale.fresh_stamp);
+        assert_ne!(stale.original_stamp, Some(admitted[stale_slot]));
+        assert!(stale.setter.is_none() && !stale.configured);
+        assert!(setup.slots[opens..].iter().all(Option::is_none));
+        assert_eq!(
+            (src.payload_read_calls(), src.requested_payload_bytes()),
+            (0, 0)
+        );
     }
 }
 

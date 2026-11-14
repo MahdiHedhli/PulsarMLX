@@ -32,6 +32,7 @@ fn mock(arg: i32, ret: i32) -> Setter {
 #[test]
 fn fresh_open_receives_one_setter_and_preserves_interruption_or_mutation() {
     let (dir, root, old) = fixture();
+    let expected = Stamp::read(&old).unwrap().digest();
     for (p, ret, mutate) in [
         (Policy::BufferedRequested, 0, false),
         (Policy::NoCacheRequested, 0, false),
@@ -39,8 +40,9 @@ fn fresh_open_receives_one_setter_and_preserves_interruption_or_mutation() {
         (Policy::BufferedRequested, 0, true),
     ] {
         let mut calls = 0;
-        let r = FixedDescriptor::open_with(&root, "part", &old, p, |f, arg| {
+        let r = FixedDescriptor::open_with(&root, "part", &old, p, Some(expected), |f, arg| {
             assert_ne!(f.as_raw_fd(), old.as_raw_fd());
+            assert_eq!(Stamp::read(f).unwrap().digest(), expected);
             assert_eq!(arg, p.argument());
             calls += 1;
             if mutate {
@@ -66,9 +68,45 @@ fn fresh_open_receives_one_setter_and_preserves_interruption_or_mutation() {
         };
         assert!(s.fresh_owned);
         assert_eq!(s.matched, Some(true));
+        assert_eq!(s.original_stamp, Some(expected));
         assert_eq!(s.original_stamp, s.fresh_stamp);
+        assert_eq!(s.configured, ret == 0);
         assert_eq!(s.setter.unwrap().returned, ret);
         assert_eq!(s.setter.unwrap().errno, (ret < 0).then_some(libc::EINTR));
+    }
+}
+
+#[test]
+fn stale_expected_stamp_refuses_before_setter_on_matching_current_descriptors() {
+    let (dir, root, original) = fixture();
+    let admitted = Stamp::read(&original).unwrap();
+    fs::OpenOptions::new()
+        .write(true)
+        .open(dir.0.join("part"))
+        .unwrap()
+        .set_len(admitted.len + 1)
+        .unwrap();
+    let current = Stamp::read(&original).unwrap();
+    assert_eq!((current.dev, current.ino), (admitted.dev, admitted.ino));
+    assert_ne!(current.digest(), admitted.digest());
+    for policy in [Policy::BufferedRequested, Policy::NoCacheRequested] {
+        let failure = FixedDescriptor::open_with(
+            &root,
+            "part",
+            &original,
+            policy,
+            Some(admitted.digest()),
+            |_, _| panic!("setter reached for a stale admission witness"),
+        )
+        .err()
+        .unwrap();
+        assert_eq!(failure.reason, "EXPECTED_STAMP");
+        let setup = failure.observation;
+        assert!(setup.open_attempted && setup.fresh_owned);
+        assert_eq!(setup.original_stamp, Some(current.digest()));
+        assert_eq!(setup.original_stamp, setup.fresh_stamp);
+        assert_eq!(setup.matched, Some(true));
+        assert!(setup.setter.is_none() && !setup.configured);
     }
 }
 #[test]
@@ -79,11 +117,12 @@ fn names_and_complete_file_identity_precede_configuration() {
     for n in [
         "other", "missing", "link", "../part", "/part", ".", "..", "",
     ] {
-        let err = FixedDescriptor::open_with(&root, n, &old, Policy::NoCacheRequested, |_, _| {
-            panic!("unexpected setter")
-        })
-        .err()
-        .unwrap();
+        let err =
+            FixedDescriptor::open_with(&root, n, &old, Policy::NoCacheRequested, None, |_, _| {
+                panic!("unexpected setter")
+            })
+            .err()
+            .unwrap();
         assert!(err.observation.setter.is_none());
         assert_eq!(
             err.observation.matched,
@@ -98,6 +137,7 @@ fn names_and_complete_file_identity_precede_configuration() {
             "part",
             &old,
             Policy::NoCacheRequested,
+            None,
             |_, _| panic!()
         )
         .err()
