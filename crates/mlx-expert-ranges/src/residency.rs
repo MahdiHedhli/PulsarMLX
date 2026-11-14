@@ -8,7 +8,11 @@ use sha2::{Digest, Sha256};
 use std::{
     mem::size_of,
     panic::{catch_unwind, resume_unwind, AssertUnwindSafe},
+    sync::Arc,
 };
+
+/// Bounded host staging for already-known routed demand.
+pub mod overlap;
 
 pub const CONTROL_BYTES: u64 = 1 << 20;
 pub const WORKSPACE_BYTES: u64 = 64 << 10;
@@ -200,7 +204,7 @@ fn binding_digest(
 pub struct CopiedResidency {
     owner: u64,
     lease_epoch: u64,
-    source: BoundedSource,
+    source: Arc<BoundedSource>,
     class: ExpertRequest,
     layer: u32,
     content: Hash256,
@@ -332,7 +336,7 @@ impl CopiedResidency {
         let policy = ExpertAdmissionPolicy::new(2 * tuple_bytes, 1, false, false)
             .ok_or_else(|| refusal("RESIDENCY", "invalid policy"))?;
         Ok(Self {
-            source,
+            source: Arc::new(source),
             owner,
             lease_epoch: 0,
             class: class.clone(),
@@ -368,6 +372,15 @@ impl CopiedResidency {
     }
     pub fn resident_bytes(&self) -> u64 {
         self.table.resident_bytes()
+    }
+    /// Resident expert, slot generation and last successful occurrence, in physical slot order.
+    pub fn residents(&self) -> [Option<(u32, u64, u64)>; 2] {
+        self.slots.each_ref().map(|slot| match slot.state {
+            State::Ready(t) | State::Leased(t) => {
+                Some((t.demand.key.expert, t.generation, slot.recency))
+            }
+            _ => None,
+        })
     }
     pub fn stats(&self) -> CacheStats {
         self.stats
@@ -468,21 +481,9 @@ impl CopiedResidency {
     ) -> std::result::Result<(), CacheFailure> {
         while !demand.is_empty() {
             check_cancel(cancelled)?;
-            let first = demand[0];
-            let second = demand.iter().copied().find(|&d| d != first);
-            let len = demand
-                .iter()
-                .position(|d| *d != first && Some(*d) != second)
-                .unwrap_or(demand.len());
-            let (wave, rest) = demand.split_at(len);
+            let (wave, keys, rest) = split_wave(demand);
             let mut leases = [None, None];
-            let primary = self.wave(
-                wave,
-                [Some(first), second],
-                &mut leases,
-                cancelled,
-                consumer,
-            );
+            let primary = self.wave(wave, keys, &mut leases, cancelled, consumer);
             self.end_wave(primary, leases)?;
             demand = rest;
         }
@@ -533,7 +534,25 @@ impl CopiedResidency {
         cancelled: &mut impl FnMut() -> bool,
         consumer: &mut impl FnMut(TupleView<'_>) -> Result<()>,
     ) -> Result<()> {
+        self.protect_hits(&keys, leases)?;
         let mut fresh = [false; 2];
+        for (i, d) in keys.iter().enumerate() {
+            if let Some(d) = d {
+                if leases[i].is_none() {
+                    let ticket = self.fill(*d, cancelled)?;
+                    leases[i] = Some(self.acquire(ticket)?);
+                    fresh[i] = true;
+                }
+            }
+        }
+        self.consume_wave(wave, &keys, leases, fresh, cancelled, consumer)
+    }
+
+    fn protect_hits(
+        &mut self,
+        keys: &[Option<Demand>; 2],
+        leases: &mut [Option<Ticket>; 2],
+    ) -> Result<()> {
         // Protect *all* hits, even those following a miss in occurrence order.
         for (i, d) in keys.iter().enumerate() {
             if let Some(d) = d {
@@ -546,15 +565,18 @@ impl CopiedResidency {
                 }
             }
         }
-        for (i, d) in keys.iter().enumerate() {
-            if let Some(d) = d {
-                if leases[i].is_none() {
-                    let ticket = self.fill(*d, cancelled)?;
-                    leases[i] = Some(self.acquire(ticket)?);
-                    fresh[i] = true;
-                }
-            }
-        }
+        Ok(())
+    }
+
+    fn consume_wave(
+        &mut self,
+        wave: &[Demand],
+        keys: &[Option<Demand>; 2],
+        leases: &[Option<Ticket>; 2],
+        mut fresh: [bool; 2],
+        cancelled: &mut impl FnMut() -> bool,
+        consumer: &mut impl FnMut(TupleView<'_>) -> Result<()>,
+    ) -> Result<()> {
         for d in wave {
             check_cancel(cancelled)?;
             self.validate(*d)?;
@@ -635,10 +657,21 @@ impl CopiedResidency {
     }
     fn fill(&mut self, d: Demand, cancelled: &mut impl FnMut() -> bool) -> Result<Ticket> {
         check_cancel(cancelled)?;
-        let index = self.victim()?;
-        let hashes = &self.bindings[d.key.expert as usize].hashes;
-        let plan = Self::plan_for(&self.source, &self.class, d, self.content, hashes)?;
+        let source = Arc::clone(&self.source);
+        let hashes = self.bindings[d.key.expert as usize].hashes;
+        let plan = Self::plan_for(&source, &self.class, d, self.content, &hashes)?;
         plan.validate_source()?;
+        let ticket = self.begin_fill(d)?;
+        let slot = &mut self.slots[ticket.slot];
+        if let Err(e) = fill_parts(&plan, &hashes, &mut slot.parts, cancelled, |_| {}) {
+            slot.state = State::Free;
+            return Err(e);
+        }
+        self.commit_fill(ticket)?;
+        Ok(ticket)
+    }
+    fn begin_fill(&mut self, d: Demand) -> Result<Ticket> {
+        let index = self.victim()?;
         let slot = &mut self.slots[index];
         let ticket = Ticket {
             owner: self.owner,
@@ -653,13 +686,12 @@ impl CopiedResidency {
         }
         slot.state = State::Filling(ticket);
         slot.generation = ticket.generation;
-        if let Err(e) = fill_parts(&plan, hashes, slot, cancelled) {
-            slot.state = State::Free;
-            return Err(e);
-        }
+        Ok(ticket)
+    }
+    fn commit_fill(&mut self, ticket: Ticket) -> Result<()> {
         self.publish(ticket)?;
         self.stats.fills += 1;
-        Ok(ticket)
+        Ok(())
     }
     fn publish(&mut self, t: Ticket) -> Result<()> {
         if self.slots[t.slot].state != State::Filling(t) {
@@ -679,6 +711,17 @@ impl CopiedResidency {
         self.slots[t.slot].state = State::Ready(t);
         Ok(())
     }
+}
+
+fn split_wave(demand: &[Demand]) -> (&[Demand], [Option<Demand>; 2], &[Demand]) {
+    let first = demand[0];
+    let second = demand.iter().copied().find(|&d| d != first);
+    let len = demand
+        .iter()
+        .position(|d| *d != first && Some(*d) != second)
+        .unwrap_or(demand.len());
+    let (wave, rest) = demand.split_at(len);
+    (wave, [Some(first), second], rest)
 }
 
 fn check_cancel(cancelled: &mut impl FnMut() -> bool) -> Result<()> {
@@ -704,14 +747,15 @@ fn same_plane(a: &PlaneRecord, b: &PlaneRecord) -> bool {
 fn fill_parts(
     plan: &ExpertPlan<'_>,
     hashes: &TupleHashes,
-    slot: &mut Slot,
+    parts: &mut [[Vec<u8>; 3]; 3],
     cancelled: &mut impl FnMut() -> bool,
+    mut verified: impl FnMut(ExpertRole),
 ) -> Result<()> {
     for role in [ExpertRole::Gate, ExpertRole::Up, ExpertRole::Down] {
         check_cancel(cancelled)?;
         let index = role.index();
         let expected = hashes[index].map(|hash| safetensors_catalog::hex(&hash));
-        let [weights, scales, biases] = &mut slot.parts[index];
+        let [weights, scales, biases] = &mut parts[index];
         let dest = PlaneDestination::new(weights, scales, biases, expected.clone());
         let receipt = plan.read_plane_into(role, dest)?.into_receipt();
         let plane = &plan.record().planes[index];
@@ -728,6 +772,7 @@ fn fill_parts(
                 "verified role receipt differs from admitted tuple",
             ));
         }
+        verified(role);
     }
     check_cancel(cancelled)?;
     plan.validate_source()
