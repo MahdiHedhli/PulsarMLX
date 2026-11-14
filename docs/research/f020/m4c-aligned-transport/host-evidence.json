@@ -1,0 +1,921 @@
+{
+  "Rust": {
+    "debug": {
+      "actual_control_requirement_range": [
+        30341,
+        30425
+      ],
+      "actual_reservation_range": [
+        73727,
+        114687
+      ],
+      "max_transport_encoding": 2172,
+      "passed": 64,
+      "per_recipe_alignment_mode": [
+        [
+          "default",
+          4096,
+          "BufferedAlignedWindow",
+          {
+            "copied": 37376,
+            "copies": 26,
+            "edges": 1,
+            "logical": 41472,
+            "overread": 105984,
+            "requested": 147456,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          4096,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 41472,
+            "overread": 0,
+            "requested": 41472,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          16384,
+          "BufferedAlignedWindow",
+          {
+            "copied": 29184,
+            "copies": 24,
+            "edges": 3,
+            "logical": 41472,
+            "overread": 380416,
+            "requested": 421888,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          16384,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 41472,
+            "overread": 0,
+            "requested": 41472,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          4096,
+          "BufferedAlignedWindow",
+          {
+            "copied": 61952,
+            "copies": 26,
+            "edges": 1,
+            "logical": 66048,
+            "overread": 105984,
+            "requested": 172032,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          4096,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 66048,
+            "overread": 0,
+            "requested": 66048,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          16384,
+          "BufferedAlignedWindow",
+          {
+            "copied": 61952,
+            "copies": 26,
+            "edges": 1,
+            "logical": 66048,
+            "overread": 413184,
+            "requested": 479232,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          16384,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 66048,
+            "overread": 0,
+            "requested": 66048,
+            "roles": 9
+          }
+        ]
+      ],
+      "tests": {
+        "admission_screen": {
+          "binary_sha256": "5ee6147b5c67703460858f65408239514ebc565e60a49cb3ecc44e424a7a75ef",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "admission_screen_control_matches_actual_copied_residency",
+            "admission_screen_exhaustive_independent_reference",
+            "admission_screen_input_limits_and_refusals",
+            "admission_screen_named_journals_and_hand_computed_outcomes"
+          ],
+          "passed": 4
+        },
+        "aligned_transport_host": {
+          "binary_sha256": "f683213dd8d643d76516d4e78b7e849b6e673ca3ca5a857a7ec9aa9e03b943ea",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "all_original_roles_match_exact_reader_in_both_buffered_modes"
+          ],
+          "passed": 1
+        },
+        "copied_residency": {
+          "binary_sha256": "8c87cd8fae7b1ce4e3260924c94b27e2af36d74d442270d0e8caae5bdddc869d",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "both_recipes_ordered_cold_warm_and_protected_wave_reload",
+            "cancellation_drains_roles_and_only_complete_entries_survive",
+            "full_demand_admission_precedes_all_reads_and_evictions",
+            "incorrect_final_digest_never_publishes_partial_tuple",
+            "invalid_class_metadata_and_memory_are_rejected_before_filling",
+            "metadata_counts_separate_catalog_header_and_index_names",
+            "mutation_after_first_plane_withholds_the_tuple",
+            "stale_descriptors_refuse_both_hits_and_misses",
+            "trusted_checkpoint_and_content_bindings_precede_warm_reuse",
+            "unsupported_rank_refuses_while_shape_is_borrowed"
+          ],
+          "passed": 10
+        },
+        "mlx_expert_ranges": {
+          "binary_sha256": "403378fc925f84008839c245a1434d7e256134c4c29537d555f6a4ef92966747",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "admission_screen::tests::admission_screen_counter_and_generation_overflow_are_atomic",
+            "admission_screen::tests::admission_screen_equal_recency_uses_lower_slot",
+            "metadata::tests::json_payload_and_limits",
+            "read_into::aligned_transport::tests::all_integer_cases_match_frozen_independent_population",
+            "read_into::aligned_transport::tests::authored_layouts_verify_real_offsets_alignment_canaries_and_reuse",
+            "read_into::aligned_transport::tests::descriptor_component_role_and_window_remain_sealed",
+            "read_into::aligned_transport::tests::destination_hash_budget_and_control_refuse_before_io",
+            "read_into::aligned_transport::tests::failures_at_all_positions_preserve_partial_and_completed_effects",
+            "read_into::aligned_transport::tests::retained_rename_corruption_and_truncation_have_distinct_outcomes",
+            "read_into::tests::partial_io_failure_counts_attempt_and_returns_no_capability",
+            "residency::overlap::tests::staged_cancellation_releases_banks_and_discards_observed_reads",
+            "residency::overlap::tests::staged_completion_identity_duplicate_and_queue_refusals",
+            "residency::overlap::tests::staged_future_error_preserves_foreground_order_and_primary",
+            "residency::overlap::tests::staged_panic_refusal_and_secondary_failure_join_before_return",
+            "residency::overlap::tests::staged_partial_tuple_hash_and_source_stamp_keep_previous_resident",
+            "residency::overlap::tests::staged_preflight_budget_epochs_and_counter_exhaustion",
+            "residency::overlap::tests::staged_reader_and_foreground_happens_before",
+            "residency::tests::cleanup_uncertainty_keeps_both_errors_and_charge",
+            "residency::tests::exhaustion_refuses_before_eviction_or_reads",
+            "residency::tests::standing_charge_checks_metadata_ceiling_and_overflow_before_allocation",
+            "residency::tests::tickets_bind_slot_identity_and_generation_and_block_active_reuse"
+          ],
+          "passed": 21
+        },
+        "ranges": {
+          "binary_sha256": "4b52162f496d9acaf2fc0d4b5d938c18dfd85bd262442731ec2b152ef9a41be1",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "changed_config_refuses_before_first_read",
+            "every_expert_and_component_stays_packed",
+            "huge_sparse_decoy_is_never_loaded_or_hashed",
+            "index_path_escape_and_duplicate_config_are_refused",
+            "invalid_binding_refuses_before_payload",
+            "malformed_and_overflowing_headers_fail_catalog_admission",
+            "metadata_limits_refuse_before_large_allocation",
+            "mixed_overrides_are_bound_per_role",
+            "nonregular_index_refuses_at_descriptor_admission",
+            "owned_bytes_survive_source_drop_and_owner_move",
+            "replacement_path_is_never_read",
+            "same_size_payload_mutation_refuses_before_first_read",
+            "selected_budget_refuses_without_reading_large_sparse_planes",
+            "shard_count_and_aggregate_header_limits_are_checked",
+            "stored_wrong_weight_dtype_is_not_reinterpreted",
+            "symlink_shard_and_config_are_refused",
+            "truncated_descriptor_refuses_before_first_read"
+          ],
+          "passed": 17
+        },
+        "read_into": {
+          "binary_sha256": "45149f9ef664e64d5c99253f816e9eeb2ffccf90a44d0140192a208b97ff8282",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "all_roles_experts_recipes_match_independent_allocating_loader",
+            "changed_descriptor_and_wrong_content_never_publish_a_filled_capability",
+            "every_bad_destination_length_refuses_before_any_write_or_read"
+          ],
+          "passed": 3
+        },
+        "residency_coordinator": {
+          "binary_sha256": "717d8df22b9df56e676bf56cfe483296d9d02f887191beeec1a736e11eb0ecf2",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "cancellation_and_failed_finish_preserve_primary_and_secondary_errors",
+            "exact_once_admission_commit_and_replay_on_real_coordinator",
+            "one_byte_short_stops_before_reads_dispatch_or_mutation"
+          ],
+          "passed": 3
+        },
+        "staged_residency": {
+          "binary_sha256": "8e080cf1510e35f4e73fd537567a9a78b56fb47b98d6a374792e69af778b4e3f",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "staged_constant_ledger_at_short_long_and_unicode_paths",
+            "staged_three_paths_match_model_and_all_borrowed_components"
+          ],
+          "passed": 2
+        },
+        "staged_residency_coordinator": {
+          "binary_sha256": "9851974ac9a752aaaab9bfe756d72e63aab8165df832c4aa4c736ac05461d1ae",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "staged_coordinator_cancellation_and_poisoned_finish",
+            "staged_coordinator_commit_lost_delivery_and_replay",
+            "staged_coordinator_short_budget_and_precancel"
+          ],
+          "passed": 3
+        }
+      },
+      "verified_observations": {
+        "binding": 4,
+        "integer": 6161,
+        "layout": 16,
+        "mutation": 4,
+        "named": 19,
+        "partial": 12,
+        "preflight": 14,
+        "real": 72
+      }
+    },
+    "release": {
+      "actual_control_requirement_range": [
+        30341,
+        30425
+      ],
+      "actual_reservation_range": [
+        73727,
+        114687
+      ],
+      "max_transport_encoding": 2175,
+      "passed": 64,
+      "per_recipe_alignment_mode": [
+        [
+          "default",
+          4096,
+          "BufferedAlignedWindow",
+          {
+            "copied": 37376,
+            "copies": 26,
+            "edges": 1,
+            "logical": 41472,
+            "overread": 105984,
+            "requested": 147456,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          4096,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 41472,
+            "overread": 0,
+            "requested": 41472,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          16384,
+          "BufferedAlignedWindow",
+          {
+            "copied": 29184,
+            "copies": 24,
+            "edges": 3,
+            "logical": 41472,
+            "overread": 380416,
+            "requested": 421888,
+            "roles": 9
+          }
+        ],
+        [
+          "default",
+          16384,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 41472,
+            "overread": 0,
+            "requested": 41472,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          4096,
+          "BufferedAlignedWindow",
+          {
+            "copied": 61952,
+            "copies": 26,
+            "edges": 1,
+            "logical": 66048,
+            "overread": 105984,
+            "requested": 172032,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          4096,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 66048,
+            "overread": 0,
+            "requested": 66048,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          16384,
+          "BufferedAlignedWindow",
+          {
+            "copied": 61952,
+            "copies": 26,
+            "edges": 1,
+            "logical": 66048,
+            "overread": 413184,
+            "requested": 479232,
+            "roles": 9
+          }
+        ],
+        [
+          "mixed",
+          16384,
+          "BufferedExact",
+          {
+            "copied": 0,
+            "copies": 0,
+            "edges": 0,
+            "logical": 66048,
+            "overread": 0,
+            "requested": 66048,
+            "roles": 9
+          }
+        ]
+      ],
+      "tests": {
+        "admission_screen": {
+          "binary_sha256": "9ee0ac64064ad235d2c927ac5c35cbc59b636bb3ca6ddf485665661ab4637c77",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "admission_screen_control_matches_actual_copied_residency",
+            "admission_screen_exhaustive_independent_reference",
+            "admission_screen_input_limits_and_refusals",
+            "admission_screen_named_journals_and_hand_computed_outcomes"
+          ],
+          "passed": 4
+        },
+        "aligned_transport_host": {
+          "binary_sha256": "145c664e349f2c86a94f0873b9d513f76beb6f5762f8f08d745267703a2b67c0",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "all_original_roles_match_exact_reader_in_both_buffered_modes"
+          ],
+          "passed": 1
+        },
+        "copied_residency": {
+          "binary_sha256": "d40fbdbc1d4f453d0df78d73fba469a38b5d309c9abdbc5a8855bcee5cff94b8",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "both_recipes_ordered_cold_warm_and_protected_wave_reload",
+            "cancellation_drains_roles_and_only_complete_entries_survive",
+            "full_demand_admission_precedes_all_reads_and_evictions",
+            "incorrect_final_digest_never_publishes_partial_tuple",
+            "invalid_class_metadata_and_memory_are_rejected_before_filling",
+            "metadata_counts_separate_catalog_header_and_index_names",
+            "mutation_after_first_plane_withholds_the_tuple",
+            "stale_descriptors_refuse_both_hits_and_misses",
+            "trusted_checkpoint_and_content_bindings_precede_warm_reuse",
+            "unsupported_rank_refuses_while_shape_is_borrowed"
+          ],
+          "passed": 10
+        },
+        "mlx_expert_ranges": {
+          "binary_sha256": "55c7bef60bcc0bb845adae429c4acf668742bd9f116b02b75637b8bb922e9186",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "admission_screen::tests::admission_screen_counter_and_generation_overflow_are_atomic",
+            "admission_screen::tests::admission_screen_equal_recency_uses_lower_slot",
+            "metadata::tests::json_payload_and_limits",
+            "read_into::aligned_transport::tests::all_integer_cases_match_frozen_independent_population",
+            "read_into::aligned_transport::tests::authored_layouts_verify_real_offsets_alignment_canaries_and_reuse",
+            "read_into::aligned_transport::tests::descriptor_component_role_and_window_remain_sealed",
+            "read_into::aligned_transport::tests::destination_hash_budget_and_control_refuse_before_io",
+            "read_into::aligned_transport::tests::failures_at_all_positions_preserve_partial_and_completed_effects",
+            "read_into::aligned_transport::tests::retained_rename_corruption_and_truncation_have_distinct_outcomes",
+            "read_into::tests::partial_io_failure_counts_attempt_and_returns_no_capability",
+            "residency::overlap::tests::staged_cancellation_releases_banks_and_discards_observed_reads",
+            "residency::overlap::tests::staged_completion_identity_duplicate_and_queue_refusals",
+            "residency::overlap::tests::staged_future_error_preserves_foreground_order_and_primary",
+            "residency::overlap::tests::staged_panic_refusal_and_secondary_failure_join_before_return",
+            "residency::overlap::tests::staged_partial_tuple_hash_and_source_stamp_keep_previous_resident",
+            "residency::overlap::tests::staged_preflight_budget_epochs_and_counter_exhaustion",
+            "residency::overlap::tests::staged_reader_and_foreground_happens_before",
+            "residency::tests::cleanup_uncertainty_keeps_both_errors_and_charge",
+            "residency::tests::exhaustion_refuses_before_eviction_or_reads",
+            "residency::tests::standing_charge_checks_metadata_ceiling_and_overflow_before_allocation",
+            "residency::tests::tickets_bind_slot_identity_and_generation_and_block_active_reuse"
+          ],
+          "passed": 21
+        },
+        "ranges": {
+          "binary_sha256": "9b83f019cd76bbaa6184b8d21c007338b0a071fd960e8c59020d7cd31b2e572c",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "changed_config_refuses_before_first_read",
+            "every_expert_and_component_stays_packed",
+            "huge_sparse_decoy_is_never_loaded_or_hashed",
+            "index_path_escape_and_duplicate_config_are_refused",
+            "invalid_binding_refuses_before_payload",
+            "malformed_and_overflowing_headers_fail_catalog_admission",
+            "metadata_limits_refuse_before_large_allocation",
+            "mixed_overrides_are_bound_per_role",
+            "nonregular_index_refuses_at_descriptor_admission",
+            "owned_bytes_survive_source_drop_and_owner_move",
+            "replacement_path_is_never_read",
+            "same_size_payload_mutation_refuses_before_first_read",
+            "selected_budget_refuses_without_reading_large_sparse_planes",
+            "shard_count_and_aggregate_header_limits_are_checked",
+            "stored_wrong_weight_dtype_is_not_reinterpreted",
+            "symlink_shard_and_config_are_refused",
+            "truncated_descriptor_refuses_before_first_read"
+          ],
+          "passed": 17
+        },
+        "read_into": {
+          "binary_sha256": "0d4e258e69ed1be33b93ceef7a86f66b093b081dad95cdd434b6fc97ad0a261f",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "all_roles_experts_recipes_match_independent_allocating_loader",
+            "changed_descriptor_and_wrong_content_never_publish_a_filled_capability",
+            "every_bad_destination_length_refuses_before_any_write_or_read"
+          ],
+          "passed": 3
+        },
+        "residency_coordinator": {
+          "binary_sha256": "0ca0e41c236e293ec25200ac691f3a54885c816acb16c091dc18f125f944ae5f",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "cancellation_and_failed_finish_preserve_primary_and_secondary_errors",
+            "exact_once_admission_commit_and_replay_on_real_coordinator",
+            "one_byte_short_stops_before_reads_dispatch_or_mutation"
+          ],
+          "passed": 3
+        },
+        "staged_residency": {
+          "binary_sha256": "5819017798d5c05dd640bd6ff26c3265a0a8e94e186a37f5a4c00564fd06c1ec",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "staged_constant_ledger_at_short_long_and_unicode_paths",
+            "staged_three_paths_match_model_and_all_borrowed_components"
+          ],
+          "passed": 2
+        },
+        "staged_residency_coordinator": {
+          "binary_sha256": "ad9f906b63e91f4f9235edb699d12e51f7e952ba5f513773a4851ab25dbad6eb",
+          "linkage": [
+            "/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+            "/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+          ],
+          "names": [
+            "staged_coordinator_cancellation_and_poisoned_finish",
+            "staged_coordinator_commit_lost_delivery_and_replay",
+            "staged_coordinator_short_budget_and_precancel"
+          ],
+          "passed": 3
+        }
+      },
+      "verified_observations": {
+        "binding": 4,
+        "integer": 6161,
+        "layout": 16,
+        "mutation": 4,
+        "named": 19,
+        "partial": 12,
+        "preflight": 14,
+        "real": 72
+      }
+    }
+  },
+  "base": "00441665f7b381998179c42b86e7053180426435",
+  "base_tree": "a4754d5c3dd5202233adef4e28404ad5e47542b8",
+  "corpus": {
+    "census": {
+      "buffered-aligned-window": 924,
+      "buffered-edge-exact": 842,
+      "empty": 1036,
+      "out-of-file": 3359
+    },
+    "named": [
+      [
+        "endpoint-overflow",
+        "geometry",
+        [
+          4096,
+          18446744073709551615,
+          18446744073709551613,
+          3,
+          18446744073709551615,
+          true
+        ],
+        [
+          "end-overflow"
+        ]
+      ],
+      [
+        "rounded-overflow",
+        "geometry",
+        [
+          16384,
+          18446744073709551615,
+          18446744073709551612,
+          3,
+          18446744073709551615,
+          true
+        ],
+        [
+          "round-overflow"
+        ]
+      ],
+      [
+        "aligned-near-maximum",
+        "geometry",
+        [
+          4096,
+          18446744073709551615,
+          18446744073709543424,
+          4096,
+          18446744073709551615,
+          true
+        ],
+        [
+          "buffered-aligned-window",
+          18446744073709543424,
+          4096,
+          0
+        ]
+      ],
+      [
+        "high-offset-small-native",
+        "geometry",
+        [
+          4096,
+          18446744073709551615,
+          35184372088832,
+          32,
+          65535,
+          true
+        ],
+        [
+          "buffered-aligned-window",
+          35184372088832,
+          4096,
+          0
+        ]
+      ],
+      [
+        "window-native-conversion",
+        "geometry",
+        [
+          16384,
+          65536,
+          1,
+          65535,
+          65535,
+          true
+        ],
+        [
+          "native-size"
+        ]
+      ],
+      [
+        "edge-native-conversion",
+        "geometry",
+        [
+          4096,
+          65537,
+          0,
+          65537,
+          65535,
+          true
+        ],
+        [
+          "native-size"
+        ]
+      ],
+      [
+        "no-empty",
+        "geometry",
+        [
+          4096,
+          0,
+          0,
+          0,
+          18446744073709551615,
+          true
+        ],
+        [
+          "empty"
+        ]
+      ],
+      [
+        "small-public",
+        "geometry",
+        [
+          16,
+          1024,
+          0,
+          1,
+          18446744073709551615,
+          true
+        ],
+        [
+          "alignment"
+        ]
+      ],
+      [
+        "zero-alignment",
+        "geometry",
+        [
+          0,
+          2,
+          0,
+          1,
+          18446744073709551615,
+          true
+        ],
+        [
+          "alignment"
+        ]
+      ],
+      [
+        "unsupported-nonpower",
+        "geometry",
+        [
+          12288,
+          16384,
+          1,
+          1,
+          18446744073709551615,
+          true
+        ],
+        [
+          "alignment"
+        ]
+      ],
+      [
+        "maximum-backing",
+        "backing",
+        [
+          16384,
+          33587198,
+          33554432,
+          18446744073709551615
+        ],
+        [
+          "backing",
+          33603581
+        ]
+      ],
+      [
+        "backing-one-over",
+        "backing",
+        [
+          16384,
+          33587199,
+          33554432,
+          18446744073709551615
+        ],
+        [
+          "backing-limit"
+        ]
+      ],
+      [
+        "backing-add-overflow",
+        "backing",
+        [
+          4096,
+          18446744073709551615,
+          1,
+          18446744073709551615
+        ],
+        [
+          "backing-overflow"
+        ]
+      ],
+      [
+        "backing-native-limit",
+        "backing",
+        [
+          4096,
+          65536,
+          4096,
+          65535
+        ],
+        [
+          "native-size"
+        ]
+      ],
+      [
+        "selected-one-over",
+        "backing",
+        [
+          16384,
+          16384,
+          33554433,
+          18446744073709551615
+        ],
+        [
+          "selected-limit"
+        ]
+      ],
+      [
+        "control-at-cap",
+        "reservation",
+        [
+          33603581,
+          65536,
+          33669117
+        ],
+        [
+          "reservation",
+          33669117
+        ]
+      ],
+      [
+        "control-one-over",
+        "reservation",
+        [
+          4096,
+          65537,
+          18446744073709551615
+        ],
+        [
+          "control-limit"
+        ]
+      ],
+      [
+        "retained-over-cap",
+        "reservation",
+        [
+          33603582,
+          1,
+          18446744073709551615
+        ],
+        [
+          "backing-limit"
+        ]
+      ],
+      [
+        "one-byte-short",
+        "reservation",
+        [
+          33603581,
+          65536,
+          33669116
+        ],
+        [
+          "budget"
+        ]
+      ]
+    ],
+    "named_sha256": "e53817623414b06cfea717a06de4611d6187907ad7c640e2f5577942f52e96c8",
+    "order": "ascending A,L,o,n; duplicate n removed; one compact JSON array and LF per record",
+    "ordered_sha256": "b17c79e2137de3bdc22d8e3e662ec71f873e64fda1e3d1c75dbafbb82322c80f",
+    "public": 672,
+    "schema": "buffered-window-corpus/1",
+    "small": 5489,
+    "total": 6161
+  },
+  "limitations": [
+    "Ordinary buffered host requests only. Physical I/O, syscalls and cache state unobserved.",
+    "Completed/copy counts do not resolve partial returns from failed exact-at reads.",
+    "Synthetic results establish neither real checkpoint provenance nor performance."
+  ],
+  "new_rust_controls": [
+    "all_original_roles_match_exact_reader_in_both_buffered_modes",
+    "read_into::aligned_transport::tests::all_integer_cases_match_frozen_independent_population",
+    "read_into::aligned_transport::tests::authored_layouts_verify_real_offsets_alignment_canaries_and_reuse",
+    "read_into::aligned_transport::tests::descriptor_component_role_and_window_remain_sealed",
+    "read_into::aligned_transport::tests::destination_hash_budget_and_control_refuse_before_io",
+    "read_into::aligned_transport::tests::failures_at_all_positions_preserve_partial_and_completed_effects",
+    "read_into::aligned_transport::tests::retained_rename_corruption_and_truncation_have_distinct_outcomes"
+  ],
+  "preliminary_findings": [
+    "The initial read-only preflight included the inventory process itself. Its exact owned PID was reconciled before worktree creation."
+  ],
+  "python": {
+    "3.14.6": [
+      "test_independent_population_and_freeze",
+      "test_minimal_in_file_cover_or_whole_edge",
+      "test_named_limits_include_uint64_native_and_budget",
+      "test_observed_comparisons_when_host_exports_supplied"
+    ],
+    "3.9.6": [
+      "test_independent_population_and_freeze",
+      "test_minimal_in_file_cover_or_whole_edge",
+      "test_named_limits_include_uint64_native_and_budget",
+      "test_observed_comparisons_when_host_exports_supplied"
+    ]
+  },
+  "schema": "pulsarmlx.buffered-window-host-evidence/1",
+  "settings": {
+    "build_jobs": 2,
+    "build_timeout_seconds": 1800,
+    "cargo_locked_offline": true,
+    "heavy_processes": 1,
+    "native_features": [],
+    "native_launches": 0,
+    "rust": "1.95.0",
+    "test_timeout_seconds": 900,
+    "threads": 1
+  }
+}
