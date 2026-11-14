@@ -1,0 +1,1170 @@
+{
+  "base": "e62c1df783af6c420950a09bd261616d39f5078f",
+  "code": {
+    "crates/mlx-expert-ranges/src/residency.rs": {
+      "bytes": 26251,
+      "git_blob": "48c18e54e0a4d0a0a5ad26303945f68f74ff1d01",
+      "mode": "100644",
+      "sha256": "35045c8590be534d641bd5358eb5917c6ee96b3350e491db61c09c834713d627"
+    },
+    "crates/mlx-expert-ranges/src/residency/overlap.rs": {
+      "bytes": 23480,
+      "git_blob": "ad28977e2e6908ab2b0f472b0c80a30c6b4c31d1",
+      "mode": "100644",
+      "sha256": "66022505f611b21a546ed98621c5dae3776aa651b8809f5956ec571a222b3e8e"
+    },
+    "crates/mlx-expert-ranges/src/residency/overlap/tests.rs": {
+      "bytes": 16178,
+      "git_blob": "67bf920f580271b82141c831350e043b67836d15",
+      "mode": "100644",
+      "sha256": "7104fd7992fe28bca25d598a40b182f30ee76dc96c2c32ad4dbb590993cd840f"
+    },
+    "crates/mlx-expert-ranges/tests/staged_residency.rs": {
+      "bytes": 15120,
+      "git_blob": "2bcb5113e3d043ba10cb7a64b260ae3843ffceff",
+      "mode": "100644",
+      "sha256": "ad4f7c74cf8814edbb31985cc35137f713f00602ee3c10b3ca9201801b49b0e6"
+    },
+    "crates/mlx-expert-ranges/tests/staged_residency_coordinator.rs": {
+      "bytes": 12959,
+      "git_blob": "a1452be2a11c069ae248bb491e5bb1bb630a8d67",
+      "mode": "100644",
+      "sha256": "6754d7adb767e34907345ea83304b3a40ab96b9dbabc911cf6ff89897360b835"
+    }
+  },
+  "frozen_corpus_sha256": "4a35badeade5d3db0b9c01ea5b33f5b99a36e47e6fb122b59f667f8526c7580f",
+  "old_function_delta": {
+    "fill": {
+      "after": {
+        "bytes": 671,
+        "git_blob": "c6466577c68e8789f67d89c7cd77434ef5eb8983",
+        "sha256": "b6fe089d5eb38f792a9b537545ae95e43226b009ea4cbdb41a6482351d6419e1"
+      },
+      "before": {
+        "bytes": 1077,
+        "git_blob": "133d44a99ceb14d9bbe61887b8729be0b5b17d91",
+        "sha256": "74df7faaa563406b0e3be1269c0b1baceebf5472625068832f00fb2ef6342605"
+      },
+      "reason": "Retained source planning, shared begin_fill eviction/generation and commit_fill publication; direct errors can already have evicted a slot."
+    },
+    "fill_parts": {
+      "after": {
+        "bytes": 1361,
+        "git_blob": "98f9acaf7ee0406e316739f8dd3355cf2c6d40e4",
+        "sha256": "c180e5262d647fb78417b7efc55fca43fbfc56413dd281c6ee31f6532bcc7dcc"
+      },
+      "before": {
+        "bytes": 1286,
+        "git_blob": "0a8bbbcdc852e20f0c67c8c83e2cac839d2a062b",
+        "sha256": "e6796e8f7013abbc975a346322457de33eec6c2a3ddbe0d01d7da93698312ffe"
+      },
+      "reason": "Takes the nine destination buffers and reports each verified role; reader and receipt predicates unchanged."
+    },
+    "new": {
+      "after": {
+        "bytes": 5423,
+        "git_blob": "3dfa8f932802e7f791c608e9c14e92b7e1531405",
+        "sha256": "c176a2049b4149897da5a3d781af05f92f7ad0541e1a76a8fb42c7fea2dd68f7"
+      },
+      "before": {
+        "bytes": 5405,
+        "git_blob": "2bc37eb0d60b9dc23341c3bdc144c32c669ee946",
+        "sha256": "85ffa2a715f5678e188774a05cefad40877a5c71f671a31a52a7248f07a964ae"
+      },
+      "reason": "One Arc retains the existing sealed source; original ledger and public constructor signature preserved."
+    },
+    "run": {
+      "after": {
+        "bytes": 580,
+        "git_blob": "8a8d7431c080a1d0ad638623514f9c29ad2d364a",
+        "sha256": "f994fdf25e4c05a64068a243b22909a9f6ff4b14b59367e0582b94ac364da529"
+      },
+      "before": {
+        "bytes": 954,
+        "git_blob": "29199658ce659586fc3012a13de8ff4d9f6b4e46",
+        "sha256": "dfae0dbbac5a5b801caa291a900d98eeabb07ffa9d13b16c59a21849f6587004"
+      },
+      "reason": "Uses the extracted maximal two-identity split_wave."
+    },
+    "wave": {
+      "after": {
+        "bytes": 748,
+        "git_blob": "7cbbdb69af45655e8793c3e063cc179f4f21563b",
+        "sha256": "ea9ae55652eb2d940fed244e74b4a37490816a630ab48c71091dcb5f9310f688"
+      },
+      "before": {
+        "bytes": 2225,
+        "git_blob": "2030aed08aa29aff4d4f143b0b0005a492f88aed",
+        "sha256": "47873b2a6009dca7dadb682d878c23ca811aa2523ef2276046437b50e267c449"
+      },
+      "reason": "Extracted protection and ordered callback/recency accounting."
+    }
+  },
+  "results": {
+    "debug": {
+      "controls": {
+        "mlx_expert_ranges": [
+          "staged-cancel before Activity { spawned: 0, joined: 0, requests: 0, completions: 0, cancelled_jobs: 0, verified_roles: 0, verified_components: 0, verified_bytes: 0, copy_operations: 0, copied_bytes: 0, attempted_reads: 0, requested_bytes: 0, discarded_issued_bytes: 0, request_high_water: 0, completion_high_water: 0, outstanding: false, banks_home: true }",
+          "staged-cancel between Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 1, verified_roles: 1, verified_components: 3, verified_bytes: 4608, copy_operations: 0, copied_bytes: 0, attempted_reads: 3, requested_bytes: 4608, discarded_issued_bytes: 4608, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-cancel verified Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 0, copied_bytes: 0, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 27648, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-future Serial foreground=2 failure=WORKER Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-future Overlap foreground=2 failure=WORKER Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind owner_panic Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 18, copied_bytes: 27648, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 4608, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind worker_panic Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 0, verified_roles: 0, verified_components: 0, verified_bytes: 0, copy_operations: 0, copied_bytes: 0, attempted_reads: 0, requested_bytes: 0, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind both Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind refusal Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Serial hash phase=CONTENT Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 22, requested_bytes: 36352, discarded_issued_bytes: 22528, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Serial stamp phase=MUTATION Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 18432, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Overlap hash phase=CONTENT Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 22, requested_bytes: 36352, discarded_issued_bytes: 22528, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Overlap stamp phase=MUTATION Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 18432, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-order Serial owner=ThreadId(28) reader=ThreadId(29) first_future_role_while_callback=false Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 27, copied_bytes: 41472, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-order Overlap owner=ThreadId(28) reader=ThreadId(30) first_future_role_while_callback=true Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 27, copied_bytes: 41472, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }"
+        ],
+        "staged_residency": [
+          "staged-path default s {\"cache_bytes\":1147554,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5794,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369506,\"tuple_bytes\":13824}",
+          "staged-path default longer-synthetic-checkout {\"cache_bytes\":1147578,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5818,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369530,\"tuple_bytes\":13824}",
+          "staged-path default \u00e9tapes-\u6771\u4eac {\"cache_bytes\":1147567,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5807,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369519,\"tuple_bytes\":13824}",
+          "staged-path mixed s {\"cache_bytes\":1164450,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6306,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402786,\"tuple_bytes\":22016}",
+          "staged-path mixed longer-synthetic-checkout {\"cache_bytes\":1164474,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6330,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402810,\"tuple_bytes\":22016}",
+          "staged-path mixed \u00e9tapes-\u6771\u4eac {\"cache_bytes\":1164463,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6319,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402799,\"tuple_bytes\":22016}",
+          "staged-corpus combinations=480 arms=1440 named=12 named_arms=36 corpus=e51d0295a0221e80b15282ade67792c72e05afcd5cc1e2f0b36fa16525e9a895 schedules=8badfa2c016ef720740cdf5690522b97a667485d7ce97fb2fe995b126d027f84"
+        ],
+        "staged_residency_coordinator": [
+          "staged-coordinator cancel fail_finish=false position=0 Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 18, copied_bytes: 27648, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 13824, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator cancel fail_finish=true position=0 Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 18, copied_bytes: 27648, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 13824, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator replay=true position=1 peak=5373654 adapter=4096 activity=Activity { spawned: 1, joined: 1, requests: 3, completions: 3, cancelled_jobs: 0, verified_roles: 12, verified_components: 36, verified_bytes: 55296, copy_operations: 36, copied_bytes: 55296, attempted_reads: 36, requested_bytes: 55296, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator short and precancel reads=0 workers=0 commits=0"
+        ]
+      },
+      "exhaustive_arm_cases": 1440,
+      "exhaustive_combinations": 480,
+      "failed": 0,
+      "ignored": 0,
+      "named_arm_cases": 36,
+      "named_combinations": 12,
+      "named_results": [
+        {
+          "cache_counts": [
+            4,
+            2,
+            2,
+            6,
+            36,
+            55296
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "six",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 55296,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 55296,
+            "requests": 3,
+            "spawned": 1,
+            "verified_bytes": 55296,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            5,
+            2,
+            9,
+            36,
+            55296
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "m2b",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 55296,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 55296,
+            "requests": 3,
+            "spawned": 2,
+            "verified_bytes": 55296,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            3,
+            1,
+            1,
+            4,
+            27,
+            41472
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "protected",
+          "stage": {
+            "attempted_reads": 27,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 2,
+            "copied_bytes": 41472,
+            "copy_operations": 27,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 41472,
+            "requests": 2,
+            "spawned": 2,
+            "verified_bytes": 41472,
+            "verified_components": 27,
+            "verified_roles": 9
+          }
+        },
+        {
+          "cache_counts": [
+            2,
+            4,
+            0,
+            6,
+            18,
+            27648
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "hits",
+          "stage": {
+            "attempted_reads": 18,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 27648,
+            "copy_operations": 18,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 27648,
+            "requests": 1,
+            "spawned": 2,
+            "verified_bytes": 27648,
+            "verified_components": 18,
+            "verified_roles": 6
+          }
+        },
+        {
+          "cache_counts": [
+            1,
+            1,
+            0,
+            2,
+            9,
+            13824
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "single",
+          "stage": {
+            "attempted_reads": 9,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 13824,
+            "copy_operations": 9,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 13824,
+            "requests": 1,
+            "spawned": 1,
+            "verified_bytes": 13824,
+            "verified_components": 9,
+            "verified_roles": 3
+          }
+        },
+        {
+          "cache_counts": [
+            33,
+            31,
+            31,
+            64,
+            297,
+            456192
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "long",
+          "stage": {
+            "attempted_reads": 297,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 32,
+            "copied_bytes": 456192,
+            "copy_operations": 297,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 456192,
+            "requests": 32,
+            "spawned": 1,
+            "verified_bytes": 456192,
+            "verified_components": 297,
+            "verified_roles": 99
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            2,
+            2,
+            6,
+            36,
+            88064
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "six",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 88064,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 88064,
+            "requests": 3,
+            "spawned": 1,
+            "verified_bytes": 88064,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            5,
+            2,
+            9,
+            36,
+            88064
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "m2b",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 88064,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 88064,
+            "requests": 3,
+            "spawned": 2,
+            "verified_bytes": 88064,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            3,
+            1,
+            1,
+            4,
+            27,
+            66048
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "protected",
+          "stage": {
+            "attempted_reads": 27,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 2,
+            "copied_bytes": 66048,
+            "copy_operations": 27,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 66048,
+            "requests": 2,
+            "spawned": 2,
+            "verified_bytes": 66048,
+            "verified_components": 27,
+            "verified_roles": 9
+          }
+        },
+        {
+          "cache_counts": [
+            2,
+            4,
+            0,
+            6,
+            18,
+            44032
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "hits",
+          "stage": {
+            "attempted_reads": 18,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 44032,
+            "copy_operations": 18,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 44032,
+            "requests": 1,
+            "spawned": 2,
+            "verified_bytes": 44032,
+            "verified_components": 18,
+            "verified_roles": 6
+          }
+        },
+        {
+          "cache_counts": [
+            1,
+            1,
+            0,
+            2,
+            9,
+            22016
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "single",
+          "stage": {
+            "attempted_reads": 9,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 22016,
+            "copy_operations": 9,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 22016,
+            "requests": 1,
+            "spawned": 1,
+            "verified_bytes": 22016,
+            "verified_components": 9,
+            "verified_roles": 3
+          }
+        },
+        {
+          "cache_counts": [
+            33,
+            31,
+            31,
+            64,
+            297,
+            726528
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "long",
+          "stage": {
+            "attempted_reads": 297,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 32,
+            "copied_bytes": 726528,
+            "copy_operations": 297,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 726528,
+            "requests": 32,
+            "spawned": 1,
+            "verified_bytes": 726528,
+            "verified_components": 297,
+            "verified_roles": 99
+          }
+        }
+      ],
+      "original_corpus": {
+        "bytes": 1738120,
+        "git_blob": "657276311b9b2139826222180c5e09b060bab2c1",
+        "sha256": "eb738af8f8b8f65f65e8656de428dead2b9ead3dc985b2a7cb11b3f66e49d3b8"
+      },
+      "passed": 57,
+      "per_recipe_ledger": {
+        "default": {
+          "cache_bytes": 1147561,
+          "channels_and_fixed": 84608,
+          "component_capacities": [
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ]
+          ],
+          "control_bytes": 2097152,
+          "control_required": 1351360,
+          "events_bytes": 147456,
+          "live_report_limit": 1048576,
+          "metadata_bytes": 5801,
+          "names_and_plans": 70720,
+          "stack_bytes": 2097152,
+          "staging_bytes": 27648,
+          "total": 5369513,
+          "tuple_bytes": 13824
+        },
+        "mixed": {
+          "cache_bytes": 1164457,
+          "channels_and_fixed": 84608,
+          "component_capacities": [
+            [
+              8192,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              8192,
+              256,
+              256
+            ]
+          ],
+          "control_bytes": 2097152,
+          "control_required": 1351360,
+          "events_bytes": 147456,
+          "live_report_limit": 1048576,
+          "metadata_bytes": 6313,
+          "names_and_plans": 70720,
+          "stack_bytes": 2097152,
+          "staging_bytes": 44032,
+          "total": 5402793,
+          "tuple_bytes": 22016
+        }
+      },
+      "per_staged_mode_exhaustive_totals": {
+        "attempted_reads": 9828,
+        "completions": 876,
+        "copied_bytes": 19568640,
+        "copy_operations": 9828,
+        "joined": 1092,
+        "requested_bytes": 19568640,
+        "requests": 876,
+        "spawned": 1092,
+        "verified_roles": 3276
+      },
+      "regression_reference_digest": "dbece58b3c20a3f9208a696959ae3b5e03ed7f1d8c241c62710a47d24c9ce0ff",
+      "test_artifacts": {
+        "admission_screen": "e9a3ef5e2c809db4eb4dbaa5fb59ef3155cc3a5e4eeddd71336dc4720639aad4",
+        "copied_residency": "138ee703631828837f0d0e5a529bb796bdf4c87d9d2b3b1346d9a988593ea146",
+        "mlx_expert_ranges": "54dcb1a734fcc3843bde327f76fc04c2c5c281ab1c7d059e6a49f9def56f2c05",
+        "ranges": "9e4e803924bc86fefd694f9d560828df2d1bc7d44675264eb3f5a08eb07b11a9",
+        "read_into": "bcc6e5fbde6231e35fe838e34c06ec7d3ecce10e82ccd4afa2887d547d2161a2",
+        "residency_coordinator": "1ca525e876c369dafd3d8d9202e7117d544c95092cd9381f6aabad3a9cf219d3",
+        "staged_residency": "17772a799541a4853757635a86f1383233b6d8bf176cbd4d2f69bfc9ee5fe01b",
+        "staged_residency_coordinator": "d694aa87220c9fb9fb8a1940c66504280e146d36ade41e1c5ecd4e926bf77915"
+      },
+      "tests": {
+        "admission_screen": 4,
+        "copied_residency": 10,
+        "mlx_expert_ranges": 15,
+        "ranges": 17,
+        "read_into": 3,
+        "residency_coordinator": 3,
+        "staged_residency": 2,
+        "staged_residency_coordinator": 3
+      }
+    },
+    "release": {
+      "controls": {
+        "mlx_expert_ranges": [
+          "staged-cancel before Activity { spawned: 0, joined: 0, requests: 0, completions: 0, cancelled_jobs: 0, verified_roles: 0, verified_components: 0, verified_bytes: 0, copy_operations: 0, copied_bytes: 0, attempted_reads: 0, requested_bytes: 0, discarded_issued_bytes: 0, request_high_water: 0, completion_high_water: 0, outstanding: false, banks_home: true }",
+          "staged-cancel between Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 1, verified_roles: 1, verified_components: 3, verified_bytes: 4608, copy_operations: 0, copied_bytes: 0, attempted_reads: 3, requested_bytes: 4608, discarded_issued_bytes: 4608, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-cancel verified Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 0, copied_bytes: 0, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 27648, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-future Serial foreground=2 failure=WORKER Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-future Overlap foreground=2 failure=WORKER Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind owner_panic Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 8, verified_components: 24, verified_bytes: 36864, copy_operations: 18, copied_bytes: 27648, attempted_reads: 24, requested_bytes: 36864, discarded_issued_bytes: 9216, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind worker_panic Activity { spawned: 1, joined: 1, requests: 1, completions: 1, cancelled_jobs: 0, verified_roles: 0, verified_components: 0, verified_bytes: 0, copy_operations: 0, copied_bytes: 0, attempted_reads: 0, requested_bytes: 0, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind both Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-unwind refusal Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 6, verified_components: 18, verified_bytes: 27648, copy_operations: 18, copied_bytes: 27648, attempted_reads: 18, requested_bytes: 27648, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Serial hash phase=CONTENT Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 22, requested_bytes: 36352, discarded_issued_bytes: 22528, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Serial stamp phase=MUTATION Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 18432, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Overlap hash phase=CONTENT Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 22, requested_bytes: 36352, discarded_issued_bytes: 22528, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-fault Overlap stamp phase=MUTATION Activity { spawned: 2, joined: 2, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 9, copied_bytes: 13824, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 18432, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-order Serial owner=ThreadId(28) reader=ThreadId(29) first_future_role_while_callback=false Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 27, copied_bytes: 41472, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-order Overlap owner=ThreadId(28) reader=ThreadId(30) first_future_role_while_callback=true Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 0, verified_roles: 9, verified_components: 27, verified_bytes: 41472, copy_operations: 27, copied_bytes: 41472, attempted_reads: 27, requested_bytes: 41472, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }"
+        ],
+        "staged_residency": [
+          "staged-path default s {\"cache_bytes\":1147556,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5796,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369508,\"tuple_bytes\":13824}",
+          "staged-path default longer-synthetic-checkout {\"cache_bytes\":1147580,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5820,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369532,\"tuple_bytes\":13824}",
+          "staged-path default \u00e9tapes-\u6771\u4eac {\"cache_bytes\":1147569,\"channels_and_fixed\":84608,\"component_capacities\":[[4096,256,256],[4096,256,256],[4096,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":5809,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":27648,\"total\":5369521,\"tuple_bytes\":13824}",
+          "staged-path mixed s {\"cache_bytes\":1164452,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6308,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402788,\"tuple_bytes\":22016}",
+          "staged-path mixed longer-synthetic-checkout {\"cache_bytes\":1164476,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6332,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402812,\"tuple_bytes\":22016}",
+          "staged-path mixed \u00e9tapes-\u6771\u4eac {\"cache_bytes\":1164465,\"channels_and_fixed\":84608,\"component_capacities\":[[8192,256,256],[4096,256,256],[8192,256,256]],\"control_bytes\":2097152,\"control_required\":1351360,\"events_bytes\":147456,\"live_report_limit\":1048576,\"metadata_bytes\":6321,\"names_and_plans\":70720,\"stack_bytes\":2097152,\"staging_bytes\":44032,\"total\":5402801,\"tuple_bytes\":22016}",
+          "staged-corpus combinations=480 arms=1440 named=12 named_arms=36 corpus=e51d0295a0221e80b15282ade67792c72e05afcd5cc1e2f0b36fa16525e9a895 schedules=8badfa2c016ef720740cdf5690522b97a667485d7ce97fb2fe995b126d027f84"
+        ],
+        "staged_residency_coordinator": [
+          "staged-coordinator cancel fail_finish=false position=0 Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 7, verified_components: 21, verified_bytes: 32256, copy_operations: 18, copied_bytes: 27648, attempted_reads: 21, requested_bytes: 32256, discarded_issued_bytes: 4608, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator cancel fail_finish=true position=0 Activity { spawned: 1, joined: 1, requests: 2, completions: 2, cancelled_jobs: 1, verified_roles: 8, verified_components: 24, verified_bytes: 36864, copy_operations: 18, copied_bytes: 27648, attempted_reads: 24, requested_bytes: 36864, discarded_issued_bytes: 9216, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator replay=true position=1 peak=5373654 adapter=4096 activity=Activity { spawned: 1, joined: 1, requests: 3, completions: 3, cancelled_jobs: 0, verified_roles: 12, verified_components: 36, verified_bytes: 55296, copy_operations: 36, copied_bytes: 55296, attempted_reads: 36, requested_bytes: 55296, discarded_issued_bytes: 0, request_high_water: 1, completion_high_water: 1, outstanding: false, banks_home: true }",
+          "staged-coordinator short and precancel reads=0 workers=0 commits=0"
+        ]
+      },
+      "exhaustive_arm_cases": 1440,
+      "exhaustive_combinations": 480,
+      "failed": 0,
+      "ignored": 0,
+      "named_arm_cases": 36,
+      "named_combinations": 12,
+      "named_results": [
+        {
+          "cache_counts": [
+            4,
+            2,
+            2,
+            6,
+            36,
+            55296
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "six",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 55296,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 55296,
+            "requests": 3,
+            "spawned": 1,
+            "verified_bytes": 55296,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            5,
+            2,
+            9,
+            36,
+            55296
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "m2b",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 55296,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 55296,
+            "requests": 3,
+            "spawned": 2,
+            "verified_bytes": 55296,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            3,
+            1,
+            1,
+            4,
+            27,
+            41472
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "protected",
+          "stage": {
+            "attempted_reads": 27,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 2,
+            "copied_bytes": 41472,
+            "copy_operations": 27,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 41472,
+            "requests": 2,
+            "spawned": 2,
+            "verified_bytes": 41472,
+            "verified_components": 27,
+            "verified_roles": 9
+          }
+        },
+        {
+          "cache_counts": [
+            2,
+            4,
+            0,
+            6,
+            18,
+            27648
+          ],
+          "calls": 2,
+          "recipe": "default",
+          "schedule": "hits",
+          "stage": {
+            "attempted_reads": 18,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 27648,
+            "copy_operations": 18,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 27648,
+            "requests": 1,
+            "spawned": 2,
+            "verified_bytes": 27648,
+            "verified_components": 18,
+            "verified_roles": 6
+          }
+        },
+        {
+          "cache_counts": [
+            1,
+            1,
+            0,
+            2,
+            9,
+            13824
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "single",
+          "stage": {
+            "attempted_reads": 9,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 13824,
+            "copy_operations": 9,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 13824,
+            "requests": 1,
+            "spawned": 1,
+            "verified_bytes": 13824,
+            "verified_components": 9,
+            "verified_roles": 3
+          }
+        },
+        {
+          "cache_counts": [
+            33,
+            31,
+            31,
+            64,
+            297,
+            456192
+          ],
+          "calls": 1,
+          "recipe": "default",
+          "schedule": "long",
+          "stage": {
+            "attempted_reads": 297,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 32,
+            "copied_bytes": 456192,
+            "copy_operations": 297,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 456192,
+            "requests": 32,
+            "spawned": 1,
+            "verified_bytes": 456192,
+            "verified_components": 297,
+            "verified_roles": 99
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            2,
+            2,
+            6,
+            36,
+            88064
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "six",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 88064,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 88064,
+            "requests": 3,
+            "spawned": 1,
+            "verified_bytes": 88064,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            4,
+            5,
+            2,
+            9,
+            36,
+            88064
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "m2b",
+          "stage": {
+            "attempted_reads": 36,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 3,
+            "copied_bytes": 88064,
+            "copy_operations": 36,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 88064,
+            "requests": 3,
+            "spawned": 2,
+            "verified_bytes": 88064,
+            "verified_components": 36,
+            "verified_roles": 12
+          }
+        },
+        {
+          "cache_counts": [
+            3,
+            1,
+            1,
+            4,
+            27,
+            66048
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "protected",
+          "stage": {
+            "attempted_reads": 27,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 2,
+            "copied_bytes": 66048,
+            "copy_operations": 27,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 66048,
+            "requests": 2,
+            "spawned": 2,
+            "verified_bytes": 66048,
+            "verified_components": 27,
+            "verified_roles": 9
+          }
+        },
+        {
+          "cache_counts": [
+            2,
+            4,
+            0,
+            6,
+            18,
+            44032
+          ],
+          "calls": 2,
+          "recipe": "mixed",
+          "schedule": "hits",
+          "stage": {
+            "attempted_reads": 18,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 44032,
+            "copy_operations": 18,
+            "discarded_issued_bytes": 0,
+            "joined": 2,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 44032,
+            "requests": 1,
+            "spawned": 2,
+            "verified_bytes": 44032,
+            "verified_components": 18,
+            "verified_roles": 6
+          }
+        },
+        {
+          "cache_counts": [
+            1,
+            1,
+            0,
+            2,
+            9,
+            22016
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "single",
+          "stage": {
+            "attempted_reads": 9,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 1,
+            "copied_bytes": 22016,
+            "copy_operations": 9,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 22016,
+            "requests": 1,
+            "spawned": 1,
+            "verified_bytes": 22016,
+            "verified_components": 9,
+            "verified_roles": 3
+          }
+        },
+        {
+          "cache_counts": [
+            33,
+            31,
+            31,
+            64,
+            297,
+            726528
+          ],
+          "calls": 1,
+          "recipe": "mixed",
+          "schedule": "long",
+          "stage": {
+            "attempted_reads": 297,
+            "banks_home": true,
+            "cancelled_jobs": 0,
+            "completion_high_water": 1,
+            "completions": 32,
+            "copied_bytes": 726528,
+            "copy_operations": 297,
+            "discarded_issued_bytes": 0,
+            "joined": 1,
+            "outstanding": false,
+            "request_high_water": 1,
+            "requested_bytes": 726528,
+            "requests": 32,
+            "spawned": 1,
+            "verified_bytes": 726528,
+            "verified_components": 297,
+            "verified_roles": 99
+          }
+        }
+      ],
+      "original_corpus": {
+        "bytes": 1738120,
+        "git_blob": "657276311b9b2139826222180c5e09b060bab2c1",
+        "sha256": "eb738af8f8b8f65f65e8656de428dead2b9ead3dc985b2a7cb11b3f66e49d3b8"
+      },
+      "passed": 57,
+      "per_recipe_ledger": {
+        "default": {
+          "cache_bytes": 1147561,
+          "channels_and_fixed": 84608,
+          "component_capacities": [
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ]
+          ],
+          "control_bytes": 2097152,
+          "control_required": 1351360,
+          "events_bytes": 147456,
+          "live_report_limit": 1048576,
+          "metadata_bytes": 5801,
+          "names_and_plans": 70720,
+          "stack_bytes": 2097152,
+          "staging_bytes": 27648,
+          "total": 5369513,
+          "tuple_bytes": 13824
+        },
+        "mixed": {
+          "cache_bytes": 1164457,
+          "channels_and_fixed": 84608,
+          "component_capacities": [
+            [
+              8192,
+              256,
+              256
+            ],
+            [
+              4096,
+              256,
+              256
+            ],
+            [
+              8192,
+              256,
+              256
+            ]
+          ],
+          "control_bytes": 2097152,
+          "control_required": 1351360,
+          "events_bytes": 147456,
+          "live_report_limit": 1048576,
+          "metadata_bytes": 6313,
+          "names_and_plans": 70720,
+          "stack_bytes": 2097152,
+          "staging_bytes": 44032,
+          "total": 5402793,
+          "tuple_bytes": 22016
+        }
+      },
+      "per_staged_mode_exhaustive_totals": {
+        "attempted_reads": 9828,
+        "completions": 876,
+        "copied_bytes": 19568640,
+        "copy_operations": 9828,
+        "joined": 1092,
+        "requested_bytes": 19568640,
+        "requests": 876,
+        "spawned": 1092,
+        "verified_roles": 3276
+      },
+      "regression_reference_digest": "dbece58b3c20a3f9208a696959ae3b5e03ed7f1d8c241c62710a47d24c9ce0ff",
+      "test_artifacts": {
+        "admission_screen": "404848aa262fb41e042796b84da39e1774a6bedda74e9c6358c8c7de8fcfa42c",
+        "copied_residency": "755ffa415157985f79a94d5d1307d3ac0967e4e0fbec91be57c14a6d44221079",
+        "mlx_expert_ranges": "1d1fdac239953aa450d5ea68411ae9c57c3558b917c40eab2846355440f32c24",
+        "ranges": "9b83f019cd76bbaa6184b8d21c007338b0a071fd960e8c59020d7cd31b2e572c",
+        "read_into": "39819f5292de3bf62ad05b97065ae08cb2d927c56a84c4d85511ec8480251181",
+        "residency_coordinator": "d2af7e2f98968cec375f13cc19b4941da8818555d4d1db41620975234362af48",
+        "staged_residency": "33a58f1a86dc4606d500ed214ff5e36c5248fa205d5b4d71f0f251f7007727d3",
+        "staged_residency_coordinator": "ee0fa160d5735d8582a85c9ee8c0c6eb3958ee20850e38eeacd37f00f4e500b9"
+      },
+      "tests": {
+        "admission_screen": 4,
+        "copied_residency": 10,
+        "mlx_expert_ranges": 15,
+        "ranges": 17,
+        "read_into": 3,
+        "residency_coordinator": 3,
+        "staged_residency": 2,
+        "staged_residency_coordinator": 3
+      }
+    }
+  },
+  "schema": "pulsarmlx.m4b-host-staging/1",
+  "scope": "CPU-only synthetic ranges on MacBook Pro M2 Max. Equal staged budgets. Direct uses its inherited smaller charge. No elapsed-time comparison, native run, workload replay or shipping change. Counts in named rows are fills/hits/evictions/consumptions/read calls/requested bytes.",
+  "stack_is_requested": true,
+  "timing_claim": false,
+  "tree": "894df47bad3814f93546ff3519792c3f949a7561"
+}

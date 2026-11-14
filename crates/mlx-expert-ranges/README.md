@@ -30,3 +30,9 @@ The ledger excludes allocator rounding, hidden spare capacity of inherited conta
 ## Attachment boundary
 
 The host integration fixture runs the real step coordinator over generated activations and computes an owned digest from every component of every demand occurrence. Independent fixture bytes and the allocating reader verify storage and order. A later copied native importer still requires an owner-thread MLP consumer, copied tensor lifetimes through evaluation/completion, cancellation and native numerical qualification. The current shipping path uses copying. The completed Studio005 M1b result is inconclusive and its timing claim is spent.
+
+## Opt-in host staging
+
+Rust022 adds `residency::overlap::StagedResidency`. Construct it from an admitted `CopiedResidency`, a scheduling mode and an available byte budget. The wrapper owns two separate raw tuple banks and uses the original cache’s two resident slots. Both staged modes read the same admitted component ranges into the banks and explicitly copy verified bytes into the resident cache. Direct `CopiedResidency::consume` remains the default.
+
+`Mode::Overlap` can submit the immediately following wave of the current call before the owner consumes the present wave. `Mode::Serial` submits after the current leases have retired. Each admitted call uses one joined I/O thread. Consumers run on the caller and may borrow non-Send state. Use `working_bytes()`, `ledger()`, `activity()` and `events()` to inspect the standing charge, real read/copy effects and latest admitted call’s bounded journal. [Host staging mechanism, controls and limits](../../docs/research/f020/m4b-host-staging/README.md)
