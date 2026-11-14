@@ -1,6 +1,8 @@
 //! Exclusive, role-scoped fills from the descriptors retained by a sealed plan.
 //! Expected hashes are supplied by the caller's independently frozen content
 //! authority. Metadata identity alone is not payload provenance.
+pub mod aligned_transport;
+
 use super::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
