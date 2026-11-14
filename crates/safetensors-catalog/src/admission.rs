@@ -26,6 +26,8 @@
 //! point of view they are the same fact: this name did not yield an admitted
 //! file inside the admitted root.
 
+pub mod read_policy;
+
 use std::ffi::CString;
 use std::fs::File;
 use std::os::unix::ffi::OsStrExt;

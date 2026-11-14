@@ -2,7 +2,9 @@
 use super::*;
 use std::io;
 
+mod core;
 mod geometry;
+pub mod read_policy;
 use geometry::{alignment, backing, geometry, reservation};
 
 pub const MAX_BACKING: u64 = MAX_SELECTED_BYTES + 3 * (16384 - 1);
@@ -281,17 +283,57 @@ impl<'p, 'src> WindowPlan<'p, 'src> {
         budget: u64,
         mut read: impl FnMut(&HeldFile, &mut [u8], u64) -> io::Result<()>,
     ) -> std::result::Result<FilledTransportPlane<'dst>, TransportFailure> {
-        let mut ledger = self.layout(scratch);
-        // PlaneDestination retains its three caller-supplied hash Strings on success.
-        let expected_bytes = dst
-            .expected
-            .iter()
-            .try_fold(0u64, |v, s| v.checked_add(s.capacity() as u64));
-        let required = expected_bytes.and_then(|n| ledger.control_required.checked_add(n));
-        if let Some(n) = required {
-            ledger.control_required = n;
+        struct Buffered<'a, 'p, 'src, F> {
+            plan: &'a WindowPlan<'p, 'src>,
+            mode: Mode,
+            read: F,
         }
-        let mut report = TransportReceipt {
+        impl<F: FnMut(&HeldFile, &mut [u8], u64) -> io::Result<()>> core::Reader
+            for Buffered<'_, '_, '_, F>
+        {
+            fn preflight(&self, ledger: Ledger, p: core::Progress) -> Result<()> {
+                let r = self.plan.buffered_receipt(self.mode, ledger, p, false);
+                if core::encoded_size(&r)? + 32 * 20 + 8 * 4 > RECORD_LIMIT {
+                    return Err(limit("transport encoding limit"));
+                }
+                Ok(())
+            }
+            fn transfer(
+                &mut self,
+                _: usize,
+                h: &HeldFile,
+                s: core::Span,
+                b: &mut [u8],
+            ) -> io::Result<()> {
+                (self.read)(h, b, s.begin)
+            }
+        }
+        let (result, ledger, p) = core::execute(
+            self,
+            mode == Mode::BufferedExact,
+            scratch,
+            dst,
+            budget,
+            Buffered {
+                plan: self,
+                mode,
+                read: &mut read,
+            },
+        );
+        let receipt = self.buffered_receipt(mode, ledger, p, result.is_ok());
+        match result {
+            Ok(filled) => Ok(FilledTransportPlane { filled, receipt }),
+            Err(cause) => Err(TransportFailure { cause, receipt }),
+        }
+    }
+    fn buffered_receipt(
+        &self,
+        mode: Mode,
+        ledger: Ledger,
+        p: core::Progress,
+        published: bool,
+    ) -> TransportReceipt {
+        TransportReceipt {
             schema: "pulsarmlx.buffered-window-transfer/1",
             mode,
             role: self.role,
@@ -301,110 +343,25 @@ impl<'p, 'src> WindowPlan<'p, 'src> {
             alignment: self.a,
             windows: self.windows,
             transfers: self.windows.map(|w| w.transfer(mode)),
-            effects: [Effect::default(); 3],
-            logical_attempts: 0,
-            logical_requested: 0,
-            attempted: 0,
-            requested: 0,
-            completed: 0,
-            logical_delivered: 0,
-            copies: 0,
-            copied: 0,
-            candidate_overread: ledger.candidate_bytes - ledger.logical_bytes,
-            attempted_overread: 0,
-            completed_overread: 0,
-            edge_attempts: 0,
+            effects: p.effects,
+            logical_attempts: p.logical_attempts,
+            logical_requested: p.logical_requested,
+            attempted: p.attempted,
+            requested: p.requested,
+            completed: p.completed,
+            logical_delivered: p.logical_delivered,
+            copies: p.copies,
+            copied: p.copied,
+            candidate_overread: p.candidate_overread,
+            attempted_overread: p.attempted_overread,
+            completed_overread: p.completed_overread,
+            edge_attempts: p.edge_attempts,
             coalescing_overread: 0,
             physical_bytes: None,
             syscalls: None,
             cache_observed: None,
-            published: false,
+            published,
             ledger,
-        };
-        let exec = (|| {
-            // All changing numeric fields are u64 (at most 20 decimal digits).
-            // Measure this exact schema before I/O, reserving 20 extra bytes per
-            // mutable integer and 4 per mutable boolean/null tag. Arrays are fixed.
-            struct Count(usize);
-            impl io::Write for Count {
-                fn write(&mut self, b: &[u8]) -> io::Result<usize> {
-                    self.0 += b.len();
-                    Ok(b.len())
-                }
-                fn flush(&mut self) -> io::Result<()> {
-                    Ok(())
-                }
-            }
-            let mut encoded = Count(0);
-            serde_json::to_writer(&mut encoded, &report).map_err(|e| refusal("WINDOW", e))?;
-            if encoded.0 + 32 * 20 + 8 * 4 > RECORD_LIMIT {
-                return Err(limit("transport encoding limit"));
-            }
-            reservation(
-                ledger.backing_bytes,
-                required.ok_or_else(|| limit("control overflow"))?,
-                budget,
-            )
-            .map_err(limit)?;
-            if ledger.usable_bytes < self.largest {
-                return Err(limit("insufficient aligned scratch"));
-            }
-            let head = ledger.head_slack as usize;
-            let active = &mut scratch.storage[head..head + self.largest as usize];
-            self.plan.fill_with(self.role, dst, |held, bytes, offset| {
-                let i = report.logical_attempts as usize;
-                // fill_with increments its two source counters immediately before every
-                // invocation. These call-local deltas exclude other users of the same source.
-                report.logical_attempts += 1;
-                report.logical_requested += bytes.len() as u64;
-                let transfer = report.transfers.get(i).ok_or(io::ErrorKind::InvalidInput)?;
-                if !std::ptr::eq(self.held[i], held)
-                    || geometry(self.a, held.stamp.len, offset, bytes.len() as u64, NATIVE).ok()
-                        != Some(self.windows[i])
-                {
-                    return Err(io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        "sealed component mismatch",
-                    ));
-                }
-                let aligned = transfer.kind == Kind::Window;
-                let effect = &mut report.effects[i];
-                let overread = transfer.bytes - transfer.logical_bytes;
-                effect.attempted = true;
-                report.attempted += 1;
-                report.requested += transfer.bytes;
-                report.attempted_overread += overread;
-                report.edge_attempts += u64::from(transfer.kind == Kind::Edge);
-                if aligned {
-                    let window = &mut active[..transfer.bytes as usize];
-                    read(held, window, transfer.begin)?;
-                    let start = transfer.delta as usize;
-                    bytes.copy_from_slice(&window[start..start + bytes.len()]);
-                    report.copies += 1;
-                    report.copied += transfer.logical_bytes;
-                    effect.copied = transfer.logical_bytes;
-                } else {
-                    read(held, bytes, transfer.begin)?;
-                }
-                effect.returned_bytes = Some(transfer.bytes);
-                report.completed += transfer.bytes;
-                report.completed_overread += overread;
-                report.logical_delivered += transfer.logical_bytes;
-                Ok(())
-            })
-        })();
-        match exec {
-            Ok(filled) => {
-                report.published = true;
-                Ok(FilledTransportPlane {
-                    filled,
-                    receipt: report,
-                })
-            }
-            Err(cause) => Err(TransportFailure {
-                cause,
-                receipt: report,
-            }),
         }
     }
 }
