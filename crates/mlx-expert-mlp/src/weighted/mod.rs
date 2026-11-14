@@ -1,5 +1,6 @@
 //! Bounded, fixed-route composition over the existing synchronous occurrence pipeline.
 mod book;
+pub mod staged;
 mod sum;
 use crate::{
     resident_fixture::*,

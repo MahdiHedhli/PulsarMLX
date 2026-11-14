@@ -11,6 +11,7 @@ build = "build.rs"
 default = []
 resident-native = []
 weighted-native = []
+staged-weighted-native = []
 
 [dependencies]
 mlx-expert-ranges = { path = "../mlx-expert-ranges" }
@@ -37,3 +38,9 @@ test = false
 name = "qualify-weighted-mlp"
 path = "src/bin/qualify-weighted-mlp.rs"
 required-features = ["weighted-native"]
+
+[[bin]]
+name = "qualify-staged-weighted-mlp"
+path = "src/bin/qualify-staged-weighted-mlp.rs"
+required-features = ["staged-weighted-native"]
+test = false
