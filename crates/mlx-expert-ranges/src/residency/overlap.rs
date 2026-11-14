@@ -1,5 +1,7 @@
 //! Opt-in serial or one-wave-ahead transport over the actual two-slot cache.
+pub mod policy;
 use super::*;
+use policy::{FixedReader, Policy, PolicyLedger, RoleRecord};
 use serde::Serialize;
 use std::{
     sync::{
@@ -120,6 +122,7 @@ fn execute_job(
     mut job: Job,
     cancelled: &impl Fn() -> bool,
     h: &Hook,
+    mut fixed: Option<&mut FixedReader>,
 ) -> Completion {
     let (mut roles, mut bytes) = (0, 0);
     let observed_cancel = std::cell::Cell::new(false);
@@ -142,17 +145,17 @@ fn execute_job(
                 &stamp.hashes,
             )?;
             plan.validate_source()?;
-            fill_parts(
-                &plan,
-                &stamp.hashes,
-                &mut job.banks[stamp.bank as usize],
-                &mut || poll(),
-                |role| {
-                    roles += 1;
-                    bytes += stamp.lengths[role.index()].iter().sum::<usize>() as u64;
-                    observe(h, stamp.wave, stamp.bank, Point::Role(role.index()));
-                },
-            )?;
+            let parts = &mut job.banks[stamp.bank as usize];
+            let verified = |role: ExpertRole| {
+                roles += 1;
+                bytes += stamp.lengths[role.index()].iter().sum::<usize>() as u64;
+                observe(h, stamp.wave, stamp.bank, Point::Role(role.index()));
+            };
+            if let Some(reader) = fixed.as_deref_mut() {
+                reader.fill(&plan, &stamp, parts, &mut || poll(), verified)?;
+            } else {
+                fill_parts(&plan, &stamp.hashes, parts, &mut || poll(), verified)?;
+            }
             observe(h, stamp.wave, stamp.bank, Point::Verified);
         }
         Ok(())
@@ -196,6 +199,8 @@ pub struct StagedResidency {
     events: Vec<Event>,
     reader: Option<ThreadId>,
     hook: Hook,
+    fixed: Option<FixedReader>,
+    policy_ledger: Option<PolicyLedger>,
 }
 impl StagedResidency {
     /// Reject the complete standing charge before allocating either staging bank.
@@ -271,6 +276,8 @@ impl StagedResidency {
             events,
             reader: None,
             hook: Default::default(),
+            fixed: None,
+            policy_ledger: None,
             activity: Activity {
                 banks_home: true,
                 ..Default::default()
@@ -284,10 +291,45 @@ impl StagedResidency {
         self.cache.demand(e)
     }
     pub fn working_bytes(&self) -> u64 {
-        self.ledger.total
+        // The checked aggregate was admitted before allocating policy storage.
+        self.ledger.total + self.policy_ledger.map_or(0, |ledger| ledger.total)
     }
     pub fn ledger(&self) -> PipelineLedger {
         self.ledger
+    }
+    pub fn policy_ledger(&self) -> Option<PolicyLedger> {
+        self.policy_ledger
+    }
+    /// Evidence from the latest attempted call, including errors and drained speculation.
+    pub fn policy_records(&self) -> &[RoleRecord] {
+        self.fixed.as_ref().map_or(&[], |reader| reader.records())
+    }
+    /// Verified roles and their logical bytes from the latest call that never became cache fills.
+    pub fn policy_verified_discards(&self) -> (u64, u64) {
+        self.fixed
+            .as_ref()
+            .map_or((0, 0), |reader| reader.verified_discards)
+    }
+    pub fn with_policy(
+        cache: CopiedResidency,
+        mode: Mode,
+        policy: Policy,
+        available: u64,
+    ) -> Result<Self> {
+        Self::with_policy_capacity(cache, mode, policy, available, MAX_OCCURRENCES)
+    }
+    pub fn with_policy_capacity(
+        cache: CopiedResidency,
+        mode: Mode,
+        policy: Policy,
+        available: u64,
+        max_occurrences: usize,
+    ) -> Result<Self> {
+        let (fixed, ledger) = FixedReader::new(&cache, policy, available, max_occurrences)?;
+        let mut staged = Self::new(cache, mode, available - ledger.total)?;
+        staged.fixed = Some(fixed);
+        staged.policy_ledger = Some(ledger);
+        Ok(staged)
     }
     pub fn activity(&self) -> Activity {
         self.activity
@@ -306,6 +348,7 @@ impl StagedResidency {
         if self.expected.is_some()
             || self.banks.is_none()
             || self.activity.joined != self.activity.spawned
+            || self.fixed.is_some() != self.policy_ledger.is_some()
         {
             self.quarantine();
             return Err(refusal("QUARANTINE", "unresolved reader or banks"));
@@ -314,6 +357,9 @@ impl StagedResidency {
     }
     fn preflight(&self, demand: &[Demand]) -> Result<()> {
         self.cache.validate_demand(demand)?;
+        if let Some(reader) = &self.fixed {
+            reader.preflight(demand.len(), self.ledger.tuple_bytes)?;
+        }
         if self.expected.is_some() || self.banks.is_none() {
             return Err(stage_error("outstanding staging ownership"));
         }
@@ -604,10 +650,49 @@ impl StagedResidency {
         &mut self,
         demand: &[Demand],
         cancelled: impl Fn() -> bool + Sync,
-        mut consumer: impl FnMut(TupleView<'_>) -> Result<()>,
+        consumer: impl FnMut(TupleView<'_>) -> Result<()>,
     ) -> StageResult {
+        if let Some(reader) = &mut self.fixed {
+            reader.clear();
+        }
         self.preflight(demand)?;
         check_cancel(&mut || cancelled())?;
+        let prior = (
+            self.activity.verified_roles,
+            self.activity.verified_bytes,
+            self.cache.stats().fills,
+        );
+        let mut fixed = self.fixed.take();
+        let outcome = catch_unwind(AssertUnwindSafe(|| {
+            self.consume_scoped(demand, cancelled, consumer, fixed.as_mut())
+        }));
+        // A scoped worker cannot outlive its exclusive borrow, even if spawn or join failed.
+        if let Some(reader) = &mut fixed {
+            // A copy can precede a refused publication. Only a completed cache fill
+            // accounts for three installed, previously verified roles of this tuple class.
+            let fills = self.cache.stats().fills - prior.2;
+            reader.verified_discards = (
+                self.activity.verified_roles - prior.0 - 3 * fills,
+                self.activity.verified_bytes - prior.1 - self.ledger.tuple_bytes * fills,
+            );
+        }
+        self.fixed = fixed;
+        match outcome {
+            Ok(Ok(())) => self.finish().map_err(Into::into),
+            Ok(Err(failure)) => Err(failure),
+            Err(panic) => {
+                self.quarantine();
+                resume_unwind(panic)
+            }
+        }
+    }
+    fn consume_scoped(
+        &mut self,
+        demand: &[Demand],
+        cancelled: impl Fn() -> bool + Sync,
+        mut consumer: impl FnMut(TupleView<'_>) -> Result<()>,
+        mut fixed: Option<&mut FixedReader>,
+    ) -> StageResult {
         let source = same_source(&self.cache.source);
         let class = self.cache.class.clone();
         #[allow(clippy::clone_on_copy)]
@@ -637,6 +722,7 @@ impl StagedResidency {
                             job,
                             &|| stop_ref.load(Ordering::Acquire) || external(),
                             &hook,
+                            fixed.as_deref_mut(),
                         );
                         if returns.send(done).is_err() {
                             break;
@@ -684,7 +770,7 @@ impl StagedResidency {
                 }
                 Ok(Ok(())) => match cleanup {
                     Some(e) => Err(e.into()),
-                    None => self.finish().map_err(Into::into),
+                    None => Ok(()),
                 },
             }
         })

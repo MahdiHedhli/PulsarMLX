@@ -1,0 +1,60 @@
+{
+  "schema": "staged-policy-host-matrix/1",
+  "base_tree": "4c86c68e7bdaca8fc1f5dea8d3e4739d27496f2a",
+  "profiles": ["default", "mixed"],
+  "modes": ["Serial", "Overlap"],
+  "fixed_policies": ["BufferedRequested", "NoCacheRequested"],
+  "builds": ["debug", "release"],
+  "fixed_arms_per_build": 8,
+  "exact_arms_per_build": 4,
+  "fixture_sha256": {
+    "fixtures/weighted-expert-mlp/routes.json": "e9bfc80c19a69098c0bd42f8a4c88443b100aa88bed026ea34738fb8f0caaab8",
+    "fixtures/weighted-expert-mlp/expected.json": "5b1c1e24d24f5ab0e2627b5a3de651715f83784752eaa71cf634df7ee15ea3ef",
+    "fixtures/resident-expert-mlp/manifest.json": "23bad0b4c40086dfec75eda1273a7af999c3cca98027f17aed0d4a61690507d8",
+    "fixtures/resident-expert-mlp/d128-h64-default/model.safetensors": "86c25ac2d5cdb69a3ef8381b09f6d9002d398f1d28f9845ce835c0bdabf79c00",
+    "fixtures/resident-expert-mlp/d128-h64-mixed/model.safetensors": "fbdf919b356b87def22abcffee0bf5446bd3a1ee569bbb402fc47a6e6af3d50f",
+    "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e0-default.f32": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c",
+    "fixtures/expert-mlp-composition/inputs/mlp-d128-h64-m1-e0-mixed.f32": "3c563f14ae18c17c9365324c2fd265ee96251a3448d5ae43e0fee1474cd5233c"
+  },
+  "expert_weight_bits": [
+    [[0,1065353216]],
+    [[0,1061158912],[1,1048576000]],
+    [[0,1056964608],[1,1048576000],[2,1048576000]],
+    [[0,1048576000],[1,1056964608],[0,1048576000]],
+    [[0,1056964608],[2,0],[1,1056964608]]
+  ],
+  "miss_ticket_fields": ["wave", "bank", "generation", "expert"],
+  "miss_tickets": [[[0,0,1,0]], [[0,0,2,1]], [[1,0,3,2]], [[0,0,4,0]], [[0,0,5,2],[1,0,6,1]]],
+  "ticket_phases": ["submit", "returned", "validated", "installed"],
+  "resident_fields": ["expert", "generation", "recency"],
+  "residents": [[[0,1,1],null], [[0,1,2],[1,1,3]], [[2,2,6],[1,1,5]], [[0,3,9],[1,1,8]], [[1,4,12],[2,2,11]]],
+  "cumulative": {
+    "occurrences": [1,3,6,9,12], "fills": [1,2,3,4,6], "hits": [0,1,3,5,6], "evictions": [0,0,1,2,4],
+    "logical_attempts": [9,18,27,36,54], "stage_install_copies": [9,18,27,36,54],
+    "fresh_opens": [3,6,9,12,18], "setters": [3,6,9,12,18], "released_descriptors": [3,6,9,12,18],
+    "jobs": [1,2,3,4,6], "joined_readers": [1,2,3,4,5], "input_reads": [1,2,3,4,5],
+    "driver_projections": [3,9,18,27,36], "driver_imports": [12,36,72,108,144], "driver_activations": [1,3,6,9,12],
+    "driver_retirements": [1,3,6,9,12], "peak_above_standing": [1028,1544,1548,1552,1556]
+  },
+  "cumulative_byte_row": ["logical_bytes", "window_plus_edge_bytes", "overread_bytes", "edge_attempts", "bounce_operations", "bounce_bytes"],
+  "cumulative_by_page": {
+    "4096": {
+      "default": [[13824,53248,39424,0,9,13824],[27648,102400,74752,0,18,27648],[41472,147456,105984,1,26,37376],[55296,200704,145408,1,35,51200],[82944,294912,211968,2,52,74752]],
+      "mixed": [[22016,61440,39424,0,9,22016],[44032,118784,74752,0,18,44032],[66048,172032,105984,1,26,61952],[88064,233472,145408,1,35,83968],[132096,344064,211968,2,52,123904]]
+    },
+    "16384": {
+      "default": [[13824,151552,137728,1,8,9728],[27648,286720,259072,2,16,19456],[41472,421888,380416,3,24,29184],[55296,573440,518144,4,32,38912],[82944,843776,760832,6,48,58368]],
+      "mixed": [[22016,163840,141824,0,9,22016],[44032,327680,283648,0,18,44032],[66048,479232,413184,1,26,61952],[88064,643072,555008,1,35,83968],[132096,958464,826368,2,52,123904]]
+    }
+  },
+  "workload_bounds": {"positions":5,"occurrences":12,"resident_slots":2,"stage_banks":2,"reader_threads_per_call":1,"outstanding_jobs":1,"max_distinct_descriptors_per_role":3},
+  "inherited_transport_bounds": {"base_control_bytes":65536,"policy_control_bytes":65536,"max_role_record_bytes":32768,"max_additional_transport_bytes":33734653},
+  "numerical": "All 128 binary32 lane words, SHA-256 and token 0 at each position. Independently round each multiplication and ordered addition. Check every ordered occurrence, including repeated A and positive-zero C, after retirement.",
+  "controls": {
+    "identity": ["matched expected witness on both policies", "stale admitted witness with matching current samples", "mutation before strict construction", "mutation during setter with accepted setter preserved", "retained source/role/hash mismatch", "crossed or duplicate completion and generation"],
+    "transport": ["setup fails at each descriptor position before payload", "partial component transfer preserves unknown partial bytes", "later hash failure preserves delivered and copied bytes", "EOF fallback through original descriptor", "no failed tuple publication"],
+    "lifecycle": ["cold miss and wrong-source refusal", "warm hit with ordered numerical consumption and zero attributed transport", "eviction and reload", "lost delivery replays identical retained allocation", "cancellation, reader panic, foreground plus cleanup error", "drain, join, recovered ownership or quarantine"],
+    "bounds": ["exact and one-byte-short admission", "larger retained scratch charged on smaller roles", "receipt cap and counter overflow before work", "encoded footprint, fixed history and path-dependent metadata", "equal resources for paired requested settings"],
+    "unknowns": ["physical_bytes", "cache_bypass_observed", "syscalls", "physical_memory", "performance", "kernel_close_observed"]
+  }
+}

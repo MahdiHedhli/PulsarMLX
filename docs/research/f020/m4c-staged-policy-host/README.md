@@ -1,0 +1,17 @@
+# Staged fixed-policy host integration
+
+The original staged constructors use exact reads. The opt-in constructors select one fixed descriptor policy for scheduled misses. A reader opens fresh files through the retained directory, checks the current full-stamp witnesses against the stamp sealed in the window, and requests the selected Darwin setting once per admitted descriptor. A stale witness refuses before that descriptor's setter. Subsequent mutation checks remain necessary because sampling file metadata and setting the policy are separate operations.
+
+Each role uses its filled-plane capability to validate the admitted tuple before the owner installs bytes. Whole-component EOF fallbacks use the original buffered descriptor. Every interior transfer uses reader-exclusive aligned scratch. The scoped reader retires the role's fresh files before proceeding and returns scratch after join. The owner runs each occurrence, including a cache hit and a zero-weight occurrence. The coordinator retains the committed output allocation across delivery failure and replay.
+
+## Resource and evidence bounds
+
+The reader sizes one backing allocation from the largest window across the admitted expert population. Its transport charge includes that entire allocation and two 65,536-byte controls, within 33,734,653 bytes. A smaller role using the backing retains the same charge. Each transfer receipt has a 32,768-byte encoded limit.
+
+Typed evidence for the latest call is preallocated for three roles per allowed occurrence. The generic limit is 64 occurrences and the weighted limit is three. Each inline role record must fit 2,048 bytes. Range bookkeeping includes the fixed state, transient role moves and an encoding frame within 8,192 bytes. Across all supported populations this bounds range receipt storage at 401,408 bytes. Each record keeps its ticket, role, setup or transfer outcome and retirement observation. Open attempts and successes refer to the retained directory admission call and the returned fresh file. Setter records identify which descriptors reached configuration. A refusal within the directory helper does not reveal internal open syscall counts.
+
+The weighted journal retains five arrays of at most nine role records. Each array has 332,800 bytes, allowing 32,768 bytes for the original transfer receipt, 4,096 bytes for its wrapper and 1,024 bytes per array for framing. Encoding writes directly into the final preallocated slot. The caller's exported copies have a separate lifetime. The two receipt layers together are bounded at 2,073,600 bytes. The ledger charges the actual checked buffer capacities and the scoped working allowances once. These are logical reservations.
+
+The matrix fixes the old four exact arms and the eight combinations of recipe, scheduler and requested policy before qualification. Original logical requests and stage-install copies retain their prior counter meanings. Per-role receipts separate requested windows, known completed spans, overread, bounce copies and original-descriptor EOF reads. An exact-at error can leave the returned byte count unknown. The latest-call verified discard count subtracts successfully published tuples from roles verified by the reader. Ticket identities attribute an overlapping miss to its own job. Destruction records release of Rust ownership. Kernel close results, physical traffic, bypass, physical memory and performance remain unmeasured.
+
+[Finite matrix](matrix.json)

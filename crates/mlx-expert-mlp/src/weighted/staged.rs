@@ -1,23 +1,69 @@
 //! Fixed weighted execution on the bounded, joined raw-byte pipeline.
 use super::*;
-pub use mlx_expert_ranges::residency::overlap::Mode;
 use mlx_expert_ranges::residency::overlap::StagedResidency;
+pub use mlx_expert_ranges::residency::overlap::{
+    policy::{Policy, RoleRecord},
+    Mode,
+};
+use std::io::Write;
 pub const TRANSPORT: u64 = 1 << 20;
 pub const TRANSPORT_ROW: usize = 128 << 10;
+
+// One admitted weighted plan has at most three occurrences with three roles each.
+const FIXED_OCCURRENCES: usize = 3;
+const FIXED_ROLES: usize = 3 * FIXED_OCCURRENCES;
+const ROLE_RECORD_BYTES: usize = 32_768 + 4_096;
+const POLICY_ROW: usize = FIXED_ROLES * ROLE_RECORD_BYTES + 1_024;
+const WRITER_FRAME: usize = 2_048;
 
 struct Journal {
     slots: [Vec<u8>; MAX_PLANS],
     used: usize,
 }
 impl Journal {
-    fn new() -> Result<Self> {
+    fn new(row_bytes: usize) -> Result<Self> {
         let mut slots = std::array::from_fn(|_| Vec::new());
         for slot in &mut slots {
-            slot.try_reserve_exact(TRANSPORT_ROW)
+            slot.try_reserve_exact(row_bytes)
                 .map_err(|e| e.to_string())?;
-            ensure(slot.capacity() == TRANSPORT_ROW, "transport capacity")?;
+            ensure(slot.capacity() == row_bytes, "transport capacity")?;
         }
         Ok(Self { slots, used: 0 })
+    }
+
+    /// Encode directly into the final charged slot, without constructing a JSON tree.
+    fn capture_policy(&mut self, roles: &[RoleRecord]) -> Result<()> {
+        ensure(roles.len() <= FIXED_ROLES, "fixed role count")?;
+        let slot = self.slots.get_mut(self.used).ok_or("policy journal full")?;
+        slot.resize(POLICY_ROW, 0);
+        let mut writer = Cursor::new(slot.as_mut_slice());
+        let used = (|| -> Result<usize> {
+            writer.write_all(b"[").map_err(|e| e.to_string())?;
+            for (index, role) in roles.iter().enumerate() {
+                if index != 0 {
+                    writer.write_all(b",").map_err(|e| e.to_string())?;
+                }
+                let start = writer.position();
+                serde_json::to_writer(&mut writer, role).map_err(|e| e.to_string())?;
+                ensure(
+                    writer.position() - start <= ROLE_RECORD_BYTES as u64,
+                    "policy role size",
+                )?;
+            }
+            writer.write_all(b"]").map_err(|e| e.to_string())?;
+            Ok(writer.position() as usize)
+        })();
+        match used {
+            Ok(n) => {
+                slot.truncate(n);
+                self.used += 1;
+                Ok(())
+            }
+            Err(e) => {
+                slot.clear();
+                Err(e)
+            }
+        }
     }
 
     fn capture(
@@ -51,6 +97,22 @@ impl Journal {
         Ok(())
     }
 }
+fn capture_joined_policy(
+    journal: Option<&mut Journal>,
+    pending: &mut bool,
+    roles: &[RoleRecord],
+) -> Result<()> {
+    // A panic may reach the outer cleanup before consume starts or after capture.
+    // Attribute the joined observations exactly once to the dispatch that owns them.
+    if !std::mem::take(pending) {
+        return Ok(());
+    }
+    if let Some(journal) = journal {
+        journal.capture_policy(roles)?;
+    }
+    Ok(())
+}
+
 fn working_charge(pipeline: u64) -> Result<u64> {
     pipeline
         .checked_add(HOST_BYTES + TRANSPORT + NATIVE)
@@ -63,6 +125,8 @@ pub struct StagedWeightedExecutor<D: Driver> {
     cache: StagedResidency,
     mode: Mode,
     transport: Journal,
+    policy_journal: Option<Box<Journal>>,
+    policy_capture_pending: bool,
     driver: D,
     total: u64,
     ledger: Value,
@@ -91,13 +155,28 @@ impl<D: Driver> StagedWeightedExecutor<D> {
             .iter()
             .map(Vec::as_slice)
     }
+    /// Reader evidence for the latest attempt. Replay retains the same records.
+    pub fn policy_records(&self) -> &[RoleRecord] {
+        self.cache.policy_records()
+    }
+    /// Joined role observations retained once per dispatched fixed-policy plan.
+    pub fn policy_journal(&self) -> impl Iterator<Item = &[u8]> {
+        self.policy_journal
+            .iter()
+            .flat_map(|j| j.slots[..j.used].iter().map(Vec::as_slice))
+    }
     pub fn snapshot(&self) -> Value {
         let cache = self.cache.cache();
         let s = cache.stats();
-        json!({"cache_reads":cache.read_calls(),"transport_records":self.transport.used,"activity":self.cache.activity(),"mode":self.mode,
+        let mut snapshot = json!({"cache_reads":cache.read_calls(),"transport_records":self.transport.used,"activity":self.cache.activity(),"mode":self.mode,
         "fills":s.fills,"hits":s.hits,"evictions":s.evictions,"consumed":s.consumed,"occupied":cache.resident_bytes(),
         "quarantined":self.cache.cache().is_quarantined(),"records":self.records.len(),"dispatches":self.dispatches,"weighted":self.weighted,
-        "working_bytes":self.total,"pending":self.pending.is_some(),"output":self.output.is_some()})
+        "working_bytes":self.total,"pending":self.pending.is_some(),"output":self.output.is_some()});
+        if self.policy_journal.is_some() {
+            let (roles, bytes) = self.cache.policy_verified_discards();
+            snapshot["policy_verified_discards"] = json!({"roles": roles, "bytes": bytes});
+        }
+        snapshot
     }
     fn compute(
         &mut self,
@@ -194,6 +273,7 @@ impl<D: Driver> StagedWeightedExecutor<D> {
                 }
             }
         };
+        self.policy_capture_pending = self.policy_journal.is_some();
         let result = self
             .cache
             .consume(
@@ -230,6 +310,17 @@ impl<D: Driver> StagedWeightedExecutor<D> {
             self.cleanup = Some(error);
         }
 
+        if let Err(error) = capture_joined_policy(
+            self.policy_journal.as_deref_mut(),
+            &mut self.policy_capture_pending,
+            self.cache.policy_records(),
+        ) {
+            self.cache.quarantine();
+            self.cleanup = Some(match self.cleanup.take() {
+                Some(previous) => format!("{previous}; policy journal: {error}"),
+                None => error,
+            });
+        }
         if let Some(error) = release_error {
             self.cleanup = Some(match self.cleanup.take() {
                 Some(previous) => format!("{previous}; cache release: {error}"),
@@ -282,7 +373,15 @@ impl<D: Driver> LayerExecutor for StagedWeightedExecutor<D> {
                     &pending.id,
                 );
             }
-            self.cleanup = Some("callback unwound".into());
+            let journal = capture_joined_policy(
+                self.policy_journal.as_deref_mut(),
+                &mut self.policy_capture_pending,
+                self.cache.policy_records(),
+            );
+            self.cleanup = Some(match journal {
+                Ok(()) => "callback unwound".into(),
+                Err(error) => format!("callback unwound; policy journal: {error}"),
+            });
             Err(err("unwind", "unknown completion"))
         })
     }
@@ -380,6 +479,31 @@ pub fn setup<D: Driver>(
     driver: D,
     capacity: Option<u64>,
 ) -> Result<(StepCoordinator<StagedWeightedExecutor<D>>, InputStore)> {
+    setup_transport(repo, profile, book, mode, None, driver, capacity)
+}
+
+/// Opt into a fixed descriptor policy on scheduled role misses.
+pub fn setup_with_policy<D: Driver>(
+    repo: &Path,
+    profile: &str,
+    book: RouteBook,
+    mode: Mode,
+    policy: Policy,
+    driver: D,
+    capacity: Option<u64>,
+) -> Result<(StepCoordinator<StagedWeightedExecutor<D>>, InputStore)> {
+    setup_transport(repo, profile, book, mode, Some(policy), driver, capacity)
+}
+
+fn setup_transport<D: Driver>(
+    repo: &Path,
+    profile: &str,
+    book: RouteBook,
+    mode: Mode,
+    policy: Option<Policy>,
+    driver: D,
+    capacity: Option<u64>,
+) -> Result<(StepCoordinator<StagedWeightedExecutor<D>>, InputStore)> {
     let population = Population::load(profile)?;
     book.check(&population)?;
     ensure(
@@ -394,9 +518,19 @@ pub fn setup<D: Driver>(
         tensor: book.request(0)?.inputs.remove(0),
         reads: Cell::new(0),
     };
-    let cache = StagedResidency::new(cache, mode, u64::MAX).map_err(|e| e.to_string())?;
+    let cache = match policy {
+        Some(policy) => StagedResidency::with_policy_capacity(
+            cache,
+            mode,
+            policy,
+            capacity.unwrap_or(u64::MAX),
+            FIXED_OCCURRENCES,
+        ),
+        None => StagedResidency::new(cache, mode, u64::MAX),
+    }
+    .map_err(|e| e.to_string())?;
     let l = cache.ledger();
-    let transport = Journal::new()?;
+    let transport = Journal::new(TRANSPORT_ROW)?;
     let retained = transport.slots.iter().map(Vec::capacity).sum::<usize>() + size_of::<Journal>();
     // Live tree: at most twelve events, each with a 32-byte binding expanded to JSON.
     // The writer encodes directly into a retained slot. Reserve separate scratch for
@@ -447,12 +581,36 @@ pub fn setup<D: Driver>(
         records.capacity() == MAX_TERMS && host_bound <= HOST_BYTES,
         "weighted host capacity",
     )?;
-    let total = working_charge(l.total)?;
-    let ledger = json!({"W_cache":l.cache_bytes,"M":l.metadata_bytes,"S":l.tuple_bytes,"H_weighted":HOST_BYTES,"N_native":NATIVE,
+    let (policy_journal, journal_charge) = if policy.is_some() {
+        let journal = Box::new(Journal::new(POLICY_ROW)?);
+        let fixed = size_of::<Journal>()
+            + size_of::<Option<Box<Journal>>>()
+            + size_of::<bool>()
+            + WRITER_FRAME;
+        ensure(fixed <= 8_192, "policy journal bookkeeping")?;
+        let bytes = journal
+            .slots
+            .iter()
+            .try_fold(fixed, |n, slot| n.checked_add(slot.capacity()))
+            .ok_or("policy journal charge overflow")?;
+        (Some(journal), bytes as u64)
+    } else {
+        (None, 0)
+    };
+    let total = working_charge(cache.working_bytes())?
+        .checked_add(journal_charge)
+        .ok_or("working charge overflow")?;
+    let mut ledger = json!({"W_cache":l.cache_bytes,"M":l.metadata_bytes,"S":l.tuple_bytes,"H_weighted":HOST_BYTES,"N_native":NATIVE,
         "pipeline":l,"W_pipeline":l.total,"H_transport":TRANSPORT,"transport_parts":transport_parts,
         "transport_bound":transport_bound,"transport_row_bytes":TRANSPORT_ROW,"transport_slots":MAX_PLANS,
         "prospective_native":native_bound(geo)?,"W_total":total,"host_bound":host_bound,"parts":parts,
         "saved_payload_ceiling":MAX_TERMS*ROW_LIMIT});
+    if let Some(policy_ledger) = cache.policy_ledger() {
+        ledger["policy"] = json!(policy_ledger);
+        ledger["H_policy_journal"] = json!(journal_charge);
+        ledger["policy_journal_slots"] = json!(MAX_PLANS);
+        ledger["policy_journal_slot_bytes"] = json!(POLICY_ROW);
+    }
     let cp = book.checkpoint().clone();
     let exec = StagedWeightedExecutor {
         book,
@@ -461,6 +619,8 @@ pub fn setup<D: Driver>(
         cache,
         mode,
         transport,
+        policy_journal,
+        policy_capture_pending: false,
         driver,
         total,
         ledger,
@@ -471,7 +631,7 @@ pub fn setup<D: Driver>(
         dispatches: 0,
         weighted: 0,
     };
-    let max = capacity.unwrap_or(total + 1556);
+    let max = capacity.unwrap_or(total.checked_add(1556).ok_or("budget overflow")?);
     let budget = MemoryBudget::try_new(max.checked_add(1024).ok_or("budget overflow")?, 1024, max)
         .map_err(|e| e.to_string())?;
     Ok((
