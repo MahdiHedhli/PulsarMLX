@@ -4,7 +4,8 @@
   approved plan (restated in [`../tasks.md`](../tasks.md), section "Binding cross-cutting
   decisions", with decisions B1 to B13) and deviation BRAND-1. The tables are seeded
   from the planning records and a static reading of the pinned donor source; nothing
-  listed here is implemented yet.
+  listed here is implemented yet, except the names that a row or an entry of section 3.11
+  says a package has fixed.
 - **Feature**: `specs/022-console-serving-parity`
 - **Written by**: GOV-06 (this seed). Extended by every package that ports a setting,
   file, storage key, log line or wire identifier (section 4).
@@ -223,6 +224,7 @@ file names written into a user's data directory are not tracked and are not affe
 | Old name | New name | Status | Donor location | Records | Package |
 | --- | --- | --- | --- | --- | --- |
 | `[maya] ` log prefix | `[console] ` | Decided (B2) | for example `serve/server.py:926`, `:6155` | API, ENG, RSP, CNF | API-16 and every package that logs |
+| `[maya] request failed mid-answer: <message>` | `[console] request failed mid-answer: <message>` | Decided (B2, rule 7); fixed by API-01 (commit `c2392605`), which escapes control characters, U+2028 and U+2029 in the message so the line stays one line | `serve/server.py:6155` | API | API-01 |
 | "... only from Maya's own page" | product wording, same status and type | Rename decided, value proposed | `serve/server.py:6336` | API | API-03 |
 | "update Maya (./maya.sh --setup)" in request refusals | product wording | Rename decided, value proposed | `serve/server.py:2496`, `:2518`, `:2529-2530` | API | API-04 |
 | Death notes pointing to the upstream issue tracker and naming quant names | same meaning, no upstream URL or quant name | Rename decided, value proposed | as cited by ENG | ENG | ENG-08 |
@@ -254,6 +256,7 @@ file names written into a user's data directory are not tracked and are not affe
 | Quant labels `Maya-XS`, `Maya-S`, `Maya-M`, `Maya-L` and keys `maya-xs`, `maya-s`, `maya-m`, `maya-l` | neutral labels | Decided that they go (BRAND-1); labels proposed by OPS-03 | as cited by R-ops | OPS, PRM, WEB, R-ops | OPS-03 |
 | Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | API-17 |
 | `Server: BaseHTTP/0.6 Python/3.x` (HTTP response header value) | `pulsar-console/<version>` | Decided (approved deviation P-1, owner decision of 2026-11-14) | Python `http.server` default; no line in `serve/` | API | API-02 |
+| `chatcmpl-`, `msg_`, `call_`, `resp_`, `item_`, `rs_`, `fc_` (id prefixes) | unchanged | Kept: wire identifiers; fixed by API-01 (commit `c2392605`) in `console_pyjson::ids` | `serve/server.py:4936`, `:5251`; `serve/frontend.py:805`; `serve/responses.py:133`, `:354`, `:412-418` | API, PRM, R-api | API-01 |
 
 ### 3.10 Test-harness switches
 
@@ -286,6 +289,13 @@ prose, outside the machine-read tables.
 - **Run-config key `allowed_hosts`.** Decided by the owner on 2026-11-14 (deviation
   SEC-1.1, open item OPEN-04): an optional list of further `Host` names. It is absent by
   default. Read from the run config by API-15; enforced by API-03.
+- **Engine-seam names.** Fixed by ENG-01 (commit `6200f4ac`, 2026-11-14) in
+  `console-core::engine`. The engine kinds, as written in logs and in the refusal line:
+  `scripted`, `line-protocol`, `coordinator-adapter`, `runtime-adapter`
+  (`EngineKind::as_str`). The refusal line starts with `[console] refusing to start: `,
+  following rule 7. The failure kinds, as written in logs: `died`, `reported`,
+  `not_ready`, `never_answered`, `invalid_token`, `unsupported`, `protocol`, `start_failed`
+  (`FailureKind::as_str`). The guard function is `require_synthetic`.
 
 ## 4. Maintenance and checking
 

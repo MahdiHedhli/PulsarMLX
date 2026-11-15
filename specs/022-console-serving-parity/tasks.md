@@ -529,6 +529,10 @@ keeps the donor's behavior where an approved proposal now applies.
   - The `Server` and `Date` headers in comparisons: the detail file tasks/conformance.md
     calls both headers not observable. contracts/parity-ledger.md section 1.1 governs:
     header names and positions are observable, and only the two values are volatile.
+  - LD33 (2026-11-14, with CNF-01): the reading of binding decision B12 that CNF-01 built
+    is accepted. The preflight and summary jobs run no cargo command, so they install no
+    toolchain and do not assert `rustc -V`; the two Rust jobs install the pinned toolchain
+    and assert it. The Rust jobs wait for preflight.
 - **Not decided.** Who on the engine track reviews the seam draft, and in what form (FR-039,
   seam question Q12, OPEN-30). ENG-01's code may land; the seam stays a draft and ENG-01
   stays unticked until that review is recorded. Reaching the engine track goes through the
@@ -549,7 +553,7 @@ the named task closes. The register is authoritative where the two differ.
 | OPEN-01 | Whether the donor's sealed-reasoning prefix is accepted on input (B2) | Owner | RSP-03 |
 | OPEN-06 | The default run-config directory when no config is given, and whether an importer for project-maya run configs exists | Owner | OPS-11 |
 | OPEN-09 | An untagged ERR in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop) | Owner | ENG-07 |
-| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); RSP-02; OPS-21 |
+| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); P-19 (refusal of an unpaired surrogate inside a JSON string), P-20 (the nesting bound of 1000 levels in the JSON reader and writer) and P-21 (four parse differences on engine `INFO` and `DONE` values), raised by API-01 and ENG-01 on 2026-11-14 and put to the owner at checkpoint 2; also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); API-01 (P-19, P-20); ENG-01 (P-21); RSP-02; OPS-21 |
 | OPEN-24 | Whether launching refuses known project-maya engine names | Owner | ENG-15 |
 | OPEN-25 | Which names Turbo and the settings profiles write into a run-config `env` block (the donor writes `MAYA_GLM_*` and `MAYA_DS4_*`), and the engine variable names shown in the dashboard; B2 fixes only that such names pass through verbatim | Owner | OPS-05, OPS-06, WEB-09 |
 | OPEN-30 | Seam design details ENG-01 settles before freezing the seam (R27) | Lead | ENG-01 |
@@ -724,6 +728,10 @@ each later push remains a checkpoint decision.
   - Note: Owner decision 2026-11-14: implements approved deviation P-3, so the malformed
     request error keeps the `malformed request (` prefix and a Python-like category with
     Rust-side detail text.
+  - Note: Built and merged on 2026-11-14 at commit `c2392605`. The checkbox stays open: the
+    reader refuses an unpaired surrogate inside a string and both the reader and the writer
+    bound nesting at 1000 levels, which are proposals P-19 and P-20, awaiting the owner's
+    decision at checkpoint 2 (OPEN-15). If the owner declines either, the behavior changes.
   - Detail: [tasks/api.md#api-01](tasks/api.md#api-01);
     [tasks/prompt.md#prm-01](tasks/prompt.md#prm-01);
     [tasks/ops.md#ops-01](tasks/ops.md#ops-01).
@@ -851,6 +859,11 @@ each later push remains a checkpoint decision.
     The code may land, but the seam stays a draft and this task stays unticked until the
     engine track's review is recorded (FR-039); who reviews it, and in what form, is not
     decided (seam question Q12, OPEN-30).
+  - Note: Built and merged on 2026-11-14 at commit `6200f4ac`, with the seam contract at
+    draft 0.2. The checkbox stays open: it waits for the engine track's review of the seam
+    contract (FR-039; contract draft 0.2, section "Review request to the engine track") and
+    for the owner's decision on proposal P-21, the four parse differences on engine `INFO`
+    and `DONE` values (OPEN-15).
   - Detail: [tasks/engine.md#eng-01](tasks/engine.md#eng-01).
 - [ ] ENG-02 [M1] In-process fake engine (MockEngine parity) and scriptable test engines —
   console-engine::fake
@@ -904,6 +917,10 @@ each later push remains a checkpoint decision.
     records its test names in
     [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md);
     the tests are not deleted or weakened to make a real engine start.
+  - Note: This task settles what the server does when an engine delivers a token id outside
+    the vocabulary, porting the donor's behavior. ENG-01 left
+    `EngineFailure::out_of_vocabulary` with a provisional text that has no donor
+    counterpart; this task replaces or maps it.
   - Detail: [tasks/engine.md#eng-10](tasks/engine.md#eng-10).
 - [ ] API-07 [M1] Inference request lifecycle driver (dialect-agnostic) —
   console-http::inference
@@ -999,6 +1016,10 @@ each later push remains a checkpoint decision.
     outside the allowed paths and a file under console/ whose name the repository .gitignore
     drops each make preflight fail with a named class, and a rustc -V mismatch is shown to
     fail.
+  - Note: Built and merged on 2026-11-14 at commit `fb87f8a2`. The checkbox stays open
+    until a green run of CNF-01's revision of console.yml is observed: the only run of
+    console.yml so far (2026-11-14, at commit `0f4bc320`) predates that revision, and
+    nothing has been pushed since. The reading of B12 it builds is accepted (LD33, R29).
   - Detail: [tasks/conformance.md#cnf-01](tasks/conformance.md#cnf-01).
 - [ ] CNF-02 [M1] Scenario format, schema, loader, substitution tokens and rename map —
   console-conformance::scenario; contracts/conformance-scenario.schema.json,

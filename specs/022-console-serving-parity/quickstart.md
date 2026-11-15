@@ -5,12 +5,14 @@
 **Status**: The toolchain check of section 2, the `cargo` commands of section 3 and the
 two check scripts of section 4 were run on 2026-11-14 at commit `1a2db9b9`, with a clean
 working tree, against the empty skeleton. Section 4 also records the negative cases, which
-were observed earlier the same day on the uncommitted working tree. Every other command is
-planned. At M0 the only runnable content is the empty `console/` workspace skeleton and
-its check tools (GOV-06). Each command is marked **Available from** with the work
-package that makes it real. When a package lands, it updates its entries here in the same
-change: it replaces "planned" with the observed result, the date, the commit and any
-excluded or failing coverage, as constitution principle III and XII require. Treat any
+were observed earlier the same day on the uncommitted working tree. Sections 3, 9 and 10
+also record the first three M1 packages, merged on 2026-11-14 (API-01, ENG-01 and CNF-01),
+and the first CI runs. Every other command is planned. At M0 the only runnable content is
+the empty `console/` workspace skeleton and its check tools (GOV-06). Each command is
+marked **Available from** with the work package that makes it real. When a package
+lands, it updates its entries here in the same change: it replaces "planned" with the
+observed result, the date, the commit and any excluded or failing coverage, as
+constitution principle III and XII require. Treat any
 count recorded here as evidence for that commit only.
 
 Everything the console serves in this increment is synthetic. No command here loads or
@@ -83,8 +85,57 @@ commands. Observed on 2026-11-14 at commit `1a2db9b9`, on the owner's build host
 Apple Silicon): the toolchain script printed its `ok` line, `cargo fetch --locked` had
 nothing to fetch because the skeleton has no dependencies, and `cargo fmt --check`,
 `cargo clippy` and `cargo test` passed, with one skeleton test. No Linux run and no CI run
-is recorded yet. That says nothing about any console
-behavior, because none is implemented.
+was recorded at that commit; the first CI run, at commit `0f4bc320`, is recorded in
+section 10. That says nothing about any console behavior, because none was implemented at
+that commit.
+
+**Observed (API-01, Python-compatible JSON and the error model)**: merged on 2026-11-14 at
+commit `c2392605`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-pyjson -p console-http
+```
+
+In the package clone before the merge, 22 `console-pyjson` unit tests, 14 golden
+integration tests in `tests/api01_pyjson_golden.rs`, 4 doctests, 2 `console-http::error`
+unit tests and 11 tests in `tests/api01_error.rs` passed (53 tests, the whole workspace of
+that clone), and 50 consecutive runs of the same command passed; the lead's run at
+`fb87f8a2`, below, confirmed them. The golden tables were recorded from CPython 3.14.7
+with `python3 -I` and the standard library only; no donor file was run. They cover 69
+values (wire and default form), 160 option pairs (indent, sort_keys, separators,
+ensure_ascii), 46 floats plus 4 exact-tie cases, 42 indent=1 documents that round-trip
+byte for byte, 81 `json.loads(str)` outcomes with CPython's messages and positions, 39
+`json.loads(bytes)` outcomes, and 10 `raw_decode` cases. CPython accepts two inputs that
+the console refuses: a string holding an unpaired surrogate, and nesting deeper than 1000
+levels. These are proposals P-19 and P-20, awaiting the owner's decision
+([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)); the
+behavior changes if the owner declines either. Not done here: `json_from_text` (API-08,
+PRM-16) and the product wording of the overloaded message (API-07).
+
+**Observed (ENG-01, the backend seam in `console-core::engine`)**: merged on 2026-11-14 at
+commit `6200f4ac`. From `console/`:
+
+```sh
+cargo test --locked -p console-core --lib
+cargo test --locked -p console-core --test eng01_guard --test eng01_ledger --test eng01_seam
+```
+
+The first command runs the 26 unit tests of `console-core::engine`; the second runs the 68
+integration tests (8 in `eng01_guard`, 39 in `eng01_ledger`, 21 in `eng01_seam`).
+Observed with `rustc` 1.97.1 in the package clone before the merge: 94 `console-core`
+tests passed, 0 failed, and 50 consecutive runs of the `console-core` suite had no
+failure; the lead's run at `fb87f8a2`, below, confirmed them. Everything runs offline,
+with synthetic test engines only; nothing here is qualified beyond synthetic backends. Not
+done: no admission path calls the guard yet (ENG-10, API-08); the seam contract stays
+draft 0.2 until the engine track's review is recorded (FR-039, OPEN-30); and the four
+parse differences on engine `INFO` and `DONE` values are proposal P-21, awaiting the
+owner's decision.
+
+**Observed (lead's gate run after wave 1 of M1)**: on 2026-11-14 at commit `fb87f8a2`, on
+macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
+1.97.1); `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings` and
+`cargo test --locked` passed, with 182 tests in the workspace; and both check scripts of
+section 4 passed. No Linux run and no CI run covers this commit (section 10).
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -255,11 +306,27 @@ defined by the conformance packages.
 the full checker and inventories from CNF-12 and the replay of captured references from
 CNF-09 (M10). Not yet available.
 
+The conformance runner `cnf` exists as a skeleton (CNF-01, merged on 2026-11-14 at commit
+`fb87f8a2`). From `console/`:
+
+```sh
+cargo run --locked -p console-conformance --bin cnf -- help
+```
+
+It lists the planned subcommands: `record`, `diff`, `matrix` and `freshness` from CNF-09,
+and `ledger-check` from CNF-12. Until its package lands, each exits with status 3 and
+prints `cnf: NOT_BUILT: ...`. Usage errors exit with status 2 and print `cnf: USAGE: ...`;
+more than 256 arguments are refused with `cnf: USAGE: more than 256 arguments given`.
+Observed on 2026-11-14 in the package clone before the merge; the 11 unit tests of
+`src/bin/cnf.rs` and the 7 tests of `tests/cnf01_cli.rs`, which run the built binary,
+passed again in the lead's run at `fb87f8a2` (section 3). None of the planned subcommands
+is built.
+
 ## 10. CI jobs
 
 `.github/workflows/console.yml` is path-filtered to console paths. Its blocking jobs each
 name the local command that reproduces them: preflight (the two check scripts of
-section 4), Rust on Linux (toolchain assertion, `cargo fetch`, `fmt`, `clippy`, `test`),
+section 4 and, since CNF-01, a check of the toolchain pin), Rust on Linux (toolchain assertion, `cargo fetch`, `fmt`, `clippy`, `test`),
 Rust on macOS arm64 (toolchain and architecture assertion, `cargo fetch`, `test`), and a
 summary job. The blocking web logic job that binding decision B12 in
 [tasks.md](tasks.md#binding-cross-cutting-decisions) requires is not in the M0 workflow
@@ -267,9 +334,47 @@ file. The two donor test files run through the shim and the vendor-template rend
 only in the manual reference job; blocking CI checks their committed records.
 
 **Available from**: GOV-06 (M0) for the workflow and its blocking jobs; CNF-01 (M1)
-extends it; CNF-15 (M8) for the web logic job. No run has been observed yet. The owner authorized
-the first push of the feature branch on 2026-11-14; each later push remains a checkpoint
-decision.
+extends it; CNF-15 (M8) for the web logic job. The owner authorized the first push of the
+feature branch on 2026-11-14; each later push remains a checkpoint decision.
+
+**Observed (first CI runs)**: the first push, on 2026-11-14 at commit `0f4bc320` (the M0
+skeleton and the M1 scaffold), ran two workflows, and both succeeded: `console` (run
+43674353677: preflight, Rust on ubuntu-24.04, Rust on macos-15 arm64, summary) and the
+repository's own "macOS baseline" workflow (run 43674353647: classify, Apple MLX
+small-fixture validation, Apple Silicon workspace baseline, aggregate status). Nothing has
+been pushed since, so no CI run covers API-01, ENG-01 or CNF-01, and CNF-01's revision of
+`console.yml`, described below, has not run.
+
+CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
+rust-linux and rust-macos run from `console/`. Every failing step prints one
+`console failure class: <CLASS>` line and one `::error` annotation for each failed class,
+then once the detail, the local command that reproduces it, and the job, runner image and
+toolchain. The classes are listed in the header of `.github/workflows/console.yml`.
+`BOUNDARY_` and `HYGIENE_` classes come only from unindented `FAIL <check>` report lines
+whose check name is lower-case kebab; the indented path lines under them never add a
+class. Preflight and both Rust jobs share one pin check (`console_check_pin`): it reads the
+first channel line of `console/rust-toolchain.toml` the way
+`console/tools/check-toolchain.sh` does and requires an exact X.Y.Z equal to the
+workflow's `CONSOLE_RUST_TOOLCHAIN`. Preflight and the summary run no cargo command, so
+they install no toolchain and do not assert `rustc -V` (lead decision LD33). The Rust jobs
+wait for preflight, install the pinned toolchain, assert `rustc -V` and `cargo -V`, and
+run a dry-run self-test showing that a `rustc -V` mismatch fails both the CI assertion and
+`console/tools/check-toolchain.sh`. Each runs `cargo fetch --locked` once; then the Linux
+job runs `cargo fmt --check`, `cargo clippy --frozen --all-targets -- -D warnings` and
+`cargo test --frozen`, and the macOS job asserts arm64 and runs `cargo test --frozen`. The
+17 tests of `console/crates/console-conformance/tests/cnf01_workflow.rs` check the
+workflow file as text.
+
+**Observed (CNF-01, without CI)**: on 2026-11-14, before the merge, each step's own script,
+taken from the workflow, was run in a scratch copy of the package's work outside the
+repository. Preflight passed. A file outside the allowlist failed with
+`BOUNDARY_ALLOWLIST`, and files named like `FAIL x::...` added no class of their own; a
+`console/x.log` failed with `BOUNDARY_IGNORED_FILES`. These two cases ran in working-tree
+mode; the `--committed` form CI uses was not rerun after CNF-01's last revision. A
+`rustc -V` mismatch failed with `TOOLCHAIN_MISMATCH`, and the cargo steps passed. The
+`rustup` install step did not run, because that host has no `rustup`, and the runner image
+fields printed `unknown`. CNF-01 stays unticked until a green CI run of its revision is
+observed.
 
 The manual `workflow_dispatch` jobs are dispatched by the owner or the lead, never run on
 a contributor's machine: reference capture and the live differential against project-maya

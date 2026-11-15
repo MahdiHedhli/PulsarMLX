@@ -1,6 +1,7 @@
 # PulsarMLX Console workspace
 
-**Status (2026-11-14):** skeleton only. Nothing in this directory serves anything yet.
+**Status (2026-11-14):** in development. The claim table below says which parts exist;
+nothing in this directory serves anything yet.
 
 This directory will hold PulsarMLX Console: a Rust serving layer and dashboard rebuilt
 from the serving layer of project-maya (the donor, pinned at commit `7e68a30f`), driven
@@ -13,12 +14,13 @@ decision to build it ahead of strategy Stage F is recorded in
 
 | Item | Status |
 | --- | --- |
-| Cargo workspace with eight members: `console-pyjson`, `console-core`, `console-tokenizer`, `console-engine`, `console-http`, `console-testkit`, `console-conformance` and the `pulsar-console` binary | Present as skeletons for the M1 work packages. Each crate declares its planned modules and implements nothing; `console-pyjson` keeps one test that proves the workspace builds and its test harness runs. |
-| Python-compatible JSON writer (package API-01) | Planned (milestone M1). Not implemented. |
+| Cargo workspace with eight members: `console-pyjson`, `console-core`, `console-tokenizer`, `console-engine`, `console-http`, `console-testkit`, `console-conformance` and the `pulsar-console` binary | Present. Merged on 2026-11-14: `console-pyjson`, the `error` module of `console-http`, the `engine` module of `console-core` and the `cnf` runner skeleton of `console-conformance` (rows below). Every other crate and module is still a skeleton that declares its planned modules and implements nothing. |
+| Python-compatible JSON, error model and ids (package API-01), `console-pyjson` and `console-http::error` | Implemented (commit `c2392605`, 2026-11-14) and qualified on synthetic inputs only: golden tables recorded from CPython 3.14.7, no donor code run; 182 workspace tests passed at commit `fb87f8a2` (quickstart section 3). Open: its refusal of an unpaired surrogate inside a string and its nesting bound of 1000 levels are proposals P-19 and P-20, awaiting the owner's decision, so the task stays unticked. |
+| Backend seam and the synthetic-only guard (package ENG-01), `console-core::engine` | Implemented (commit `6200f4ac`, 2026-11-14) and qualified on synthetic backends only, with synthetic test engines in its tests. Open: the seam contract is draft 0.2 until the engine track's review is recorded (FR-039); four parse differences on engine `INFO` and `DONE` values are proposal P-21, awaiting the owner's decision; no admission path calls the guard yet (ENG-10, API-08). The task stays unticked. |
 | HTTP server, dialects, engines, dashboard | Planned (milestones M1 to M9). Not implemented. |
 | Parity ledger, [`parity/ledger.json`](parity/ledger.json) | Present. 913 rows, one per donor test method, every row `pending`. |
-| Boundary, hygiene and toolchain checks, [`tools/`](tools/) | Present. Meant to be run locally before each commit; they have not yet run in CI. |
-| CI, [`../.github/workflows/console.yml`](../.github/workflows/console.yml) | Written. It has not run on GitHub yet. |
+| Boundary, hygiene and toolchain checks, [`tools/`](tools/) | Present. Meant to be run locally before each commit. They have run in CI once, in the `console` workflow run at commit `0f4bc320` on 2026-11-14, which succeeded. |
+| CI, [`../.github/workflows/console.yml`](../.github/workflows/console.yml) | Written. Run once on GitHub: run 43674353677, at commit `0f4bc320` (the M0 skeleton and the M1 scaffold) on 2026-11-14, succeeded. CNF-01's revision of the workflow (commit `fb87f8a2`, 2026-11-14), with named failure classes, has not run; nothing has been pushed since. |
 | Real model serving | Out of scope for this increment. When built, the work can at most be described as "qualified on synthetic backends". |
 
 Nothing here may be described as working until its command, environment, input and
@@ -27,8 +29,9 @@ result are recorded, as constitution principle III requires.
 ## Synthetic engines only
 
 The server refuses to start an engine that does not report synthetic provenance, on every
-path that admits an engine; the owner decided this on 2026-11-14. The guard is planned
-(ENG-01, ENG-10 and API-08) and is not implemented yet. No command-line flag, environment
+path that admits an engine; the owner decided this on 2026-11-14. The guard itself exists
+(ENG-01); the calls to it in the turn driver and at process start are planned (ENG-10 and
+API-08). No command-line flag, environment
 variable, configuration key or Cargo feature bypasses the refusal.
 [`../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`](../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md)
 is the one place that says what must be done before the server may start a real engine.

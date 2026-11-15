@@ -694,9 +694,9 @@ fix is marked "proposed", as elsewhere in this register.
 
 The owner approved the proposals below on 2026-11-14, at owner checkpoint 1. Each keeps its
 P- id as its deviation id (rule 4) and is a deviation like any other id in this register:
-ledger rows and comparator annotations cite it. The ids P-5, P-12, P-17 and P-18 are not
-here: P-12 and P-17 were declined and P-5 and P-18 are deferred (the two sections that
-follow).
+ledger rows and comparator annotations cite it. The ids P-5, P-12 and P-17 to P-21 are not
+here: P-12 and P-17 were declined, P-5 and P-18 are deferred, and P-19 to P-21 were raised
+later and await the owner (the two sections that follow).
 
 ### P-1
 
@@ -734,7 +734,14 @@ follow).
 - **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
 - **Affected donor tests (known).** None identified yet; the implementing package
   confirms. `serve/test_server.py::RequestBodies::test_a_malformed_body_is_a_400` asserts
-  only the status and is expected to keep passing.
+  only the status and is expected to keep passing. No donor test method owned by API-01 is
+  affected.
+- **Implementation.** API-01 (commit `c2392605`, 2026-11-14) implements P-3 in
+  `console_http::error::ApiError::Malformed`. The message is
+  `malformed request (<Category>: <detail>)`, where the category is one of `KeyError`,
+  `TypeError`, `AttributeError` or `IndexError` (`MalformedCategory`) and the detail is the
+  server's own text. The test
+  `console-http::api01_error::malformed_request_keeps_prefix_and_category_p3` pins it.
 - **Packages.** API-01, API-07, PRM-06.
 
 ### P-4

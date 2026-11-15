@@ -1,6 +1,7 @@
 # Allowing non-synthetic engines
 
-- **Status**: Normative note, dated 2026-11-14. Nothing it describes is implemented yet.
+- **Status**: Normative note, dated 2026-11-14. The provenance type and the single guard
+  function exist (ENG-01); nothing calls the guard yet.
 - **Requested by**: the owner, on 2026-11-14, after checkpoint 1 of feature
   [`022-console-serving-parity`](../../specs/022-console-serving-parity/).
 - **Maintained by**: every task that adds, moves or removes an enforcement point of the
@@ -20,8 +21,12 @@ synthetic-only guard", of the
 This note is the single place that lists what must be done before the server may start
 any other engine.
 
-As of 2026-11-14 the rule is specified and nothing in the server enforces it yet; only the
-M0 repository checks (`console/tools/check-hygiene.sh` and
+As of 2026-11-14 the provenance type, `console_core::engine::Provenance`, and the single
+guard function, `console_core::engine::require_synthetic`, exist in `console-core::engine`
+with the tests that pin them (ENG-01, commit `6200f4ac`). No admission path calls the guard
+yet: the turn driver that calls it on every admission path (ENG-10) and the refusal at
+process start (API-08) are planned, so nothing in the server enforces the rule yet. Besides
+the guard, only the M0 repository checks (`console/tools/check-hygiene.sh` and
 `console/tools/check-boundary.sh`) exist. The table in "Where the rule is enforced" tracks
 each enforcement point as it lands. Until a row there says otherwise, read every statement
 below about code as planned.
@@ -164,15 +169,16 @@ PulsarMLX's Rust engine work outside `console/`, whose evidence ADR 0008 keeps u
 
 1. **Revise the seam contract.** In
    [`contracts/backend-seam.md`](../../specs/022-console-serving-parity/contracts/backend-seam.md)
-   and in the provenance type of `console-core::engine` (planned, ENG-01), add the
-   provenance value for the approved engine, with whatever identity and evidence fields the
-   new ADR requires, and bump the seam version. The revised seam is offered to the engine
-   track for review, through the owner, and is not frozen until that review is recorded.
-2. **Change the guard.** Change the single guard function in `console-core` (planned,
-   ENG-01) so that it admits exactly the provenance the new ADR approves, under the
-   conditions that ADR sets (for example whether an explicit operator setting is
-   required). Every other non-synthetic provenance, and an engine that declares none, is
-   still refused.
+   and in the provenance type of `console-core::engine` (`console_core::engine::Provenance`,
+   ENG-01; the seam version is `SEAM_VERSION`, now 0.2), add the provenance value for the
+   approved engine, with whatever identity and evidence fields the new ADR requires, and
+   bump the seam version. The revised seam is offered to the engine track for review,
+   through the owner, and is not frozen until that review is recorded.
+2. **Change the guard.** Change the single guard function in `console-core`
+   (`console_core::engine::require_synthetic`, ENG-01) so that it admits exactly the
+   provenance the new ADR approves, under the conditions that ADR sets (for example whether
+   an explicit operator setting is required). Every other non-synthetic provenance, and an
+   engine that declares none, is still refused.
 3. **Make every surface tell the truth.** The health and status fields of `/health` and
    `/v1/status` (planned, API-06), the dashboard badge (planned, WEB-07), the model-name
    rule (planned, ENG-02), the start-up narration and the logs (planned, ENG-08 and
@@ -208,24 +214,28 @@ PulsarMLX's Rust engine work outside `console/`, whose evidence ADR 0008 keeps u
 
 ## How to tell whether the rule still holds
 
-All of the following is planned. The test names and the guard's symbol are filled in here
-by ENG-01, ENG-10, API-08 and the M3 line-protocol tasks when they land. Run the commands
-from `console/` on the pinned toolchain, as the
+ENG-01 has filled in its test names and the guard's symbol below; everything else in this
+section is planned. The remaining test names are filled in here by ENG-10, API-08 and the
+M3 line-protocol tasks when they land. Run the commands from `console/` on the pinned
+toolchain, as the
 [per-task gate](../../specs/022-console-serving-parity/tasks.md#per-task-gate-before-commit)
 does.
 
 1. **The refusal tests pass.** `cargo test --locked` passes, and it includes the guard
-   tests of ENG-01 (names to be filled in), the turn-driver tests of ENG-10 that show an
-   engine is refused at restart, model switch and context reload (names to be filled in),
-   and the process-start test of API-08 (name to be filled in). None of them is marked
-   ignored or skipped. Confirm with `cargo test --locked -- --list` that each named test is
-   listed, and that none carries `#[ignore]` or a `cfg` that removes it.
-2. **There is one guard.** A search for the guard's symbol (to be filled in by ENG-01)
-   under `console/crates/` finds exactly one definition, in `console-core`, and a call on
-   every path that admits an engine: first start, restart, model switch and context
-   reload. Every call site of the guard is unconditional: no `if`, `cfg` or Cargo feature,
-   environment variable, configuration key or command-line flag decides whether the guard
-   runs, as a reading of each call site found by the search confirms.
+   tests of ENG-01, the eight tests of `console/crates/console-core/tests/eng01_guard.rs`
+   (listed by `cargo test --locked -p console-core --test eng01_guard -- --list`), the
+   turn-driver tests of ENG-10 that show an engine is refused at restart, model switch and
+   context reload (names to be filled in), and the process-start test of API-08 (name to
+   be filled in). None of them is marked ignored or skipped. Confirm with
+   `cargo test --locked -- --list` that each named test is listed, and that none carries
+   `#[ignore]` or a `cfg` that removes it.
+2. **There is one guard.** A search for the guard's symbol, `require_synthetic`, under
+   `console/crates/` finds exactly one definition, in `console-core`
+   (`console/crates/console-core/src/engine/guard.rs`), and a call on every path that
+   admits an engine: first start, restart, model switch and context reload. Every call site
+   of the guard is unconditional: no `if`, `cfg` or Cargo feature, environment variable,
+   configuration key or command-line flag decides whether the guard runs, as a reading of
+   each call site found by the search confirms.
 3. **The binary refuses.** Start `pulsar-console` against a test engine that reports a
    non-synthetic provenance: in M1 a scriptable test engine of ENG-02 that reports a
    non-synthetic provenance, as the API-08 test does, and from M3 also a fake line-protocol
@@ -240,8 +250,8 @@ does.
 
 | Enforcement point | File or symbol | Task that builds it | Status |
 | --- | --- | --- | --- |
-| Provenance type in the engine descriptor; it can express "not synthetic" (another provenance, or none), and synthetic is the only value accepted | `console-core::engine`, `EngineDescriptor` provenance field; exact shape settled by ENG-01 | ENG-01 | planned |
-| The single guard function, called before any engine serves a request | `console-core`; symbol to be recorded by ENG-01 | ENG-01 | planned |
+| Provenance type in the engine descriptor; it can express "not synthetic" (another provenance, or none), and synthetic is the only value accepted | `console/crates/console-core/src/engine/descriptor.rs`: `console_core::engine::Provenance` (`Synthetic`, or `NotSynthetic { declared: Option<DeclaredProvenance> }`; `Provenance::not_synthetic` never yields `Synthetic`) and the field `EngineDescriptor::provenance`; pinned by `console-core::eng01_guard::the_guard_refuses_every_provenance_that_is_not_synthetic`, `console-core::eng01_guard::the_guard_refuses_an_engine_that_declares_no_provenance` and the unit test `console-core::engine::descriptor::tests::provenance_display_is_one_escaped_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`), qualified on synthetic backends only; the seam is draft 0.2 until the engine-track review (Q12) |
+| The single guard function, called before any engine serves a request | `console/crates/console-core/src/engine/guard.rs`: `console_core::engine::require_synthetic(&EngineDescriptor) -> Result<(), ProvenanceRefused>`; the refusal line is the `Display` of `ProvenanceRefused`, and `ProvenanceRefused::to_failure` gives the failure for restart, switch and reload; pinned by the eight tests of `console-core::eng01_guard`: `the_guard_admits_synthetic_provenance_for_every_kind`, `the_guard_refuses_every_provenance_that_is_not_synthetic`, `the_guard_refuses_an_engine_that_declares_no_provenance`, `the_guard_refuses_whatever_else_the_descriptor_says`, `the_guard_source_has_no_bypass` (a source-level pin: no environment read, conditional compilation, feature switch or configuration lookup in the guard file, and a single admitting arm for `Provenance::Synthetic`), `the_refusal_line_names_kind_report_and_note`, `the_refusal_line_text` and `a_refusal_at_restart_is_a_poisoned_start_failure_with_the_same_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`); no call site yet (ENG-10, API-08) |
 | Call of the guard on every admission path (first start, restart, model switch, context reload); a refused engine is closed and serves nothing | `console-core::turn` | ENG-10 | planned |
 | Process start: refusal line on standard error and a non-zero exit status | `pulsar-console` binary | API-08 (M1 start path), kept by API-17 | planned |
 | Scripted engine reports synthetic provenance and the default model name `pulsar-console-synthetic` | `console-engine::fake` | ENG-02 (PLAN-2) | planned |
@@ -269,3 +279,6 @@ may change with that review. The rule itself does not.
 ## Record of changes to this note
 
 - 2026-11-14: written at the owner's request after checkpoint 1; nothing implemented yet.
+- 2026-11-14: ENG-01 (commit `6200f4ac`) recorded the provenance type and the guard,
+  `require_synthetic`, with the tests that pin them; no call site exists yet (ENG-10,
+  API-08).
