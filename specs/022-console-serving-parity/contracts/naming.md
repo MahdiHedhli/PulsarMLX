@@ -4,8 +4,8 @@
   approved plan (restated in [`../tasks.md`](../tasks.md), section "Binding cross-cutting
   decisions", with decisions B1 to B13) and deviation BRAND-1. The tables are seeded
   from the planning records and a static reading of the pinned donor source; nothing
-  listed here is implemented yet, except the names that a row or an entry of section 3.11
-  says a package has fixed.
+  listed here is implemented yet, except the names that a row, a note under a table or an
+  entry of section 3.11 says a package has fixed.
 - **Feature**: `specs/022-console-serving-parity`
 - **Written by**: GOV-06 (this seed). Extended by every package that ports a setting,
   file, storage key, log line or wire identifier (section 4).
@@ -81,35 +81,78 @@ row has one old name in backticks in the first column.
 | Old name | New name | Status | Donor location | Records | Package |
 | --- | --- | --- | --- | --- | --- |
 | `MAYA_API_KEY` | `PULSAR_CONSOLE_API_KEY` | Mechanical | `serve/server.py:7139` | API, OPS, R-api | API-03, API-15 |
-| `MAYA_DEBUG` | `PULSAR_CONSOLE_DEBUG` | Mechanical | `serve/server.py:4747`, `serve/mcp.py:127` | PRM, R-api | API-16 |
-| `MAYA_DRAIN_S` | `PULSAR_CONSOLE_DRAIN_S` | Mechanical | `serve/server.py:756` | ENG, R-engine | ENG-06 |
-| `MAYA_DS4_KEEP_THINKING` | `PULSAR_CONSOLE_DS4_KEEP_THINKING` | Mechanical | `serve/frontend.py:284`, `serve/server.py:6738` | PRM, R-prompt | PRM-07 |
-| `MAYA_DS4_RESTORE_POINTS` | `PULSAR_CONSOLE_DS4_RESTORE_POINTS` | Mechanical | `serve/server.py:783` | ENG, R-engine | ENG-17 |
-| `MAYA_DS4_RESTORE_TAIL` | `PULSAR_CONSOLE_DS4_RESTORE_TAIL` | Mechanical | `serve/server.py:783` | ENG, R-engine | ENG-17 |
-| `MAYA_ENGINE_QUIT_S` | `PULSAR_CONSOLE_ENGINE_QUIT_S` | Mechanical | `serve/server.py:1703-1705` | ENG, R-engine | ENG-08 |
-| `MAYA_ENGINE_STALL_S` | `PULSAR_CONSOLE_ENGINE_STALL_S` | Mechanical | `serve/server.py:728` | ENG, R-engine | ENG-08 |
-| `MAYA_ENGINE_WRAP_S` | `PULSAR_CONSOLE_ENGINE_WRAP_S` | Mechanical | `serve/server.py:7428` | ENG, R-engine | ENG-12 |
-| `MAYA_FAIR_SLICE_S` | `PULSAR_CONSOLE_FAIR_SLICE_S` | Mechanical | `serve/server.py:404-407` | ENG, R-engine | ENG-11 |
-| `MAYA_GLM_THINK_RESERVE` | `PULSAR_CONSOLE_GLM_THINK_RESERVE` | Mechanical | `serve/server.py:4402` | PRM, R-prompt | PRM-13 |
-| `MAYA_HTTP_BACKLOG` | `PULSAR_CONSOLE_HTTP_BACKLOG` | Mechanical | `serve/server.py:5349` | R-api | API-02 |
-| `MAYA_LOOP_GUARD` | `PULSAR_CONSOLE_LOOP_GUARD` | Mechanical | `serve/server.py:613-617` | PRM, R-prompt | PRM-14 |
-| `MAYA_LOOP_GUARD_COLLAPSE_MAX` | `PULSAR_CONSOLE_LOOP_GUARD_COLLAPSE_MAX` | Mechanical | `serve/loop_guard.py:594` | PRM, R-prompt | PRM-15 |
-| `MAYA_MAX_BODY_MIB` | `PULSAR_CONSOLE_MAX_BODY_MIB` | Mechanical | `serve/server.py:5366-5369` | CNF, R-api | API-02 |
-| `MAYA_MOCK_RELOAD_S` | `PULSAR_CONSOLE_MOCK_RELOAD_S` | Mechanical | `serve/server.py:2771` | ENG, R-engine | ENG-02 |
-| `MAYA_MOCK_TOK_S` | `PULSAR_CONSOLE_MOCK_TOK_S` | Mechanical | `serve/server.py:7290` | ENG, R-engine | ENG-02 |
-| `MAYA_MODEL_MANAGEMENT` | `PULSAR_CONSOLE_MODEL_MANAGEMENT` | Mechanical | `serve/server.py:600-605` | OPS, R-ops | OPS-13 |
-| `MAYA_PACK_TEMPLATE` | `PULSAR_CONSOLE_PACK_TEMPLATE` | Mechanical | `serve/server.py:6858-6867` | PRM, R-prompt | PRM-08 |
-| `MAYA_PROMPT_MEMO` | `PULSAR_CONSOLE_PROMPT_MEMO` | Mechanical | `serve/server.py:2089`, `serve/frontend.py:477` | PRM, ENG, R-prompt | ENG-17, PRM-08 |
-| `MAYA_QUEUE_PING_S` | `PULSAR_CONSOLE_QUEUE_PING_S` | Mechanical | `serve/server.py:396-398` | ENG, CNF, R-engine | ENG-09 |
-| `MAYA_REQUEST_QUIET_S` | `PULSAR_CONSOLE_REQUEST_QUIET_S` | Mechanical | `serve/server.py:742` | ENG, R-engine | ENG-07 |
-| `MAYA_REQUEST_TIMEOUT_S` | `PULSAR_CONSOLE_REQUEST_TIMEOUT_S` | Mechanical | `serve/server.py:5355-5359` | R-api | API-02 |
-| `MAYA_RESTART_ON_UPDATE` | `PULSAR_CONSOLE_RESTART_ON_UPDATE` | Mechanical | `serve/update.py:21`, `serve/server.py:2873` | OPS, R-launch | OPS-11 |
-| `MAYA_SAVINGS_PATH` | `PULSAR_CONSOLE_SAVINGS_PATH` | Mechanical | `serve/savings.py:28-30` | OPS, R-ops | OPS-21 |
-| `MAYA_SERVER_LOG` | `PULSAR_CONSOLE_SERVER_LOG` | Mechanical | `serve/server.py:7101` | R-api | API-16 |
-| `MAYA_TURN_TRACE` | `PULSAR_CONSOLE_TURN_TRACE` | Mechanical | `serve/server.py:2093` | API, ENG, R-api | API-16 |
-| `MAYA_UPDATE_CHECK` | `PULSAR_CONSOLE_UPDATE_CHECK` | Mechanical; meaning changes to opt-in (SEC-5) | `serve/update.py:75` | OPS, CNF, R-ops | OPS-22 |
-| `MAYA_VIDEO_MAX_FRAMES` | `PULSAR_CONSOLE_VIDEO_MAX_FRAMES` | Mechanical | `serve/server.py:1926-1931` | RSP, ENG, R-resp | RSP-18 |
+| `MAYA_DEBUG` | `PULSAR_CONSOLE_DEBUG` | Mechanical | `serve/server.py:4747`, `serve/mcp.py:127` | PRM, R-api | API-16, API-15 |
+| `MAYA_DRAIN_S` | `PULSAR_CONSOLE_DRAIN_S` | Mechanical | `serve/server.py:756` | ENG, R-engine | ENG-06, API-15 |
+| `MAYA_DS4_KEEP_THINKING` | `PULSAR_CONSOLE_DS4_KEEP_THINKING` | Mechanical | `serve/frontend.py:284`, `serve/server.py:6738` | PRM, R-prompt | PRM-07, API-15 |
+| `MAYA_DS4_RESTORE_POINTS` | `PULSAR_CONSOLE_DS4_RESTORE_POINTS` | Mechanical | `serve/server.py:783` | ENG, R-engine | ENG-17, API-15 |
+| `MAYA_DS4_RESTORE_TAIL` | `PULSAR_CONSOLE_DS4_RESTORE_TAIL` | Mechanical | `serve/server.py:783` | ENG, R-engine | ENG-17, API-15 |
+| `MAYA_ENGINE_QUIT_S` | `PULSAR_CONSOLE_ENGINE_QUIT_S` | Mechanical | `serve/server.py:1703-1705` | ENG, R-engine | ENG-08, API-15 |
+| `MAYA_ENGINE_STALL_S` | `PULSAR_CONSOLE_ENGINE_STALL_S` | Mechanical | `serve/server.py:728` | ENG, R-engine | ENG-08, API-15 |
+| `MAYA_ENGINE_WRAP_S` | `PULSAR_CONSOLE_ENGINE_WRAP_S` | Mechanical | `serve/server.py:7428` | ENG, R-engine | ENG-12, API-15 |
+| `MAYA_FAIR_SLICE_S` | `PULSAR_CONSOLE_FAIR_SLICE_S` | Mechanical | `serve/server.py:404-407` | ENG, R-engine | ENG-11, API-15 |
+| `MAYA_GLM_THINK_RESERVE` | `PULSAR_CONSOLE_GLM_THINK_RESERVE` | Mechanical | `serve/server.py:4402` | PRM, R-prompt | PRM-13, API-15 |
+| `MAYA_HTTP_BACKLOG` | `PULSAR_CONSOLE_HTTP_BACKLOG` | Mechanical | `serve/server.py:5349` | R-api | API-02, API-15 |
+| `MAYA_LOOP_GUARD` | `PULSAR_CONSOLE_LOOP_GUARD` | Mechanical | `serve/server.py:613-617` | PRM, R-prompt | PRM-14, API-15 |
+| `MAYA_LOOP_GUARD_COLLAPSE_MAX` | `PULSAR_CONSOLE_LOOP_GUARD_COLLAPSE_MAX` | Mechanical | `serve/loop_guard.py:594` | PRM, R-prompt | PRM-15, API-15 |
+| `MAYA_MAX_BODY_MIB` | `PULSAR_CONSOLE_MAX_BODY_MIB` | Mechanical | `serve/server.py:5366-5369` | CNF, R-api | API-02, API-15 |
+| `MAYA_MOCK_RELOAD_S` | `PULSAR_CONSOLE_MOCK_RELOAD_S` | Mechanical | `serve/server.py:2771` | ENG, R-engine | ENG-02, API-15 |
+| `MAYA_MOCK_TOK_S` | `PULSAR_CONSOLE_MOCK_TOK_S` | Mechanical | `serve/server.py:7290` | ENG, R-engine | ENG-02, API-15 |
+| `MAYA_MODEL_MANAGEMENT` | `PULSAR_CONSOLE_MODEL_MANAGEMENT` | Mechanical | `serve/server.py:600-605` | OPS, R-ops | OPS-13, API-15 |
+| `MAYA_PACK_TEMPLATE` | `PULSAR_CONSOLE_PACK_TEMPLATE` | Mechanical | `serve/server.py:6858-6867` | PRM, R-prompt | PRM-08, API-15 |
+| `MAYA_PROMPT_MEMO` | `PULSAR_CONSOLE_PROMPT_MEMO` | Mechanical | `serve/server.py:2089`, `serve/frontend.py:477` | PRM, ENG, R-prompt | ENG-17, PRM-08, API-15 |
+| `MAYA_QUEUE_PING_S` | `PULSAR_CONSOLE_QUEUE_PING_S` | Mechanical | `serve/server.py:396-398` | ENG, CNF, R-engine | ENG-09, API-15 |
+| `MAYA_REQUEST_QUIET_S` | `PULSAR_CONSOLE_REQUEST_QUIET_S` | Mechanical | `serve/server.py:742` | ENG, R-engine | ENG-07, API-15 |
+| `MAYA_REQUEST_TIMEOUT_S` | `PULSAR_CONSOLE_REQUEST_TIMEOUT_S` | Mechanical | `serve/server.py:5355-5359` | R-api | API-02, API-15 |
+| `MAYA_RESTART_ON_UPDATE` | `PULSAR_CONSOLE_RESTART_ON_UPDATE` | Mechanical | `serve/update.py:21`, `serve/server.py:2873` | OPS, R-launch | OPS-11, API-15 |
+| `MAYA_SAVINGS_PATH` | `PULSAR_CONSOLE_SAVINGS_PATH` | Mechanical | `serve/savings.py:28-30` | OPS, R-ops | OPS-21, API-15 |
+| `MAYA_SERVER_LOG` | `PULSAR_CONSOLE_SERVER_LOG` | Mechanical | `serve/server.py:7101` | R-api | API-16, API-15 |
+| `MAYA_TURN_TRACE` | `PULSAR_CONSOLE_TURN_TRACE` | Mechanical | `serve/server.py:2093` | API, ENG, R-api | API-16, API-15 |
+| `MAYA_UPDATE_CHECK` | `PULSAR_CONSOLE_UPDATE_CHECK` | Mechanical; meaning changes to opt-in (SEC-5) | `serve/update.py:75` | OPS, CNF, R-ops | OPS-22, API-15 |
+| `MAYA_VIDEO_MAX_FRAMES` | `PULSAR_CONSOLE_VIDEO_MAX_FRAMES` | Mechanical | `serve/server.py:1926-1931` | RSP, ENG, R-resp | RSP-18, API-15 |
 | `MAYA_PULL_COMMAND` | none | Removed (SEC-7): the download command is not overridable from the environment | `serve/server.py:3115-3121` | OPS, R-ops | OPS-15 |
+
+Notes on section 3.1, recorded by the packages that ported these settings (merged on
+2026-11-15). The statuses above stay Mechanical; rule 9 gives every new name.
+
+- **Every setting above except `MAYA_PULL_COMMAND`** is read by API-15 (commit `9671312a`)
+  in `console-core::config::EnvSettings`, whose table is `SERVER_SETTINGS`; the package in
+  the last column uses the value. `console/crates/console-core/tests/api15_naming.rs` fails
+  when this table and `SERVER_SETTINGS` disagree. `MAYA_PULL_COMMAND` stays Removed:
+  API-15 does not read `PULSAR_CONSOLE_PULL_COMMAND`, and the same test asserts it
+  (SEC-7.1).
+- **`PULSAR_CONSOLE_PROMPT_MEMO`** has three readings: `0` (off), `verify` (on, and each
+  remembered prompt is checked against a whole preparation) and any other value (on).
+  API-15 exposes them as `EnvSettings::prompt_memo`, of type `PromptMemo` (`Off`, `On`,
+  `Verify`).
+- **`PULSAR_CONSOLE_HTTP_BACKLOG`, `PULSAR_CONSOLE_MAX_BODY_MIB` and
+  `PULSAR_CONSOLE_REQUEST_TIMEOUT_S`** are fixed by API-02 (commit `d64685f7`) as the
+  constants `ENV_HTTP_BACKLOG`, `ENV_MAX_BODY_MIB` and `ENV_REQUEST_TIMEOUT_S` of
+  `console_http::transport`. The transport reads no environment: its parse functions
+  (`parse_backlog`, `parse_max_body_bytes`, `parse_request_timeout`) take the raw text, and
+  API-08 wires the variables. Under BRAND-1 the 413 message names the new variable:
+  `the request body is larger than N MiB (PULSAR_CONSOLE_MAX_BODY_MIB raises the limit)`,
+  where the donor names `MAYA_MAX_BODY_MIB`. The test
+  `console-http::api02_donor::a_body_over_the_limit_is_refused_unread` pins it.
+- **`PULSAR_CONSOLE_MOCK_RELOAD_S` and `PULSAR_CONSOLE_MOCK_TOK_S`** are confirmed by
+  ENG-02 (commit `c86cf84f`) as `console_engine::fake::RELOAD_DELAY_ENV` and
+  `console_engine::fake::TOK_S_ENV`. The reload delay is 2 s when the variable is unset; it
+  is read as Python's `float()` reads it and slept at each context reload. Its text is taken
+  from the environment when the engine is built, where the donor reads the environment at
+  each reload (a timing difference ENG-12 settles). The speed is read at start; unset, empty
+  or 0 means no pacing. The legacy names are not read.
+- **`PULSAR_CONSOLE_QUEUE_PING_S`** is implemented by ENG-09 (commit `5880f298`) as
+  `console_core::fifo::QUEUE_PING_ENV` and read by
+  `console_core::fifo::queue_ping_interval()`. It is parsed as the donor parses it: unset,
+  empty or unreadable gives 2 s; a value below 0.01, NaN included, gives 0.01 s; `inf`, or
+  a value too long to represent, means never.
+  ENG-09 also fixes four log lines under the `[console] ` prefix (rule 7):
+  `[console] the engine's places: <old> -> <new> (<used> in use)`;
+  `[console] a place was given back that is not held (...)`;
+  `[console] this request waited <s> s for the engine (<n> request(s) behind it)`, where on
+  a cancel `<n>` includes the request itself, as in the donor; and the queue watchdog's
+  `[console] WARNING: ...` line about a wedged FIFO, which names
+  `PULSAR_CONSOLE_REQUEST_QUIET_S` and `PULSAR_CONSOLE_DRAIN_S`. The phase text that line
+  prints comes from the engine and is made log-safe by ENG-10 (lead decision LD35).
 
 ### 3.2 Responses limits
 
@@ -117,6 +160,12 @@ row has one old name in backticks in the first column.
 rule 9 each becomes `PULSAR_CONSOLE_GLM_RESPONSES_<KEY>`. The Responses planner proposed
 `PULSAR_CONSOLE_RESPONSES_<KEY>` instead, dropping `GLM_`; that is open item N2. Owner:
 RSP-01. Records: RSP, R-resp.
+
+API-15 (commit `9671312a`) reads the 18 names under the rule-9 form
+`PULSAR_CONSOLE_GLM_RESPONSES_<KEY>` as raw text (`console-core::config::RESPONSES_LIMITS`,
+`EnvSettings::responses`) and lists them among the run-config `env` entries the server
+reads itself; validation stays with RSP-01. If N2 drops `GLM_`, `RESPONSES_PREFIX` and
+`RESPONSES_LIMITS` change with it, and `tests/api15_naming.rs` follows this table.
 
 | Old name | New name | Status |
 | --- | --- | --- |
@@ -186,8 +235,9 @@ names reach only the Rust fake engines or are unused.
 | --- | --- | --- | --- | --- | --- |
 | `maya-<name>.json` (run configs) | `pulsar-<name>.json` | Decided (B2) | `serve/models.py:682`, `:724-727` | OPS, R-ops | API-15, OPS-07 |
 | `maya-` stripped from public model names | `pulsar-` stripped | Decided (B2), follows the file prefix | `serve/model_api.py:45-52` | OPS | OPS-12 |
-| `.maya-switch.json` | `.pulsar-switch.json` | Decided (B2) | `serve/models.py:32` | OPS, R-ops | OPS-10 |
-| `.maya-delete.json` | `.pulsar-delete.json` | Decided (B2) | `serve/models.py:33` | OPS, R-ops | OPS-09 |
+| `maya-<name>.shared-settings.json` | `pulsar-<name>.shared-settings.json` | Decided (B2), follows the run-config prefix | `serve/server.py:7369`, `serve/models.py:682` | OPS | API-15, API-13 |
+| `.maya-switch.json` | `.pulsar-switch.json` | Decided (B2) | `serve/models.py:32` | OPS, R-ops | OPS-10, API-15 |
+| `.maya-delete.json` | `.pulsar-delete.json` | Decided (B2) | `serve/models.py:33` | OPS, R-ops | OPS-09, API-15 |
 | `.maya-verified.json` | `.pulsar-verified.json` | Decided (B2) | as cited by R-ops and R-launch | OPS, R-ops | OPS-16 |
 | `answers/` and `answers/<id>.jsonl` | unchanged | Kept; written to disk only when enabled (PRIV-1) | `serve/server.py:5130`, `:5140`, `:7348` | API, R-api | API-10 |
 | `token-savings.json` | unchanged | Kept | as cited by OPS | OPS | OPS-21 |
@@ -196,6 +246,13 @@ names reach only the Rust fake engines or are unused.
 | `maya-vision-` temporary directory prefix | a `pulsar-` prefix | Rename decided, value proposed | as cited by ENG and RSP | ENG, RSP | ENG-14 |
 | `maya-ds4-pictures-`, `maya-mm3-pictures-` | a `pulsar-` prefix | Rename decided, value proposed | as cited by RSP | RSP, R-resp | RSP-17 |
 | `maya.py`, `maya.sh`, `START-MAYA.bat` (launchers) | `pulsar-console fetch`, `pulsar-console supervise` | Decided (PLAT-3) | `serve/model_pull.py:193-205` | OPS, R-launch | OPS-11, OPS-16 |
+
+API-15 (commit `9671312a`) fixes four of these names in `console-core::config`:
+`CONFIG_PREFIX` (`pulsar-`), `SHARED_SETTINGS_SUFFIX` (`.shared-settings.json`),
+`SWITCH_FILE` (`.pulsar-switch.json`) and `DELETE_FILE` (`.pulsar-delete.json`).
+`RunConfigStore` resolves the shared-settings file and the two note files in the directory
+of the run config (`shared_settings_path`, `switch_note_path`, `delete_note_path`), as the
+lead decided on 2026-11-14 for every persisted file.
 
 Any new tracked file or directory name is also checked against the repository's
 `.gitignore` traps (directories such as `models`, `logs`, `dist`, `env`, `debug`,
@@ -226,7 +283,9 @@ file names written into a user's data directory are not tracked and are not affe
 | `[maya] ` log prefix | `[console] ` | Decided (B2) | for example `serve/server.py:926`, `:6155` | API, ENG, RSP, CNF | API-16 and every package that logs |
 | `[maya] request failed mid-answer: <message>` | `[console] request failed mid-answer: <message>` | Decided (B2, rule 7); fixed by API-01 (commit `c2392605`), which escapes control characters, U+2028 and U+2029 in the message so the line stays one line | `serve/server.py:6155` | API | API-01 |
 | "... only from Maya's own page" | product wording, same status and type | Rename decided, value proposed | `serve/server.py:6336` | API | API-03 |
-| "update Maya (./maya.sh --setup)" in request refusals | product wording | Rename decided, value proposed | `serve/server.py:2496`, `:2518`, `:2529-2530` | API | API-04 |
+| "update Maya (./maya.sh --setup)" in request refusals | the tail "update PulsarMLX Console" (for example "logit_bias: this engine does not apply token biases - update PulsarMLX Console"; "logprobs: this model's engine does not report token log-probabilities (the DeepSeek engine does - update PulsarMLX Console if it is that one)") | Rename decided, value proposed: fixed by API-04 (commit `89d40258`) in `console_core::request` (`UPDATE_HINT`), awaiting the lead's review | `serve/server.py:2496`, `:2518`, `:2529-2530` | API | API-04 |
+| "ablate: this model has no refusal direction loaded (the Models page: a direction file for it, and the switch on)" | "ablate: this model has no refusal direction loaded" (the pointer to the unported Models-page switch is dropped, POL-1.2) | Rename decided, value proposed: fixed by API-04 (commit `89d40258`), awaiting the lead's review | `serve/server.py:2502-2504` | API | API-04 |
+| `[maya] config sampling.<key>=<value>: ...` (start-up refusals and their `unknown key, ignored` notes), `[maya] sampling defaults from the config: ...`, `[maya] sampling defaults from the model: ...` | the same text with the `[console] ` prefix (rule 7); the notes for unknown keys before a refused key travel in `ConfigSamplingError::notes()` and are printed before the refusal line, in the donor's order | Decided (B2); fixed by API-04 (commit `89d40258`) in `console_core::sampling` | `serve/server.py:6899-6960`, `:7213-7215` | API | API-04 |
 | Death notes pointing to the upstream issue tracker and naming quant names | same meaning, no upstream URL or quant name | Rename decided, value proposed | as cited by ENG | ENG | ENG-08 |
 | `/api/report` "System: ..., Python ..." and "Project Maya <version>" | OS identification and `pulsar-console <version>` | Rename decided, value proposed | as cited by API | API | API-13 |
 | "Support Maya" sponsor link | none | Removed (BRAND-1) | `serve/web/sidebar.js:280`, `serve/web/lib.js:6` | WEB | WEB-10 |
@@ -254,7 +313,7 @@ file names written into a user's data directory are not tracked and are not affe
 | HTTP `User-Agent: maya` (MCP over HTTP, image fetch) | product name | Rename decided, value proposed | `serve/server.py:1824` | RSP | RSP-10, RSP-17 |
 | CLI `--engine maya` | proposed `--engine line` | Rename decided, value proposed | as cited by API | API | API-17 |
 | Quant labels `Maya-XS`, `Maya-S`, `Maya-M`, `Maya-L` and keys `maya-xs`, `maya-s`, `maya-m`, `maya-l` | neutral labels | Decided that they go (BRAND-1); labels proposed by OPS-03 | as cited by R-ops | OPS, PRM, WEB, R-ops | OPS-03 |
-| Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | API-17 |
+| Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | ENG-02 (delivers the value, commit `c86cf84f`); API-17 |
 | `Server: BaseHTTP/0.6 Python/3.x` (HTTP response header value) | `pulsar-console/<version>` | Decided (approved deviation P-1, owner decision of 2026-11-14) | Python `http.server` default; no line in `serve/` | API | API-02 |
 | `chatcmpl-`, `msg_`, `call_`, `resp_`, `item_`, `rs_`, `fc_` (id prefixes) | unchanged | Kept: wire identifiers; fixed by API-01 (commit `c2392605`) in `console_pyjson::ids` | `serve/server.py:4936`, `:5251`; `serve/frontend.py:805`; `serve/responses.py:133`, `:354`, `:412-418` | API, PRM, R-api | API-01 |
 
@@ -276,10 +335,16 @@ listed.
 | `CONSOLE_VENDOR_DIR` | `PULSAR_CONSOLE_VENDOR_DIR` | Decided (lead decision of 2026-11-14) | none (planner name) | CNF | as named in `tasks/conformance.md` |
 | `CONSOLE_VENDOR_SRC` | `PULSAR_CONSOLE_VENDOR_SRC` | Decided (lead decision of 2026-11-14); whether it and `CONSOLE_VENDOR_DIR` are one switch is settled by PRM-02 | none (planner name) | PRM | PRM-02 |
 | `CONSOLE_REQUIRE_VENDOR` | `PULSAR_CONSOLE_REQUIRE_VENDOR` | Decided (lead decision of 2026-11-14) | none (planner name) | PRM | PRM-02 |
-| `CONSOLE_PACK_TOKENIZER` | `PULSAR_CONSOLE_PACK_TOKENIZER` | Decided (lead decision of 2026-11-14) | none (planner name) | PRM | as named in `tasks/prompt.md` |
+| `CONSOLE_PACK_TOKENIZER` | `PULSAR_CONSOLE_PACK_TOKENIZER` | Decided (lead decision of 2026-11-14) | none (planner name) | PRM | PRM-04 |
 | `CONSOLE_TEST_TIME_SCALE` | `PULSAR_CONSOLE_TEST_TIME_SCALE` | Decided (lead decision of 2026-11-14) | none (planner name) | CNF | as named in `tasks/conformance.md` |
 | `CONSOLE_REQUIRE_NODE` | `PULSAR_CONSOLE_REQUIRE_NODE` | Decided (lead decision of 2026-11-14) | none (planner name) | WEB | WEB-04 |
 | `CONSOLE_E2E` | `PULSAR_CONSOLE_E2E` | Decided (lead decision of 2026-11-14) | none (planner name) | WEB | WEB-06 |
+
+PRM-04 (commit `7b58580f`) uses `PULSAR_CONSOLE_PACK_TOKENIZER` in one test only:
+`console/crates/console-tokenizer/tests/prm04_roundtrip.rs::real_pack_round_trip` reads it
+as the path of a real pack's tokenizer directory. The test is marked ignored, and it fails
+when it is run with `--ignored` and the variable is unset. PRM-04 introduces no other
+environment variable, file name or wire name.
 
 ### 3.11 Names with no donor counterpart
 
@@ -288,7 +353,12 @@ prose, outside the machine-read tables.
 
 - **Run-config key `allowed_hosts`.** Decided by the owner on 2026-11-14 (deviation
   SEC-1.1, open item OPEN-04): an optional list of further `Host` names. It is absent by
-  default. Read from the run config by API-15; enforced by API-03.
+  default. Read from the run config by API-15; enforced by API-03. API-15 (commit
+  `9671312a`) reads it as `RunConfig::allowed_hosts` and `ServerSettings::allowed_hosts`:
+  absent or null gives none, and a list of non-blank strings is kept, each entry stripped;
+  anything else stops start-up with the console's own message, `ALLOWED_HOSTS_MESSAGE`
+  (`"allowed_hosts" must be a list of host names like "pulsar.local"`). The API-03 guard
+  that enforces it is not built yet.
 - **Engine-seam names.** Fixed by ENG-01 (commit `6200f4ac`, 2026-11-14) in
   `console-core::engine`. The engine kinds, as written in logs and in the refusal line:
   `scripted`, `line-protocol`, `coordinator-adapter`, `runtime-adapter`
@@ -318,6 +388,17 @@ prose, outside the machine-read tables.
 4. **Format.** Each table row starts with the old name in backticks. A row may group
    several names that share every other column, separated by commas. Columns are not
    reordered.
+5. **Rename map.** [`rename-map.json`](rename-map.json) is the machine-readable form of the
+   renames in section 3, used by the comparator on the reference side (CNF-02, CNF-04). It
+   is derived from these tables and checked against them by the `console-conformance` test
+   `cnf02_contracts` (CNF-02, commit `8dc26783`): every entry must match exactly one row
+   (status and new value), every rename row of sections 3.1 to 3.9 must be covered or listed
+   as excluded with a reason, and every cited deviation must be approved in
+   [`deviations.md`](deviations.md). Only decided and mechanical entries are applied; a
+   proposed value is never applied, and a difference it would explain is reported
+   annotated with the entry's deviation. A change to a row of section 3 therefore updates
+   `rename-map.json` in the same change. Section 3.10 holds planner names, not donor names,
+   and has no entry.
 
 ## 5. Open items
 

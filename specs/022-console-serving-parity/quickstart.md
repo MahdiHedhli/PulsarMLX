@@ -7,7 +7,9 @@ two check scripts of section 4 were run on 2026-11-14 at commit `1a2db9b9`, with
 working tree, against the empty skeleton. Section 4 also records the negative cases, which
 were observed earlier the same day on the uncommitted working tree. Sections 3, 9 and 10
 also record the first three M1 packages, merged on 2026-11-14 (API-01, ENG-01 and CNF-01),
-and the first CI runs. Every other command is planned. At M0 the only runnable content is
+and the first CI runs. Sections 3 and 9 also record the seven packages of wave 2 of M1,
+merged on 2026-11-15 (API-02, API-04, API-15, ENG-02, ENG-09, PRM-04 and CNF-02). Every
+other command is planned. At M0 the only runnable content is
 the empty `console/` workspace skeleton and its check tools (GOV-06). Each command is
 marked **Available from** with the work package that makes it real. When a package
 lands, it updates its entries here in the same change: it replaces "planned" with the
@@ -136,6 +138,149 @@ macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`
 1.97.1); `cargo fmt --check`, `cargo clippy --locked --all-targets -- -D warnings` and
 `cargo test --locked` passed, with 182 tests in the workspace; and both check scripts of
 section 4 passed. No Linux run and no CI run covers this commit (section 10).
+
+**Observed (API-02, the HTTP/1.0 transport in `console-http::transport`)**: merged on
+2026-11-15 at commit `d64685f7`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http --lib transport
+nice -n 10 cargo test --locked -p console-http --test api02_donor
+nice -n 10 cargo test --locked -p console-http --test api02_transport
+```
+
+In the package clone before the merge, 29 unit tests, 8 donor tests and 21 transport tests
+passed, and the `console-http` suite passed 15 runs in a row; the lead's run at
+`8ea4c27a`, below, confirmed them. The transport file took about 3.5 s, because its timeout
+and watcher tests wait 1 to 2 s on the real clock. These are claims about the transport
+with a test handler only; no engine is involved. The request head is parsed by hand by
+CPython's rules, without `httparse` (lead decision LD34 in
+[tasks.md](tasks.md#reconciliations), R29). Not done: the donor rows
+`RequestBodies::test_a_chunked_body` and `RequestBodies::test_a_malformed_body_is_a_400`
+need the router, validation and the chat route (API-03, API-04, API-08), and only their
+transport parts are tested; API-08 wires the three environment settings into the
+transport; the `HEAD` support of P-11 needs a transport extension (WEB-02); and Python's
+error page for a refused request head when `cors_origins` is set is proposal P-22,
+awaiting the owner's decision
+([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
+
+**Observed (API-04, request validation and sampling in `console-core::request` and
+`console-core::sampling`)**: merged on 2026-11-15 at commit `89d40258`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-core --test api04_request --test api04_sampling
+nice -n 10 cargo test --locked -p console-core --lib request::
+```
+
+In the package clone before the merge, the 33 integration tests (17 in `api04_request`, 16
+in `api04_sampling`) and the 15 unit tests the second command selects (13 in
+`console-core::request` and 2 in `console-core::engine::request`, whose path the filter
+also matches) passed offline in under a second, with no sockets or clocks; the two
+integration binaries passed 50 runs in a loop. The tests pin every validation message with
+the input that triggers it, CPython's `float()` and `int()` whitespace rules (U+001C to
+U+001F are not stripped), the SEC-6 underscore stripping (also enforced in
+`effective_sampling`), the POL-1 `ablate` refusal, the start-up notes carried with a config
+refusal, and a 48-row precedence matrix (the request, then the shared defaults, then the
+run-config block, or the model's defaults when the config has no block). The Unicode
+tables were recorded from CPython 3.14.7 with `python3 -I` and the standard library only;
+no donor code was run. Not done: the joint test of the SamplingKeys expectations through
+the engine encoder needs ENG-03 (M3), and the HTTP halves of the SharedSettings rows
+belong to API-13 and API-08.
+
+**Observed (API-15, the run-config store and environment settings in
+`console-core::config`)**: merged on 2026-11-15 at commit `9671312a`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-core config::
+nice -n 10 cargo test --locked -p console-core \
+  --test api15_store --test api15_settings --test api15_naming --test api15_donor
+```
+
+In the package clone before the merge, 37 unit tests and 37 integration tests (14 in
+`api15_store`, 12 in `api15_settings`, 4 in `api15_naming`, 7 in `api15_donor`) passed,
+and each of these test sets passed 50 runs in a loop. `api15_naming` reads
+`contracts/naming.md` and fails when its section 3.1 or 3.2 and `EnvSettings` disagree.
+`api15_store` shows that an untouched run config is rewritten byte for byte as Python's
+`json.dumps(obj, indent=1)` writes it (on five CPython-recorded documents), that a 0600
+config and its `.prev` stay 0600 across saves (Unix), and that concurrent writers never
+leave a partial config. Not done: five of its seven donor rows need the model routes of M7
+or the listener, and only their run-config parts are tested; the typed accessors it did
+not build go to ENG-15 and the OPS packages of M7; and five differences in the store are
+proposal P-23, awaiting the owner's decision.
+
+**Observed (ENG-02, the scripted engine and the test engines in `console-engine::fake`)**:
+merged on 2026-11-15 at commit `c86cf84f`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-engine fake
+```
+
+In the package clone before the merge, 52 unit tests and 9 integration tests (module
+`fake` of `tests/eng02_seam.rs`) passed offline, and the same filter passed 20 runs in a
+row. The scripted engine and every test engine built on it report synthetic provenance,
+except the test-only `NotSyntheticEngine`, which the guard refuses. Qualified on synthetic
+backends only. Not done: none of its 21 listed donor rows is re-expressed yet (they need
+ENG-10, API-07, API-08 or the line-protocol client of M3), and two timing differences on
+a context reload are left to ENG-12.
+
+**Observed (ENG-09, the engine FIFO in `console-core::fifo`)**: merged on 2026-11-15 at
+commit `5880f298`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-core --lib fifo
+nice -n 10 cargo test --locked -p console-core \
+  --test eng09_fair_lock --test eng09_queue --test eng09_stress
+```
+
+In the package clone before the merge, 20 unit tests, 10 translated donor tests, 15 queue,
+log and watchdog tests and 4 stress tests passed, offline on tokio's paused time, in under
+a second, and 50 of 50 runs in a loop passed. Each stress run makes 1,000 random
+operations and keeps its own tally of the places the tasks really hold. Without capacity
+changes, the places held never exceed the capacity and always equal the FIFO's count, and
+no over-release line is logged. Every run ends with no place held or in use, nobody in
+line and no yield claim outstanding. With capacity changes, the run reports moments where
+more places are held than the capacity: an exclusive release is worked out against the
+capacity at release time, as the donor does, which the lead kept (LD36). Not done: the
+GoneClients and QueuedKeepAlives rows need the HTTP layer (API-07 on API-02's transport,
+with ENG-10).
+
+**Observed (PRM-04, the byte-level BPE tokenizer in `console-tokenizer`)**: merged on
+2026-11-15 at commit `7b58580f`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-tokenizer
+```
+
+In the package clone before the merge, 55 unit tests and 57 integration tests
+(`tests/prm04_*.rs`) passed in about 25 s in a debug build, about 17 s of it in the
+2,000,000-character whitespace round trip; one test is ignored. The donor ports are
+`--test prm04_tokenizer_glm` (11 tests, from `tools/test_tokenizer_glm.py`) and
+`--test prm04_detok` (the 3 tests of `serve/test_detok.py` and 3 more).
+`--test prm04_roundtrip` checks decode(encode(s)) over the donor's boundary corpus for
+qwen35, glm4, glm5, deepseek3 and minimax (minimax round-trips to NFC), and the
+2,000,000-character whitespace runs. The vocabularies are synthetic, trained in code; no
+Python oracle was run. The Unicode-table differences it pins are listed in
+[research.md](research.md), Decision 5. Optional real-pack check:
+
+```sh
+PULSAR_CONSOLE_PACK_TOKENIZER=<pack>/tokenizer \
+  nice -n 10 cargo test --locked -p console-tokenizer --test prm04_roundtrip -- --ignored
+```
+
+Without the variable the test is reported ignored, and round trips on real vocabularies
+are unverified. Not done: end-to-end id parity against the donor (PRM-08); and its
+refusals of malformed pack inputs and its size limits are proposal P-24, awaiting the
+owner's decision.
+
+**Observed (lead's gate run after wave 2 of M1)**: on 2026-11-15 at commit `8ea4c27a`, on
+macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
+1.97.1); `cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings`
+passed; `cargo test --locked` gave 668 passed, 0 failed and 1 ignored, the ignored test
+being `console-tokenizer` `prm04_roundtrip::real_pack_round_trip`, which needs a real
+pack's tokenizer directory named by `PULSAR_CONSOLE_PACK_TOKENIZER` and reports unverified
+without it; and both check scripts of section 4 passed. The parity ledger at this commit
+has 27 of 913 rows resolved (26 `rust-test`, 1 `deviation`: API-02 4, API-04 8, API-15 2,
+ENG-09 10, PRM-04 3) and 886 `pending`. No Linux run and no CI run covers this commit
+(section 10).
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -322,6 +467,26 @@ Observed on 2026-11-14 in the package clone before the merge; the 11 unit tests 
 passed again in the lead's run at `fb87f8a2` (section 3). None of the planned subcommands
 is built.
 
+**Observed (CNF-02, the scenario format in `console-conformance::scenario`)**: merged on
+2026-11-15 at commit `8dc26783`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-conformance scenario::
+nice -n 10 cargo test --locked -p console-conformance \
+  --test cnf02_samples --test cnf02_contracts
+```
+
+In the package clone before the merge, the 70 unit tests of the loader, the 7 sample tests
+and the 9 contract tests passed offline in well under a second, and the crate's tests
+passed 50 runs in a loop. They load the eleven sample scenarios in
+`console/crates/console-conformance/tests/data/scenarios/` and check
+`contracts/conformance-scenario.schema.json` against the loader table,
+`contracts/rename-map.json` against `contracts/naming.md` and `contracts/deviations.md`,
+and `contracts/volatile-fields.json` against `contracts/parity-ledger.md` section 1.1.
+Nothing runs a server or a scenario: the client, comparator, process harness and runner
+arrive with CNF-03, CNF-04, CNF-07 and CNF-09. The `cnf` binary does not expose the
+loader.
+
 ## 10. CI jobs
 
 `.github/workflows/console.yml` is path-filtered to console paths. Its blocking jobs each
@@ -343,7 +508,9 @@ skeleton and the M1 scaffold), ran two workflows, and both succeeded: `console` 
 repository's own "macOS baseline" workflow (run 43674353647: classify, Apple MLX
 small-fixture validation, Apple Silicon workspace baseline, aggregate status). Nothing has
 been pushed since, so no CI run covers API-01, ENG-01 or CNF-01, and CNF-01's revision of
-`console.yml`, described below, has not run.
+`console.yml`, described below, has not run. As of 2026-11-15 (commit `8ea4c27a`) nothing
+has been pushed since `0f4bc320` either: no CI run covers the seven packages of wave 2, and
+the Linux behavior of the M1 code is unobserved.
 
 CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
 rust-linux and rust-macos run from `console/`. Every failing step prints one

@@ -1,7 +1,8 @@
 # Allowing non-synthetic engines
 
 - **Status**: Normative note, dated 2026-11-14. The provenance type and the single guard
-  function exist (ENG-01); nothing calls the guard yet.
+  function exist (ENG-01), and the scripted engine reports synthetic provenance (ENG-02);
+  nothing calls the guard yet.
 - **Requested by**: the owner, on 2026-11-14, after checkpoint 1 of feature
   [`022-console-serving-parity`](../../specs/022-console-serving-parity/).
 - **Maintained by**: every task that adds, moves or removes an enforcement point of the
@@ -23,10 +24,16 @@ any other engine.
 
 As of 2026-11-14 the provenance type, `console_core::engine::Provenance`, and the single
 guard function, `console_core::engine::require_synthetic`, exist in `console-core::engine`
-with the tests that pin them (ENG-01, commit `6200f4ac`). No admission path calls the guard
-yet: the turn driver that calls it on every admission path (ENG-10) and the refusal at
-process start (API-08) are planned, so nothing in the server enforces the rule yet. Besides
-the guard, only the M0 repository checks (`console/tools/check-hygiene.sh` and
+with the tests that pin them (ENG-01, commit `6200f4ac`). As of 2026-11-15 the scripted
+engine of `console-engine::fake` and every test double built on it report synthetic
+provenance, and the scripted engine's default model name is `pulsar-console-synthetic`
+(ENG-02, commit `c86cf84f`). A test-only engine that reports a provenance that is not
+synthetic, `NotSyntheticEngine`, exists behind the `test-support` Cargo feature of
+`console-engine` for the refusal tests; no configuration key, command-line flag or
+environment variable can select it, and the guard refuses it. No admission path calls the
+guard yet: the turn driver that calls it on every admission path (ENG-10) and the refusal
+at process start (API-08) are planned, so nothing in the server enforces the rule yet.
+Besides the guard, only the M0 repository checks (`console/tools/check-hygiene.sh` and
 `console/tools/check-boundary.sh`) exist. The table in "Where the rule is enforced" tracks
 each enforcement point as it lands. Until a row there says otherwise, read every statement
 below about code as planned.
@@ -181,10 +188,11 @@ PulsarMLX's Rust engine work outside `console/`, whose evidence ADR 0008 keeps u
    engine that declares none, is still refused.
 3. **Make every surface tell the truth.** The health and status fields of `/health` and
    `/v1/status` (planned, API-06), the dashboard badge (planned, WEB-07), the model-name
-   rule (planned, ENG-02), the start-up narration and the logs (planned, ENG-08 and
-   API-17) all report the real engine as what it is. PLAN-1 (the permanent synthetic
-   badge) and PLAN-2 (the default model name `pulsar-console-synthetic`) change
-   accordingly; what replaces them is decided in the new ADR.
+   rule (`console_engine::fake::DEFAULT_MODEL_NAME`, ENG-02), the start-up narration and
+   the logs (planned, ENG-08 and API-17) all report the real engine as what it is. PLAN-1
+   (the permanent synthetic badge) and PLAN-2 (the default model name
+   `pulsar-console-synthetic`) change accordingly; what replaces them is decided in the new
+   ADR.
 4. **The engine itself.** It passes the engine conformance suite (planned, ENG-18) in the
    profile that OPEN-21 makes required. It uses the model's own tokenizer and its own chat
    template at run time; the template comes from the model directory or an explicit
@@ -236,13 +244,14 @@ does.
    of the guard is unconditional: no `if`, `cfg` or Cargo feature, environment variable,
    configuration key or command-line flag decides whether the guard runs, as a reading of
    each call site found by the search confirms.
-3. **The binary refuses.** Start `pulsar-console` against a test engine that reports a
-   non-synthetic provenance: in M1 a scriptable test engine of ENG-02 that reports a
-   non-synthetic provenance, as the API-08 test does, and from M3 also a fake line-protocol
-   engine that does not declare synthetic provenance in its start-up lines (the test
-   engine and how it is
-   selected are filled in here by API-08 in M1; the line-protocol case is added by the M3
-   line-protocol tasks). Expect one line on standard error that names the engine kind,
+3. **The binary refuses.** Start the server's entry point against a test engine that
+   reports a non-synthetic provenance. The shipped `pulsar-console` binary cannot select
+   such an engine: the test-only engine of ENG-02 sits behind a Cargo feature that only
+   tests enable. The API-08 test (planned) therefore runs the server's entry function in a
+   child process of its own test executable, with that engine handed in directly; API-08
+   records the test's name here. From M3 the same check is also made with a fake
+   line-protocol engine that does not declare synthetic provenance in its start-up lines
+   (added by the M3 line-protocol tasks). Expect one line on standard error that names the engine kind,
    what the engine reported, and the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`,
    then a non-zero exit status, with no request served.
 
@@ -254,7 +263,7 @@ does.
 | The single guard function, called before any engine serves a request | `console/crates/console-core/src/engine/guard.rs`: `console_core::engine::require_synthetic(&EngineDescriptor) -> Result<(), ProvenanceRefused>`; the refusal line is the `Display` of `ProvenanceRefused`, and `ProvenanceRefused::to_failure` gives the failure for restart, switch and reload; pinned by the eight tests of `console-core::eng01_guard`: `the_guard_admits_synthetic_provenance_for_every_kind`, `the_guard_refuses_every_provenance_that_is_not_synthetic`, `the_guard_refuses_an_engine_that_declares_no_provenance`, `the_guard_refuses_whatever_else_the_descriptor_says`, `the_guard_source_has_no_bypass` (a source-level pin: no environment read, conditional compilation, feature switch or configuration lookup in the guard file, and a single admitting arm for `Provenance::Synthetic`), `the_refusal_line_names_kind_report_and_note`, `the_refusal_line_text` and `a_refusal_at_restart_is_a_poisoned_start_failure_with_the_same_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`); no call site yet (ENG-10, API-08) |
 | Call of the guard on every admission path (first start, restart, model switch, context reload); a refused engine is closed and serves nothing | `console-core::turn` | ENG-10 | planned |
 | Process start: refusal line on standard error and a non-zero exit status | `pulsar-console` binary | API-08 (M1 start path), kept by API-17 | planned |
-| Scripted engine reports synthetic provenance and the default model name `pulsar-console-synthetic` | `console-engine::fake` | ENG-02 (PLAN-2) | planned |
+| Scripted engine reports synthetic provenance and the default model name `pulsar-console-synthetic` | `console-engine::fake`: `mock_descriptor` in `console/crates/console-engine/src/fake/mock.rs` builds `EngineDescriptor::new(EngineKind::Scripted, Provenance::Synthetic)` for `FakeFactory`, `FakeEngine` and every test double built on them; `DEFAULT_MODEL_NAME` in `console/crates/console-engine/src/fake/mod.rs`. The refusal test engine `fake::doubles::NotSyntheticEngine` (`console/crates/console-engine/src/fake/doubles/not_synthetic.rs`) reports `Provenance::NotSynthetic`, from its first start or, built with `after_synthetic_starts`, after a given number of synthetic starts, for the restart, model-switch and context-reload paths. It exists only with the `test-support` feature; no configuration key, command-line flag or environment variable can select it, and any `generate` on it gets the guard's refusal. Pinned by `console-engine::fake::mock::tests::fake_descriptor_is_synthetic_with_the_donor_info`, `console-engine::fake::factory::tests::fake_engine_is_synthetic_and_passes_the_guard`, `console-engine::fake::tests::fake_default_model_name_is_the_decided_one`, `console-engine::eng02_seam::fake::every_double_but_one_is_synthetic_and_admitted`, `console-engine::eng02_seam::fake::the_not_synthetic_double_is_refused_before_it_serves`, `console-engine::eng02_seam::fake::the_decided_names_hold`, `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_engine_is_refused_by_the_guard`, `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_engine_never_serves_even_without_the_guard` and `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_after_synthetic_starts_serves_then_is_refused` | ENG-02 (PLAN-2) | implemented (ENG-02, commit `c86cf84f`), qualified on synthetic backends only |
 | Coordinator-shaped test adapter and blocking runtime adapter report synthetic provenance | `console-engine::runtime` | ENG-19 (checked by ENG-18) | planned |
 | Line-protocol declaration of synthetic provenance in the engine's start-up lines; an engine that declares another provenance, or none, counts as not synthetic | `console-engine::line` codec and client (ENG-04, ENG-06); the fake engine binaries make the declaration (ENG-05) | M3 line-protocol tasks (ENG-04, ENG-05, ENG-06; checked by ENG-18); the form of the declaration is open item OPEN-58 and is recorded here by those tasks | planned |
 | Synthetic marker on the server's own ready line (proposed under PLAN-1; not decided, OPEN-35) | `pulsar-console` start-up narration | API-17 | proposed, not decided |
@@ -282,3 +291,6 @@ may change with that review. The rule itself does not.
 - 2026-11-14: ENG-01 (commit `6200f4ac`) recorded the provenance type and the guard,
   `require_synthetic`, with the tests that pin them; no call site exists yet (ENG-10,
   API-08).
+- 2026-11-15: ENG-02 (commit `c86cf84f`) recorded the scripted engine's synthetic
+  provenance and default model name, and the test-only `NotSyntheticEngine` for the refusal
+  tests, with the tests that pin them; still no call site of the guard (ENG-10, API-08).

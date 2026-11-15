@@ -8,8 +8,9 @@
   checkpoint 1, the owner approved proposals
   P-1 to P-4, P-6 to P-11 and P-13 to P-16 (registered below under their P- ids, in
   "Approved proposals"), declined P-12 and P-17, deferred P-5 and P-18, and settled the
-  open values of SEC-1.1 and PLAN-2. None of the behavior described is implemented yet;
-  the "PulsarMLX Console does" lines describe planned behavior.
+  open values of SEC-1.1 and PLAN-2. The "PulsarMLX Console does" lines describe planned
+  behavior unless an entry carries an implementation note that names the package and the
+  commit that built it.
 - **Feature**: `specs/022-console-serving-parity`
 - **Written by**: GOV-06. Each implementing package adds its tests to the "Affected donor
   tests" lines and its ledger rows cite the id or sub-item id
@@ -139,6 +140,15 @@ a key.**
   `serve/test_savings.py::Page::*`,
   `serve/test_responses.py::Responses::test_auth_cors_capabilities_and_reload`. Many of
   these will keep passing as written; each is confirmed by its package.
+- **Implementation (SEC-1.1, reading the key only).** API-15 (commit `9671312a`,
+  2026-11-15) reads the optional run-config key `allowed_hosts` in `console-core::config`:
+  `RunConfig::allowed_hosts` and `ServerSettings::allowed_hosts` give no list when the key
+  is absent or null, keep a list of non-blank strings with each entry stripped, and stop
+  start-up with `ALLOWED_HOSTS_MESSAGE` for any other value. The tests
+  `console-core::api15_settings::allowed_hosts_is_absent_by_default_and_read_as_a_list` and
+  `console-core::config::document::tests::allowed_hosts_absent_by_default` pin it. Nothing
+  enforces the list yet: the guard is API-03's and is not built, and API-08 wires the list
+  into it.
 - **Packages.** API-02, API-03 (guards; enforces the `allowed_hosts` list), API-15 (reads
   the optional run-config key `allowed_hosts`), OPS-23 (ops route guards), CNF-14
   (independent security tests).
@@ -284,6 +294,15 @@ typed and never read from client input.**
   `serve/test_server.py::ThinkingBudget::*`,
   `serve/test_server.py::ThinkingBudgetAtASentenceEnd::*`) are re-expressed against the
   typed fields.
+- **Implementation.** API-04 (commit `89d40258`, 2026-11-15) implements SEC-6.1 in
+  `console_core::request::strip_internal_keys`, which removes every top-level client key
+  that starts with `_`; `console_core::sampling::effective_sampling` strips them again as a
+  second layer. The donor's `_level_shared` marker is the typed field
+  `InternalFlags::level_shared` (SEC-6.2). The tests
+  `console-core::request::tests::underscore_keys_are_stripped_at_the_boundary` and
+  `console-core::api04_request::underscore_keys_never_reach_the_checks` pin the stripping.
+  No entry point calls `strip_internal_keys` yet: the boundary strip belongs to the dialect
+  handlers (API-07, API-08 and the Responses packages).
 - **Packages.** API-04 (request boundary), PRM-11 (prompt-side flags), ENG-03 (typed
   engine parameters).
 
@@ -487,6 +506,17 @@ and its configuration keys are not ported.**
   `serve/test_server.py::RequestChecks::test_ablate`, and ablation cases inside
   `serve/test_models.py::Settings::*`, `serve/test_glm_dsa_models.py::Page::*` and
   `serve/test_mixed_gpus.py::TestMixedGpus::test_flags` (candidates).
+- **Implementation.** API-04 (commit `89d40258`, 2026-11-15) recognizes the request field
+  `ablate` in `console_core::request::check_request` and refuses `ablate: true` unless
+  `EngineCaps::ablate` is set (POL-1.1); the refusal reads "ablate: this model has no
+  refusal direction loaded", without the donor's pointer to the unported Models-page
+  switch (a wording that awaits the lead's review, [naming.md](naming.md) section 3.8). The
+  run-config key `sampling.ablate` is not ported and is reported as an unknown key
+  (POL-1.2). The tests
+  `console-core::api04_request::ablate_is_recognized_and_refused_unless_advertised` and
+  `console-core::api04_sampling::run_config_sampling_block` pin both. The ledger row
+  `serve/test_server.py::RequestChecks::test_ablate` cites POL-1 with the `deviation`
+  disposition.
 - **Packages.** API-04 (request check), OPS-05 (settings profiles), WEB-09 (Models page).
 
 | Sub-item | Difference |
@@ -637,6 +667,11 @@ fix is marked "proposed", as elsewhere in this register.
 - **Why.** A real model's name on a synthetic engine would overclaim.
 - **Approval basis.** Plan section 12 ("Overclaiming": model names containing
   `synthetic`); the exact string, the owner's decision of 2026-11-14.
+- **Implementation.** ENG-02 (commit `c86cf84f`, 2026-11-15) defines
+  `console_engine::fake::DEFAULT_MODEL_NAME` as `pulsar-console-synthetic`. The tests
+  `console-engine::fake::tests::fake_default_model_name_is_the_decided_one` and
+  `console-engine::eng02_seam::fake::the_decided_names_hold` pin it. The API-08 tests that
+  assert it in the `model` field are not built yet.
 - **Packages.** ENG-02 (the scripted engine's default model name), asserted by the tests of
   API-08; API-17 keeps it when the full command line lands.
 
@@ -708,7 +743,13 @@ later and await the owner (the two sections that follow).
 - **Why.** API planner: copying the donor's value would misrepresent the implementation.
 - **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
 - **Affected donor tests (known).** None identified yet; the implementing package
-  confirms.
+  confirms. API-02 found none among the donor test methods it owns.
+- **Implementation.** API-02 (commit `d64685f7`, 2026-11-15) implements P-1 in
+  `console_http::transport::SERVER_HEADER`: `pulsar-console/` followed by the crate version
+  (`pulsar-console/0.0.0` at that commit). The header comes right after the status line and
+  before `Date`, where Python's `send_response` writes it. The test
+  `console-http::transport::wire::tests::server_header_is_the_product_version` and the raw
+  head assertions of `console-http::api02_transport` and `console-http::api02_donor` pin it.
 - **Packages.** API-02.
 
 ### P-2
@@ -721,7 +762,23 @@ later and await the owner (the two sections that follow).
 - **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
 - **Affected donor tests (known).** None identified yet; the implementing package
   confirms. `serve/test_server.py::RequestBodies::test_a_chunked_body` sends chunked
-  framing alone and is expected to keep passing.
+  framing alone and is expected to keep passing. API-02 found none: no donor test
+  method's assertion changes, so no ledger row cites P-2.
+- **Implementation.** API-02 (commit `d64685f7`, 2026-11-15) answers the 400 in the
+  donor's bad-body form:
+  `{"error": {"type": "invalid_request_error", "message": "both Content-Length and a chunked Transfer-Encoding were sent; send only one"}}`
+  (`CONFLICTING_FRAMING`). The transport sends it for every request with a served method
+  (`GET`, `POST`, `DELETE`, `OPTIONS`), after the 501 method check and before the handler
+  is called, so it applies on every route, whether or not the route reads a body, and
+  before any router guard. The answer carries the end-headers hook's headers (CORS). It
+  applies when any `Content-Length` header is present, an empty one included, and any
+  `Transfer-Encoding` header has a comma-separated value that is `chunked` once stripped
+  and lower-cased, in any position. That is wider than the donor's decoding rule, which
+  looks only at the last value of the first header. `read_body` checks again as a second
+  guard. The code is in `console_http::transport` (`has_conflicting_framing`,
+  `serve_connection`, `read_body`). The tests
+  `console-http::transport::body::tests::both_framings_are_refused` and
+  `console-http::api02_transport::both_content_length_and_chunked_are_refused` pin it.
 - **Packages.** API-02.
 
 ### P-3

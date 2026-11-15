@@ -12,7 +12,8 @@ the planning records: seven subsystem work breakdowns ("planners" below), three 
 proposals and two red-team reviews, all reading project-maya at commit `7e68a30f` and this
 repository at `main` (`aaf076f1`). Those records are not in the repository; what the
 feature takes from them is restated in [tasks.md](tasks.md) and `tasks/`. Nothing in this
-file has been built or measured. Questions the approved plan does not decide are listed
+file was built or measured when it was written; where a package has since recorded a
+result, the entry says so with its commit. Questions the approved plan does not decide are listed
 under [Open items](#open-items) and are not decisions.
 
 **Sources checked for this file**: the approved plan; the constitution; the pinned donor
@@ -74,6 +75,12 @@ simpler to reproduce with direct control of the socket.
   order.
 - Treating framing as unobservable and using HTTP/1.1: the approved plan chose byte-level
   parity instead.
+
+**Amended on 2026-11-15 (lead decision LD34)**: API-02 writes the request-head parser by
+hand, without `httparse`, so that it accepts what CPython's request and header parsing
+accepts; `httparse` refuses lines that Python accepts. The purpose of the decision,
+byte-level parity, is unchanged. `httparse` stays a dependency of `console-conformance`
+only (see [Dependencies](#dependencies)).
 
 ## Decision 3: JSON
 
@@ -146,6 +153,44 @@ notice, as the donor does.
 - The `tokenizers` crate: a large dependency tree for behavior the donor implements in a
   few hundred lines of its own.
 - Converging with `crates/tokenizer` now: a later, separately approved step.
+
+**Recorded by PRM-04 (commit `7b58580f`, 2026-11-15)**: the residual differences between
+Python's `regex` module and `unicodedata` on one side and the Rust crates on the other,
+which the lead decided on 2026-11-14 to accept when a test names and pins them (item 28).
+Each is pinned by a named test in
+`console/crates/console-tokenizer/tests/prm04_unicode_tables.rs`. No Python oracle was run
+and no donor code was executed, so the two points marked "believed" below are not verified.
+
+1. `whitespace_class_excludes_u001c_to_u001f`: `\s` is Unicode `White_Space`
+   (`regex-syntax`), so U+001C to U+001F are not whitespace for the pre-tokenizers (`!\x1c`
+   is one piece). Python's `str.isspace` and the `re` module's `\s` include them. The
+   `regex` module's `\s` for str patterns is believed to be `White_Space`, as here.
+2. `letter_classes_use_unicode_16_tables`: `\p{L}`, `\p{N}`, `\p{M}`, `\p{P}` and `\p{S}`
+   come from Unicode 16.0.0 (`regex-syntax` 0.8.11). Characters assigned in Unicode 17 (for
+   example Sidetic U+10940) are unassigned here, so `a\u{10940}` splits into two pieces,
+   where a `regex` module with Unicode 17 tables gives one. The donor's CI installs an
+   unpinned `regex`.
+3. `nfc_tables_are_unicode_18`: the MiniMax NFC step uses `unicode-normalization` 0.1.26
+   (Unicode 18.0.0), against CPython 3.14's `unicodedata` 16.0.0 (15.0.0 on the donor CI's
+   Python 3.12). Only characters assigned after 16.0 can normalize differently. Which
+   interpreter version is the reference for such differences is open item OPEN-60; the
+   working default is CPython 3.14 (lead decision LD38).
+4. `case_insensitive_contraction_folds_long_s`: the MiniMax `(?i:'s|...)` group uses simple
+   case folding, so U+017F matches `s`. This is believed to equal the `regex` module.
+
+PRM-04 also changed how the pre-tokenizer matches. The patterns are kept verbatim as the
+donor writes them (the DeepSeek-3 CJK stage included, with its `\uXXXX` escapes). Each
+pattern's last two branches, `\s+(?!\S)|\s+`, are applied by hand: the whole run at the
+end of the text, L-1 characters before a non-space when L is 2 or more, one character when
+L is 1. The remaining branches run on the `regex` crate (leftmost-first, linear time). A
+backtracking engine (`fancy-regex` 0.20.2, with its fixed 1,000,000-entry stack) failed on
+whitespace runs of about a million characters, which the donor's `regex` module splits;
+matching can no longer fail. The unit test
+`pretok::tests::hand_applied_whitespace_tail_equals_the_whole_pattern` checks the
+equivalence against `fancy-regex` running the donor's full pattern text, which is why
+`fancy-regex` is now a test-only dependency. Runs of 2,000,000 spaces and tabs encode and
+round-trip for every scheme
+(`prm04_roundtrip::two_million_character_whitespace_runs_encode_and_round_trip`).
 
 ## Decision 6: Schema validation
 
@@ -520,10 +565,10 @@ the manifest of the pinned version.
 | `serde_json` =1.0.151 (`preserve_order`, `arbitrary_precision`) | JSON values with insertion order and exact numbers (B3) | MIT OR Apache-2.0 (checked) | API-01 |
 | `indexmap` 2.14.0 (locked) | Ordered map behind `preserve_order` (transitive) | Apache-2.0 OR MIT (checked) | API-01 |
 | `tokio` =1.53.1 | Async runtime, sockets, timers, processes, signals | MIT (checked) | API-02 |
-| `httparse` =1.10.1 | HTTP/1.x request-head parsing for the hand-written transport (B1) | MIT OR Apache-2.0 (checked) | API-02 |
+| `httparse` =1.10.1 | HTTP/1.x response parsing in the raw conformance client; not used by the transport, whose request-head parser is written by hand (LD34) | MIT OR Apache-2.0 (checked) | API-02 (pinned with the M1 scaffold); used by CNF-03 |
 | `libc` =0.2.189 | Operating-system randomness for ids; signals, process groups, POSIX calls in lifecycle and supervision | MIT OR Apache-2.0 (checked) | API-01 |
-| `fancy-regex` =0.20.2 | Pre-tokenizer patterns with look-around | MIT (checked) | PRM-04 |
-| `regex` =1.12.4 | Literal alternation and Unicode classes in tokenizer, parsers and loop guards | MIT OR Apache-2.0 (checked) | PRM-04 |
+| `fancy-regex` =0.20.2 | Test-only: checks the pre-tokenizer's hand-applied whitespace tail against the donor's full patterns, which use look-around | MIT (checked) | PRM-04 |
+| `regex` =1.12.4 | Pre-tokenizer patterns (with the whitespace tail applied by hand), literal alternation and Unicode classes in tokenizer, parsers and loop guards | MIT OR Apache-2.0 (checked) | PRM-04 |
 | `unicode-normalization` =0.1.26 | NFC for the MiniMax tokenizer path | (MIT OR Apache-2.0) AND Unicode-3.0 (checked) | PRM-04 |
 | `minijinja` | Chat-template runtime (B4) | Not yet checked | PRM-03 |
 | `minijinja-contrib` | Python string-method compatibility for templates (B4) | Not yet checked | PRM-03 |
@@ -546,10 +591,10 @@ with `workspace = true` and add only the features their package needs.
 | `serde_json` =1.0.151 | `default-features = false`; `std`, `preserve_order`, `arbitrary_precision` | `console-pyjson`, `console-core`, `console-tokenizer`, `console-http`, `console-testkit`, `console-conformance` | Binding decision B3: order-preserving, exact-number JSON across the workspace |
 | `libc` =0.2.189 | default (`std`) | `console-pyjson`, `console-testkit`, `console-conformance` | `getentropy` for ids (API-01; no `uuid`); process groups and signals (CNF-07, the API-19 process helper) |
 | `tokio` =1.53.1 | `default-features = false` at workspace level; `console-core`: `rt`, `sync`, `time`, `macros` (dev adds `test-util`); `console-http`: `rt`, `rt-multi-thread`, `net`, `io-util`, `time`, `sync`, `macros` (dev adds `test-util`); `console-testkit`: `rt`, `rt-multi-thread`, `net`, `io-util`, `time`, `sync`, `macros` | `console-core`, `console-http`, `console-testkit` | Hand-written HTTP/1.0 transport (API-02, B1); FIFO with `Mutex` and `Notify` and paused-time tests (ENG-09); spawned turn tasks and bounded channels (ENG-10); in-process test server (API-19) |
-| `httparse` =1.10.1 | default (`std`) | `console-http`, `console-conformance` | Request-head parsing for the transport (API-02) and response parsing in the raw client (CNF-03) |
+| `httparse` =1.10.1 | default (`std`) | `console-conformance` | Response parsing in the raw client (CNF-03). Since 2026-11-15 `console-http` does not use it: its request-head parser is written by hand so that it accepts what CPython accepts (LD34) |
 | `sha2` =0.10.9 | `default-features = false` | `console-core`, `console-conformance` | SHA-256 response owner id (API-03 `response_owner`) and the vendor-template SHA-256 check (CNF-02) |
-| `fancy-regex` =0.20.2 | `default-features = false`; `std`, `unicode` | `console-tokenizer` | Pre-tokenizer patterns with look-around (PRM-04) |
-| `regex` =1.12.4 | `default-features = false`; `std`, `unicode` | `console-tokenizer` | Literal alternation and Unicode classes (PRM-04) |
+| `fancy-regex` =0.20.2 | `default-features = false`; `std`, `unicode` | `console-tokenizer`, as a dev-dependency only since 2026-11-15 | A unit test that checks the hand-applied whitespace tail against the donor's full patterns (PRM-04, Decision 5) |
+| `regex` =1.12.4 | `default-features = false`; `std`, `unicode` | `console-tokenizer` | Pre-tokenizer patterns, literal alternation and Unicode classes (PRM-04) |
 | `unicode-normalization` =0.1.26 | default (`std`) | `console-tokenizer` | NFC for the MiniMax pre-tokenizer path (PRM-04) |
 
 The licenses above matter once a binary is distributed: a notices file for the linked
