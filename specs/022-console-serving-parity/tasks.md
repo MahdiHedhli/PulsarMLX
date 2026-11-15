@@ -6,7 +6,10 @@
 
 **Date**: 2026-11-14
 
-**Status**: Planned. No task in this list is implemented. When the work is built, the
+**Status**: In progress. Milestone M0 is committed and was accepted at owner checkpoint 1 on
+2026-11-14. Milestone M1 is being built: each task that has landed carries a dated note
+with its merge commit, and its checkbox is ticked only when its full definition of done
+holds, so a task that is built can still be open. Every later milestone is planned. The
 strongest claim any task can support is "qualified on synthetic backends": no real model is
 served, no donor engine runs, and hardware readers are verified only against fixtures.
 
@@ -581,6 +584,46 @@ keeps the donor's behavior where an approved proposal now applies.
     missing one is refused; names are compared without regard to case; any port, or none,
     is accepted; an `allowed_hosts` entry that names a port matches only that port; no
     trimming, no IPv6 normalization, no forgiveness of a trailing dot.
+  - LD44 (2026-11-15, with CNF-04): the value of the `Content-Length` header is a derived
+    value in comparisons. The normalizer replaces it with the length of the normalized
+    body, only when the read was complete, the framing is `Content-Length` and the header
+    equals the number of body bytes received; the header's name and position stay
+    observable. A follow-up to CNF-04 builds it in wave 5, together with three tightenings
+    of the comparator: a stored reference must be a fixed point of normalization; an
+    annotation names the kind of difference it covers or carries the expected values; and
+    some `json-key` fields apply to the root object only.
+  - LD45 (2026-11-15, with API-07): until the prompt packages of M2 land, the chat route of
+    M1 builds its prompt with a PulsarMLX-authored stand-in form of role and content lines
+    behind the prompt seam, encoded with the byte tokenizer. It is not a vendor template
+    and not a fallback: from M2 on, start-up fails without a template (B4). Usage figures
+    under the stand-in are not parity figures, and donor rows that assert prompt token
+    counts or rendered prompts stay `pending`.
+  - LD46 (2026-11-15): at start the M1 entry point prints one line with the `[console]`
+    prefix that says the engine is synthetic and no real model is served. The ready line
+    carries no synthetic marker, because that marker is only proposed (PLAN-1, FR-050,
+    OPEN-35).
+  - LD47 (2026-11-15, with API-19): the process helper of `console-testkit` (API-19) and
+    the process harness of `console-conformance` (CNF-07) stay separate for now; whether
+    they merge is decided when the fake engine binaries of ENG-05 arrive in M3.
+  - LD48 (2026-11-15, with API-07): a donor test method none of whose assertions reads a
+    dialect's body may be resolved by tests that drive the request lifecycle driver
+    through API-07's probe dialect. This holds for the two rows API-07 resolved, GoneClients
+    and the ModelManagement 503 while the engine starts; a test through a real dialect is
+    named beside them when one exists. LD37 is not narrowed: a row with any assertion on a
+    dialect's body stays `pending` for that dialect's package.
+  - LD49 (2026-11-15, with API-19): the owning package that API-19 recorded for a
+    `pending` row is a working assignment, not a resolution. The package named resolves
+    the row, or, when it can only re-express part of it, leaves it `pending` and names the
+    package that completes it (LD37). The rows API-19 assigned from a task's behaviors or
+    donor sources, with no "Parity tests" line that names them, stand on that footing, and
+    the launcher-only rows are recorded by the packages named for them (CNF-10 and API-18).
+  - LD50 (2026-11-15, with CNF-04): three properties of the comparator are accepted as
+    built. The comparison document leaves out the client's own request bytes and the
+    values derived from what it keeps (byte counts and digests beside each text, per-event
+    raw bytes and field lists, the text of NDJSON lines that parsed, and wire bytes read
+    past the recorded body after a disconnect). Renames are applied to the reference side
+    scope by scope, as contracts/naming.md section 4 records. Number placeholders keep the
+    shape of the token they replace, and ISO time stamps must have Python's form.
 - **Not decided.** Who on the engine track reviews the seam draft, and in what form (FR-039,
   seam question Q12, OPEN-30). ENG-01's code may land; the seam stays a draft and ENG-01
   stays unticked until that review is recorded. Reaching the engine track goes through the
@@ -845,6 +888,11 @@ each later push remains a checkpoint decision.
     checkpoint 2; and a follow-up, built in wave 4 with a commit that cites API-03, runs
     the `Host` check also before the transport's 501 page and its P-2 400 page, which are
     answered before the check until it lands. LD39 and LD41 apply (R29).
+  - Note: The follow-up was merged on 2026-11-15 at commit `50179f0d`: the `Host` check
+    now also runs before the transport's 501 page and its P-2 400 page, through the new
+    transport hook `Handler::early_refusal`; the 431 pages have no usable headers and stay
+    as they are. This closes the gap the note above records. The checkbox stays open for
+    the ten pending donor rows and the owner's confirmation of LD30 and LD43.
   - Detail: [tasks/api.md#api-03](tasks/api.md#api-03).
 - [ ] API-04 [M1] Request validation, sampling normalization and shared defaults —
   console-core::request and console-core::sampling
@@ -982,6 +1030,9 @@ each later push remains a checkpoint decision.
     transport, with ENG-10's queued counter); only their FIFO halves are tested. The FIFO
     keeps the donor's release arithmetic, including what an exclusive holder frees after
     the capacity grew while it held (LD36, R29).
+  - Note: API-07 resolved the GoneClients row on 2026-11-15 (commit `f6c42bb4`; the ledger
+    at `f5400931` names this task's two FIFO tests beside API-07's). QueuedKeepAlives still
+    waits for the chat dialects (API-08, API-09), so the checkbox stays open.
   - Detail: [tasks/engine.md#eng-09](tasks/engine.md#eng-09).
 - [ ] ENG-10 [M1] Engine turn driver: place, ensure_engine, engine calls, drain, context
   rule, errors, non-finite retry, figures — console-core::turn
@@ -1046,6 +1097,17 @@ each later push remains a checkpoint decision.
     vocabulary is answered as the donor's tokenizer `IndexError` (ENG-10's finding,
     contracts/backend-seam.md section 12.1); and this task's error table is where approved
     deviation P-8 is mapped.
+  - Note: Built and merged on 2026-11-15 at commit `f6c42bb4`. Its definition of done
+    holds: the gone-client and keep-alive tests passed 50 runs in a loop, the error table
+    test covers every class before and after the first byte, and a fake-engine transcript
+    shows one engine STOP after a write failure. Two donor rows are resolved (GoneClients
+    and the ModelManagement 503 while the engine starts), through the probe dialect
+    (LD48). The checkbox stays open: five of its seven donor rows need a dialect (API-08,
+    API-09) or the reload path (ENG-12) and stay `pending` under LD37. A start that fails
+    during a request answers 503 as contracts/backend-seam.md section 10 says, where the
+    donor's handler does not catch the `RuntimeError` of `serve/server.py:947` and answers
+    nothing. No approved deviation covers this difference yet: the lead registers it as a
+    proposal for the owner with wave 5 of M1.
   - Detail: [tasks/api.md#api-07](tasks/api.md#api-07).
 - [ ] API-08 [M1] OpenAI Chat Completions adapter and SSE stream —
   console-http::dialect::openai; pulsar-console (the minimal M1 entry point, LD31)
@@ -1087,6 +1149,11 @@ each later push remains a checkpoint decision.
     synthetic marker unless the owner approves the one proposed under PLAN-1. This task
     also wires LD40: an `allowed_hosts` entry that cannot be parsed stops the server at
     start.
+  - Note: Follow-ups from wave 4 of M1 (lead, 2026-11-15): this task applies LD45 (the
+    stand-in prompt form behind the prompt seam until M2) and LD46 (the start line that
+    says the engine is synthetic). It may let `RouteRequest` carry the instants the
+    request head arrived and the body was read, for API-07's turn trace, and may add a way
+    to read the engine's context outside a turn's preparation.
   - Detail: [tasks/api.md#api-08](tasks/api.md#api-08).
 - [ ] PRM-04 [M1] Byte-level BPE tokenizer, ByteTokenizer and incremental detokenizer —
   console-tokenizer (new crate)
@@ -1125,6 +1192,16 @@ each later push remains a checkpoint decision.
   - Done when: the kit is used by at least the API-02 and API-03 tests, and every ledger row
     of the listed files has an owning package that a reviewer can reproduce by counting
     methods in the pinned donor files.
+  - Note: Built and merged on 2026-11-15 at commit `b1f4709a`; the lead applied its owner
+    assignments at `f5400931`, where 259 pending rows name their owning package. The tests
+    of API-02 and API-03 now use the kit. The checkbox stays open: the process helper is
+    proven against shell scripts only, until the server binary of API-08 and the fake
+    engine binaries of M3 exist, and the chat-template fixture is M2's.
+  - Note: Follow-ups from wave 4 of M1 (lead, 2026-11-15): the detail file's
+    `serve-api.tsv` and its statuses are superseded; the ledger is
+    `console/parity/ledger.json`, with the dispositions of contracts/parity-ledger.md (R19
+    and the contract win). The kit's process helper and CNF-07's harness stay separate for
+    now (LD47). The owning packages it recorded are working assignments (LD49).
   - Detail: [tasks/api.md#api-19](tasks/api.md#api-19).
 - [ ] CNF-01 [P] [M1] Conformance crate scaffold and the console.yml preflight and summary
   jobs — console-conformance (lib and cnf binary skeleton); .github/workflows/console.yml
@@ -1190,6 +1267,18 @@ each later push remains a checkpoint decision.
     observable and volatile rule of contracts/parity-ledger.md section 1.1, and the
     volatile-fields list is reviewed against the donor's response builders with a citation
     for each field.
+  - Note: Built and merged on 2026-11-15 at commit `7259f941`:
+    `console_conformance::normalize` and `::compare`, and contracts/volatile-fields.json
+    reviewed against the donor's response builders, with a citation for each of its 71
+    fields. Header names and positions and JSON key order are differences, as
+    contracts/parity-ledger.md section 1.1 says, not as the detail file's "header
+    allowlist" and "advisory key-order report" say. Its definition of done holds. The
+    checkbox stays open until the wave 5 follow-up lands: the derived `Content-Length`
+    value and three tightenings of the comparator (LD44).
+  - Note: Follow-up from wave 4 of M1 (lead, 2026-11-15): a location kind for the engine
+    tape arrives with the vision packages of M6; until then the tape is compared exactly.
+    What the comparison document leaves out, where renames are applied and the shape of
+    the placeholders are accepted as built (LD50).
   - Detail: [tasks/conformance.md#cnf-04](tasks/conformance.md#cnf-04).
 - [ ] CNF-07 [M1] Process harness for pulsar-console and the fakes —
   console-conformance::process
@@ -2409,7 +2498,9 @@ the parity routes; browser end-to-end scenarios.
     (declined 2026-11-14), because it would weaken SEC-2 while on.
   - Note: The `HEAD` support of P-11 needs a transport extension (lead, 2026-11-15): a way
     for a handler to admit more methods than the four donor methods, and a head-only
-    response. API-02's transport answers 501 to any other method before a handler sees it.
+    response. API-02's transport answers 501 to any other method before a handler's
+    `handle` is called; since commit `50179f0d` only the `early_refusal` hook sees such a
+    request first, for the `Host` check.
   - Detail: [tasks/web.md#web-02](tasks/web.md#web-02).
 - [ ] API-12 [M8] Static dashboard routes mounted in console-http — console-http (mount of
   the console-web routes)
@@ -2714,6 +2805,12 @@ go-ahead.
   - Note: The scenario format may gain a way to say how and when a step disconnects: a
     half-close mode and a disconnect right after the request, which CNF-03's client
     already supports (CNF-03's request; lead, 2026-11-15).
+  - Note: This task decides a scenario-level rule for log lines that repeat a
+    timing-dependent number of times, such as the progress lines and the start-up
+    heartbeat (CNF-04's request; lead, 2026-11-15). It also decides whether a scenario
+    carries the idle limit, so that the harness can extend the run window for the
+    `expires_at` of `/api/ps`, which lies after the run by that limit; until then a
+    scenario extends the window itself (`SideContext::extend_window`).
   - Detail: [tasks/conformance.md#cnf-09](tasks/conformance.md#cnf-09).
 - [ ] CNF-10 [M10] Shim tier: donor tests run as-is against Rust artifacts (manual job only)
   — console/conformance/oracle/ shim scripts invoked from the manual differential job
@@ -2755,6 +2852,10 @@ go-ahead.
     matrix that plan.md promises under constitution principle VIII (model family, chat
     template, tool-call syntax, checkpoint format and backend, every cell labeled
     synthetic).
+  - Note: This task builds the real ledger checker. The test kit's ledger helper (API-19)
+    checks named Rust tests at source level only, ignoring `cfg` and `ignore` attributes,
+    and its exact listing comparison, `missing_from_listing`, is not used yet (lead,
+    2026-11-15).
   - Detail: [tasks/conformance.md#cnf-12](tasks/conformance.md#cnf-12).
 - [ ] CNF-13 [P] [M10] Independent official-SDK client tests (manual job) —
   console/conformance/sdk (pyproject.toml, uv.lock, tests); the manual SDK job

@@ -35,7 +35,11 @@ environment variable can select it, and the guard refuses it. As of 2026-11-15 t
 driver (ENG-10, commit `4e7c438a`) calls the guard on every path that admits an engine
 (first start, restart, model switch, context reload, and the start after an idle unload,
 a death or a caught engine panic), in its single admission step `Host::admit`
-(`console/crates/console-core/src/turn/host.rs`). The refusal at process start (API-08)
+(`console/crates/console-core/src/turn/host.rs`). The request lifecycle driver of
+`console-http::inference` (API-07, commit `f6c42bb4`) adds no enforcement point and
+admits no engine: a request reaches an engine only through the turn driver, and a start
+that the guard refuses during a request is answered 503 `server_error` with the refusal
+line. The refusal at process start (API-08)
 is planned, and no binary exists yet, so nothing that serves requests runs the turn
 driver. Besides the guard and its call in the turn driver, only the M0 repository checks
 (`console/tools/check-hygiene.sh` and `console/tools/check-boundary.sh`) exist. The

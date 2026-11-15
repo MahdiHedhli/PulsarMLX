@@ -153,6 +153,9 @@ Notes on section 3.1, recorded by the packages that ported these settings (merge
   `[console] WARNING: ...` line about a wedged FIFO, which names
   `PULSAR_CONSOLE_REQUEST_QUIET_S` and `PULSAR_CONSOLE_DRAIN_S`. The phase text that line
   prints comes from the engine and is made log-safe by ENG-10 (lead decision LD35).
+- **`PULSAR_CONSOLE_DEBUG` and `PULSAR_CONSOLE_TURN_TRACE`** are used by API-07 (commit
+  `f6c42bb4`) through `console_http::inference::InferenceSettings::from_env`, which takes
+  them from API-15's `EnvSettings`; the lines they turn on are listed in section 3.8.
 
 ### 3.2 Responses limits
 
@@ -254,6 +257,11 @@ API-15 (commit `9671312a`) fixes four of these names in `console-core::config`:
 of the run config (`shared_settings_path`, `switch_note_path`, `delete_note_path`), as the
 lead decided on 2026-11-14 for every persisted file.
 
+API-19 (commit `b1f4709a`) names the run config that the test kit's
+`console_testkit::process::fake_config` writes `pulsar-fake.json` (`FAKE_CONFIG_NAME`): the
+donor tests' `maya-fake.json` under the `maya-<name>.json` row above. It sits next to a
+`tokenizer/` folder holding a byte-level `vocab.json` and `merges.txt`.
+
 Any new tracked file or directory name is also checked against the repository's
 `.gitignore` traps (directories such as `models`, `logs`, `dist`, `env`, `debug`,
 `release`, `target`; files such as `*.log`, `*.key`, `secrets.*`, `mcp.json`). Runtime
@@ -287,6 +295,9 @@ file names written into a user's data directory are not tracked and are not affe
 | "update Maya (./maya.sh --setup)" in request refusals | the tail "update PulsarMLX Console" (for example "logit_bias: this engine does not apply token biases - update PulsarMLX Console"; "logprobs: this model's engine does not report token log-probabilities (the DeepSeek engine does - update PulsarMLX Console if it is that one)") | Rename decided, value proposed: fixed by API-04 (commit `89d40258`) in `console_core::request` (`UPDATE_HINT`), awaiting the lead's review | `serve/server.py:2496`, `:2518`, `:2529-2530` | API | API-04 |
 | "ablate: this model has no refusal direction loaded (the Models page: a direction file for it, and the switch on)" | "ablate: this model has no refusal direction loaded" (the pointer to the unported Models-page switch is dropped, POL-1.2) | Rename decided, value proposed: fixed by API-04 (commit `89d40258`), awaiting the lead's review | `serve/server.py:2502-2504` | API | API-04 |
 | `[maya] config sampling.<key>=<value>: ...` (start-up refusals and their `unknown key, ignored` notes), `[maya] sampling defaults from the config: ...`, `[maya] sampling defaults from the model: ...` | the same text with the `[console] ` prefix (rule 7); the notes for unknown keys before a refused key travel in `ConfigSamplingError::notes()` and are printed before the refusal line, in the donor's order | Decided (B2); fixed by API-04 (commit `89d40258`) in `console_core::sampling` | `serve/server.py:6899-6960`, `:7213-7215` | API | API-04 |
+| "Project Maya is updating and starts again in a few minutes" (the 503 `overloaded_error` message of the chat routes while the updater is busy) | "PulsarMLX Console is updating and starts again in a few minutes" | Rename decided, value proposed: fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::OVERLOADED_UPDATING`, awaiting the lead's review | `serve/server.py:6258` | API | API-07 |
+| `[maya] req <api>: msgs=... max_new=... last=...` (the debug line that `MAYA_DEBUG` turns on) | `[console] req <api>: ...`, with the same fields and Python reprs | Decided (B2, rule 7); fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::DebugRequest::line` | `serve/server.py:4796-4808` | API | API-07 |
+| `[maya] trace n=<n> <mark>=<ms>... t0=<ms>` (the turn-trace line that `MAYA_TURN_TRACE` turns on) | `[console] trace n=<n> ...`; printed, as the donor's, only at the first token of a turn that is not cancelled and only once the engine-side `gen_start` mark exists, so not before the line-protocol client of M3; `t0` counts milliseconds from the process's first trace, not the absolute monotonic clock | Decided (B2, rule 7); fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::TurnTrace` | `serve/server.py:2093-2110`, `:1413-1417` | API | API-07 |
 | Death notes pointing to the upstream issue tracker and naming quant names | same meaning, no upstream URL or quant name | Rename decided, value proposed | as cited by ENG | ENG | ENG-08 |
 | `/api/report` "System: ..., Python ..." and "Project Maya <version>" | OS identification and `pulsar-console <version>` | Rename decided, value proposed | as cited by API | API | API-13 |
 | "Support Maya" sponsor link | none | Removed (BRAND-1) | `serve/web/sidebar.js:280`, `serve/web/lib.js:6` | WEB | WEB-10 |
@@ -308,6 +319,15 @@ Notes on section 3.8, recorded by the packages that fixed these texts (merged on
   cancel=<True|False>)[, expert cache H% hit]". It adds one line the donor has no
   counterpart for: "the engine panicked: it is dropped, and the next request starts it
   again" (section 3.11). The queue-wait line is ENG-09's (notes on section 3.1).
+- **The lifecycle driver's log lines.** API-07 (commit `f6c42bb4`) writes the debug and
+  turn-trace lines of the table above, and two lines in place of the donor's Python
+  tracebacks, which cannot be reproduced: `[console] traceback: <Class> in a request from
+  <peer>: <message>` for a malformed request, and `[console] exception while serving a
+  request from <peer>: <Class>: <message>` for an error the donor's handler does not
+  catch. Both are made log-safe (LD35). With `PULSAR_CONSOLE_DEBUG` set, a content part
+  whose `text` is not a string makes the request fail with the donor's 400
+  `malformed request (TypeError: sequence item N: expected str instance, X found)`, a
+  quirk ported as the donor has it.
 
 ### 3.9 Wire identifiers
 
@@ -390,8 +410,9 @@ prose, outside the machine-read tables.
   server at start, with a message that names the entry and the accepted forms, which
   API-08 wires. The refusal is 403 `permission_error` with `HOST_REFUSED_MESSAGE` (below),
   and it carries no CORS header. The transport's 431 header-limit pages are answered
-  before the `Host` check, and so, until the follow-up to API-03 lands, are its 501 for an
-  unserved method and its 400 for conflicting framing under P-2.
+  before the `Host` check. Since the follow-up to API-03 (commit `50179f0d`, 2026-11-15)
+  the check also runs before the transport's 501 for an unserved method and its 400 for
+  conflicting framing under P-2, through `Handler::early_refusal` (below).
 - **Refusal texts of SEC-1.** Fixed by API-03 (commit `60fa1461`) in
   `console_http::guard`, and accepted as written by the lead (LD41): the SEC-1.1 refusal
   `HOST_REFUSED_MESSAGE`, "requests for other host names are refused (the config's
@@ -401,6 +422,23 @@ prose, outside the machine-read tables.
   model-management routes keep the donor's own message,
   `MODEL_MANAGE_LOCAL_ONLY_MESSAGE`. The product name in these texts is
   `console_http::guard::PRODUCT_NAME`, "PulsarMLX Console".
+- **Transport hook `Handler::early_refusal`.** Added to `console_http::transport` by the
+  follow-up to API-03 (commit `50179f0d`, 2026-11-15): the hook that may refuse a parsed
+  request head before any of the transport's own answers. It returns
+  `Option<ApiError>`, and the default refuses nothing. The router implements it with the
+  `Host` allowlist only, answering `HOST_REFUSED_MESSAGE`.
+- **Lifecycle-driver names.** Fixed by API-07 (commit `f6c42bb4`) in
+  `console_http::inference`: the keep-alive comment written while a request waits with no
+  progress, `: keep-alive` followed by a blank line (`KEEP_ALIVE`), and the seams to later
+  packages, `ReloadState`, `UpdaterState` and `Attachments`, with the M1 defaults
+  `NeverReloading`, `NoUpdater` and `NoAttachments`. API-07 adds no environment variable or
+  configuration key.
+- **Test-kit names.** Fixed by API-19 (commit `b1f4709a`) in `console-testkit`: temporary
+  folders named `pulsar-console-testkit-<prefix>-<pid>-<n>-<nanos>` under the system
+  temporary folder (the ledger helper's own unit tests use
+  `pulsar-console-testkit-ledger-<pid>-<n>`). The kit reads no environment variable of its
+  own: `TestServerBuilder::env` injects values and never reads the process environment.
+  The kit's run config is listed under section 3.6.
 - **Turn-driver names.** Fixed by ENG-10 (commit `4e7c438a`) in `console_core::turn`: the
   engine's driver thread is named `console-engine-driver`, and the death text of an engine
   that panicked is `the engine panicked` (`ENGINE_PANICKED`). ENG-10 adds no environment
@@ -451,7 +489,11 @@ prose, outside the machine-read tables.
    proposed value is never applied, and a difference it would explain is reported
    annotated with the entry's deviation. A change to a row of section 3 therefore updates
    `rename-map.json` in the same change. Section 3.10 holds planner names, not donor names,
-   and has no entry.
+   and has no entry. CNF-04 (commit `7259f941`) applies the decided and mechanical entries
+   to the reference side, scope by scope: the log prefix, the last segment of a file name,
+   the value of members named `model`, whole JSON strings for text, and exact,
+   word-bounded environment names inside JSON strings and log lines. Every replacement is
+   recorded as `rename:<deviation id>`, and a proposed entry is only named as a hint.
 
 ## 5. Open items
 

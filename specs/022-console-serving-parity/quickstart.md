@@ -10,7 +10,9 @@ also record the first three M1 packages, merged on 2026-11-14 (API-01, ENG-01 an
 and the first CI runs. Sections 3 and 9 also record the seven packages of wave 2 of M1,
 merged on 2026-11-15 (API-02, API-04, API-15, ENG-02, ENG-09, PRM-04 and CNF-02), and
 sections 3, 5, 9 and 10 the four packages of wave 3 of M1, merged on 2026-11-15 (API-03,
-ENG-10, CNF-03 and CNF-07). Every other command is planned. At M0 the only runnable
+ENG-10, CNF-03 and CNF-07), and sections 3, 5, 9 and 10 the four packages of wave 4 of M1,
+merged on 2026-11-15 (API-07, API-19, CNF-04 and a follow-up to API-03). Every other
+command is planned. At M0 the only runnable
 content is the empty `console/` workspace skeleton and its check tools (GOV-06). Each
 command is marked **Available from** with the work package that makes it real. When a
 package lands, it updates its entries here in the same change: it replaces "planned"
@@ -243,7 +245,7 @@ line and no yield claim outstanding. With capacity changes, the run reports mome
 more places are held than the capacity: an exclusive release is worked out against the
 capacity at release time, as the donor does, which the lead kept (LD36). Not done: the
 GoneClients and QueuedKeepAlives rows need the HTTP layer (API-07 on API-02's transport,
-with ENG-10).
+with ENG-10); API-07 resolved the GoneClients row in wave 4 (below).
 
 **Observed (PRM-04, the byte-level BPE tokenizer in `console-tokenizer`)**: merged on
 2026-11-15 at commit `7b58580f`. From `console/`:
@@ -318,6 +320,50 @@ being the real-pack tokenizer round trip, which reports unverified without a pac
 both check scripts of section 4 passed. The parity ledger at this commit has 37 of 913
 rows resolved (35 `rust-test`, 2 `deviation`; wave 3 added API-03 4 and ENG-10 6) and 876
 `pending`. No Linux run and no CI run covers this commit (section 10).
+
+**Observed (API-07, the inference request lifecycle driver in `console-http::inference`)**:
+merged on 2026-11-15 at commit `f6c42bb4`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http --lib inference
+nice -n 10 cargo test --locked -p console-http --test api07_lifecycle --test api07_errors
+```
+
+The first command runs the 15 unit tests of `console_http::inference`; the second runs 16
+lifecycle tests and 7 error tests. In the package clone before the merge all passed, the
+lifecycle file in about 0.3 s and the error file in about 0.01 s on macOS on Apple
+Silicon, and the two integration binaries, which hold the gone-client, keep-alive and
+write-failure tests, passed 50 runs in a row; the lead's run at `f5400931`, below,
+confirmed them. A recording fake engine shows that a failed write gives exactly one engine
+stop, then the drain, then the release of the FIFO place, with the client watcher off and
+on. The error table maps every error class to its status and body before and after the
+first byte: a malformed request (P-3), a token id outside the vocabulary included, answers
+400 before the first byte and cuts the stream after it; the template and encoder refusals
+of P-8 answer 400 through the mapping point `PromptFailure`, tested with stand-ins; the
+stopping refusal answers 400 (LD42); an engine that fails to start during a request
+answers 503, as contracts/backend-seam.md section 10 says, where the donor answers
+nothing (no approved deviation covers this difference yet; the lead registers it as a
+proposal for the owner with wave 5); and an error the donor's handler does not catch
+closes the connection with nothing written. These tests use a probe dialect in place of API-08, API-09 and the
+Responses dialect, and ENG-02's synthetic engines; nothing here is qualified beyond
+synthetic backends, and no route serves a client dialect yet. Not done: five of its seven
+donor rows stay `pending` (LD37): the two EngineDeath rows, QueuedKeepAlives and the
+MaxTokens debug-line row wait for API-08 and API-09, and the Dashboard 503-while-reloading
+row for ENG-12; the seams to ENG-12, OPS-22, RSP-16, PRM-11 and PRM-12 keep their M1
+defaults; the turn trace marks only what the handler sees, so the donor's `http` and
+`body` marks wait for a change in API-08; and the line written after the first byte goes
+to standard error, where the tests cannot capture it.
+
+**Observed (lead's gate run after wave 4 of M1)**: on 2026-11-15 at commit `f5400931`, on
+macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
+1.97.1); `cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings`
+passed; `cargo test --locked` gave 1,113 passed, 0 failed and 1 ignored, the ignored test
+being the real-pack tokenizer round trip, which reports unverified without a pack; and
+both check scripts of section 4 passed. The parity ledger at this commit has 39 of 913
+rows resolved (37 `rust-test`, 2 `deviation`; wave 4 added API-07 2) and 874 `pending`.
+Of the pending rows, 259 name the package that owns them (API-19's assignment for the
+API-reader files) and the other 615 have no owner recorded yet. No Linux run and no CI run
+covers this commit (section 10).
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -423,6 +469,35 @@ line on standard error that names the engine kind, what it reported, and the not
 **Available from**: API-08 with API-07, ENG-02 and ENG-10 (M1); the documented CLI from
 API-17 (M4). Not yet available.
 
+**Observed (API-19, the HTTP test kit in `console-testkit`)**: merged on 2026-11-15 at
+commit `b1f4709a`. Until API-08's binary exists, tests start an in-process server from the
+kit: `TestServer::builder()` binds 127.0.0.1 port 0 over the API-02 transport and the
+API-03 router, and can run the scripted engine behind the ENG-10 turn driver, which
+applies the synthetic-only guard. A router given to the builder keeps its own guards, and
+separate guard settings given with it are refused at start. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-testkit
+nice -n 10 cargo test --locked -p console-http --tests
+```
+
+The first command runs the kit's 32 unit tests and 29 integration tests (`api19_server`,
+`api19_raw`, `api19_process`, `api19_ledger`); the second runs the integration tests of
+`console-http`, those of API-02 and API-03 among them, which now use the kit with no
+assertion changed. In the package clone before the merge all passed, and a 30-run loop of
+the kit's and `console-http`'s tests passed 30 of 30; in one of 13 earlier whole-workspace
+runs a summary reported one failed test whose name was not captured, and it did not
+recur. The lead's run at `f5400931` (section 3) confirmed them. `api19_ledger` checks
+`console/parity/ledger.json`: 913 rows, a valid structure, every named Rust test present
+as a test function in the source file its path names, and 244 rows in the eight
+API-reader files. The package resolves no donor row; it assigned the owning package of the
+pending rows of those files (section 3). Qualified on synthetic backends only. Not done:
+the process helper is proven against shell-script stand-ins only, until the binary of
+API-08 and the fake engine binaries of M3 exist, and the flags it passes wait for API-08
+and API-17; the chat-template fixture is M2's; the ledger checks are a source-level
+approximation that ignores `cfg` and `ignore` attributes, and the exact listing comparison
+waits for CNF-12; and the kit's own tests run on the real clock, not paused time.
+
 An Anthropic message:
 
 ```sh
@@ -464,9 +539,10 @@ on POST once the key check passes; a POST without `application/json`, other than
 decision LD39); on a loopback bind a `Host` other than `localhost`, `127.0.0.1` or `[::1]`
 (any port), or a name listed in `allowed_hosts`, gets 403 `permission_error` before
 routing. The
-transport's own 431 pages are answered before the `Host` check, and so, until a follow-up
-to API-03 lands, are its 501 page for an unserved method and its P-2 400 page. These are
-claims about the router with test handlers, on synthetic inputs only. By hand, once the
+transport's own 431 pages are answered before the `Host` check. At this merge so were its
+501 page for an unserved method and its P-2 400 page; the follow-up to API-03 at
+`50179f0d`, below, closed that gap. These are claims about the router with test handlers,
+on synthetic inputs only. By hand, once the
 binary exists:
 
 ```sh
@@ -482,6 +558,29 @@ API-08, API-09, API-11, API-12, API-13), and only their router halves are tested
 (LD30) await the owner's confirmation at checkpoint 2; and API-08 wires the guard at
 start, including the refusal to start on an `allowed_hosts` entry that cannot be parsed
 (LD40).
+
+**Observed (the follow-up to API-03: the `Host` check before the transport's own
+pages)**: merged on 2026-11-15 at commit `50179f0d`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http --test api03f_early_host
+nice -n 10 cargo test --locked -p console-http --lib -- router::tests::the_early_refusal
+```
+
+The transport's `Handler` trait has a new hook, `early_refusal`, whose default refuses
+nothing; the transport calls it once per parsed request head, before its 501 page for an
+unserved method and its P-2 400 page, and the router implements it with the `Host`
+allowlist only. The first command runs 11 tests on loopback sockets; the second the unit
+test that the hook gives the router's own `Host` refusal. In the package clone before the
+merge all passed, the integration file passed 50 runs in a loop, and no API-02 or API-03
+test was changed; the lead's run at `f5400931` (section 3) confirmed them. Observed: a
+refused `Host` with an unserved method, with `HEAD` (the 403 head, no body) or with
+conflicting framing gets 403 `permission_error`, byte for byte the router's 403 on a route
+apart from `Date`, with no CORS header; an allowed `Host` still gets the 501 and the P-2
+400; a handler without the hook behaves as before; the hook runs once per request, and a
+panic in it closes only its connection. The 431 pages, and the 400, 414 and 505 pages of
+the request line, have no usable headers and are still answered without the check.
+Qualified on synthetic inputs only.
 
 ## 6. Run through the line-protocol engine
 
@@ -529,7 +628,8 @@ defined by the conformance packages.
 
 **Available from**: the ledger skeleton from GOV-06 (M0); the comparator from CNF-04 (M1);
 the full checker and inventories from CNF-12 and the replay of captured references from
-CNF-09 (M10). Not yet available.
+CNF-09 (M10). The comparator exists as a library since CNF-04 (below); the checker and the
+replay are not yet available.
 
 The conformance runner `cnf` exists as a skeleton (CNF-01, merged on 2026-11-14 at commit
 `fb87f8a2`). From `console/`:
@@ -625,6 +725,44 @@ that the server's ready line names the bound port under `--port 0` is proposal P
 awaiting the owner's decision
 ([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
 
+**Observed (CNF-04, the normalizer and comparator in `console-conformance::normalize` and
+`::compare`)**: merged on 2026-11-15 at commit `7259f941`. It is a library; no `cnf`
+subcommand uses it yet. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-conformance \
+  --test cnf04_negative --test cnf04_contracts
+nice -n 10 cargo test --locked -p console-conformance --lib -- normalize:: compare::
+```
+
+The first command runs the 65 negative self-tests and contract checks; the second the 28
+unit tests. None is timing-sensitive. In the package clone before the merge all passed,
+and the two integration files passed 50 runs in a loop; the lead's run at `f5400931`
+(section 3) confirmed them. Each one-field mutation of a candidate gives a difference at
+the expected JSON pointer: status, reason phrase, header name and its case, header value
+and order, a missing or an extra header, a `Date` not in IMF-fixdate form or outside the
+run, JSON key order, white space and escapes, an event, an id cross-reference, a client id
+replaced by a fresh one, a tape entry, a file field, a log line or its token count, wire
+bytes after a half-close, and the exit status. Header names, their case and positions and
+JSON key order are differences, as contracts/parity-ledger.md section 1.1 says; only the
+values `contracts/volatile-fields.json` lists (71 fields, each with a donor citation) are
+replaced, and decided and mechanical renames are applied to the reference side only. A
+difference is suppressed only by an annotation that cites an approved deviation. A
+donor-shaped reference and a candidate that differ only in listed volatile values and
+decided names compare clean apart from `Content-Length`: under the shipped list, each
+`Content-Length`-framed answer whose body changes length under normalization differs in
+that header, its raw head and its framing length. Lead decision LD44 makes the header's
+value derived; a follow-up to CNF-04 builds it in wave 5. Use:
+`Normalizer::new(&load_volatile_fields(..)?, load_rename_map(..)?)`, then
+`compare_documents(..)` with the annotations and `ApprovedIds::from_register(..)` read
+from contracts/deviations.md, then `Report::passed()`; a reference stored in normalized
+form is replayed with `compare(&Normalized::stored(doc), ..)`. Qualified on synthetic
+inputs only. Not done: nothing runs a scenario end to end yet (CNF-08, CNF-09); a stored
+reference is not yet checked as a fixed point of normalization, and an annotation does
+not yet name the kind of difference it covers (both with LD44's follow-up); the engine
+tape is compared exactly until a location kind for it arrives with the vision packages of
+M6; and how hardware and machine readings are compared is open item OPEN-61.
+
 ## 10. CI jobs
 
 `.github/workflows/console.yml` is path-filtered to console paths. Its blocking jobs each
@@ -650,7 +788,8 @@ been pushed since, so no CI run covers API-01, ENG-01 or CNF-01, and CNF-01's re
 has been pushed since `0f4bc320` either: no CI run covers the seven packages of wave 2, and
 the Linux behavior of the M1 code is unobserved. The same holds at commit `6faf815b`
 (2026-11-15): no CI run covers the four packages of wave 3, and the Linux behavior of the
-M1 code, CNF-07's process harness included, is unobserved.
+M1 code, CNF-07's process harness included, is unobserved. The same holds at commit
+`f5400931` (2026-11-15) for the four packages of wave 4.
 
 CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
 rust-linux and rust-macos run from `console/`. Every failing step prints one

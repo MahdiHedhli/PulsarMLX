@@ -39,8 +39,8 @@ link resolved. All 27 lead decisions of that time were reflected in the document
 101 findings of the review pass are closed or declined with the decline accepted, and
 every residual finding of this analysis is closed (section 8).
 
-As the register stands after checkpoint 1, it holds 60 open-item ids: 44 open (23 for the
-owner, 21 for the lead) and 16 settled. The lead has made 43 decisions (section 3). The
+As the register stands after checkpoint 1, it holds 61 open-item ids: 45 open (23 for the
+owner, 22 for the lead) and 16 settled. The lead has made 50 decisions (section 3). The
 deviation register holds 37 approved deviation ids: the 23 approved with the plan and the
 14 proposals the owner approved on 2026-11-14, which keep their `P-` ids (LD29). Two
 proposals are declined and nine await the owner: P-5 and P-18, which the owner deferred,
@@ -146,10 +146,10 @@ repository (finding R-05); `quickstart.md` section 4 records each case and that 
 
 ## 3. Lead decisions
 
-The lead made 43 decisions, on 2026-11-14 and 2026-11-15: LD1 to LD16 after the documents
-were first drafted, LD17 to LD27 after this analysis was first recorded, and LD28 to LD43
-after owner checkpoint 1 (LD34 to LD38 on 2026-11-15, with wave 2 of M1, and LD39 to LD43
-on 2026-11-15, with wave 3). The labels LD1
+The lead made 50 decisions, on 2026-11-14 and 2026-11-15: LD1 to LD16 after the documents
+were first drafted, LD17 to LD27 after this analysis was first recorded, and LD28 to LD50
+after owner checkpoint 1 (LD34 to LD38 on 2026-11-15, with wave 2 of M1, LD39 to LD43 on
+2026-11-15, with wave 3, and LD44 to LD50 on 2026-11-15, with wave 4). The labels LD1
 to LD27 exist only in this file; the other documents state each of those decisions in
 words, as "decided by the lead on 2026-11-14", without a label.
 LD28 to LD30, and LD1 and LD17 in R29 of tasks.md, are also cited by label in the
@@ -210,6 +210,13 @@ confirms the details LD30 and LD43 record with the owner at checkpoint 2.
 | LD41 | The product wording API-03 fixed is accepted: "only from PulsarMLX Console's own page" and "files are read only for PulsarMLX Console's own page", and the texts of the SEC-1.1 `Host` refusal and of the SEC-1.4 local-only refusal as API-03 wrote them (`HOST_REFUSED_MESSAGE` and `LOCAL_ONLY_MESSAGE` of `console_http::guard`). Decided on 2026-11-15, with the merge of API-03. | The values of two "Rename decided, value proposed" texts and two new refusal texts (part of OPEN-35 for API-03) | tasks R29, API-03; naming 3.8 and 3.11; rename-map |
 | LD42 | The refusal while the server is stopping is answered 400 `invalid_request_error`, as the donor's `ValueError` is (`serve/server.py:4364-4365`); the API-07 detail's "503 shape" is superseded. Decided on 2026-11-15, with the merge of ENG-10. | The status of the stopping refusal (ENG-10's request to the lead) | tasks R29, API-07 |
 | LD43 | The matching details of SEC-1.1 as API-03 built them, to be confirmed with the owner together with LD30: exactly one `Host` header, and a missing one is refused; names are compared without regard to case; any port, or none, is accepted; an `allowed_hosts` entry that names a port matches only that port; no trimming, no IPv6 normalization, no forgiveness of a trailing dot. Decided on 2026-11-15, with the merge of API-03. | The matching details LD30 left to API-03 | tasks R29, API-03; deviations SEC-1.1 (implementation note); naming 3.11 |
+| LD44 | The value of the `Content-Length` header is a derived value in comparisons: the normalizer replaces it with the length of the normalized body, only when the read was complete, the framing is `Content-Length` and the header equals the number of body bytes received; the header's name and position stay observable. A follow-up to CNF-04 builds it in wave 5, together with three tightenings of the comparator: a stored reference must be a fixed point of normalization; an annotation names the kind of difference it covers or carries the expected values; some `json-key` fields apply to the root object only. Decided on 2026-11-15, with the merge of CNF-04. | How `Content-Length` is compared when normalization changes a body's length (CNF-04's request to the lead) | tasks R29, CNF-04; quickstart section 9 |
+| LD45 | Until the prompt packages of M2 land, the chat route of M1 builds its prompt with a PulsarMLX-authored stand-in form of role and content lines behind the prompt seam, encoded with the byte tokenizer. It is not a vendor template and not a fallback: from M2 on, start-up fails without a template (binding decision B4). Usage figures under the stand-in are not parity figures, and donor rows that assert prompt token counts or rendered prompts stay `pending`. Decided on 2026-11-15. | How the M1 chat route builds a prompt before M2 | tasks R29, API-08 |
+| LD46 | At start the M1 entry point prints one line with the `[console]` prefix that says the engine is synthetic and no real model is served. The ready line carries no synthetic marker, because that marker is only proposed (PLAN-1, FR-050, OPEN-35). Decided on 2026-11-15. | How the M1 binary says that its engine is synthetic | tasks R29, API-08 |
+| LD47 | The process helper of `console-testkit` (API-19) and the process harness of `console-conformance` (CNF-07) stay separate for now; whether they merge is decided when the fake engine binaries of ENG-05 arrive in M3. Decided on 2026-11-15, with the merge of API-19. | Whether the two process helpers merge (API-19's request to the lead) | tasks R29, API-19 |
+| LD48 | A donor test method none of whose assertions reads a dialect's body may be resolved by tests that drive the request lifecycle driver through API-07's probe dialect. This holds for the two rows API-07 resolved: `GoneClients::test_a_queued_request_leaves_when_its_client_goes` and `ModelManagement::test_a_request_while_the_engine_starts_gets_a_retryable_503`. A test through a real dialect is named beside them when one exists. LD37 is not narrowed: a row with any assertion on a dialect's body stays `pending` for that dialect's package. Decided on 2026-11-15, with the merge of API-07. | Whether API-07's two resolved rows need API-08 under LD37 (API-07's question to the lead) | tasks R29, API-07; ledger.json (the two rows' notes) |
+| LD49 | The owning package that API-19 recorded for a `pending` row is a working assignment, not a resolution. The package named resolves the row, or, when it can only re-express part of it, leaves it `pending` and names the package that completes it (LD37). The rows API-19 assigned from a task's behaviors or donor sources, with no "Parity tests" line that names them, stand on that footing, and the launcher-only rows are recorded by the packages named for them (CNF-10 and API-18). Decided on 2026-11-15, with the merge of API-19. | The standing of API-19's owner assignments (API-19's question to the lead) | tasks R29, API-19; ledger.json (the `package` member of pending rows) |
+| LD50 | Three properties of the comparator are accepted as built. The comparison document leaves out the client's own request bytes and the values derived from what it keeps: byte counts and digests beside each text, per-event raw bytes and field lists, the text of NDJSON lines that parsed, and wire bytes read past the recorded body after a disconnect. Renames are applied to the reference side scope by scope, as naming.md section 4 records. Number placeholders keep the shape of the token they replace, and ISO time stamps must have Python's form. Decided on 2026-11-15, with the merge of CNF-04. | What the comparison document leaves out, where renames apply and the shape of placeholders (CNF-04's questions to the lead) | tasks R29, CNF-04; naming section 4 |
 
 ## 4. Inventory
 
@@ -225,10 +232,10 @@ confirms the details LD30 and LD43 record with the owner at checkpoint 2.
 | Deviation sub-items | deviations.md | 64, no duplicate; every sub-item cited elsewhere is defined | — | yes |
 | Proposals | deviations.md | P-1 to P-18, all under "Proposed, awaiting owner decision" before checkpoint 1; every `P-` reference elsewhere is in range. Decided by the owner on 2026-11-14: 14 approved, 2 declined (P-12, P-17), 2 deferred (P-5, P-18). P-19 to P-21 were raised by M1 packages on 2026-11-14, and P-22 to P-25 on 2026-11-15; all seven await the owner at checkpoint 2 | — | yes |
 | Contracts | contracts/README.md | 4 written in M0 (backend-seam, naming, parity-ledger, deviations) plus the index; added by M1 packages since: `cli.md` (a draft, CNF-07) and the scenario schema, the rename map and the volatile-field list (CNF-02); later contracts listed as planned with their packages | — | yes |
-| Ledger rows | ledger.json | 913 rows, sorted by id, 44 donor files, fields exactly `id`, `file`, `class`, `method`, `subsystem`, `disposition`; all `pending`; no null class. At commit `6faf815b` (2026-11-15), 37 rows are resolved (35 `rust-test`, 2 `deviation`) and 876 are `pending` | 913 rows, all pending (GOV-06); schema in parity-ledger 3 and 3.1 | yes for the M0 ledger; the resolved rows are re-derived at the next rerun |
+| Ledger rows | ledger.json | 913 rows, sorted by id, 44 donor files, fields exactly `id`, `file`, `class`, `method`, `subsystem`, `disposition`; all `pending`; no null class. At commit `f5400931` (2026-11-15), 39 rows are resolved (37 `rust-test`, 2 `deviation`) and 874 are `pending`; 259 of the pending rows name their owning package (API-19), and 615 have no owner recorded yet | 913 rows, all pending (GOV-06); schema in parity-ledger 3 and 3.1 | yes for the M0 ledger; the resolved rows are re-derived at the next rerun |
 | Donor test methods | pinned donor, listed independently | 913 unique in 44 files; the same id set as the ledger | 913 and 44 everywhere they appear | yes |
-| Open-item ids | all M0 files | OPEN-01 to OPEN-60 each cited at least once; none out of range; 44 open (23 owner, 21 lead), 16 settled | — | yes; OPEN-56 was added by this analysis and OPEN-57 by the polish pass; seven ids moved to settled on 2026-11-14 |
-| Lead-decision labels | all M0 files | LD1 to LD27: none outside this file, except LD1 and LD17 in tasks.md R29; LD28 to LD30: cited by label in spec, research, data-model, tasks, backend-seam and deviations; LD31 to LD33: cited by label in tasks.md; LD34 to LD36: cited by label in tasks.md, and LD34 also in research.md and LD35 in naming.md; LD37 to LD43: cited by label in tasks.md, LD39, LD40 and LD43 also in deviations.md, LD40, LD41 and LD43 also in naming.md, and LD41 also in rename-map.json | — | yes |
+| Open-item ids | all M0 files | OPEN-01 to OPEN-61 each cited at least once; none out of range; 45 open (23 owner, 22 lead), 16 settled | — | yes; OPEN-56 was added by this analysis and OPEN-57 by the polish pass; seven ids moved to settled on 2026-11-14; OPEN-61 was added on 2026-11-15 |
+| Lead-decision labels | all M0 files | LD1 to LD27: none outside this file, except LD1 and LD17 in tasks.md R29; LD28 to LD30: cited by label in spec, research, data-model, tasks, backend-seam and deviations; LD31 to LD33: cited by label in tasks.md; LD34 to LD36: cited by label in tasks.md, and LD34 also in research.md and LD35 in naming.md; LD37 to LD43: cited by label in tasks.md, LD39, LD40 and LD43 also in deviations.md, LD40, LD41 and LD43 also in naming.md, and LD41 also in rename-map.json; LD44 to LD50: cited by label in tasks.md, and LD44 also in quickstart.md | — | yes |
 
 ## 5. Coverage: requirement groups and tasks
 
@@ -287,7 +294,7 @@ OPS-14. The mapping is re-checked against tasks.md at the next rerun (CHK008).
 | No hard dependency on a later milestone | Milestone of every prerequisite compared with the task's | Holds: zero. Every "Seams" entry points to a later milestone, as R13 requires. |
 | `[P]` markers | A task is `[P]` exactly when it has no prerequisite in its own milestone | Holds for all 131. |
 | Dependency prose matches the entries | Spot checks of the "Dependency graph by milestone" text (PRM-04, RSP-10, RSP-17, OPS-16, ENG-14, RSP-18, API-07) | Holds for the cases checked; the whole text was not compared line by line. |
-| Lead decisions applied | Section 3, each decision traced to the files named there | Holds for LD1 to LD27. LD28 to LD43 are applied in the changes that record them and are re-checked at the next rerun. |
+| Lead decisions applied | Section 3, each decision traced to the files named there | Holds for LD1 to LD27. LD28 to LD50 are applied in the changes that record them and are re-checked at the next rerun. |
 | Constitution check complete | plan.md Constitution Check compared with the 12 principles of the constitution | Holds: 12 rows, each marked PASS (design) or N/A with a reason, and stated as a design commitment. Principle VIII's support matrix is produced by CNF-12 and published by CNF-17 (R-04 closed). |
 | Exceptions complete | plan.md Constitution Exceptions compared with the constitution's Governance section (scope, evidence, risk, removal condition, approval) | Holds for E1 to E6. The owner accepted E6 (donor benefit estimated before adoption and measured at close-out, against ADR 0004's order) on 2026-11-14 by settling OPEN-27. Reviewer approval of E1 to E5 was due at checkpoint 1; the checkpoint 1 decision record does not name E1 to E5 separately. |
 | Constitution compliance in spec and tasks | Search for a compliance section | Both have one. tasks.md's section points to plan.md's Constitution Check and says which gate step enforces which principle (R-03 closed). |
@@ -522,6 +529,7 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 | OPEN-55 | Whether the console creates or only maintains the donor's `run-<STEM>.sh` and `.bat` launcher scripts. | data-model Persisted Files | none recorded | the packages that rewrite or remove them |
 | OPEN-58 | The form in which a line-protocol engine declares synthetic provenance in its start-up lines (LD28, rule 4): the key and value of an `INFO` fact, or another form, chosen so that the donor's `READY` grammar and the shim run of `serve/test_engine_contract.py` are not disturbed. Added on 2026-11-14, when the engine's declaration was separated from the synthetic marker proposed for the server's own ready line (OPEN-35). | seam 5.1 and 13; tasks R29, ENG-06; the note on allowing non-synthetic engines | a fact on an `INFO` line (the lead's direction) | ENG-04, ENG-05, ENG-06 (M3) |
 | OPEN-59 | A notices file for the licenses of the third-party crates linked into a distributed binary (MIT, Apache-2.0, Unicode-3.0, Zlib and others named in `console/Cargo.lock`). The repository vendors no crate and this increment distributes no binary, so nothing is owed yet. Added on 2026-11-14 with the M1 scaffold. | research dependency table | none recorded | the first distributed binary |
+| OPEN-61 | How hardware and machine readings are compared with donor references: the telemetry of `GET /metrics`, storage included, and `machine.gpu` and `machine.ram` of `GET /v1/status`. Either as a volatile class, or left out at the scenario level. Raised by CNF-04 on 2026-11-15. | quickstart section 9 (CNF-04); ledger 1.1 | none recorded | before the monitoring routes are compared: API-05 and API-06 (M4); CNF-08 (M10) |
 
 ### Settled since the documents were drafted
 
@@ -573,7 +581,9 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 - [x] CHK003 The ledger matches the pinned donor. 913 rows, the same ids as an independent
   listing of the 44 donor test files, every row `pending`, fields as the contract defines.
   Since wave 2 of M1 (2026-11-15), 27 rows are resolved and 886 are `pending`; since wave
-  3 (commit `6faf815b`), 37 are resolved and 876 are `pending` (section 11).
+  3 (commit `6faf815b`), 37 are resolved and 876 are `pending`; since wave 4 (commit
+  `f5400931`), 39 are resolved and 874 are `pending`, 259 of them with an owning package
+  (section 11).
 - [x] CHK004 Counts stated across documents agree (913, 44, 131, 125, 17 plus 6).
 
 ### Coverage
@@ -603,7 +613,7 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 - [x] CHK012 Every relative link and anchor resolves.
 - [x] CHK013 Every `OPEN-` id used in a document is in the register with the same meaning.
 - [x] CHK014 The lead decisions LD1 to LD27 are reflected in every document they affect.
-  LD28 to LD43 are applied in the changes that record them and are re-checked at the next
+  LD28 to LD50 are applied in the changes that record them and are re-checked at the next
   rerun.
 - [x] CHK015 Task detail files agree with the binding and lead decisions. Superseded planner
   lines remain in the detail files by design; each file's header now says that a binding
@@ -633,6 +643,9 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   tokenizer (PRM-04) and the scenario loader (CNF-02). Since wave 3 (2026-11-15), the same
   holds for the router and guards (API-03), the turn driver (ENG-10), the raw client and
   recorder (CNF-03) and the process harness (CNF-07), the last proven on macOS only.
+  Since wave 4 (2026-11-15), the same holds for the request lifecycle driver (API-07, on a
+  probe dialect only), the test kit (API-19), the normalizer and comparator (CNF-04) and
+  the early `Host` refusal of the follow-up to API-03.
 - [x] CHK023 Non-interference holds on the working tree: both check scripts pass, and the
   root `Cargo.toml`, `Cargo.lock` and `macos.yml` equal the merge base.
 - [x] CHK024 The analysis exists before any M1 code (plan exception E5, GOV-03).
@@ -781,3 +794,39 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   package, and the Linux behavior of the M1 code, CNF-07's process harness included, is
   unobserved. OPEN-15 in section 9 was updated; the counts of open-item ids do not change,
   and the cross-document checks and link check were not rerun for this change.
+- Wave 4 of M1, 2026-11-15. Four packages were merged: the follow-up to API-03
+  (`50179f0d`, cited as API-03: the `Host` check now also runs before the transport's 501
+  page and its P-2 400 page, through the new transport hook `Handler::early_refusal`; the
+  431 pages have no usable headers and stay as they are), API-07 (`f6c42bb4`), CNF-04
+  (`7259f941`) and API-19 (`b1f4709a`; the tests of API-02 and API-03 now use the kit).
+  Commit `e4637af9` prepared the binary crate's manifest for API-08, and `f5400931`
+  applied the ledger rows and owners: 39 of 913 rows resolved (37 `rust-test`, 2
+  `deviation`; wave 4 added API-07 2) and 874 `pending`, of which 259 name the package
+  that owns them (API-19's assignment for the API-reader files) and 615 have no owner
+  recorded yet. At `f5400931` the lead observed, on macOS on Apple Silicon:
+  `bash tools/check-toolchain.sh` ok (`rustc` 1.97.1); `cargo fmt --check` and
+  `cargo clippy --locked --all-targets -- -D warnings` passed; `cargo test --locked` gave
+  1,113 passed, 0 failed and 1 ignored (the real-pack tokenizer round trip, which reports
+  unverified); `console/tools/check-boundary.sh` and `console/tools/check-hygiene.sh`
+  passed. The lead made LD44 (`Content-Length` is a derived value in comparisons, built
+  by a follow-up to CNF-04 in wave 5 with three tightenings of the comparator), LD45 (the
+  stand-in prompt form of the M1 chat route until M2), LD46 (the M1 entry point's start
+  line that says the engine is synthetic), LD47 (the two process helpers stay separate
+  until ENG-05), LD48 (a donor row with no assertion on a dialect's body may be resolved
+  through API-07's probe dialect), LD49 (API-19's owner assignments are working
+  assignments) and LD50 (what the comparison document leaves out, where renames apply and
+  the shape of placeholders, accepted as CNF-04 built them), and added the lead item
+  OPEN-61 (how hardware and machine readings are compared), so the register holds 61 ids:
+  45 open (23 owner, 22 lead) and 16 settled. One difference from the donor that no
+  approved deviation covers was found in API-07: a start that fails during a request is
+  answered 503, as the seam contract's section 10 says, where the donor's handler does not
+  catch the `RuntimeError` of `serve/server.py:947` and answers nothing. The lead registers
+  it as a proposal for the owner with wave 5, because the comparator's contract test fixes
+  the list of proposal ids and its file is being changed in that wave. No
+  task is ticked in this wave: API-07 and CNF-04 meet their definitions of done but stay
+  open, API-07 for five donor rows that need a dialect or the reload path (LD37) and
+  CNF-04 until its wave 5 follow-up lands; API-19 waits for the binary of API-08 and the
+  fake engine binaries of M3; API-03 stays open for its ten pending rows and the owner's
+  confirmation of LD30 and LD43. Nothing has been pushed since `0f4bc320`, so no CI run
+  covers any M1 package, and the Linux behavior of the M1 code is unobserved. The
+  cross-document checks and link check were not rerun for this change.

@@ -180,12 +180,12 @@ a key.**
     cannot be parsed stops the server at start, with a message that names the entry and
     the accepted forms (LD40; `GuardConfig::rejected_allowed_hosts` gives the entries, and
     API-08 wires the check). The refusal is 403 `permission_error` with
-    `HOST_REFUSED_MESSAGE` and no CORS header. The check runs in the router, so the
-    transport's own pages are answered before it: the 431 header-limit pages, the 501 for
-    an unserved method and the P-2 400 for conflicting framing. A follow-up to API-03 runs
-    the check also before the 501 and the P-2 400 pages; until it lands, those two pages
-    are answered for any `Host`. They carry no data and, for a refused `Host`, no CORS
-    header. Pinned by
+    `HOST_REFUSED_MESSAGE` and no CORS header. The check runs in the router, so at this
+    merge the transport's own pages were answered before it: the 431 header-limit pages,
+    the 501 for an unserved method and the P-2 400 for conflicting framing. Since the
+    follow-up to API-03 (commit `50179f0d`, below) the check also runs before the 501 and
+    the P-2 400 pages. The 431 pages are still answered for any `Host`; they carry no data
+    and, for a refused `Host`, no CORS header. Pinned by
     `api03_security::rebinding_a_loopback_bind_serves_only_loopback_names`,
     `rebinding_exactly_one_host_header`, `rebinding_allowed_hosts_extend_a_loopback_bind`,
     `rebinding_a_non_loopback_bind_is_unrestricted_without_a_list`,
@@ -223,6 +223,25 @@ a key.**
   - SEC-1.5: every configured key is compared in constant time (`constant_time_eq`); no
     observable difference from `hmac.compare_digest` was found, so no new sub-item is
     recorded. Pinned by `api03_security::api_keys_in_their_accepted_forms`.
+- **Implementation (SEC-1.1, before the transport's own pages; follow-up to API-03, commit
+  `50179f0d`, 2026-11-15).** The follow-up adds the hook `Handler::early_refusal` to
+  `console_http::transport`. The transport calls it once per parsed request, after the
+  end-headers hook and before its 501 for an unserved method and its 400 for conflicting
+  framing (P-2); a refusal is written with the end-headers extras, and the handler is not
+  called. `Router` implements it with the `Host` allowlist only, answering the same 403
+  `permission_error` as on a route; the router's dispatch still checks the `Host` itself,
+  so `Router::handle` called directly behaves as before. For a `HEAD` request the 403
+  carries the same head (status, `Content-Type`, the `Content-Length` of the JSON) and no
+  body, because a response to `HEAD` carries no content (RFC 9110 section 9.3.2), as
+  Python's `send_error` does. The 431 pages and the request-line 400, 414 and 505 pages
+  have no usable headers and are answered without it. Pinned by
+  `console-http::api03f_early_host::a_refused_host_with_an_unserved_method_gets_403`,
+  `::a_refused_host_with_head_gets_403_without_a_body`,
+  `::a_refused_host_with_conflicting_framing_gets_403`,
+  `::an_allowed_host_still_gets_501_and_the_p2_400`,
+  `::the_early_403_is_the_route_403_and_carries_no_cors_header`,
+  `::the_hook_runs_once_per_request`, `::the_431_page_is_answered_without_the_host_check`
+  and `console-http::router::tests::the_early_refusal_is_the_host_refusal`.
 - **Note on proposal P-22.** The router adds its CORS headers through the transport's
   end-headers hook, so they also reach the pages the transport writes itself
   (`api03_security::cors_headers_reach_the_transports_own_pages`). On the 431 pages the
@@ -380,10 +399,13 @@ typed and never read from client input.**
   `InternalFlags::level_shared` (SEC-6.2). The tests
   `console-core::request::tests::underscore_keys_are_stripped_at_the_boundary` and
   `console-core::api04_request::underscore_keys_never_reach_the_checks` pin the stripping.
-  No entry point calls `strip_internal_keys` yet: the boundary strip belongs to the dialect
-  handlers (API-07, API-08 and the Responses packages).
-- **Packages.** API-04 (request boundary), PRM-11 (prompt-side flags), ENG-03 (typed
-  engine parameters).
+  API-07 (commit `f6c42bb4`, 2026-11-15) calls `strip_internal_keys` at the boundary of the
+  three chat routes, in `console_http::inference` (after the overloaded gate, before the
+  attachment planner and the dialect); the test
+  `console-http::api07_lifecycle::internal_keys_are_stripped_before_the_dialect` pins it.
+  No route serves a client dialect through it until API-08 lands.
+- **Packages.** API-04 (request boundary), API-07 (the boundary strip of the chat routes),
+  PRM-11 (prompt-side flags), ENG-03 (typed engine parameters).
 
 | Sub-item | Difference |
 | --- | --- |
@@ -858,6 +880,11 @@ later and await the owner (the two sections that follow).
   `serve_connection`, `read_body`). The tests
   `console-http::transport::body::tests::both_framings_are_refused` and
   `console-http::api02_transport::both_content_length_and_chunked_are_refused` pin it.
+  Since the follow-up to API-03 (commit `50179f0d`, 2026-11-15), the router's `Host`
+  check runs before this 400 through `Handler::early_refusal`, so a refused `Host` with
+  conflicting framing gets the SEC-1.1 403 instead; an allowed `Host` still gets the 400
+  (`console-http::api03f_early_host::a_refused_host_with_conflicting_framing_gets_403` and
+  `::an_allowed_host_still_gets_501_and_the_p2_400`).
 - **Packages.** API-02.
 
 ### P-3
@@ -878,6 +905,14 @@ later and await the owner (the two sections that follow).
   `TypeError`, `AttributeError` or `IndexError` (`MalformedCategory`) and the detail is the
   server's own text. The test
   `console-http::api01_error::malformed_request_keeps_prefix_and_category_p3` pins it.
+  API-07 (commit `f6c42bb4`, 2026-11-15) maps the request checks' `TypeError`
+  (`RequestError::Malformed`) and the tokenizer `IndexError` of a token id outside the
+  vocabulary (`TurnError::out_of_vocabulary`, `EngineFailure::out_of_vocabulary`) to
+  `ApiError::Malformed` in `console_http::inference::InferenceError`: 400 before the first
+  byte; after it the line is logged and the stream is cut. The tests
+  `console-http::inference::error::tests::every_error_class_maps_to_its_status_and_body`
+  and `console-http::api07_errors::an_id_outside_the_vocabulary_is_a_400_before_and_a_cut_after`
+  pin it.
 - **Packages.** API-01, API-07, PRM-06.
 
 ### P-4
@@ -929,6 +964,15 @@ later and await the owner (the two sections that follow).
 - **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
 - **Affected donor tests (known).** None identified yet; the implementing package
   confirms.
+- **Implementation (the HTTP mapping).** API-07 (commit `f6c42bb4`, 2026-11-15) provides
+  the mapping point `console_http::inference::PromptFailure` (`template_raise`,
+  `encoder_assertion`); `From<PromptFailure> for InferenceError` answers 400
+  `invalid_request_error` with the message before the first byte and the dialect's stream
+  error after it. PRM-03 and PRM-07 build a `PromptFailure` from their error types. The
+  tests `console-http::inference::error::tests::every_error_class_maps_to_its_status_and_body`
+  and `console-http::api07_errors::every_error_class_answers_its_status_before_the_first_byte`
+  pin it with stand-ins; the template and encoder refusals themselves arrive with PRM-03
+  and PRM-07 (M2).
 - **Packages.** PRM-03 (template error), PRM-07 (encoder error), PRM-08 (render-time
   failures), API-07 (the HTTP mapping).
 
