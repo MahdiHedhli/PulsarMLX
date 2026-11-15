@@ -8,16 +8,25 @@ mod adapter {
     impl Temporary {
         fn new() -> Self {
             let base = std::env::temp_dir().canonicalize().unwrap();
-            let time = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos();
-            let path = base.join(format!(
-                "policy-qualification-{}-{time}",
-                std::process::id()
-            ));
-            fs::create_dir(&path).unwrap();
-            Self(path)
+            static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+            Self::under(&base, || {
+                NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+            })
+        }
+
+        fn under(base: &std::path::Path, mut next: impl FnMut() -> u64) -> Self {
+            loop {
+                let path = base.join(format!(
+                    "policy-qualification-{}-{}",
+                    std::process::id(),
+                    next()
+                ));
+                match fs::create_dir(&path) {
+                    Ok(()) => return Self(path),
+                    Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                    Err(err) => panic!("cannot create qualification test directory: {err}"),
+                }
+            }
         }
     }
     impl Drop for Temporary {
@@ -254,6 +263,16 @@ mod adapter {
     #[test]
     fn policy_qualification_file_limits_and_unknown_progress() {
         let tmp = Temporary::new();
+        {
+            let occupied = Temporary::under(&tmp.0, || 0);
+            let witness = occupied.0.join("owner");
+            fs::write(&witness, b"previous owner").unwrap();
+            let mut sequence = 0u64..;
+            let other = Temporary::under(&tmp.0, || sequence.next().unwrap());
+            assert_ne!(occupied.0, other.0);
+            drop(other);
+            assert_eq!(fs::read(witness).unwrap(), b"previous owner");
+        }
         let mut files = ArmFiles::new(&tmp.0);
         assert!(files.vector(0, &[0; 511]).is_err());
         assert!(files

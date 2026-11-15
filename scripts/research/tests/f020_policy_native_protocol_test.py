@@ -56,6 +56,64 @@ class StudioBoundary(unittest.TestCase):
         self.assertTrue(all(spy.call_count==0 for spy in self.forbidden))
         self.assertFalse(Path(self.config["output"]).exists())
 
+    def test_original_compiler_record_survives_linkage_validation(self):
+        import hashlib
+        from contextlib import ExitStack
+
+        release = self.root / "fabricated-target" / "release"
+        release.mkdir(parents=True)
+        binary = release / custody.BIN
+        binary.write_bytes(b"fabricated, never executed")
+        binary.chmod(0o700)
+        prefix = self.root / "fabricated-prefix"
+        prefix.mkdir()
+        paths = dict(binary=binary, prefix=prefix, cargo_log=self.root / "compiler.jsonl",
+                     artifact=self.root / "selected.jsonl")
+        package = custody.ROOT / "crates/mlx-expert-mlp"
+        row = dict(reason="compiler-artifact", package_id="path+" + package.as_uri() + "#0.1.0",
+                   target=dict(name=custody.BIN, kind=["bin"], src_path=str(package / "src/bin" / (custody.BIN + ".rs"))),
+                   executable=str(binary), profile=dict(test=False, opt_level="3"),
+                   fresh=False, features=[custody.FEATURE])
+        # Noncanonical but valid JSONL bytes distinguish original artifact custody from re-encoding.
+        selected = b"  " + json.dumps(row).encode("utf-8") + b" \t\n"
+        other = b'{"reason":"compiler-artifact","target":{"name":"another-package"}}\n'
+        finished = b'{"reason":"build-finished","success":true}\n'
+        good = other + selected + finished
+        expected_sha = hashlib.sha256(selected).hexdigest()
+        log_sha = hashlib.sha256(good).hexdigest()
+        libraries = {name: dict(lexical=str(prefix / "lib" / name), canonical=str(prefix / "lib" / name))
+                     for name in ("libmlx.dylib", "libmlxc.dylib")}
+        imports = ["\t@rpath/" + name + " (compatibility version 1.0.0, current version 1.0.0)"
+                   for name in libraries]
+        admission = dict(self.ident, prefix=str(prefix), accounting_abi_stamp="fabricated ABI", headers={},
+                         cargo_configs={}, native=dict(install_sha256="a"*64, static_inspection=dict(files=libraries)))
+        tools = {name: dict(path=str(self.root / "fabricated-tools" / name)) for name in ("cargo", "rustc")}
+        with ExitStack() as stack:
+            linkage = stack.enter_context(patch.object(custody.prior, "links", return_value=imports))
+            stack.enter_context(patch.object(custody.prior, "contains_marker", return_value=True))
+            stack.enter_context(patch.object(custody.prior.old, "hashed", return_value="b"*64))
+            toolchain = stack.enter_context(patch.object(custody, "_toolchain", return_value=tools))
+            paths["cargo_log"].write_bytes(good)
+            self.assertEqual(custody._artifact(paths), (selected, log_sha))
+            original, build = custody._built(paths, admission, toolchain())
+            self.assertEqual(original, selected)
+            self.assertEqual(build["artifact_sha256"], expected_sha)
+            self.assertEqual(build["cargo_log_sha256"], log_sha)
+            self.assertEqual(build["linkage"], imports)
+
+            for label, bad in (("duplicate artifact", other + selected + selected + finished),
+                               ("missing build-finished", other + selected)):
+                with self.subTest(label=label):
+                    paths["cargo_log"].write_bytes(bad)
+                    with self.assertRaisesRegex(ValueError, "successful unique Cargo artifact"):
+                        custody._built(paths, admission, toolchain())
+            paths["cargo_log"].write_bytes(good)
+            linkage.return_value = imports + ["\t@rpath/libunbound.dylib (compatibility version 1.0.0)"]
+            with self.assertRaisesRegex(ValueError, "pinned physical binary import"):
+                custody._built(paths, admission, toolchain())
+        self.assertFalse(paths["artifact"].exists())
+        self.check_untouched()
+
     def test_valid_mock_boundary_consumes_only_injected_intent(self):
         _cfg,ident,path,claim=self.start()
         self.assertEqual(ident,self.ident)

@@ -311,7 +311,7 @@ def _command(paths, tools):
 
 
 def _built(paths, admission, tools):
-    line, cargo_hash = _artifact(paths)
+    artifact_bytes, cargo_hash = _artifact(paths)
     binary = _path(str(paths["binary"]))
     require(binary.is_file() and os.access(binary, os.X_OK) and 0 < binary.stat().st_size <= 128 << 20, "bounded executable")
     require(prior.contains_marker(binary, admission["seal"]) and prior.contains_marker(binary, admission["accounting_abi_stamp"]),
@@ -319,8 +319,8 @@ def _built(paths, admission, tools):
     links = prior.links(binary)
     libraries = admission["native"]["static_inspection"]["files"]
     selected = []
-    for line in links:
-        name, separator, _ = line.strip().partition(" (compatibility")
+    for import_entry in links:
+        name, separator, _ = import_entry.strip().partition(" (compatibility")
         require(separator and ".." not in Path(name).parts, "original ordered binary import")
         leaf = Path(name).name
         if name.startswith(("/usr/lib/", "/System/Library/")):
@@ -332,13 +332,13 @@ def _built(paths, admission, tools):
             selected.append(leaf)
     require(sorted(selected) == ["libmlx.dylib", "libmlxc.dylib"], "selected pinned images")
     args, env = _command(paths, tools)
-    return line, dict(schema="pulsarmlx.policy-native-build/1", commit=admission["commit"], tree=admission["tree"],
+    return artifact_bytes, dict(schema="pulsarmlx.policy-native-build/1", commit=admission["commit"], tree=admission["tree"],
         run=admission["run"], input_sha256=admission["input_sha256"], seal=admission["seal"], reference=REFERENCE,
         prefix=admission["prefix"], installation_sha256=admission["native"]["install_sha256"],
         installed_assets_sha256=sha(canonical(admission["native"])),
         headers=admission["headers"], cargo_configs=admission["cargo_configs"], page_size=admission["page_size"],
         host=admission["host"], tools=tools, command=args, environment=env,
-        artifact=str(paths["artifact"]), artifact_sha256=sha(line), cargo_log=str(paths["cargo_log"]),
+        artifact=str(paths["artifact"]), artifact_sha256=sha(artifact_bytes), cargo_log=str(paths["cargo_log"]),
         cargo_log_sha256=cargo_hash, binary=str(binary), binary_sha256=prior.old.hashed(binary),
         linkage=links, accounting_abi_stamp=admission["accounting_abi_stamp"])
 
@@ -383,6 +383,8 @@ def _run_build(paths, tools):
             require(prior.group_gone(child.pid), "owned build group unresolved")
         require(child.returncode == 0 and time.monotonic() <= deadline and os.fstat(out.fileno()).st_size <= LOG_LIMIT
                 and os.fstat(err.fileno()).st_size <= LOG_LIMIT, "bounded physical build failed")
+        out.flush()
+        err.flush()
         os.fsync(out.fileno())
         os.fsync(err.fileno())
 
