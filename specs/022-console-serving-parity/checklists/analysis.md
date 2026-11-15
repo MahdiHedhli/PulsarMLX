@@ -42,11 +42,27 @@ What must be settled before M1, and only this:
 - **Inside M1, before the named package closes (owner):** **OPEN-03**, the exact synthetic
   default model name (ENG-02, API-08, API-17); until it is decided the working default is
   `pulsar-console-synthetic` (LD27). **OPEN-04**, the `Host` allowlist on non-loopback
-  binds (API-03).
+  binds (API-03). **OPEN-29**, what the server does if an engine reports a provenance
+  other than synthetic (seam question Q9), before ENG-01 freezes the seam.
+- **Inside M1, needing the owner's help (ENG-01):** the seam draft must be offered to the
+  engine track, and its review recorded, before ENG-01 freezes version 1.0 (FR-039). Who
+  reviews it and in what form is seam question Q12 (OPEN-30), a lead item, but reaching
+  the engine track goes through the owner. ENG-01's code can land before that; its task
+  cannot be ticked, and the seam stays a draft, until the review is recorded.
+- **Not a precondition, but it shapes M1 output (owner):** proposals P-1 to P-3 of
+  **OPEN-15** concern the transport and the request-error text built in M1 (API-02, with
+  the error model of API-01). Until the owner decides them, those packages keep the
+  donor's behavior where they can and record `pending` rows where they cannot, as the
+  register says.
 
 Lead items due inside M1 remain lead work, not preconditions: OPEN-30 (seam details,
 settled by ENG-01 before the freeze). The owner item OPEN-06 is due before OPS-11 in M7
 (LD26).
+
+The OPEN-29 sentence and the two bullets after it were added on 2026-11-14, after the M0
+commits, when the checkpoint list was re-derived from the register: OPEN-29 was in the
+register with its due point but missing from this summary, and the engine-track review
+was in ENG-01's definition of done but not listed here.
 
 ## 2. Scope and method
 

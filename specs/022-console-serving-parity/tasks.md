@@ -421,6 +421,7 @@ the named task closes. The register is authoritative where the two differ.
 | OPEN-09 | An untagged ERR in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop) | Owner | ENG-07 |
 | OPEN-24 | Whether launching refuses known project-maya engine names | Owner | ENG-15 |
 | OPEN-25 | Which names Turbo and the settings profiles write into a run-config `env` block (the donor writes `MAYA_GLM_*` and `MAYA_DS4_*`), and the engine variable names shown in the dashboard; B2 fixes only that such names pass through verbatim | Owner | OPS-05, OPS-06, WEB-09 |
+| OPEN-29 | What the server does if an engine reports a provenance other than synthetic: refuse to start, or report it (seam question Q9) | Owner | ENG-01 (seam freeze) |
 | OPEN-30 | Seam design details ENG-01 settles before freezing the seam (R27) | Lead | ENG-01 |
 
 Points that earlier drafts of this list left open and that the lead decided on 2026-11-14:
