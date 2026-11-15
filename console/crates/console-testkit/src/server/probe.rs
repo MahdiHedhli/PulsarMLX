@@ -194,7 +194,16 @@ impl TransportProbe {
                     } else {
                         b": keep-alive\n\n"
                     };
-                    if exchange.responder().write_body(frame).await.is_err() || done {
+                    if exchange.responder().write_body(frame).await.is_err() {
+                        // The write found the client gone before the watch's next check
+                        // (it checks every 0.5 s, the keep-alives come every 0.1 s); the
+                        // watch still sees the end at that check, and that is reported.
+                        if tokio::time::timeout(DEADLINE, watch.gone()).await.is_ok() {
+                            let _ = self.seen.send(Seen::Cancelled);
+                        }
+                        return;
+                    }
+                    if done {
                         return;
                     }
                 }
