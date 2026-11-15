@@ -2329,8 +2329,12 @@
       "class": "Api",
       "method": "test_not_asked",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::api_not_asked"
+      ],
+      "notes": "ENG-02 delivers LpEngine."
     },
     {
       "id": "serve/test_logprobs.py::Api::test_refused",
@@ -2338,8 +2342,12 @@
       "class": "Api",
       "method": "test_refused",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::api_refused"
+      ],
+      "notes": "The request checks are API-04's (console_core::request::check_request); the answers through the chat route are API-08's."
     },
     {
       "id": "serve/test_logprobs.py::Api::test_streamed",
@@ -5318,8 +5326,13 @@
       "class": "CorsOptIn",
       "method": "test_another_page_cannot_post_without_a_preflight",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::cors_another_page_cannot_post_without_a_preflight",
+        "console-http::api03_donor::cors_another_page_cannot_post_without_a_preflight"
+      ],
+      "notes": "Completed by API-08 (the 200 chat answer without an Origin); API-03's test pins the 403 refusals."
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_another_page_gets_nothing",
@@ -5906,8 +5919,13 @@
       "class": "PromptProgressStream",
       "method": "test_asked_for_and_sent",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "ENG-06"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::prompt_progress_stream_asked_for_and_sent",
+        "console-core::eng10_turn::prompt_progress_becomes_pings_with_its_payload"
+      ],
+      "notes": "The ledger names ENG-06 as owner; the donor drives prompt progress through its in-process engine's progress attribute, which ENG-02's PacedEngine reproduces through the seam, so the HTTP half (API-08) and the ping payload (ENG-10) complete it without the line-protocol client."
     },
     {
       "id": "serve/test_server.py::PromptProgressStream::test_non_stream_is_untouched",
@@ -5915,8 +5933,13 @@
       "class": "PromptProgressStream",
       "method": "test_non_stream_is_untouched",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "ENG-06"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::prompt_progress_stream_non_stream_is_untouched",
+        "console-core::eng10_turn::prompt_progress_becomes_pings_with_its_payload"
+      ],
+      "notes": "As test_asked_for_and_sent."
     },
     {
       "id": "serve/test_server.py::PromptProgressStream::test_not_asked_for_is_not_sent",
@@ -5924,8 +5947,13 @@
       "class": "PromptProgressStream",
       "method": "test_not_asked_for_is_not_sent",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "ENG-06"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::prompt_progress_stream_not_asked_for_is_not_sent",
+        "console-core::eng10_turn::prompt_progress_becomes_pings_with_its_payload"
+      ],
+      "notes": "As test_asked_for_and_sent; the Rust test uses PacedEngine, so the engine does report progress (stronger than the donor's plain engine)."
     },
     {
       "id": "serve/test_server.py::QueuedKeepAlives::test_keep_alives_while_queued",
@@ -5966,8 +5994,13 @@
       "class": "RequestBodies",
       "method": "test_a_chunked_body",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::request_bodies_a_chunked_body",
+        "console-http::api02_donor::a_chunked_body_is_decoded_for_the_handler"
+      ],
+      "notes": "LD37: completed by API-08 (the 200 with the engine's text from the chat route); API-02's test is the transport half."
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_a_malformed_body_is_a_400",
@@ -5975,8 +6008,13 @@
       "class": "RequestBodies",
       "method": "test_a_malformed_body_is_a_400",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::request_bodies_a_malformed_body_is_a_400",
+        "console-http::api02_donor::a_malformed_body_reaches_the_handler_intact"
+      ],
+      "notes": "LD37: completed by API-08 (the dict body's 400 from the message conversion, approved deviation P-3; the [] body's 400 is the router's, API-03); API-02's test is the transport half."
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_several_api_keys",
@@ -5984,8 +6022,13 @@
       "class": "RequestBodies",
       "method": "test_several_api_keys",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::request_bodies_several_api_keys",
+        "console-http::api03_donor::several_api_keys"
+      ],
+      "notes": "Completed by API-08 (the 200 chat answers); API-03's test pins the key parsing and the 401 answers."
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_the_listen_backlog",
@@ -6495,8 +6538,12 @@
       "class": "UsageAndStatus",
       "method": "test_openai",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::usage_and_status_openai"
+      ],
+      "notes": "Completes the HTTP half; ENG-10's driver half: console-core::eng10_turn::usage_and_timings_come_from_the_engine_clock; ENG-02 delivers ClockedEngine."
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_openai_stream",
@@ -6504,8 +6551,12 @@
       "class": "UsageAndStatus",
       "method": "test_openai_stream",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending",
-      "package": "API-08"
+      "disposition": "rust-test",
+      "package": "API-08",
+      "rust_tests": [
+        "console-http::api08_donor::usage_and_status_openai_stream"
+      ],
+      "notes": "Completes the HTTP half; ENG-10's driver half: console-core::eng10_turn::usage_and_timings_come_from_the_engine_clock."
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_v1_status",
