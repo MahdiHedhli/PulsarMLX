@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from studio016_source import bind, need, parse, sha, vector
+from studio016_source import bind, need, parse, sha, vector, SHARD, SHARD_ID, REVISION
 import f020_policy_native_custody as custody
 from f020_staged_weighted_supervise import fetch
 from studio016_compare import compare, deserialize, serialize
@@ -66,14 +66,45 @@ def pressure():
     used=re.search(r'used\s*=\s*([\d.]+)([KMGT])',v)
     return dict(headroom=estimated,kernel_available_percent=pct,pageable_external_pages=pageable,pressure=int(cmd('/usr/sbin/sysctl','-n','kern.memorystatus_vm_pressure_level')),
                 swap=int(float(used[1])*1024**('KMGT'.index(used[2])+1)))
-def basic(d):
+def configuration(d):
     need(d.is_absolute() and d.resolve(strict=True)==d and d.stat().st_uid==os.getuid() and stat.S_IMODE(d.stat().st_mode)==0o700,'private directory')
     cfg=doc(d/'config.json');root=Path(cfg['checkpoint'])
     for protected in (ROOT,root,Path(cfg['prefix'])):
         need(not d.is_relative_to(protected) and not protected.is_relative_to(d),'directory overlap')
     need(re.fullmatch('[0-9a-f]{64}',cfg['run']),'run id')
+    return cfg,root
+
+def binding_receipt(cfg,source):
+    return dict(schema='studio016-original-whole-shard/1',run=cfg['run'],revision=REVISION,
+                name=SHARD,method='held-descriptor-sha256',bytes=source['witnesses'][SHARD][2],
+                checked_sha256=SHARD_ID,witness=source['witnesses'][SHARD],source_sha256=sha(enc(source)),
+                public_binding_sha256=digest(BINDING))
+
+def validate_binding(d,cfg,source):
+    original=doc(d/'binding-receipt.json')
+    need(original==binding_receipt(cfg,source),'missing or crossed original whole-shard receipt')
+    return original
+
+def prepare_binding(d):
+    cfg,root=configuration(d)
+    need(not os.path.lexists(ANCHOR) and not os.path.lexists(d/'binding-receipt.json'),'existing claim or binding')
+    # Repeat N1 in reviewed code; adopt earlier originals only on identical bytes.
+    source,_=bind(root,whole=True)
+    need({k:v for k,v in source.items() if k!='witnesses'}==doc(BINDING),'reviewed range binding')
+    if (d/'source.json').exists():need(read(d/'source.json')==enc(source),'earlier original changed')
+    else:record(d/'source.json',source)
+    inp=d/'input.f32le'
+    if inp.exists():need(read(inp,16384)==vector(),'earlier input changed')
+    else:
+        with inp.open('xb') as f:f.write(vector());f.flush();os.fsync(f.fileno())
+    receipt=binding_receipt(cfg,source);record(d/'binding-receipt.json',receipt)
+    return receipt
+
+def basic(d):
+    cfg,root=configuration(d)
     source=doc(d/'source.json')
     need({k:v for k,v in source.items() if k!='witnesses'}==doc(BINDING),'source manifest')
+    validate_binding(d,cfg,source)
     need(read(d/'input.f32le',16384)==vector(),'input')
     return cfg,root,source
 
@@ -90,8 +121,36 @@ def inputs(d):
     oldcfg=doc(Path(doc(claim)['config']))
     need(digest(Path(oldcfg['output'])/'result.json')=='28f77c560a467f3af2331e6bc01292a0ae5e03fa7f4cada0b934903005c36eed','Studio015 result')
     return dict(source=source,host=host,tools=tools,native=native,headers=custody._headers(Path(cfg['prefix'])),history=hist,
-                source_manifest=digest(d/'source.json'),input_sha256=sha(vector()),run=cfg['run'],config=digest(d/'config.json'),
+                source_manifest=digest(d/'source.json'),whole_binding=digest(d/'binding-receipt.json'),input_sha256=sha(vector()),run=cfg['run'],config=digest(d/'config.json'),
                 interpreter=digest(PYTHON.resolve(strict=True)))
+
+def build_record(d):
+    need(not os.path.lexists(ANCHOR) and not os.path.lexists(d/'build.json'),'existing claim or build')
+    fact=inputs(d);cfg=doc(d/'config.json');tools=fact['tools'];root=d/('build-'+fact['source']['commit'])
+    root.mkdir(mode=0o700);binary=d/'target/release/qualify-real-flash-expert';log=root/'cargo.jsonl'
+    args=[tools['cargo']['path'],'build','--offline','--locked','--release','-j','2','--no-default-features','-p','mlx-expert-mlp','--features','real-flash-expert','--bin',binary.name,'--message-format=json']
+    env=dict(HOME=str(Path.home()),PATH=str(Path(tools['rustc']['path']).parent)+':/usr/bin:/bin:/usr/sbin:/sbin',RUSTC=tools['rustc']['path'],CARGO_TARGET_DIR=str(d/'target'),CARGO_NET_OFFLINE='true',CARGO_BUILD_JOBS='2',MLX_PREFIX=cfg['prefix'],MLX_C_PREFIX=cfg['prefix'],PULSAR_REQUIRE_NATIVE_MLX='1')
+    record(root/'intent.json',dict(head=fact['source']['commit'],argv=args,environment=env,inputs=sha(enc(fact))))
+    start=time.monotonic()
+    with log.open('xb') as o,(root/'stderr.txt').open('xb') as err:
+        p=subprocess.Popen(args,cwd=ROOT,env=env,stdin=subprocess.DEVNULL,stdout=o,stderr=err,start_new_session=True)
+        try:
+            record(root/'process.json',dict(pid=p.pid))
+            while p.poll() is None:
+                ev,b=census(d);need(ev<=LIMITS['evidence'] and b<=LIMITS['build'] and time.monotonic()-start<1800,'build resource limit')
+                time.sleep(.5)
+        finally:
+            if p.poll() is None:os.killpg(p.pid,signal.SIGKILL)
+            p.wait();record(root/'exit.json',dict(exit=p.returncode,seconds=time.monotonic()-start))
+    need(p.returncode==0 and time.monotonic()-start<=1800,'failed or expired build')
+    rows=[parse(l) for l in read(log,12<<20).splitlines()]
+    arts=[r for r in rows if r.get('reason')=='compiler-artifact' and r.get('executable')==str(binary)]
+    need(len(arts)==1 and rows[-1]==dict(reason='build-finished',success=True),'Cargo artifact')
+    art=arts[0];need(art['target']['name']==binary.name and art['target']['kind']==['bin'] and 'real-flash-expert' in art['features'] and not art['profile']['test'],'wrong compiled artifact')
+    need(inputs(d)==fact,'postbuild custody')
+    rec=dict(admission=fact,exit=0,artifact=art,binary_sha256=digest(binary),cargo_log=str(log.relative_to(d)),
+             cargo_log_sha256=digest(log),operation=root.name,linkage=cmd('/usr/bin/otool','-L',str(binary)))
+    record(d/'build.json',rec);return rec
 
 def envelope(d):
     fact=inputs(d);source=fact['source'];cfg=doc(d/'config.json')
@@ -202,7 +261,12 @@ def observe(d,kind,argv,deadline,swap,prior):
 def launch(d):
     need(not os.path.lexists(ANCHOR),'initial claim occupied')
     deadline=time.monotonic()+7200
-    grant,ptr=verified(d);p=pressure()
+    grant,ptr=verified(d)
+    # Do not trust a hand-entered witness even if it has the same form as the
+    # preparation receipt: verify the original publisher SHA before consuming the claim.
+    cfg,root,original=basic(d);fresh,_=bind(root,whole=True)
+    need(fresh==original and validate_binding(d,cfg,fresh)==binding_receipt(cfg,original),'final whole-source revalidation')
+    p=pressure()
     need(p['headroom']>=16<<30 and p['pressure']==1,'host headroom')
     for k in ('reference','native','grade'):
         need(not any(d.glob(k+'-*.json')) and not any(os.path.lexists(d/(k+suffix)) for suffix in ('.json','.stderr','.monitor')),'existing operation')
@@ -218,7 +282,9 @@ def launch(d):
 if __name__=='__main__':
     os.umask(0o077)
     mode=sys.argv[1];d=Path(sys.argv[2])
-    if mode=='describe':result=envelope(d)
+    if mode=='prepare-binding':result=prepare_binding(d)
+    elif mode=='build-record':result=build_record(d)
+    elif mode=='describe':result=envelope(d)
     elif mode=='launch':result=launch(d)
     elif mode=='verify-child':result=work(d,'native',sys.argv[3])
     elif mode in ('reference','grade'):

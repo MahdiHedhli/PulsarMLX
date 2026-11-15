@@ -7,7 +7,11 @@ expert 0 is selected statically. Nothing implies the router selected this expert
 
 The binding lists the nine ranges and original metadata digest. The direct
 reference binder checks original file descriptors and their namespace witnesses;
-only the selected shard is streamed in full, once for publisher SHA-256. Other
+only the selected shard is streamed in full for publisher SHA-256. The reviewed
+prepare-binding command checks or exclusively creates the original manifest and
+records its full-shard witness. Build-record captures the offline Cargo artifact
+and original inputs. Launch independently rehashes that one shard before spending
+the claim, so a typed receipt alone cannot establish provenance. Other
 shards are identified at metadata scope. No whole-model revision attestation.
 One frozen 4096-element F32 input uses deterministic dense signs of 1/4. This
 is an expert-boundary test vector, not a real prompt state. No vector search.

@@ -5,12 +5,14 @@ import os
 import struct
 import tempfile
 import unittest
+import sys
 from fractions import Fraction as F
 from pathlib import Path
-from studio016_source import geometry, parse, read, opened, vector, sha
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+from studio016_source import whole_identity,geometry, parse, read, opened, vector, sha
 from studio016_compare import serialize, deserialize, affine_gate, compare
 from studio016_reference import affine, units, X_EXP, W_EXP, hidden_admission
-from studio016_campaign import record, sealed, file_receipt, enc
+from studio016_campaign import record, sealed, file_receipt, enc, validate_binding
 
 class Tests(unittest.TestCase):
     def test_wire(self):
@@ -79,6 +81,13 @@ class Tests(unittest.TestCase):
     def test_mutation_short_read_and_claim_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp).resolve();p=root/'data';p.write_bytes(b'abc')
+            # Even an unchanged selected prefix cannot hide an out-of-range flip.
+            p.write_bytes(b'abc1')
+            with p.open('rb') as f:self.assertEqual(whole_identity(f.fileno(),4,sha(b'abc1')),sha(b'abc1'))
+            p.write_bytes(b'abc2')
+            with p.open('rb') as f,self.assertRaisesRegex(ValueError,'publisher'):whole_identity(f.fileno(),4,sha(b'abc1'))
+            with self.assertRaises(FileNotFoundError):validate_binding(root,{}, {})
+            p.write_bytes(b'abc')
             fd=os.open(root,os.O_RDONLY|os.O_DIRECTORY)
             try:
                 with self.assertRaises(ValueError):

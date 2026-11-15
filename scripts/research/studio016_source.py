@@ -82,6 +82,14 @@ def vector():
                     for c in range(16) for v in hashlib.sha256(
                         b'Studio016 expert boundary v1'+bytes([c])).digest() for i in range(8))
 
+def whole_identity(fd, size, expected):
+    need(0<size<=16<<30,'selected whole-shard size bound')
+    dg=hashlib.sha256()
+    for pos in range(0,size,4<<20):
+        dg.update(read(fd,pos,min(4<<20,size-pos)))
+    need(dg.hexdigest()==expected,'selected whole shard differs from publisher')
+    return dg.hexdigest()
+
 def frame(h,b):
     h.update(struct.pack('<Q',len(b)))
     h.update(b)
@@ -124,9 +132,7 @@ def bind(path, *, whole=False, payload=False, previous=None):
                 frame(snap,name.encode());frame(snap,struct.pack('<Q',st[2]));frame(snap,prefix+raw)
                 if name!=SHARD:continue
                 if whole:
-                    dg=hashlib.sha256()
-                    for pos in range(0,st[2],4<<20):dg.update(read(fd,pos,min(4<<20,st[2]-pos)))
-                    need(dg.hexdigest()==SHARD_ID,'selected whole shard differs from publisher')
+                    whole_identity(fd,st[2],SHARD_ID)
                 for i,(role,module) in enumerate(zip(ROLE,MODULES)):
                     spec=q.get(module,q)
                     need((spec['bits'],spec['group_size'],spec.get('mode','affine'))==(4,64,'affine'),'module recipe')
