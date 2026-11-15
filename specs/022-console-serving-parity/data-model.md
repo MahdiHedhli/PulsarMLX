@@ -7,8 +7,9 @@ the work-package records of 2026-11-14 (planning records that are not in the rep
 their content is restated per package in [tasks.md](tasks.md) and `tasks/`), which read
 project-maya at commit `7e68a30f`; the package named in each section owns the final
 definition and records it in its contract document. Where the donor's behavior and this
-model differ, the difference is an approved deviation (named inline), a proposal awaiting
-the owner (marked "proposed"), or an open item. Open items are listed with stable `OPEN-`
+model differ, the difference is an approved deviation (named inline, including the `P-`
+proposals the owner approved on 2026-11-14), a proposal still awaiting the owner (marked
+"proposed"), or an open item. Open items are listed with stable `OPEN-`
 ids in the register in [checklists/analysis.md](checklists/analysis.md). References such
 as B3 or B10 are the binding cross-cutting decisions in
 [tasks.md](tasks.md#binding-cross-cutting-decisions). Names on the wire
@@ -74,7 +75,7 @@ files are tracked text files.
 | `token-savings.json` | Runtime | Beside the run config, or the path in the savings variable | OPS-21 | Savings ledger; whole document rewritten through a temporary file and rename after each add. |
 | Server log | Runtime | Path from the server-log variable | API-16 | Plain text with the `[console]` prefix. Never tracked (`*.log` is ignored). |
 | `run-<STEM>.sh`, `run-<STEM>.bat` | Runtime | Beside the run config | API-13 (port route), OPS-09 (delete) | Donor launcher scripts that the donor's port route rewrites and delete removes; whether the console creates or only maintains them is OPEN-55, fixed by those packages. |
-| Vision and picture files (SVE1, DSI1) | Runtime, transient | Temporary directory | ENG-14, RSP-19 (the one fake vision encoder used in tests is in `console-fake-engines`, ENG-14) | Per-request embeddings and pixel files owned by the request task. |
+| Vision and picture files (SVE1, DSI1) | Runtime, transient | Temporary directory under a whitespace-free base; the server refuses to start if none exists (P-7, approved by the owner on 2026-11-14) | ENG-14, RSP-19 (the one fake vision encoder used in tests is in `console-fake-engines`, ENG-14) | Per-request embeddings and pixel files owned by the request task. |
 | `console/parity/ledger.json` | Repository | `console/parity/` | GOV-06 (skeleton), every package | Parity ledger, one row per donor test method. |
 | `specs/022-console-serving-parity/contracts/deviations.md` | Repository | Feature contracts | GOV-06, packages adding deviations | Deviation register. |
 | Conformance scenarios | Repository | `console/conformance/` | CNF-02, CNF-18 to CNF-20 | Scenario JSON validated by a schema. |
@@ -199,7 +200,7 @@ ENG-04 and ENG-06 (handshake), ENG-15 (launch specification).
 | --- | --- |
 | `seam` | Seam contract version |
 | `kind` | `Scripted`, `LineProtocol`, `CoordinatorAdapter`, `RuntimeAdapter` |
-| `provenance` | `Synthetic`, the only value in this increment |
+| `provenance` | What the engine reports. The type can also express "not synthetic": an engine that declares another provenance, or declares none (lead decision LD28; ENG-01 settles the exact shape). `Synthetic` is the only value the server accepts in this increment |
 | `version` | From the engine's `INFO`, else a build manifest |
 | `max_context` | From `READY`; 0 means not ready (503 "the model is starting") |
 | `vocab_size` | When known, the event ledger checks token ids against it |
@@ -217,10 +218,26 @@ refused with the donor's 400 before anything reaches the engine.
 **Launch specification** (line-protocol engines): executable, arguments and child
 environment built from the run config. Run-config `env` entries not named in the server's
 own list pass to the child verbatim as opaque data (B2); the environment guard refuses
-library- and executable-injection variables (SEC-7).
+library- and executable-injection variables (SEC-7). An optional ready timeout bounds the
+wait for `READY`; it is off by default, so by default the server waits as the donor does
+(P-6, approved by the owner on 2026-11-14).
 
 **Invariants**: no project-maya engine binary is ever launched (B10); in this increment
-every engine is synthetic, and `/health` and the dashboard say so.
+every engine is synthetic, and `/health` and the dashboard say so. The scripted engine's
+default model name is exactly `pulsar-console-synthetic` (PLAN-2; the owner decided the
+name on 2026-11-14, OPEN-03). The server refuses to start an engine that does not report
+synthetic provenance (decided by the owner on 2026-11-14, OPEN-29): one guard function in
+`console-core` decides, and every path that admits an engine (first start, restart, model
+switch, context reload) calls it before the engine serves a request; no environment
+variable, configuration key, command-line flag or Cargo feature bypasses it in this
+increment (lead decision LD28). At process start a refusal makes `pulsar-console` exit
+with a non-zero status after one line on standard error that names the engine kind, what
+the engine reported, and the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`; at a
+later restart, switch or reload the engine is closed, the operation fails with the same
+message, and nothing is served from that engine. A line-protocol engine that does
+not declare synthetic provenance in its start-up lines counts as not synthetic (the form
+of the declaration is open item OPEN-58). What must be done before such an engine may be allowed is in
+[ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
 
 ## GenerationRequest, Committed Token and the Event Ledger
 
@@ -268,8 +285,9 @@ order-preserving map so unknown keys survive every rewrite in their original ord
 accessors cover, among others: `exe`, `args`, `env`, `gpu`, `backend` (absent means the
 donor's default), `installer.*`, `vision`, `vision_off`, `turbo`, `sampling`, `port`,
 `host`, `api_key`, `model_management`, `cors_origins`, `fit_max_tokens`, `idle_unload_s`,
-`mcp_servers` and `mcpServers`. The refusal-ablation keys are not ported (POL-1). The full
-key table with old and new names is part of the naming contract.
+`mcp_servers` and `mcpServers`, plus the console's own optional `allowed_hosts` (SEC-1.1,
+decided by the owner on 2026-11-14). The refusal-ablation keys are not ported (POL-1). The
+full key table with old and new names is part of the naming contract.
 
 **Invariants**
 
@@ -281,6 +299,12 @@ key table with old and new names is part of the naming contract.
   `host` from the command line, else config, else `127.0.0.1`.
 - `cors_origins` is none, empty, or a list of non-blank strings with trailing `/` removed;
   anything else aborts start-up with the donor's message.
+- `allowed_hosts` is absent by default. On a loopback bind a request passes only if its
+  `Host` is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, any port) or a listed
+  name; on a non-loopback bind `Host` is not restricted unless the key is set, and then
+  only the listed names and the loopback names pass. A refused request gets 403
+  `permission_error`. Matching details (case, port, IPv6 forms, a missing `Host` header)
+  follow the archived serving crate (B8) and are settled by API-03.
 - Environment values whose name matches key, token, secret or password are returned as
   `***` in every outward copy; submitting `***` keeps the stored value.
 - Server settings use the `PULSAR_CONSOLE_` prefix; legacy `MAYA_*` and `STRATA_*` names
@@ -390,8 +414,8 @@ Exactly one of:
 (PDF header, ZIP member presence in the donor's order, text sniffing), not by file name
 alone; ZIP inflation stops at a per-member and a cumulative cap; XML never resolves
 external entities; text is cut at the model's text limit in code points with the donor's
-note; message prefixes match the donor exactly; different detail text in parentheses is
-proposed (P-4; not approved, OPEN-15).
+note; message prefixes match the donor exactly; the detail text in parentheses comes from
+the Rust reader (P-4, approved by the owner on 2026-11-14).
 
 ## ModelRegistryEntry and CatalogManifest
 
@@ -405,7 +429,7 @@ directory, newest first)
 | `file` | `pulsar-<NAME>.json`; must match the prefix, must not be a shared-settings file, must exist |
 | `family` | Donor families, plus `pulsar-mlx` for MLX safetensors checkpoints and `synthetic` for the synthetic backend |
 | `quant_label` | From a data-driven table with neutral labels (BRAND-1) |
-| `missing` | Reason the model cannot start, or none. Proposed, not approved (P-15, OPEN-15): an MLX backend config is listed with "no engine for this backend in this build" |
+| `missing` | Reason the model cannot start, or none. An MLX backend config is listed with "no engine for this backend in this build" (P-15, approved by the owner on 2026-11-14) |
 | `context_range` | `{ min, max, trained, tested }` |
 | checkpoint descriptor | For MLX checkpoints: neutral quantization label, shard count, total bytes; payloads never opened |
 
@@ -487,17 +511,19 @@ Owner: GOV-06 (register), packages that rely on a deviation. Stored in
 
 | Field | Notes |
 | --- | --- |
-| `id` | One of the approved ids (SEC-1 to SEC-7, PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1), one of PLAN-1 to PLAN-6 for differences the approved plan decides outside its deviation table, or a later id under the register's scheme (OPEN-39) |
+| `id` | One of the approved ids (SEC-1 to SEC-7, PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1), one of PLAN-1 to PLAN-6 for differences the approved plan decides outside its deviation table, or a `P-` id: an owner-approved proposal keeps its `P-` id as its deviation id, and a later owner-approved deviation that was never a listed proposal takes the next free `P-` number; ids are never reused (OPEN-39, settled by lead decision LD29 on 2026-11-14) |
 | donor behavior | What project-maya does at the pin, with source lines |
 | console behavior | What PulsarMLX Console does instead |
 | reason | Why literal parity is not kept |
-| approval | The owner's approval and its date; the approved plan of 2026-11-14 for the listed ids, with the deciding plan section for PLAN-1 to PLAN-6 |
+| approval | The owner's approval and its date; the approved plan of 2026-11-14 for the listed ids, with the deciding plan section for PLAN-1 to PLAN-6; the owner's decision of 2026-11-14 for the approved proposals P-1 to P-4, P-6 to P-11 and P-13 to P-16 |
 | affected rows and scenarios | Ledger keys and scenario annotations that cite it |
 | tests | The tests that pin the console behavior |
 
-**Invariants**: no deviation without owner approval (proposals with `P-` ids are not
-deviations until the owner approves them); every comparator annotation and every
-rename-map entry cites a deviation id; an unused deviation entry is flagged.
+**Invariants**: no deviation without owner approval (a proposal with a `P-` id is not a
+deviation until the owner approves it; a declined proposal, such as P-12 or P-17, keeps
+its id marked declined, and a deferred one, such as P-5 or P-18, stays a proposal); every
+comparator annotation and every rename-map entry cites a deviation id; an unused
+deviation entry is flagged.
 
 ## ConformanceScenario and RecordedReference
 

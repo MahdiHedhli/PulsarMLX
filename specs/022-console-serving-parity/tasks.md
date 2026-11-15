@@ -160,9 +160,17 @@ PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1) are reco
 differences the plan decides outside its deviation table (the synthetic badge and health
 report, a synthetic default model name, embedded assets with no filesystem path served,
 license notices reachable from the About page, the always-available schema validator, and
-HTTPS MCP through the curl facade). Planner proposals that no approved id covers are listed
-there under "Proposed, awaiting owner decision" and are not built until the owner decides.
-Task entries cite deviation ids where they apply.
+HTTPS MCP through the curl facade). Planner proposals that no approved id covers were listed
+there, before checkpoint 1, under "Proposed, awaiting owner decision"; that section is now
+split into "Approved proposals", "Declined proposals" and "Deferred, awaiting owner
+decision".
+Amended on 2026-11-14: the owner decided those proposals at checkpoint 1 (R29). P-1 to P-4,
+P-6 to P-11 and P-13 to P-16 are approved deviations under their `P-` ids; P-12 and P-17
+are declined and not built; P-5 and P-18 still await the owner. Under lead decision LD29
+(OPEN-39, settled by the lead on 2026-11-14), an approved proposal keeps its `P-` id, a
+later approved deviation that was never a listed proposal takes the next free `P-` number,
+no id is reused, and a declined proposal keeps its id, marked declined. Task entries cite
+deviation ids where they apply.
 
 ## Reconciliations
 
@@ -253,7 +261,8 @@ shim (`serve/test_engine_contract.py` and `serve/test_stop.py`, CNF-10) and the
 vendor-template renders (CNF-11) run only in the manual reference job, and blocking CI
 checks their committed record. The ledger dispositions are therefore `rust-test`,
 `scenario`, `web-test`, `shim`, `vendor-render`, `deviation`, `not-applicable` and
-`pending`.
+`pending`. Amended on 2026-11-14: this lead decision was reported to the owner at checkpoint
+1, and the owner raised no objection (R29).
 
 **R11. Duplicate fakes and crates.** CNF-05 and ENG-05 both planned fake engine binaries, and
 CNF-06 and RSP-08 both planned a fake MCP server; the approved merges resolve both. ENG-14
@@ -394,7 +403,11 @@ The lead's guidance is that the instance stays owned by one driver thread; for m
 concurrent generation the token-level trait offers a submit-and-pump form with events tagged
 by request id, and the blocking generate form is the single-conversation case. The draft is
 offered to the engine track for review before it is frozen (FR-039 in spec.md). The open
-seam questions are OPEN-30.
+seam questions are OPEN-30. Amended on 2026-11-14: the owner decided seam question Q9
+(OPEN-29): the server refuses to start an engine that does not report synthetic
+provenance, and ENG-01 builds the provenance type and the single guard of lead decision
+LD28 (R29). Who on the engine track reviews the draft, and in what form, is still not
+decided (seam question Q12, OPEN-30); reaching the engine track goes through the owner.
 
 **R28. Dashboard caching and asset source (WEB-02).** The dashboard planner gave WEB-02
 strong `ETag`s with 304 responses and `HEAD` support, and a `devdir` module that serves
@@ -402,7 +415,126 @@ assets from a directory in development. The first is proposal P-11 in the deviat
 register, awaiting owner decision (OPEN-15); the second conflicts with the approved plan's
 rule that no filesystem path is ever served (PLAN-3), and the question is recorded as
 OPEN-41. Resolution: WEB-02 keeps the donor's `Cache-Control: no-cache` without validators
-and no `HEAD` support until the owner decides P-11, and builds no `devdir` module.
+and no `HEAD` support until the owner decides P-11, and builds no `devdir` module. Amended
+on 2026-11-14: the owner approved P-11 at checkpoint 1, so WEB-02 builds strong `ETag`s,
+304 responses and `HEAD` support for dashboard assets; the `devdir` module stays not
+adopted and OPEN-41 is unchanged (R29).
+
+**R29. Owner decisions at checkpoint 1 (2026-11-14).** The owner reviewed checkpoint 1 on
+2026-11-14, accepted and approved the decisions put to it, and asked for a clear note on
+what must be done before the server may start an engine that is not synthetic. The
+decisions below, and the lead decisions LD28 and LD29 that carry them out, override any
+conflicting sentence in the detail files under `tasks/` and in earlier reconciliations. In
+particular they supersede R28's "until the owner decides P-11", any "working default" or
+"open" wording about the scripted engine's default model name, and any detail text that
+keeps the donor's behavior where an approved proposal now applies.
+
+- **ADR 0008** is accepted by the owner, as written (GOV-04).
+- **OPEN-27 is settled.** The owner accepts that donor benefit is recorded as a
+  pre-adoption estimate and measured at close-out (plan exception E6; GOV-02). OPEN-57,
+  which named checklist the close-out coverage figure uses, stays open (CNF-17).
+- **OPEN-03 is settled.** The scripted engine's default model name is exactly
+  `pulsar-console-synthetic` (PLAN-2). ENG-02 delivers it, API-08 asserts it and API-17
+  keeps it; it is the decided name, no longer a working default.
+- **OPEN-04 is settled** by the owner as deviation SEC-1.1. On a loopback bind a request is
+  accepted only if its `Host` is a loopback name (`localhost`, `127.0.0.1` or `[::1]`, any
+  port) or a name listed in the optional run-config key `allowed_hosts`; the key is absent
+  by default, so by default only loopback names pass. On a non-loopback bind `Host` is not
+  restricted, as in the donor, unless `allowed_hosts` is set; when it is set, only the
+  listed names and the loopback names pass. A refused request gets 403 `permission_error`,
+  unchanged. The key name `allowed_hosts` is decided. API-15 reads the key from the run
+  config and API-03 enforces the list. Matching details (case, port, IPv6 forms, a missing
+  `Host` header) follow the archived serving crate (B8) and are settled by API-03. Lead note
+  LD30: the one-line recommendation put to the owner read "Loopback names only on loopback
+  binds; elsewhere no restriction unless an allowed_hosts key is set". That `allowed_hosts`
+  also extends the list on a loopback bind follows the SEC-1.1 text the owner reviewed; the
+  lead confirms it with the owner at checkpoint 2.
+- **OPEN-29 is settled** (seam question Q9): the server refuses to start an engine that
+  does not report synthetic provenance. The mechanism is lead decision LD28:
+  1. The provenance type in the engine descriptor can express "not synthetic": an engine
+     that declares another provenance, or declares none. Synthetic is the only value the
+     server accepts in this increment. ENG-01 settles the exact shape of the type.
+  2. One guard function in `console-core` decides. Every path that admits an engine (first
+     start, restart, model switch, context reload) calls it before the engine serves a
+     request. No environment variable, configuration key, command-line flag or Cargo
+     feature bypasses it in this increment.
+  3. At process start a refusal makes `pulsar-console` exit with a non-zero status after
+     one line on standard error that names the engine kind, what the engine reported, and
+     the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`. At a later restart, switch
+     or reload, the engine is closed, the operation fails with the same message, and the
+     server serves nothing from that engine.
+  4. A line-protocol engine declares synthetic provenance in its start-up lines before it
+     is admitted; one that declares another provenance, or none, counts as not synthetic
+     (fail closed). The form of the declaration is settled with the line-protocol packages
+     in M3 (OPEN-58, a lead item; the lead's direction is a fact on an `INFO` line). It is
+     not the synthetic marker proposed for the server's own ready line, which belongs to
+     PLAN-1 and OPEN-35.
+  5. Tests pin the refusal: ENG-01 for the guard, ENG-10 for the turn driver, API-08 for
+     process start (kept by API-17). They are not deleted or weakened to make a real engine
+     start.
+  6. What must be done to allow a non-synthetic engine is written in
+     [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md),
+     requested by the owner on 2026-11-14 so that whoever picks the work up next can act on
+     it. A task that adds, moves or removes an enforcement point of the synthetic-only rule
+     updates that note in the same change (per-task gate, step 7).
+
+  Tasks changed: ENG-01, ENG-02, ENG-10, API-08, API-17 and, for the line-protocol
+  declaration, ENG-04, ENG-05 and ENG-06.
+- **Proposals P-1 to P-18**, decided by the owner on 2026-11-14. Approved, and now
+  deviations under their `P-` ids: P-1 and P-2 (API-02; P-1 fixes the `Server` header as
+  `pulsar-console/<version>`); P-3 (API-01, API-07, PRM-06); P-4 (RSP-12, RSP-18, RSP-19);
+  P-6 (ENG-06; it settles OPEN-10: an optional engine ready-timeout setting, off by
+  default); P-7 (ENG-14; RSP-18 and RSP-19 write under its directory); P-8 (PRM-03, PRM-07, PRM-08, API-07; it
+  settles OPEN-07: a template `raise_exception` and DeepSeek encoder assertion failures
+  answer 400); P-9 (WEB-08); P-10 (ENG-08, OPS-17); P-11 (WEB-02); P-13 (WEB-03); P-14 (OPS-12);
+  P-15 (OPS-03, OPS-16); P-16 (OPS-14). Declined, and not built: P-12, because a report-only
+  switch for the Content-Security-Policy would weaken SEC-2 while on (WEB-02, WEB-03); and
+  P-17, because FIX-1.1 is approved and no literal-parity reload setting is built (ENG-12,
+  API-14). Deferred, still awaiting the owner: P-5, decided before the picture packages of
+  M6 (RSP-18, RSP-19), and P-18, decided before PRM-05 in M2. OPEN-15 stays open for those
+  two and for the JSON Schema meta-validation wording (PLAN-5, RSP-02) and the advisory
+  savings lock (OPS-21).
+- **WEB-02.** R28's "until the owner decides P-11" is superseded: WEB-02 builds strong
+  `ETag`s, 304 responses and `HEAD` support for dashboard assets. The `devdir` module stays
+  not adopted (OPEN-41 unchanged).
+- **OPEN-39 is settled** by the lead on 2026-11-14 (LD29): an owner-approved proposal keeps
+  its `P-n` id as its deviation id; a later owner-approved deviation that was never a
+  listed proposal takes the next free `P-` number; ids are never reused; a declined
+  proposal keeps its id, marked declined.
+- **Lead decisions reported.** LD1 (shim runs and vendor-template renders only in the manual
+  job, and the eight ledger dispositions; R10) and LD17 (third-party license texts arrive
+  with the importing package; GOV-05) were reported to the owner at checkpoint 1, and the
+  reply raised no objection.
+- **Lead decisions that go with the above** (2026-11-14, made with the M1 scaffold).
+  - LD31: API-08 owns the minimal `pulsar-console` entry point that M1 needs, in
+    `console/crates/pulsar-console/`: the scripted engine, the listen address and port, the
+    wiring of `allowed_hosts` from the run config into the API-03 guard, and the
+    process-start refusal of LD28 with its spawned-process test. API-17 (M4) replaces it
+    with the full command line and keeps the refusal. The lead runs the M1 demonstration
+    of owner checkpoint 2 with that binary.
+  - LD32: the SHA-256 helper `console-core::digest` is owned by API-03, the first task
+    that needs it. `console-conformance` keeps no internal dependency and uses `sha2`
+    directly (CNF-02).
+  - Later admission paths: any task that adds a path which starts, restarts, switches or
+    reloads an engine (ENG-06, ENG-12, API-14 and OPS-10 among them) routes it through the
+    admission step of ENG-10, so that the LD28 guard runs, and adds a test that an engine
+    which is not synthetic is refused on that path.
+  - P-6: ENG-06 adds the ready-timeout setting to the settings store that API-15 builds
+    and records its name in contracts/naming.md; API-15 does not define it in M1.
+  - P-7: ENG-14 creates the vision temporary directory and refuses at start when no
+    whitespace-free base exists; RSP-18 and RSP-19 write under it. The per-request `GENI`
+    path check of ENG-04 is the donor's behavior and is not part of P-7.
+  - P-9: the approved table has no entry for `fake`. The WEB-08 detail's mapping of `fake`
+    to Synthetic is not approved and is not built unless the owner approves it.
+  - The `Server` and `Date` headers in comparisons: the detail file tasks/conformance.md
+    calls both headers not observable. contracts/parity-ledger.md section 1.1 governs:
+    header names and positions are observable, and only the two values are volatile.
+- **Not decided.** Who on the engine track reviews the seam draft, and in what form (FR-039,
+  seam question Q12, OPEN-30). ENG-01's code may land; the seam stays a draft and ENG-01
+  stays unticked until that review is recorded. Reaching the engine track goes through the
+  owner.
+
+With these decisions, M1 may start.
 
 ## Open items
 
@@ -415,14 +547,13 @@ the named task closes. The register is authoritative where the two differ.
 | Id | Item | Who decides | Blocks |
 | --- | --- | --- | --- |
 | OPEN-01 | Whether the donor's sealed-reasoning prefix is accepted on input (B2) | Owner | RSP-03 |
-| OPEN-04 | How the `Host` allowlist behaves on non-loopback binds, and the proposed `allowed_hosts` key (SEC-1) | Owner | API-03 |
-| OPEN-03 | The exact default model name of the scripted engine; until decided the working default is `pulsar-console-synthetic` (PLAN-2) | Owner | ENG-02, API-08, API-17 |
 | OPEN-06 | The default run-config directory when no config is given, and whether an importer for project-maya run configs exists | Owner | OPS-11 |
 | OPEN-09 | An untagged ERR in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop) | Owner | ENG-07 |
+| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); RSP-02; OPS-21 |
 | OPEN-24 | Whether launching refuses known project-maya engine names | Owner | ENG-15 |
 | OPEN-25 | Which names Turbo and the settings profiles write into a run-config `env` block (the donor writes `MAYA_GLM_*` and `MAYA_DS4_*`), and the engine variable names shown in the dashboard; B2 fixes only that such names pass through verbatim | Owner | OPS-05, OPS-06, WEB-09 |
-| OPEN-29 | What the server does if an engine reports a provenance other than synthetic: refuse to start, or report it (seam question Q9) | Owner | ENG-01 (seam freeze) |
 | OPEN-30 | Seam design details ENG-01 settles before freezing the seam (R27) | Lead | ENG-01 |
+| OPEN-58 | The form in which a line-protocol engine declares synthetic provenance in its start-up lines (LD28; the lead's direction is a fact on an `INFO` line) | Lead | ENG-04, ENG-05, ENG-06 |
 
 Points that earlier drafts of this list left open and that the lead decided on 2026-11-14:
 how ids are generated (R8), whether `hyper` may appear in test code (R2), which package
@@ -435,6 +566,19 @@ verbatim passthrough of run-config `env` names (API-15), the test-switch names (
 counts as observable (CNF-04), accepted Unicode-table differences (PRM-04), the
 run-config directory rule of API-15, and the delivery of PLAN-2 (ENG-02).
 
+Points the owner settled at checkpoint 1 on 2026-11-14 (R29): OPEN-03, the scripted
+engine's default model name, which is exactly `pulsar-console-synthetic` (ENG-02, API-08,
+API-17); OPEN-04, the `Host` allowlist of SEC-1.1, under which only loopback names and the
+names listed in the optional run-config key `allowed_hosts` pass on a loopback bind, and
+`Host` is unrestricted on a non-loopback bind unless `allowed_hosts` is set (API-03,
+API-15); OPEN-29 (seam question Q9), under which the server refuses to start an engine
+that does not report synthetic provenance, through the single guard of lead decision LD28
+(ENG-01, ENG-10, API-08, API-17); OPEN-07 and OPEN-10, settled by the approved proposals
+P-8 and P-6; and OPEN-27, the pre-adoption estimate of donor benefit with its measurement
+at close-out (plan exception E6). What must be done before any other engine may start is in
+[docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
+The lead settled OPEN-39, the numbering of later deviations, on the same day (LD29).
+
 ## Phase M0: Governance and skeleton
 
 **Purpose**: Section 7 of the approved plan in full: the Spec Kit artifacts, ADR 0008, the
@@ -442,7 +586,8 @@ roadmap, the donor qualification, and an empty `console/` workspace with `consol
 the boundary and hygiene tools. No code.
 
 **Checkpoint**: Owner checkpoint 1: spec.md with its checklist, ADR 0008, the roadmap
-entries, NOTICE.md and the donor qualification record.
+entries, NOTICE.md and the donor qualification record. Held on 2026-11-14: the owner
+accepted and approved the decisions put to it, and M1 may start (R29).
 
 - [ ] GOV-01 [P] [M0] Feature specification and requirements checklist —
   specs/022-console-serving-parity/spec.md, checklists/requirements.md
@@ -469,6 +614,8 @@ entries, NOTICE.md and the donor qualification record.
     exceptions (E1 to E6) with scope, risk and removal condition; research.md records
     every chosen crate with its license and exact pin as packages add them; quickstart.md
     gives commands that are marked as planned until they run.
+  - Note: Owner decision 2026-11-14: exception E6 is accepted, settling OPEN-27; OPEN-57
+    stays open (R29).
   - Detail: this entry is complete; the files it produces are listed in plan.md.
 - [ ] GOV-03 [M0] Task list and recorded cross-artifact analysis —
   specs/022-console-serving-parity/tasks.md (this file) and checklists/analysis.md
@@ -495,6 +642,7 @@ entries, NOTICE.md and the donor qualification record.
     donor qualification, the two-phase front end, the superseded archived serving crate, the
     out-of-scope donor engine binaries and the CI cost; the roadmap names Phases 1, 2 and 3;
     the three small edits contradict nothing the owner decided.
+  - Note: Owner decision 2026-11-14: ADR 0008 is accepted, as written (R29).
   - Detail: this entry is complete; the files it produces are listed in plan.md.
 - [ ] GOV-05 [P] [M0] Donor qualification record, NOTICE section and license texts —
   docs/upstream/PROJECT_MAYA.md, docs/upstream/PROJECT_MAYA_SYNC.md, NOTICE.md (new
@@ -510,7 +658,8 @@ entries, NOTICE.md and the donor qualification record.
     of third-party components are added in the same change that imports the component:
     Preact (MIT), htm (Apache-2.0) and Lucide (ISC) with WEB-01, and the DeepSeek reference
     encoder notice with PRM-07, which commits the five DeepSeek fixture pairs together with
-    that notice (decided by the lead on 2026-11-14; the owner is informed at checkpoint 1);
+    that notice (decided by the lead on 2026-11-14; the owner was informed at checkpoint 1
+    and raised no objection, R29);
     NOTICE.md gains the matching section; no donor benchmark is presented as PulsarMLX
     evidence.
   - Detail: this entry is complete; the files it produces are listed in plan.md.
@@ -534,6 +683,8 @@ entries, NOTICE.md and the donor qualification record.
     done needs it); the ledger lists 913 pending rows; naming.md publishes the old-to-new
     name table; and deviations.md lists every deviation id of the approved plan and
     PLAN-1 to PLAN-6, with unapproved proposals kept apart.
+  - Note: Owner decision 2026-11-14: the proposals are decided as recorded in R29; the
+    approved ones are deviations under their `P-` ids (LD29).
   - Detail: this entry is complete; the files it produces are listed in plan.md.
 
 ## Phase M1: Core pipeline
@@ -544,7 +695,9 @@ detokenizer; chat completions for plain content; run-config store; test kit and 
 comparator.
 
 **Checkpoint**: Owner checkpoint 2: the first end-to-end demonstration, a streamed answer
-over `curl` from the scripted engine, and the decision on the first push.
+over `curl` from the scripted engine, and the decision on the first push. The owner
+authorized the first push of the feature branch on 2026-11-14, ahead of this checkpoint;
+each later push remains a checkpoint decision.
 
 - [ ] API-01 [P] [M1] Wire foundations: Python-compatible JSON, error model, ids (absorbs
   PRM-01 and the JSON writer of OPS-01) — console-pyjson (new crate) and console-http::error
@@ -568,6 +721,9 @@ over `curl` from the scripted engine, and the decision on the first push.
     documented body and status; the crate depends on nothing beyond serde, serde_json (with
     the B3 features) and libc, and ids are random hexadecimal from operating-system
     randomness with no `uuid` crate (R8).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-3, so the malformed
+    request error keeps the `malformed request (` prefix and a Python-like category with
+    Rust-side detail text.
   - Detail: [tasks/api.md#api-01](tasks/api.md#api-01);
     [tasks/prompt.md#prm-01](tasks/prompt.md#prm-01);
     [tasks/ops.md#ops-01](tasks/ops.md#ops-01).
@@ -585,10 +741,18 @@ over `curl` from the scripted engine, and the decision on the first push.
   - Done when: the listed tests pass; a 300 MB Content-Length gets 413 without the body
     being read, chunked request bodies decode, a blocked handler is cancelled within 1 s of
     the client closing, SSE sockets have TCP_NODELAY, and raw response bytes show no
-    keep-alive and no chunked response encoding.
+    keep-alive and no chunked response encoding. Every response carries
+    `Server: pulsar-console/<version>` (P-1), and a request with both `Content-Length` and
+    chunked `Transfer-Encoding` gets 400 (P-2); raw-byte tests pin both.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-1, the `Server` header
+    `pulsar-console/<version>` in place of the donor's Python value.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-2, a 400 answer to a
+    request that carries both `Content-Length` and chunked framing, where the donor silently
+    prefers chunked; the detail file's chunked-first rule applies only when
+    `Content-Length` is absent.
   - Detail: [tasks/api.md#api-02](tasks/api.md#api-02).
 - [ ] API-03 [M1] Router, authentication, CORS and cross-site guards — console-http::router
-  and console-http::guard
+  and console-http::guard; console-core::digest (the SHA-256 helper, LD32)
   - Depends on: API-01, API-02.
   - Donor sources: serve/server.py:5383-5400, 5780-5819, 5821-5826, 5923-5933, 5934-6139,
     6141-6150, 6160-6282, 6327-6338, 6434-6450.
@@ -599,7 +763,17 @@ over `curl` from the scripted engine, and the decision on the first push.
     deviations, taken from the archived crate (B8).
   - Done when: a table-driven test enumerates every donor route with and without a key and
     with foreign, same-host and absent Origin and asserts the status, and a reviewer can
-    diff that table against the donor dispatch order; all listed donor methods pass.
+    diff that table against the donor dispatch order; all listed donor methods pass. The
+    rebinding test covers the `Host` allowlist of SEC-1.1 as the owner settled it (OPEN-04):
+    on a loopback bind only loopback names (`localhost`, `127.0.0.1`, `[::1]`, any port)
+    and names listed in `allowed_hosts` pass; on a non-loopback bind `Host` is unrestricted
+    unless `allowed_hosts` is set, and then only the listed names and the loopback names
+    pass; a refused request gets 403 `permission_error`.
+  - Note: Owner decision 2026-11-14 (R29): the guard takes the `allowed_hosts` list that
+    API-15 reads from the run config (absent by default); API-03 settles the matching
+    details (case, port, IPv6 forms, a missing `Host` header) from the archived serving
+    crate (B8). Lead note LD30: that `allowed_hosts` also extends the list on a loopback
+    bind is confirmed with the owner at checkpoint 2.
   - Detail: [tasks/api.md#api-03](tasks/api.md#api-03).
 - [ ] API-04 [M1] Request validation, sampling normalization and shared defaults —
   console-core::request and console-core::sampling
@@ -631,8 +805,10 @@ over `curl` from the scripted engine, and the decision on the first push.
     a rewrite.
   - Done when: an untouched config is rewritten byte-identical to Python's indent=1 output,
     unknown nested keys survive read-modify-write with order kept, the three OPS-01 donor
-    tests pass, and a test asserts that EnvSettings and the name table in
-    contracts/naming.md agree.
+    tests pass, a test asserts that EnvSettings and the name table in
+    contracts/naming.md agree, and the optional run-config key `allowed_hosts` (SEC-1.1,
+    OPEN-04 settled by the owner on 2026-11-14) is read as a list of host names, absent by
+    default, for the API-03 guard.
   - Note: Decided by the lead on 2026-11-14: every persisted file is resolved relative to
     the directory of the run config passed with --config, as the donor does; the default
     directory when no config is given, and whether an importer for project-maya run
@@ -656,12 +832,25 @@ over `curl` from the scripted engine, and the decision on the first push.
     that need not be `Send` and is owned by the driver thread, and a request id assigned by
     the server; backend-seam.md maps every optional donor engine member to a trait method or
     capability; its open questions Q1 to Q8 and Q12 are answered or explicitly deferred
-    (Q9 to Q11 are owner decisions), with Q1 (multi-conversation engines) settled before
-    the freeze (R27); and the draft has been offered to the engine track, with its review
-    recorded, before version 1.0 is frozen (FR-039).
+    (Q9 to Q11 are owner decisions; the owner decided Q9 on 2026-11-14), with Q1
+    (multi-conversation engines) settled before the freeze (R27); the engine descriptor
+    carries a provenance type that can express "not synthetic" (another provenance, or
+    none), and one guard function in console-core admits only synthetic provenance, with no
+    environment variable, configuration key, command-line flag or Cargo feature that
+    bypasses it, and unit tests pin its refusal of another provenance and of none (LD28);
+    and the draft has been offered to the engine track, with its review recorded, before
+    version 1.0 is frozen (FR-039).
   - Note: The detail file's async `Send + Sync` trait, its engine-assigned request id and
     its `Box<dyn Engine>` and `Send + 'static` handle checks are superseded by
     contracts/backend-seam.md where they conflict (R27).
+  - Note: Owner decision 2026-11-14: seam question Q9 is decided (OPEN-29): the server
+    refuses to start an engine that does not report synthetic provenance (R29). The guard
+    tests are not deleted or weakened to make a real engine start, and this task records
+    the guard's symbol and test names in
+    [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
+    The code may land, but the seam stays a draft and this task stays unticked until the
+    engine track's review is recorded (FR-039); who reviews it, and in what form, is not
+    decided (seam question Q12, OPEN-30).
   - Detail: [tasks/engine.md#eng-01](tasks/engine.md#eng-01).
 - [ ] ENG-02 [M1] In-process fake engine (MockEngine parity) and scriptable test engines —
   console-engine::fake
@@ -677,9 +866,9 @@ over `curl` from the scripted engine, and the decision on the first push.
   - Risk: low. Must stay deterministic.
   - Done when: the fake engine implements the ENG-01 trait, every listed donor double has a
     Rust counterpart naming its upstream class, the scripted engine's default model name
-    contains `synthetic` (PLAN-2; until the owner fixes the exact name, OPEN-03, the
-    working default is `pulsar-console-synthetic`), and `cargo test -p console-engine fake`
-    passes offline with --locked.
+    is exactly `pulsar-console-synthetic` (PLAN-2; decided by the owner on 2026-11-14,
+    settling OPEN-03) and its descriptor reports synthetic provenance (LD28), and
+    `cargo test -p console-engine fake` passes offline with --locked.
   - Detail: [tasks/engine.md#eng-02](tasks/engine.md#eng-02).
 - [ ] ENG-09 [M1] EngineFifo: FairLock parity with places, exclusive holders, yields, queue
   keep-alives and watchdog — console-core::fifo
@@ -707,7 +896,14 @@ over `curl` from the scripted engine, and the decision on the first push.
   - Done when: every listed test passes, a recording fake shows that dropping the consumer
     mid-stream still produces STOP, drain and place release in that order, a test shows the
     non-finite retry rules, timings match the donor's formula on fixed DoneFigures fixtures,
-    and the turn API is documented in contracts/backend-seam.md.
+    the turn API is documented in contracts/backend-seam.md, and the driver calls the
+    ENG-01 guard before an admitted engine serves a request, at first start, restart, model
+    switch and context reload, with a test showing that a refused engine is closed, the
+    operation fails with the refusal message, and nothing is served from it (LD28).
+  - Note: Owner decision 2026-11-14: the synthetic-only rule of OPEN-29 (R29). This task
+    records its test names in
+    [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md);
+    the tests are not deleted or weakened to make a real engine start.
   - Detail: [tasks/engine.md#eng-10](tasks/engine.md#eng-10).
 - [ ] API-07 [M1] Inference request lifecycle driver (dialect-agnostic) —
   console-http::inference
@@ -723,9 +919,15 @@ over `curl` from the scripted engine, and the decision on the first push.
   - Done when: gone-client and keep-alive tests pass 50 times in a loop, every error class
     maps to its documented status and body in a table test, and a fake-engine transcript
     shows that a write failure triggers exactly one engine STOP.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-3, so typed-extraction
+    failures answer 400 `malformed request (<category>: <detail>)` with Rust-side detail
+    text.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-8, so the error table
+    maps a template `raise_exception` (PRM-03) and a DeepSeek encoder assertion failure
+    (PRM-07) to 400 instead of the donor's unclean server error (OPEN-07 settled).
   - Detail: [tasks/api.md#api-07](tasks/api.md#api-07).
 - [ ] API-08 [M1] OpenAI Chat Completions adapter and SSE stream —
-  console-http::dialect::openai
+  console-http::dialect::openai; pulsar-console (the minimal M1 entry point, LD31)
   - Depends on: API-07, ENG-10. Seams: PRM-06 (M2), PRM-09 (M2), PRM-16 (M2), RSP-11 (M6).
   - Donor sources: serve/server.py:6566-6624, 4909-4930, 4933-5008, 5204-5246, 581-596;
     serve/frontend.py:561-724.
@@ -735,12 +937,24 @@ over `curl` from the scripted engine, and the decision on the first push.
   - Risk: medium. Frame order and the content null-versus-empty rule are easy to break.
   - Done when: golden raw-byte SSE transcripts for plain text, reasoning, streamed and whole
     tool calls, JSON mode, logprobs, prompt progress, cancel and engine death match, the
-    non-stream collector matches its JSON goldens, all listed donor methods pass, and the
+    non-stream collector matches its JSON goldens, all listed donor methods pass, the
     tests assert that the `model` field reports ENG-02's synthetic default model name
-    (PLAN-2).
+    `pulsar-console-synthetic` (PLAN-2), and a spawned-process test shows that at process
+    start an engine refused by the ENG-01 guard makes `pulsar-console` exit with a non-zero
+    status after one line on standard error naming the engine kind, what the engine
+    reported and the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md` (LD28).
   - Note: M1 exit needs only the plain-content subset (the approved plan's 'chat completions
     for plain content'); the checkbox is ticked only when the full definition of done holds,
     after the M2 parsers land.
+  - Note: Owner decision 2026-11-14: the synthetic-only rule of OPEN-29 (R29). This task
+    records its process-start test name in
+    [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md);
+    API-17 keeps the refusal when the full command line lands.
+  - Note: Lead decision LD31 (2026-11-14): this task owns the minimal `pulsar-console`
+    entry point of M1, in `console/crates/pulsar-console/`, with its tests
+    `tests/api08_*.rs` there: the scripted engine, the listen address and port, the wiring
+    of `allowed_hosts` from the run config into the API-03 guard, and the process-start
+    refusal. API-17 replaces it with the full command line.
   - Detail: [tasks/api.md#api-08](tasks/api.md#api-08).
 - [ ] PRM-04 [M1] Byte-level BPE tokenizer, ByteTokenizer and incremental detokenizer —
   console-tokenizer (new crate)
@@ -882,6 +1096,8 @@ Messages.
     rewritten, all synthetic conformance cases pass, and tojson, string and trim use
     console-pyjson semantics; the vendor goldens are checked in the manual job, which
     records hashes, not text.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-8: a template
+    `raise_exception` yields a typed TemplateError that answers 400 (mapped by API-07).
   - Detail: [tasks/prompt.md#prm-03](tasks/prompt.md#prm-03).
 - [ ] PRM-07 [M2] DeepSeek-V4.1 prompt encoder and reference decoder port —
   console-prompt::deepseek
@@ -894,6 +1110,8 @@ Messages.
     and match byte for byte, the Rendering and Images tests pass, the module header and
     NOTICE.md carry DeepSeek's MIT notice and source revision, and DeepSeek's license text
     is added to console/LICENSES/ in the same change (lead decision of 2026-11-14).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-8: an encoder
+    assertion failure yields a typed EncodeError that answers 400 (mapped by API-07).
   - Detail: [tasks/prompt.md#prm-07](tasks/prompt.md#prm-07).
 - [ ] PRM-05 [M2] Thinking-level vocabulary, GLM effort dialects and ChatTemplate family
   rendering — console-prompt::effort and console-prompt::template
@@ -909,6 +1127,9 @@ Messages.
   - Done when: every listed test is re-expressed and passes (vendor-gated ones in the manual
     job), invalid-effort error texts match the donor modulo approved branding, and a table
     test covers every spelling and family combination.
+  - Note: Proposal P-18, an optional explicit model-family override in configuration, still
+    awaits the owner, who decides it before this package starts (OPEN-15, R29); until then
+    the detail file's override is not built.
   - Detail: [tasks/prompt.md#prm-05](tasks/prompt.md#prm-05).
 - [ ] PRM-06 [M2] Request normalization for OpenAI Chat Completions and Anthropic Messages —
   console-prompt::normalize
@@ -924,6 +1145,8 @@ Messages.
   - Done when: every listed test passes, a golden table of at least 40 request bodies maps
     to expected normalized JSON with citations, client key order is preserved, and
     underscore-prefixed client fields never reach internal flags (SEC-6).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-3: its typed
+    MalformedRequest error carries a Python-like category with Rust-side detail text.
   - Detail: [tasks/prompt.md#prm-06](tasks/prompt.md#prm-06).
 - [ ] PRM-08 [M2] Special-literal protection, render_ids, startup template selection and
   prompt measurement — console-prompt::literals, ::render, ::select, ::measure
@@ -939,6 +1162,9 @@ Messages.
   - Done when: LiteralSpecials, the memo and selection tests pass, the verify mode and its
     failure are tested, the start-up error for a missing template is tested and documented
     (B4), and all 72 render_ids entries match in the manual vendor job.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-8: a template
+    `raise_exception` and a DeepSeek encoder assertion failure raised while rendering a
+    request answer 400 (OPEN-07 settled).
   - Detail: [tasks/prompt.md#prm-08](tasks/prompt.md#prm-08).
 - [ ] PRM-09 [M2] Streaming OutputParser and parse_tool_call (GLM and Qwen call forms) —
   console-prompt::parse
@@ -1100,6 +1326,8 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
   - Done when: every line form of the wire contracts round-trips under table tests, fuzz
     tests run with no panic, and contracts/engine-wire.md restates the grammar with donor
     line citations.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-7: the `GENI` path is
+    checked against the whitespace-free vision base.
   - Detail: [tasks/engine.md#eng-04](tasks/engine.md#eng-04).
 - [ ] ENG-05 [P] [M3] Fake engine binaries speaking the line protocol (absorbs CNF-05) —
   console-fake-engines (new crate): console-fake-engine, console-fake-multi-engine,
@@ -1137,6 +1365,15 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
     prompt never hands its lines to the next request, a late EOF from a replaced process
     does not mark the new one dead, and stdin lines are never interleaved under a
     100-request stress test (FIX-1).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-6, an optional engine
+    ready-timeout setting that is off by default, so the donor's unbounded wait for `READY`
+    stays the default (OPEN-10 settled).
+  - Note: Owner decision 2026-11-14 (OPEN-29, R29): a line-protocol engine that does not
+    declare synthetic provenance in its start-up lines counts as not synthetic and is
+    refused by the ENG-01 guard (LD28, fail closed). The form of the declaration is open
+    item OPEN-58 (lead; the direction is a fact on an `INFO` line) and is settled with the
+    line-protocol packages of this milestone, which record it in
+    [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
   - Detail: [tasks/engine.md#eng-06](tasks/engine.md#eng-06).
 - [ ] ENG-07 [M3] Multi-conversation mode: rid tagging, routing, quiet timeout and bounded
   drain — console-engine::line::multi
@@ -1167,6 +1404,9 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
   - Done when: every listed test passes on macOS, the vm_stat and /proc parsers have fixture
     tests, a failed restart keeps max_context and the rid counter, close() kills after the
     configured quit wait, and death notes name no donor URL or product.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-10: the frozen-engine
+    watchdog uses native samplers on macOS and Linux without `psutil`, and on macOS fires
+    only when a GPU-busy signal exists.
   - Detail: [tasks/engine.md#eng-08](tasks/engine.md#eng-08).
 - [ ] ENG-11 [P] [M3] Server-side continuations: fair slices, soft thinking close,
   loop-guard and penalty continuation hooks — console-core::turn::continuations
@@ -1196,6 +1436,8 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
   - Done when: every listed test passes, a failed reload restores the old size and reports
     failed, the config write is atomic and keeps unknown keys, and shutdown sends WRAP
     before STOP with no fake engine surviving (FIX-1: reload quits gracefully).
+  - Note: Proposal P-17, a literal-parity setting for the old reload behavior: not built
+    (declined 2026-11-14); FIX-1.1 applies.
   - Detail: [tasks/engine.md#eng-12](tasks/engine.md#eng-12).
 - [ ] ENG-15 [P] [M3] Engine launch specification from the run config, and GLM link mode —
   console-engine::launch and ::multigpu::glm_link
@@ -1317,6 +1559,9 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
   - Done when: the 5 tests pass deterministically over 50 repeated runs, and the /metrics
     hardware and history shape is checked against a contract fixture with nulls in every
     position.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-10: the sampler's
+    native macOS and Linux readers replace `psutil` and supply the GPU-busy signal the
+    ENG-08 watchdog needs.
   - Detail: [tasks/ops.md#ops-17](tasks/ops.md#ops-17).
 - [ ] API-06 [M4] Monitoring routes: /health, /status, /v1/status, /metrics,
   /metrics/prometheus — console-http::routes::monitor
@@ -1376,6 +1621,8 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
   - Done when: all listed donor methods pass with fake manage and engine traits, a route
     table test shows each delegated route's guard and status rules, and the reload test
     shows 503 on inference routes during a reload, both end states and the saved context.
+  - Note: Proposal P-17, a literal-parity setting for the old reload behavior: not built
+    (declined 2026-11-14); the reload route uses the FIX-1.1 graceful close of ENG-12.
   - Detail: [tasks/api.md#api-14](tasks/api.md#api-14).
 - [ ] API-17 [M4] pulsar-console binary: CLI, start-up assembly and graceful shutdown —
   pulsar-console (bin and lib)
@@ -1392,7 +1639,9 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
   - Done when: all 5 ServerStops methods pass on macOS and Linux, a start-up test asserts
     the exact order of log lines for the scripted engine and the line engine, a shutdown
     transcript shows WRAP, then DONE or STOP, then QUIT, and the full command line keeps
-    ENG-02's synthetic default model name (PLAN-2).
+    ENG-02's synthetic default model name `pulsar-console-synthetic` (PLAN-2) and the
+    API-08 start-up refusal, with its test, of an engine that does not report synthetic
+    provenance (LD28).
   - Note: test_old_engine_name is re-expressed as a refusal of the legacy engine name with a
     clear error (BRAND-1, B2).
   - Detail: [tasks/api.md#api-17](tasks/api.md#api-17).
@@ -1520,6 +1769,9 @@ DeepSeek picture preprocessor.
     format and selection rule match the donor on fixtures, every FIFO place is held from
     VLEND to VRECLAIM, and per-request embeddings files are removed after success, error and
     cancellation.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-7: the vision
+    temporary directory is created under a base path free of whitespace, and start-up
+    refuses when no such base exists.
   - Detail: [tasks/engine.md#eng-14](tasks/engine.md#eng-14).
 - [ ] RSP-08 [P] [M6] MCP JSON-RPC framing and the fake MCP server binary (absorbs CNF-06) —
   console-mcp::jsonrpc and the console-mcp test-support binary fake-mcp-server
@@ -1583,6 +1835,8 @@ DeepSeek picture preprocessor.
   - Done when: all 13 ported tests and the new unit tests pass, a fuzz test feeds 1,000
     random and mutated zips without panics and within caps, every donor error string is
     traceable, and new dependencies are recorded with licenses in research.md.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-4: error-message
+    prefixes are kept exactly, with the parenthesized detail taken from the Rust reader.
   - Detail: [tasks/responses.md#rsp-12](tasks/responses.md#rsp-12).
 - [ ] RSP-13 [M6] PDF object layer: lexer, object scan, stream filters, page tree —
   console-attach::pdf::{lexer, object, filters, document}
@@ -1652,6 +1906,13 @@ DeepSeek picture preprocessor.
   - Done when: all 18 tests pass on macOS with the fake encoder, vision-memory.json is
     documented as a persisted file in contracts/media.md, and every hardware-only branch
     sits behind a trait and carries the unverified label.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-4: the "the image
+    could not be read (" prefix is kept, with Rust-side detail text.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-7: its private
+    temporary files go under the whitespace-free vision base that ENG-14 sets up.
+  - Note: Proposal P-5 (picture decoding and resampling in Rust, its format set, and pixel
+    values labeled not bit-exact with Pillow) still awaits the owner, who decides it before
+    the picture packages of M6 (OPEN-15, R29).
   - Detail: [tasks/responses.md#rsp-18](tasks/responses.md#rsp-18).
 - [ ] RSP-19 [M6] DeepSeek (DSI1) picture preprocessor; MiniMax (MMI1) documented, not built
   — console-media::ds4 (the mm3 module is not built: LIC-2)
@@ -1666,6 +1927,13 @@ DeepSeek picture preprocessor.
     is verified by header parsing, NOTICE.md carries the DeepSeek MIT line, and an engine
     reporting MiniMax vision gets a clear error while the MMI1 format is documented in the
     contract.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-4: the "the image
+    could not be read (" prefix is kept, with Rust-side detail text.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-7: its DSI1 request
+    files go under the whitespace-free vision base that ENG-14 sets up.
+  - Note: Proposal P-5 (picture decoding and resampling in Rust, its format set, and pixel
+    values labeled not bit-exact with Pillow) still awaits the owner, who decides it before
+    the picture packages of M6 (OPEN-15, R29).
   - Detail: [tasks/responses.md#rsp-19](tasks/responses.md#rsp-19).
 
 ## Phase M7: Model management
@@ -1700,6 +1968,8 @@ contract.
   - Risk: low. Uses no engine-track crate.
   - Done when: all listed tests pass with neutral quant labels (BRAND-1), the GGUF probe
     refuses every truncated prefix, and pulsar-mlx and synthetic configs classify correctly.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-15: an MLX checkpoint
+    configuration reports `ok: false` with "no engine for this backend in this build".
   - Detail: [tasks/ops.md#ops-03](tasks/ops.md#ops-03).
 - [ ] OPS-04 [M7] GLM-DSA product facts and per-request tune knobs —
   console-manage::registry::glm_dsa and console-manage::tune
@@ -1793,6 +2063,9 @@ contract.
   - Risk: low.
   - Done when: the 4 Pure tests pass with every assertion carried over, the duration parser
     is fuzzed without panics, and no new time crate is added.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-14: `details.format`
+    reports `safetensors` for PulsarMLX MLX checkpoints instead of the donor's constant
+    `gguf`.
   - Detail: [tasks/ops.md#ops-12](tasks/ops.md#ops-12).
 - [ ] OPS-13 [M7] Model API routes and llama.cpp-style model management routes —
   console-http::routes::model_api
@@ -1818,6 +2091,8 @@ contract.
   - Done when: 10 re-expressed tests pass, the validator rejects a non-commit revision, a
     missing sha256, a duplicate id or a gitignored path, and the empty production catalog
     yields its documented empty shape without error (B10).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-16: the validator
+    refuses the catalog revision `main` and any other revision that is not a 40-hex commit.
   - Detail: [tasks/ops.md#ops-14](tasks/ops.md#ops-14).
 - [ ] OPS-15 [M7] One-slot pull driver and download routes — console-manage::pull and
   console-http::routes::pull
@@ -1855,6 +2130,9 @@ contract.
     disk-space refusal and gated-token tests pass on macOS against the loopback server,
     progress lines parse with the OPS-15 parser, and an end-to-end pull to fetch to
     new-config test passes with a synthetic catalog (PLAT-3).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-15: a fetched MLX
+    checkpoint gets a pulsar-mlx config with backend `mlx` that is listed but not startable
+    in this increment.
   - Detail: [tasks/ops.md#ops-16](tasks/ops.md#ops-16).
 - [ ] OPS-21 [P] [M7] Savings ledger and /api/savings — console-manage::savings
   - Depends on: API-01, API-15, ENG-10.
@@ -1939,10 +2217,16 @@ the parity routes; browser end-to-end scenarios.
   - Risk: low. SEC-2: the CSP must be proven against the real page before it is enforced.
   - Done when: cargo test -p console-web passes the three static-route tests, the offline
     scan, and the header, CSP and `/fonts/<name>` tests; responses keep the donor's
-    `Cache-Control: no-cache`; and pulsar-console serves the page from the embedded table
-    with no files on disk (PLAN-3).
-  - Note: No `ETag`, 304 or `HEAD` support and no `devdir` module; see Reconciliations
-    R28. The `/fonts/<name>` 404 and the SVG-only manifest are BRAND-2 sub-items (R14).
+    `Cache-Control: no-cache` and add strong `ETag`s, with 304 and no body for a matching
+    `If-None-Match` and `HEAD` answered without a body, each pinned by a test (P-11); and
+    pulsar-console serves the page from the embedded table with no files on disk (PLAN-3).
+  - Note: No `devdir` module (OPEN-41 unchanged); see Reconciliations R28, amended on
+    2026-11-14. The `/fonts/<name>` 404 and the SVG-only manifest are BRAND-2 sub-items
+    (R14).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-11: strong `ETag`s,
+    304 responses and `HEAD` support for dashboard assets.
+  - Note: Proposal P-12, a report-only switch for the Content-Security-Policy: not built
+    (declined 2026-11-14), because it would weaken SEC-2 while on.
   - Detail: [tasks/web.md#web-02](tasks/web.md#web-02).
 - [ ] API-12 [M8] Static dashboard routes mounted in console-http — console-http (mount of
   the console-web routes)
@@ -1971,6 +2255,11 @@ the parity routes; browser end-to-end scenarios.
   - Done when: index.html has no inline script or style, the sprite has no style attributes,
     every innerHTML sink calls guard.js, the XSS and golden corpora pass, /preview returns
     its documented CSP, and the ?q= link only prefills (SEC-3).
+  - Note: Owner decision 2026-11-14: implements approved deviation P-13: `window.maya` is
+    replaced by `window.console_debug = {S, chatView}`, exposed only when `#debug` is in
+    the address.
+  - Note: Proposal P-12, the Content-Security-Policy-Report-Only fallback switch in the
+    detail file's risk text: not built (declined 2026-11-14).
   - Detail: [tasks/web.md#web-03](tasks/web.md#web-03).
 - [ ] WEB-04 [M8] Node page-logic oracle re-hosted in Rust —
   console/crates/console-web/tests/page_logic.rs and tests/node/*.mjs
@@ -2175,6 +2464,9 @@ hardware. Deliberately last (B11).
   - Done when: all five GPU fixtures render the GPU map, cards, banners and About facts
     without errors and with upstream wording except brand words, and the Node and end-to-end
     tests pass.
+  - Note: Owner decision 2026-11-14: implements approved deviation P-9: the Models cards
+    label `hip` as HIP, `cuda` as CUDA, `metal` as Metal, synthetic as Synthetic, and any
+    other value as the raw value.
   - Detail: [tasks/web.md#web-08](tasks/web.md#web-08).
 
 ## Phase M10: Close-out
@@ -2497,7 +2789,10 @@ apply to the workspace as it stands.
    citing the task id, with no AI or tool attribution and no co-author trailer.
 7. **Claims:** nothing in code comments, documents or the commit message describes the work as
    more than qualified on synthetic backends, and hardware-specific code says it is unverified
-   on real hardware.
+   on real hardware. A task that adds, moves or removes an enforcement point of the
+   synthetic-only rule updates
+   [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md)
+   in the same change (owner request of 2026-11-14, R29).
 
 ## Constitution compliance
 

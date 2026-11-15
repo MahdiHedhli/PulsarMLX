@@ -213,7 +213,7 @@ file names written into a user's data directory are not tracked and are not affe
 | IndexedDB database `maya` | `pulsar-console` | Decided (B2); store `chats`, key path `id`, version 1 kept | `serve/web/lib.js:46-47` | WEB, R-web | WEB-01 |
 | DOM event `maya:context` | proposed `console:context` | Rename decided, value proposed | `serve/web/server.js:235`, `serve/web/models.js:1033` | WEB, R-web | WEB-01 |
 | CSS names `--maya-side`, `--maya-read`, `.maya-mark` | neutral names | Rename decided, value proposed | as cited by WEB | WEB, R-web | WEB-01 |
-| Global `window.maya` | none under that name | Rename decided; any replacement is a proposal (see deviations.md, Proposed) | `serve/web/app.js:126` | WEB, R-web | WEB-01 |
+| Global `window.maya` | none under that name; `window.console_debug`, set only with `#debug` in the address | Decided (BRAND-1.9 removes the name; the debug-only replacement is approved deviation P-13, owner decision of 2026-11-14) | `serve/web/app.js:126` | WEB, R-web | WEB-01, WEB-03 |
 | Download name `maya-code.<ext>` | proposed `pulsar-code.<ext>` | Rename decided, value proposed | `serve/web/md.js:237` | WEB, R-web | WEB-01 |
 | Download name `maya-chat-<stamp>.md` | proposed `pulsar-chat-<stamp>.md` | Rename decided, value proposed | `serve/web/chats.js:734` | WEB, R-web | WEB-01 |
 | Page title, manifest name, About text "Project Maya" | "PulsarMLX Console" | Decided (BRAND-1) | as cited by WEB and R-web | WEB, R-web | WEB-01 |
@@ -252,7 +252,8 @@ file names written into a user's data directory are not tracked and are not affe
 | HTTP `User-Agent: maya` (MCP over HTTP, image fetch) | product name | Rename decided, value proposed | `serve/server.py:1824` | RSP | RSP-10, RSP-17 |
 | CLI `--engine maya` | proposed `--engine line` | Rename decided, value proposed | as cited by API | API | API-17 |
 | Quant labels `Maya-XS`, `Maya-S`, `Maya-M`, `Maya-L` and keys `maya-xs`, `maya-s`, `maya-m`, `maya-l` | neutral labels | Decided that they go (BRAND-1); labels proposed by OPS-03 | as cited by R-ops | OPS, PRM, WEB, R-ops | OPS-03 |
-| Default scripted-engine model name `qwen3.8-flash-next` | a name containing `synthetic`; working default `pulsar-console-synthetic` | Decided that it contains `synthetic` (plan section 12, deviation PLAN-2); exact value open (N6) | `serve/server.py:2383` | API | API-17 |
+| Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | API-17 |
+| `Server: BaseHTTP/0.6 Python/3.x` (HTTP response header value) | `pulsar-console/<version>` | Decided (approved deviation P-1, owner decision of 2026-11-14) | Python `http.server` default; no line in `serve/` | API | API-02 |
 
 ### 3.10 Test-harness switches
 
@@ -276,6 +277,15 @@ listed.
 | `CONSOLE_TEST_TIME_SCALE` | `PULSAR_CONSOLE_TEST_TIME_SCALE` | Decided (lead decision of 2026-11-14) | none (planner name) | CNF | as named in `tasks/conformance.md` |
 | `CONSOLE_REQUIRE_NODE` | `PULSAR_CONSOLE_REQUIRE_NODE` | Decided (lead decision of 2026-11-14) | none (planner name) | WEB | WEB-04 |
 | `CONSOLE_E2E` | `PULSAR_CONSOLE_E2E` | Decided (lead decision of 2026-11-14) | none (planner name) | WEB | WEB-06 |
+
+### 3.11 Names with no donor counterpart
+
+These names are new in PulsarMLX Console and have no old name, so they are listed here in
+prose, outside the machine-read tables.
+
+- **Run-config key `allowed_hosts`.** Decided by the owner on 2026-11-14 (deviation
+  SEC-1.1, open item OPEN-04): an optional list of further `Host` names. It is absent by
+  default. Read from the run config by API-15; enforced by API-03.
 
 ## 4. Maintenance and checking
 
@@ -312,5 +322,5 @@ which also says who decides it.
 | N3 | Settled by the lead on 2026-11-14: the donor's export of each engine setting under both its `MAYA_` and `STRATA_` names is not reproduced; `env` names pass through verbatim, once (rule 3). | OPEN-32 (settled) |
 | N4 | How the dashboard shows engine variable names such as `MAYA_EXPERT_RAM_GB` and `MAYA_DS4_DRAFT_DEV`: they are engine-interface names (verbatim), but BRAND-1 forbids Maya names in what the product presents as its own. | OPEN-25 |
 | N5 | Settled by the lead on 2026-11-14: test-only settings (section 3.5) and test-harness switches (section 3.10) take the mechanical names `PULSAR_CONSOLE_<old suffix>` listed there. | OPEN-33 (settled) |
-| N6 | The default model name of the scripted engine. The plan requires that it contain `synthetic` (PLAN-2); the string itself is not decided, and until it is the working default is `pulsar-console-synthetic`. | OPEN-03 |
+| N6 | Settled by the owner on 2026-11-14: the default model name of the scripted engine is exactly `pulsar-console-synthetic` (PLAN-2; section 3.9). | OPEN-03 (settled) |
 | N7 | The value of `/props` `build_info`. "Strata" is not Maya's name, so B2 does not require the change; the API planner proposed it because the string presents a product identity. | OPEN-34 |

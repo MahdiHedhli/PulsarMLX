@@ -1,6 +1,6 @@
 # ADR 0008: Build the PulsarMLX Console serving layer ahead of Stage F, on synthetic backends only
 
-- **Status**: Proposed: records the owner's decisions of 2026-11-14; becomes Accepted when the owner has reviewed this text
+- **Status**: Accepted by the owner on 2026-11-14
 - **Date**: 2026-11-14
 - **Feature**: `specs/022-console-serving-parity`, branch `feat/022-console-serving-parity`
 - **Relates to**: ADR 0001 (Rust owns the shipping runtime), ADR 0004 (qualify donor code before adoption)
@@ -60,12 +60,12 @@ Spec Kit artifacts under `specs/022-console-serving-parity/`.
    behavior; compatibility analysis in the deviation register; and benefit as adapted
    lines against a clean-rewrite estimate plus feature coverage on a named checklist,
    estimated before adoption and measured at close-out. ADR 0004 asks for measured benefit
-   before adoption, so this ordering is recorded as an exception in the feature plan and
-   awaits the owner's decision (OPEN-27). project-maya is never a runtime dependency: the
-   product links no donor package and launches no donor process. Donor code enters only as
-   adapted files (the Phase 1 dashboard) or as Rust reimplementations under the
-   qualification record, and project-maya's own server runs only in a manual GitHub
-   Actions reference job. No donor benchmark is presented as PulsarMLX evidence.
+   before adoption, so this ordering is recorded as an exception in the feature plan, and
+   the owner accepted it on 2026-11-14 (OPEN-27, settled). project-maya is never a runtime
+   dependency: the product links no donor package and launches no donor process. Donor
+   code enters only as adapted files (the Phase 1 dashboard) or as Rust reimplementations
+   under the qualification record, and project-maya's own server runs only in a manual
+   GitHub Actions reference job. No donor benchmark is presented as PulsarMLX evidence.
    project-maya is named wherever attribution or provenance requires it and is never used
    as product identity.
 
@@ -169,7 +169,9 @@ Spec Kit artifacts under `specs/022-console-serving-parity/`.
   to M10 that each end reviewable, so the work can stop cleanly after any of them.
 - Nothing in this increment changes what PulsarMLX can claim about real models. A future
   claim that the console serves a real model requires the Phase 3 decision and the
-  qualification Stage F and OPT-08 already require.
+  qualification Stage F and OPT-08 already require. What must happen first, before the
+  server may start an engine that does not report synthetic provenance, is listed in
+  [`docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`](../../console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
 
 ## Open items
 
@@ -181,6 +183,8 @@ is listed in the register in
 - OPEN-14: the merge order of the feature branch relative to engine-track branches with
   tree-bound evidence.
 - OPEN-20: the Phase 2 front-end framework and toolchain.
-- OPEN-27: whether the owner accepts that donor benefit is estimated before adoption and
-  measured at close-out, against ADR 0004's order.
 - OPEN-28: any future re-pin of project-maya beyond `7e68a30f`.
+
+OPEN-27, whether donor benefit may be estimated before adoption and measured at
+close-out, against ADR 0004's order, was settled on 2026-11-14, when the owner accepted
+that ordering.

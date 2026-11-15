@@ -4,7 +4,7 @@
 the PulsarMLX Console serving layer and dashboard (feature 022). The source and license
 review is complete, and attribution and compatibility analysis are set up; independent
 tests are planned; benefit is recorded as a pre-adoption estimate and measured at
-close-out (M10), an ordering that awaits the owner's decision (OPEN-27). See [ADR 0004 requirements](#adr-0004-requirements).
+close-out (M10), an ordering the owner accepted on 2026-11-14 (OPEN-27, settled). See [ADR 0004 requirements](#adr-0004-requirements).
 
 **Decision**: project-maya's `serve/` and `serve/web/` at the pinned commit are the
 behavioral reference for PulsarMLX Console. The dashboard's JavaScript is adapted; the
@@ -192,7 +192,7 @@ see [PROJECT_MAYA_SYNC.md](PROJECT_MAYA_SYNC.md).
   same change that imports the component: the Preact (MIT), htm (Apache-2.0) and Lucide
   (ISC) texts with WEB-01, and DeepSeek's reference encoder notice with PRM-07, which
   commits the five DeepSeek fixture pairs together with that notice (decided by the lead
-  on 2026-11-14; the owner is informed at checkpoint 1).
+  on 2026-11-14; reported to the owner at checkpoint 1, who raised no objection).
 - Provenance headers follow this rule, decided by the lead on 2026-11-14:
   - A file adapted from the donor (JavaScript, CSS, HTML, SVG) starts with a comment, in
     that file type's comment syntax, of these four lines:
@@ -242,12 +242,17 @@ independent. Independent evidence comes from two sources, both in blocking CI:
   LIC-2, POL-1, PLAT-1 to PLAT-3 and FIX-1. The register also holds PLAN-1 to PLAN-6,
   differences that plan decides outside its deviation table, each citing the plan section
   that decides it: the synthetic badge and health report (PLAN-1, plan section 7,
-  item 5), a synthetic default model name (PLAN-2, section 12), embedded assets with no
+  item 5), a synthetic default model name (PLAN-2, section 12; the owner settled it as
+  exactly `pulsar-console-synthetic` on 2026-11-14, OPEN-03), embedded assets with no
   filesystem path served (PLAN-3, section 6), license notices reachable from the About
   page (PLAN-4, section 7, item 4), the always-available schema validator (PLAN-5,
   section 6), and HTTPS MCP through the `curl` facade (PLAN-6, section 6). Any further
-  deviation needs its own approval; proposals without one are kept in the register's
-  section "Proposed, awaiting owner decision" (OPEN-15) and are not approved.
+  deviation needs the owner's approval. On 2026-11-14 the owner approved the proposals
+  P-1 to P-4, P-6 to P-11 and P-13 to P-16, which are now approved deviations under their
+  `P-` ids; declined P-12 and P-17, which keep their ids marked declined; and deferred
+  P-5 and P-18, which stay unapproved in the register's section "Deferred, awaiting owner decision" (OPEN-15). A later
+  approved deviation that was never a listed proposal takes the next free `P-` number,
+  and no id is reused (OPEN-39, settled by the lead on 2026-11-14).
 - **Parity ledger**: `console/parity/ledger.json` has one row per donor test method (913
   rows at this pin). Each row resolves to exactly one disposition: `rust-test`,
   `scenario`, `web-test`, `shim`, `vendor-render`, `deviation`, `not-applicable` (with a
@@ -294,8 +299,10 @@ This order differs from ADR 0004, which names measured benefit among the conditi
 meet before donor code is copied or adapted. Here an estimate precedes adoption, which
 starts in M1 (translated donor tests) and M8 (the dashboard, WEB-01), and the measurement
 follows at close-out. The feature plan records this ordering as constitution exception E6
-in [`plan.md`](../../specs/022-console-serving-parity/plan.md#constitution-exceptions);
-whether the owner accepts it is open item OPEN-27.
+in [`plan.md`](../../specs/022-console-serving-parity/plan.md#constitution-exceptions),
+and the owner accepted it on 2026-11-14, settling open item OPEN-27. The pre-adoption
+estimate above stays the record until the close-out measurement; which checklist that
+measurement uses is still open (OPEN-57).
 
 ## Important differences
 
@@ -333,18 +340,17 @@ depends on it. The register of every open item for this feature, with who decide
 one, is `specs/022-console-serving-parity/checklists/analysis.md`; the ids below are its
 ids.
 
-1. **OPEN-27, benefit ordering.** ADR 0004 asks for measured benefit before adoption;
-   here an estimate precedes adoption and the measurement follows at close-out (see
-   [Measured benefit](#measured-benefit)). Whether the owner accepts this ordering, at
-   checkpoint 1.
-2. **OPEN-57, coverage checklist.** Which feature checklist the close-out coverage figure
+1. **OPEN-57, coverage checklist.** Which feature checklist the close-out coverage figure
    uses. A candidate is the feature list in the donor `README.md` at the pin (its
    browser, API, thinking, loop-guard, pictures, files and MCP items); this is a
    suggestion, not a decision.
-3. **OPEN-49, `preact.js` provenance.** Whether the donor's pre-built bundle is accepted
+2. **OPEN-49, `preact.js` provenance.** Whether the donor's pre-built bundle is accepted
    on its recorded hash, or checked once against the upstream Preact 10.29.8 and htm
    3.1.1 releases.
 
+The benefit ordering (OPEN-27) is decided: the owner accepted on 2026-11-14 that an
+estimate precedes adoption and the measurement follows at close-out (see
+[Measured benefit](#measured-benefit)).
 The provenance header format and the timing of third-party license texts are decided
 (see [Attribution](#attribution)).
 Where the two donor test files run through a shim is decided: they and the

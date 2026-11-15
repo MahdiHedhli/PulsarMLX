@@ -35,10 +35,10 @@ Paths are relative to this directory unless they start with `console/`.
 | Document | Subject | Written by | Status |
 | --- | --- | --- | --- |
 | `README.md` | This index | GOV-06 | written |
-| [`backend-seam.md`](backend-seam.md) | The two-level backend seam: token level (descriptor, capabilities, request, events, terminal, failures, cancel, pause, wrap, threading, at-least-once delivery and the event ledger, usage rules) and event level | GOV-06 (draft 0.1); frozen as 1.0 by ENG-01 after engine-track review | written (draft) |
+| [`backend-seam.md`](backend-seam.md) | The two-level backend seam: token level (descriptor, capabilities, request, events, terminal, failures, cancel, pause, wrap, threading, at-least-once delivery and the event ledger, usage rules, the synthetic-only guard) and event level | GOV-06 (draft 0.1); frozen as 1.0 by ENG-01 after engine-track review | written (draft) |
 | [`naming.md`](naming.md) | Naming rules of decision B2 and the old-to-new name table | GOV-06 (seed); extended by every package that ports a name | written (seed) |
 | [`parity-ledger.md`](parity-ledger.md) | Definition of parity, ledger schema, evidence sources, checker rules, row listing and re-pinning | GOV-06; checker by CNF-12 | written |
-| [`deviations.md`](deviations.md) | The deviation register of record | GOV-06; each package adds its tests | written |
+| [`deviations.md`](deviations.md) | The deviation register of record, with the proposals the owner approved, declined or deferred on 2026-11-14 | GOV-06; each package adds its tests | written |
 | `console/parity/ledger.json` | The 913-row parity ledger | GOV-06 (skeleton, all rows `pending`); every package | file, not a document |
 
 The planner records are the per-area design proposals written before the plan was

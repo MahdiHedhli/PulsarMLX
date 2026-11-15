@@ -32,9 +32,11 @@ planning, and record honestly where it does not meet a template criterion
 
 - [x] CHK005 No `[NEEDS CLARIFICATION]` markers remain. Questions the plan recorded in ADR
   0008 does not decide are recorded as open items OI-1 to OI-13 in a table and referenced
-  from the requirements they affect, so that no requirement decides them silently. Each
-  row gives its id in the consolidated register in [analysis.md](analysis.md). None blocks
-  planning; each names the milestone it must be settled before.
+  from the requirements they affect, so that no requirement decides them silently. The
+  owner decided four of them (OI-2, OI-3, OI-6 and OI-9) on 2026-11-14; their rows are
+  marked decided and the affected requirements state the decision. Each row gives its id in
+  the consolidated register in [analysis.md](analysis.md). None blocks planning; each names
+  the milestone it must be settled before.
 - [x] CHK006 Requirements are testable and unambiguous. Each requirement either states an
   observable rule or binds a capability to the donor's observable behavior at `7e68a30f`,
   which the ledger, the reference corpus and the re-expressed donor tests make checkable.
@@ -102,9 +104,10 @@ planning, and record honestly where it does not meet a template criterion
   BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1) appears as a requirement (FR-090 to
   FR-106). The differences the plan decides outside that table are registered as PLAN-1
   to PLAN-6 and marked on FR-004, FR-005, FR-078, FR-108, FR-054 and FR-074. FR-107 is the
-  rule for later deviations: any further difference needs the owner's approval. Proposals
-  that no approved id covers, such as P-5 (DeepSeek picture pixel values, FR-066), stay
-  under "Proposed, awaiting owner decision" in the register and are not approved.
+  rule for later deviations: any further difference needs the owner's approval. The owner
+  decided the register's proposals on 2026-11-14: fourteen (P-1 to P-4, P-6 to P-11 and
+  P-13 to P-16) are approved deviations under their `P-` ids, P-12 and P-17 are declined,
+  and P-5 (DeepSeek picture pixel values, FR-066) and P-18 are deferred and not approved.
 - Some proposals made during planning are overridden by the plan (legacy name aliases, a
   bundled template fallback, building the MiniMax preprocessor, porting the
   refusal-ablation switch, blocking the differential job). The specification follows the

@@ -38,8 +38,8 @@ The texts expected under this rule are:
 None of these texts is present yet: M0 ships the project-maya MIT text only. The lead
 decided on 2026-11-14 that each third-party text is added in the same change that imports
 its component, as the table shows; the plan the owner approved listed the Preact, htm and
-Lucide texts among the M0 contents of this directory, and the owner is informed of this
-timing at checkpoint 1.
+Lucide texts among the M0 contents of this directory, and this timing was reported to the
+owner at checkpoint 1 on 2026-11-14, whose reply raised no objection.
 
 Some donor material has no license text here because it is excluded and never
 committed: the Outfit font (OFL-1.1), the vendor logo files, project-maya's app icons, and

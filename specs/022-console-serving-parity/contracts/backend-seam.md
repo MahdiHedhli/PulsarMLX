@@ -4,9 +4,12 @@
   implemented. Work package ENG-01 turns this draft into code and freezes it as version
   1.0, after the draft has been offered to the engine track for review (plan section 12,
   "The seam does not fit the real engine"). Until then any section may change.
+- **Revised**: 2026-11-14, to record the owner's decision on Q9 (sections 5, 5.1, 13 and
+  14): the server refuses to start an engine that does not report synthetic provenance.
 - **Feature**: `specs/022-console-serving-parity`
 - **Written by**: GOV-06 (this draft); frozen by ENG-01; implemented by ENG-01, ENG-02,
-  ENG-06, ENG-07, ENG-10, ENG-18 and ENG-19.
+  ENG-06, ENG-07, ENG-10, ENG-18 and ENG-19; the refusal at process start of section 5.1
+  by API-08.
 - **Claims**: When built, every engine behind this seam is synthetic. The strongest claim
   any of them can earn in this increment is "qualified on synthetic backends". No real
   model, no project-maya engine binary and no engine-track crate is attached through this
@@ -127,7 +130,11 @@ Q1.
 pub struct SeamVersion { pub major: u16, pub minor: u16 }
 pub const SEAM_VERSION: SeamVersion = SeamVersion { major: 0, minor: 1 };
 
-pub enum Provenance { Synthetic }          // the only value in this increment (Q9)
+#[non_exhaustive]
+pub enum Provenance {
+    Synthetic,                                  // the only value the server accepts in this increment
+    NotSynthetic { declared: Option<String> },  // anything else an engine declares, or no declaration
+}
 
 pub enum EngineKind { Scripted, LineProtocol, CoordinatorAdapter, RuntimeAdapter }
 
@@ -189,6 +196,63 @@ Rules:
    increment advertises it, and no switch or configuration key sets it (deviation POL-1).
 5. `max_context == 0` means the engine is not ready; the server answers 503 "the model is
    starting" without calling `generate`.
+6. `Provenance` can express "not synthetic": an engine that declares another provenance,
+   or declares none, reports `NotSynthetic`. `Synthetic` is the only value the server
+   accepts in this increment (section 5.1). The enum above is a draft; ENG-01 settles the
+   exact shape of the type.
+
+### 5.1 The synthetic-only guard
+
+Decided by the owner on 2026-11-14 (Q9, open item OPEN-29): the server refuses to start
+an engine that does not report synthetic provenance. The mechanism is the lead's decision
+LD28, stated here as rules.
+
+```rust
+pub struct ProvenanceRefused {
+    pub kind: EngineKind,                  // the engine kind, named in the refusal line
+    pub reported: Provenance,              // what the engine reported, named in the line
+}
+
+/// The single guard, in console-core. Ok(()) only for Provenance::Synthetic.
+pub fn require_synthetic(d: &EngineDescriptor) -> Result<(), ProvenanceRefused>;
+```
+
+Rules:
+
+1. The provenance type in the engine descriptor MUST be able to express "not synthetic":
+   an engine that declares another provenance, or declares none. `Synthetic` is the only
+   value the server accepts in this increment. ENG-01 settles the exact shape of the type.
+2. Exactly one guard function in `console-core` decides (drafted above as
+   `require_synthetic`). Every path that admits an engine (first start, restart, model
+   switch, context reload) MUST call it before the engine serves a request. No
+   environment variable, configuration key, command-line flag or Cargo feature MAY bypass
+   it in this increment.
+3. At process start, a refusal MUST make `pulsar-console` exit with a non-zero status
+   after one line on standard error. The line MUST name the engine kind, what the engine
+   reported, and the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`. At a later
+   restart, model switch or context reload, the engine MUST be closed, the operation MUST
+   fail with the same message, and the server MUST NOT serve anything from that engine.
+4. A line-protocol engine MUST declare synthetic provenance in its start-up lines before
+   it is admitted. An engine that declares another provenance, or none, MUST count as not
+   synthetic (fail closed). The form of the declaration is settled by the line-protocol
+   packages in M3 and is open item OPEN-58, a lead item; the lead's direction is a fact on
+   an `INFO` line, so that the donor's `READY` grammar stays unchanged. This is not the
+   synthetic marker proposed for the server's own ready line, which belongs to PLAN-1 and
+   OPEN-35.
+5. Tests pin the refusal: ENG-01 for the guard, ENG-10 for the turn driver and API-08 for
+   process start. They MUST NOT be deleted or weakened to make a real engine start.
+6. What must be done to allow a non-synthetic engine is written in
+   [`ALLOWING_NON_SYNTHETIC_ENGINES.md`](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md),
+   requested by the owner on 2026-11-14 so that whoever picks the work up next can act on
+   it. A task that adds, moves or removes an enforcement point of the synthetic-only rule
+   MUST update that note in the same change.
+
+A draft of the refusal line of rule 3 follows. The three named parts are required; the
+rest of the wording is a draft.
+
+```text
+[console] refusing to start: engine <kind> reports provenance <reported>; this build serves synthetic engines only. See docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md
+```
 
 ## 6. Generation request
 
@@ -577,6 +641,14 @@ Rules:
 | Coordinator-shaped test adapter and blocking runtime adapter | ENG-19 | Models the engine track's `deliver` hook, replay after a refused delivery and the non-`Send` single owner; passes the seam battery |
 | Seam conformance battery | ENG-18 | Runs every implementation above against sections 5 to 11 |
 
+Each implementation above reports `Provenance::Synthetic`, and each passes the guard of
+section 5.1. The in-process engines (the scripted engine and the ENG-19 adapters) construct
+their descriptor with `Synthetic` themselves. The line-protocol client derives provenance
+from the declaration in the child's start-up lines (section 5.1, rule 4): with a
+declaration of synthetic provenance it reports `Synthetic`, and with any other
+declaration, or none, it reports `NotSynthetic`. The Rust fake engine binaries make the
+declaration.
+
 The coordinator-shaped adapter shows the fit as follows. The engine track's
 `StepCoordinator::execute` calls `deliver(&CommittedStep)` after its commit; the adapter's
 hook calls `EventSink::deliver(Token(CommittedToken { index: position - position0,
@@ -590,7 +662,8 @@ drops. Nothing in this increment calls `crates/backend`; the adapter mirrors the
 These MUST be answered, or explicitly deferred with a reason, before the seam is frozen.
 They are also listed in the register of open items,
 [`../checklists/analysis.md`](../checklists/analysis.md), which says who decides each: Q1
-to Q8 and Q12 are OPEN-30, Q9 is OPEN-29, Q10 is OPEN-21 and Q11 is OPEN-01.
+to Q8 and Q12 are OPEN-30, Q10 is OPEN-21 and Q11 is OPEN-01. Q9 was OPEN-29; the owner
+settled it on 2026-11-14, and its row below records the decision.
 
 | Id | Question |
 | --- | --- |
@@ -602,7 +675,7 @@ to Q8 and Q12 are OPEN-30, Q9 is OPEN-29, Q10 is OPEN-21 and Q11 is OPEN-01.
 | Q6 | Which cancel deadline applies, and what happens to an in-process engine that ignores cancel beyond it? The archived crate destroyed in-process futures at a bound; an in-process synchronous engine cannot be destroyed, only waited for. |
 | Q7 | Should `Sample` carry a typed residency and memory record (the panel proposal's `EngineSample`), or the donor's untyped `STAT` key-value map only? |
 | Q8 | Are `TuneKnobs` a closed typed set (the donor's `pcie_frac`, `spec_min_p`, `spec_cum`, `suffix_draft`, `lookup_trust`, `cpu_threads`) or an opaque validated map? |
-| Q9 | Every engine here reports `Provenance::Synthetic`. What must the server do if an engine reports anything else: refuse to start, or report it? The plan forbids serving a real model in this increment but does not name the mechanism. |
+| Q9 | Decided by the owner on 2026-11-14 (OPEN-29, settled): the server refuses to start an engine that does not report synthetic provenance, at process start and at every later restart, model switch or context reload. The mechanism (one guard function in `console-core`, no bypass, the refusal line, fail-closed handling of a line-protocol engine that does not declare synthetic provenance, the pinning tests and the note on allowing non-synthetic engines) is in section 5.1. |
 | Q10 | May a later engine attach at the event level, and if so which of the duties in section 3 does it take over? This needs its own approval (Phase 3). |
 | Q11 | Is the sealed-reasoning prefix accepted on input in the donor's form? This is an open item of decision B2 ([naming.md](naming.md), item N1), not of this seam, but it touches the event level. |
 | Q12 | Which engine-track reviewer receives this draft, and what form does their acceptance take before ENG-01 freezes version 1.0? |

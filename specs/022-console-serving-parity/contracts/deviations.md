@@ -1,11 +1,15 @@
 # Deviation Register
 
-- **Status**: Register of record, dated 2026-11-14. Every id below was approved by the
-  owner with the plan on 2026-11-14. The SEC, PRIV, BRAND, LIC, POL, PLAT and FIX ids come
-  from plan section 4, "Deviations from literal parity that need your approval"; the
-  PLAN-1 to PLAN-6 ids register differences that other plan sections decide, and each
-  cites its section. None of the behavior described is implemented yet; the "PulsarMLX
-  Console does" lines describe planned behavior.
+- **Status**: Register of record, dated 2026-11-14. Every SEC, PRIV, BRAND, LIC, POL,
+  PLAT, FIX and PLAN id below was approved by the owner with the plan on 2026-11-14. The
+  SEC, PRIV, BRAND, LIC, POL, PLAT and FIX ids come from plan section 4, "Deviations from
+  literal parity that need your approval"; the PLAN-1 to PLAN-6 ids register differences
+  that other plan sections decide, and each cites its section. On 2026-11-14, at owner
+  checkpoint 1, the owner approved proposals
+  P-1 to P-4, P-6 to P-11 and P-13 to P-16 (registered below under their P- ids, in
+  "Approved proposals"), declined P-12 and P-17, deferred P-5 and P-18, and settled the
+  open values of SEC-1.1 and PLAN-2. None of the behavior described is implemented yet;
+  the "PulsarMLX Console does" lines describe planned behavior.
 - **Feature**: `specs/022-console-serving-parity`
 - **Written by**: GOV-06. Each implementing package adds its tests to the "Affected donor
   tests" lines and its ledger rows cite the id or sub-item id
@@ -43,16 +47,24 @@ Rules:
 
 1. No deviation exists without an entry here. A comparator annotation or ledger row that
    names an id not in this register fails the ledger checker.
-2. A planner proposal that no approved id covers is **not** approved. It is listed in the
-   final section, "Proposed, awaiting owner decision", until the owner decides.
+2. A planner proposal becomes a deviation only when the owner approves it. Approved
+   proposals are registered under their P- ids in the section "Approved proposals".
+   Proposals still awaiting a decision are listed under "Deferred, awaiting owner
+   decision" and are **not** approved. Declined proposals are kept, marked declined, in
+   "Declined proposals", so their ids are never reused. A ledger row or comparator
+   annotation that names a deferred or declined P- id fails the ledger checker.
 3. An entry that no ledger row and no comparator annotation uses is flagged by the
    checker as unused.
+4. Numbering (decided by the lead on 2026-11-14; this settles OPEN-39): an owner-approved
+   proposal keeps its P-n id as its deviation id; a later owner-approved deviation that
+   was never a listed proposal takes the next free P- number; ids are never reused; a
+   declined proposal keeps its id, marked declined.
 
 ## Index
 
 | Id | Short title | Packages |
 | --- | --- | --- |
-| [SEC-1](#sec-1) | Host allowlist, Origin on every route, JSON content type, gated admin routes | API-02, API-03, OPS-23, CNF-14 |
+| [SEC-1](#sec-1) | Host allowlist, Origin on every route, JSON content type, gated admin routes | API-02, API-03, API-15, OPS-23, CNF-14 |
 | [SEC-2](#sec-2) | Security headers, HTML sanitizer, sandboxed preview route | WEB-02, WEB-03, WEB-06 |
 | [SEC-3](#sec-3) | `/?q=` prefills, never sends | WEB-03, WEB-06 |
 | [SEC-4](#sec-4) | Remote image URLs and local image paths are opt-in | RSP-17, RSP-18, RSP-16 |
@@ -69,19 +81,34 @@ Rules:
 | [PLAT-2](#plat-2) | Apple Silicon reader and monitor view | OPS-17, OPS-18, WEB-07 |
 | [PLAT-3](#plat-3) | `pulsar-console fetch` and `supervise`; empty catalog | OPS-11, OPS-14, OPS-15, OPS-16 |
 | [FIX-1](#fix-1) | Three upstream defects fixed | ENG-06, ENG-07, ENG-08, ENG-12 |
-| [PLAN-1](#plan-1) | Permanent synthetic badge; `/health` reports the synthetic backend | API-06, WEB-07 |
-| [PLAN-2](#plan-2) | Scripted engine's default model name contains `synthetic` | ENG-02, API-08, API-17 |
+| [PLAN-1](#plan-1) | Permanent synthetic badge; `/health` reports the synthetic backend; an engine that is not synthetic is refused at start | API-06, WEB-07, ENG-01, ENG-10, API-08 |
+| [PLAN-2](#plan-2) | Scripted engine's default model name is `pulsar-console-synthetic` | ENG-02, API-08, API-17 |
 | [PLAN-3](#plan-3) | Embedded dashboard assets; no filesystem path served | WEB-02 |
 | [PLAN-4](#plan-4) | License notices reachable from the About page | WEB-01 |
 | [PLAN-5](#plan-5) | In-house schema validator, always available | RSP-02 |
 | [PLAN-6](#plan-6) | HTTPS MCP servers through the outbound `curl` facade | RSP-10 |
+| [P-1](#p-1) | `Server: pulsar-console/<version>` | API-02 |
+| [P-2](#p-2) | 400 for both `Content-Length` and chunked `Transfer-Encoding` | API-02 |
+| [P-3](#p-3) | `malformed request (` prefix kept, Rust-side detail text | API-01, API-07, PRM-06 |
+| [P-4](#p-4) | Reader error prefixes kept, Rust-side parenthesized detail | RSP-12, RSP-18, RSP-19 |
+| [P-6](#p-6) | Optional engine ready timeout, off by default | ENG-06 |
+| [P-7](#p-7) | Whitespace-free base for the vision temporary directory, checked at start | ENG-14, RSP-18, RSP-19 |
+| [P-8](#p-8) | Template `raise_exception` and DeepSeek encoder assertion failures answer 400 | PRM-03, PRM-07, PRM-08, API-07 |
+| [P-9](#p-9) | Backend label table on Models cards | WEB-08 |
+| [P-10](#p-10) | Frozen-engine watchdog needs a GPU-busy signal on macOS; native samplers | ENG-08, OPS-17 |
+| [P-11](#p-11) | Strong `ETag`s, 304 responses and `HEAD` for dashboard assets | WEB-02 |
+| [P-13](#p-13) | `window.console_debug` only with `#debug` in the address | WEB-03 |
+| [P-14](#p-14) | `details.format` reports `safetensors` for PulsarMLX MLX checkpoints | OPS-12 |
+| [P-15](#p-15) | MLX checkpoint configurations listed with `ok: false` | OPS-03, OPS-16 |
+| [P-16](#p-16) | Catalog revision `main` refused | OPS-14 |
 
 ---
 
 ## SEC-1
 
-**Host allowlist on loopback binds; `Origin` checked on every route; JSON content type on
-POST; mutating admin routes need loopback or a key.**
+**`Host` allowlist (loopback binds, and any bind where `allowed_hosts` is set); `Origin`
+checked on every route; JSON content type on POST; mutating admin routes need loopback or
+a key.**
 
 - **project-maya does.** It compares `Origin` with `Host` on some routes only and has no
   `Host` allowlist. `_foreign_page` refuses a browser `Origin` that is neither this server
@@ -99,7 +126,9 @@ POST; mutating admin routes need loopback or a key.**
 - **Why.** DNS rebinding, and cross-site requests from any page the user visits, could
   otherwise change settings, move the port or run MCP tools with the user's rights.
   PulsarMLX's own earlier serving work already held this posture.
-- **Approval.** Approved by the owner with the plan on 2026-11-14.
+- **Approval.** Approved by the owner with the plan on 2026-11-14. The values of sub-item
+  SEC-1.1 (the `Host` rule on loopback and non-loopback binds and the `allowed_hosts`
+  key) were decided by the owner on 2026-11-14 at checkpoint 1 (OPEN-04).
 - **Affected donor tests (known).** `serve/test_server.py::CorsOptIn::*` (8 methods),
   `serve/test_server.py::SharedSettings::test_only_strata_s_own_page_may_set_them`,
   `serve/test_mcp.py::ToolLoop::test_only_from_the_app_s_own_page`,
@@ -110,12 +139,13 @@ POST; mutating admin routes need loopback or a key.**
   `serve/test_savings.py::Page::*`,
   `serve/test_responses.py::Responses::test_auth_cors_capabilities_and_reload`. Many of
   these will keep passing as written; each is confirmed by its package.
-- **Packages.** API-02, API-03 (guards), OPS-23 (ops route guards), CNF-14 (independent
-  security tests).
+- **Packages.** API-02, API-03 (guards; enforces the `allowed_hosts` list), API-15 (reads
+  the optional run-config key `allowed_hosts`), OPS-23 (ops route guards), CNF-14
+  (independent security tests).
 
 | Sub-item | Difference |
 | --- | --- |
-| SEC-1.1 | On a loopback bind, a request whose `Host` is not a loopback name (`localhost`, `127.0.0.1`, `[::1]`, any port) is refused with 403 `permission_error`. The API planner proposed an optional configuration key `allowed_hosts` for further names; the key name, and its use on non-loopback binds, are proposed (OPEN-04). |
+| SEC-1.1 | Decided by the owner on 2026-11-14 (OPEN-04). On a loopback bind, a request is accepted only if its `Host` is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, any port) or a name listed in the optional run-config key `allowed_hosts`. The key is absent by default, so by default only loopback names pass. On a non-loopback bind, `Host` is not restricted, as in the donor, unless `allowed_hosts` is set; when it is set, only the listed names and the loopback names pass. A refused request gets 403 `permission_error`. The key name `allowed_hosts` is decided. Matching details (case, port, IPv6 forms, a missing `Host` header) follow the archived serving crate (decision B8) and are settled by API-03. The lead confirms with the owner at checkpoint 2 that `allowed_hosts` also extends the list on a loopback bind, as this text states (lead note LD30). |
 | SEC-1.2 | `Origin` is checked on every route, not only on the routes that call `_foreign_page` or `_own_page`. `Origin: null` is treated as a foreign origin. |
 | SEC-1.3 | Every POST requires a JSON content type, not only the dashboard's mutating routes (donor `_own_page`, `serve/server.py:6331-6333`, answers 415 "send application/json"). |
 | SEC-1.4 | Every mutating admin and ops route is accepted only from a loopback peer or with a valid API key, not only pull, delete and swap. The OPS planner lists settings, engine environment, switch, Turbo, savings reset and update among the routes this adds. |
@@ -353,7 +383,7 @@ accepted.**
 | BRAND-1.6 | Wire identifiers that name the product change: `/v1/status` `service`, the Prometheus `maya:` prefix, MCP `clientInfo`, the `User-Agent`, `/api/version`, the `maya` object in `/api/tags` and `/api/show`, the `--engine maya` value, and the emitted sealed-reasoning prefix. Values are proposed in [naming.md](naming.md) (OPEN-35; the Prometheus prefix is OPEN-22 and the sealed-reasoning prefix OPEN-02); whether the donor's sealed-reasoning prefix is accepted on input is open (naming item N1, OPEN-01). |
 | BRAND-1.7 | Quant names (`Maya-XS`, `Maya-S`, `Maya-M`, `Maya-L` and their keys) are replaced by neutral labels from a data-driven table. The quant-specific thinking-budget default becomes a per-model registry value with the same arithmetic (PRM planner). |
 | BRAND-1.8 | No sponsor links: the sidebar heart, the About support line and `SUPPORT_URL` (`serve/web/lib.js:6`, `serve/web/sidebar.js:280`) are removed. |
-| BRAND-1.9 | Dashboard identifiers that carry the name are renamed: the `maya:context` DOM event, the `--maya-side`, `--maya-read` and `.maya-mark` CSS names, the `maya-code.<ext>` and `maya-chat-<stamp>.md` download names, and the `window.maya` global. |
+| BRAND-1.9 | Dashboard identifiers that carry the name are renamed: the `maya:context` DOM event, the `--maya-side`, `--maya-read` and `.maya-mark` CSS names, the `maya-code.<ext>` and `maya-chat-<stamp>.md` download names, and the `window.maya` global. Its debug-only replacement, `window.console_debug`, is approved deviation [P-13](#p-13). |
 
 ## BRAND-2
 
@@ -584,22 +614,29 @@ fix is marked "proposed", as elsewhere in this register.
 - **PulsarMLX Console does.** The dashboard shows a permanent "Synthetic engine: no real
   model" badge and `/health` reports the synthetic backend. The API planner proposed
   concrete fields (`synthetic: true`, `backend`) in `/health` and `/v1/status`, and a
-  suffix on the ready line; those values are proposed (OPEN-35).
+  suffix on the ready line; those values are proposed (OPEN-35). An engine that does not
+  report synthetic provenance is refused at start: the server does not serve it, at
+  process start or at a later restart, model switch or context reload (owner decision of
+  2026-11-14 on OPEN-29; the mechanism is in [backend-seam.md](backend-seam.md), section
+  5.1). What must be done to allow a non-synthetic engine is written in
+  [`ALLOWING_NON_SYNTHETIC_ENGINES.md`](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
 - **Why.** This increment can at most be "qualified on synthetic backends", and nothing
   may suggest a real model is served.
-- **Approval basis.** Plan section 7, item 5.
-- **Packages.** API-06 (`/health`), WEB-07 (badge).
+- **Approval basis.** Plan section 7, item 5; for the refusal at start, the owner's
+  decision of 2026-11-14 on OPEN-29 (seam question Q9).
+- **Packages.** API-06 (`/health`), WEB-07 (badge), ENG-01 (the provenance type and the
+  synthetic-only guard), ENG-10 (the guard on every engine admission path), API-08 (the
+  refusal at process start).
 
 ### PLAN-2
 
 - **project-maya does.** The scripted engine's default model name is
   `qwen3.8-flash-next` (`serve/server.py:2383`).
-- **PulsarMLX Console does.** The default model name contains `synthetic`; the exact
-  string is open (OPEN-03), and until the owner fixes it the working default is
-  `pulsar-console-synthetic`.
+- **PulsarMLX Console does.** The default model name is exactly
+  `pulsar-console-synthetic`, decided by the owner on 2026-11-14 (OPEN-03).
 - **Why.** A real model's name on a synthetic engine would overclaim.
 - **Approval basis.** Plan section 12 ("Overclaiming": model names containing
-  `synthetic`).
+  `synthetic`); the exact string, the owner's decision of 2026-11-14.
 - **Packages.** ENG-02 (the scripted engine's default model name), asserted by the tests of
   API-08; API-17 keeps it when the full command line lands.
 
@@ -633,8 +670,8 @@ fix is marked "proposed", as elsewhere in this register.
 - **PulsarMLX Console does.** The schema validator is written in-house, so structured
   output never depends on an optional package and that 400 path cannot occur. JSON Schema
   meta-validation wording may differ while the `invalid JSON Schema: ` prefix and the
-  accept and reject decisions match (RSP planner); that wording difference is a proposal
-  (OPEN-15).
+  accept and reject decisions match (RSP planner); that wording difference still awaits
+  the owner's decision (OPEN-15; see "Deferred, awaiting owner decision").
 - **Why.** Few dependencies; no `jsonschema` crate.
 - **Approval basis.** Plan section 6, technology table (schema validation, written
   in-house; no `jsonschema`), restated as decision B6.
@@ -653,33 +690,222 @@ fix is marked "proposed", as elsewhere in this register.
   decision B7.
 - **Packages.** RSP-10.
 
-## Proposed, awaiting owner decision
+## Approved proposals
 
-Planners proposed the differences below. No approved id covers them, so they are **not
+The owner approved the proposals below on 2026-11-14, at owner checkpoint 1. Each keeps its
+P- id as its deviation id (rule 4) and is a deviation like any other id in this register:
+ledger rows and comparator annotations cite it. The ids P-5, P-12, P-17 and P-18 are not
+here: P-12 and P-17 were declined and P-5 and P-18 are deferred (the two sections that
+follow).
+
+### P-1
+
+- **project-maya does.** It sends Python's default `Server: BaseHTTP/0.6 Python/3.x`.
+- **PulsarMLX Console does.** It sends `Server: pulsar-console/<version>`. The header name
+  and its position stay observable. The value stays on the volatile list for comparison
+  against donor references (parity-ledger section 1.1), and the tests of API-02 assert the
+  console's own value.
+- **Why.** API planner: copying the donor's value would misrepresent the implementation.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** API-02.
+
+### P-2
+
+- **project-maya does.** It prefers chunked framing silently when a request carries both
+  `Content-Length` and `Transfer-Encoding: chunked` (`serve/server.py:5416-5444`).
+- **PulsarMLX Console does.** It answers 400 to a request that carries both.
+- **Why.** API planner: ambiguous framing is a request-smuggling vector behind proxies. It
+  is not part of SEC-1's approved text, so it is registered on its own.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms. `serve/test_server.py::RequestBodies::test_a_chunked_body` sends chunked
+  framing alone and is expected to keep passing.
+- **Packages.** API-02.
+
+### P-3
+
+- **project-maya does.** The `malformed request (...)` answer includes the Python
+  exception class and its `repr`.
+- **PulsarMLX Console does.** It keeps the `malformed request (` prefix and a Python-like
+  category, with different detail text.
+- **Why.** API planner: the Python text has no Rust counterpart.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms. `serve/test_server.py::RequestBodies::test_a_malformed_body_is_a_400` asserts
+  only the status and is expected to keep passing.
+- **Packages.** API-01, API-07, PRM-06.
+
+### P-4
+
+- **project-maya does.** Reader error messages embed `zipfile`, `ElementTree`, Pillow,
+  `json` and `OSError` text.
+- **PulsarMLX Console does.** It keeps the error-message prefixes exactly, with the
+  parenthesized detail taken from the Rust reader.
+- **Why.** RSP planner: library exception text cannot be reproduced.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms. The error-message checks in `serve/test_attach.py::Text::*` assert prefixes
+  and phrases only and are expected to keep passing.
+- **Packages.** RSP-12, RSP-18, RSP-19.
+
+### P-6
+
+- **project-maya does.** It waits for `READY` forever.
+- **PulsarMLX Console does.** It offers an optional engine ready-timeout setting, off by
+  default. The setting is additive. This settles OPEN-10.
+- **Why.** ENG planner: a hung engine start hangs the server start.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** ENG-06, which adds the setting to the settings store that API-15 builds
+  and records its name in [naming.md](naming.md).
+
+### P-7
+
+- **project-maya does.** A temporary path that contains a space silently breaks picture
+  requests.
+- **PulsarMLX Console does.** It creates the vision temporary directory under a
+  whitespace-free base and refuses to start if none exists.
+- **Why.** ENG planner: an upstream defect, not one of the three FIX-1 items.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** ENG-14, which creates the directory and refuses at start when no
+  whitespace-free base exists; RSP-18 and RSP-19, which write their files under it. The
+  per-request `GENI` path check of ENG-04 is the donor's behavior and is not part of this
+  deviation (settled by the lead on 2026-11-14).
+
+### P-8
+
+- **project-maya does.** A template `raise_exception` and a DeepSeek encoder assertion
+  failure end in an unclean server error.
+- **PulsarMLX Console does.** Both answer 400. This settles OPEN-07.
+- **Why.** PRM planner: an upstream defect, not one of the three FIX-1 items.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** PRM-03 (template error), PRM-07 (encoder error), PRM-08 (render-time
+  failures), API-07 (the HTTP mapping).
+
+### P-9
+
+- **project-maya does.** Models cards label `hip` as `HIP` and every other backend as
+  `CUDA`.
+- **PulsarMLX Console does.** It uses a backend label table: `hip` to HIP, `cuda` to CUDA,
+  `metal` to Metal, synthetic to Synthetic, else the raw value. The table has no entry
+  for `fake`: the planner detail's mapping of `fake` to Synthetic was not part of the
+  proposal and is not approved.
+- **Why.** WEB planner: an upstream defect that would label every synthetic or Apple model
+  CUDA.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** WEB-08.
+
+### P-10
+
+- **project-maya does.** The frozen-engine watchdog never fires on a Mac in practice,
+  because `psutil` lacks `io_counters` there.
+- **PulsarMLX Console does.** On macOS the watchdog fires only when a GPU-busy signal
+  exists. The activity samplers are implemented on macOS and Linux without `psutil`.
+- **Why.** ENG planner: a naive watchdog could kill a healthy GPU-bound engine. The
+  behavior is close to the donor's, but the mechanism differs.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** `serve/test_server.py::StallWatchdog::test_stuck`,
+  `serve/test_server.py::StallWatchdog::test_working` and
+  `serve/test_server.py::StallWatchdog::test_without_psutil_nothing_is_ended`
+  (candidates: they inject samples and a GPU-busy hook and are expected to keep passing).
+- **Packages.** ENG-08, OPS-17.
+
+### P-11
+
+- **project-maya does.** It sends dashboard assets with `Cache-Control: no-cache` and no
+  validators, and has no `HEAD` support.
+- **PulsarMLX Console does.** It sends strong `ETag`s with 304 responses, and answers
+  `HEAD`, for dashboard assets. The development-directory module (`devdir`) is not part
+  of this deviation and stays not adopted (PLAN-3, OPEN-41).
+- **Why.** WEB planner: about 600 KB is re-downloaded on every load.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** `serve/test_server.py::WebApp::*` checks static
+  serving (candidates; confirmed by WEB-02).
+- **Packages.** WEB-02.
+
+### P-13
+
+- **project-maya does.** It sets `window.maya = {S, chatView}` always
+  (`serve/web/app.js:126`).
+- **PulsarMLX Console does.** It replaces `window.maya` with
+  `window.console_debug = {S, chatView}`, set only when `#debug` is in the address.
+  BRAND-1.9 covers removing the name; adding the debug global is this deviation.
+- **Why.** WEB planner: the global exposes the whole state object.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** WEB-03.
+
+### P-14
+
+- **project-maya does.** `details.format` is always `gguf`.
+- **PulsarMLX Console does.** `details.format` reports `safetensors` for PulsarMLX MLX
+  checkpoints.
+- **Why.** OPS planner: accuracy for a format the donor does not know.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** OPS-12.
+
+### P-15
+
+- **project-maya does.** Its pack-centric rule marks MLX checkpoint configurations not
+  startable.
+- **PulsarMLX Console does.** MLX checkpoint configurations are listed with `ok: false`
+  and "no engine for this backend in this build".
+- **Why.** OPS planner: PulsarMLX checkpoints are Safetensors directories.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** OPS-03, OPS-16.
+
+### P-16
+
+- **project-maya does.** It has no rule on the catalog revision.
+- **PulsarMLX Console does.** It refuses catalog revision `main`.
+- **Why.** OPS planner: a moving revision cannot be verified. The catalog ships empty
+  (PLAT-3.3), so this matters only when real entries are approved.
+- **Approval.** Approved by the owner on 2026-11-14 at checkpoint 1.
+- **Affected donor tests (known).** None identified yet; the implementing package
+  confirms.
+- **Packages.** OPS-14.
+
+## Declined proposals
+
+The owner declined these proposals on 2026-11-14, at checkpoint 1. They are not
+deviations. Each keeps its id, marked declined, so the id is never reused (rule 4). A
+ledger row or comparator annotation that cites one fails the checker.
+
+| Ref | Proposed difference | Reason declined | Decided | What stands instead |
+| --- | --- | --- | --- | --- |
+| P-12 (declined) | A report-only switch for the Content-Security-Policy (WEB planner: a rollback aid) | It would weaken SEC-2 while on | By the owner, 2026-11-14 | SEC-2 as approved; no report-only switch is built |
+| P-17 (declined) | A literal-parity setting for the old reload behavior (ENG planner, offered as an alternative to FIX-1.1) | FIX-1.1 is approved | By the owner, 2026-11-14 | FIX-1.1 as approved: a reload uses the graceful close; no literal-parity reload setting is built |
+
+## Deferred, awaiting owner decision
+
+The owner deferred the proposals below on 2026-11-14, at checkpoint 1. They are **not
 approved**. Until the owner decides, the implementing package reproduces the donor's
 behavior where it can, and records the row as `pending` where it cannot. The register of
-open items tracks them as OPEN-15, except P-6 (OPEN-10) and P-8 (OPEN-07).
+open items tracks them as OPEN-15.
 
-| Ref | Proposed difference | Donor behavior | Planner and reason |
-| --- | --- | --- | --- |
-| P-1 | Send `Server: pulsar-console/<version>` | `Server: BaseHTTP/0.6 Python/3.x` | API: copying it would misrepresent the implementation. Until the owner decides, the value of the `Server` header is on the volatile list (parity-ledger section 1.1); the header name and its position stay observable. |
-| P-2 | Answer 400 when a request carries both `Content-Length` and `Transfer-Encoding: chunked` | Prefers chunked silently (`serve/server.py:5416-5444`) | API: ambiguous framing is a request-smuggling vector behind proxies. Not part of SEC-1's approved text. |
-| P-3 | Keep the `malformed request (` prefix and a Python-like category, with different detail text | Includes the Python exception class and `repr` | API: the Python text has no Rust counterpart. |
-| P-4 | Keep error-message prefixes exactly, with the parenthesized detail from the Rust reader | Embeds `zipfile`, `ElementTree`, Pillow, `json` and `OSError` text | RSP: library exception text cannot be reproduced. |
-| P-5 | Decode and resample pictures with Rust code (Catmull-Rom for bicubic, in-house pad, EXIF orientation); formats PNG, JPEG, GIF, BMP, WebP; pixel values labeled not bit-exact with Pillow | Pillow decode, `ImageOps.pad`, bicubic | RSP: Pillow is unavailable and no real vision tower makes pixel differences observable. |
-| P-6 | Optional engine ready-timeout setting (off by default) | Waits for `READY` forever | ENG: a hung engine start hangs the server start. Additive. |
-| P-7 | Create the vision temporary directory under a whitespace-free base and refuse at start if none exists | A temporary path with a space silently breaks picture requests | ENG: an upstream defect, not one of the three FIX-1 items. |
-| P-8 | Map a template `raise_exception` and DeepSeek encoder assertion failures to 400 | An unclean server error | PRM: an upstream defect, not one of the three FIX-1 items. |
-| P-9 | Backend label table on Models cards: `hip` to HIP, `cuda` to CUDA, `metal` to Metal, synthetic to Synthetic, else the raw value | `HIP` for `hip`, otherwise `CUDA` | WEB: an upstream defect that would label every synthetic or Apple model CUDA. |
-| P-10 | Frozen-engine watchdog on macOS fires only when a GPU-busy signal exists; samplers implemented on macOS and Linux without `psutil` | Never fires on a Mac in practice (`psutil` lacks `io_counters` there) | ENG: a naive watchdog could kill a healthy GPU-bound engine. Close to donor behavior, but the mechanism differs. |
-| P-11 | Strong `ETag`s with 304 responses, and `HEAD` support, for dashboard assets | `Cache-Control: no-cache` without validators; no `HEAD` | WEB: about 600 KB re-downloaded on every load. |
-| P-12 | A report-only switch for the Content-Security-Policy | No policy | WEB: rollback aid. It would weaken SEC-2 while on. |
-| P-13 | Replace `window.maya` with `window.console_debug = {S, chatView}` only when `#debug` is in the address | `window.maya = {S, chatView}` always (`serve/web/app.js:126`) | WEB: the global exposes the whole state object. BRAND-1.9 covers removing the name; adding the debug global is this proposal. |
-| P-14 | `details.format` reports `safetensors` for PulsarMLX MLX checkpoints | Always `gguf` | OPS: accuracy for a format the donor does not know. |
-| P-15 | MLX checkpoint configurations list with `ok: false` and "no engine for this backend in this build" | The pack-centric rule marks them not startable | OPS: PulsarMLX checkpoints are Safetensors directories. |
-| P-16 | Refuse catalog revision `main` | No such rule | OPS: a moving revision cannot be verified. The catalog ships empty (PLAT-3.3), so this matters only when real entries are approved. |
-| P-17 | Keep a literal-parity setting for the old reload behavior | n/a | ENG offered it as an alternative to FIX-1.1. FIX-1.1 is approved; the setting is not built unless the owner asks. |
-| P-18 | An optional, explicit model-family override in configuration, beside the substring-based family detection | The template family is detected only from marker substrings in the chat template's source (`serve/frontend.py`, class `ChatTemplate`); there is no override | PRM (PRM-05): detection by substrings is brittle; the override is additive and leaves detection unchanged when unset. |
+| Ref | Proposed difference | Donor behavior | Planner and reason | Decide before |
+| --- | --- | --- | --- | --- |
+| P-5 | Decode and resample pictures with Rust code (Catmull-Rom for bicubic, in-house pad, EXIF orientation); formats PNG, JPEG, GIF, BMP, WebP; pixel values labeled not bit-exact with Pillow | Pillow decode, `ImageOps.pad`, bicubic | RSP: Pillow is unavailable and no real vision tower makes pixel differences observable. | The picture packages of M6 (RSP-18, RSP-19) |
+| P-18 | An optional, explicit model-family override in configuration, beside the substring-based family detection | The template family is detected only from marker substrings in the chat template's source (`serve/frontend.py`, class `ChatTemplate`); there is no override | PRM (PRM-05): detection by substrings is brittle; the override is additive and leaves detection unchanged when unset. | PRM-05 in M2 |
+
+Two further items are still open under OPEN-15 and await the owner in the same way: the
+JSON Schema meta-validation wording of PLAN-5 (the `invalid JSON Schema: ` prefix and the
+accept and reject decisions match the donor; the wording after the prefix may differ), and
+the advisory lock on the savings ledger (OPS-21).
 
 The planners also recorded items that change no externally observable behavior, so they
 need no deviation: the thread-local embeddings handle passed explicitly (API), prompt-memo
@@ -687,4 +913,5 @@ internals that keep identical ids (PRM), a per-service tool-order cache (PRM), t
 `ResponseStore.expand()` helper not ported (RSP), a permanent `fieldsOf` export in
 `models.js` (WEB), the GLM-family split of the engine conformance suite (ENG), and fixtures
 replacing tests that read engine sources (ENG, OPS; ledger reason `engine-source-reads`).
-A reviewer who finds an observable effect in any of them moves it to the table above.
+A reviewer who finds an observable effect in any of them adds it to the deferred table
+above as a new proposal for the owner.

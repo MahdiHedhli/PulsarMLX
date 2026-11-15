@@ -57,12 +57,13 @@ headers and body; client-disconnect detection for queued, streaming and non-stre
 requests.
 
 **Rationale**: project-maya's server is Python's standard-library HTTP server. Byte-level
-parity covers its status lines, its `Date` and `Server` headers, 501 for unsupported
-methods, 414 and 431 for oversized request lines and headers, no `100-continue`, and
-connection close after every response. A framework answers HTTP/1.1 with chunked bodies
-and different headers, which would need a deviation, and adds dependencies parity does not
-need. Disconnect detection (the donor's client watcher) is simpler to reproduce with
-direct control of the socket.
+parity covers its status lines, its `Date` header, the name and position of its `Server`
+header (whose value is `pulsar-console/<version>` under P-1, approved by the owner on
+2026-11-14), 501 for unsupported methods, 414 and 431 for oversized request lines and
+headers, no `100-continue`, and connection close after every response. A framework answers
+HTTP/1.1 with chunked bodies and different headers, which would need a deviation, and adds
+dependencies parity does not need. Disconnect detection (the donor's client watcher) is
+simpler to reproduce with direct control of the socket.
 
 **Alternatives considered**:
 
@@ -214,7 +215,8 @@ with default features off and only PNG, JPEG, GIF, BMP and WebP enabled, Catmull
 resampling for the donor's bicubic filter, an in-house centered pad, and EXIF orientation
 applied. This implementation depends on deviation proposal P-5 in
 [contracts/deviations.md](contracts/deviations.md): pixel values that differ from Pillow
-and the refusal of other formats are not approved until the owner decides P-5 (OPEN-15).
+and the refusal of other formats are not approved. The owner deferred P-5 on 2026-11-14
+to a decision before the picture packages of M6 (OPEN-15).
 `data:` URLs are always accepted; remote URLs and local file paths are refused unless
 enabled in settings (SEC-4). The DeepSeek picture preprocessor is built in M6; the MiniMax
 picture preprocessor is not built (LIC-2), its file format is documented, and an engine
@@ -299,7 +301,16 @@ crate is not re-merged.
 requires (Host allowlist on loopback binds, `Origin` checked on every route including
 `null`, JSON content type on POST, constant-time token comparison). Its tests
 (`tests/raw_http.rs` and others at the tag) express attacks that the donor's tests do not.
-Its framework (`hyper`) and its Python campaign harness are not reused.
+Its framework (`hyper`) and its Python campaign harness are not reused. The owner settled
+the allowlist's scope on 2026-11-14 (SEC-1.1, OPEN-04): on a loopback bind a request is
+accepted only if its `Host` is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, any
+port) or a name listed in the optional run-config key `allowed_hosts`, absent by default;
+on a non-loopback bind `Host` is not restricted, as in the donor, unless `allowed_hosts`
+is set, and then only the listed names and the loopback names pass. A refused request
+gets 403 `permission_error`. That `allowed_hosts` also extends the list on a loopback bind
+follows the SEC-1.1 text the owner reviewed; the lead confirms it with the owner at
+checkpoint 2 (lead note LD30). Matching details (case, port, IPv6 forms, a missing `Host`
+header) follow this crate and are settled by API-03.
 
 **Alternatives considered**:
 
@@ -469,6 +480,18 @@ instance stays owned by one driver thread; for more than one concurrent generati
 token-level trait offers a submit-and-pump form with request-id-tagged events, and the
 blocking `generate` form is the single-conversation case.
 
+The server refuses to start an engine that does not report synthetic provenance (seam
+question Q9, OPEN-29, decided by the owner on 2026-11-14). By lead decision LD28, the
+descriptor's provenance type can express an engine that declares another provenance or
+none, and synthetic is the only value accepted in this increment; one guard function in
+`console-core` decides, every path that admits an engine (first start, restart, model
+switch, context reload) calls it before the engine serves a request, and no environment
+variable, configuration key, command-line flag or Cargo feature bypasses it. A
+line-protocol engine that does not declare synthetic provenance in its start-up lines
+counts as not synthetic; the form of the declaration is open item OPEN-58. ENG-01 settles the exact shape of the
+type. What must be done before such an engine may be allowed is in
+[ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
+
 **Rationale**: The at-least-once, position-keyed delivery matches how the engine track's
 post-commit `deliver` hook in `crates/backend/src/step.rs` behaves after a refused
 delivery, so a future PulsarMLX engine can attach without changing its commit semantics. A
@@ -487,22 +510,24 @@ table is updated in the same change. "Introduced by" names the first package tha
 it. Licenses marked "checked" were read on 2026-11-14 from the crate manifest of the
 version present in the local Cargo registry (the version the root lock uses); they are
 re-checked against the version actually pinned. "Not yet checked" licenses are recorded
-from the pinned crate's manifest when it is added.
+from the pinned crate's manifest when it is added. A crate shown with an `=` version is
+pinned in `console/Cargo.toml`; for those rows the license was re-read on 2026-11-14 from
+the manifest of the pinned version.
 
 | Crate | Purpose | License | Introduced by |
 | --- | --- | --- | --- |
-| `serde` | Derive and data model for every JSON type | MIT OR Apache-2.0 (checked) | API-01 |
-| `serde_json` (`preserve_order`, `arbitrary_precision`) | JSON values with insertion order and exact numbers (B3) | MIT OR Apache-2.0 (checked) | API-01 |
-| `indexmap` | Ordered map behind `preserve_order` (transitive) | Apache-2.0 OR MIT (checked) | API-01 |
-| `tokio` | Async runtime, sockets, timers, processes, signals | MIT (checked) | API-02 |
-| `httparse` | HTTP/1.x request-head parsing for the hand-written transport (B1) | MIT OR Apache-2.0 (checked) | API-02 |
-| `libc` | Signals, process groups, POSIX calls in lifecycle and supervision | MIT OR Apache-2.0 (checked) | API-16 |
-| `fancy-regex` | Pre-tokenizer patterns with look-around | Not yet checked | PRM-04 |
-| `regex` | Literal alternation and Unicode classes in tokenizer, parsers and loop guards | Not yet checked | PRM-04 |
-| `unicode-normalization` | NFC for the MiniMax tokenizer path | Not yet checked | PRM-04 |
+| `serde` =1.0.229 | Derive and data model for every JSON type | MIT OR Apache-2.0 (checked) | API-01 |
+| `serde_json` =1.0.151 (`preserve_order`, `arbitrary_precision`) | JSON values with insertion order and exact numbers (B3) | MIT OR Apache-2.0 (checked) | API-01 |
+| `indexmap` 2.14.0 (locked) | Ordered map behind `preserve_order` (transitive) | Apache-2.0 OR MIT (checked) | API-01 |
+| `tokio` =1.53.1 | Async runtime, sockets, timers, processes, signals | MIT (checked) | API-02 |
+| `httparse` =1.10.1 | HTTP/1.x request-head parsing for the hand-written transport (B1) | MIT OR Apache-2.0 (checked) | API-02 |
+| `libc` =0.2.189 | Operating-system randomness for ids; signals, process groups, POSIX calls in lifecycle and supervision | MIT OR Apache-2.0 (checked) | API-01 |
+| `fancy-regex` =0.20.2 | Pre-tokenizer patterns with look-around | MIT (checked) | PRM-04 |
+| `regex` =1.12.4 | Literal alternation and Unicode classes in tokenizer, parsers and loop guards | MIT OR Apache-2.0 (checked) | PRM-04 |
+| `unicode-normalization` =0.1.26 | NFC for the MiniMax tokenizer path | (MIT OR Apache-2.0) AND Unicode-3.0 (checked) | PRM-04 |
 | `minijinja` | Chat-template runtime (B4) | Not yet checked | PRM-03 |
 | `minijinja-contrib` | Python string-method compatibility for templates (B4) | Not yet checked | PRM-03 |
-| `sha2` | Content hashes: store keys, owner ids, template and manifest hashes | MIT OR Apache-2.0 (checked) | PRM-02 |
+| `sha2` =0.10.9 | Content hashes: store keys, owner ids, template and manifest hashes | MIT OR Apache-2.0 (checked) | API-03 |
 | `base64` | Sealed reasoning, `data:` URLs, file parts | MIT OR Apache-2.0 (checked) | RSP-03 |
 | `tokio-util` | Cancellation token for background jobs, unless the core provides its own | MIT (checked) | RSP-05 |
 | `miniz_oxide` | Deflate for the ZIP reader and PDF stream filters | Not yet checked | RSP-12 |
@@ -510,6 +535,49 @@ from the pinned crate's manifest when it is added.
 | `html-escape` | HTML5 named entity table | Not yet checked | RSP-12 |
 | `image` (PNG, JPEG, GIF, BMP, WebP only) | Picture decoding and resampling | Not yet checked | RSP-18 |
 | `fantoccini` (no TLS backend; test-only crate), **excluded if `cargo tree -i hyper` shows `hyper`** | WebDriver client for the browser end-to-end suite. Current releases are believed to build on `hyper`, which is excluded everywhere, test-only crates included (not verified: the crate is not in the local registry). WEB-06 runs that check before adding it; if it fails, WEB-06 needs a WebDriver client without `hyper`. | Not yet checked | WEB-06 |
+
+The M1 scaffold pins the crates below in `[workspace.dependencies]` of
+`console/Cargo.toml`, and `console/Cargo.lock` records them. Member crates inherit them
+with `workspace = true` and add only the features their package needs.
+
+| Crate and pin | Features | Used by | Why |
+| --- | --- | --- | --- |
+| `serde` =1.0.229 | `default-features = false`; `std`, `derive` | `console-pyjson`, `console-core`, `console-conformance` | Data model and derive for JSON types (API-01 per PRM-01, API-15, CNF-02) |
+| `serde_json` =1.0.151 | `default-features = false`; `std`, `preserve_order`, `arbitrary_precision` | `console-pyjson`, `console-core`, `console-tokenizer`, `console-http`, `console-testkit`, `console-conformance` | Binding decision B3: order-preserving, exact-number JSON across the workspace |
+| `libc` =0.2.189 | default (`std`) | `console-pyjson`, `console-testkit`, `console-conformance` | `getentropy` for ids (API-01; no `uuid`); process groups and signals (CNF-07, the API-19 process helper) |
+| `tokio` =1.53.1 | `default-features = false` at workspace level; `console-core`: `rt`, `sync`, `time`, `macros` (dev adds `test-util`); `console-http`: `rt`, `rt-multi-thread`, `net`, `io-util`, `time`, `sync`, `macros` (dev adds `test-util`); `console-testkit`: `rt`, `rt-multi-thread`, `net`, `io-util`, `time`, `sync`, `macros` | `console-core`, `console-http`, `console-testkit` | Hand-written HTTP/1.0 transport (API-02, B1); FIFO with `Mutex` and `Notify` and paused-time tests (ENG-09); spawned turn tasks and bounded channels (ENG-10); in-process test server (API-19) |
+| `httparse` =1.10.1 | default (`std`) | `console-http`, `console-conformance` | Request-head parsing for the transport (API-02) and response parsing in the raw client (CNF-03) |
+| `sha2` =0.10.9 | `default-features = false` | `console-core`, `console-conformance` | SHA-256 response owner id (API-03 `response_owner`) and the vendor-template SHA-256 check (CNF-02) |
+| `fancy-regex` =0.20.2 | `default-features = false`; `std`, `unicode` | `console-tokenizer` | Pre-tokenizer patterns with look-around (PRM-04) |
+| `regex` =1.12.4 | `default-features = false`; `std`, `unicode` | `console-tokenizer` | Literal alternation and Unicode classes (PRM-04) |
+| `unicode-normalization` =0.1.26 | default (`std`) | `console-tokenizer` | NFC for the MiniMax pre-tokenizer path (PRM-04) |
+
+The licenses above matter once a binary is distributed: a notices file for the linked
+crates is owed before that (open item OPEN-59). Nothing is vendored and this increment
+distributes no binary.
+
+Transitive crates, locked but not declared: `aho-corasick` 1.1.3, `bit-set` 0.8.0,
+`bit-vec` 0.8.0, `block-buffer` 0.10.4, `bytes` 1.12.1, `cfg-if` 1.0.5, `cpufeatures`
+0.2.17, `crypto-common` 0.1.7, `digest` 0.10.7, `equivalent` 1.0.2, `generic-array`
+0.14.7, `hashbrown` 0.17.1, `indexmap` 2.14.0, `itoa` 1.0.18, `memchr` 2.8.3, `mio` 1.2.2,
+`pin-project-lite` 0.2.17, `proc-macro2` 1.0.107, `quote` 1.0.47, `regex-automata` 0.4.18,
+`regex-syntax` 0.8.11, `serde_core` 1.0.229, `serde_derive` 1.0.229, `socket2` 0.6.5,
+`syn` 3.0.6, `tinyvec` 1.13.3, `tokio-macros` 2.7.2, `typenum` 1.20.1, `unicode-ident`
+1.0.26, `version_check` 0.9.5, `wasi` 0.11.1+wasi-snapshot-preview1, `windows-link` 0.2.1,
+`windows-sys` 0.61.2 and `zmij` 1.0.23. Their licenses, read on 2026-11-14 from each
+crate's own manifest in the local Cargo registry: `aho-corasick` and `memchr` Unlicense OR
+MIT; `bytes`, `generic-array`, `mio`, `tokio-macros` and `zmij` MIT; `tinyvec` Zlib OR
+Apache-2.0 OR MIT; `unicode-ident` (MIT OR Apache-2.0) AND Unicode-3.0; `version_check`
+MIT/Apache-2.0; `wasi` Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT; all others MIT
+OR Apache-2.0 (or Apache-2.0 OR MIT). `bytes` arrives only through `tokio`; no console
+crate declares it (OPEN-40 unchanged).
+
+Two rows changed when the scaffold pinned them. `libc` is now introduced by API-01 instead
+of API-16, because `console-pyjson` reads operating-system randomness for ids through
+`getentropy`. `sha2` is now introduced by API-03 instead of PRM-02, because the response
+owner id (API-03) and the vendor-template check (CNF-02) need it before any store key or
+manifest hash does. No decision in this document named a version, and no crate was
+replaced.
 
 Explicitly excluded: `hyper`, `axum` (B1; by lead decision `hyper` is excluded everywhere,
 including test-only crates and fixture servers); `rmcp`, `jsonschema` (B6); any TLS crate
@@ -574,23 +642,38 @@ records in the named contract.
    prefix in Responses `encrypted_content` is accepted on input (portability of
    histories), while only the product prefix is emitted. Blocks RSP-03.
 4. **Further deviations proposed by planners but not among the approved ids** (OPEN-15;
-   the engine ready timeout is also OPEN-10, the template and encoder failures OPEN-07,
-   the accessibility fixes OPEN-12). Most are listed with `P-` ids under "Proposed,
-   awaiting owner decision" in [contracts/deviations.md](contracts/deviations.md). Each
-   needs owner approval before the package that relies on it is merged, or the package
-   keeps literal parity. Proposed: a `Server: pulsar-console/<version>` header (API-02);
-   400 when both `Content-Length` and chunked transfer encoding are present (API-02); a
-   different detail text inside `malformed request (...)` errors (API-07); strong ETags,
-   304 and `HEAD` for static assets (WEB-02); an optional engine ready timeout, off by
-   default (ENG-06); the frozen-engine watchdog rule on macOS (ENG-08); a whitespace-free
-   vision temporary directory (ENG-14); JSON Schema meta-validation wording (RSP-02);
-   exception detail text inside parenthesized error tails (RSP-12 and others); image
-   formats beyond PNG, JPEG, GIF, BMP and WebP refused, and pixel values not bit-exact
-   with Pillow (RSP-18, P-5); template `raise_exception` and DeepSeek encoder assertion
-   failures mapped to 400 instead of the donor's generic error (PRM-08); an explicit
-   model-family override in config (PRM-05, P-18); accessibility fixes the donor leaves open
-   (WEB-10); `details.format` of `safetensors` for MLX checkpoints in the model API
-   (OPS-12); an advisory lock on the savings ledger (OPS-21).
+   the engine ready timeout was also OPEN-10 and the template and encoder failures
+   OPEN-07; the accessibility fixes are OPEN-12). Most are listed with `P-` ids in the
+   proposals section of [contracts/deviations.md](contracts/deviations.md). On 2026-11-14
+   the owner approved fourteen of P-1 to P-18, declined two and deferred two:
+   - **Approved**, and now deviations under their `P-` ids: a
+     `Server: pulsar-console/<version>` header (API-02, P-1); 400 when both
+     `Content-Length` and chunked transfer encoding are present (API-02, P-2); a different
+     detail text inside `malformed request (...)` errors (API-07, P-3); exception detail
+     text inside parenthesized error tails (RSP-12 and others, P-4); an optional engine
+     ready timeout, off by default (ENG-06, P-6, which settles OPEN-10); a whitespace-free
+     vision temporary directory (ENG-14, P-7); template `raise_exception` and DeepSeek
+     encoder assertion failures mapped to 400 instead of the donor's generic error (PRM-03,
+     PRM-07, PRM-08 and API-07, P-8, which settles OPEN-07); the backend label table on Models
+     cards (WEB-08, P-9); the frozen-engine watchdog rule on macOS (ENG-08, P-10); strong
+     ETags, 304 and `HEAD` for static assets (WEB-02, P-11; the developer asset override
+     stays not adopted, OPEN-41); `window.console_debug` only under `#debug` (WEB-03,
+     P-13); `details.format` of `safetensors` for MLX checkpoints in the model API
+     (OPS-12, P-14); MLX checkpoint configurations listed as not startable (OPS-03, P-15);
+     refusal of catalog revision `main` (OPS-14, P-16).
+   - **Declined**: a report-only switch for the Content-Security-Policy (P-12), because it
+     would weaken SEC-2 while on; a literal-parity setting for the old reload behavior
+     (P-17), because FIX-1.1 is approved and no such setting is built.
+   - **Deferred**, still awaiting the owner: image formats beyond PNG, JPEG, GIF, BMP and
+     WebP refused, and pixel values not bit-exact with Pillow (RSP-18, P-5), before the
+     picture packages of M6; an explicit model-family override in config (PRM-05, P-18),
+     before PRM-05 in M2.
+   - **Still open under OPEN-15**: JSON Schema meta-validation wording (RSP-02, PLAN-5)
+     and an advisory lock on the savings ledger (OPS-21). The accessibility fixes the donor
+     leaves open (WEB-10) stay open as OPEN-12.
+
+   Each item still open or deferred needs owner approval before the package that relies on
+   it is merged, or the package keeps literal parity.
 5. **Upstream defects not listed under FIX-1** (OPEN-16 for `/props`, OPEN-09 for the
    untagged `ERR`). Whether to reproduce or fix: `/props`
    reporting `model_path` as a literal fallback for configs that use a pack or GGUF flag;
@@ -631,10 +714,10 @@ records in the named contract.
     choice decides which conformance profile becomes required. Not blocking in this
     increment.
 15. **Default synthetic model name** (OPEN-03) reported by the scripted engine in every
-    `model` field and in `/v1/models`. The plan requires synthetic model names to contain
-    `synthetic` (PLAN-2); the exact name is open. ENG-02 delivers the default, the tests
-    of API-08 assert it, and API-17 keeps it; until the owner fixes the name, the working
-    default is `pulsar-console-synthetic`.
+    `model` field and in `/v1/models`. Resolved by the owner on 2026-11-14: the name is
+    exactly `pulsar-console-synthetic`, which meets the plan's rule that synthetic model
+    names contain `synthetic` (PLAN-2). ENG-02 delivers the default, the tests of API-08
+    assert it, and API-17 keeps it.
 16. **Prometheus metric prefix** (OPEN-22). Whether metric names follow the environment
     prefix. Blocks API-06.
 17. **Logo** (OPEN-23). The neutral product mark (BRAND-2 allows SVG only). Blocks WEB-01.
@@ -647,9 +730,11 @@ records in the named contract.
     [contracts/parity-ledger.md](contracts/parity-ledger.md)). Still open: the
     `upstream-skipped` marker (OPEN-36) and the format of the shim and vendor-render
     records (OPEN-38).
-19. **Deviation ids for later deviations** (OPEN-39). The approved ids are fixed; the
-    numbering scheme for further owner-approved deviations is set in
-    `contracts/deviations.md` (GOV-06).
+19. **Deviation ids for later deviations** (OPEN-39). Resolved by the lead on 2026-11-14
+    (LD29) and recorded in `contracts/deviations.md` (GOV-06): an owner-approved proposal
+    keeps its `P-` id as its deviation id; a later owner-approved deviation that was never
+    a listed proposal takes the next free `P-` number; ids are never reused; a declined
+    proposal keeps its id, marked declined.
 20. **Upstream-skipped methods** (OPEN-36). Methods the donor's own CI skips (official
     SDK, poppler, tokenizer packs, transformers, a real engine) still need a disposition;
     whether evidence C or D may satisfy them. CNF-12.

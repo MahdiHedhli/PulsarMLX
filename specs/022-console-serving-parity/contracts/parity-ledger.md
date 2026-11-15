@@ -40,8 +40,10 @@ on the volatile list, which is normalized before comparison. The volatile list i
 - generated ids;
 - timestamps and `created` fields;
 - the `Date` header;
-- the value of the `Server` header, until the owner decides proposal P-1 in
-  [deviations.md](deviations.md);
+- the value of the `Server` header, for comparison against donor references only: the
+  donor's value carries a Python version and the console's a product version. The
+  console's own value, `pulsar-console/<version>`, is asserted by the tests of API-02, and
+  rows it affects cite approved deviation P-1 in [deviations.md](deviations.md);
 - timing and rate figures;
 - uptime;
 - process ids;
@@ -130,7 +132,7 @@ cannot silently carry evidence.
 | `shim` | The donor test runs unchanged against the Rust artifact | `shim`: the shim runner (`engine-contract` or `stop`); `shim_record`: the path of the committed result record of the last manual shim run at the pin | Manual job; the blocking checker verifies only the committed record (section 5) |
 | `web-test` | A Node test of the adapted dashboard re-expresses the method | `web_tests`: non-empty array of `console/web/<path>.test.mjs::<test name>` | B (blocking, Node with no packages) |
 | `vendor-render` | A vendor-template render case covers the method; the case runs only where the template can be read lawfully (decision B4, deviation LIC-1) | `vendor_cases`: non-empty array of case ids; `vendor_record`: the path of the committed hash record of the last manual run | Manual job; the blocking checker verifies only the committed record |
-| `deviation` | The behavior differs on purpose under an approved register entry | `deviation`: a register id or sub-item id, for example `SEC-5` or `SEC-5.2`; `asserted_by`: non-empty array of `rust_tests`, `web_tests` or `scenarios` entries that pin the PulsarMLX Console behavior | B or A, through `asserted_by` |
+| `deviation` | The behavior differs on purpose under an approved register entry | `deviation`: a register id or sub-item id, for example `SEC-5`, `SEC-5.2` or an approved proposal id such as `P-1`; `asserted_by`: non-empty array of `rust_tests`, `web_tests` or `scenarios` entries that pin the PulsarMLX Console behavior | B or A, through `asserted_by` |
 | `not-applicable` | The method tests something outside this increment | `reason`: one value from the closed list in section 3.3; `notes`: one sentence naming what the method depends on | None |
 | `pending` | Not yet resolved | none | None |
 
@@ -234,7 +236,11 @@ ledger, the register and the evidence listings, and fails the build when any rul
      reference was replayed in the same run.
    - Every `web_tests` entry appears in the Node test listing of the web logic job.
    - Every `deviation` value is an id or sub-item id present in the register and marked
-     approved there.
+     approved there. Approved proposal ids (P-1 to P-4, P-6 to P-11 and P-13 to P-16,
+     approved by the owner on 2026-11-14) are valid. A row citing a deferred proposal
+     (P-5, P-18) or a declined one (P-12, P-17) fails the checker. Later deviation ids
+     follow the register's numbering rule (deviations.md, "How to read this register",
+     rule 4; OPEN-39, settled by the lead on 2026-11-14).
    - Every `shim_record` and `vendor_record` exists, names the pinned commit, and lists the
      row's method as passed.
    - Every `reason` is in the closed list.
@@ -253,7 +259,9 @@ ledger, the register and the evidence listings, and fails the build when any rul
 ## 6. Relation to other checks
 
 - The comparator that replays references suppresses a difference only with an approved
-  register id as its annotation, and flags unused annotations (CNF-04).
+  register id as its annotation, and flags unused annotations (CNF-04). Approved proposal
+  ids are valid annotations; an annotation citing a deferred or declined proposal fails
+  the check, as in section 5, rule 3.
 - The inventory extractor (CNF-12) lists environment names, routes and written files from
   the pinned source statically; their coverage is checked against the HTTP, ops and naming
   contracts, not against this ledger.

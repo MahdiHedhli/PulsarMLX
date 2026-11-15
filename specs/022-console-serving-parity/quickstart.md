@@ -83,7 +83,7 @@ commands. Observed on 2026-11-14 at commit `1a2db9b9`, on the owner's build host
 Apple Silicon): the toolchain script printed its `ok` line, `cargo fetch --locked` had
 nothing to fetch because the skeleton has no dependencies, and `cargo fmt --check`,
 `cargo clippy` and `cargo test` passed, with one skeleton test. No Linux run and no CI run
-is recorded yet, because nothing has been pushed. That says nothing about any console
+is recorded yet. That says nothing about any console
 behavior, because none is implemented.
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
@@ -179,7 +179,13 @@ curl -N http://127.0.0.1:<port>/v1/chat/completions \
 ```
 
 Check the frames (`data:` chunks, a final chunk with `finish_reason` and `usage`, then
-`data: [DONE]`) and that the server reports a synthetic engine.
+`data: [DONE]`) and that the server reports a synthetic engine with the default model name
+`pulsar-console-synthetic`.
+
+Planned (ENG-01, ENG-10 and API-08): the server refuses to start an engine that does not
+report synthetic provenance, and `pulsar-console` exits with a non-zero status after one
+line on standard error that names the engine kind, what it reported, and the note
+[ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
 
 **Available from**: API-08 with API-07, ENG-02 and ENG-10 (M1); the documented CLI from
 API-17 (M4). Not yet available.
@@ -195,8 +201,9 @@ curl -N http://127.0.0.1:<port>/v1/messages \
 **Available from**: API-09 (M2). Not yet available.
 
 Security posture checks by hand (SEC-1): a POST with a foreign `Origin` header, or with a
-non-JSON content type, is refused; a request whose `Host` is not on the loopback allowlist
-is refused when bound to loopback.
+non-JSON content type, is refused; a request whose `Host` is not a loopback name or a name
+listed in the run-config key `allowed_hosts` is refused with 403 when bound to loopback
+(SEC-1.1).
 
 **Available from**: API-03 (M1). Not yet available.
 
@@ -260,8 +267,9 @@ file. The two donor test files run through the shim and the vendor-template rend
 only in the manual reference job; blocking CI checks their committed records.
 
 **Available from**: GOV-06 (M0) for the workflow and its blocking jobs; CNF-01 (M1)
-extends it; CNF-15 (M8) for the web logic job. No run has been observed yet; nothing is
-pushed before owner checkpoint 2.
+extends it; CNF-15 (M8) for the web logic job. No run has been observed yet. The owner authorized
+the first push of the feature branch on 2026-11-14; each later push remains a checkpoint
+decision.
 
 The manual `workflow_dispatch` jobs are dispatched by the owner or the lead, never run on
 a contributor's machine: reference capture and the live differential against project-maya

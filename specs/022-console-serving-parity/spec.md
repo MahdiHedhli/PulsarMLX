@@ -4,8 +4,9 @@
 
 **Created**: 2026-11-14
 
-**Status**: Draft (milestone M0, awaiting the owner's review of the M0 documents; nothing
-in this feature is implemented)
+**Status**: Draft (milestone M0; the owner reviewed the M0 documents at checkpoint 1 on
+2026-11-14, accepted ADR 0008 and decided the items marked decided below, and M1 may
+start; nothing in this feature is implemented)
 
 **Input**: The plan the owner approved on 2026-11-14, whose decisions are recorded in
 [ADR 0008](../../docs/architecture/decisions/0008-console-serving-ahead-of-stage-f.md)
@@ -29,7 +30,7 @@ are never PulsarMLX evidence.
 | Parity | Driven by equivalent fake engines, the same externally observable behavior as the donor's `serve/` at the pin for every route, stream format, error, configuration key, environment variable and persisted file. The donor is the reference even where it differs from the OpenAI or Anthropic specifications. |
 | Synthetic backend | An engine that serves no model: the scripted in-process engine, the PulsarMLX fake engine binaries, or a test adapter. |
 | Ledger | `console/parity/ledger.json`, one row per donor test method (913 rows). |
-| Deviation register | `specs/022-console-serving-parity/contracts/deviations.md`, every intended difference from literal parity with its reason and its approval basis; proposed differences that await the owner's decision are kept in a separate section and are not approved. |
+| Deviation register | `specs/022-console-serving-parity/contracts/deviations.md`, every intended difference from literal parity with its reason and its approval basis; proposals are listed with `P-` ids in a separate section with the owner's decision on each. A proposal the owner approved is a deviation under its `P-` id; a declined or deferred proposal is not approved. |
 | Name table | `specs/022-console-serving-parity/contracts/naming.md`, the published old-to-new name table. |
 | Reference corpus | Requests, responses, streams and rendered-prompt probes captured from the donor's own server in fake-engine mode at the pin, normalized and committed as text with a provenance header. |
 
@@ -101,8 +102,8 @@ termination signal during an answer and record the shutdown order and exit code.
    the ready line names the address, the dialect routes and the context size in the donor's
    format and uses the `[console]` log prefix.
 3. **Given** the server is bound to loopback, **When** a request arrives with a `Host`
-   header that is not a loopback name or an allowlisted host, **Then** it is refused with
-   403 before routing.
+   header that is not a loopback name or a name listed in the run-config key
+   `allowed_hosts`, **Then** it is refused with 403 before routing.
 4. **Given** any route, **When** a request carries an `Origin` that is not the server's own
    page and not CORS-allowed, including `Origin: null`, **Then** the request is refused.
 5. **Given** a POST with a non-JSON content type to a JSON route, **When** it is received,
@@ -393,15 +394,23 @@ repeats items from the consolidated register in
 - **FR-002**: Every intended difference from literal parity MUST be an entry in the
   deviation register with its reason and the owner's approval before any test relies on it.
   The approved entries are SEC-1 to SEC-7, PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1,
-  PLAT-1 to PLAT-3 and FIX-1 from the plan's deviation table (FR-090 to FR-106), and PLAN-1
-  to PLAN-6 for differences the plan decides elsewhere. Any other difference stays under
-  "Proposed, awaiting owner decision" in the register until the owner approves it.
+  PLAT-1 to PLAT-3 and FIX-1 from the plan's deviation table (FR-090 to FR-106), PLAN-1
+  to PLAN-6 for differences the plan decides elsewhere, and the proposals the owner
+  approved on 2026-11-14 under their `P-` ids (P-1 to P-4, P-6 to P-11 and P-13 to P-16).
+  The owner declined P-12 and P-17 and deferred P-5 and P-18 on the same date. Any other
+  difference stays a proposal in the register until the owner approves it.
 - **FR-003**: The increment MUST NOT serve a real model, and every claim about what it does
-  MUST state that its backends are synthetic.
+  MUST state that its backends are synthetic. The server MUST refuse to start an engine
+  that does not report synthetic provenance, on every path that admits an engine, and no
+  setting, flag or build option MAY bypass that refusal in this increment (decided by the
+  owner on 2026-11-14, OPEN-29). What must be done before a non-synthetic engine may be
+  allowed is written in
+  [`docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
 - **FR-004 (PLAN-1)**: The dashboard MUST show a permanent "Synthetic engine: no real
   model" badge, and `/health` MUST report that the backend is synthetic.
-- **FR-005 (PLAN-2)**: The scripted engine's default model name MUST contain the word
-  "synthetic" (exact name: open item OI-2).
+- **FR-005 (PLAN-2)**: The scripted engine's default model name MUST be exactly
+  `pulsar-console-synthetic`, which contains the word "synthetic" as PLAN-2 requires (the
+  owner decided the name on 2026-11-14, open item OI-2).
 - **FR-006**: Hardware- and OS-specific readers MUST be labelled unverified on real
   hardware everywhere they are mentioned.
 
@@ -445,7 +454,9 @@ repeats items from the consolidated register in
 #### Prompt construction
 
 - **FR-015**: Chat templates MUST render byte-identical prompt text to the donor's for the
-  same messages, tools and keyword arguments, under the donor's sandbox semantics.
+  same messages, tools and keyword arguments, under the donor's sandbox semantics. A
+  template's `raise_exception` MUST answer 400 instead of the donor's unclean server error
+  (P-8, approved by the owner on 2026-11-14, open item OI-6).
 - **FR-016**: When no chat template is configured, start-up MUST fail with a clear error;
   no vendor template is bundled or used as a fallback.
 - **FR-017**: The tokenizer MUST encode rendered prompts to the same token ids as the
@@ -453,7 +464,9 @@ repeats items from the consolidated register in
   donor does, and decode incrementally across split characters.
 - **FR-018**: Request normalization MUST convert OpenAI, Anthropic and Responses inputs,
   including media parts and the DeepSeek path, into the donor's template message form.
-- **FR-019**: The DeepSeek prompt encoder MUST reproduce the donor's encoder output.
+- **FR-019**: The DeepSeek prompt encoder MUST reproduce the donor's encoder output. An
+  encoder assertion failure MUST answer 400 (P-8, approved by the owner on 2026-11-14,
+  open item OI-6).
 - **FR-020**: Thinking levels and the GLM effort dialects MUST map to template keyword
   arguments as in the donor, and forced tool-call prefills, JSON mode and context-room
   handling MUST behave as in the donor.
@@ -512,7 +525,10 @@ repeats items from the consolidated register in
 - **FR-037**: Engine supervision MUST restart a dead engine on the next request, close
   gracefully, kill on timeout, watch for stalls, record death notes, narrate start-up,
   and support unload, idle unload, context reload with fallback and atomic save, and
-  shutdown wind-down, as in the donor with the FIX-1 corrections.
+  shutdown wind-down, as in the donor with the FIX-1 corrections. An optional engine
+  ready-timeout setting MAY bound the wait for an engine to become ready; it is off by
+  default, so by default the server waits as the donor does (P-6, approved by the owner on
+  2026-11-14, open item OI-9).
 - **FR-038**: An engine conformance suite MUST check any engine against the protocol
   profile and the seam contract.
 - **FR-039**: The backend seam contract MUST be offered to the engine track for review
@@ -595,7 +611,8 @@ repeats items from the consolidated register in
   follow the donor's contracts and be exercised only against fakes.
 - **FR-066**: The DeepSeek picture preprocessor MUST produce the donor's file format and
   geometry. Whether pixel values may differ from the donor's image library is proposal P-5
-  in the deviation register and is not approved (open item OI-13); until the owner
+  in the deviation register, which the owner deferred on 2026-11-14 to a decision before
+  the picture packages of M6; it is not approved (open item OI-13), and until the owner
   decides, the ledger rows it affects stay `pending`.
 
 #### Model management and launch
@@ -675,10 +692,19 @@ repeats items from the consolidated register in
 
 #### Approved deviations from literal parity
 
-- **FR-090 (SEC-1)**: On loopback binds the server MUST enforce a `Host` allowlist; MUST
-  check `Origin` on every route, including `Origin: null`; MUST require a JSON content type
-  on POST; and MUST require a loopback client or an API key for mutating admin routes.
-  Behavior of the `Host` allowlist on non-loopback binds is open item OI-3.
+- **FR-090 (SEC-1)**: The server MUST enforce the `Host` rule the owner decided on
+  2026-11-14 (SEC-1.1, open item OI-3): on a loopback bind a request is accepted only if
+  its `Host` is a loopback name (`localhost`, `127.0.0.1` or `[::1]`, with any port) or a
+  name listed in the optional run-config key `allowed_hosts`, which is absent by default;
+  on a non-loopback bind `Host` is not restricted unless `allowed_hosts` is set, and then
+  only the listed names and the loopback names pass; a refused request gets 403
+  `permission_error`. That `allowed_hosts` also extends the list on a loopback bind
+  follows the SEC-1.1 text the owner reviewed and is confirmed with the owner at
+  checkpoint 2 (lead note LD30); matching details (case, port, IPv6 forms, a missing
+  `Host` header) follow the archived serving crate and are settled by API-03. The server
+  MUST also check `Origin` on every route, including `Origin: null`; MUST require a JSON
+  content type on POST; and MUST require a loopback client or an API key for mutating
+  admin routes.
 - **FR-091 (SEC-2)**: The server MUST send a strict Content-Security-Policy and related
   security headers, MUST sanitize every HTML sink, and MUST run HTML previews in their own
   sandboxed route with network access off unless allowed for that preview.
@@ -719,7 +745,10 @@ repeats items from the consolidated register in
   register: context reload ends the engine by killing instead of quitting; concurrent
   writes to the engine pipe; an untagged stop in multi-conversation mode.
 - **FR-107**: Any further difference found during implementation MUST be proposed as a new
-  register entry and MUST NOT be relied on until the owner approves it.
+  register entry and MUST NOT be relied on until the owner approves it. An approved
+  proposal keeps its `P-` id as its deviation id, a later approved deviation that was never
+  a listed proposal takes the next free `P-` number, a declined proposal keeps its id
+  marked declined, and no id is reused (OPEN-39, settled by the lead on 2026-11-14).
 
 #### Provenance and licensing
 
@@ -740,8 +769,9 @@ repeats items from the consolidated register in
   CORS origins and installer state; its modification time decides recency.
 - **Request and Turn**: One client request in one dialect, its normalized messages, typed
   run options, cancel signal, queue place and the turn that drives the engine.
-- **Engine**: A backend behind the seam, with capability flags, facts (context size,
-  information keys, statistics, version) and lifecycle operations.
+- **Engine**: A backend behind the seam, with capability flags, its reported provenance
+  (only synthetic is admitted in this increment), facts (context size, information keys,
+  statistics, version) and lifecycle operations.
 - **Engine Event**: A token with optional logprobs, prompt progress, a heartbeat, or the
   single terminal record with figures and finish reason.
 - **Queue Place**: A unit of engine capacity held by a request or by exclusive work in
@@ -798,23 +828,25 @@ These are not decided by the plan recorded in ADR 0008. Each is recorded here so
 requirement silently decides it; none blocks planning. The consolidated register of open
 items, with stable ids and who decides each one, is
 [`checklists/analysis.md`](checklists/analysis.md). This list repeats the items that bear on
-this specification; the last column gives each item's register id.
+this specification; the last column gives each item's register id. Rows marked
+**Decided** were settled by the owner on 2026-11-14 at checkpoint 1; they keep their ids,
+and the decision is stated in the row and in the requirements it affects.
 
 | Id | Question | Affects | Register |
 | --- | --- | --- | --- |
 | OI-1 | Is the donor's sealed-reasoning prefix accepted on input? | FR-055, M5 | OPEN-01 |
-| OI-2 | The exact default model name of the scripted engine (it must contain "synthetic"); until it is decided, the lead's working default is `pulsar-console-synthetic`. | FR-005, M1 | OPEN-03 |
-| OI-3 | How the `Host` allowlist behaves when the server is bound to a non-loopback address. | FR-090, M1 | OPEN-04 |
+| OI-2 | **Decided** by the owner on 2026-11-14: the scripted engine's default model name is exactly `pulsar-console-synthetic`. | FR-005, M1 | OPEN-03 |
+| OI-3 | **Decided** by the owner on 2026-11-14 (SEC-1.1): on a loopback bind only loopback names and names listed in the optional run-config key `allowed_hosts` pass; on a non-loopback bind `Host` is not restricted unless `allowed_hosts` is set, and then only the listed names and the loopback names pass; a refused request gets 403 `permission_error`. | FR-090, M1 | OPEN-04 |
 | OI-4 | Whether `supervise` or plain serving is the documented default entry point. | FR-071, M7 | OPEN-05 |
 | OI-5 | The default run-config directory when no configuration path is given, and whether an importer for project-maya run configs exists. When a configuration path is given, persisted files are resolved relative to its directory, as the donor does (a lead decision, applied in M1). | FR-044, M7 (before OPS-11) | OPEN-06 |
-| OI-6 | Mapping of template rendering errors and DeepSeek encoder assertion failures to a status code, given the donor does not catch them. | FR-015, FR-019, M2 | OPEN-07 |
+| OI-6 | **Decided** by the owner on 2026-11-14 (P-8 approved): a template `raise_exception` and DeepSeek encoder assertion failures answer 400, where the donor does not catch them. | FR-015, FR-019, M2 | OPEN-07 |
 | OI-7 | Whether the donor's built-in savings price table ships verbatim or empty. | FR-072, M7 | OPEN-08 |
 | OI-8 | Handling of an untagged engine error in multi-conversation mode, which the donor delivers to no request. | FR-033, M3 | OPEN-09 |
-| OI-9 | Whether an engine start timeout is added; the donor waits indefinitely. | FR-037, M3 | OPEN-10 |
+| OI-9 | **Decided** by the owner on 2026-11-14 (P-6 approved): an optional engine ready-timeout setting is added, off by default; the donor waits indefinitely. | FR-037, M3 | OPEN-10 |
 | OI-10 | Whether the GLM official chat template, which has no license text in the donor repository, may be fetched for vendor-template checks in the manual job. | FR-100, M10 | OPEN-11 |
 | OI-11 | Whether small accessibility gaps the donor leaves open are fixed in Phase 1 or deferred to Phase 2. | FR-079, M8 | OPEN-12 |
 | OI-12 | Whether this feature's summary check becomes a required check, and the merge order relative to engine branches; the plan defers both to the owner at merge time. | FR-089 | OPEN-13, OPEN-14 |
-| OI-13 | Whether DeepSeek picture pixel values may differ from the donor's image library (proposal P-5 in the deviation register). | FR-066, M6 | OPEN-15 |
+| OI-13 | Whether DeepSeek picture pixel values may differ from the donor's image library (proposal P-5 in the deviation register, which the owner deferred on 2026-11-14 to a decision before the picture packages of M6). | FR-066, M6 | OPEN-15 |
 
 ## Success Criteria *(mandatory)*
 
@@ -838,9 +870,10 @@ this specification; the last column gives each item's register id.
   table-driven test over the full route inventory.
 - **SC-007**: Every dashboard screen and the health response identify the backend as
   synthetic, and no committed document describes a real model as served.
-- **SC-008**: Every entry outside the register's proposed section is approved, referenced
-  by at least one test or ledger row, and every difference in the corpus maps to a register
-  entry; unused entries are zero.
+- **SC-008**: Every register entry that tests or ledger rows rely on is approved (the
+  approved ids and the approved `P-` proposals; never a declined or deferred proposal),
+  every approved entry is referenced by at least one test or ledger row, and every
+  difference in the corpus maps to an approved register entry; unused entries are zero.
 - **SC-009**: Killing a fake engine mid-answer produces the donor's 503 or error tail, and
   the next request succeeds after a restart.
 - **SC-010**: A termination signal during an answer produces the donor's wrap, stop and quit
@@ -865,8 +898,11 @@ this specification; the last column gives each item's register id.
 ## Assumptions
 
 - The owner's decisions are those recorded in ADR 0008, which records the plan the owner
-  approved on 2026-11-14 (that plan is not published); this specification restates them
-  and adds none.
+  approved on 2026-11-14 (that plan is not published) and which the owner accepted on
+  2026-11-14, together with the decisions the owner made at checkpoint 1 on 2026-11-14
+  (the open items marked decided, the synthetic-only start rule of FR-003 and the
+  decisions on the register's `P-` proposals); this specification restates them and adds
+  none.
 - The donor is pinned at `7e68a30f`; re-pinning is a separate decision. The donor's
   `serve/` is about 19,800 lines of Python with 44 test files and 913 test methods.
 - The size estimate of about 125 work packages plus six for governance is soft and may be
@@ -897,7 +933,8 @@ The full check, principle by principle, and the six recorded exceptions (E1 to E
   recorded behavior and re-expressed tests; no performance work is in scope.
 - II. Preserve upstream Linux and CUDA behavior: nothing under `crates/` changes, and the
   boundary check enforces the no-touch list (FR-088).
-- III. Verified claims only: every capability is planned, backends are synthetic, and the
+- III. Verified claims only: every capability is planned, backends are synthetic, the
+  server refuses to start an engine that does not report synthetic provenance, and the
   strongest later claim is "qualified on synthetic backends" (FR-003, FR-004, FR-006).
 - IV. Apple Silicon is a first-class backend: macOS arm64 is the primary platform, with an
   Apple Silicon reader and monitor view (FR-076, FR-104).
@@ -910,7 +947,7 @@ The full check, principle by principle, and the six recorded exceptions (E1 to E
   (FR-070).
 - IX. Clean licensing and attribution: the donor is qualified under ADR 0004, with
   benefit recorded as a pre-adoption estimate and measured at close-out (exception E6,
-  which awaits the owner's decision, OPEN-27),
+  which the owner accepted on 2026-11-14, settling OPEN-27),
   and provenance headers and license texts are required (FR-108, FR-109).
 - X. Incremental, test-backed commits: one work package per commit series, each with its
   ledger rows resolved.

@@ -14,55 +14,83 @@ still uncommitted. Nothing in this increment is implemented. Every result below 
 documents, the empty workspace skeleton and three check scripts; none of it is evidence
 that any console behavior works. It is re-recorded whenever `tasks.md` or a contract
 changes materially, and at each milestone report.
+It was updated on 2026-11-14 to record the owner's decisions at checkpoint 1 and lead
+decisions LD28 to LD30 (section 3; the update is noted in section 11).
 
 ## 1. Summary verdict
 
-**The artifacts are consistent enough to go to owner checkpoint 1, and to start M1 after
-that checkpoint, provided the items listed below are settled first.** The inventory
-re-derived after the polish pass agrees with every count the documents state: 110
-functional requirements, 17 success criteria, 131 tasks in 11 milestones, 23 deviation ids
-(17 from the plan's table and PLAN-1 to PLAN-6), 18 proposals (P-1 to P-18) kept apart
-from them, and 913 ledger rows that match the pinned donor's test methods one for one. The
-register holds 57 open-item ids: 48 open (28 for the owner, 20 for the lead) and 9 settled
-since the documents were drafted. Every requirement group maps to tasks and every task
-traces to a requirement group. The task graph has no cycle, and no task has a hard
-dependency on a later milestone. Every relative link resolves. All 27 lead decisions are
-reflected in the documents. All 101 findings of the review pass are closed or declined
-with the decline accepted, and every residual finding of this analysis is closed
-(section 8).
+**Owner checkpoint 1 was held on 2026-11-14, and M1 may start.** The owner accepted ADR
+0008, settled OPEN-03, OPEN-04, OPEN-27 and OPEN-29, and decided sixteen of the eighteen
+proposals, which also settles OPEN-07 and OPEN-10. One item is still needed inside M1:
+the engine-track review of the seam draft, described below.
 
-What must be settled before M1, and only this:
+Before the checkpoint, this analysis found the artifacts consistent enough to go to owner
+checkpoint 1, and to start M1 after that checkpoint, provided the items listed in it were
+settled first. The inventory re-derived after the polish pass agreed with every count the
+documents stated then: 110 functional requirements, 17 success criteria, 131 tasks in 11
+milestones, 23 deviation ids (17 from the plan's table and PLAN-1 to PLAN-6), 18
+proposals (P-1 to P-18) kept apart from them, and 913 ledger rows that match the pinned
+donor's test methods one for one. The register then held 57 open-item ids: 48 open (28
+for the owner, 20 for the lead) and 9 settled since the documents were drafted. Every
+requirement group maps to tasks and every task traces to a requirement group. The task
+graph has no cycle, and no task has a hard dependency on a later milestone. Every relative
+link resolved. All 27 lead decisions of that time were reflected in the documents. All
+101 findings of the review pass are closed or declined with the decline accepted, and
+every residual finding of this analysis is closed (section 8).
 
-- **At owner checkpoint 1 (owner):**
-  - Accept or amend ADR 0008, which is still "Proposed". The strategy pointer and the
-    donor record both depend on it.
-  - Decide **OPEN-27**: ADR 0004 asks for measured benefit before adoption; here an
-    estimate precedes adoption and the measurement follows at close-out (plan exception
-    E6). Is this ordering accepted?
-- **Inside M1, before the named package closes (owner):** **OPEN-03**, the exact synthetic
-  default model name (ENG-02, API-08, API-17); until it is decided the working default is
-  `pulsar-console-synthetic` (LD27). **OPEN-04**, the `Host` allowlist on non-loopback
-  binds (API-03). **OPEN-29**, what the server does if an engine reports a provenance
-  other than synthetic (seam question Q9), before ENG-01 freezes the seam.
-- **Inside M1, needing the owner's help (ENG-01):** the seam draft must be offered to the
-  engine track, and its review recorded, before ENG-01 freezes version 1.0 (FR-039). Who
-  reviews it and in what form is seam question Q12 (OPEN-30), a lead item, but reaching
-  the engine track goes through the owner. ENG-01's code can land before that; its task
-  cannot be ticked, and the seam stays a draft, until the review is recorded.
-- **Not a precondition, but it shapes M1 output (owner):** proposals P-1 to P-3 of
-  **OPEN-15** concern the transport and the request-error text built in M1 (API-02, with
-  the error model of API-01). Until the owner decides them, those packages keep the
-  donor's behavior where they can and record `pending` rows where they cannot, as the
-  register says.
+As the register stands after checkpoint 1, it holds 59 open-item ids: 43 open (22 for the
+owner, 21 for the lead) and 16 settled. The lead has made 32 decisions (section 3). The
+deviation register holds 37 approved deviation ids: the 23 approved with the plan and the
+14 proposals the owner approved on 2026-11-14, which keep their `P-` ids (LD29). Two
+proposals are declined and two are deferred.
+
+**Decided by the owner at checkpoint 1, on 2026-11-14:**
+
+- ADR 0008 is accepted as written. The strategy pointer and the donor record depend on it.
+- **OPEN-27** is settled: the owner accepts that donor benefit is recorded as a
+  pre-adoption estimate and measured at close-out (plan exception E6). OPEN-57, the named
+  checklist the close-out coverage figure uses, stays open.
+- **OPEN-03** is settled: the scripted engine's default model name is exactly
+  `pulsar-console-synthetic` (ENG-02, API-08, API-17).
+- **OPEN-04** is settled as deviation SEC-1.1 (API-03). On a loopback bind a request is
+  accepted only if its `Host` is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, any
+  port) or a name listed in the optional run-config key `allowed_hosts`, which is absent
+  by default. On a non-loopback bind `Host` is not restricted, as in the donor, unless
+  `allowed_hosts` is set; then only the listed names and the loopback names pass. A
+  refused request gets 403 `permission_error`. LD30 records the one detail the lead
+  confirms with the owner at checkpoint 2.
+- **OPEN-29** is settled (seam question Q9): the server refuses to start an engine that
+  does not report synthetic provenance. LD28 records the mechanism, and
+  [ALLOWING_NON_SYNTHETIC_ENGINES.md](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md)
+  states what must be done to allow a non-synthetic engine.
+- **Proposals:** P-1 to P-4, P-6 to P-11 and P-13 to P-16 are approved deviations under
+  their `P-` ids; P-1 fixes the `Server` header as `pulsar-console/<version>`. P-12 and
+  P-17 are declined. P-5 (before the picture packages of M6) and P-18 (before PRM-05 in
+  M2) are deferred and still await the owner. P-8 settles OPEN-07 (a template
+  `raise_exception` and DeepSeek encoder assertion failures answer 400) and P-6 settles
+  OPEN-10 (an optional engine ready-timeout setting, off by default). WEB-02 builds strong
+  `ETag`s, 304 responses and `HEAD` support for dashboard assets (P-11); the `devdir`
+  module stays not adopted (OPEN-41).
+
+**Still needed inside M1 (owner and lead, ENG-01):** the seam draft must be offered to the
+engine track, and its review recorded, before ENG-01 freezes version 1.0 (FR-039). Who
+reviews it and in what form is seam question Q12 (OPEN-30), a lead item, but reaching the
+engine track goes through the owner, and the owner has not yet said how the draft reaches
+it. ENG-01's code can land before that; its task cannot be ticked, and the seam stays a
+draft, until the review is recorded.
 
 Lead items due inside M1 remain lead work, not preconditions: OPEN-30 (seam details,
-settled by ENG-01 before the freeze). The owner item OPEN-06 is due before OPS-11 in M7
-(LD26).
+settled by ENG-01 before the freeze). Owner items due later: P-18 before PRM-05 (M2), P-5
+before the picture packages of M6, and OPEN-06 before OPS-11 in M7 (LD26). What remains of
+OPEN-15 is listed in section 9.
 
-The OPEN-29 sentence and the two bullets after it were added on 2026-11-14, after the M0
-commits, when the checkpoint list was re-derived from the register: OPEN-29 was in the
-register with its due point but missing from this summary, and the engine-track review
-was in ENG-01's definition of done but not listed here.
+Before the checkpoint, the list of items to settle named ADR 0008 and OPEN-27 at
+checkpoint 1; OPEN-03, OPEN-04 and OPEN-29 inside M1; the engine-track review; and
+proposals P-1 to P-3, which shape the transport and request-error text of M1. OPEN-29 and
+the engine-track review were added to that list on 2026-11-14, after the M0 commits, when
+the checkpoint list was re-derived from the register: OPEN-29 was in the register with its
+due point but missing from this summary, and the engine-track review was in ENG-01's
+definition of done but not listed here.
 
 ## 2. Scope and method
 
@@ -116,15 +144,18 @@ repository (finding R-05); `quickstart.md` section 4 records each case and that 
 
 ## 3. Lead decisions
 
-The lead made 27 decisions on 2026-11-14: LD1 to LD16 after the documents were first
-drafted, and LD17 to LD27 after this analysis was first recorded. The labels LD1 to LD27
-exist only in this file; the other documents state each decision in
-words, as "decided by the lead on 2026-11-14", without a label. None of them adds an owner
-decision: each applies a rule of the approved plan to a case the plan does not name, or
-settles a choice the plan leaves to the lead. One departs from the plan's wording: LD17
-moves the Preact, htm and Lucide texts, which the plan lists among the M0 contents of
-`console/LICENSES/`, to WEB-01, and the owner is informed of it at checkpoint 1. All are
-settled.
+The lead made 32 decisions on 2026-11-14: LD1 to LD16 after the documents were first
+drafted, LD17 to LD27 after this analysis was first recorded, and LD28 to LD32 after owner
+checkpoint 1. The labels LD1 to LD27 exist only in this file; the other documents state
+each of those decisions in words, as "decided by the lead on 2026-11-14", without a label.
+LD28 to LD30, and LD1 and LD17 in R29 of tasks.md, are also cited by label in the
+documents that record the checkpoint 1 decisions. None of them adds an owner decision:
+each applies a rule of the approved plan to a case the plan does not name, or settles a
+choice the plan leaves to the lead; LD28 and LD30 apply the owner's checkpoint 1 decisions
+on OPEN-29 and OPEN-04. One departs from the plan's wording: LD17 moves the Preact, htm
+and Lucide texts, which the plan lists among the M0 contents of `console/LICENSES/`, to
+WEB-01; it was reported to the owner at checkpoint 1, and the reply raised no objection.
+All are settled; the lead confirms the detail LD30 records with the owner at checkpoint 2.
 
 | Id | Decision, in words | What it settled | Where it is applied |
 | --- | --- | --- | --- |
@@ -142,19 +173,24 @@ settled.
 | LD12 | The server assigns the request id; ENG-01's task text follows `contracts/backend-seam.md`. | Request-id ownership at the seam | tasks R27, ENG-01 |
 | LD13 | ENG-01 settles how multi-conversation engines fit the single-owner seam before freezing it. Guidance: the engine instance stays owned by one driver thread; for more than one concurrent generation the token-level trait offers a submit-and-pump form with request-id-tagged events, and the blocking generate form is the single-conversation case. | The design direction for the seam (details stay open as OPEN-30) | spec FR-027; backend-seam Q1; tasks R27, ENG-01; research Decision 17; roadmap Phase 3 |
 | LD14 | The frozen-blob check compares the root `Cargo.toml`, `Cargo.lock` and `macos.yml` with the merge base, as `check-boundary.sh` implements it, not with a moving `main` tip. | The comparison point of the non-interference check | spec FR-088, SC-004; plan II and Non-Interference; tasks gate step 5; ADR 0008; console README |
-| LD15 | The six differences that the plan decides outside its deviation table are registered as PLAN-1 to PLAN-6, each citing its plan section as the approval basis: the synthetic badge and health report (PLAN-1), a synthetic default model name (PLAN-2), embedded assets with no filesystem path served (PLAN-3), license notices reachable from the About page (PLAN-4), the always-available in-house schema validator (PLAN-5), and HTTPS MCP through the curl facade (PLAN-6). Planner proposals that no approved id covers stay under "Proposed, awaiting owner decision" and are never described as approved. | Register ids for plan-decided differences; the status of P-1 to P-17 | deviations (PLAN section and index); spec FR-002, FR-004, FR-005, FR-054, FR-074, FR-078, FR-108; ADR 0008; PROJECT_MAYA; tasks |
+| LD15 | The six differences that the plan decides outside its deviation table are registered as PLAN-1 to PLAN-6, each citing its plan section as the approval basis: the synthetic badge and health report (PLAN-1), a synthetic default model name (PLAN-2), embedded assets with no filesystem path served (PLAN-3), license notices reachable from the About page (PLAN-4), the always-available in-house schema validator (PLAN-5), and HTTPS MCP through the curl facade (PLAN-6). Planner proposals that no approved id covers stay under "Deferred, awaiting owner decision" (named "Proposed, awaiting owner decision" before checkpoint 1) and are never described as approved. The owner decided P-1 to P-18 on 2026-11-14, except P-5 and P-18 (section 1); LD29 gives the ids of approved proposals. | Register ids for plan-decided differences; the status of P-1 to P-18 | deviations (PLAN section and index); spec FR-002, FR-004, FR-005, FR-054, FR-074, FR-078, FR-108; ADR 0008; PROJECT_MAYA; tasks |
 | LD16 | One register of open items, in this file, lists every open item from every document with a stable id, who decides it and where it came from; each document may keep a local list that points here. | Open-item numbering and ownership | Section 9 of this file; pointers in spec, tasks, research, data-model, plan, quickstart, all five contracts, ADR 0008, roadmap, PROJECT_MAYA, PROJECT_MAYA_SYNC, console README, LICENSES README, `console.yml` |
-| LD17 | License texts of third-party components are added in the same change that imports the component: Preact (MIT), htm (Apache-2.0) and Lucide (ISC) with WEB-01; the DeepSeek reference encoder notice with PRM-07, which commits the five DeepSeek fixture pairs together with that notice. M0 ships the project-maya MIT text only. The owner is informed at checkpoint 1. | OPEN-26 (now a lead item); finding F052 | tasks GOV-05, WEB-01, PRM-07 and open items; LICENSES README; PROJECT_MAYA (module map, third-party table, Attribution, open items); plan IX, structure and M0 row; roadmap M0 row; console README layout |
+| LD17 | License texts of third-party components are added in the same change that imports the component: Preact (MIT), htm (Apache-2.0) and Lucide (ISC) with WEB-01; the DeepSeek reference encoder notice with PRM-07, which commits the five DeepSeek fixture pairs together with that notice. M0 ships the project-maya MIT text only. The owner was informed at checkpoint 1, and the reply raised no objection. | OPEN-26 (now a lead item); finding F052 | tasks GOV-05, WEB-01, PRM-07 and open items; LICENSES README; PROJECT_MAYA (module map, third-party table, Attribution, open items); plan IX, structure and M0 row; roadmap M0 row; console README layout |
 | LD18 | CI fetches crates that are not already cached with `cargo fetch --locked` at run time; nothing is vendored. | OPEN-47 | research 29; quickstart section 3; `console.yml` (unchanged, already does this) |
 | LD19 | The toolchain pin is enforced on hosts without `rustup` by `console/tools/check-toolchain.sh`, which reads the channel from `console/rust-toolchain.toml` and fails unless `rustc -V` reports exactly that version. It is part of the per-task gate, the console subsection of `CONTRIBUTING.md`, `console/README.md` and quickstart; `console.yml` keeps its own assertion. | OPEN-51; finding F021 | the new script; tasks gate step 1 and GOV-06; CONTRIBUTING; console README; quickstart sections 2 and 3; research Decision 15 and item 33; plan Technical Context and E1; `rust-toolchain.toml` comment; `console.yml` step names |
 | LD20 | Provenance headers: a four-line comment on files adapted from the donor; a one-line module comment on Rust tests and test doubles translated from donor tests or fakes; no donor copyright lines on Rust modules reimplemented from the contracts, which may cite a "Behavior reference"; WEB-01 adds a check that every file under `console/web` carries a `Provenance` line or is listed as PulsarMLX-original. | OPEN-54 | PROJECT_MAYA Attribution (the rule) and module map; contracts README rule 7; tasks WEB-01 |
 | LD21 | The donor's export of each engine setting under both a `MAYA_` and a `STRATA_` name to the engine child is not reproduced; names in a run-config `env` block pass through to the child verbatim, once. | OPEN-32 | naming rule 3, section 3.4 and N3; research Decision 16; tasks API-15 |
 | LD22 | Test-only settings and test-harness switches take the mechanical names `PULSAR_CONSOLE_<old suffix>`, as listed in `contracts/naming.md`. | OPEN-33 | naming 3.5, 3.10 and N5; tasks R5 and open items; research Decision 16 |
-| LD23 | Everything the server sends is observable unless it is on the volatile list (generated ids; timestamps and `created` fields; the `Date` header; the value of the `Server` header until the owner decides P-1; timing and rate figures; uptime; process ids; ports; temporary paths), which is normalized before comparison. The HTTP version token, status line, header names, header order where the donor's order is deterministic, JSON key order and stream framing are observable. CNF-04 implements it. | OPEN-37 | parity-ledger section 1.1 and L2; deviations P-1; tasks CNF-04 |
+| LD23 | Everything the server sends is observable unless it is on the volatile list (generated ids; timestamps and `created` fields; the `Date` header; the value of the `Server` header, which P-1, approved by the owner on 2026-11-14, fixes as `pulsar-console/<version>`; timing and rate figures; uptime; process ids; ports; temporary paths), which is normalized before comparison. The HTTP version token, status line, header names, header order where the donor's order is deterministic, JSON key order and stream framing are observable. CNF-04 implements it. | OPEN-37 | parity-ledger section 1.1 and L2; deviations P-1; tasks CNF-04 |
 | LD24 | Residual Unicode-table differences between Python's regex module and the Rust regex crates are accepted when a test names and pins them; PRM-04 records them. | OPEN-46 | tasks PRM-04; research 28 |
 | LD25 | `check-hygiene.sh` has no file-count limit. | OPEN-56; the declined part of finding F070 | `check-hygiene.sh` header comment |
 | LD26 | API-15 (M1) resolves every persisted file relative to the directory of the run config passed with `--config`, as the donor does. The default directory when no config is given, and whether an importer for project-maya run configs exists, remain owner item OPEN-06, due before OPS-11 (M7). | Narrows OPEN-06; residual R-12 | spec OI-5; research 10; data-model Persisted Files; tasks API-15 and open items |
-| LD27 | PLAN-2 (a synthetic default model name) is delivered by ENG-02, asserted by the tests of API-08, and kept by API-17 when the full command line lands. Until the owner fixes the exact name (OPEN-03), the working default is `pulsar-console-synthetic`. | Residual R-01 | tasks ENG-02, API-08, API-17 and open items; research 15; deviations PLAN-2; naming 3.9 and N6; spec OI-2 |
+| LD27 | PLAN-2 (a synthetic default model name) is delivered by ENG-02, asserted by the tests of API-08, and kept by API-17 when the full command line lands. Until the owner fixes the exact name (OPEN-03), the working default is `pulsar-console-synthetic`. The owner fixed exactly that name on 2026-11-14. | Residual R-01 | tasks ENG-02, API-08, API-17 and open items; research 15; deviations PLAN-2; naming 3.9 and N6; spec OI-2 |
+| LD28 | The mechanism of the owner's refusal of engines that do not report synthetic provenance (OPEN-29). (1) The provenance type in the engine descriptor can express "not synthetic": an engine that declares another provenance, or declares none. Synthetic is the only value the server accepts in this increment; ENG-01 settles the exact shape of the type. (2) One guard function in `console-core` decides. Every path that admits an engine (first start, restart, model switch, context reload) calls it before the engine serves a request. No environment variable, configuration key, command-line flag or Cargo feature bypasses it in this increment. (3) At process start a refusal makes `pulsar-console` exit with a non-zero status after one line on standard error that names the engine kind, what the engine reported, and the path `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`. At a later restart, switch or reload, the engine is closed, the operation fails with the same message, and the server serves nothing from that engine. (4) A line-protocol engine declares synthetic provenance in its start-up lines before it is admitted; one that declares another provenance, or none, counts as not synthetic (fail closed). The form of the declaration is settled with the line-protocol packages in M3 (OPEN-58; the lead's direction is a fact on an `INFO` line); it is not the synthetic marker proposed for the server's own ready line (PLAN-1, OPEN-35). (5) Tests pin the refusal: ENG-01 for the guard, ENG-10 for the turn driver, API-08 for process start; they are not deleted or weakened to make a real engine start. (6) What must be done to allow a non-synthetic engine is written in [ALLOWING_NON_SYNTHETIC_ENGINES.md](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md), requested by the owner on 2026-11-14; a task that adds, moves or removes an enforcement point of the synthetic-only rule updates that note in the same change. | How OPEN-29 is enforced; seam question Q9 | tasks ENG-01, ENG-10, API-08; seam Q9; OPEN-58 (the engine's declaration); the note on allowing non-synthetic engines |
+| LD29 | An owner-approved proposal keeps its `P-n` id as its deviation id. A later owner-approved deviation that was never a listed proposal takes the next free `P-` number. Ids are never reused. A declined proposal keeps its id, marked declined. | OPEN-39 | deviations (proposals section and index); research 19; data-model DeviationEntry |
+| LD30 | The one-line recommendation put to the owner for OPEN-04 read "Loopback names only on loopback binds; elsewhere no restriction unless an allowed_hosts key is set". That `allowed_hosts` also extends the accepted names on a loopback bind follows the SEC-1.1 text the owner reviewed; the lead confirms it with the owner at checkpoint 2. Matching details (case, port, IPv6 forms, a missing `Host` header) follow the archived serving crate (decision B8) and are settled by API-03. | The `allowed_hosts` detail of OPEN-04 | deviations SEC-1.1; spec FR-090; tasks API-03 |
+| LD31 | API-08 owns the minimal `pulsar-console` entry point that M1 needs, in `console/crates/pulsar-console/`: the scripted engine, the listen address and port, the wiring of `allowed_hosts` from the run config into the API-03 guard, and the process-start refusal of LD28 with its spawned-process test. API-17 (M4) replaces it with the full command line and keeps the refusal. The lead runs the M1 demonstration of owner checkpoint 2 with that binary. Decided with the M1 scaffold. | Which task owns a binary in M1, and who runs the M1 demonstration | tasks R29, API-08, API-17 |
+| LD32 | The SHA-256 helper `console-core::digest` is owned by API-03, the first task that needs it (the response owner id). `console-conformance` keeps no internal dependency and uses `sha2` directly (CNF-02). Decided with the M1 scaffold. | Ownership of the shared hashing module | tasks R29, API-03 |
 
 ## 4. Inventory
 
@@ -166,14 +202,14 @@ settled.
 | Tasks | tasks.md | 131, all unticked: GOV 6, API 20, ENG 19, PRM 16, RSP 19, OPS 22, WEB 11, CNF 18 | 131 (6 governance, 125 packages) | yes |
 | Tasks per milestone | tasks.md | M0 6, M1 18, M2 15, M3 12, M4 11, M5 7, M6 13, M7 18, M8 12, M9 7, M10 12 | Counts table and approved plan section 8 | yes |
 | Merged and roadmap ids | tasks.md | PRM-01, OPS-01, CNF-05, CNF-06 and WEB-P2-01 to WEB-P2-03 absent from task lines | stated as merged or roadmap-only | yes |
-| Deviation ids | deviations.md | 23 headings and 23 index rows in the same order: SEC-1 to SEC-7, PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1, PLAN-1 to PLAN-6 | 17 plan-table ids plus PLAN-1 to PLAN-6 | yes |
+| Deviation ids | deviations.md | 23 headings and 23 index rows in the same order: SEC-1 to SEC-7, PRIV-1, BRAND-1, BRAND-2, LIC-1, LIC-2, POL-1, PLAT-1 to PLAT-3, FIX-1, PLAN-1 to PLAN-6. Since 2026-11-14 also the 14 owner-approved proposals P-1 to P-4, P-6 to P-11 and P-13 to P-16 under their `P-` ids (LD29): 37 approved deviation ids | 17 plan-table ids plus PLAN-1 to PLAN-6, plus 14 approved proposals | yes for the 23 (checked before checkpoint 1); the 37 are re-derived at the next rerun |
 | Deviation sub-items | deviations.md | 64, no duplicate; every sub-item cited elsewhere is defined | — | yes |
-| Proposals | deviations.md | P-1 to P-18, all under "Proposed, awaiting owner decision"; every `P-` reference elsewhere is in range | — | yes |
+| Proposals | deviations.md | P-1 to P-18, all under "Proposed, awaiting owner decision" before checkpoint 1; every `P-` reference elsewhere is in range. Decided by the owner on 2026-11-14: 14 approved, 2 declined (P-12, P-17), 2 deferred (P-5, P-18) | — | yes |
 | Contracts | contracts/README.md | 4 written (backend-seam, naming, parity-ledger, deviations) plus the index; later contracts listed as planned with their packages | — | yes |
 | Ledger rows | ledger.json | 913 rows, sorted by id, 44 donor files, fields exactly `id`, `file`, `class`, `method`, `subsystem`, `disposition`; all `pending`; no null class | 913 rows, all pending (GOV-06); schema in parity-ledger 3 and 3.1 | yes |
 | Donor test methods | pinned donor, listed independently | 913 unique in 44 files; the same id set as the ledger | 913 and 44 everywhere they appear | yes |
-| Open-item ids | all M0 files | OPEN-01 to OPEN-57 each cited at least once; none out of range; 48 open (28 owner, 20 lead), 9 settled | — | yes; OPEN-56 was added by this analysis and OPEN-57 by the polish pass |
-| Lead-decision labels | all M0 files | none outside this file | — | yes |
+| Open-item ids | all M0 files | OPEN-01 to OPEN-59 each cited at least once; none out of range; 43 open (22 owner, 21 lead), 16 settled | — | yes; OPEN-56 was added by this analysis and OPEN-57 by the polish pass; seven ids moved to settled on 2026-11-14 |
+| Lead-decision labels | all M0 files | LD1 to LD27: none outside this file, except LD1 and LD17 in tasks.md R29; LD28 to LD30: cited by label in spec, research, data-model, tasks, backend-seam and deviations | — | yes |
 
 ## 5. Coverage: requirement groups and tasks
 
@@ -208,14 +244,22 @@ until tasks cite requirements themselves.
 traced (checked by script against the task list). No gap remains: FR-005, mapped by
 subject only when first recorded (R-01), is now in ENG-02's definition of done.
 
+The 14 proposals the owner approved on 2026-11-14 are not in the table above. A survey of
+tasks.md and the detail files made before the decisions were recorded named these
+packages: P-1 and P-2 API-02; P-3 API-01, API-07 and PRM-06; P-4 RSP-12, RSP-18 and
+RSP-19; P-6 ENG-06; P-7 ENG-14, whose detail text keeps the temporary directory free of
+whitespace but does not refuse to start; P-8 PRM-03, PRM-07 and API-07; P-9 WEB-08; P-10
+ENG-08 and OPS-17; P-11 WEB-02; P-13 WEB-03; P-14 OPS-12; P-15 OPS-03 and OPS-16; P-16
+OPS-14. The mapping is re-checked against tasks.md at the next rerun (CHK008).
+
 ## 6. Consistency checks
 
 | Check | How | Result |
 | --- | --- | --- |
 | Each deviation id defined once | Headings and index rows of deviations.md compared | Holds: 23 ids, each with one heading and one index row, in the same order. |
 | Deviation ids referenced consistently | Every id and sub-item match in the 42 files checked against the register | Holds: no unknown id, no undefined sub-item, no leftover temporary `E-1` to `E-6` refs. The PLAN order is the same in spec, deviations, ADR 0008, PROJECT_MAYA and tasks. |
-| Approved set stated the same way | Text search for the approved list in spec FR-002, plan, ADR 0008, PROJECT_MAYA, tasks, requirements checklist | Holds: each names the 17 table ids plus PLAN-1 to PLAN-6 and keeps proposals apart. |
-| Proposals not described as approved | P-5, P-11 and P-15 traced through spec FR-066, research Decision 9, data-model, plan V, tasks R28 and WEB-02 | Holds. research Decision 9 is now headed as conditional on P-5 (R-06 closed). |
+| Approved set stated the same way | Text search for the approved list in spec FR-002, plan, ADR 0008, PROJECT_MAYA, tasks, requirements checklist | Held before checkpoint 1: each named the 17 table ids plus PLAN-1 to PLAN-6 and kept proposals apart. Since 2026-11-14 the approved set also holds the 14 owner-approved proposals; the documents are re-checked for it at the next rerun. |
+| Proposals not described as approved | P-5, P-11 and P-15 traced through spec FR-066, research Decision 9, data-model, plan V, tasks R28 and WEB-02 | Held before checkpoint 1. research Decision 9 is now headed as conditional on P-5 (R-06 closed). Since 2026-11-14 P-11 and P-15 are approved, P-5 and P-18 remain proposals, and P-12 and P-17 are declined. |
 | Open-item ids | Every `OPEN-` reference in the 42 files read in context against section 9 | Holds: each id is used with the meaning recorded here; spec OI-12 maps to OPEN-13 and OPEN-14, and OI-13 to OPEN-15. |
 | Names | Text search for the product name, binary, prefix, crate names and switch prefixes | Holds: "PulsarMLX Console", `pulsar-console`, `PULSAR_CONSOLE_`; every crate name is in the plan's list or is a binary inside `console-fake-engines`. The only "Pulsar Console" is a quoted planner placeholder in tasks R14. Detail files still use `CONSOLE_*` switch names; naming 3.10 maps them (R-02). |
 | Links | All relative links and their fragments resolved (354 when first recorded; 364 in 31 files after the polish pass) | Holds: every target exists; the only target that did not exist before this file was this file. |
@@ -224,9 +268,9 @@ subject only when first recorded (R-01), is now in ENG-02's definition of done.
 | No hard dependency on a later milestone | Milestone of every prerequisite compared with the task's | Holds: zero. Every "Seams" entry points to a later milestone, as R13 requires. |
 | `[P]` markers | A task is `[P]` exactly when it has no prerequisite in its own milestone | Holds for all 131. |
 | Dependency prose matches the entries | Spot checks of the "Dependency graph by milestone" text (PRM-04, RSP-10, RSP-17, OPS-16, ENG-14, RSP-18, API-07) | Holds for the cases checked; the whole text was not compared line by line. |
-| Lead decisions applied | Section 3, each decision traced to the files named there | Holds for LD1 to LD27. |
+| Lead decisions applied | Section 3, each decision traced to the files named there | Holds for LD1 to LD27. LD28 to LD30 are applied in the change that records them and are re-checked at the next rerun. |
 | Constitution check complete | plan.md Constitution Check compared with the 12 principles of the constitution | Holds: 12 rows, each marked PASS (design) or N/A with a reason, and stated as a design commitment. Principle VIII's support matrix is produced by CNF-12 and published by CNF-17 (R-04 closed). |
-| Exceptions complete | plan.md Constitution Exceptions compared with the constitution's Governance section (scope, evidence, risk, removal condition, approval) | Holds for E1 to E6; reviewer approval of E1 to E5 is pending at checkpoint 1, and E6 (donor benefit estimated before adoption and measured at close-out, against ADR 0004's order) is pending the owner's decision OPEN-27. |
+| Exceptions complete | plan.md Constitution Exceptions compared with the constitution's Governance section (scope, evidence, risk, removal condition, approval) | Holds for E1 to E6. The owner accepted E6 (donor benefit estimated before adoption and measured at close-out, against ADR 0004's order) on 2026-11-14 by settling OPEN-27. Reviewer approval of E1 to E5 was due at checkpoint 1; the checkpoint 1 decision record does not name E1 to E5 separately. |
 | Constitution compliance in spec and tasks | Search for a compliance section | Both have one. tasks.md's section points to plan.md's Constitution Check and says which gate step enforces which principle (R-03 closed). |
 | Workflow order | Constitution workflow steps 1 to 3 against the record | The requirements checklist is complete (no unchecked item) and was rerun after plan, contracts and tasks existed; the analysis (this file) exists before any M1 code. |
 | Non-interference | `check-boundary.sh` and `check-hygiene.sh` on the working tree | Both pass (section 2). The root `Cargo.toml`, `Cargo.lock` and `macos.yml` equal the merge base. |
@@ -255,13 +299,14 @@ five-value disposition set (eleven) and the unregistered plan-decided difference
 
 Two parts of findings were declined by fixers and the decline is accepted here; the
 findings themselves are counted by their remaining state. F017: setting ADR 0008 to
-Accepted is the owner's act at checkpoint 1, not a fixer's. F018 (also F074): the shared
-files `README.md`, `NOTICE.md`, `CONTRIBUTING.md` and the strategy are left out of the
-workflow path filter, because plan section 9 says an engine push never runs `console.yml`
-and the engine track edits those files; the workflow header says how they are checked.
-F070: a 512-file limit was not ported, because the scan covers a whole multi-milestone
-branch, not one commit; the lead confirmed that there is no count limit (LD25). The six
-findings still open after the fix pass were closed in the polish pass, as their rows say.
+Accepted is the owner's act at checkpoint 1, not a fixer's (the owner accepted it on
+2026-11-14). F018 (also F074): the shared files `README.md`, `NOTICE.md`, `CONTRIBUTING.md`
+and the strategy are left out of the workflow path filter, because plan section 9 says an
+engine push never runs `console.yml` and the engine track edits those files; the workflow
+header says how they are checked. F070: a 512-file limit was not ported, because the scan
+covers a whole multi-milestone branch, not one commit; the lead confirmed that there is no
+count limit (LD25). The six findings still open after the fix pass were closed in the
+polish pass, as their rows say.
 
 "Re-checked" below means this analysis verified the current text itself; "fix pass"
 means it relies on the fixer's report.
@@ -377,7 +422,7 @@ last column records what the polish pass did.
 
 | Id | Sev. | File | Finding | Fix | Status after the polish pass |
 | --- | --- | --- | --- | --- | --- |
-| R-01 | minor | `specs/022-console-serving-parity/tasks.md` | PLAN-2 (FR-005, synthetic default model name) has no task whose definition of done delivers it. deviations.md names API-17 as its package, research item 15 says it blocks API-08, and the scripted engine itself is ENG-02; no entry mentions it. | Add it to ENG-02's (or API-17's) definition of done with a PLAN-2 note, and align research item 15 and the PLAN-2 Packages line. | Closed by LD27: ENG-02, API-08 and API-17 name PLAN-2 in their definitions of done; research 15 and the PLAN-2 entry agree; working default `pulsar-console-synthetic` until OPEN-03. |
+| R-01 | minor | `specs/022-console-serving-parity/tasks.md` | PLAN-2 (FR-005, synthetic default model name) has no task whose definition of done delivers it. deviations.md names API-17 as its package, research item 15 says it blocks API-08, and the scripted engine itself is ENG-02; no entry mentions it. | Add it to ENG-02's (or API-17's) definition of done with a PLAN-2 note, and align research item 15 and the PLAN-2 Packages line. | Closed by LD27: ENG-02, API-08 and API-17 name PLAN-2 in their definitions of done; research 15 and the PLAN-2 entry agree; working default `pulsar-console-synthetic` until OPEN-03, which the owner settled on 2026-11-14 with exactly that name. |
 | R-02 | minor | `specs/022-console-serving-parity/tasks/*.md` | Detail files keep planner text that binding decisions or lead decisions supersede: a `hyper` server and client and a "shared outbound TLS client" (responses.md), `hyper` fixture servers (ops.md, conformance.md), the `uuid` crate (prompt.md), an unconditional WebDriver client, `console/web/fonts/`, `console/web/LICENSES/` and `CONSOLE_*` switch names (web.md), and old method counts (ops.md). Each file's header says a binding decision overrides it, but most of these are lead decisions recorded as reconciliations, which the header does not name. | Extend each header to "a binding decision or a reconciliation in tasks.md overrides", or mark the superseded lines. | Closed: all seven headers now say that a binding decision or a reconciliation in tasks.md overrides any conflicting sentence. The superseded planner lines themselves are unchanged, by design, except the four method counts in `tasks/ops.md` (F034). |
 | R-03 | minor | `specs/022-console-serving-parity/tasks.md` | The constitution requires tasks to include a constitution-compliance check; tasks.md has none beyond the per-task gate. | Add a short section that points to plan.md's Constitution Check, as spec.md does. | Closed: tasks.md has a "Constitution compliance" section that points to plan.md and maps gate steps to principles. |
 | R-04 | minor | `specs/022-console-serving-parity/tasks.md` | plan.md row VIII promises a support matrix in the M10 parity report and says the packages that fill it are named in tasks.md; none is named. | Name them (for example CNF-12 and CNF-17) in their definitions of done. | Closed: CNF-12 produces the support matrix and CNF-17 publishes it in the M10 parity report; plan.md row VIII names both. |
@@ -410,19 +455,15 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 | Id | Statement | Sources | Proposed default | Before |
 | --- | --- | --- | --- | --- |
 | OPEN-01 | Whether the donor's sealed-reasoning prefix `maya-r1:` is accepted on input; only the product prefix is emitted. | spec OI-1, FR-055; research 3; tasks B2, R6, open items; naming N1, 3.9; seam Q11; deviations BRAND-1.6; data-model | The Responses planner proposed accepting it; until decided it is not accepted (tasks R6). | RSP-03 (M5) |
-| OPEN-03 | The exact default model name of the scripted engine; it must contain "synthetic" (PLAN-2). | spec OI-2, FR-005; research 15; naming N6; deviations PLAN-2; tasks open items | the lead's working default `pulsar-console-synthetic` (LD27), used until the owner decides | ENG-02, API-08, API-17 (M1) |
-| OPEN-04 | How the `Host` allowlist behaves on non-loopback binds, and the proposed `allowed_hosts` key. | spec OI-3, FR-090; deviations SEC-1.1 | key `allowed_hosts` (proposed) | API-03 (M1) |
 | OPEN-05 | Whether `pulsar-console supervise` or plain serving is the documented default entry point. | spec OI-4, FR-071; research 9 | `supervise` as default, unsupervised serving reporting restarts as unavailable (research) | OPS-11 (M7), API-17 |
 | OPEN-06 | The default run-config directory when no config is given, and whether an importer for project-maya run configs exists. Persisted files are resolved relative to the directory of the run config passed with `--config` (LD26). | spec OI-5, FR-044; research 10; data-model Persisted Files; tasks API-15, open items | a fixed per-user application-support folder was suggested (research); not decided | OPS-11 (M7) |
-| OPEN-07 | Whether template `raise_exception` and DeepSeek encoder assertion failures map to 400 instead of the donor's uncaught error. | spec OI-6; research 4; deviations P-8 | 400 (P-8) | PRM-08 (M2) |
 | OPEN-08 | Whether the donor's built-in savings price table (as of 2026-10) ships verbatim, with its date, or empty. | spec OI-7, FR-072; research 8; data-model | none recorded | OPS-21 (M7) |
 | OPEN-09 | An untagged `ERR` in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop). | spec OI-8, FR-033; research 5; tasks open items, ENG-07 | none recorded | ENG-07 (M3) |
-| OPEN-10 | Whether an optional engine start (`READY`) timeout is added; the donor waits forever. | spec OI-9, FR-037; research 4; deviations P-6 | optional, off by default (P-6) | ENG-06 (M3) |
 | OPEN-11 | Whether the manual vendor-template job may fetch and render the GLM-5.3 template (no license text in the donor) and the MiniMax Community License template and fixtures, test-only with hashes recorded. | spec OI-10, FR-100; research 6 | if not, those ledger rows become deviations (research) | CNF-11 (M10) |
 | OPEN-12 | Whether accessibility gaps the donor leaves open are fixed in Phase 1 or deferred to Phase 2. | spec OI-11, FR-079; research 4 | none recorded | WEB-10 (M8) |
 | OPEN-13 | Whether `console.yml` (its summary job) becomes a required check on `main`, and how a required check behaves when the path filter skips the workflow (not yet checked on GitHub). | spec OI-12, FR-089; research 1, 36; tasks R18; plan; ADR; roadmap; `console.yml` header; console README | none; decided at merge time (plan section 9) | merge |
 | OPEN-14 | The merge order of the feature branch relative to engine-track branches whose evidence is bound to tree identity. | spec OI-12; research 2; plan; ADR; roadmap; README.md | a merge commit, engine branches never asked to rebase (plan section 10 default merge policy) | pull request |
-| OPEN-15 | Planner proposals that no approved id covers: P-1 to P-5, P-7 and P-9 to P-18 (Server header, both length and chunked framing, malformed-request detail, reader detail text, picture resampling and formats, whitespace-free vision temporary directory, backend labels, macOS watchdog, ETag, 304 and HEAD, CSP report-only switch, debug global, `safetensors` format label, MLX not-startable listing, refusing revision `main`, a literal-parity reload setting, an explicit model-family override); also the JSON Schema meta-validation wording (PLAN-5), and the advisory savings lock (research 4). | deviations "Proposed, awaiting owner decision"; spec OI-13, FR-066; research 4, Decision 9; data-model; plan V; tasks R28, WEB-02; PM; ledger 1.1 | each as described in its P-row; until decided the donor's behavior, or `pending` rows | each implementing package |
+| OPEN-15 | What remains of the planner proposals and related points: P-5 (picture resampling and formats) and P-18 (an explicit model-family override), both deferred by the owner on 2026-11-14; the JSON Schema meta-validation wording (PLAN-5); and the advisory savings lock (research 4). The owner decided the other proposals on 2026-11-14: P-1 to P-4, P-6 to P-11 and P-13 to P-16 are approved deviations under their `P-` ids (LD29), and P-12 and P-17 are declined; they are registered in the proposals section of `contracts/deviations.md`. | deviations (proposals section); spec OI-13, FR-066; research 4, Decision 9; data-model; plan V; PM | P-5 and P-18 as described in their P-rows; until decided the donor's behavior, or `pending` rows | P-18: PRM-05 (M2); PLAN-5 wording: RSP-02 (M5); P-5: the picture packages RSP-18 and RSP-19 (M6); savings lock: OPS-21 (M7) |
 | OPEN-16 | Whether to reproduce or fix `/props` reporting `model_path` as a literal fallback for pack or GGUF configs. | research 5 | none recorded | API-11 (M4) |
 | OPEN-17 | Whether a private read-only mirror of project-maya at `7e68a30f` is kept for the manual reference job. | research 7; plan section 12 (risk table) | none; the plan notes a mirror would remove the dependency on upstream | CNF-08 (M10) |
 | OPEN-18 | The form and name of the SEC-4 media-source opt-in (run-config key, environment variable or both). | research 11; deviations SEC-4.2 | `media_sources: ["data", "http", "file"]` (proposed) | RSP-17 (M6) |
@@ -433,35 +474,34 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 | OPEN-23 | The neutral product logo (SVG only under BRAND-2). | research 17; PM sprite row | none recorded | WEB-01 (M8) |
 | OPEN-24 | Whether launching actively refuses known project-maya engine binary names. | tasks R24, open items | none recorded; no document, default or test launches one either way | ENG-15 (M3) |
 | OPEN-25 | Which engine variable names Turbo and the settings profiles write into a run-config `env` block, and how the dashboard shows names such as `MAYA_EXPERT_RAM_GB`. | tasks open items; naming N4 | none recorded | OPS-05, OPS-06, WEB-09 (M7, M8) |
-| OPEN-27 | Whether the owner accepts this ordering: ADR 0004 asks for measured benefit before adoption; here an estimate precedes adoption and the measurement follows at close-out (plan exception E6). | PM Measured benefit and open items; plan E6; ADR decision 2 and open items; review finding F007 | none; the pre-adoption estimate is recorded in PM | owner checkpoint 1 |
 | OPEN-28 | Any re-pin of project-maya beyond `7e68a30f`. | ADR; roadmap; SYNC; ledger 4.1 | none; a re-pin is a separate decision (plan section 12) | any re-pin |
-| OPEN-29 | What the server does if an engine reports a provenance other than synthetic: refuse to start or report it. | seam Q9 | none recorded | seam freeze (ENG-01) |
-| OPEN-57 | Which named feature checklist the close-out coverage figure uses. Split from the earlier OPEN-27 in the polish pass. | PM Measured benefit and open items | the donor README feature list (a suggestion in PM, not decided) | CNF-17 (M10) |
+| OPEN-57 | Which named feature checklist the close-out coverage figure uses. Split from the earlier OPEN-27 in the polish pass; it stays open after the owner settled OPEN-27 on 2026-11-14. | PM Measured benefit and open items | the donor README feature list (a suggestion in PM, not decided) | CNF-17 (M10) |
 
 ### Lead decisions
 
 | Id | Statement | Sources | Proposed default | Before |
 | --- | --- | --- | --- | --- |
 | OPEN-02 | The exact product sealed-reasoning prefix string; the rename itself is decided. | naming N1, 3.9; deviations BRAND-1.6 | `pcr1:` (proposed) | RSP-03 (M5) |
-| OPEN-30 | Seam details ENG-01 settles before freezing: Q1 (multi-place engines, along the lines of the lead's submit-and-pump guidance, LD13), Q2 to Q8, and Q12 (which engine-track reviewer accepts the draft, and in what form). | seam section 4, Q1 to Q8, Q12; data-model Usage; spec FR-027, FR-039; tasks R27, ENG-01, open items; research Decision 17; roadmap Phase 3 | LD13 guidance for Q1; drafts in backend-seam.md for the rest | ENG-01 freeze (M1) |
+| OPEN-30 | Seam details ENG-01 settles before freezing: Q1 (multi-place engines, along the lines of the lead's submit-and-pump guidance, LD13), Q2 to Q8, and Q12 (which engine-track reviewer accepts the draft, and in what form), plus the exact shape of the provenance type (LD28). Q9 was settled by the owner on 2026-11-14 (OPEN-29). Q12 is still open: reaching the engine track goes through the owner, who has not yet said how the draft reaches it; until the review is recorded the seam stays a draft and ENG-01 stays unticked. | seam section 4, Q1 to Q8, Q12; data-model Usage; spec FR-027, FR-039; tasks R27, ENG-01, open items; research Decision 17; roadmap Phase 3 | LD13 guidance for Q1; drafts in backend-seam.md for the rest | ENG-01 freeze (M1) |
 | OPEN-31 | Whether the Responses limit names keep `GLM_` in their suffix. | naming N2, 3.2 | drop it (RSP planner proposal) | RSP-01 (M5) |
 | OPEN-34 | The `/props` `build_info` value ("Strata <version>" or a product string). | naming N7 | a product string (API planner proposal) | API-11 (M4) |
-| OPEN-35 | Values marked "Rename decided, value proposed" in naming 3.6 to 3.9 and 4.3 (service field, `/api/version`, DOM event, CSS names, download names, `clientInfo`, User-Agent, `--engine` value, temporary prefixes, quant labels), and the concrete PLAN-1 badge and health fields and ready-line suffix. | naming 3.6 to 3.9, 4.3; deviations PLAN-1, BRAND-1.6 | the values in naming; `synthetic: true` and `backend` in `/health` and `/v1/status` (API planner) | each owning package |
+| OPEN-35 | Values marked "Rename decided, value proposed" in naming 3.6 to 3.9 and 4.3 (service field, `/api/version`, DOM event, CSS names, download names, `clientInfo`, User-Agent, `--engine` value, temporary prefixes, quant labels), and the concrete PLAN-1 badge and health fields and ready-line suffix. The ready-line suffix is the synthetic marker proposed for the server's own ready line (FR-050); the engine's own declaration of provenance is OPEN-58. | naming 3.6 to 3.9, 4.3; deviations PLAN-1, BRAND-1.6 | the values in naming; `synthetic: true` and `backend` in `/health` and `/v1/status` (API planner) | each owning package |
 | OPEN-36 | How upstream-skipped donor methods are resolved (whether independent tests or SDK tests may satisfy them), and whether the donor's baseline pass and skip results are stored separately or only as `upstream_skipped`. | research 18, 20; ledger L4 | none recorded | API-19 assigns owners (M1); CNF-12 (M10) |
 | OPEN-38 | Format and location of the `shim_record` and `vendor_record` files, and how the manual run id is recorded. | ledger L3; research 18 | none recorded | CNF-10, CNF-11, CNF-12 (M10) |
-| OPEN-39 | The numbering scheme for later owner-approved deviations, beyond PLAN-1 to PLAN-6. | research 19; data-model DeviationEntry | none recorded | the first later deviation |
 | OPEN-40 | Whether `console-web` uses the `http` and `bytes` crates or the transport's own types. | research 22, dependency table | `http` and `bytes` (WEB planner proposal); not adopted by the plan | WEB-02 (M8) |
-| OPEN-41 | Whether an opt-in development mode serves dashboard assets from a directory; PLAN-3 says no filesystem path is ever served in the product. | research 23, Decision 11; deviations PLAN-3; tasks R28, WEB-02 | not adopted; WEB-02 builds no `devdir` module (tasks R28) | WEB-02 (M8) |
+| OPEN-41 | Whether an opt-in development mode serves dashboard assets from a directory; PLAN-3 says no filesystem path is ever served in the product. | research 23, Decision 11; deviations PLAN-3; tasks R28, WEB-02 | not adopted; WEB-02 builds no `devdir` module (tasks R28). P-11, approved on 2026-11-14, gives WEB-02 strong `ETag`s, 304 responses and `HEAD` support and does not change this. | WEB-02 (M8) |
 | OPEN-42 | Whether `check-hygiene.sh` applies the `check_staged.sh` word rules (`cuda`, `nvidia`, `target_os linux`) to console paths, given that the M9 ports need those words. | research 24 | none recorded | M9 |
 | OPEN-43 | Whether timing-sensitive multi-conversation and fair-slice tests run in the default blocking jobs or in a scaled-time job. | research 25 | none recorded | ENG-07, ENG-11 (M3) |
 | OPEN-44 | The ownership split of GLM-5.3 product facts (pack detection, template choice, memory constants) between `console-prompt` and `console-manage`. | research 26 | the split research describes, to be confirmed | PRM-05 (M2), OPS-04 (M7) |
 | OPEN-45 | Whether the engine conformance binary exposes the engine-only `LOGP` command. | research 27 | none recorded | ENG-18 (M3) |
 | OPEN-48 | Whether the Responses and MCP contract documents go to the owner before RSP-06 and RSP-11 start. | research 30 | none recorded | RSP-06 (M5), RSP-11 (M6) |
-| OPEN-49 | `preact.js` provenance: accept on recorded hash, or compare once against the upstream Preact 10.29.8 and htm 3.1.1 releases (needs a network step). | research 31; PM open item 3 | keep byte-identical with a recorded hash | WEB-01 (M8) |
+| OPEN-49 | `preact.js` provenance: accept on recorded hash, or compare once against the upstream Preact 10.29.8 and htm 3.1.1 releases (needs a network step). | research 31; PM open items | keep byte-identical with a recorded hash | WEB-01 (M8) |
 | OPEN-50 | The local browser driver for the manual end-to-end suite (`safaridriver` needs a one-time administrator enable). | research 32 | none recorded | WEB-06 (M8) |
 | OPEN-52 | Whether the pinned `libc` exposes the macOS process-statistics calls the supervision sampler needs. | research 34 | a small `extern` declaration or another crate if not | ENG-08 (M3), OPS-18 (M4) |
 | OPEN-53 | Installing the Windows standard library for the cross type-check in the Linux job. | research 35; tasks GOV-06 | none recorded | API-18 (M9) at the latest |
 | OPEN-55 | Whether the console creates or only maintains the donor's `run-<STEM>.sh` and `.bat` launcher scripts. | data-model Persisted Files | none recorded | the packages that rewrite or remove them |
+| OPEN-58 | The form in which a line-protocol engine declares synthetic provenance in its start-up lines (LD28, rule 4): the key and value of an `INFO` fact, or another form, chosen so that the donor's `READY` grammar and the shim run of `serve/test_engine_contract.py` are not disturbed. Added on 2026-11-14, when the engine's declaration was separated from the synthetic marker proposed for the server's own ready line (OPEN-35). | seam 5.1 and 13; tasks R29, ENG-06; the note on allowing non-synthetic engines | a fact on an `INFO` line (the lead's direction) | ENG-04, ENG-05, ENG-06 (M3) |
+| OPEN-59 | A notices file for the licenses of the third-party crates linked into a distributed binary (MIT, Apache-2.0, Unicode-3.0, Zlib and others named in `console/Cargo.lock`). The repository vendors no crate and this increment distributes no binary, so nothing is owed yet. Added on 2026-11-14 with the M1 scaffold. | research dependency table | none recorded | the first distributed binary |
 
 ### Settled since the documents were drafted
 
@@ -493,7 +533,14 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 | Residual Unicode-table differences (OPEN-46) | LD24 | research 28; tasks PRM-04 risk |
 | A file-count limit in `check-hygiene.sh` (OPEN-56) | LD25 | review finding F070 (declined part) |
 | Run-config directory when `--config` is given (part of OPEN-06; the rest stays open) | LD26 | spec OI-5; research 10; residual R-12 |
-| Which task delivers PLAN-2, and a working default name (part of OPEN-03; the exact name stays open) | LD27 | residual R-01 |
+| Which task delivers PLAN-2, and a working default name (part of OPEN-03; the exact name was settled by the owner, below) | LD27 | residual R-01 |
+| The exact default model name of the scripted engine (OPEN-03) | the owner on 2026-11-14: exactly `pulsar-console-synthetic` | spec OI-2, FR-005; research 15; naming N6; deviations PLAN-2; tasks open items |
+| The `Host` allowlist and the `allowed_hosts` key (OPEN-04) | the owner on 2026-11-14, as deviation SEC-1.1: on a loopback bind only loopback names (`localhost`, `127.0.0.1`, `[::1]`, any port) and names listed in the optional run-config key `allowed_hosts` pass, and the key is absent by default; on a non-loopback bind `Host` is not restricted unless `allowed_hosts` is set, and then only the listed names and the loopback names pass; a refused request gets 403 `permission_error`; the key name is decided. LD30 records the detail the lead confirms with the owner at checkpoint 2; matching details follow decision B8 and are settled by API-03 | spec OI-3, FR-090; deviations SEC-1.1 |
+| Template `raise_exception` and DeepSeek encoder assertion failures (OPEN-07) | the owner on 2026-11-14, by approving P-8: both answer 400 | spec OI-6; research 4; deviations P-8 |
+| An optional engine start (`READY`) timeout (OPEN-10) | the owner on 2026-11-14, by approving P-6: an optional engine ready-timeout setting, off by default | spec OI-9, FR-037; research 4; deviations P-6 |
+| The order of donor-benefit estimate and measurement against ADR 0004 (OPEN-27) | the owner on 2026-11-14: donor benefit is recorded as a pre-adoption estimate and measured at close-out (plan exception E6); OPEN-57 stays open | PM Measured benefit and open items; plan E6; ADR decision 2 and open items; review finding F007 |
+| What the server does with an engine that does not report synthetic provenance (OPEN-29) | the owner on 2026-11-14 (seam Q9): the server refuses to start an engine that does not report synthetic provenance (another provenance, or none); LD28 records the mechanism, and [ALLOWING_NON_SYNTHETIC_ENGINES.md](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md) states what must be done to allow a non-synthetic engine | seam Q9 |
+| The numbering scheme for later owner-approved deviations (OPEN-39) | LD29, on 2026-11-14 | research 19; data-model DeviationEntry |
 
 ## 10. Checklist
 
@@ -514,19 +561,25 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 - [x] CHK006 Every task traces to a requirement group. All 131 checked by script.
 - [x] CHK007 Every user story is delivered by named milestones. The milestone table in
   tasks.md covers US1 to US9.
-- [x] CHK008 Every approved deviation has a task whose definition of done delivers it. Met
-  for all 23 ids; PLAN-2 is delivered by ENG-02, asserted by API-08 and kept by API-17
-  (LD27).
+- [ ] CHK008 Every approved deviation has a task whose definition of done delivers it. Met
+  for the 23 ids approved with the plan; PLAN-2 is delivered by ENG-02, asserted by API-08
+  and kept by API-17 (LD27). Not yet checked for the 14 proposals the owner approved on
+  2026-11-14: section 5 lists the packages a survey named before the decisions were
+  recorded, and the definitions of done are re-checked at the next rerun.
 
 ### Consistency
 
 - [x] CHK009 Each deviation id is defined once and referenced consistently.
-- [x] CHK010 No planner proposal is described as approved. P-5, P-11, P-15 and P-18 are
-  stated as proposals everywhere; research Decision 9 is headed as conditional on P-5.
+- [x] CHK010 No planner proposal is described as approved before the owner approves it.
+  Before checkpoint 1, P-5, P-11, P-15 and P-18 were stated as proposals everywhere, and
+  research Decision 9 is headed as conditional on P-5. Since 2026-11-14, 14 proposals are
+  approved, P-12 and P-17 are declined, and P-5 and P-18 remain proposals.
 - [x] CHK011 Names agree across documents (product, binary, prefix, crates).
 - [x] CHK012 Every relative link and anchor resolves.
 - [x] CHK013 Every `OPEN-` id used in a document is in the register with the same meaning.
 - [x] CHK014 The lead decisions LD1 to LD27 are reflected in every document they affect.
+  LD28 to LD30 are applied in the change that records them and are re-checked at the next
+  rerun.
 - [x] CHK015 Task detail files agree with the binding and lead decisions. Superseded planner
   lines remain in the detail files by design; each file's header now says that a binding
   decision or a reconciliation in tasks.md overrides any conflicting sentence (R-02).
@@ -542,8 +595,8 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 - [x] CHK019 plan.md's Constitution Check covers all twelve principles, each as a design
   commitment, not as evidence.
 - [x] CHK020 Every departure from the constitution or standing project direction is a
-  recorded exception. E1 to E6 are recorded; E6 (donor benefit estimated before adoption
-  and measured at close-out) awaits the owner's decision OPEN-27.
+  recorded exception. E1 to E6 are recorded; the owner accepted E6 (donor benefit
+  estimated before adoption and measured at close-out) on 2026-11-14 (OPEN-27).
 - [x] CHK021 Specification and tasks each carry a constitution-compliance check.
 - [x] CHK022 Nothing is described as working or measured. The skeleton's single test and
   the check-script runs are recorded as what they are; every feature claim is planned.
@@ -555,13 +608,15 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
 
 - [x] CHK025 The open items are consolidated in one register with stable ids and deciders,
   and every document's local list points here.
-- [ ] CHK026 The items that must be settled before M1 are settled. Not yet: accepting ADR
-  0008 and OPEN-27 at checkpoint 1, and OPEN-03 (working default in place) and OPEN-04
-  inside M1.
-- [ ] CHK027 M0 can be ticked in full. Not yet: GOV-03 is complete only once this file is
-  committed with the rest of M0, and the owner's checkpoint 1 review of the documents that
-  speak in the owner's name is pending. GOV-05 no longer waits on an open item (LD17), and
-  GOV-06's negative checks are recorded (R-05).
+- [x] CHK026 The items that must be settled before M1 are settled. At checkpoint 1 on
+  2026-11-14 the owner accepted ADR 0008 and settled OPEN-27, OPEN-03, OPEN-04 and
+  OPEN-29; M1 may start. The engine-track review of the seam draft (OPEN-30, Q12) is
+  needed inside M1, before ENG-01 freezes the seam, not before M1 starts.
+- [ ] CHK027 M0 can be ticked in full. Not yet: the M0 files, this one included, were
+  committed on 2026-11-14 (`a713aecd` to `67aeca06`), but no CI run of `console.yml` has
+  been observed. Owner checkpoint 1 was held on 2026-11-14 (section 1).
+  GOV-05 no longer waits on an open item (LD17), and GOV-06's negative checks are recorded
+  (R-05).
 
 ## 11. Notes
 
@@ -586,8 +641,34 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   was found to stop part-way with a syntax error; the tools are bash scripts and the
   workflow starts them with bash, so no result above changes. Nothing has been pushed, so
   no CI run exists for these commits.
+- Owner checkpoint 1 was held on 2026-11-14. The owner's reply was "Accept and approve
+  decisions.", with a request for a clear note on what must be done to allow an engine
+  that is not synthetic. The decisions were recorded the same day: in this file (sections
+  1, 3, 4, 5, 6, 9 and 10, with one-line additions in sections 7 and 8) and, in the same
+  change, in ADR 0008, the strategy pointer, the console roadmap, the donor record
+  (`docs/upstream/PROJECT_MAYA.md`), `console/README.md`, spec.md, plan.md, research.md,
+  data-model.md, quickstart.md, checklists/requirements.md, the four contracts and their
+  README, and tasks.md. The new note
+  [ALLOWING_NON_SYNTHETIC_ENGINES.md](../../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md)
+  states what must be done to allow a non-synthetic engine. Lead decisions LD1 (shim runs
+  and vendor-template renders only in the manual job; eight ledger dispositions) and LD17
+  (third-party license texts arrive with the importing package) were reported to the
+  owner at checkpoint 1, and the reply raised no objection. Not decided at checkpoint 1:
+  who on the engine track reviews the seam draft, and in what form (FR-039, Q12,
+  OPEN-30). The counts of open items, lead decisions and deviation ids in sections 1 and 4
+  are recomputed from the register as this file leaves it; the cross-document checks,
+  scripts and link check were not rerun for this change.
 - The donor checkout was read only as text, with `ast` from a script kept outside it. No
   donor code was imported or executed, and nothing was fetched from the network.
 - Rerun this analysis when tasks.md or a contract changes materially, after the owner's
   checkpoint 1 decisions, and at each milestone report. Items settled later move from
   section 9 to its "Settled" table with the decision and its date; ids are never reused.
+- Lead corrections of 2026-11-14, made while this change was reviewed: rule 4 of LD28 now
+  speaks of the engine's own declaration of provenance in its start-up lines, whose form
+  is the new lead item OPEN-58; the first wording tied it to the synthetic marker proposed
+  for the server's ready line, which is a different thing (PLAN-1, FR-050, OPEN-35). LD31
+  and LD32 record two ownership points the M1 scaffold raised. OPEN-59 records the crate
+  license notices owed before any binary is distributed. The approval cells of plan
+  exceptions E1 to E5 say that their text was not put to the owner at checkpoint 1.
+- On 2026-11-14 the owner authorized pushing the console work to GitHub on its clean
+  feature branch. Each later push remains a checkpoint decision.
