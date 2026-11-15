@@ -1,14 +1,22 @@
-//! The transport's three settings and the donor's rules for reading them from text.
+//! The transport's three settings: the conversion of the resolved values into a
+//! [`TransportConfig`], and the raw-text path that reads them with the donor's rules.
 //!
-//! The settings arrive as a plain [`TransportConfig`]; reading the environment is work
-//! package API-08's job. The parse functions take the raw text of a variable (`None` when it
-//! is unset) and apply the donor's rules, including Python's `int()` and `float()` syntax
-//! (surrounding whitespace, a sign, `_` between digits).
+//! The settings have one source of truth. The rule that turns a variable's text into a
+//! value (Python's `int()` and `float()` syntax, the defaults, the minimum and the
+//! fallbacks) lives in console-core, on [`EnvSettings`] (`http_backlog_from`,
+//! `max_body_mib_from`, `request_timeout_s_from`); the conversion of those values into the
+//! listener's settings (the clamp to the platform's `int`, the shift to bytes, a
+//! `Duration` that cannot panic) lives here, in [`TransportConfig::from_values`]. The
+//! server builds its settings with [`TransportConfig::from_settings`] from the resolved
+//! [`EnvSettings`] (the run config's `env` block laid over the environment); the raw-text
+//! path ([`TransportConfig::from_raw`] and the three `parse_` functions) delegates to the
+//! same two halves, so the two paths cannot drift apart.
 //!
 //! Behavior reference: project-maya serve/server.py:5346-5372 at 7e68a30f.
 
 use std::time::Duration;
 
+use console_core::config::EnvSettings;
 use console_pyjson::pystr;
 
 /// Environment variable naming the listen backlog (contracts/naming.md, donor
@@ -62,19 +70,41 @@ impl Default for TransportConfig {
 }
 
 impl TransportConfig {
-    /// The settings from the raw text of the three variables (`None` when unset), by the
-    /// donor's rules ([`parse_backlog`], [`parse_max_body_bytes`],
-    /// [`parse_request_timeout`]).
+    /// The settings from the resolved values of the three variables, as the donor converts
+    /// them: the backlog is at least 5 and at most `i32::MAX` (CPython's `listen()` would
+    /// raise `OverflowError` beyond the platform's `int`); a body limit of 0 or less is
+    /// 256 MiB, and a limit beyond `u64` bytes saturates; a timeout of 0 or less, or `nan`,
+    /// is 300 s, and an infinite one, or one too large for a `Duration`, is
+    /// `Duration::MAX` (no practical limit).
+    ///
+    /// Behavior reference: project-maya serve/server.py:5347-5372 at 7e68a30f.
+    pub fn from_values(http_backlog: i64, max_body_mib: i64, request_timeout_s: f64) -> Self {
+        Self {
+            backlog: backlog_value(http_backlog),
+            max_body_bytes: body_bytes_value(max_body_mib),
+            request_timeout: timeout_value(request_timeout_s),
+        }
+    }
+
+    /// The settings from the server's resolved environment settings: their
+    /// `http_backlog`, `max_body_mib` and `request_timeout_s` ([`Self::from_values`]).
+    /// This is how the server and the test kit build the listener's settings.
+    pub fn from_settings(env: &EnvSettings) -> Self {
+        Self::from_values(env.http_backlog, env.max_body_mib, env.request_timeout_s)
+    }
+
+    /// The settings from the raw text of the three variables (`None` when unset): the rules
+    /// of [`EnvSettings`], then [`Self::from_values`].
     pub fn from_raw(
         backlog: Option<&str>,
         max_body_mib: Option<&str>,
         request_timeout_s: Option<&str>,
     ) -> Self {
-        Self {
-            backlog: parse_backlog(backlog),
-            max_body_bytes: parse_max_body_bytes(max_body_mib),
-            request_timeout: parse_request_timeout(request_timeout_s),
-        }
+        Self::from_values(
+            EnvSettings::http_backlog_from(backlog),
+            EnvSettings::max_body_mib_from(max_body_mib),
+            EnvSettings::request_timeout_s_from(request_timeout_s),
+        )
     }
 
     /// The body limit in whole MiB, as the 413 message prints it (`limit >> 20`).
@@ -83,37 +113,47 @@ impl TransportConfig {
     }
 }
 
-/// The listen backlog: `max(5, int(value or 256))`, and 256 when the value is not an
-/// integer. An unset or empty value gives 256; `"0"` and negative values give 5. A value
-/// beyond `i32::MAX` is clamped there (CPython's `listen()` would raise `OverflowError`).
+/// The listen backlog from the raw text: `max(5, int(value or 256))`, and 256 when the
+/// value is not an integer. An unset or empty value gives 256; `"0"` and negative values
+/// give 5. A value beyond `i32::MAX` is clamped there (CPython's `listen()` would raise
+/// `OverflowError`). Delegates to [`EnvSettings::http_backlog_from`].
 ///
 /// Behavior reference: project-maya serve/server.py:5347-5351 at 7e68a30f.
 pub fn parse_backlog(raw: Option<&str>) -> u32 {
-    let text = match raw {
-        None | Some("") => return DEFAULT_BACKLOG,
-        Some(text) => text,
-    };
-    let Some(value) = py_int(text) else {
-        return DEFAULT_BACKLOG;
-    };
-    if value.negative {
-        return MIN_BACKLOG;
-    }
-    let clamped = value.magnitude.min(i32::MAX as u64);
-    u32::try_from(clamped)
-        .unwrap_or(i32::MAX as u32)
-        .max(MIN_BACKLOG)
+    backlog_value(EnvSettings::http_backlog_from(raw))
 }
 
-/// The body limit in bytes: `int(value)` MiB when that is a positive integer, otherwise 256
-/// MiB; shifted left by 20. A limit beyond `u64` saturates.
+/// The body limit in bytes from the raw text: `int(value)` MiB when that is a positive
+/// integer, otherwise 256 MiB; shifted left by 20. A limit beyond `u64` saturates.
+/// Delegates to [`EnvSettings::max_body_mib_from`].
 ///
 /// Behavior reference: project-maya serve/server.py:5365-5372 at 7e68a30f.
 pub fn parse_max_body_bytes(raw: Option<&str>) -> u64 {
-    let mib = match raw.and_then(py_int) {
-        Some(v) if !v.negative && v.magnitude > 0 => v.magnitude,
-        _ => DEFAULT_MAX_BODY_MIB,
-    };
+    body_bytes_value(EnvSettings::max_body_mib_from(raw))
+}
+
+/// The per-operation timeout from the raw text: `float(value)` seconds when that is
+/// greater than zero, otherwise 300 s. Zero, negative, NaN and unparsable values give
+/// 300 s. Infinity, or a value too large for a `Duration`, gives `Duration::MAX` (no
+/// practical limit). Delegates to [`EnvSettings::request_timeout_s_from`].
+///
+/// Behavior reference: project-maya serve/server.py:5354-5362 at 7e68a30f.
+pub fn parse_request_timeout(raw: Option<&str>) -> Duration {
+    timeout_value(EnvSettings::request_timeout_s_from(raw))
+}
+
+/// `max(5, n)`, clamped to `i32::MAX`.
+fn backlog_value(n: i64) -> u32 {
+    let clamped = n.clamp(i64::from(MIN_BACKLOG), i64::from(i32::MAX));
+    u32::try_from(clamped).unwrap_or(DEFAULT_BACKLOG)
+}
+
+/// `(mib if mib > 0 else 256) << 20`, saturating at `u64::MAX`.
+fn body_bytes_value(mib: i64) -> u64 {
+    let mib = u64::try_from(mib)
+        .ok()
+        .filter(|m| *m > 0)
+        .unwrap_or(DEFAULT_MAX_BODY_MIB);
     if mib > (u64::MAX >> 20) {
         u64::MAX
     } else {
@@ -121,13 +161,8 @@ pub fn parse_max_body_bytes(raw: Option<&str>) -> u64 {
     }
 }
 
-/// The per-operation timeout: `float(value)` seconds when that is greater than zero,
-/// otherwise 300 s. Zero, negative, NaN and unparsable values give 300 s. Infinity, or a
-/// value too large for a `Duration`, gives `Duration::MAX` (no practical limit).
-///
-/// Behavior reference: project-maya serve/server.py:5354-5362 at 7e68a30f.
-pub fn parse_request_timeout(raw: Option<&str>) -> Duration {
-    let seconds = raw.and_then(py_float).unwrap_or(0.0);
+/// `s if s > 0 else 300.0` as a `Duration`, without panicking on `inf` or a huge value.
+fn timeout_value(seconds: f64) -> Duration {
     if seconds > 0.0 {
         Duration::try_from_secs_f64(seconds).unwrap_or(Duration::MAX)
     } else {
@@ -167,33 +202,6 @@ pub(crate) fn py_int(text: &str) -> Option<PyInt> {
         negative: negative && magnitude > 0,
         magnitude,
     })
-}
-
-/// Python `float(text)`: surrounding whitespace, `_` only between digits, then the decimal,
-/// `inf`, `infinity` and `nan` forms. `None` where Python raises `ValueError`.
-fn py_float(text: &str) -> Option<f64> {
-    let s = pystr::strip(text, None);
-    if s.is_empty() {
-        return None;
-    }
-    let chars: Vec<char> = s.chars().collect();
-    let mut cleaned = String::with_capacity(s.len());
-    for (i, &c) in chars.iter().enumerate() {
-        if c == '_' {
-            let before = i.checked_sub(1).and_then(|j| chars.get(j));
-            let after = chars.get(i + 1);
-            let digit = |x: Option<&char>| x.is_some_and(|c| c.is_ascii_digit());
-            if !(digit(before) && digit(after)) {
-                return None;
-            }
-            continue;
-        }
-        if !c.is_ascii() {
-            return None;
-        }
-        cleaned.push(c);
-    }
-    cleaned.parse::<f64>().ok()
 }
 
 /// Splits an optional leading `+` or `-`.
@@ -352,6 +360,106 @@ mod tests {
         assert_eq!(config.max_body_bytes, 268_435_456);
         assert_eq!(config.request_timeout, Duration::from_secs(300));
         assert_eq!(TransportConfig::from_raw(None, None, None), config);
+    }
+
+    #[test]
+    fn typed_values_keep_the_donors_bounds() {
+        let backlog = |n| TransportConfig::from_values(n, 1, 1.0).backlog;
+        assert_eq!(backlog(i64::MIN), 5);
+        assert_eq!(backlog(0), 5);
+        assert_eq!(backlog(5), 5);
+        assert_eq!(backlog(64), 64);
+        assert_eq!(backlog(i64::from(i32::MAX)), i32::MAX as u32);
+        assert_eq!(backlog(i64::MAX), i32::MAX as u32);
+        let body = |m| TransportConfig::from_values(256, m, 1.0).max_body_bytes;
+        assert_eq!(body(i64::MIN), 256 << 20);
+        assert_eq!(body(-1), 256 << 20);
+        assert_eq!(body(0), 256 << 20);
+        assert_eq!(body(1), 1 << 20);
+        assert_eq!(body((1 << 44) - 1), ((1u64 << 44) - 1) << 20);
+        assert_eq!(body(1 << 44), u64::MAX);
+        assert_eq!(body(i64::MAX), u64::MAX);
+        let timeout = |s| TransportConfig::from_values(256, 1, s).request_timeout;
+        let default = Duration::from_secs(300);
+        assert_eq!(timeout(0.0), default);
+        assert_eq!(timeout(-0.0), default);
+        assert_eq!(timeout(-1.0), default);
+        assert_eq!(timeout(f64::NAN), default);
+        assert_eq!(timeout(f64::NEG_INFINITY), default);
+        assert_eq!(timeout(0.5), Duration::from_millis(500));
+        assert_eq!(timeout(f64::INFINITY), Duration::MAX);
+        assert_eq!(timeout(1e300), Duration::MAX);
+    }
+
+    /// The raw-text path and the resolved-settings path give the same settings on every
+    /// edge case the two listed before they were merged (the second path is the one the
+    /// server uses: `EnvSettings::from_env`, then `from_settings`).
+    #[test]
+    fn the_raw_text_and_the_resolved_settings_agree() {
+        use std::collections::BTreeMap;
+        let long = "9".repeat(4300);
+        let too_long = "9".repeat(4301);
+        let ints = [
+            "",
+            "abc",
+            "1.5",
+            "0",
+            "3",
+            "-40",
+            "-0",
+            " 1_024 ",
+            "+64",
+            "1__0",
+            "_10",
+            "10_",
+            "x",
+            "2.5",
+            "1",
+            "\t512\n",
+            "99999999999999999999",
+            "17592186044416",
+            "007",
+            "\u{a0}12\u{85}",
+            "\u{b2}",
+            "0x10",
+            &long,
+            &too_long,
+        ];
+        let floats = [
+            "", "0", "-1", "nan", "-nan", "soon", "1_.5", "2", " 0.5 ", "1_0", "1e1", "inf",
+            "-inf", "Infinity", "1e300", "1e-12",
+        ];
+        let check = |b: Option<&str>, m: Option<&str>, t: Option<&str>| {
+            let mut env = BTreeMap::new();
+            for (name, value) in [
+                (ENV_HTTP_BACKLOG, b),
+                (ENV_MAX_BODY_MIB, m),
+                (ENV_REQUEST_TIMEOUT_S, t),
+            ] {
+                if let Some(v) = value {
+                    env.insert(name.to_owned(), v.to_owned());
+                }
+            }
+            let resolved = TransportConfig::from_settings(&EnvSettings::from_env(&env));
+            assert_eq!(
+                TransportConfig::from_raw(b, m, t),
+                resolved,
+                "{b:?} {m:?} {t:?}"
+            );
+            assert_eq!(parse_backlog(b), resolved.backlog, "{b:?}");
+            assert_eq!(parse_max_body_bytes(m), resolved.max_body_bytes, "{m:?}");
+            assert_eq!(parse_request_timeout(t), resolved.request_timeout, "{t:?}");
+        };
+        check(None, None, None);
+        for i in ints {
+            check(Some(i), Some(i), None);
+        }
+        for f in floats {
+            check(None, None, Some(f));
+        }
+        assert_eq!(parse_backlog(Some(&too_long)), 256);
+        assert_eq!(parse_max_body_bytes(Some(&too_long)), 256 << 20);
+        assert_eq!(parse_backlog(Some(&long)), i32::MAX as u32);
     }
 
     #[test]

@@ -6,8 +6,9 @@
 //! chat template, then `serve(svc, port=0)`. The builder is the same set-up in Rust:
 //!
 //! - the transport is bound on `127.0.0.1:0` (or another address of the caller's choice)
-//!   with [`TransportConfig`] read from the injected environment, never from the process's
-//!   own (so a test is not changed by the shell it runs in);
+//!   with [`TransportConfig`] read from the injected environment and the run config's
+//!   `env` block, as the server reads them, never from the process's own environment (so a
+//!   test is not changed by the shell it runs in);
 //! - requests go to a [`Router`] built from the guard settings (API key, CORS origins,
 //!   `allowed_hosts`, given one by one or read from a [`RunConfig`]), with the handlers the
 //!   test registers; or, for transport tests, to one raw [`Handler`];
@@ -37,7 +38,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use console_core::config::{names, ConfigError, RunConfig};
+use console_core::config::{names, ConfigError, EnvSettings, RunConfig};
 use console_core::engine::{EngineFactory, EngineFailure};
 use console_core::fifo::{queue_ping_interval_from, EngineFifo, FifoLog, LogCapture};
 use console_core::turn::{NoObserver, TurnDriver, TurnObserver, TurnSettings};
@@ -206,9 +207,12 @@ impl TestServerBuilder {
         self
     }
 
-    /// The transport settings; by default they are read from the injected environment
-    /// (`PULSAR_CONSOLE_HTTP_BACKLOG`, `PULSAR_CONSOLE_MAX_BODY_MIB`,
-    /// `PULSAR_CONSOLE_REQUEST_TIMEOUT_S`), which is empty unless the test sets it.
+    /// The transport settings; by default they are read as the server reads them, from
+    /// the injected environment (`PULSAR_CONSOLE_HTTP_BACKLOG`,
+    /// `PULSAR_CONSOLE_MAX_BODY_MIB`, `PULSAR_CONSOLE_REQUEST_TIMEOUT_S`, empty unless the
+    /// test sets it) with the server entries of the `env` block of the
+    /// [`run_config`](Self::run_config) laid over it (the backlog and the body limit; the
+    /// donor's `SERVER_ENV` does not name the timeout).
     pub fn transport(mut self, config: TransportConfig) -> Self {
         self.transport = Some(config);
         self
@@ -249,7 +253,9 @@ impl TestServerBuilder {
 
     /// A run config to read the guard settings from (`api_key`, `cors_origins`,
     /// `allowed_hosts`), with the injected `PULSAR_CONSOLE_API_KEY` taking precedence over
-    /// its `api_key`, as at server start. Settings given one by one win over it.
+    /// its `api_key`, as at server start. Settings given one by one win over it. Its `env`
+    /// block's server entries win over the injected environment for the transport
+    /// settings, as at server start.
     pub fn run_config(mut self, config: RunConfig) -> Self {
         self.run_config = Some(config);
         self
@@ -358,14 +364,17 @@ impl TestServerBuilder {
         Ok((config, run_config))
     }
 
-    fn transport_config(&self) -> TransportConfig {
-        self.transport.unwrap_or_else(|| {
-            TransportConfig::from_raw(
-                self.env.get(names::HTTP_BACKLOG).map(String::as_str),
-                self.env.get(names::MAX_BODY_MIB).map(String::as_str),
-                self.env.get(names::REQUEST_TIMEOUT_S).map(String::as_str),
-            )
-        })
+    /// The transport settings given, or the resolved ones as the server builds them: the
+    /// run config's `env` block laid over the injected environment
+    /// (`EnvSettings::resolve`), then `TransportConfig::from_settings`.
+    fn transport_config(&self) -> Result<TransportConfig, StartError> {
+        if let Some(config) = self.transport {
+            return Ok(config);
+        }
+        let empty = RunConfig::new();
+        let run_config = self.run_config.as_ref().unwrap_or(&empty);
+        let settings = EnvSettings::resolve(&self.env, run_config).map_err(StartError::Config)?;
+        Ok(TransportConfig::from_settings(&settings))
     }
 
     /// Starts the server: the engine (if any) through the synthetic-only admission step,
@@ -397,7 +406,7 @@ impl TestServerBuilder {
                 "a whole guard config takes no separate guard settings",
             ));
         }
-        let transport = self.transport_config();
+        let transport = self.transport_config()?;
         let (guard_config, run_config) = self.guard_config()?;
         let temp = match self.config_dir {
             ConfigDir::Temp => Some(TempDir::new("config").map_err(StartError::TempDir)?),

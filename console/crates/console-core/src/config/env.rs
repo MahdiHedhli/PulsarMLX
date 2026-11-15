@@ -706,36 +706,11 @@ impl EnvSettings {
                 _ => 2.0,
             }
         };
-        // Behavior reference: serve/server.py:5348-5351.
-        let http_backlog = {
-            let raw = get(HTTP_BACKLOG);
-            match raw.as_deref() {
-                Some(t) if !t.is_empty() => py::py_int(t).map_or(256, |n| n.max(5)),
-                _ => 256,
-            }
-        };
-        // Behavior reference: serve/server.py:5354-5362.
-        let request_timeout_s = {
-            let s = get(REQUEST_TIMEOUT_S)
-                .map_or(Some(0.0), |t| py::py_float(&t))
-                .unwrap_or(0.0);
-            if s > 0.0 {
-                s
-            } else {
-                300.0
-            }
-        };
-        // Behavior reference: serve/server.py:5365-5371.
-        let max_body_mib = {
-            let mib = get(MAX_BODY_MIB)
-                .map_or(Some(0), |t| py::py_int(&t))
-                .unwrap_or(0);
-            if mib > 0 {
-                mib
-            } else {
-                256
-            }
-        };
+        // The transport's three settings: one rule each, shared with the raw-text path of
+        // console-http (`TransportConfig::from_raw`).
+        let http_backlog = Self::http_backlog_from(get(HTTP_BACKLOG).as_deref());
+        let request_timeout_s = Self::request_timeout_s_from(get(REQUEST_TIMEOUT_S).as_deref());
+        let max_body_mib = Self::max_body_mib_from(get(MAX_BODY_MIB).as_deref());
         // Behavior reference: serve/server.py:783-791.
         let whole = |name: &str, default: i64| -> i64 {
             match get(name) {
@@ -871,6 +846,68 @@ impl EnvSettings {
     /// Whether DeepSeek restore points are on.
     pub fn ds4_restore_on(&self) -> bool {
         self.ds4_restore_points > 0
+    }
+
+    /// The rule of `PULSAR_CONSOLE_HTTP_BACKLOG` on the raw text of the variable (`None`
+    /// when unset): `max(5, int(value or 256))`, and 256 when `int()` raises (a value that
+    /// is not an integer, or longer than Python's 4300 digits). A value beyond `i64`
+    /// saturates; the transport clamps it to the platform's `int` when it listens. This is
+    /// the only implementation of the rule: [`EnvSettings::from_env`] and console-http's
+    /// raw-text path both call it.
+    ///
+    /// Behavior reference: project-maya serve/server.py:5347-5351 at 7e68a30f.
+    pub fn http_backlog_from(raw: Option<&str>) -> i64 {
+        match raw {
+            Some(t) if !t.is_empty() => py_int_bounded(t).map_or(256, |n| n.max(5)),
+            _ => 256,
+        }
+    }
+
+    /// The rule of `PULSAR_CONSOLE_MAX_BODY_MIB` on the raw text of the variable (`None`
+    /// when unset): `int(value)` MiB when that is above 0, otherwise 256 (unset, zero,
+    /// negative, not an integer, or longer than Python's 4300 digits). A value beyond `i64`
+    /// saturates. The only implementation of the rule (see
+    /// [`EnvSettings::http_backlog_from`]).
+    ///
+    /// Behavior reference: project-maya serve/server.py:5365-5371 at 7e68a30f.
+    pub fn max_body_mib_from(raw: Option<&str>) -> i64 {
+        let mib = raw.map_or(Some(0), py_int_bounded).unwrap_or(0);
+        if mib > 0 {
+            mib
+        } else {
+            256
+        }
+    }
+
+    /// The rule of `PULSAR_CONSOLE_REQUEST_TIMEOUT_S` on the raw text of the variable
+    /// (`None` when unset): `float(value)` seconds when that is above 0, otherwise 300
+    /// (unset, empty, zero, negative, `nan`, not a number). `inf` stays infinite. The only
+    /// implementation of the rule (see [`EnvSettings::http_backlog_from`]).
+    ///
+    /// Behavior reference: project-maya serve/server.py:5354-5362 at 7e68a30f.
+    pub fn request_timeout_s_from(raw: Option<&str>) -> f64 {
+        let s = raw.map_or(Some(0.0), py::py_float).unwrap_or(0.0);
+        if s > 0.0 {
+            s
+        } else {
+            300.0
+        }
+    }
+}
+
+/// Python's limit on the digits `int()` converts from text (CPython 3.11 and later,
+/// `sys.int_info.default_max_str_digits`; CPython 3.14 per lead decision LD38).
+const PY_MAX_STR_DIGITS: usize = 4300;
+
+/// Python's `int(text)` with its 4300-digit limit: `None` where Python raises
+/// `ValueError`, a longer digit string included. Used by the transport settings, whose
+/// fallback the donor takes on any `ValueError`.
+fn py_int_bounded(text: &str) -> Option<i64> {
+    let n = py::py_int(text)?;
+    if text.bytes().filter(u8::is_ascii_digit).count() > PY_MAX_STR_DIGITS {
+        None
+    } else {
+        Some(n)
     }
 }
 
@@ -1472,5 +1509,39 @@ mod tests {
                 + 8
                 + 5
         });
+    }
+
+    // Expected values follow CPython 3.14 `int()`, `float()` and `max()` on the same text,
+    // with the donor's `except ValueError` fallbacks.
+    #[test]
+    fn the_transport_rules_on_raw_text() {
+        let backlog = EnvSettings::http_backlog_from;
+        assert_eq!(backlog(None), 256);
+        assert_eq!(backlog(Some("")), 256);
+        assert_eq!(backlog(Some("abc")), 256);
+        assert_eq!(backlog(Some("0")), 5);
+        assert_eq!(backlog(Some("-40")), 5);
+        assert_eq!(backlog(Some(" 1_024 ")), 1024);
+        assert_eq!(backlog(Some("99999999999999999999")), i64::MAX);
+        assert_eq!(backlog(Some(&"9".repeat(4300))), i64::MAX);
+        // Python's int() refuses more than 4300 digits with a ValueError: the fallback.
+        assert_eq!(backlog(Some(&"9".repeat(4301))), 256);
+        let mib = EnvSettings::max_body_mib_from;
+        assert_eq!(mib(None), 256);
+        assert_eq!(mib(Some("")), 256);
+        assert_eq!(mib(Some("0")), 256);
+        assert_eq!(mib(Some("-3")), 256);
+        assert_eq!(mib(Some("2.5")), 256);
+        assert_eq!(mib(Some("\t512\n")), 512);
+        assert_eq!(mib(Some(&"9".repeat(4301))), 256);
+        let timeout = EnvSettings::request_timeout_s_from;
+        assert_eq!(timeout(None), 300.0);
+        assert_eq!(timeout(Some("")), 300.0);
+        assert_eq!(timeout(Some("0")), 300.0);
+        assert_eq!(timeout(Some("nan")), 300.0);
+        assert_eq!(timeout(Some(" 0.5 ")), 0.5);
+        assert_eq!(timeout(Some("inf")), f64::INFINITY);
+        let s = settings(&[(HTTP_BACKLOG, &"1".repeat(4301))]);
+        assert_eq!(s.http_backlog, 256);
     }
 }

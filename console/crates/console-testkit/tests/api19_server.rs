@@ -1,8 +1,8 @@
 //! Tests of the test kit's in-process server (work package API-19): the builder over the
 //! transport, the router and the turn driver, a handler factory that streams an engine's
 //! tokens as SSE, the SSE reader against it, the guards read from a run config, the
-//! transport settings read from the injected environment, the configuration folder, and
-//! the synthetic-only refusal at start.
+//! transport settings read from the injected environment and the run config's `env` block,
+//! the configuration folder, and the synthetic-only refusal at start.
 //!
 //! These are tests of the kit itself, not re-expressions of donor methods.
 
@@ -262,6 +262,46 @@ async fn transport_settings_come_from_the_injected_environment() {
     // Without the variable, the donor's default, whatever the shell running the test has.
     let plain = TestServer::builder().start().await.expect("starts");
     assert_eq!(plain.parts().transport.max_body_bytes, 256 << 20);
+}
+
+#[tokio::test]
+async fn a_run_config_env_value_reaches_the_kit_servers_backlog() {
+    // As at server start: the run config's `env` entry is laid over the injected
+    // environment, and wins over it (follow-up API-08F).
+    let mut cfg = RunConfig::new();
+    cfg.set(
+        "env",
+        json!({"PULSAR_CONSOLE_HTTP_BACKLOG": "64", "PULSAR_CONSOLE_MAX_BODY_MIB": null}),
+    );
+    let server = TestServer::builder()
+        .env("PULSAR_CONSOLE_HTTP_BACKLOG", "300")
+        .env("PULSAR_CONSOLE_MAX_BODY_MIB", "2")
+        .run_config(cfg)
+        .start()
+        .await
+        .expect("starts");
+    assert_eq!(server.backlog, 64);
+    assert_eq!(server.parts().transport.backlog, 64);
+    // A `null` entry is not applied: the injected value stays in force.
+    assert_eq!(server.parts().transport.max_body_bytes, 2 << 20);
+    // The injected environment itself is kept as given.
+    assert_eq!(
+        server.parts().env_var("PULSAR_CONSOLE_HTTP_BACKLOG"),
+        Some("300")
+    );
+    // A transport configuration given whole still wins over both.
+    let mut cfg = RunConfig::new();
+    cfg.set("env", json!({"PULSAR_CONSOLE_HTTP_BACKLOG": "64"}));
+    let given = TestServer::builder()
+        .run_config(cfg)
+        .transport(console_http::transport::TransportConfig {
+            backlog: 7,
+            ..console_http::transport::TransportConfig::default()
+        })
+        .start()
+        .await
+        .expect("starts");
+    assert_eq!(given.backlog, 7);
 }
 
 #[tokio::test]

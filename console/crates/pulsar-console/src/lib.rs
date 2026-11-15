@@ -18,7 +18,12 @@
 //! 4. The server settings (API key, CORS origins, `allowed_hosts`, the turn-driver
 //!    settings); an `allowed_hosts` entry that cannot be parsed stops the start with a
 //!    message naming the entry and the accepted forms (lead decision LD40). The
-//!    transport's settings come from the same environment.
+//!    transport's settings (listen backlog, body limit, request timeout) are the resolved
+//!    `http_backlog`, `max_body_mib` and `request_timeout_s` of these settings
+//!    (`TransportConfig::from_settings`), so a run config's `env` entry for the backlog
+//!    or the body limit wins over the environment, as the donor's `apply_server_env`
+//!    makes it win; the timeout is not one of the donor's `SERVER_ENV` names, and only the
+//!    environment sets it.
 //! 5. The byte tokenizer, then the engine: the scripts of `--script`, or the donor's
 //!    default script, encoded with the end-of-turn marker; the model name is the config's
 //!    `model_name`, else `pulsar-console-synthetic` (deviation PLAN-2).
@@ -45,8 +50,8 @@
 //! and the binary passes only the scripted one. Nothing here is qualified beyond
 //! synthetic backends.
 //!
-//! Behavior reference: project-maya serve/server.py:7115-7175, 7285-7295, 7320-7333 and
-//! 7376-7392 at 7e68a30f.
+//! Behavior reference: project-maya serve/server.py:6744-6755, 7115-7175, 7285-7295,
+//! 7320-7333 and 7376-7392 at 7e68a30f.
 
 pub mod cli;
 
@@ -167,6 +172,12 @@ impl Started {
     /// The bound address.
     pub fn addr(&self) -> SocketAddr {
         self.addr
+    }
+
+    /// The settings the bound listener uses: its listen backlog, body limit and request
+    /// timeout. Read-only.
+    pub fn transport(&self) -> TransportConfig {
+        self.listener.config()
     }
 
     /// The turn driver.
@@ -317,11 +328,10 @@ where
             return Err(Exit(1));
         }
     }
-    let transport = TransportConfig::from_raw(
-        layered.var(names::HTTP_BACKLOG).as_deref(),
-        layered.var(names::MAX_BODY_MIB).as_deref(),
-        layered.var(names::REQUEST_TIMEOUT_S).as_deref(),
-    );
+    // The transport's settings are the resolved ones (the run config's `env` block laid
+    // over the environment): the same values `EnvSettings` reports, so no second reading
+    // of the variables can drift from them.
+    let transport = TransportConfig::from_settings(&settings.env);
     let tok = Arc::new(ByteTokenizer::new());
     let end = tok.encode(IM_END, true, &[]);
     let texts: Vec<&str> = if opts.scripts.is_empty() {
