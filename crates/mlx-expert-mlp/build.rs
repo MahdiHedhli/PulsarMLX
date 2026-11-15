@@ -71,6 +71,26 @@ fn main() {
     if std::env::var_os("CARGO_FEATURE_STAGED_POLICY_NATIVE").is_some() {
         bins.push("qualify-staged-policy-mlp");
     }
+    if std::env::var_os("CARGO_FEATURE_REAL_FLASH_EXPERT").is_some() {
+        println!("cargo:rerun-if-changed=src/activation_selected.cpp");
+        cc::Build::new()
+            .cpp(true)
+            .file("src/activation_selected.cpp")
+            .include(c.join("include"))
+            .include("../../scripts/research")
+            .flag("-std=c++17")
+            .flag("-fno-fast-math")
+            .flag("-ffp-contract=off")
+            .flag("-Wall")
+            .flag("-Werror")
+            .cargo_metadata(false)
+            .compile("studio016_activation");
+        println!(
+            "cargo:rustc-link-arg-bin=qualify-real-flash-expert={}",
+            out.join("libstudio016_activation.a").display()
+        );
+        bins.push("qualify-real-flash-expert");
+    }
     for bin in bins {
         for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
             println!(
