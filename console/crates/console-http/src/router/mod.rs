@@ -11,11 +11,12 @@
 //!
 //! Every request the router sees first passes the `Host` allowlist (deviation SEC-1.1): a
 //! refused `Host` is 403 `permission_error` before anything else, and its answer carries no
-//! CORS header. The transport's own error pages are answered before the router is called,
-//! so they do not pass the allowlist: the 431 header-limit pages, the 501 of a method it
-//! does not serve and the 400 of conflicting framing (deviation P-2). For a refused `Host`
-//! they carry no CORS header either ([`Guard::cors_headers`]); enforcing SEC-1.1 on them
-//! needs a pre-dispatch hook on the transport's `Handler` trait, which is the lead's to add.
+//! CORS header. The transport asks the router's [`Handler::early_refusal`] as soon as it has
+//! the head, so the same 403 also comes before the transport's own 501 for a method it does
+//! not serve and its 400 for conflicting framing (deviation P-2). Only the 431 header-limit
+//! pages, and the 400, 414 and 505 pages of the request line, are answered without the
+//! allowlist: the transport has no usable headers there. They carry no CORS header for a
+//! refused `Host` ([`Guard::cors_headers`]).
 //!
 //! - **OPTIONS** (any path): the CORS preflight, no key (the donor's `do_OPTIONS`).
 //! - **GET**: the foreign-page check (deviation SEC-1.2: the donor checks `Origin` only on
@@ -53,7 +54,7 @@ use serde_json::{Map, Value};
 
 use crate::error::ApiError;
 use crate::guard::{
-    is_json_content_type, Guard, GuardConfig, Refusal, LOCAL_ONLY_MESSAGE,
+    is_json_content_type, Guard, GuardConfig, Refusal, HOST_REFUSED_MESSAGE, LOCAL_ONLY_MESSAGE,
     MODEL_MANAGE_LOCAL_ONLY_MESSAGE,
 };
 use crate::transport::{BodyError, Exchange, Handler, HandlerFuture, RequestHead};
@@ -799,6 +800,23 @@ impl Handler for Router {
     fn end_headers(&self, head: &RequestHead) -> Vec<(String, String)> {
         self.guard().cors_headers(head)
     }
+
+    /// The `Host` allowlist of deviation SEC-1.1, and nothing else: a refused `Host` is the
+    /// same 403 `permission_error` the router answers on a route ([`Guard::check_host`]),
+    /// here also before the transport's 501 and P-2 pages. The key, `Origin` and content
+    /// type checks stay in the router's dispatch, which checks the `Host` again.
+    fn early_refusal(&self, head: &RequestHead) -> Option<ApiError> {
+        host_refusal(&self.guard(), head)
+    }
+}
+
+/// The early answer of a refused `Host`: the error of [`Refusal::host`].
+fn host_refusal(guard: &Guard, head: &RequestHead) -> Option<ApiError> {
+    if guard.host_allowed(head) {
+        None
+    } else {
+        Some(ApiError::permission(HOST_REFUSED_MESSAGE))
+    }
 }
 
 #[cfg(test)]
@@ -887,6 +905,32 @@ mod tests {
         assert_eq!(ROUTES.iter().filter(|s| s.method == "GET").count(), 31);
         assert_eq!(ROUTES.iter().filter(|s| s.method == "POST").count(), 30);
         assert_eq!(ROUTES.iter().filter(|s| s.method == "DELETE").count(), 2);
+    }
+
+    // Deviation SEC-1.1: the early refusal is the router's own refusal of a `Host`, and it
+    // refuses nothing for an allowed one.
+    #[test]
+    fn the_early_refusal_is_the_host_refusal() {
+        let router = Router::new(GuardConfig::new(IpAddr::V4(Ipv4Addr::LOCALHOST)));
+        let head = |host: &str| {
+            RequestHead::new(
+                "PUT",
+                "/v1/models",
+                "HTTP/1.1",
+                Headers::from_pairs(vec![(String::from("Host"), host.to_owned())]),
+            )
+        };
+        let refused = head("evil.example:8095");
+        assert_eq!(
+            router.early_refusal(&refused).map(Refusal::Api),
+            router.guard().check_host(&refused).err()
+        );
+        assert_eq!(
+            router.early_refusal(&refused).map(|e| e.status()),
+            Some(403)
+        );
+        assert_eq!(router.early_refusal(&head("127.0.0.1:8095")), None);
+        assert_eq!(router.early_refusal(&head("localhost")), None);
     }
 
     #[test]

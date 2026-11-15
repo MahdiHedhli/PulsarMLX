@@ -1,16 +1,22 @@
 //! The listener and the per-connection loop.
 //!
 //! One accepted connection serves exactly one request and then closes (HTTP/1.0, decision
-//! B1). The connection reads the request head, answers the transport's own errors (400,
-//! 414, 431, 501, 505) with Python's HTML error page, refuses a request that carries both
-//! framings with 400 (approved deviation P-2), and hands every other request with a method
-//! the donor serves (`GET`, `POST`, `DELETE`, `OPTIONS`) to the [`Handler`]. There is no
+//! B1). The connection reads the request head and answers the errors of the head itself
+//! (400, 414, 431, 505) with Python's HTML error page. For a parsed head it then asks the
+//! handler's [`Handler::early_refusal`] (the router's `Host` allowlist, deviation SEC-1.1)
+//! and writes a refusal as the answer; otherwise it answers a method the donor does not
+//! serve with the 501 page, refuses a request that carries both framings with 400
+//! (approved deviation P-2), and hands every other request (`GET`, `POST`, `DELETE`,
+//! `OPTIONS`) to the [`Handler`]. The 431 pages are answered before the early refusal:
+//! the header limit is hit before the headers are known, so there is no `Host` to check,
+//! and they stay Python's pages as they are. There is no
 //! access log; a client that hangs up is not logged. A panic in the handler (in
 //! [`Handler::end_headers`], in the call to [`Handler::handle`] or in the future it
 //! returns) closes only its connection, and the server goes on. The transport writes one
 //! line, `[console] a request from <peer> failed: <message>`, after whatever the process
 //! panic hook prints; with the standard hook that is the usual multi-line `thread ...
-//! panicked at ...` report, which the binary may replace with its own hook.
+//! panicked at ...` report, which the binary may replace with its own hook. A panic in
+//! [`Handler::early_refusal`] is handled the same way.
 //!
 //! The end-headers hook runs for the 501 page and for the 431 pages (where Python's
 //! `self.command` and `self.path` are already set, with empty headers), as the donor's
@@ -186,7 +192,8 @@ pub(crate) async fn serve_connection(
         } => {
             let extra = match (method.as_deref(), target) {
                 // The 431 pages: the donor's end_headers override sees `self.command` and
-                // `self.path`, and no headers yet.
+                // `self.path`, and no headers yet. With no headers there is no `Host`, so
+                // the early refusal (SEC-1.1) is not asked and the page is answered as is.
                 (Some(m), Some((path, version))) => {
                     let partial = RequestHead::new(m, &path, &version, Headers::default());
                     match guarded(peer, || handler.end_headers(&partial)) {
@@ -206,6 +213,25 @@ pub(crate) async fn serve_connection(
         return;
     };
     let mut responder = Responder::new(write, timeout, head.is_http09(), extra);
+    // The handler's early refusal (the router's `Host` allowlist, deviation SEC-1.1) comes
+    // before the transport's own answers for a parsed request, the 501 and the P-2 400.
+    let Some(refusal) = guarded(peer, || handler.early_refusal(&head)) else {
+        return;
+    };
+    if let Some(error) = refusal {
+        if head.method() == "HEAD" {
+            // A response to HEAD carries no content (RFC 9110 section 9.3.2), as Python's
+            // send_error leaves the body out for HEAD: the same head (status,
+            // Content-Type, the Content-Length of the JSON), without the body.
+            let response = error.to_response();
+            let headers = response.headers();
+            let pairs: Vec<(&str, &str)> = headers.iter().map(|(k, v)| (*k, v.as_str())).collect();
+            let _ = responder.start(response.status, &pairs).await;
+        } else {
+            let _ = responder.error(&error).await;
+        }
+        return;
+    }
     if !SERVED_METHODS.contains(&head.method()) {
         let page = ErrorPage::with_message(
             501,

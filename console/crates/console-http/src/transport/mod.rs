@@ -11,7 +11,8 @@
 //! ends, the connection closes.
 //!
 //! The router of API-03 implements [`Handler`]: it matches [`RequestHead::route_path`],
-//! applies its guards and adds its CORS headers through [`Handler::end_headers`]. The
+//! applies its guards, adds its CORS headers through [`Handler::end_headers`] and refuses a
+//! `Host` the allowlist does not serve through [`Handler::early_refusal`]. The
 //! inference driver of API-07 reads the body, starts a [`ClientWatch`] with the request's
 //! [`ControlHandle`](console_core::engine::ControlHandle), and writes through
 //! [`Responder::json`], [`Responder::sse_start`] and the [`FrameSink`].
@@ -51,6 +52,8 @@ use console_core::engine::ControlHandle;
 use tokio::io::BufReader;
 use tokio::net::tcp::OwnedReadHalf;
 
+use crate::error::ApiError;
+
 pub use body::{
     has_conflicting_framing, is_chunked, too_large, BodyError, CONFLICTING_FRAMING,
     INVALID_CONTENT_LENGTH, MALFORMED_CHUNKED,
@@ -89,6 +92,22 @@ pub trait Handler: Send + Sync + 'static {
     fn end_headers(&self, head: &RequestHead) -> Vec<(String, String)> {
         let _ = head;
         Vec::new()
+    }
+
+    /// The early refusal of a request head, checked before the transport answers anything
+    /// of its own for a parsed request. The transport calls it once per request, right
+    /// after [`end_headers`](Self::end_headers) and before its 501 page for a method it
+    /// does not serve and its 400 for conflicting framing (approved deviation P-2); an
+    /// error is written as the answer (with the headers of `end_headers`) and the handler
+    /// is not called. It exists so that the `Host` allowlist of deviation SEC-1.1 holds
+    /// on those transport pages too. It is not a second dispatch path: it sees only the
+    /// head and must not read the body or run route checks.
+    ///
+    /// It is not called for the 431 header-limit pages, which have no usable headers, nor
+    /// for the 400, 414 and 505 pages of the request line. The default refuses nothing.
+    fn early_refusal(&self, head: &RequestHead) -> Option<ApiError> {
+        let _ = head;
+        None
     }
 }
 
