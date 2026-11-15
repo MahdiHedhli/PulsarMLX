@@ -5211,7 +5211,11 @@
       "class": "CorsOptIn",
       "method": "test_a_trailing_slash_in_the_config_is_forgiven",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-03",
+      "rust_tests": [
+        "console-http::api03_donor::cors_a_trailing_slash_in_the_config_is_forgiven"
+      ]
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_another_page_cannot_post_without_a_preflight",
@@ -5227,7 +5231,11 @@
       "class": "CorsOptIn",
       "method": "test_another_page_gets_nothing",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-03",
+      "rust_tests": [
+        "console-http::api03_donor::cors_another_page_gets_nothing"
+      ]
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_settings_and_the_page_itself_stay_closed",
@@ -5235,7 +5243,11 @@
       "class": "CorsOptIn",
       "method": "test_settings_and_the_page_itself_stay_closed",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-03",
+      "rust_tests": [
+        "console-http::api03_donor::cors_settings_and_the_page_itself_stay_closed"
+      ]
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_star_allows_every_page",
@@ -5263,7 +5275,13 @@
       "class": "CorsOptIn",
       "method": "test_without_the_setting_nothing_changes",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "deviation",
+      "package": "API-03",
+      "deviation": "SEC-1.2",
+      "asserted_by": [
+        "console-http::api03_donor::cors_without_the_setting_nothing_changes",
+        "console-http::api03_security::origin_is_checked_on_every_route"
+      ]
     },
     {
       "id": "serve/test_server.py::EngineDeath::test_engine_err_mid_stream",
@@ -5676,7 +5694,11 @@
       "class": "NonFiniteRetry",
       "method": "test_answer_under_way_ends_as_length",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::non_finite_retry_answer_under_way_ends_as_length"
+      ]
     },
     {
       "id": "serve/test_server.py::NonFiniteRetry::test_other_errors_are_not_retried",
@@ -5684,7 +5706,11 @@
       "class": "NonFiniteRetry",
       "method": "test_other_errors_are_not_retried",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::non_finite_retry_other_errors_are_not_retried"
+      ]
     },
     {
       "id": "serve/test_server.py::NonFiniteRetry::test_retried_before_the_answer",
@@ -5692,7 +5718,11 @@
       "class": "NonFiniteRetry",
       "method": "test_retried_before_the_answer",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::non_finite_retry_retried_before_the_answer"
+      ]
     },
     {
       "id": "serve/test_server.py::NonFiniteRetry::test_twice_is_an_error",
@@ -5700,7 +5730,11 @@
       "class": "NonFiniteRetry",
       "method": "test_twice_is_an_error",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::non_finite_retry_twice_is_an_error"
+      ]
     },
     {
       "id": "serve/test_server.py::PrometheusMetrics::test_text_and_key",
@@ -6128,7 +6162,11 @@
       "class": "TestCarryEmbeddings",
       "method": "test_the_job_thread_sees_the_request_threads_image_file",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::carry_embeddings_the_job_thread_sees_the_request_threads_image_file"
+      ]
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_configured_budget_and_thinking_off",
@@ -6224,7 +6262,11 @@
       "class": "TimingsDrafts",
       "method": "test_draft_fields",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-10",
+      "rust_tests": [
+        "console-core::eng10_donor::timings_drafts_draft_fields"
+      ]
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_anthropic",
