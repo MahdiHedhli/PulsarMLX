@@ -12,6 +12,7 @@ default = []
 resident-native = []
 weighted-native = []
 staged-weighted-native = []
+staged-policy-native = []
 
 [dependencies]
 mlx-expert-ranges = { path = "../mlx-expert-ranges" }
@@ -43,4 +44,10 @@ required-features = ["weighted-native"]
 name = "qualify-staged-weighted-mlp"
 path = "src/bin/qualify-staged-weighted-mlp.rs"
 required-features = ["staged-weighted-native"]
+test = false
+
+[[bin]]
+name = "qualify-staged-policy-mlp"
+path = "src/bin/qualify-staged-policy-mlp.rs"
+required-features = ["staged-policy-native"]
 test = false

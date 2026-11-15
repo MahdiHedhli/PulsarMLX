@@ -68,6 +68,9 @@ fn main() {
     if std::env::var_os("CARGO_FEATURE_STAGED_WEIGHTED_NATIVE").is_some() {
         bins.push("qualify-staged-weighted-mlp");
     }
+    if std::env::var_os("CARGO_FEATURE_STAGED_POLICY_NATIVE").is_some() {
+        bins.push("qualify-staged-policy-mlp");
+    }
     for bin in bins {
         for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
             println!(

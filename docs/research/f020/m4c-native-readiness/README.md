@@ -1,0 +1,17 @@
+# Staged policy qualification readiness
+
+The opt-in `qualify-staged-policy-mlp` target takes one supervised arm intent. Its child obtains a fresh startup receipt and checks the measured images and page size before creating the arm output or selecting the stored profile, scheduling mode and requested descriptor policy. The existing coordinator owns the commit. Each weighted occurrence uses the existing Driver and arithmetic. A repeated delivery of the committed request must preserve the allocation and policy journal digest.
+
+The host adapter emits twelve synthetic fixture captures. Four use the default exact transport. Eight select a descriptor policy. The new Studio protocol defines eight future policy children, one at a time. The historical four-arm native campaign, its source seals and its claim keep their original identities. A host report cannot enter native grading. Native grading requires a fresh build, operator-bound private description, exclusive claim, startup agreement, positive child completion and the existing independent numerical predicates. Physical bytes, physical bypass, RSS and performance remain unknown.
+
+## Finite resources
+
+Each arm has five 512-byte outputs, up to twelve 32,768-byte occurrence files, five 131,072-byte transport files and one report capped at 131,072 bytes. The successful policy population has eighteen role records across five journals. Each role permits 32,768 bytes plus 4,096 bytes of wrapper. Array framing allows 1,024 bytes per journal. The total is at most 1,850,880 bytes for a successful policy arm and fits the independent 2 MiB file payload limit. The runtime charges its standing policy journal once. Its 2,073,600-byte combined staged-receipt ceiling and 33,734,653-byte transport ceiling still apply.
+
+The prospective campaign admits eight children (300 seconds each), one grade, zero retries, and 2,400 seconds overall. Child standard output and standard error each have an 8 MiB file ceiling. Eight sets of 2 MiB payload plus 16 MiB logs consume at most 144 MiB. The 192 MiB campaign output envelope leaves room for eight sets of bounded intent, startup, completion and PID records, hashes and final outcome. Build output and the retained installation have separate custody. The host checker processes one arm at a time and retains only digest commitments between arms. Its proposed 64 MiB per-arm working allowance and 192 MiB controller allowance are logical working envelopes, not measured RSS or kernel limits. They include bounded JSON decoding, independent reference data, current-arm vectors and process control. Python object layout and native memory use are distinct from serialized byte counts.
+
+## Provenance and handoff
+
+The versioned input closure includes every tracked source blob and mode, including compile-time data, build scripts, dependencies, fixture inputs, verifier modules and the accounting code. Generating the Rust pins normalizes only the self-referential seal value. Live physical admission checks the generated file, clean Git inventory, original installation, exact compiler artifact and measured linkage. Native builds and native numerical results require the separate Studio successor.
+
+The [field register](register.json) gives producers, consumers, bounds, null meanings and evidence classes. It retains the ten Rust026 advisory dispositions. Unknown partial reads and interrupted roles stay unknown. A warm occurrence with no attributable transport still computes. Replay adds neither a new occurrence nor a new policy journal.

@@ -6,9 +6,9 @@ use crate::{
 };
 use backend::{step::HostLayerExecutor, CancellationToken, ContractError, ErrorCategory};
 use mlx_expert_mlp::{
+    policy_qualification::{self as qualification, Arm, ArmFiles},
     resident_fixture::{self as fixture},
     resident_pipeline::{Fault, StageResult},
-    weighted,
 };
 use mlx_native_affine::{fixture::sha256_hex, frozen};
 use serde_json::{json, Value};
@@ -16,7 +16,7 @@ use std::{
     cell::RefCell,
     ffi::CStr,
     fs,
-    io::{Read, Write},
+    io::Read,
     path::{Path, PathBuf},
     process::Stdio,
     rc::Rc,
@@ -40,13 +40,6 @@ fn probe() -> StageResult<u64> {
 }
 fn verify(ok: bool, message: &str) -> Result<(), String> {
     fixture::ensure(ok, message)
-}
-fn write(out: &Path, name: &str, bytes: &[u8], limit: usize) -> Result<(), String> {
-    verify(bytes.len() <= limit, "output size")?;
-    let mut file = fs::File::create_new(out.join(name)).map_err(|e| e.to_string())?;
-    file.write_all(bytes)
-        .and_then(|_| file.sync_all())
-        .map_err(|e| e.to_string())
 }
 // Observe the actual image addresses in this process. The isolated verifier streams
 // file hashes for these exact canonical paths; the child never buffers an entire dylib.
@@ -97,12 +90,20 @@ fn images() -> Result<Value, String> {
 
 #[path = "staged_weighted_native_pins.rs"]
 mod pins;
-fn admit(path: &Path) -> Result<Value, String> {
-    let modules = pins::MODULES;
+struct Campaign {
+    fixed_policy: bool,
+    modules: &'static [(&'static str, &'static str)],
+    reference: &'static str,
+    seal: &'static str,
+    bootstrap: &'static str,
+}
+
+fn admit(path: &Path, campaign: &Campaign) -> Result<(Arm, Value), String> {
+    let modules = campaign.modules;
     let measured = images()?;
     let evidence = json!({"images":measured,"binary":std::env::current_exe().map_err(|e|e.to_string())?,
-        "parent":unsafe{libc::getppid()},"reference":pins::REFERENCE,
-        "seal":pins::SEAL,"abi":resident_verifier::layout_stamp(),"rustc":env!("F020_RUSTC_VERSION"),"profile":env!("F020_BUILD_PROFILE"),
+        "parent":unsafe{libc::getppid()},"reference":campaign.reference,
+        "seal":campaign.seal,"abi":resident_verifier::layout_stamp(),"rustc":env!("F020_RUSTC_VERSION"),"profile":env!("F020_BUILD_PROFILE"),
         "mlx_commit":frozen::MLX_COMMIT,"mlx_c_commit":frozen::MLX_C_COMMIT,
         "prefix":std::env::var("MLX_C_PREFIX").map_err(|_|"native prefix")?});
     let prefix = PathBuf::from(evidence["prefix"].as_str().ok_or("prefix")?);
@@ -123,9 +124,8 @@ fn admit(path: &Path) -> Result<Value, String> {
             )?;
         }
     }
-    let bootstrap = include_str!("../../../scripts/research/f020_staged_weighted_bootstrap.py");
     let mut cmd = resident_verifier::verifier_command(
-        bootstrap,
+        campaign.bootstrap,
         &serde_json::to_string(&modules).map_err(|e| e.to_string())?,
         path,
     )?;
@@ -149,11 +149,29 @@ fn admit(path: &Path) -> Result<Value, String> {
         read.is_ok() && status.success() && answer.len() <= 8192,
         "child admission",
     )?;
-    let cap: Value = serde_json::from_slice(&answer).map_err(|e| e.to_string())?;
     let directory = path.parent().ok_or("intent directory")?;
     let saved = fixture::checked_file(&directory.join("startup.json"), 8192)?;
-    let receipt: Value = serde_json::from_slice(&saved).map_err(|e| e.to_string())?;
     let intent_hash = sha256_hex(&fixture::checked_file(path, 65536)?);
+    if campaign.fixed_policy {
+        verify(images()? == measured, "loaded image census changed")?;
+        // SAFETY: sysconf(_SC_PAGESIZE) takes no pointers or writable arguments.
+        let page =
+            u64::try_from(unsafe { libc::sysconf(libc::_SC_PAGESIZE) }).map_err(|_| "page size")?;
+        return qualification::fixed_startup(
+            &answer,
+            &saved,
+            directory
+                .file_name()
+                .and_then(|s| s.to_str())
+                .ok_or("arm directory")?,
+            page,
+            &intent_hash,
+            campaign.reference,
+            &measured,
+        );
+    }
+    let cap: Value = serde_json::from_slice(&answer).map_err(|e| e.to_string())?;
+    let receipt: Value = serde_json::from_slice(&saved).map_err(|e| e.to_string())?;
     verify(
         receipt == cap
             && cap.as_object().is_some_and(|v| v.len() == 9)
@@ -194,9 +212,35 @@ fn admit(path: &Path) -> Result<Value, String> {
             "startup identity",
         )?;
     }
-    Ok(cap)
+    Ok((Arm::parse(profile, mode, None)?, cap))
 }
 pub fn run() -> Result<(), String> {
+    run_campaign(Campaign {
+        fixed_policy: false,
+        modules: pins::MODULES,
+        seal: pins::SEAL,
+        reference: pins::REFERENCE,
+        bootstrap: include_str!("../../../scripts/research/f020_staged_weighted_bootstrap.py"),
+    })
+}
+
+#[cfg(feature = "staged-policy-native")]
+pub fn run_policy(
+    modules: &'static [(&'static str, &'static str)],
+    seal: &'static str,
+    reference: &'static str,
+    bootstrap: &'static str,
+) -> Result<(), String> {
+    run_campaign(Campaign {
+        fixed_policy: true,
+        modules,
+        seal,
+        reference,
+        bootstrap,
+    })
+}
+
+fn run_campaign(campaign: Campaign) -> Result<(), String> {
     let mut args = std::env::args_os().skip(1);
     verify(
         args.next().as_deref() == Some(std::ffi::OsStr::new("--intent")),
@@ -205,29 +249,35 @@ pub fn run() -> Result<(), String> {
     let path = PathBuf::from(args.next().ok_or("intent")?);
     verify(
         args.next().is_none()
-            && path.file_name().and_then(|s| s.to_str()) == Some("staged-intent.json")
+            && path.file_name().and_then(|s| s.to_str())
+                == Some(if campaign.fixed_policy {
+                    "policy-intent.json"
+                } else {
+                    "staged-intent.json"
+                })
             && path.canonicalize().map_err(|e| e.to_string())? == path,
         "canonical intent",
     )?;
-    let cap = admit(&path)?;
+    let (arm, cap) = admit(&path, &campaign)?;
     let out = path.parent().ok_or("intent directory")?.join("out");
     fs::create_dir(&out).map_err(|e| e.to_string())?;
     let mut phases = vec!["verified_child"];
-    let result = run_arm(&cap, &out, &mut phases);
+    let mut files = ArmFiles::new(&out);
+    let result = run_arm(&cap, arm, &mut files, &mut phases);
     if let Err(e) = &result {
         // Absence of an occurrence/receipt is not a zero-effect observation.
-        write(&out,"failure.json",&serde_json::to_vec(&json!({"status":"failed","completed_phases":phases,"ffi_counts":ffi::call_counts(),"reason":e.chars().take(512).collect::<String>(),"unobserved_effects":"unknown"})).map_err(|e|e.to_string())?,8192)?;
+        files.failure(&json!({"status":"failed","completed_phases":phases,"ffi_counts":ffi::call_counts(),"reason":e.chars().take(512).collect::<String>(),"unobserved_effects":"unknown"}))?;
     }
     result
 }
-fn run_arm(cap: &Value, out: &Path, phases: &mut Vec<&'static str>) -> Result<(), String> {
-    let profile = fixture::text(&cap["profile"])?;
-    let arm = fixture::text(&cap["arm"])?;
-    let mode = match arm {
-        "Serial" => weighted::staged::Mode::Serial,
-        "Overlap" => weighted::staged::Mode::Overlap,
-        _ => return Err("staged mode".into()),
-    };
+fn run_arm(
+    cap: &Value,
+    selected: Arm,
+    files: &mut ArmFiles<'_>,
+    phases: &mut Vec<&'static str>,
+) -> Result<(), String> {
+    let profile = selected.profile;
+    let arm = selected.mode;
     let repo = std::env::current_dir().map_err(|e| e.to_string())?;
     let state = Rc::new(RefCell::new(Guard::new(probe).map_err(|e| e.reason)?));
     phases.push("initial_guard");
@@ -252,14 +302,7 @@ fn run_arm(cap: &Value, out: &Path, phases: &mut Vec<&'static str>) -> Result<()
         copied: Copied::new(),
         state: state.clone(),
     };
-    let (mut host, store) = weighted::staged::setup(
-        &repo,
-        profile,
-        weighted::RouteBook::fixed(profile)?,
-        mode,
-        driver,
-        None,
-    )?;
+    let (mut host, store) = selected.setup(&repo, driver)?;
     phases.push("weighted_setup");
     let t = CancellationToken::new();
     let mut steps = Vec::with_capacity(5);
@@ -297,16 +340,15 @@ fn run_arm(cap: &Value, out: &Path, phases: &mut Vec<&'static str>) -> Result<()
                     && result.committed.position == pos + 1,
                 "weighted commit",
             )?;
-            write(
-                out,
-                &format!("weighted-{pos}.f32"),
-                &result.committed.bytes,
-                512,
-            )?;
+            files.vector(pos, &result.committed.bytes)?;
             steps.push(json!({"position":pos,"request":request.id,"token":0,"input_reads":store.reads(),"counts":observed,
                 "snapshot":snap,"peak":host.peak_reservation_bytes(),"active":host.active_reservation_bytes(),"sha256":sha256_hex(&result.committed.bytes)}));
             after_commit.map_err(|e| e.reason)?;
             if pos == 0 {
+                let journal_before = selected
+                    .policy
+                    .map(|_| qualification::journal_digest(host.backend(), 0))
+                    .transpose()?;
                 let again = host
                     .execute(&request, &store, &store, &t, |_| Ok(()))
                     .map_err(|e| e.to_string())?;
@@ -321,39 +363,30 @@ fn run_arm(cap: &Value, out: &Path, phases: &mut Vec<&'static str>) -> Result<()
                     "replay performed work",
                 )?;
                 replay = json!({"same_commit":true,"lost_delivery":true,"position":1,"input_reads":1,"counts":observed,"snapshot":snap,"guard_count":checks});
+                if let Some(digest) = journal_before {
+                    verify(
+                        qualification::journal_digest(host.backend(), 0)? == digest,
+                        "replay changed policy journal",
+                    )?;
+                    replay["policy_sha256"] = json!(digest);
+                }
             }
         }
         Ok(())
     })();
-    let mut size = steps.len() * 512;
-    let mut rows = 0;
-    for (i, (_, _, bytes)) in host.backend().records().enumerate() {
-        verify(i < 12, "occurrence limit")?;
-        write(out, &format!("occ-{i:02}.json"), bytes, 32768)?;
-        size += bytes.len();
-        rows += 1;
-    }
-    for (i, bytes) in host.backend().transport_records().enumerate() {
-        verify(i < 5, "transport count")?;
-        write(
-            out,
-            &format!("transport-{i}.json"),
-            bytes,
-            weighted::staged::TRANSPORT_ROW,
-        )?;
-        size += bytes.len();
-    }
-    let report = json!({"schema":"staged-weighted-native-arm-v1","admission":cap,"profile":profile,"arm":arm,"book":host.backend().book().digest(),
+    let (rows, journals) = files.records(host.backend())?;
+    let size = files.bytes();
+    let mut report = json!({"schema":"staged-weighted-native-arm-v1","admission":cap,"profile":profile,"arm":arm,"book":host.backend().book().digest(),
         "allocator":{"previous_limit":old,"initial_cache":initial,"cache_limit":0,"initial_clear":0},"version":version,"initial_counts":initial_counts,
         "steps":steps,"replay":replay,"row_count":rows,"final":host.backend().snapshot(),"ledger":host.backend().ledger(),"standing":host.backend().working_bytes(),
         "guards":state.borrow().words,"failure":sequence.as_ref().err(),"payload_before_report":size,
         "harness":{"limit":2<<20,"admission_and_paths":128<<10,"step_snapshots_and_guards":128<<10,"report_tree_and_encoding":768<<10,
             "verifier_and_provenance":384<<10,"caller_output_clones":0,"combined_bound":host.peak_reservation_bytes()+(2<<20)}});
-    let mut data = vec![0; 128 << 10];
-    let mut target = std::io::Cursor::new(data.as_mut_slice());
-    serde_json::to_writer(&mut target, &report).map_err(|_| "bounded report encoding")?;
-    let used = target.position() as usize;
-    verify(size + used <= 2 << 20, "arm payload")?;
-    write(out, "report.json", &data[..used], 128 << 10)?;
+    if let Some(policy) = selected.policy {
+        report["schema"] = json!(qualification::NATIVE_SCHEMA);
+        report["policy"] = json!(policy);
+        report["policy_journals"] = json!(journals);
+    }
+    files.report(&report)?;
     sequence
 }
