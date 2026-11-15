@@ -729,8 +729,8 @@ fix is marked "proposed", as elsewhere in this register.
 
 The owner approved the proposals below on 2026-11-14, at owner checkpoint 1. Each keeps its
 P- id as its deviation id (rule 4) and is a deviation like any other id in this register:
-ledger rows and comparator annotations cite it. The ids P-5, P-12 and P-17 to P-24 are not
-here: P-12 and P-17 were declined, P-5 and P-18 are deferred, and P-19 to P-24 were raised
+ledger rows and comparator annotations cite it. The ids P-5, P-12 and P-17 to P-25 are not
+here: P-12 and P-17 were declined, P-5 and P-18 are deferred, and P-19 to P-25 were raised
 later and await the owner (the two sections that follow).
 
 ### P-1
@@ -956,13 +956,13 @@ ledger row or comparator annotation that cites one fails the checker.
 
 ## Deferred, awaiting owner decision
 
-The owner deferred P-5 and P-18 on 2026-11-14, at checkpoint 1. P-19 to P-24 were raised
+The owner deferred P-5 and P-18 on 2026-11-14, at checkpoint 1. P-19 to P-25 were raised
 by the M1 packages on 2026-11-14 and 2026-11-15 and have not been put to the owner yet;
-they are put at checkpoint 2. None of the eight is **approved**. Until the owner decides, the
+they are put at checkpoint 2. None of the nine is **approved**. Until the owner decides, the
 implementing package reproduces the donor's behavior where it can, and records the row as
-`pending` where it cannot. For P-19 to P-24 it cannot: the code ships the proposed
+`pending` where it cannot. For P-19 to P-25 it cannot: the code ships the proposed
 behavior, says so where it does, and changes if the owner declines. The register of open
-items tracks all eight as OPEN-15.
+items tracks all nine as OPEN-15.
 
 | Ref | Proposed difference | Donor behavior | Planner and reason | Decide before |
 | --- | --- | --- | --- | --- |
@@ -974,6 +974,7 @@ items tracks all eight as OPEN-15.
 | P-22 | Answer Python's error page for a refused request head (400, 414, 431, 505) also when `cors_origins` is set | With `cors_origins` set, the donor's `end_headers` override raises an `AttributeError` on these pages, because the request path or headers are not set yet, and the client gets no answer (`serve/server.py`, the handler's `end_headers`) | API-02: an upstream defect that is not one of the three FIX-1 items; the transport cannot reproduce a crash without an answer. For the 431 page the hook runs with empty headers, so a listed-origin list adds no CORS header. | Checkpoint 2 (the behavior ships with API-02) |
 | P-23 | Five differences in the run-config store: a config file above 16 MiB is not read; a config `env` that is not an object, a config `host` that is not a string and an `installer` that is not an object stop the server with the console's own message; a document nested deeper than the reader's bound reads as an empty config on the lenient path (tied to P-20); the savings path expands only `~` and `~/`, not `~name/`; and a rewritten config keeps its file permissions | The donor reads a file of any size; stops with a Python traceback or `TypeError` in the three cases; reads a deep document; uses `Path.expanduser()`; and writes a new file with default permissions | API-15: bounded reads and readable start-up errors; the server stops in the same cases as the donor, only the text differs. | Checkpoint 2 (the behavior ships with API-15) |
 | P-24 | Tokenizer pack loading: refuse, with the crate's own messages, a `vocab.json` that leaves exactly one id empty, a `special_ids` that is truthy but not an object, token-type values that are truthy but not a list, and GGUF token or merge arrays that are not arrays of strings; refuse a pack file above 512 MiB before reading it; and bound the compile size of the special-literal pattern at 256 MiB | The donor accepts these inputs (for example it turns a string into a list of characters) and has no size limits | PRM-04: inputs no working pack has; explicit limits on anything sized by a file. Plain spans are byte offsets into the Rust string where the donor uses code-point indexes, which changes no observable behavior. | Checkpoint 2 (the behavior ships with PRM-04) |
+| P-25 | Under `--port 0` the server's ready line names the port the operating system bound | The donor prints the requested port (`a.port`, `serve/server.py:7387`), so under `--port 0` its line would say `:0`; its own tests never start it with port 0 | CNF-07: the conformance harness starts every server on port 0 and reads the port from the ready line. For any other port the line is identical to the donor's. API-08 and API-17 implement it. | Checkpoint 2 (the harness of CNF-07 relies on it) |
 
 Two further items are still open under OPEN-15 and await the owner in the same way: the
 JSON Schema meta-validation wording of PLAN-5 (the `invalid JSON Schema: ` prefix and the
