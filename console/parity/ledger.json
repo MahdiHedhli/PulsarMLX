@@ -255,7 +255,8 @@
       "class": "ContextCost",
       "method": "test_parsed_from_the_start_log",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_dashboard.py::ContextCost::test_set_context_rewrites_the_command",
@@ -263,7 +264,8 @@
       "class": "ContextCost",
       "method": "test_set_context_rewrites_the_command",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_chat_gets_503_while_reloading",
@@ -271,7 +273,8 @@
       "class": "Dashboard",
       "method": "test_chat_gets_503_while_reloading",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-07"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_context_range",
@@ -279,7 +282,8 @@
       "class": "Dashboard",
       "method": "test_context_range",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_deepseek_context_range",
@@ -287,7 +291,8 @@
       "class": "Dashboard",
       "method": "test_deepseek_context_range",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_health_has_the_version",
@@ -295,7 +300,8 @@
       "class": "Dashboard",
       "method": "test_health_has_the_version",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_health_history_thinking",
@@ -303,7 +309,8 @@
       "class": "Dashboard",
       "method": "test_health_history_thinking",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_metrics_list_the_drafters_that_run",
@@ -311,7 +318,8 @@
       "class": "Dashboard",
       "method": "test_metrics_list_the_drafters_that_run",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_metrics_say_whether_deepseek_drafts",
@@ -319,7 +327,8 @@
       "class": "Dashboard",
       "method": "test_metrics_say_whether_deepseek_drafts",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_out_of_range_and_foreign_pages_are_refused",
@@ -327,7 +336,8 @@
       "class": "Dashboard",
       "method": "test_out_of_range_and_foreign_pages_are_refused",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_peak_decode_follows_the_live_figure",
@@ -335,7 +345,8 @@
       "class": "Dashboard",
       "method": "test_peak_decode_follows_the_live_figure",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_peak_decode_speed",
@@ -343,7 +354,8 @@
       "class": "Dashboard",
       "method": "test_peak_decode_speed",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_reload_changes_the_context_and_saves_it",
@@ -351,7 +363,8 @@
       "class": "Dashboard",
       "method": "test_reload_changes_the_context_and_saves_it",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_report_leaves_secrets_out",
@@ -359,7 +372,8 @@
       "class": "Dashboard",
       "method": "test_report_leaves_secrets_out",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_requests_carry_the_drafts_offered_and_kept",
@@ -367,7 +381,8 @@
       "class": "Dashboard",
       "method": "test_requests_carry_the_drafts_offered_and_kept",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_requests_record_their_api",
@@ -375,7 +390,8 @@
       "class": "Dashboard",
       "method": "test_requests_record_their_api",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_stat_lines_carry_the_draft_counts_and_the_ssd_bytes",
@@ -383,7 +399,8 @@
       "class": "Dashboard",
       "method": "test_stat_lines_carry_the_draft_counts_and_the_ssd_bytes",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_token_count_matches_the_prompt",
@@ -391,7 +408,8 @@
       "class": "Dashboard",
       "method": "test_token_count_matches_the_prompt",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_dashboard.py::Dashboard::test_tokenize_and_detokenize",
@@ -399,7 +417,8 @@
       "class": "Dashboard",
       "method": "test_tokenize_and_detokenize",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_a_vision_tower_in_the_engines_process",
@@ -407,7 +426,8 @@
       "class": "GpuMap",
       "method": "test_a_vision_tower_in_the_engines_process",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_an_engine_run_through_a_launcher",
@@ -415,7 +435,8 @@
       "class": "GpuMap",
       "method": "test_an_engine_run_through_a_launcher",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_found_by_pci_not_by_place",
@@ -423,7 +444,8 @@
       "class": "GpuMap",
       "method": "test_found_by_pci_not_by_place",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_helper_pool_and_primary_pool_on_one_card_do_not_overlap",
@@ -431,7 +453,8 @@
       "class": "GpuMap",
       "method": "test_helper_pool_and_primary_pool_on_one_card_do_not_overlap",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_helper_pool_is_accounted_separately_from_drafter_and_rest",
@@ -439,7 +462,8 @@
       "class": "GpuMap",
       "method": "test_helper_pool_is_accounted_separately_from_drafter_and_rest",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_later_lines_follow_a_picture",
@@ -447,7 +471,8 @@
       "class": "GpuMap",
       "method": "test_later_lines_follow_a_picture",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_metrics_carry_it",
@@ -455,7 +480,8 @@
       "class": "GpuMap",
       "method": "test_metrics_carry_it",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_never_more_than_the_card",
@@ -463,7 +489,8 @@
       "class": "GpuMap",
       "method": "test_never_more_than_the_card",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_nvml_tells_the_engine_from_other_programs",
@@ -471,7 +498,8 @@
       "class": "GpuMap",
       "method": "test_nvml_tells_the_engine_from_other_programs",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_parse",
@@ -479,7 +507,8 @@
       "class": "GpuMap",
       "method": "test_parse",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_strata_ds4s_prompt_buffers_and_tensor_parallel",
@@ -487,7 +516,8 @@
       "class": "GpuMap",
       "method": "test_strata_ds4s_prompt_buffers_and_tensor_parallel",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_tensor_parallel_room_is_the_groups_least_free",
@@ -495,7 +525,8 @@
       "class": "GpuMap",
       "method": "test_tensor_parallel_room_is_the_groups_least_free",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_the_drivers_reserve_is_not_another_program",
@@ -503,7 +534,8 @@
       "class": "GpuMap",
       "method": "test_the_drivers_reserve_is_not_another_program",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_the_engine_not_listed_the_start_measurement",
@@ -511,7 +543,8 @@
       "class": "GpuMap",
       "method": "test_the_engine_not_listed_the_start_measurement",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_the_vision_encoder_has_the_tail",
@@ -519,7 +552,8 @@
       "class": "GpuMap",
       "method": "test_the_vision_encoder_has_the_tail",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_two_parts_on_one_card_add_up",
@@ -527,7 +561,8 @@
       "class": "GpuMap",
       "method": "test_two_parts_on_one_card_add_up",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuMap::test_without_nvml_the_start_measurement",
@@ -535,7 +570,8 @@
       "class": "GpuMap",
       "method": "test_without_nvml_the_start_measurement",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::GpuRelease::test_mac_free_bytes_reads_vm_stat",
@@ -543,7 +579,8 @@
       "class": "GpuRelease",
       "method": "test_mac_free_bytes_reads_vm_stat",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_dashboard.py::GpuRelease::test_mac_waits_until_free_memory_stops_rising",
@@ -551,7 +588,8 @@
       "class": "GpuRelease",
       "method": "test_mac_waits_until_free_memory_stops_rising",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_dashboard.py::GpuRelease::test_waits_until_no_gpu_lists_the_engine",
@@ -559,7 +597,8 @@
       "class": "GpuRelease",
       "method": "test_waits_until_no_gpu_lists_the_engine",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_dashboard.py::GpuRelease::test_without_nvml_a_short_wait",
@@ -567,7 +606,8 @@
       "class": "GpuRelease",
       "method": "test_without_nvml_a_short_wait",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_dashboard.py::NvmlPids::test_its_own_pid_when_listed_or_nothing_is",
@@ -575,7 +615,8 @@
       "class": "NvmlPids",
       "method": "test_its_own_pid_when_listed_or_nothing_is",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::NvmlPids::test_the_processes_a_launcher_started",
@@ -583,7 +624,8 @@
       "class": "NvmlPids",
       "method": "test_the_processes_a_launcher_started",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-13"
     },
     {
       "id": "serve/test_dashboard.py::Offline::test_nothing_loaded_from_the_network",
@@ -591,7 +633,8 @@
       "class": "Offline",
       "method": "test_nothing_loaded_from_the_network",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-02"
     },
     {
       "id": "serve/test_dashboard.py::Offline::test_the_vendored_code_keeps_its_notices",
@@ -599,7 +642,8 @@
       "class": "Offline",
       "method": "test_the_vendored_code_keeps_its_notices",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-01"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_about_has_the_support_line_always_and_the_update_card_none",
@@ -607,7 +651,8 @@
       "class": "PageLogic",
       "method": "test_about_has_the_support_line_always_and_the_update_card_none",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_context_slider_reaches_each_models_own_top",
@@ -615,7 +660,8 @@
       "class": "PageLogic",
       "method": "test_context_slider_reaches_each_models_own_top",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_experts_on_the_ssd_have_their_bytes_like_the_other_tiers",
@@ -623,7 +669,8 @@
       "class": "PageLogic",
       "method": "test_experts_on_the_ssd_have_their_bytes_like_the_other_tiers",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_free_room_a_tensor_parallel_partner_cannot_use_promises_no_experts",
@@ -631,7 +678,8 @@
       "class": "PageLogic",
       "method": "test_free_room_a_tensor_parallel_partner_cannot_use_promises_no_experts",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_glm53_keeps_its_own_chat_defaults",
@@ -639,7 +687,8 @@
       "class": "PageLogic",
       "method": "test_glm53_keeps_its_own_chat_defaults",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_qwen_file_reads_are_named_for_what_they_count_and_the_ssd_tip_needs_ssd_only_experts",
@@ -647,7 +696,8 @@
       "class": "PageLogic",
       "method": "test_qwen_file_reads_are_named_for_what_they_count_and_the_ssd_tip_needs_ssd_only_experts",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_speculation_says_off_waiting_or_the_acceptance",
@@ -655,7 +705,8 @@
       "class": "PageLogic",
       "method": "test_speculation_says_off_waiting_or_the_acceptance",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::PageLogic::test_thinking_pill_covers_the_chosen_level_only",
@@ -663,7 +714,8 @@
       "class": "PageLogic",
       "method": "test_thinking_pill_covers_the_chosen_level_only",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_dashboard.py::Port::test_refused_with_nothing_saved",
@@ -671,7 +723,8 @@
       "class": "Port",
       "method": "test_refused_with_nothing_saved",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_dashboard.py::Port::test_saved_and_reported",
@@ -679,7 +732,8 @@
       "class": "Port",
       "method": "test_saved_and_reported",
       "subsystem": "console-http / console-manage / console-host / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_deepseek_tool_block.py::DeepSeekToolBlock::test_blocked_call_is_withheld_and_continuation_has_valid_boundaries",
@@ -1371,7 +1425,8 @@
       "class": "FairSlices",
       "method": "test_a_client_gone_while_queued_again_leaves_the_line",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_fair.py::FairSlices::test_alone_it_is_never_cut",
@@ -1379,7 +1434,8 @@
       "class": "FairSlices",
       "method": "test_alone_it_is_never_cut",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_fair.py::FairSlices::test_off_by_default_the_short_one_waits",
@@ -1387,7 +1443,8 @@
       "class": "FairSlices",
       "method": "test_off_by_default_the_short_one_waits",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_fair.py::FairSlices::test_pause_keeps_the_tokens_still_on_their_way",
@@ -1395,7 +1452,8 @@
       "class": "FairSlices",
       "method": "test_pause_keeps_the_tokens_still_on_their_way",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_fair.py::FairSlices::test_the_short_one_goes_first_and_the_long_one_continues",
@@ -1403,7 +1461,8 @@
       "class": "FairSlices",
       "method": "test_the_short_one_goes_first_and_the_long_one_continues",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_fair.py::FairSlicesParallel::test_one_short_request_cuts_one_long_answer",
@@ -1411,7 +1470,8 @@
       "class": "FairSlicesParallel",
       "method": "test_one_short_request_cuts_one_long_answer",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_glm_dsa_api.py::Anthropic::test_streamed_events",
@@ -2251,7 +2311,8 @@
       "class": "Api",
       "method": "test_json_mode",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_no_alternatives_and_no_chance",
@@ -2259,7 +2320,8 @@
       "class": "Api",
       "method": "test_no_alternatives_and_no_chance",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_not_asked",
@@ -2267,7 +2329,8 @@
       "class": "Api",
       "method": "test_not_asked",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_refused",
@@ -2275,7 +2338,8 @@
       "class": "Api",
       "method": "test_refused",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_streamed",
@@ -2283,7 +2347,8 @@
       "class": "Api",
       "method": "test_streamed",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_tool_call_tokens_are_not_text",
@@ -2291,7 +2356,8 @@
       "class": "Api",
       "method": "test_tool_call_tokens_are_not_text",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Api::test_whole",
@@ -2299,7 +2365,8 @@
       "class": "Api",
       "method": "test_whole",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_logprobs.py::Fields::test_asking",
@@ -2319,7 +2386,8 @@
       "class": "Fields",
       "method": "test_gen_key",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_logprobs.py::Fields::test_lp_line",
@@ -2327,7 +2395,8 @@
       "class": "Fields",
       "method": "test_lp_line",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-04"
     },
     {
       "id": "serve/test_logprobs.py::Fields::test_refused",
@@ -2347,7 +2416,8 @@
       "class": "OneConversation",
       "method": "test_another_tokens_line_is_not_taken",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-12"
     },
     {
       "id": "serve/test_logprobs.py::OneConversation::test_lines",
@@ -2355,7 +2425,8 @@
       "class": "OneConversation",
       "method": "test_lines",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-12"
     },
     {
       "id": "serve/test_logprobs.py::OneConversation::test_not_asked",
@@ -2363,7 +2434,8 @@
       "class": "OneConversation",
       "method": "test_not_asked",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-12"
     },
     {
       "id": "serve/test_logprobs.py::Responses::test_normalized",
@@ -2371,7 +2443,8 @@
       "class": "Responses",
       "method": "test_normalized",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "RSP-06"
     },
     {
       "id": "serve/test_logprobs.py::Responses::test_not_asked_response",
@@ -2379,7 +2452,8 @@
       "class": "Responses",
       "method": "test_not_asked_response",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "RSP-06"
     },
     {
       "id": "serve/test_logprobs.py::Responses::test_streamed_response",
@@ -2387,7 +2461,8 @@
       "class": "Responses",
       "method": "test_streamed_response",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "RSP-06"
     },
     {
       "id": "serve/test_logprobs.py::Responses::test_whole_response",
@@ -2395,7 +2470,8 @@
       "class": "Responses",
       "method": "test_whole_response",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "RSP-06"
     },
     {
       "id": "serve/test_logprobs.py::SeveralConversations::test_routed",
@@ -2403,7 +2479,8 @@
       "class": "SeveralConversations",
       "method": "test_routed",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_loop_guard.py::Collapse::test_a_check_run_again_in_a_row",
@@ -3939,7 +4016,8 @@
       "class": "AStoppedLongPrompt",
       "method": "test_it_says_it_waits_while_progress_lines_go_on",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_multi.py::AStoppedLongPrompt::test_the_next_request_gets_its_own_tokens",
@@ -3947,7 +4025,8 @@
       "class": "AStoppedLongPrompt",
       "method": "test_the_next_request_gets_its_own_tokens",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_multi.py::AWedgedRequest::test_a_cancelled_request_is_drained_for_a_bounded_time",
@@ -3955,7 +4034,8 @@
       "class": "AWedgedRequest",
       "method": "test_a_cancelled_request_is_drained_for_a_bounded_time",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::AWedgedRequest::test_a_request_the_engine_never_answers_ends",
@@ -3963,7 +4043,8 @@
       "class": "AWedgedRequest",
       "method": "test_a_request_the_engine_never_answers_ends",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Engine::test_a_consumer_that_stops_ends_only_its_request",
@@ -3971,7 +4052,8 @@
       "class": "Engine",
       "method": "test_a_consumer_that_stops_ends_only_its_request",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Engine::test_a_restart_does_not_hand_out_a_number_a_request_already_has",
@@ -3979,7 +4061,8 @@
       "class": "Engine",
       "method": "test_a_restart_does_not_hand_out_a_number_a_request_already_has",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_multi.py::Engine::test_an_engine_error_reaches_its_request",
@@ -3987,7 +4070,8 @@
       "class": "Engine",
       "method": "test_an_engine_error_reaches_its_request",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Engine::test_concurrent_requests_each_get_their_own_tokens",
@@ -3995,7 +4079,8 @@
       "class": "Engine",
       "method": "test_concurrent_requests_each_get_their_own_tokens",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Engine::test_each_request_reads_its_own_done_figures",
@@ -4003,7 +4088,8 @@
       "class": "Engine",
       "method": "test_each_request_reads_its_own_done_figures",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Engine::test_ready_says_how_many",
@@ -4011,7 +4097,8 @@
       "class": "Engine",
       "method": "test_ready_says_how_many",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Interleaved::test_a_stop_during_its_read_ends_that_request_alone",
@@ -4019,7 +4106,8 @@
       "class": "Interleaved",
       "method": "test_a_stop_during_its_read_ends_that_request_alone",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Interleaved::test_prompts_arriving_during_a_read_queue_behind_it",
@@ -4027,7 +4115,8 @@
       "class": "Interleaved",
       "method": "test_prompts_arriving_during_a_read_queue_behind_it",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Interleaved::test_running_requests_decode_while_a_prompt_is_read",
@@ -4035,7 +4124,8 @@
       "class": "Interleaved",
       "method": "test_running_requests_decode_while_a_prompt_is_read",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-07"
     },
     {
       "id": "serve/test_multi.py::Places::test_a_waiter_for_all_holds_back_later_ones",
@@ -5171,7 +5261,8 @@
       "class": "ClientShapes",
       "method": "test_anthropic_mid_conversation_system",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::ClientShapes::test_leading_system_unchanged",
@@ -5179,7 +5270,8 @@
       "class": "ClientShapes",
       "method": "test_leading_system_unchanged",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-06"
     },
     {
       "id": "serve/test_server.py::ClientShapes::test_openai_late_developer_and_system",
@@ -5187,7 +5279,8 @@
       "class": "ClientShapes",
       "method": "test_openai_late_developer_and_system",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-16"
     },
     {
       "id": "serve/test_server.py::ClientShapes::test_query_string",
@@ -5195,7 +5288,8 @@
       "class": "ClientShapes",
       "method": "test_query_string",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_a_listed_page_gets_its_preflight_and_the_header",
@@ -5203,7 +5297,8 @@
       "class": "CorsOptIn",
       "method": "test_a_listed_page_gets_its_preflight_and_the_header",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_a_trailing_slash_in_the_config_is_forgiven",
@@ -5223,7 +5318,8 @@
       "class": "CorsOptIn",
       "method": "test_another_page_cannot_post_without_a_preflight",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_another_page_gets_nothing",
@@ -5255,7 +5351,8 @@
       "class": "CorsOptIn",
       "method": "test_star_allows_every_page",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_the_config_value",
@@ -5289,7 +5386,8 @@
       "class": "EngineDeath",
       "method": "test_engine_err_mid_stream",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::EngineDeath::test_error_then_restart",
@@ -5297,7 +5395,8 @@
       "class": "EngineDeath",
       "method": "test_error_then_restart",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-12"
     },
     {
       "id": "serve/test_server.py::EngineEndTests::test_a_gpu_fault_the_engine_caught_is_not_read_as_ram",
@@ -5305,7 +5404,8 @@
       "class": "EngineEndTests",
       "method": "test_a_gpu_fault_the_engine_caught_is_not_read_as_ram",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_server.py::EngineEndTests::test_a_replaced_engines_late_end_leaves_the_new_one_running",
@@ -5313,7 +5413,8 @@
       "class": "EngineEndTests",
       "method": "test_a_replaced_engines_late_end_leaves_the_new_one_running",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::EngineEndTests::test_end_ahead_of_done_marks_the_engine_ended_before_the_request_ends",
@@ -5321,7 +5422,8 @@
       "class": "EngineEndTests",
       "method": "test_end_ahead_of_done_marks_the_engine_ended_before_the_request_ends",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::EngineEndTests::test_the_watchdog_and_ram_notes_are_unchanged",
@@ -5329,7 +5431,8 @@
       "class": "EngineEndTests",
       "method": "test_the_watchdog_and_ram_notes_are_unchanged",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_server.py::FailedRestartKeepsContext::test_failed_restart",
@@ -5337,7 +5440,8 @@
       "class": "FailedRestartKeepsContext",
       "method": "test_failed_restart",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-14"
     },
     {
       "id": "serve/test_server.py::FitMaxTokens::test_a_budget_that_fits_is_unchanged",
@@ -5345,7 +5449,8 @@
       "class": "FitMaxTokens",
       "method": "test_a_budget_that_fits_is_unchanged",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-11"
     },
     {
       "id": "serve/test_server.py::FitMaxTokens::test_no_room_is_still_a_400",
@@ -5353,7 +5458,8 @@
       "class": "FitMaxTokens",
       "method": "test_no_room_is_still_a_400",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-11"
     },
     {
       "id": "serve/test_server.py::FitMaxTokens::test_overshoot_is_clamped_to_the_room",
@@ -5361,7 +5467,8 @@
       "class": "FitMaxTokens",
       "method": "test_overshoot_is_clamped_to_the_room",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-11"
     },
     {
       "id": "serve/test_server.py::GlmThinkingLevels::test_level_names_and_budgets",
@@ -5369,7 +5476,8 @@
       "class": "GlmThinkingLevels",
       "method": "test_level_names_and_budgets",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-05"
     },
     {
       "id": "serve/test_server.py::GlmThinkingLevels::test_levels",
@@ -5377,7 +5485,8 @@
       "class": "GlmThinkingLevels",
       "method": "test_levels",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-05"
     },
     {
       "id": "serve/test_server.py::GlmThinkingLevels::test_other_spellings",
@@ -5385,7 +5494,8 @@
       "class": "GlmThinkingLevels",
       "method": "test_other_spellings",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-05"
     },
     {
       "id": "serve/test_server.py::GoneClients::test_a_queued_request_leaves_when_its_client_goes",
@@ -5393,7 +5503,12 @@
       "class": "GoneClients",
       "method": "test_a_queued_request_leaves_when_its_client_goes",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-07",
+      "rust_tests": [
+        "console-http::api07_lifecycle::a_queued_request_leaves_when_its_client_goes"
+      ],
+      "notes": "Completed by API-07 (the driver starts the client watch and cancels the queued turn through its stream). Covered in part earlier by API-02: console-http::api02_donor::a_waiting_request_is_cancelled_when_its_client_goes; and by ENG-09: console-core::eng09_queue::a_dropped_wait_gives_up_its_place_in_line and console-core::eng09_queue::a_cancelled_request_leaves_the_line_promptly. Re-expressed with API-07's probe dialect on /v1/chat/completions: the donor test asserts only the queue counter, the status line of the request that kept its client and the engine's call count, none of which depends on OpenAI's body."
     },
     {
       "id": "serve/test_server.py::GpuChoice::test_env",
@@ -5401,7 +5516,8 @@
       "class": "GpuChoice",
       "method": "test_env",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-15"
     },
     {
       "id": "serve/test_server.py::IdleUnload::test_an_engine_without_a_lifecycle_is_left_alone",
@@ -5409,7 +5525,8 @@
       "class": "IdleUnload",
       "method": "test_an_engine_without_a_lifecycle_is_left_alone",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-12"
     },
     {
       "id": "serve/test_server.py::IdleUnload::test_not_while_a_request_is_recent_or_holds_the_engine",
@@ -5417,7 +5534,8 @@
       "class": "IdleUnload",
       "method": "test_not_while_a_request_is_recent_or_holds_the_engine",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-12"
     },
     {
       "id": "serve/test_server.py::IdleUnload::test_parallel_requests_start_the_engine_once",
@@ -5425,7 +5543,8 @@
       "class": "IdleUnload",
       "method": "test_parallel_requests_start_the_engine_once",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-12"
     },
     {
       "id": "serve/test_server.py::IdleUnload::test_unloads_when_idle_and_the_next_request_loads_it",
@@ -5433,7 +5552,8 @@
       "class": "IdleUnload",
       "method": "test_unloads_when_idle_and_the_next_request_loads_it",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-12"
     },
     {
       "id": "serve/test_server.py::ImageMarkers::test_literal_marker_with_an_image",
@@ -5441,7 +5561,8 @@
       "class": "ImageMarkers",
       "method": "test_literal_marker_with_an_image",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_assistant_inline_reasoning_and_raw_calls",
@@ -5449,7 +5570,8 @@
       "class": "LiteralSpecials",
       "method": "test_assistant_inline_reasoning_and_raw_calls",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_no_literal_no_change",
@@ -5457,7 +5579,8 @@
       "class": "LiteralSpecials",
       "method": "test_no_literal_no_change",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_nothink_stays_a_switch",
@@ -5465,7 +5588,8 @@
       "class": "LiteralSpecials",
       "method": "test_nothink_stays_a_switch",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_prepare_and_count_agree",
@@ -5473,7 +5597,8 @@
       "class": "LiteralSpecials",
       "method": "test_prepare_and_count_agree",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_tool_result_and_tools",
@@ -5481,7 +5606,8 @@
       "class": "LiteralSpecials",
       "method": "test_tool_result_and_tools",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiteralSpecials::test_user_text_stays_text",
@@ -5489,7 +5615,8 @@
       "class": "LiteralSpecials",
       "method": "test_user_text_stays_text",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-08"
     },
     {
       "id": "serve/test_server.py::LiveRate::test_a_request_without_a_done_keeps_no_engine_counters",
@@ -5497,7 +5624,8 @@
       "class": "LiveRate",
       "method": "test_a_request_without_a_done_keeps_no_engine_counters",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRate::test_prefill_rate_excludes_cached_tokens",
@@ -5505,7 +5633,8 @@
       "class": "LiveRate",
       "method": "test_prefill_rate_excludes_cached_tokens",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRate::test_the_live_number_is_a_rate",
@@ -5513,7 +5642,8 @@
       "class": "LiveRate",
       "method": "test_the_live_number_is_a_rate",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRateBursts::test_a_burst_after_a_quiet_stretch_is_not_read_as_its_size_over_an_instant",
@@ -5521,7 +5651,8 @@
       "class": "LiveRateBursts",
       "method": "test_a_burst_after_a_quiet_stretch_is_not_read_as_its_size_over_an_instant",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRateBursts::test_bursty_tokens_read_near_the_true_rate",
@@ -5529,7 +5660,8 @@
       "class": "LiveRateBursts",
       "method": "test_bursty_tokens_read_near_the_true_rate",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRateBursts::test_concurrent_requests_do_not_mix_their_counts",
@@ -5537,7 +5669,8 @@
       "class": "LiveRateBursts",
       "method": "test_concurrent_requests_do_not_mix_their_counts",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRateBursts::test_no_rate_once_a_request_has_left",
@@ -5545,7 +5678,8 @@
       "class": "LiveRateBursts",
       "method": "test_no_rate_once_a_request_has_left",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::LiveRateBursts::test_writing_counts_only_the_requests_past_their_prompt",
@@ -5553,7 +5687,8 @@
       "class": "LiveRateBursts",
       "method": "test_writing_counts_only_the_requests_past_their_prompt",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::MalformedToolCallAnswers::test_the_parser_never_raises",
@@ -5561,7 +5696,8 @@
       "class": "MalformedToolCallAnswers",
       "method": "test_the_parser_never_raises",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-09"
     },
     {
       "id": "serve/test_server.py::MalformedToolCallAnswers::test_the_request_answers",
@@ -5569,7 +5705,8 @@
       "class": "MalformedToolCallAnswers",
       "method": "test_the_request_answers",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-09"
     },
     {
       "id": "serve/test_server.py::MaxTokens::test_debug_log_shows_the_resolved_budget",
@@ -5577,7 +5714,8 @@
       "class": "MaxTokens",
       "method": "test_debug_log_shows_the_resolved_budget",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::MaxTokens::test_explicit_budget_is_honoured",
@@ -5585,7 +5723,8 @@
       "class": "MaxTokens",
       "method": "test_explicit_budget_is_honoured",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::MaxTokens::test_explicit_budget_over_the_context_is_rejected",
@@ -5593,7 +5732,8 @@
       "class": "MaxTokens",
       "method": "test_explicit_budget_over_the_context_is_rejected",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::MaxTokens::test_unset_budget_is_the_rest_of_the_context",
@@ -5601,7 +5741,8 @@
       "class": "MaxTokens",
       "method": "test_unset_budget_is_the_rest_of_the_context",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::MaxTokens::test_unset_budget_with_a_near_full_prompt",
@@ -5609,7 +5750,8 @@
       "class": "MaxTokens",
       "method": "test_unset_budget_with_a_near_full_prompt",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::ModelManagement::test_a_request_while_the_engine_starts_gets_a_retryable_503",
@@ -5617,7 +5759,13 @@
       "class": "ModelManagement",
       "method": "test_a_request_while_the_engine_starts_gets_a_retryable_503",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-07",
+      "rust_tests": [
+        "console-http::api07_lifecycle::a_request_while_the_engine_starts_gets_a_retryable_503",
+        "console-http::api07_lifecycle::an_engine_found_starting_at_its_turn_is_a_503_before_the_first_byte"
+      ],
+      "notes": "A start in progress is a real restart whose engine start is held, so the turn driver reports no context; the donor test asserts the 503, 'starting' in the message, then a 200, none of which depends on OpenAI's body. The context rule half is ENG-10's console-core::eng10_turn::an_engine_that_is_not_ready_is_starting."
     },
     {
       "id": "serve/test_server.py::ModelManagement::test_on_unless_the_config_turns_it_off",
@@ -5625,7 +5773,8 @@
       "class": "ModelManagement",
       "method": "test_on_unless_the_config_turns_it_off",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-13"
     },
     {
       "id": "serve/test_server.py::ModelManagement::test_the_api_key_guards_them_and_status",
@@ -5633,7 +5782,8 @@
       "class": "ModelManagement",
       "method": "test_the_api_key_guards_them_and_status",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-23"
     },
     {
       "id": "serve/test_server.py::ModelManagement::test_unload_load_and_the_state_stream",
@@ -5641,7 +5791,8 @@
       "class": "ModelManagement",
       "method": "test_unload_load_and_the_state_stream",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-13"
     },
     {
       "id": "serve/test_server.py::ModelManagement::test_unload_waits_for_a_running_request",
@@ -5649,7 +5800,8 @@
       "class": "ModelManagement",
       "method": "test_unload_waits_for_a_running_request",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-13"
     },
     {
       "id": "serve/test_server.py::NoDelayStreaming::test_sse_sets_tcp_nodelay",
@@ -5670,7 +5822,8 @@
       "class": "NoRoomOrNoToken",
       "method": "test_engine_token",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-11"
     },
     {
       "id": "serve/test_server.py::NoRoomOrNoToken::test_no_tokens_length_is_an_empty_answer",
@@ -5678,7 +5831,8 @@
       "class": "NoRoomOrNoToken",
       "method": "test_no_tokens_length_is_an_empty_answer",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-04"
     },
     {
       "id": "serve/test_server.py::NoRoomOrNoToken::test_token_minus_one_is_an_error",
@@ -5686,7 +5840,8 @@
       "class": "NoRoomOrNoToken",
       "method": "test_token_minus_one_is_an_error",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-04"
     },
     {
       "id": "serve/test_server.py::NonFiniteRetry::test_answer_under_way_ends_as_length",
@@ -5742,7 +5897,8 @@
       "class": "PrometheusMetrics",
       "method": "test_text_and_key",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_server.py::PromptProgressStream::test_asked_for_and_sent",
@@ -5750,7 +5906,8 @@
       "class": "PromptProgressStream",
       "method": "test_asked_for_and_sent",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::PromptProgressStream::test_non_stream_is_untouched",
@@ -5758,7 +5915,8 @@
       "class": "PromptProgressStream",
       "method": "test_non_stream_is_untouched",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::PromptProgressStream::test_not_asked_for_is_not_sent",
@@ -5766,7 +5924,8 @@
       "class": "PromptProgressStream",
       "method": "test_not_asked_for_is_not_sent",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::QueuedKeepAlives::test_keep_alives_while_queued",
@@ -5774,7 +5933,8 @@
       "class": "QueuedKeepAlives",
       "method": "test_keep_alives_while_queued",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_a_bad_content_length",
@@ -5806,7 +5966,8 @@
       "class": "RequestBodies",
       "method": "test_a_chunked_body",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_a_malformed_body_is_a_400",
@@ -5814,7 +5975,8 @@
       "class": "RequestBodies",
       "method": "test_a_malformed_body_is_a_400",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_several_api_keys",
@@ -5822,7 +5984,8 @@
       "class": "RequestBodies",
       "method": "test_several_api_keys",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_the_listen_backlog",
@@ -5868,7 +6031,8 @@
       "class": "RequestChecks",
       "method": "test_ignore_eos",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_llama_cpp_names",
@@ -5926,7 +6090,8 @@
       "class": "SamplingKeys",
       "method": "test_logit_bias_key",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_miss_skip_tune_keys",
@@ -5934,7 +6099,8 @@
       "class": "SamplingKeys",
       "method": "test_miss_skip_tune_keys",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_penalties_greedy",
@@ -5942,7 +6108,8 @@
       "class": "SamplingKeys",
       "method": "test_penalties_greedy",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_penalty_window",
@@ -5950,7 +6117,8 @@
       "class": "SamplingKeys",
       "method": "test_penalty_window",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_penalty_window_llama_cpp",
@@ -5958,7 +6126,8 @@
       "class": "SamplingKeys",
       "method": "test_penalty_window_llama_cpp",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_read_chunks_tune_key",
@@ -5966,7 +6135,8 @@
       "class": "SamplingKeys",
       "method": "test_read_chunks_tune_key",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_suffix_draft_tune_key",
@@ -5974,7 +6144,8 @@
       "class": "SamplingKeys",
       "method": "test_suffix_draft_tune_key",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_top_k",
@@ -5982,7 +6153,8 @@
       "class": "SamplingKeys",
       "method": "test_top_k",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_tune_keys",
@@ -5990,7 +6162,8 @@
       "class": "SamplingKeys",
       "method": "test_tune_keys",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-03"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_off_again",
@@ -5998,7 +6171,8 @@
       "class": "SharedSettings",
       "method": "test_off_again",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_only_strata_s_own_page_may_set_them",
@@ -6006,7 +6180,8 @@
       "class": "SharedSettings",
       "method": "test_only_strata_s_own_page_may_set_them",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_other_apps_get_the_chat_settings",
@@ -6014,7 +6189,8 @@
       "class": "SharedSettings",
       "method": "test_other_apps_get_the_chat_settings",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_penalties_only_when_set",
@@ -6022,7 +6198,8 @@
       "class": "SharedSettings",
       "method": "test_penalties_only_when_set",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_they_need_the_key_when_one_is_set",
@@ -6030,7 +6207,8 @@
       "class": "SharedSettings",
       "method": "test_they_need_the_key_when_one_is_set",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SharedSettings::test_top_k_and_min_p_off_win_over_the_run_config",
@@ -6038,7 +6216,8 @@
       "class": "SharedSettings",
       "method": "test_top_k_and_min_p_off_win_over_the_run_config",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-13"
     },
     {
       "id": "serve/test_server.py::SpelledStopMarker::test_lookalikes_pass",
@@ -6046,7 +6225,8 @@
       "class": "SpelledStopMarker",
       "method": "test_lookalikes_pass",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-12"
     },
     {
       "id": "serve/test_server.py::SpelledStopMarker::test_marker_ends_the_answer",
@@ -6054,7 +6234,8 @@
       "class": "SpelledStopMarker",
       "method": "test_marker_ends_the_answer",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-12"
     },
     {
       "id": "serve/test_server.py::StableToolOrder::test_deepseek_namespaced_tools_key_on_the_encoding_name",
@@ -6062,7 +6243,8 @@
       "class": "StableToolOrder",
       "method": "test_deepseek_namespaced_tools_key_on_the_encoding_name",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-06"
     },
     {
       "id": "serve/test_server.py::StableToolOrder::test_deepseek_paths_are_stabilized_too",
@@ -6070,7 +6252,8 @@
       "class": "StableToolOrder",
       "method": "test_deepseek_paths_are_stabilized_too",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-06"
     },
     {
       "id": "serve/test_server.py::StableToolOrder::test_left_as_sent",
@@ -6078,7 +6261,8 @@
       "class": "StableToolOrder",
       "method": "test_left_as_sent",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-06"
     },
     {
       "id": "serve/test_server.py::StableToolOrder::test_openai_and_anthropic",
@@ -6086,7 +6270,8 @@
       "class": "StableToolOrder",
       "method": "test_openai_and_anthropic",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "PRM-06"
     },
     {
       "id": "serve/test_server.py::StaleDoneAfterErr::test_done_after_err_is_taken",
@@ -6094,7 +6279,8 @@
       "class": "StaleDoneAfterErr",
       "method": "test_done_after_err_is_taken",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::StaleDoneAfterErr::test_err_alone",
@@ -6102,7 +6288,8 @@
       "class": "StaleDoneAfterErr",
       "method": "test_err_alone",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-06"
     },
     {
       "id": "serve/test_server.py::StallWatchdog::test_stuck",
@@ -6110,7 +6297,8 @@
       "class": "StallWatchdog",
       "method": "test_stuck",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_server.py::StallWatchdog::test_the_config_env_reaches_the_server",
@@ -6130,7 +6318,8 @@
       "class": "StallWatchdog",
       "method": "test_without_psutil_nothing_is_ended",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_server.py::StallWatchdog::test_working",
@@ -6138,7 +6327,8 @@
       "class": "StallWatchdog",
       "method": "test_working",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-08"
     },
     {
       "id": "serve/test_server.py::StampedLog::test_only_maya_lines_get_a_time",
@@ -6146,7 +6336,8 @@
       "class": "StampedLog",
       "method": "test_only_maya_lines_get_a_time",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_server.py::StatsAfterConsumerStops::test_final_stats_are_kept_and_next_request_is_clean",
@@ -6154,7 +6345,8 @@
       "class": "StatsAfterConsumerStops",
       "method": "test_final_stats_are_kept_and_next_request_is_clean",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-05"
     },
     {
       "id": "serve/test_server.py::TestCarryEmbeddings::test_the_job_thread_sees_the_request_threads_image_file",
@@ -6174,7 +6366,8 @@
       "class": "ThinkingBudget",
       "method": "test_configured_budget_and_thinking_off",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_larger_limits_keep_the_configured_budget",
@@ -6182,7 +6375,8 @@
       "class": "ThinkingBudget",
       "method": "test_larger_limits_keep_the_configured_budget",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_reserve_from_run_config_reaches_http_requests",
@@ -6190,7 +6384,8 @@
       "class": "ThinkingBudget",
       "method": "test_reserve_from_run_config_reaches_http_requests",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_reserve_override_cannot_consume_small_limit",
@@ -6198,7 +6393,8 @@
       "class": "ThinkingBudget",
       "method": "test_reserve_override_cannot_consume_small_limit",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_small_limits_leave_reasoning_and_answer_room",
@@ -6206,7 +6402,8 @@
       "class": "ThinkingBudget",
       "method": "test_small_limits_leave_reasoning_and_answer_room",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudget::test_tiny_limits_still_honour_total_output",
@@ -6214,7 +6411,8 @@
       "class": "ThinkingBudget",
       "method": "test_tiny_limits_still_honour_total_output",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudgetAtASentenceEnd::test_boundary",
@@ -6222,7 +6420,8 @@
       "class": "ThinkingBudgetAtASentenceEnd",
       "method": "test_boundary",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudgetAtASentenceEnd::test_closed_at_the_end_of_its_sentence",
@@ -6230,7 +6429,8 @@
       "class": "ThinkingBudgetAtASentenceEnd",
       "method": "test_closed_at_the_end_of_its_sentence",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudgetAtASentenceEnd::test_engine_gets_the_soft_close_tables",
@@ -6238,7 +6438,8 @@
       "class": "ThinkingBudgetAtASentenceEnd",
       "method": "test_engine_gets_the_soft_close_tables",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudgetAtASentenceEnd::test_little_room_after_the_budget_keeps_half_of_it",
@@ -6246,7 +6447,8 @@
       "class": "ThinkingBudgetAtASentenceEnd",
       "method": "test_little_room_after_the_budget_keeps_half_of_it",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::ThinkingBudgetAtASentenceEnd::test_no_sentence_end_closes_at_the_engines_budget",
@@ -6254,7 +6456,8 @@
       "class": "ThinkingBudgetAtASentenceEnd",
       "method": "test_no_sentence_end_closes_at_the_engines_budget",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-11"
     },
     {
       "id": "serve/test_server.py::TimingsDrafts::test_draft_fields",
@@ -6274,7 +6477,8 @@
       "class": "UsageAndStatus",
       "method": "test_anthropic",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-09"
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_no_clock",
@@ -6282,7 +6486,8 @@
       "class": "UsageAndStatus",
       "method": "test_no_clock",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_openai",
@@ -6290,7 +6495,8 @@
       "class": "UsageAndStatus",
       "method": "test_openai",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_openai_stream",
@@ -6298,7 +6504,8 @@
       "class": "UsageAndStatus",
       "method": "test_openai_stream",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-08"
     },
     {
       "id": "serve/test_server.py::UsageAndStatus::test_v1_status",
@@ -6306,7 +6513,8 @@
       "class": "UsageAndStatus",
       "method": "test_v1_status",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_server.py::VisionFootprint::test_a_damaged_cache_entry_is_measured_again",
@@ -6314,7 +6522,8 @@
       "class": "VisionFootprint",
       "method": "test_a_damaged_cache_entry_is_measured_again",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-14"
     },
     {
       "id": "serve/test_server.py::VisionFootprint::test_a_failed_warm_up_is_no_measurement",
@@ -6322,7 +6531,8 @@
       "class": "VisionFootprint",
       "method": "test_a_failed_warm_up_is_no_measurement",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-14"
     },
     {
       "id": "serve/test_server.py::VisionFootprint::test_a_malformed_mem_line_is_no_measurement",
@@ -6330,7 +6540,8 @@
       "class": "VisionFootprint",
       "method": "test_a_malformed_mem_line_is_no_measurement",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "ENG-14"
     },
     {
       "id": "serve/test_server.py::WebApp::test_build_model_path_and_slot_status",
@@ -6338,7 +6549,8 @@
       "class": "WebApp",
       "method": "test_build_model_path_and_slot_status",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::WebApp::test_discovery_does_not_restart_a_dead_engine",
@@ -6346,7 +6558,8 @@
       "class": "WebApp",
       "method": "test_discovery_does_not_restart_a_dead_engine",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::WebApp::test_discovery_needs_the_api_key",
@@ -6354,7 +6567,8 @@
       "class": "WebApp",
       "method": "test_discovery_needs_the_api_key",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::WebApp::test_home_screen_start_url",
@@ -6362,7 +6576,8 @@
       "class": "WebApp",
       "method": "test_home_screen_start_url",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-12"
     },
     {
       "id": "serve/test_server.py::WebApp::test_metrics",
@@ -6370,7 +6585,8 @@
       "class": "WebApp",
       "method": "test_metrics",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_server.py::WebApp::test_metrics_need_the_key_when_one_is_set",
@@ -6378,7 +6594,8 @@
       "class": "WebApp",
       "method": "test_metrics_need_the_key_when_one_is_set",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-12"
     },
     {
       "id": "serve/test_server.py::WebApp::test_model_discovery_and_props",
@@ -6386,7 +6603,8 @@
       "class": "WebApp",
       "method": "test_model_discovery_and_props",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-11"
     },
     {
       "id": "serve/test_server.py::WebApp::test_only_the_app_files_are_served",
@@ -6394,7 +6612,8 @@
       "class": "WebApp",
       "method": "test_only_the_app_files_are_served",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-12"
     },
     {
       "id": "serve/test_server.py::WebApp::test_page_and_files",
@@ -6402,7 +6621,8 @@
       "class": "WebApp",
       "method": "test_page_and_files",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-12"
     },
     {
       "id": "serve/test_server.py::WebApp::test_text_file_limit_follows_the_context",
@@ -6410,7 +6630,8 @@
       "class": "WebApp",
       "method": "test_text_file_limit_follows_the_context",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_server.py::WebApp::test_the_model_shown_model_first",
@@ -6418,7 +6639,8 @@
       "class": "WebApp",
       "method": "test_the_model_shown_model_first",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-06"
     },
     {
       "id": "serve/test_stop.py::MayaStops::test_maya_killed",
@@ -6426,7 +6648,8 @@
       "class": "MayaStops",
       "method": "test_maya_killed",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "CNF-10"
     },
     {
       "id": "serve/test_stop.py::MayaStops::test_sighup_to_maya_alone",
@@ -6434,7 +6657,8 @@
       "class": "MayaStops",
       "method": "test_sighup_to_maya_alone",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "CNF-10"
     },
     {
       "id": "serve/test_stop.py::MayaStops::test_sigterm_to_maya_alone",
@@ -6442,7 +6666,8 @@
       "class": "MayaStops",
       "method": "test_sigterm_to_maya_alone",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "CNF-10"
     },
     {
       "id": "serve/test_stop.py::ScreenStops::test_maya_killed",
@@ -6450,7 +6675,8 @@
       "class": "ScreenStops",
       "method": "test_maya_killed",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "CNF-10"
     },
     {
       "id": "serve/test_stop.py::ServerStops::test_old_engine_name",
@@ -6458,7 +6684,8 @@
       "class": "ServerStops",
       "method": "test_old_engine_name",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-17"
     },
     {
       "id": "serve/test_stop.py::ServerStops::test_parent_pipe_closed",
@@ -6466,7 +6693,8 @@
       "class": "ServerStops",
       "method": "test_parent_pipe_closed",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-17"
     },
     {
       "id": "serve/test_stop.py::ServerStops::test_sighup",
@@ -6474,7 +6702,8 @@
       "class": "ServerStops",
       "method": "test_sighup",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-17"
     },
     {
       "id": "serve/test_stop.py::ServerStops::test_sigterm",
@@ -6482,7 +6711,8 @@
       "class": "ServerStops",
       "method": "test_sigterm",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-17"
     },
     {
       "id": "serve/test_stop.py::ServerStops::test_stdin_closed_without_parent_pipe_changes_nothing",
@@ -6490,7 +6720,8 @@
       "class": "ServerStops",
       "method": "test_stdin_closed_without_parent_pipe_changes_nothing",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-17"
     },
     {
       "id": "serve/test_stop.py::WatchParent::test_a_new_parent_stops",
@@ -6498,7 +6729,8 @@
       "class": "WatchParent",
       "method": "test_a_new_parent_stops",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_stop.py::WatchParent::test_a_signal_handler_stops_the_main_wait",
@@ -6506,7 +6738,8 @@
       "class": "WatchParent",
       "method": "test_a_signal_handler_stops_the_main_wait",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_stop.py::WatchParent::test_eof_on_the_pipe_stops",
@@ -6514,7 +6747,8 @@
       "class": "WatchParent",
       "method": "test_eof_on_the_pipe_stops",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_stop.py::WatchParent::test_stop_once",
@@ -6522,7 +6756,8 @@
       "class": "WatchParent",
       "method": "test_stop_once",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_stop.py::WatchParent::test_the_main_wait_never_holds_the_events_lock",
@@ -6530,7 +6765,8 @@
       "class": "WatchParent",
       "method": "test_the_main_wait_never_holds_the_events_lock",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-16"
     },
     {
       "id": "serve/test_stop.py::WindowsJob::test_the_tree_ends_with_its_owner",
@@ -6538,7 +6774,8 @@
       "class": "WindowsJob",
       "method": "test_the_tree_ends_with_its_owner",
       "subsystem": "console-engine supervision / pulsar-console binary",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-18"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobFiles::test_a_finished_answer_survives_a_restart",
@@ -6546,7 +6783,8 @@
       "class": "StreamJobFiles",
       "method": "test_a_finished_answer_survives_a_restart",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobFiles::test_an_answer_cut_by_a_stop_comes_back_with_a_note",
@@ -6554,7 +6792,8 @@
       "class": "StreamJobFiles",
       "method": "test_an_answer_cut_by_a_stop_comes_back_with_a_note",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobFiles::test_old_files_and_strange_names_are_removed_and_eviction_deletes_the_file",
@@ -6562,7 +6801,8 @@
       "class": "StreamJobFiles",
       "method": "test_old_files_and_strange_names_are_removed_and_eviction_deletes_the_file",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobFiles::test_without_a_folder_nothing_is_written",
@@ -6570,7 +6810,8 @@
       "class": "StreamJobFiles",
       "method": "test_without_a_folder_nothing_is_written",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobs::test_a_new_answer_never_cancels_a_running_unread_one",
@@ -6578,7 +6819,8 @@
       "class": "StreamJobs",
       "method": "test_a_new_answer_never_cancels_a_running_unread_one",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobs::test_an_unread_answer_runs_to_its_end",
@@ -6586,7 +6828,8 @@
       "class": "StreamJobs",
       "method": "test_an_unread_answer_runs_to_its_end",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobs::test_finished_answers_stay_a_day_and_the_oldest_go_first",
@@ -6594,7 +6837,8 @@
       "class": "StreamJobs",
       "method": "test_finished_answers_stay_a_day_and_the_oldest_go_first",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_stream_jobs.py::StreamJobs::test_running_answers_are_never_dropped_to_make_room",
@@ -6602,7 +6846,8 @@
       "class": "StreamJobs",
       "method": "test_running_answers_are_never_dropped_to_make_room",
       "subsystem": "console-core (resumable streams)",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "API-10"
     },
     {
       "id": "serve/test_telemetry.py::AmdSysfs::test_auto_detected_when_nvml_has_no_card",
@@ -7194,7 +7439,8 @@
       "class": "ResidentSkip",
       "method": "test_a_dropped_expert_is_a_null_plan_entry_and_the_top_one_stays",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::ResidentSkip::test_off_in_a_config_without_turbo",
@@ -7202,7 +7448,8 @@
       "class": "ResidentSkip",
       "method": "test_off_in_a_config_without_turbo",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::ResidentSkip::test_the_engines_read_the_options_and_the_docs_name_them",
@@ -7210,7 +7457,8 @@
       "class": "ResidentSkip",
       "method": "test_the_engines_read_the_options_and_the_docs_name_them",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::ResidentSkip::test_turbo_env_aliases_to_the_names_the_engines_read",
@@ -7218,7 +7466,8 @@
       "class": "ResidentSkip",
       "method": "test_turbo_env_aliases_to_the_names_the_engines_read",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::ResidentSkip::test_turbo_values_are_sane",
@@ -7226,7 +7475,8 @@
       "class": "ResidentSkip",
       "method": "test_turbo_values_are_sane",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_deepseek_keeps_its_context",
@@ -7234,7 +7484,8 @@
       "class": "TurboMap",
       "method": "test_deepseek_keeps_its_context",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_deepseek_lookup_and_drafter",
@@ -7242,7 +7493,8 @@
       "class": "TurboMap",
       "method": "test_deepseek_lookup_and_drafter",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_glm",
@@ -7250,7 +7502,8 @@
       "class": "TurboMap",
       "method": "test_glm",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_minimax",
@@ -7258,7 +7511,8 @@
       "class": "TurboMap",
       "method": "test_minimax",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_smaller_context_is_kept",
@@ -7266,7 +7520,8 @@
       "class": "TurboMap",
       "method": "test_smaller_context_is_kept",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboMap::test_smallest_quants_keep_every_expert",
@@ -7274,7 +7529,8 @@
       "class": "TurboMap",
       "method": "test_smallest_quants_keep_every_expert",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboPageSide::test_chat_level_changed_in_turbo_is_not_overwritten",
@@ -7282,7 +7538,8 @@
       "class": "TurboPageSide",
       "method": "test_chat_level_changed_in_turbo_is_not_overwritten",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_turbo.py::TurboPageSide::test_coding_ideas",
@@ -7290,7 +7547,8 @@
       "class": "TurboPageSide",
       "method": "test_coding_ideas",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_turbo.py::TurboPageSide::test_enter_and_leave_restore_exactly",
@@ -7298,7 +7556,8 @@
       "class": "TurboPageSide",
       "method": "test_enter_and_leave_restore_exactly",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_turbo.py::TurboPageSide::test_fastest_thinking",
@@ -7306,7 +7565,8 @@
       "class": "TurboPageSide",
       "method": "test_fastest_thinking",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_turbo.py::TurboPageSide::test_nothing_chosen_before",
@@ -7314,7 +7574,8 @@
       "class": "TurboPageSide",
       "method": "test_nothing_chosen_before",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "WEB-04"
     },
     {
       "id": "serve/test_turbo.py::TurboServer::test_bad_body",
@@ -7322,7 +7583,8 @@
       "class": "TurboServer",
       "method": "test_bad_body",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboServer::test_info_on_off",
@@ -7330,7 +7592,8 @@
       "class": "TurboServer",
       "method": "test_info_on_off",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_context_raised_in_turbo_is_restored_too",
@@ -7338,7 +7601,8 @@
       "class": "TurboSnapshot",
       "method": "test_context_raised_in_turbo_is_restored_too",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_env_absent_before_is_absent_after",
@@ -7346,7 +7610,8 @@
       "class": "TurboSnapshot",
       "method": "test_env_absent_before_is_absent_after",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_models_page_save_is_unchanged",
@@ -7354,7 +7619,8 @@
       "class": "TurboSnapshot",
       "method": "test_models_page_save_is_unchanged",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_nothing_to_change_needs_no_restart",
@@ -7362,7 +7628,8 @@
       "class": "TurboSnapshot",
       "method": "test_nothing_to_change_needs_no_restart",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_on_then_off_is_exact",
@@ -7370,7 +7637,8 @@
       "class": "TurboSnapshot",
       "method": "test_on_then_off_is_exact",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_other_edits_in_turbo_survive_the_restore",
@@ -7378,7 +7646,8 @@
       "class": "TurboSnapshot",
       "method": "test_other_edits_in_turbo_survive_the_restore",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_turbo.py::TurboSnapshot::test_twice_and_off_without_on",
@@ -7386,7 +7655,8 @@
       "class": "TurboSnapshot",
       "method": "test_twice_and_off_without_on",
       "subsystem": "console-manage / web",
-      "disposition": "pending"
+      "disposition": "pending",
+      "package": "OPS-06"
     },
     {
       "id": "serve/test_update.py::Pieces::test_check_off",
