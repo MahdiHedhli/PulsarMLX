@@ -1,8 +1,9 @@
 # Allowing non-synthetic engines
 
 - **Status**: Normative note, dated 2026-11-14. The provenance type and the single guard
-  function exist (ENG-01), and the scripted engine reports synthetic provenance (ENG-02);
-  nothing calls the guard yet.
+  function exist (ENG-01), the scripted engine reports synthetic provenance (ENG-02), and
+  the turn driver calls the guard on every path that admits an engine (ENG-10); the
+  refusal at process start (API-08) is planned.
 - **Requested by**: the owner, on 2026-11-14, after checkpoint 1 of feature
   [`022-console-serving-parity`](../../specs/022-console-serving-parity/).
 - **Maintained by**: every task that adds, moves or removes an enforcement point of the
@@ -30,13 +31,16 @@ provenance, and the scripted engine's default model name is `pulsar-console-synt
 (ENG-02, commit `c86cf84f`). A test-only engine that reports a provenance that is not
 synthetic, `NotSyntheticEngine`, exists behind the `test-support` Cargo feature of
 `console-engine` for the refusal tests; no configuration key, command-line flag or
-environment variable can select it, and the guard refuses it. No admission path calls the
-guard yet: the turn driver that calls it on every admission path (ENG-10) and the refusal
-at process start (API-08) are planned, so nothing in the server enforces the rule yet.
-Besides the guard, only the M0 repository checks (`console/tools/check-hygiene.sh` and
-`console/tools/check-boundary.sh`) exist. The table in "Where the rule is enforced" tracks
-each enforcement point as it lands. Until a row there says otherwise, read every statement
-below about code as planned.
+environment variable can select it, and the guard refuses it. As of 2026-11-15 the turn
+driver (ENG-10, commit `4e7c438a`) calls the guard on every path that admits an engine
+(first start, restart, model switch, context reload, and the start after an idle unload,
+a death or a caught engine panic), in its single admission step `Host::admit`
+(`console/crates/console-core/src/turn/host.rs`). The refusal at process start (API-08)
+is planned, and no binary exists yet, so nothing that serves requests runs the turn
+driver. Besides the guard and its call in the turn driver, only the M0 repository checks
+(`console/tools/check-hygiene.sh` and `console/tools/check-boundary.sh`) exist. The
+table in "Where the rule is enforced" tracks each enforcement point as it lands. Until a
+row there says otherwise, read every statement below about code as planned.
 
 ## Why the rule exists
 
@@ -222,9 +226,10 @@ PulsarMLX's Rust engine work outside `console/`, whose evidence ADR 0008 keeps u
 
 ## How to tell whether the rule still holds
 
-ENG-01 has filled in its test names and the guard's symbol below; everything else in this
-section is planned. The remaining test names are filled in here by ENG-10, API-08 and the
-M3 line-protocol tasks when they land. Run the commands from `console/` on the pinned
+ENG-01 has filled in its test names and the guard's symbol below, and ENG-10 the test
+names and the call site of the turn driver; everything else in this section is planned.
+The remaining test names are filled in here by API-08 and the M3 line-protocol tasks when
+they land. Run the commands from `console/` on the pinned
 toolchain, as the
 [per-task gate](../../specs/022-console-serving-parity/tasks.md#per-task-gate-before-commit)
 does.
@@ -232,15 +237,31 @@ does.
 1. **The refusal tests pass.** `cargo test --locked` passes, and it includes the guard
    tests of ENG-01, the eight tests of `console/crates/console-core/tests/eng01_guard.rs`
    (listed by `cargo test --locked -p console-core --test eng01_guard -- --list`), the
-   turn-driver tests of ENG-10 that show an engine is refused at restart, model switch and
-   context reload (names to be filled in), and the process-start test of API-08 (name to
-   be filled in). None of them is marked ignored or skipped. Confirm with
-   `cargo test --locked -- --list` that each named test is listed, and that none carries
-   `#[ignore]` or a `cfg` that removes it.
+   nine turn-driver tests of ENG-10 in
+   `console/crates/console-core/tests/eng10_admission.rs` (listed by
+   `cargo test --locked -p console-core --test eng10_admission -- --list`):
+   `the_first_start_refuses_an_engine_that_is_not_synthetic`,
+   `a_restart_refuses_an_engine_that_is_not_synthetic`,
+   `a_context_reload_refuses_an_engine_that_is_not_synthetic`,
+   `a_model_switch_refuses_an_engine_that_is_not_synthetic`,
+   `the_start_after_an_idle_unload_refuses_an_engine_that_is_not_synthetic`,
+   `the_start_after_a_death_refuses_an_engine_that_is_not_synthetic`,
+   `a_failed_restart_keeps_the_context_and_the_next_turn_starts_again`,
+   `synthetic_engines_pass_every_admission_path` and `every_start_goes_through_the_guard`.
+   Each refusal test asserts that the refused engine was shut down, that the operation
+   failed with the refusal line, and that the engine's generate was never called; the
+   turn-path refusals first pass the context rule (`TurnDriver::context_budget`), as a
+   request does. The process-start test of API-08 (name to be filled in) is planned. None
+   of them is marked ignored or skipped. Confirm with `cargo test --locked -- --list`
+   that each named test is listed, and that none carries `#[ignore]` or a `cfg` that
+   removes it.
 2. **There is one guard.** A search for the guard's symbol, `require_synthetic`, under
    `console/crates/` finds exactly one definition, in `console-core`
    (`console/crates/console-core/src/engine/guard.rs`), and a call on every path that
-   admits an engine: first start, restart, model switch and context reload. Every call site
+   admits an engine: first start, restart, model switch and context reload. In the turn
+   driver that call is in one place, the admission step `Host::admit` in
+   `console/crates/console-core/src/turn/host.rs`, which every admission path of the
+   driver reaches; the process-start call of API-08 is planned. Every call site
    of the guard is unconditional: no `if`, `cfg` or Cargo feature, environment variable,
    configuration key or command-line flag decides whether the guard runs, as a reading of
    each call site found by the search confirms.
@@ -260,8 +281,8 @@ does.
 | Enforcement point | File or symbol | Task that builds it | Status |
 | --- | --- | --- | --- |
 | Provenance type in the engine descriptor; it can express "not synthetic" (another provenance, or none), and synthetic is the only value accepted | `console/crates/console-core/src/engine/descriptor.rs`: `console_core::engine::Provenance` (`Synthetic`, or `NotSynthetic { declared: Option<DeclaredProvenance> }`; `Provenance::not_synthetic` never yields `Synthetic`) and the field `EngineDescriptor::provenance`; pinned by `console-core::eng01_guard::the_guard_refuses_every_provenance_that_is_not_synthetic`, `console-core::eng01_guard::the_guard_refuses_an_engine_that_declares_no_provenance` and the unit test `console-core::engine::descriptor::tests::provenance_display_is_one_escaped_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`), qualified on synthetic backends only; the seam is draft 0.2 until the engine-track review (Q12) |
-| The single guard function, called before any engine serves a request | `console/crates/console-core/src/engine/guard.rs`: `console_core::engine::require_synthetic(&EngineDescriptor) -> Result<(), ProvenanceRefused>`; the refusal line is the `Display` of `ProvenanceRefused`, and `ProvenanceRefused::to_failure` gives the failure for restart, switch and reload; pinned by the eight tests of `console-core::eng01_guard`: `the_guard_admits_synthetic_provenance_for_every_kind`, `the_guard_refuses_every_provenance_that_is_not_synthetic`, `the_guard_refuses_an_engine_that_declares_no_provenance`, `the_guard_refuses_whatever_else_the_descriptor_says`, `the_guard_source_has_no_bypass` (a source-level pin: no environment read, conditional compilation, feature switch or configuration lookup in the guard file, and a single admitting arm for `Provenance::Synthetic`), `the_refusal_line_names_kind_report_and_note`, `the_refusal_line_text` and `a_refusal_at_restart_is_a_poisoned_start_failure_with_the_same_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`); no call site yet (ENG-10, API-08) |
-| Call of the guard on every admission path (first start, restart, model switch, context reload); a refused engine is closed and serves nothing | `console-core::turn` | ENG-10 | planned |
+| The single guard function, called before any engine serves a request | `console/crates/console-core/src/engine/guard.rs`: `console_core::engine::require_synthetic(&EngineDescriptor) -> Result<(), ProvenanceRefused>`; the refusal line is the `Display` of `ProvenanceRefused`, and `ProvenanceRefused::to_failure` gives the failure for restart, switch and reload; pinned by the eight tests of `console-core::eng01_guard`: `the_guard_admits_synthetic_provenance_for_every_kind`, `the_guard_refuses_every_provenance_that_is_not_synthetic`, `the_guard_refuses_an_engine_that_declares_no_provenance`, `the_guard_refuses_whatever_else_the_descriptor_says`, `the_guard_source_has_no_bypass` (a source-level pin: no environment read, conditional compilation, feature switch or configuration lookup in the guard file, and a single admitting arm for `Provenance::Synthetic`), `the_refusal_line_names_kind_report_and_note`, `the_refusal_line_text` and `a_refusal_at_restart_is_a_poisoned_start_failure_with_the_same_line` | ENG-01 | implemented (ENG-01, commit `6200f4ac`); called by the turn driver (ENG-10, commit `4e7c438a`); the process-start call is planned (API-08) |
+| Call of the guard on every admission path (first start, restart, model switch, context reload, and the start a turn makes after an idle unload, a death or a caught engine panic); a refused engine is closed and serves nothing | `console/crates/console-core/src/turn/host.rs`: the admission step `Host::admit` on the engine's driver thread. It is the only place an engine is started (`EngineFactory::start`), and it calls `console_core::engine::require_synthetic` unconditionally before the instance is kept; a refused instance is shut down at once and the operation fails with `ProvenanceRefused::to_failure`. A refused or failed start keeps the context from before it, so the next request passes the context rule and its turn reaches the guard again. It is reached from `TurnDriver::start` (first start), `TurnDriver::restart`, `TurnDriver::reload_context`, `TurnDriver::switch_engine` (the model switch's entry point) and `Host::prepare` (the donor's `ensure_engine`, which restarts after an idle unload, a death or a caught panic). Pinned by `console-core::eng10_admission::the_first_start_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::a_restart_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::a_context_reload_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::a_model_switch_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::the_start_after_an_idle_unload_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::the_start_after_a_death_refuses_an_engine_that_is_not_synthetic`, `console-core::eng10_admission::a_failed_restart_keeps_the_context_and_the_next_turn_starts_again`, `console-core::eng10_admission::synthetic_engines_pass_every_admission_path` and `console-core::eng10_admission::every_start_goes_through_the_guard` (a source-level pin: one engine start, after it one guard call, before the instance is kept, and no environment read, conditional compilation or feature switch in the file) | ENG-10 | implemented (ENG-10, commit `4e7c438a`), qualified on synthetic backends only; the seam is draft 0.2 until the engine-track review (Q12) |
 | Process start: refusal line on standard error and a non-zero exit status | `pulsar-console` binary | API-08 (M1 start path), kept by API-17 | planned |
 | Scripted engine reports synthetic provenance and the default model name `pulsar-console-synthetic` | `console-engine::fake`: `mock_descriptor` in `console/crates/console-engine/src/fake/mock.rs` builds `EngineDescriptor::new(EngineKind::Scripted, Provenance::Synthetic)` for `FakeFactory`, `FakeEngine` and every test double built on them; `DEFAULT_MODEL_NAME` in `console/crates/console-engine/src/fake/mod.rs`. The refusal test engine `fake::doubles::NotSyntheticEngine` (`console/crates/console-engine/src/fake/doubles/not_synthetic.rs`) reports `Provenance::NotSynthetic`, from its first start or, built with `after_synthetic_starts`, after a given number of synthetic starts, for the restart, model-switch and context-reload paths. It exists only with the `test-support` feature; no configuration key, command-line flag or environment variable can select it, and any `generate` on it gets the guard's refusal. Pinned by `console-engine::fake::mock::tests::fake_descriptor_is_synthetic_with_the_donor_info`, `console-engine::fake::factory::tests::fake_engine_is_synthetic_and_passes_the_guard`, `console-engine::fake::tests::fake_default_model_name_is_the_decided_one`, `console-engine::eng02_seam::fake::every_double_but_one_is_synthetic_and_admitted`, `console-engine::eng02_seam::fake::the_not_synthetic_double_is_refused_before_it_serves`, `console-engine::eng02_seam::fake::the_decided_names_hold`, `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_engine_is_refused_by_the_guard`, `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_engine_never_serves_even_without_the_guard` and `console-engine::fake::doubles::not_synthetic::tests::fake_not_synthetic_after_synthetic_starts_serves_then_is_refused` | ENG-02 (PLAN-2) | implemented (ENG-02, commit `c86cf84f`), qualified on synthetic backends only |
 | Coordinator-shaped test adapter and blocking runtime adapter report synthetic provenance | `console-engine::runtime` | ENG-19 (checked by ENG-18) | planned |
@@ -294,3 +315,7 @@ may change with that review. The rule itself does not.
 - 2026-11-15: ENG-02 (commit `c86cf84f`) recorded the scripted engine's synthetic
   provenance and default model name, and the test-only `NotSyntheticEngine` for the refusal
   tests, with the tests that pin them; still no call site of the guard (ENG-10, API-08).
+- 2026-11-15: ENG-10 (commit `4e7c438a`) recorded the call of the guard on every admission
+  path of the turn driver, in its single admission step `Host::admit`, with the nine tests
+  that pin it. The refusal at process start (API-08), the line-protocol declaration of
+  provenance, the health and status fields and the badge are still planned.

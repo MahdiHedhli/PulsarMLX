@@ -72,8 +72,9 @@ the operating system chose. The donor prints the requested port (`a.port`,
 tests never start `main` with port 0 (they probe a free port first), and the donor already
 keeps the bound port as `svc.listen` (`serve/server.py:6798`). Printing the bound port is
 needed by the harness, which never probes for a free port (tasks/conformance.md,
-"Determinism rules"). It differs from the donor only when the port is 0, and it is proposal
-P-25 in [deviations.md](deviations.md), awaiting the owner's decision. The harness refuses a ready line that names port 0.
+"Determinism rules"). It differs from the donor only when the port is 0, and it is
+proposal P-25 in [deviations.md](deviations.md), awaiting the owner's decision. The
+harness refuses a ready line that names port 0.
 
 ### 2.3 Proposed synthetic marker (not approved)
 

@@ -146,9 +146,88 @@ a key.**
   is absent or null, keep a list of non-blank strings with each entry stripped, and stop
   start-up with `ALLOWED_HOSTS_MESSAGE` for any other value. The tests
   `console-core::api15_settings::allowed_hosts_is_absent_by_default_and_read_as_a_list` and
-  `console-core::config::document::tests::allowed_hosts_absent_by_default` pin it. Nothing
-  enforces the list yet: the guard is API-03's and is not built, and API-08 wires the list
-  into it.
+  `console-core::config::document::tests::allowed_hosts_absent_by_default` pin it. The
+  guard that enforces the list is API-03's (below); API-08 passes the list from the run
+  config into it at start.
+- **Affected donor tests, confirmed by API-03 (commit `60fa1461`, 2026-11-15).**
+  `serve/test_server.py::CorsOptIn::test_without_the_setting_nothing_changes` takes the
+  SEC-1.2 deviation: its `GET /v1/models` with a foreign `Origin` is answered 403, asserted
+  by `console-http::api03_donor::cors_without_the_setting_nothing_changes` and
+  `console-http::api03_security::origin_is_checked_on_every_route`.
+  `CorsOptIn::test_another_page_gets_nothing`,
+  `CorsOptIn::test_a_trailing_slash_in_the_config_is_forgiven` and
+  `CorsOptIn::test_settings_and_the_page_itself_stay_closed` keep passing as written
+  (`rust-test` rows). `SharedSettings::test_only_strata_s_own_page_may_set_them` keeps its
+  statuses: the 415 now comes from the router under SEC-1.3, and the 403 is the donor's
+  own foreign-page refusal, unchanged; its row stays `pending` until the settings handler
+  of API-13 lands. The other affected methods above belong to later packages and are
+  confirmed by them.
+- **Implementation (API-03, commit `60fa1461`, 2026-11-15).** The guards are in
+  `console_http::guard` and are applied by the router, `console_http::router` (the
+  dispatch table `ROUTES`, in the donor's order, and `Router`), on every route. No binary
+  serves the router until API-08 wires it at start (LD31), so the posture is shown by the
+  tests only, on synthetic inputs. The tests are `console-http::api03_dispatch` (every
+  donor route without and with a key, and with no `Origin`, the server's own page, a
+  foreign page and `Origin: null`), `console-http::api03_security`,
+  `console-http::api03_donor`, and the unit tests of `console-http::router` and
+  `console-http::guard`. Per sub-item:
+  - SEC-1.1: `HostPolicy` and `Guard::check_host`, run before routing. The matching
+    details, settled by API-03 and recorded as lead decision LD43 (to be confirmed with
+    the owner together with LD30): exactly one `Host` header, and a missing one is refused;
+    names are compared without regard to case; any port, or none, is accepted; an
+    `allowed_hosts` entry that names a port matches only that port; no trimming, no IPv6
+    normalization and no forgiveness of a trailing dot. An `allowed_hosts` entry that
+    cannot be parsed stops the server at start, with a message that names the entry and
+    the accepted forms (LD40; `GuardConfig::rejected_allowed_hosts` gives the entries, and
+    API-08 wires the check). The refusal is 403 `permission_error` with
+    `HOST_REFUSED_MESSAGE` and no CORS header. The check runs in the router, so the
+    transport's own pages are answered before it: the 431 header-limit pages, the 501 for
+    an unserved method and the P-2 400 for conflicting framing. A follow-up to API-03 runs
+    the check also before the 501 and the P-2 400 pages; until it lands, those two pages
+    are answered for any `Host`. They carry no data and, for a refused `Host`, no CORS
+    header. Pinned by
+    `api03_security::rebinding_a_loopback_bind_serves_only_loopback_names`,
+    `rebinding_exactly_one_host_header`, `rebinding_allowed_hosts_extend_a_loopback_bind`,
+    `rebinding_a_non_loopback_bind_is_unrestricted_without_a_list`,
+    `rebinding_a_non_loopback_bind_with_a_list` and `rebinding_the_host_check_comes_first`,
+    and by `guard::tests::entries_that_cannot_match_are_reported`.
+  - SEC-1.2: `Origin` is checked on every route, GET included; on GET the check runs
+    before the route and before the key, so an unknown GET from a foreign page gets 403
+    where the donor answers 404. `Origin: null` is never the server's own page. A
+    `cors_origins` of `*`, or a listed `null`, still grants `null` on `/v1/*`, as the
+    donor's `_cors_allow` does. Pinned by
+    `api03_security::origin_is_checked_on_every_route`.
+  - SEC-1.3: a JSON content type (the media type before `;`, trimmed, compared without
+    regard to case with `application/json`, as in the archived crate) is required on every
+    POST except the two raw-upload routes, `/attach` and `/pdf`. Under lead decision LD39
+    those two take the donor's attachment content types (`ATTACH_CONTENT_TYPES`:
+    `application/octet-stream` and `application/pdf`; `serve/server.py:6434-6446`) and
+    keep the donor's own refusal for any other type; LD39 is reported to the owner at
+    checkpoint 2. Any other POST without a JSON content type gets 415
+    `{"error": {"message": "send application/json"}}`, after the body is read, as the
+    donor reads it before its gates. Pinned by
+    `api03_security::every_post_needs_a_json_content_type`.
+  - SEC-1.4: the router's loopback-or-key gate covers POST `/settings`, `/api/context`,
+    `/api/port`, `/api/thinking-budget`, `/api/update`, `/api/turbo`,
+    `/api/models/{settings,switch,delete,leftovers}` and `/api/savings/{reset,prices}`
+    (403 `permission_error` with `LOCAL_ONLY_MESSAGE`), and POST `/models/load`,
+    `/models/unload`, `/api/pull`, `/api/pull/cancel`, `/api/delete` and DELETE
+    `/api/delete` (the donor's own 403 body, `MODEL_MANAGE_LOCAL_ONLY_MESSAGE`). It runs
+    before the handler's model-management check, so a client from another computer without
+    a key gets 403 even when model management is off, where the donor answers 404. A
+    loopback peer is any address in 127.0.0.0/8, `::1`, or an IPv4-mapped address in
+    127.0.0.0/8, which is wider than the donor's list (127.0.0.1, `::1`,
+    `::ffff:127.0.0.1`). The refusal is answered after the body is read. Pinned by
+    `router::tests::admin_routes_need_a_loopback_client_or_a_key` and
+    `guard::tests::loopback_peers`.
+  - SEC-1.5: every configured key is compared in constant time (`constant_time_eq`); no
+    observable difference from `hmac.compare_digest` was found, so no new sub-item is
+    recorded. Pinned by `api03_security::api_keys_in_their_accepted_forms`.
+- **Note on proposal P-22.** The router adds its CORS headers through the transport's
+  end-headers hook, so they also reach the pages the transport writes itself
+  (`api03_security::cors_headers_reach_the_transports_own_pages`). On the 431 pages the
+  hook runs with empty headers, so no `Origin` is seen and no CORS header is added. This
+  matches what P-22 states and changes nothing in it; P-22 still awaits the owner.
 - **Packages.** API-02, API-03 (guards; enforces the `allowed_hosts` list), API-15 (reads
   the optional run-config key `allowed_hosts`), OPS-23 (ops route guards), CNF-14
   (independent security tests).

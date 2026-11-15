@@ -8,12 +8,13 @@ working tree, against the empty skeleton. Section 4 also records the negative ca
 were observed earlier the same day on the uncommitted working tree. Sections 3, 9 and 10
 also record the first three M1 packages, merged on 2026-11-14 (API-01, ENG-01 and CNF-01),
 and the first CI runs. Sections 3 and 9 also record the seven packages of wave 2 of M1,
-merged on 2026-11-15 (API-02, API-04, API-15, ENG-02, ENG-09, PRM-04 and CNF-02). Every
-other command is planned. At M0 the only runnable content is
-the empty `console/` workspace skeleton and its check tools (GOV-06). Each command is
-marked **Available from** with the work package that makes it real. When a package
-lands, it updates its entries here in the same change: it replaces "planned" with the
-observed result, the date, the commit and any excluded or failing coverage, as
+merged on 2026-11-15 (API-02, API-04, API-15, ENG-02, ENG-09, PRM-04 and CNF-02), and
+sections 3, 5, 9 and 10 the four packages of wave 3 of M1, merged on 2026-11-15 (API-03,
+ENG-10, CNF-03 and CNF-07). Every other command is planned. At M0 the only runnable
+content is the empty `console/` workspace skeleton and its check tools (GOV-06). Each
+command is marked **Available from** with the work package that makes it real. When a
+package lands, it updates its entries here in the same change: it replaces "planned"
+with the observed result, the date, the commit and any excluded or failing coverage, as
 constitution principle III and XII require. Treat any
 count recorded here as evidence for that commit only.
 
@@ -128,7 +129,8 @@ Observed with `rustc` 1.97.1 in the package clone before the merge: 94 `console-
 tests passed, 0 failed, and 50 consecutive runs of the `console-core` suite had no
 failure; the lead's run at `fb87f8a2`, below, confirmed them. Everything runs offline,
 with synthetic test engines only; nothing here is qualified beyond synthetic backends. Not
-done: no admission path calls the guard yet (ENG-10, API-08); the seam contract stays
+done at that commit: no admission path called the guard yet (ENG-10 has called it since
+wave 3, below; the process-start refusal is API-08's); the seam contract stays
 draft 0.2 until the engine track's review is recorded (FR-039, OPEN-30); and the four
 parse differences on engine `INFO` and `DONE` values are proposal P-21, awaiting the
 owner's decision.
@@ -282,6 +284,41 @@ has 27 of 913 rows resolved (26 `rust-test`, 1 `deviation`: API-02 4, API-04 8, 
 ENG-09 10, PRM-04 3) and 886 `pending`. No Linux run and no CI run covers this commit
 (section 10).
 
+**Observed (ENG-10, the engine turn driver in `console-core::turn`)**: merged on
+2026-11-15 at commit `4e7c438a`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-core --lib turn::
+nice -n 10 cargo test --locked -p console-core \
+  --test eng10_donor --test eng10_turn --test eng10_admission
+```
+
+The first command runs the 17 unit tests of `console_core::turn`; the second runs 6
+translated donor methods, 28 driver tests and 9 admission tests, all on tokio's paused
+clock with ENG-02's synthetic engines. In the package clone before the merge, with `rustc`
+1.97.1, all passed, and the three integration targets passed 50 runs out of 50 in a loop;
+the lead's run at `6faf815b`, below, confirmed them. A recording fake shows that a dropped
+consumer still gives the engine's stop, then the drain, then the release of the place. The
+admission tests show an engine that is not synthetic refused at first start, restart,
+context reload, model switch and the start after an idle unload or a death, each reached
+through the context rule as a request is; the refused engine is shut down and never
+generates. Qualified on synthetic backends only. Not done: 29 of its 35 donor rows need
+the HTTP layer (API-07, API-08), the line-protocol client (ENG-04, ENG-05, ENG-06) or the
+continuations (ENG-11), and only their driver halves are tested; the driver runs one
+engine call at a time, so several generations at once on an engine with several places
+are left to ENG-07; the continuations of fair slices, the thinking budget and the loop
+guard are ENG-11's, over the driver's `ContinuationPolicy` hook; and the wrap, shutdown
+and idle-unload timing are ENG-12's.
+
+**Observed (lead's gate run after wave 3 of M1)**: on 2026-11-15 at commit `6faf815b`, on
+macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
+1.97.1); `cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings`
+passed; `cargo test --locked` gave 909 passed, 0 failed and 1 ignored, the ignored test
+being the real-pack tokenizer round trip, which reports unverified without a pack; and
+both check scripts of section 4 passed. The parity ledger at this commit has 37 of 913
+rows resolved (35 `rust-test`, 2 `deviation`; wave 3 added API-03 4 and ENG-10 6) and 876
+`pending`. No Linux run and no CI run covers this commit (section 10).
+
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
 them as well only when a change also touches root-workspace files, which this feature
@@ -401,7 +438,50 @@ non-JSON content type, is refused; a request whose `Host` is not a loopback name
 listed in the run-config key `allowed_hosts` is refused with 403 when bound to loopback
 (SEC-1.1).
 
-**Available from**: API-03 (M1). Not yet available.
+**Available from**: API-03 (M1) as a library; by hand once API-08 wires the router and
+`allowed_hosts` into `pulsar-console`. Not yet available by hand.
+
+**Observed (API-03, the router and guards in `console-http::router` and
+`console-http::guard`)**: merged on 2026-11-15 at commit `60fa1461`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http \
+  --test api03_dispatch --test api03_donor --test api03_security
+nice -n 10 cargo test --locked -p console-http --lib -- router:: guard::
+nice -n 10 cargo test --locked -p console-core --lib digest::
+```
+
+The first command runs 29 integration tests (5 in `api03_dispatch`, 14 in `api03_donor`,
+10 in `api03_security`); the second the unit tests of the router and the guards; the third
+the SHA-256 helper's tests against known vectors. In the package clone before the merge
+all passed, and the three integration files and the router unit tests passed 50 runs in a
+loop; the lead's run at `6faf815b` (section 3) confirmed them. Observed: every donor route
+answers its expected status without a key and with a key, and with no `Origin`, the
+server's own page, a foreign page and `Origin: null`, with a probe handler in place of the
+handlers of later packages; a foreign or null `Origin` gets 403 on GET and DELETE, and
+on POST once the key check passes; a POST without `application/json`, other than to
+`/attach` and `/pdf`, gets 415 `{"error": {"message": "send application/json"}}` (lead
+decision LD39); on a loopback bind a `Host` other than `localhost`, `127.0.0.1` or `[::1]`
+(any port), or a name listed in `allowed_hosts`, gets 403 `permission_error` before
+routing. The
+transport's own 431 pages are answered before the `Host` check, and so, until a follow-up
+to API-03 lands, are its 501 page for an unserved method and its P-2 400 page. These are
+claims about the router with test handlers, on synthetic inputs only. By hand, once the
+binary exists:
+
+```sh
+curl -i -H 'Host: attacker.invalid' http://127.0.0.1:<port>/health     # 403
+curl -i -H 'Origin: null' http://127.0.0.1:<port>/health               # 403
+curl -i -X POST -H 'Content-Type: text/plain' -d '{}' \
+  http://127.0.0.1:<port>/v1/chat/completions                          # 415
+```
+
+Not done: ten of its donor rows need the handlers of later packages (API-06, API-07,
+API-08, API-09, API-11, API-12, API-13), and only their router halves are tested; the
+`Host` matching details (LD43) and the reading of `allowed_hosts` on a loopback bind
+(LD30) await the owner's confirmation at checkpoint 2; and API-08 wires the guard at
+start, including the refusal to start on an `allowed_hosts` entry that cannot be parsed
+(LD40).
 
 ## 6. Run through the line-protocol engine
 
@@ -487,6 +567,64 @@ Nothing runs a server or a scenario: the client, comparator, process harness and
 arrive with CNF-03, CNF-04, CNF-07 and CNF-09. The `cnf` binary does not expose the
 loader.
 
+**Observed (CNF-03, the raw HTTP client and observation recorder in
+`console-conformance::client` and `::observe`)**: merged on 2026-11-15 at commit
+`21f5be60`. It is a library; no `cnf` subcommand uses it yet. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-conformance --test cnf03_client
+nice -n 10 cargo test --locked -p console-conformance --lib -- client:: observe::
+```
+
+The first command runs 19 self-tests, each against a `std::net` server the test starts on
+127.0.0.1 port 0. The server writes the same logical answer with `Content-Length`, chunked
+and close-delimited framing, and the tests check that the logical observations are
+identical. The tests also cover HTTP/1.0 requests sent byte for byte, raw malformed
+requests, answers with no head and heads the parser rejects, which are read to the end of
+the connection and recorded the same whatever the server's write sizes, and disconnects
+after N events, after N bytes and right after the request, as a close or a half-close. In
+the disconnect tests the server waits for the client to go away, so they cannot pass by
+timing. The second command runs 52 unit tests: the SSE and NDJSON parsers, the chunked
+decoder, the `json.dumps`-compatible body writer, the read limits, the request write that
+stops at the exchange deadline, durations up to `Duration::MAX`, and file reads that
+refuse symbolic links and named pipes. In the package clone before the merge all passed,
+and the integration file passed 30 of 30 runs in a row; the lead's run at `6faf815b`
+(section 3) confirmed them. Qualified on synthetic inputs only. Not done: the client has
+not been run against the console's own transport or a binary; a scenario cannot yet say
+that a step half-closes or disconnects right after its request (a request to CNF-09); and
+an answer whose only bytes are a prefix of `HTTP/` is still recorded as truncated with no
+body.
+
+**Observed (CNF-07, the process harness in `console-conformance::process`)**: merged on
+2026-11-15 at commit `d270f113`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-conformance --test cnf07_process
+nice -n 10 cargo test --locked -p console-conformance --test cnf07_scenario_files
+nice -n 10 cargo test --locked -p console-conformance --lib -- process::
+```
+
+The first command runs the 27 process-harness self-tests against the test-only child
+`cnf_child` (loopback, port 0; each test holds the lifecycle lock; about 4 s on a macOS
+host); the second checks the generated tokenizer directory and run config (7 tests, no
+process); the third the 23 unit tests of the module. Set
+`PULSAR_CONSOLE_TEST_TIME_SCALE=3` on a slow runner: every harness deadline (ready line
+20 s, grace 10 s, kill 10 s, the 500 ms exit wait after standard output closes, and the
+tests' short 300 ms deadlines) is multiplied by it; a non-numeric or out-of-range value
+fails the run instead of being ignored. A failed start keeps its run directory (the error
+names it), and so does a drop that finds a stop that was not clean; CI should collect the
+kept directories' `stdout.txt` and `stderr.txt` as artifacts. In the package clone before
+the merge, on macOS (Darwin): 27 of 27 process tests passed, repeated runs passed, and no
+process or run directory was left afterwards; the lead's run at `6faf815b` (section 3)
+confirmed them. The leak check is proven with a child that forks a grandchild, inside and
+outside its process group. The ready line and the harness are specified in
+[contracts/cli.md](contracts/cli.md) (draft). Not done: the Linux paths (the `/proc`
+walk, `waitid` with `WNOWAIT`, process groups) are unverified until a CI run; no
+`pulsar-console` binary exists yet, so the harness has started only `cnf_child`; and
+that the server's ready line names the bound port under `--port 0` is proposal P-25,
+awaiting the owner's decision
+([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
+
 ## 10. CI jobs
 
 `.github/workflows/console.yml` is path-filtered to console paths. Its blocking jobs each
@@ -510,7 +648,9 @@ small-fixture validation, Apple Silicon workspace baseline, aggregate status). N
 been pushed since, so no CI run covers API-01, ENG-01 or CNF-01, and CNF-01's revision of
 `console.yml`, described below, has not run. As of 2026-11-15 (commit `8ea4c27a`) nothing
 has been pushed since `0f4bc320` either: no CI run covers the seven packages of wave 2, and
-the Linux behavior of the M1 code is unobserved.
+the Linux behavior of the M1 code is unobserved. The same holds at commit `6faf815b`
+(2026-11-15): no CI run covers the four packages of wave 3, and the Linux behavior of the
+M1 code, CNF-07's process harness included, is unobserved.
 
 CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
 rust-linux and rust-macos run from `console/`. Every failing step prints one

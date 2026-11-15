@@ -1,10 +1,11 @@
 # Contracts for Feature 022: PulsarMLX Console Serving Parity
 
-- **Status**: Index, dated 2026-11-14. Milestone M0 writes the five documents marked
-  "written" below. Every other document is planned and is written by the work package
-  named in its row. No contract here describes working software: nothing in this
-  increment is built yet, and when built it can at most be "qualified on synthetic
-  backends".
+- **Status**: Index, first dated 2026-11-14 and kept current as packages land. Milestone
+  M0 wrote the five documents marked "written" below; the M1 packages named in their rows
+  have added others since. Every other document is planned and is written by the work
+  package named in its row. A contract describes what is specified; what is built, and
+  how far it is verified, is recorded per package in `tasks.md` and the quickstart, and
+  nothing built can be described as more than "qualified on synthetic backends".
 - **Feature**: `specs/022-console-serving-parity`, branch `feat/022-console-serving-parity`
 - **Plan of record**: the owner-approved plan of 2026-11-14, carried into
   [`../plan.md`](../plan.md) and [`../tasks.md`](../tasks.md)
@@ -61,7 +62,7 @@ in [`../checklists/analysis.md`](../checklists/analysis.md).
 | Error conventions | Error body shapes, status mapping, messages before and after the first byte of a stream | API-01 with API-20 | planned |
 | OpenAI Chat Completions stream grammar | SSE chunk sequence, finish reasons, usage chunk, `[DONE]` | API-08 | planned |
 | Anthropic Messages stream grammar | `message_start` through `message_stop`, thinking and tool blocks | API-09 | planned |
-| `cli.md` | `pulsar-console` command line, the ready line, exit codes | API-17 with CNF-07 | planned |
+| [`cli.md`](cli.md) | `pulsar-console` command line, the ready line, exit codes, the process harness | CNF-07 (draft, 2026-11-15, commit `d270f113`: the ready line, section 2, and the process harness, section 5); API-08 and API-17 settle the command line, the port-in-use error and the exit codes (sections 1, 3 and 4) | written (draft) |
 | Monitoring routes | `/health`, `/status`, `/v1/status`, `/metrics`, Prometheus names | API-06 | planned |
 | Resumable web streams | `strata_resume`, `/v1/strata/stream`, `/v1/strata/cancel`, answer retention (PRIV-1) | API-10 | planned |
 

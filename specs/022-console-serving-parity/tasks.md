@@ -561,6 +561,26 @@ keeps the donor's behavior where an approved proposal now applies.
     parsing details, Unicode tables) can differ by version in the donor itself. Until the
     owner decides, the manual reference job (CNF-08) is planned on CPython 3.14 instead of
     3.12, and every table says which version it was recorded with.
+  - LD39 (2026-11-15, with API-03): SEC-1.3 (a JSON content type on every POST) does not
+    apply to the two raw-upload routes, `/attach` and `/pdf`, which take the donor's
+    attachment content types and keep the donor's own refusal for any other type; every
+    other POST needs a JSON content type. Reported to the owner at checkpoint 2.
+  - LD40 (2026-11-15, with API-03): an `allowed_hosts` entry that cannot be parsed stops
+    the server at start, with a message that names the entry and the accepted forms.
+    API-08 wires it; `GuardConfig::rejected_allowed_hosts` gives the entries.
+  - LD41 (2026-11-15, with API-03): the product wording API-03 fixed is accepted: "only
+    from PulsarMLX Console's own page" and "files are read only for PulsarMLX Console's own
+    page", and the texts of the SEC-1.1 `Host` refusal and of the SEC-1.4 local-only
+    refusal as API-03 wrote them (`HOST_REFUSED_MESSAGE` and `LOCAL_ONLY_MESSAGE` of
+    `console_http::guard`; contracts/naming.md section 3.11).
+  - LD42 (2026-11-15, with ENG-10): the refusal while the server is stopping is answered
+    400 `invalid_request_error`, as the donor's `ValueError` is
+    (`serve/server.py:4364-4365`); the API-07 detail's "503 shape" is superseded.
+  - LD43 (2026-11-15, with API-03): the matching details of SEC-1.1 as API-03 built them,
+    to be confirmed with the owner together with LD30: exactly one `Host` header, and a
+    missing one is refused; names are compared without regard to case; any port, or none,
+    is accepted; an `allowed_hosts` entry that names a port matches only that port; no
+    trimming, no IPv6 normalization, no forgiveness of a trailing dot.
 - **Not decided.** Who on the engine track reviews the seam draft, and in what form (FR-039,
   seam question Q12, OPEN-30). ENG-01's code may land; the seam stays a draft and ENG-01
   stays unticked until that review is recorded. Reaching the engine track goes through the
@@ -581,7 +601,7 @@ the named task closes. The register is authoritative where the two differ.
 | OPEN-01 | Whether the donor's sealed-reasoning prefix is accepted on input (B2) | Owner | RSP-03 |
 | OPEN-06 | The default run-config directory when no config is given, and whether an importer for project-maya run configs exists | Owner | OPS-11 |
 | OPEN-09 | An untagged ERR in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop) | Owner | ENG-07 |
-| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); P-19 (refusal of an unpaired surrogate inside a JSON string), P-20 (the nesting bound of 1000 levels in the JSON reader and writer) and P-21 (four parse differences on engine `INFO` and `DONE` values), raised by API-01 and ENG-01 on 2026-11-14; P-22 (Python's error page for a refused request head also when `cors_origins` is set), P-23 (five differences in the run-config store) and P-24 (refusals and size limits in tokenizer pack loading), raised by API-02, API-15 and PRM-04 on 2026-11-15; P-19 to P-24 are put to the owner at checkpoint 2; also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); API-01 (P-19, P-20); ENG-01 (P-21); API-02 (P-22); API-15 (P-23); PRM-04 (P-24); RSP-02; OPS-21 |
+| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); P-19 (refusal of an unpaired surrogate inside a JSON string), P-20 (the nesting bound of 1000 levels in the JSON reader and writer) and P-21 (four parse differences on engine `INFO` and `DONE` values), raised by API-01 and ENG-01 on 2026-11-14; P-22 (Python's error page for a refused request head also when `cors_origins` is set), P-23 (five differences in the run-config store) and P-24 (refusals and size limits in tokenizer pack loading), raised by API-02, API-15 and PRM-04 on 2026-11-15; P-25 (under `--port 0` the server's ready line names the port the operating system bound), raised by CNF-07 on 2026-11-15; P-19 to P-25 are put to the owner at checkpoint 2; also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); API-01 (P-19, P-20); ENG-01 (P-21); API-02 (P-22); API-15 (P-23); PRM-04 (P-24); CNF-07, API-08, API-17 (P-25); RSP-02; OPS-21 |
 | OPEN-24 | Whether launching refuses known project-maya engine names | Owner | ENG-15 |
 | OPEN-25 | Which names Turbo and the settings profiles write into a run-config `env` block (the donor writes `MAYA_GLM_*` and `MAYA_DS4_*`), and the engine variable names shown in the dashboard; B2 fixes only that such names pass through verbatim | Owner | OPS-05, OPS-06, WEB-09 |
 | OPEN-30 | Seam design details ENG-01 settles before freezing the seam (R27) | Lead | ENG-01 |
@@ -817,6 +837,14 @@ each later push remains a checkpoint decision.
     details (case, port, IPv6 forms, a missing `Host` header) from the archived serving
     crate (B8). Lead note LD30: that `allowed_hosts` also extends the list on a loopback
     bind is confirmed with the owner at checkpoint 2.
+  - Note: Built and merged on 2026-11-15 at commit `60fa1461`; its implementation and the
+    donor tests it confirmed are recorded under SEC-1 in contracts/deviations.md. The
+    checkbox stays open: ten of its fourteen donor rows need the handlers of later packages
+    (API-06, API-07, API-08, API-09, API-11, API-12, API-13), and only their router halves
+    are tested; LD30 and the matching details of LD43 await the owner's confirmation at
+    checkpoint 2; and a follow-up, built in wave 4 with a commit that cites API-03, runs
+    the `Host` check also before the transport's 501 page and its P-2 400 page, which are
+    answered before the check until it lands. LD39 and LD41 apply (R29).
   - Detail: [tasks/api.md#api-03](tasks/api.md#api-03).
 - [ ] API-04 [M1] Request validation, sampling normalization and shared defaults —
   console-core::request and console-core::sampling
@@ -981,6 +1009,17 @@ each later push remains a checkpoint decision.
     the vocabulary, porting the donor's behavior. ENG-01 left
     `EngineFailure::out_of_vocabulary` with a provisional text that has no donor
     counterpart; this task replaces or maps it.
+  - Note: Built and merged on 2026-11-15 at commit `4e7c438a`; the lead's fix-up at
+    `78a408a7` gave the out-of-vocabulary failure a structured form
+    (`EngineFailure::out_of_vocabulary_parts`). Its call of the guard on every admission
+    path is recorded as implemented in
+    [docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md),
+    and a token id outside the vocabulary is answered as the donor's tokenizer
+    `IndexError` (contracts/backend-seam.md section 12.1). The checkbox stays open: 29 of
+    its 35 donor rows need the HTTP layer (API-07, API-08), the line-protocol client
+    (ENG-04, ENG-05, ENG-06) or the continuation packages (ENG-11), and only their driver
+    halves are tested; several generations at once on an engine with several places are
+    left to ENG-07, and the continuations to ENG-11.
   - Detail: [tasks/engine.md#eng-10](tasks/engine.md#eng-10).
 - [ ] API-07 [M1] Inference request lifecycle driver (dialect-agnostic) —
   console-http::inference
@@ -1002,6 +1041,11 @@ each later push remains a checkpoint decision.
   - Note: Owner decision 2026-11-14: implements approved deviation P-8, so the error table
     maps a template `raise_exception` (PRM-03) and a DeepSeek encoder assertion failure
     (PRM-07) to 400 instead of the donor's unclean server error (OPEN-07 settled).
+  - Note: Follow-ups from wave 3 of M1 (lead, 2026-11-15): the refusal while the server is
+    stopping is answered 400 `invalid_request_error` (LD42); a token id outside the
+    vocabulary is answered as the donor's tokenizer `IndexError` (ENG-10's finding,
+    contracts/backend-seam.md section 12.1); and this task's error table is where approved
+    deviation P-8 is mapped.
   - Detail: [tasks/api.md#api-07](tasks/api.md#api-07).
 - [ ] API-08 [M1] OpenAI Chat Completions adapter and SSE stream —
   console-http::dialect::openai; pulsar-console (the minimal M1 entry point, LD31)
@@ -1037,6 +1081,12 @@ each later push remains a checkpoint decision.
     the API-03 guard; prints a `ConfigSamplingError`'s notes on standard output and its
     message on standard error before a non-zero exit; and decides whether the binary
     installs a one-line panic hook (the transport already logs one line per failed request).
+  - Note: Follow-ups from wave 3 of M1 (lead, 2026-11-15): the binary prints the ready line
+    of contracts/cli.md section 2 on standard output, flushed, once the server accepts
+    connections; under `--port 0` it names the bound port (proposal P-25); it carries no
+    synthetic marker unless the owner approves the one proposed under PLAN-1. This task
+    also wires LD40: an `allowed_hosts` entry that cannot be parsed stops the server at
+    start.
   - Detail: [tasks/api.md#api-08](tasks/api.md#api-08).
 - [ ] PRM-04 [M1] Byte-level BPE tokenizer, ByteTokenizer and incremental detokenizer —
   console-tokenizer (new crate)
@@ -1111,7 +1161,7 @@ each later push remains a checkpoint decision.
     contracts/naming.md, contracts/deviations.md and contracts/parity-ledger.md. Nothing
     runs a scenario yet (CNF-03, CNF-04, CNF-07, CNF-09).
   - Detail: [tasks/conformance.md#cnf-02](tasks/conformance.md#cnf-02).
-- [ ] CNF-03 [M1] Raw HTTP client and observation recorder (SSE, NDJSON, disconnect control)
+- [x] CNF-03 [M1] Raw HTTP client and observation recorder (SSE, NDJSON, disconnect control)
   — console-conformance::client and ::observe
   - Depends on: CNF-02.
   - Donor sources: serve/server.py:5405 (HTTP/1.0), the SSE writers, NDJSON in
@@ -1121,6 +1171,11 @@ each later push remains a checkpoint decision.
   - Done when: self-tests show identical observations for the same logical response under
     all three framings, HTTP/1.0 request mode works, and disconnect timing is exact to the
     event.
+  - Note: Built and merged on 2026-11-15 at commit `21f5be60`, and done: the self-tests
+    show identical logical observations under the three framings, HTTP/1.0 requests are
+    sent byte for byte, and disconnects are exact to the event. It uses blocking `std::net`
+    sockets, and its self-tests use `std::net` servers. A scenario cannot yet say that a
+    step half-closes or disconnects right after its request (CNF-09).
   - Detail: [tasks/conformance.md#cnf-03](tasks/conformance.md#cnf-03).
 - [ ] CNF-04 [M1] Normalizer and comparator with deviation annotations —
   console-conformance::normalize and ::compare
@@ -1149,6 +1204,14 @@ each later push remains a checkpoint decision.
     contracts/cli.md.
   - Note: This task covers the refusal of reserved environment names in the `env` block of
     a scenario's `server.config`, which CNF-02's loader does not check (lead, 2026-11-15).
+  - Note: Built and merged on 2026-11-15 at commit `d270f113`:
+    `console_conformance::process` (`Launch`, `ServerProcess`, `StopReport`,
+    `ScenarioFiles`, `lifecycle_lock`), the test-only child `src/bin/cnf_child.rs` and the
+    draft contract contracts/cli.md (the ready line and the process harness). It holds the
+    `env` block of a run config it writes to the reserved-name rule. The checkbox stays open: the leak check is proven on
+    macOS with the test-only child, and the Linux paths are unverified until a CI run; no
+    `pulsar-console` binary exists yet. That the ready line names the bound port under
+    `--port 0` is proposal P-25, awaiting the owner (OPEN-15).
   - Detail: [tasks/conformance.md#cnf-07](tasks/conformance.md#cnf-07).
 
 ## Phase M2: Prompt and output
@@ -1487,6 +1550,8 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
     every place returned.
   - Note: FIX-1 covers the untagged stop in multi mode; the untagged ERR case is open item
     OPEN-09.
+  - Note: This task drives several generations at once over the seam's submit-and-pump
+    form; the turn driver of ENG-10 runs one engine call at a time (lead, 2026-11-15).
   - Detail: [tasks/engine.md#eng-07](tasks/engine.md#eng-07).
 - [ ] ENG-08 [M3] Engine supervision: restart, graceful close, kill, stall watchdog, death
   notes, narration, context cost, memory settle — console-engine::supervise, ::activity,
@@ -1521,6 +1586,9 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
   - Done when: every listed test passes with stub policies, a property test shows the client
     receives exactly the produced tokens in order with no duplicates or losses, and the
     continuation trait is documented and signed off by the console-prompt owner.
+  - Note: Fair slices, the soft close of a thinking budget and the loop guard's
+    continuations go through the `ContinuationPolicy` hook of ENG-10's turn driver (lead,
+    2026-11-15).
   - Detail: [tasks/engine.md#eng-11](tasks/engine.md#eng-11).
 - [ ] ENG-12 [M3] EngineHost lifecycle: start, unload and idle unload, model load and
   unload, context reload, facts, shutdown — console-core::host
@@ -1541,6 +1609,8 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
     ENG-02's scripted engine: the reload delay is read once when the engine is built, where
     the donor reads the environment at each reload; and a reload to the same context does
     not sleep, where the donor always sleeps (lead, 2026-11-15).
+  - Note: The wrap and shutdown sequencing and the idle-unload timing use ENG-10's
+    `TurnDriver::unload` and `TurnDriver::set_stopping` (lead, 2026-11-15).
   - Detail: [tasks/engine.md#eng-12](tasks/engine.md#eng-12).
 - [ ] ENG-15 [P] [M3] Engine launch specification from the run config, and GLM link mode —
   console-engine::launch and ::multigpu::glm_link
@@ -1750,6 +1820,10 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
     provenance (LD28).
   - Note: test_old_engine_name is re-expressed as a refusal of the legacy engine name with a
     clear error (BRAND-1, B2).
+  - Note: Follow-up from wave 3 of M1 (lead, 2026-11-15): the binary prints the ready line
+    of contracts/cli.md section 2 on standard output, flushed, once the server accepts
+    connections; under `--port 0` it names the bound port (proposal P-25); it carries no
+    synthetic marker unless the owner approves the one proposed under PLAN-1.
   - Detail: [tasks/api.md#api-17](tasks/api.md#api-17).
 - [ ] API-20 [M4] HTTP API contract documents and route inventory gate —
   specs/022-console-serving-parity/contracts/http/ and a console-http test
@@ -2637,6 +2711,9 @@ go-ahead.
     references runs in the blocking Linux job.
   - Note: May add a `cnf check-scenarios` subcommand that loads every scenario file in a
     directory, so the corpus can be checked before the runner exists (lead, 2026-11-15).
+  - Note: The scenario format may gain a way to say how and when a step disconnects: a
+    half-close mode and a disconnect right after the request, which CNF-03's client
+    already supports (CNF-03's request; lead, 2026-11-15).
   - Detail: [tasks/conformance.md#cnf-09](tasks/conformance.md#cnf-09).
 - [ ] CNF-10 [M10] Shim tier: donor tests run as-is against Rust artifacts (manual job only)
   — console/conformance/oracle/ shim scripts invoked from the manual differential job

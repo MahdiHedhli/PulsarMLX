@@ -355,7 +355,8 @@ is set, and then only the listed names and the loopback names pass. A refused re
 gets 403 `permission_error`. That `allowed_hosts` also extends the list on a loopback bind
 follows the SEC-1.1 text the owner reviewed; the lead confirms it with the owner at
 checkpoint 2 (lead note LD30). Matching details (case, port, IPv6 forms, a missing `Host`
-header) follow this crate and are settled by API-03.
+header) follow this crate; API-03 settled them on 2026-11-15, as lead decision LD43
+records, and they are confirmed with the owner together with LD30.
 
 **Alternatives considered**:
 

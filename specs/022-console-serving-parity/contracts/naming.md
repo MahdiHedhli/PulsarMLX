@@ -282,7 +282,8 @@ file names written into a user's data directory are not tracked and are not affe
 | --- | --- | --- | --- | --- | --- |
 | `[maya] ` log prefix | `[console] ` | Decided (B2) | for example `serve/server.py:926`, `:6155` | API, ENG, RSP, CNF | API-16 and every package that logs |
 | `[maya] request failed mid-answer: <message>` | `[console] request failed mid-answer: <message>` | Decided (B2, rule 7); fixed by API-01 (commit `c2392605`), which escapes control characters, U+2028 and U+2029 in the message so the line stays one line | `serve/server.py:6155` | API | API-01 |
-| "... only from Maya's own page" | product wording, same status and type | Rename decided, value proposed | `serve/server.py:6336` | API | API-03 |
+| "... only from Maya's own page" | `<what> only from PulsarMLX Console's own page`, same status and type | Decided (BRAND-1.1; the wording accepted by lead decision LD41): fixed by API-03 (commit `60fa1461`) in `console_http::guard::own_page_message` | `serve/server.py:6336` | API | API-03 |
+| "files are read only for Maya's own page" | `files are read only for PulsarMLX Console's own page` | Decided (BRAND-1.1; the wording accepted by lead decision LD41): fixed by API-03 (commit `60fa1461`) in `console_http::guard::attach_foreign_message` | `serve/server.py:6448` | API | API-03 |
 | "update Maya (./maya.sh --setup)" in request refusals | the tail "update PulsarMLX Console" (for example "logit_bias: this engine does not apply token biases - update PulsarMLX Console"; "logprobs: this model's engine does not report token log-probabilities (the DeepSeek engine does - update PulsarMLX Console if it is that one)") | Rename decided, value proposed: fixed by API-04 (commit `89d40258`) in `console_core::request` (`UPDATE_HINT`), awaiting the lead's review | `serve/server.py:2496`, `:2518`, `:2529-2530` | API | API-04 |
 | "ablate: this model has no refusal direction loaded (the Models page: a direction file for it, and the switch on)" | "ablate: this model has no refusal direction loaded" (the pointer to the unported Models-page switch is dropped, POL-1.2) | Rename decided, value proposed: fixed by API-04 (commit `89d40258`), awaiting the lead's review | `serve/server.py:2502-2504` | API | API-04 |
 | `[maya] config sampling.<key>=<value>: ...` (start-up refusals and their `unknown key, ignored` notes), `[maya] sampling defaults from the config: ...`, `[maya] sampling defaults from the model: ...` | the same text with the `[console] ` prefix (rule 7); the notes for unknown keys before a refused key travel in `ConfigSamplingError::notes()` and are printed before the refusal line, in the donor's order | Decided (B2); fixed by API-04 (commit `89d40258`) in `console_core::sampling` | `serve/server.py:6899-6960`, `:7213-7215` | API | API-04 |
@@ -290,6 +291,23 @@ file names written into a user's data directory are not tracked and are not affe
 | `/api/report` "System: ..., Python ..." and "Project Maya <version>" | OS identification and `pulsar-console <version>` | Rename decided, value proposed | as cited by API | API | API-13 |
 | "Support Maya" sponsor link | none | Removed (BRAND-1) | `serve/web/sidebar.js:280`, `serve/web/lib.js:6` | WEB | WEB-10 |
 | Engine log phrases the server parses (for example "session is up", the VRAM-before-the-expert-pool line) | unchanged | Verbatim: engine output parsed as data (the ENG planner's proposal) | as cited by ENG | ENG | ENG-08 |
+
+Notes on section 3.8, recorded by the packages that fixed these texts (merged on
+2026-11-15):
+
+- **The turn driver's log lines.** ENG-10 (commit `4e7c438a`) writes these lines of the
+  donor's turn with the `[console] ` prefix (rule 7); text that comes from the engine is
+  made log-safe first (lead decision LD35, `console_core::turn::log_safe`):
+  "loading the model again after an idle unload (a minute or so) ...", "the engine had
+  stopped (exit code N); starting it again (a minute or two) ...", "the engine is running
+  again", "the engine's numbers went non-finite before the answer started (...): running
+  the request again from token 0", "the engine's numbers went non-finite after N tokens
+  (...): the answer ends there", "the engine reported an error: ..." (only for what the
+  donor's `except ValueError` catches), "<message>. <note> The next request starts the
+  engine again.[ Its log: <path>]" and "done: N tokens in S s (R tok/s) (<finish>,
+  cancel=<True|False>)[, expert cache H% hit]". It adds one line the donor has no
+  counterpart for: "the engine panicked: it is dropped, and the next request starts it
+  again" (section 3.11). The queue-wait line is ENG-09's (notes on section 3.1).
 
 ### 3.9 Wire identifiers
 
@@ -357,8 +375,43 @@ prose, outside the machine-read tables.
   `9671312a`) reads it as `RunConfig::allowed_hosts` and `ServerSettings::allowed_hosts`:
   absent or null gives none, and a list of non-blank strings is kept, each entry stripped;
   anything else stops start-up with the console's own message, `ALLOWED_HOSTS_MESSAGE`
-  (`"allowed_hosts" must be a list of host names like "pulsar.local"`). The API-03 guard
-  that enforces it is not built yet.
+  (`"allowed_hosts" must be a list of host names like "pulsar.local"`). API-03 (commit
+  `60fa1461`, 2026-11-15) enforces it in `console_http::guard::HostPolicy`; no binary
+  passes the list to the guard until API-08 wires it at start (LD31). The matching, as
+  API-03 built it (lead decision LD43, to be confirmed with the owner together with LD30):
+  a request carries exactly one `Host` header, and none, or two, is refused; the value is
+  used as it arrives, with no trimming, no removal of a trailing dot and no IPv6
+  normalization, and an IPv6 address must be bracketed; names are compared without regard
+  to ASCII case; any port, or none, is accepted for the loopback names and for list
+  entries without a port; a list entry that names a port matches only that port. An entry
+  that cannot match (the accepted forms are `name`, `name:port`, `[v6]` and `[v6]:port`) is
+  reported by `console_http::guard::invalid_allowed_hosts` and
+  `GuardConfig::rejected_allowed_hosts`; under lead decision LD40 such an entry stops the
+  server at start, with a message that names the entry and the accepted forms, which
+  API-08 wires. The refusal is 403 `permission_error` with `HOST_REFUSED_MESSAGE` (below),
+  and it carries no CORS header. The transport's 431 header-limit pages are answered
+  before the `Host` check, and so, until the follow-up to API-03 lands, are its 501 for an
+  unserved method and its 400 for conflicting framing under P-2.
+- **Refusal texts of SEC-1.** Fixed by API-03 (commit `60fa1461`) in
+  `console_http::guard`, and accepted as written by the lead (LD41): the SEC-1.1 refusal
+  `HOST_REFUSED_MESSAGE`, "requests for other host names are refused (the config's
+  allowed_hosts lists the names allowed)", and the SEC-1.4 refusal of a mutating admin
+  route asked from another computer without a key, `LOCAL_ONLY_MESSAGE`, "set an API key
+  to change this server's settings over the network" (403 `permission_error`). The
+  model-management routes keep the donor's own message,
+  `MODEL_MANAGE_LOCAL_ONLY_MESSAGE`. The product name in these texts is
+  `console_http::guard::PRODUCT_NAME`, "PulsarMLX Console".
+- **Turn-driver names.** Fixed by ENG-10 (commit `4e7c438a`) in `console_core::turn`: the
+  engine's driver thread is named `console-engine-driver`, and the death text of an engine
+  that panicked is `the engine panicked` (`ENGINE_PANICKED`). ENG-10 adds no environment
+  variable or configuration key.
+- **Harness file names.** Fixed by CNF-07 (commit `d270f113`) in
+  `console_conformance::process`: inside each run directory, `stdout.txt` and `stderr.txt`
+  (the captured output); in the data directory, the generated run config
+  `pulsar-scenario.json` (prefix `pulsar-`, rule 5) and the generated tokenizer directory
+  `tokenizer/`. They are test-harness names, never read by the product. The harness reads
+  `PULSAR_CONSOLE_TEST_TIME_SCALE` (section 3.10) and sets `FAKE_ENGINE_GATE` (section
+  3.4) and `PULSAR_CONSOLE_VENDOR_DIR` (section 3.10) when the caller gives them.
 - **Engine-seam names.** Fixed by ENG-01 (commit `6200f4ac`, 2026-11-14) in
   `console-core::engine`. The engine kinds, as written in logs and in the refusal line:
   `scripted`, `line-protocol`, `coordinator-adapter`, `runtime-adapter`
