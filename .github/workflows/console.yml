@@ -3,7 +3,9 @@ name: console
 # Gate for PulsarMLX Console (spec 022), the standalone Cargo workspace under
 # console/. The root workspace does not build console/, and macos.yml neither
 # builds it nor includes this workflow in its aggregate, so this file is the
-# only CI that compiles or tests it.
+# only CI that compiles or tests it. GOV-06 created it; CNF-01 extends it with
+# named failure classes, the exact-pin check in preflight, the toolchain
+# mismatch self-test and --frozen cargo runs.
 #
 # Lessons from the reverted synthetic serving workflow (serving-synthetic.yml,
 # kept at tag archive/2026-09-21/feat/openai-serving; reverted by 005867d8):
@@ -18,7 +20,9 @@ name: console
 #    a copied crate offline in a scrubbed environment. That harness, not the
 #    crate, went red when the runner image moved to a newer toolchain. Here the
 #    blocking jobs run plain cargo commands only: no pip, no offline or
-#    scrubbed rebuilds, no third-party code, no orchestration layer.
+#    scrubbed rebuilds, no third-party code, no orchestration layer. Crates are
+#    resolved once per job with `cargo fetch --locked`; every later cargo
+#    command runs with --frozen, so no step resolves or downloads again.
 # 3. It had no path filter, so after a merge it would run, and could go red,
 #    on every engine-track push. This workflow is path-filtered to console
 #    paths, so an engine push never triggers it. Console edits to the shared
@@ -33,6 +37,39 @@ name: console
 # 5. One long job mixed concerns. Here each job has one responsibility and
 #    can be reproduced locally with the command it prints.
 #
+# The donor's own gate (project-maya .github/workflows/tests.yml at 7e68a30f)
+# runs every check in one job on ubuntu-latest with actions pinned by tag; it
+# is a reference for what is checked, not for how. Here runner labels are
+# explicit and actions are pinned by commit SHA.
+#
+# Failure classes. Every failing step prints one line
+# "console failure class: <CLASS>" (and a matching ::error annotation) per
+# failed class, each line holding exactly one class, then once the detail, the
+# local command that reproduces it, and the job, runner image and toolchain.
+# BOUNDARY_ and HYGIENE_ classes come only from unindented "FAIL <check>" report
+# lines whose check name is lower-case kebab; the indented path lines under
+# them never add a class. The classes are:
+#   PREFLIGHT_BASE_UNAVAILABLE     the base branch is not in the checkout
+#   TOOLCHAIN_PIN_NOT_EXACT        console/rust-toolchain.toml has no exact X.Y.Z channel
+#   TOOLCHAIN_PIN_MISMATCH         the pin differs from CONSOLE_RUST_TOOLCHAIN below
+#   BOUNDARY_<CHECK>               a check of console/tools/check-boundary.sh failed, for
+#                                  example BOUNDARY_ALLOWLIST (a path outside the allowlist)
+#                                  or BOUNDARY_IGNORED_FILES (a file git would ignore, or a
+#                                  trap name such as console/x.log); BOUNDARY_SCRIPT_ERROR
+#                                  when the script could not run its checks
+#   HYGIENE_<GATE>                 a gate of console/tools/check-hygiene.sh failed, for
+#                                  example HYGIENE_HOME_PATH; HYGIENE_SCRIPT_ERROR as above
+#   TOOLCHAIN_INSTALL_FAILED       rustup could not install the pinned toolchain
+#   TOOLCHAIN_MISSING              rustc -V or cargo -V did not run
+#   TOOLCHAIN_MISMATCH             rustc -V or cargo -V reports a version other than the pin
+#   TOOLCHAIN_PROBE_ACCEPTED       the mismatch self-test found an assertion that passes
+#   TOOLCHAIN_PROBE_UNCLASSIFIED   the mismatch self-test failed without the expected class
+#   ARCH_MISMATCH                  the macOS job is not on arm64
+#   CARGO_FETCH_FAILED             cargo fetch --locked failed (network, or a stale lock)
+#   CARGO_FMT, CARGO_CLIPPY, CARGO_TEST
+#   SUMMARY_<JOB>_<RESULT>         a needed job did not succeed, for example
+#                                  SUMMARY_RUST_MACOS_FAILURE or SUMMARY_PREFLIGHT_CANCELLED
+#
 # Heavy or network-dependent checks (reference capture and the live
 # differential, the shim runs of the donor test files serve/test_engine_contract.py
 # and serve/test_stop.py, vendor-template render checks, SDK client tests, the
@@ -43,7 +80,8 @@ name: console
 #
 # Actions are pinned by full commit SHA. actions/checkout v7.0.1 resolves to
 # the SHA below (read with `gh api repos/actions/checkout/git/ref/tags/v7.0.1`
-# on 2026-11-14); macos.yml uses the same major version by tag.
+# on 2026-11-14); macos.yml uses the same major version by tag. No other
+# action is used: no cache action, no artifact upload.
 
 on:
   push:
@@ -75,15 +113,137 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    # bash --noprofile --norc -eo pipefail {0}
+    shell: bash
+
 env:
   CARGO_TERM_COLOR: always
   CONSOLE_RUST_TOOLCHAIN: "1.97.1"
+  # Failure reporting shared by every step, loaded with eval "$CONSOLE_CI_LIB".
+  # It defines shell functions only and runs nothing by itself. The rustc and
+  # cargo calls in console_context disable rustup's automatic install for that
+  # one call, so reporting a failure never installs a toolchain.
+  CONSOLE_CI_LIB: |
+    console_context() {
+      echo "  job:       ${GITHUB_JOB:-local}, run ${GITHUB_RUN_ID:-none}, attempt ${GITHUB_RUN_ATTEMPT:-none}"
+      echo "  image:     ${ImageOS:-unknown} ${ImageVersion:-unknown} (runner ${RUNNER_OS:-$(uname -s)} ${RUNNER_ARCH:-$(uname -m)})"
+      echo "  toolchain: pinned ${CONSOLE_RUST_TOOLCHAIN:-unset}; in $(pwd):"
+      echo "    rustc -V: $(RUSTUP_AUTO_INSTALL=0 rustc -V 2>/dev/null || echo 'not available')"
+      echo "    cargo -V: $(RUSTUP_AUTO_INSTALL=0 cargo -V 2>/dev/null || echo 'not available')"
+    }
+    # $1 is one class or a space-separated list of classes; each gets its own
+    # annotation and its own "console failure class:" line.
+    console_fail() {
+      local class list
+      read -r -a list <<<"$1"
+      for class in "${list[@]}"; do
+        echo "::error title=console ${class}::${2}"
+        echo "console failure class: ${class}"
+      done
+      echo "  detail:    ${2}"
+      if [ -n "${3:-}" ]; then echo "  reproduce: ${3}"; fi
+      console_context
+      exit 1
+    }
+    # Only unindented "FAIL <check>" report lines count. The tools print the
+    # offending paths indented under them, and a path is untrusted text, so a
+    # check name that is not lower-case kebab is reported as SCRIPT_ERROR.
+    console_classify() {
+      local prefix=$1 status=$2 output=$3 reproduce=$4 line name class classes=""
+      if [ "$status" -eq 0 ]; then return 0; fi
+      while IFS= read -r line || [ -n "$line" ]; do
+        case $line in
+          'FAIL '*)
+            name=${line#FAIL }
+            name=${name#"${name%%[! ]*}"}
+            name=${name%% *}
+            if [[ $name =~ ^[a-z][a-z0-9-]*$ ]]; then
+              class="${prefix}_$(printf '%s' "$name" | tr 'a-z-' 'A-Z_')"
+            else
+              class="${prefix}_SCRIPT_ERROR"
+            fi
+            case " $classes " in
+              *" $class "*) ;;
+              *) classes="$classes $class" ;;
+            esac
+            ;;
+        esac
+      done <"$output"
+      if [ -z "$classes" ]; then classes=" ${prefix}_SCRIPT_ERROR"; fi
+      console_fail "${classes# }" "the check exited with status $status; the FAIL lines above name each failed check" "$reproduce"
+    }
+    # Run from console/. Reads the first channel line the way
+    # tools/check-toolchain.sh does, then requires an exact X.Y.Z equal to
+    # CONSOLE_RUST_TOOLCHAIN. Preflight and both Rust jobs call this one check.
+    console_check_pin() {
+      local channel_re line pinned="" found=no
+      channel_re='^[[:space:]]*channel[[:space:]]*=[[:space:]]*"([^"]+)"[[:space:]]*(#.*)?$'
+      while IFS= read -r line || [ -n "$line" ]; do
+        if [[ $line =~ $channel_re ]]; then pinned=${BASH_REMATCH[1]}; found=yes; break; fi
+      done <rust-toolchain.toml
+      if [ "$found" = no ] || ! [[ $pinned =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        console_fail TOOLCHAIN_PIN_NOT_EXACT "console/rust-toolchain.toml has no channel = \"X.Y.Z\" line (found '${pinned}')" "bash console/tools/check-toolchain.sh"
+      fi
+      if [ "$pinned" != "$CONSOLE_RUST_TOOLCHAIN" ]; then
+        console_fail TOOLCHAIN_PIN_MISMATCH "console/rust-toolchain.toml pins $pinned; console.yml expects $CONSOLE_RUST_TOOLCHAIN" "grep channel console/rust-toolchain.toml"
+      fi
+      echo "ok: console/rust-toolchain.toml pins exactly $pinned"
+    }
+    console_assert_toolchain() {
+      local expected=$1 rustc_v cargo_v
+      rustc_v=$(rustc -V) || console_fail TOOLCHAIN_MISSING "rustc -V failed in $(pwd)" "bash console/tools/check-toolchain.sh"
+      cargo_v=$(cargo -V) || console_fail TOOLCHAIN_MISSING "cargo -V failed in $(pwd)" "bash console/tools/check-toolchain.sh"
+      echo "$rustc_v"
+      echo "$cargo_v"
+      if [ "$(printf '%s' "$rustc_v" | cut -d' ' -f2)" != "$expected" ]; then
+        console_fail TOOLCHAIN_MISMATCH "rustc -V reports '$rustc_v'; expected $expected" "bash console/tools/check-toolchain.sh"
+      fi
+      if [ "$(printf '%s' "$cargo_v" | cut -d' ' -f2)" != "$expected" ]; then
+        console_fail TOOLCHAIN_MISMATCH "cargo -V reports '$cargo_v'; expected $expected" "bash console/tools/check-toolchain.sh"
+      fi
+    }
+    console_probe_mismatch() {
+      local probe_dir probe fake_bin
+      probe_dir=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/console-probe.XXXXXX")
+      probe="$probe_dir/assert.out"
+      if ( console_assert_toolchain "0.0.0" ) >"$probe" 2>&1; then
+        console_fail TOOLCHAIN_PROBE_ACCEPTED "the toolchain assertion accepted rustc for an expected version of 0.0.0"
+      fi
+      # Expected failure output is indented behind "probe |", so it neither
+      # raises an annotation nor matches a search for a real failure class.
+      sed 's/^/  probe | /' "$probe"
+      if ! grep -qx 'console failure class: TOOLCHAIN_MISMATCH' "$probe"; then
+        console_fail TOOLCHAIN_PROBE_UNCLASSIFIED "the assertion failed without class TOOLCHAIN_MISMATCH"
+      fi
+      fake_bin="$probe_dir/bin"
+      mkdir "$fake_bin"
+      printf '#!/bin/sh\necho "rustc 0.0.0 (mismatch probe)"\n' >"$fake_bin/rustc"
+      chmod +x "$fake_bin/rustc"
+      if PATH="$fake_bin:$PATH" bash "$1" >"$probe_dir/tool.out" 2>&1; then
+        sed 's/^/  probe | /' "$probe_dir/tool.out"
+        console_fail TOOLCHAIN_PROBE_ACCEPTED "check-toolchain.sh accepted a rustc that reports 0.0.0" "$1"
+      fi
+      sed 's/^/  probe | /' "$probe_dir/tool.out"
+      if ! grep -q '^FAIL toolchain  rustc reports 0.0.0;' "$probe_dir/tool.out"; then
+        console_fail TOOLCHAIN_PROBE_UNCLASSIFIED "check-toolchain.sh failed without naming the mismatch" "$1"
+      fi
+      rm -rf "$probe_dir"
+      echo "ok: a rustc -V mismatch fails both the CI assertion (TOOLCHAIN_MISMATCH) and $1"
+    }
 
 jobs:
   preflight:
     name: preflight (boundary and hygiene)
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # Like the Rust jobs, preflight runs from console/; the check tools find the
+    # repository root themselves. It builds nothing, so it installs no toolchain
+    # and does not assert rustc -V (the Rust jobs do).
+    defaults:
+      run:
+        working-directory: console
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -95,21 +255,43 @@ jobs:
           PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
-          set -euo pipefail
+          eval "$CONSOLE_CI_LIB"
           BASE_BRANCH="${PR_BASE_REF:-${DEFAULT_BRANCH:-main}}"
-          git rev-parse --verify --quiet "refs/remotes/origin/${BASE_BRANCH}" >/dev/null
+          if ! git rev-parse --verify --quiet "refs/remotes/origin/${BASE_BRANCH}" >/dev/null; then
+            console_fail PREFLIGHT_BASE_UNAVAILABLE "origin/${BASE_BRANCH} is not in the checkout" "git fetch origin ${BASE_BRANCH}"
+          fi
           echo "CONSOLE_BASE=origin/${BASE_BRANCH}" >> "$GITHUB_ENV"
           echo "base: origin/${BASE_BRANCH}"
           echo "merge base: $(git merge-base "origin/${BASE_BRANCH}" HEAD)"
 
+      - name: Toolchain pin is exact (reproduce with console/tools/check-toolchain.sh)
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          console_check_pin
+
       - name: Boundary check (reproduce with console/tools/check-boundary.sh)
-        run: bash console/tools/check-boundary.sh --base "$CONSOLE_BASE" --committed
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          out="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/console-boundary.out"
+          set +e
+          bash tools/check-boundary.sh --base "$CONSOLE_BASE" --committed 2>&1 | tee "$out"
+          status=${PIPESTATUS[0]}
+          set -e
+          console_classify BOUNDARY "$status" "$out" "bash console/tools/check-boundary.sh --base $CONSOLE_BASE --committed"
 
       - name: Hygiene check, files and commit range (reproduce with console/tools/check-hygiene.sh)
-        run: bash console/tools/check-hygiene.sh --base "$CONSOLE_BASE" --committed
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          out="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/console-hygiene.out"
+          set +e
+          bash tools/check-hygiene.sh --base "$CONSOLE_BASE" --committed 2>&1 | tee "$out"
+          status=${PIPESTATUS[0]}
+          set -e
+          console_classify HYGIENE "$status" "$out" "bash console/tools/check-hygiene.sh --base $CONSOLE_BASE --committed"
 
   rust-linux:
     name: rust (ubuntu-24.04)
+    needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
@@ -122,33 +304,49 @@ jobs:
 
       - name: Install the pinned toolchain
         run: |
-          set -euo pipefail
-          grep -qx "channel = \"${CONSOLE_RUST_TOOLCHAIN}\"" rust-toolchain.toml
-          rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update
+          eval "$CONSOLE_CI_LIB"
+          console_check_pin
+          if ! rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update; then
+            console_fail TOOLCHAIN_INSTALL_FAILED "rustup could not install ${CONSOLE_RUST_TOOLCHAIN}" "rustup toolchain install ${CONSOLE_RUST_TOOLCHAIN} --profile minimal --component rustfmt,clippy"
+          fi
 
       - name: Assert the toolchain version (reproduce with console/tools/check-toolchain.sh)
         run: |
-          set -euo pipefail
-          rustup show active-toolchain
-          rustc -V
-          cargo -V
-          test "$(rustc -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
-          test "$(cargo -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+          eval "$CONSOLE_CI_LIB"
+          rustup show active-toolchain || console_fail TOOLCHAIN_MISSING "rustup show active-toolchain failed in $(pwd)" "rustup show active-toolchain"
+          console_assert_toolchain "${CONSOLE_RUST_TOOLCHAIN}"
+          if ! bash tools/check-toolchain.sh; then
+            console_fail TOOLCHAIN_MISMATCH "console/tools/check-toolchain.sh failed" "bash console/tools/check-toolchain.sh"
+          fi
+
+      - name: Self-test, a rustc -V mismatch fails (dry run; expected failures are printed)
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          console_probe_mismatch tools/check-toolchain.sh
 
       - name: cargo fetch
-        run: cargo fetch --locked
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo fetch --locked || console_fail CARGO_FETCH_FAILED "cargo fetch --locked failed" "cd console && cargo fetch --locked"
 
       - name: cargo fmt
-        run: cargo fmt --check
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo fmt --check || console_fail CARGO_FMT "cargo fmt --check found unformatted code" "cd console && cargo fmt --check"
 
       - name: cargo clippy
-        run: cargo clippy --locked --all-targets -- -D warnings
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo clippy --frozen --all-targets -- -D warnings || console_fail CARGO_CLIPPY "cargo clippy reported warnings or errors" "cd console && cargo clippy --locked --all-targets -- -D warnings"
 
       - name: cargo test
-        run: cargo test --locked
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo test --frozen || console_fail CARGO_TEST "cargo test failed" "cd console && cargo test --locked"
 
   rust-macos:
     name: rust (macos-15 arm64)
+    needs: preflight
     runs-on: macos-15
     timeout-minutes: 30
     defaults:
@@ -159,28 +357,45 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Assert the architecture
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          uname -m
+          if [ "$(uname -m)" != arm64 ]; then
+            console_fail ARCH_MISMATCH "uname -m reports $(uname -m); this job must run on arm64" "uname -m"
+          fi
+
       - name: Install the pinned toolchain
         run: |
-          set -euo pipefail
-          grep -qx "channel = \"${CONSOLE_RUST_TOOLCHAIN}\"" rust-toolchain.toml
-          rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update
+          eval "$CONSOLE_CI_LIB"
+          console_check_pin
+          if ! rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update; then
+            console_fail TOOLCHAIN_INSTALL_FAILED "rustup could not install ${CONSOLE_RUST_TOOLCHAIN}" "rustup toolchain install ${CONSOLE_RUST_TOOLCHAIN} --profile minimal --component rustfmt,clippy"
+          fi
 
-      - name: Assert toolchain and architecture (reproduce with console/tools/check-toolchain.sh)
+      - name: Assert the toolchain version (reproduce with console/tools/check-toolchain.sh)
         run: |
-          set -euo pipefail
-          uname -m
-          test "$(uname -m)" = arm64
-          rustup show active-toolchain
-          rustc -V
-          cargo -V
-          test "$(rustc -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
-          test "$(cargo -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+          eval "$CONSOLE_CI_LIB"
+          rustup show active-toolchain || console_fail TOOLCHAIN_MISSING "rustup show active-toolchain failed in $(pwd)" "rustup show active-toolchain"
+          console_assert_toolchain "${CONSOLE_RUST_TOOLCHAIN}"
+          if ! bash tools/check-toolchain.sh; then
+            console_fail TOOLCHAIN_MISMATCH "console/tools/check-toolchain.sh failed" "bash console/tools/check-toolchain.sh"
+          fi
+
+      - name: Self-test, a rustc -V mismatch fails (dry run; expected failures are printed)
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          console_probe_mismatch tools/check-toolchain.sh
 
       - name: cargo fetch
-        run: cargo fetch --locked
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo fetch --locked || console_fail CARGO_FETCH_FAILED "cargo fetch --locked failed" "cd console && cargo fetch --locked"
 
       - name: cargo test
-        run: cargo test --locked
+        run: |
+          eval "$CONSOLE_CI_LIB"
+          cargo test --frozen || console_fail CARGO_TEST "cargo test failed" "cd console && cargo test --locked"
 
   summary:
     name: console summary
@@ -195,7 +410,17 @@ jobs:
           RUST_LINUX: ${{ needs.rust-linux.result }}
           RUST_MACOS: ${{ needs.rust-macos.result }}
         run: |
+          eval "$CONSOLE_CI_LIB"
           echo "preflight=$PREFLIGHT rust-linux=$RUST_LINUX rust-macos=$RUST_MACOS"
-          test "$PREFLIGHT" = success
-          test "$RUST_LINUX" = success
-          test "$RUST_MACOS" = success
+          classes=""
+          for pair in "PREFLIGHT=$PREFLIGHT" "RUST_LINUX=$RUST_LINUX" "RUST_MACOS=$RUST_MACOS"; do
+            job=${pair%%=*}
+            result=${pair#*=}
+            if [ "$result" != success ]; then
+              classes="$classes SUMMARY_${job}_$(printf '%s' "${result:-missing}" | tr 'a-z-' 'A-Z_')"
+            fi
+          done
+          if [ -n "$classes" ]; then
+            console_fail "${classes# }" "not every console job succeeded; open the failed job for its own class" "see the failed job's reproduce line"
+          fi
+          echo "ok: preflight, rust-linux and rust-macos succeeded"
