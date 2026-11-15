@@ -9,7 +9,21 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+console-pyjson.workspace = true
 console-core.workspace = true
 console-engine.workspace = true
 console-tokenizer.workspace = true
 console-http.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = [
+    "rt", "rt-multi-thread", "net", "io-util", "time", "sync", "macros",
+] }
+
+# Test only. The test-support feature of console-engine holds the engine that reports a
+# provenance that is not synthetic, for the process-start refusal test; the binary itself
+# never names it, and a release build selects this package alone (-p pulsar-console).
+[dev-dependencies]
+console-engine = { workspace = true, features = ["test-support"] }
+console-testkit.workspace = true
+console-conformance.workspace = true
+libc.workspace = true

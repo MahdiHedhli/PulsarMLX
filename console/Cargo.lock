@@ -251,10 +251,16 @@ dependencies = [
 name = "pulsar-console"
 version = "0.0.0"
 dependencies = [
+ "console-conformance",
  "console-core",
  "console-engine",
  "console-http",
+ "console-pyjson",
+ "console-testkit",
  "console-tokenizer",
+ "libc",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

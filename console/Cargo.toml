@@ -66,6 +66,7 @@ console-tokenizer = { path = "crates/console-tokenizer" }
 console-engine = { path = "crates/console-engine" }
 console-http = { path = "crates/console-http" }
 console-testkit = { path = "crates/console-testkit" }
+console-conformance = { path = "crates/console-conformance" }
 pulsar-console = { path = "crates/pulsar-console" }
 
 [profile.release]
