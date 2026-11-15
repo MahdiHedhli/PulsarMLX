@@ -33,6 +33,13 @@
 # Exit status: 0 when every check passes, 1 when any check fails, 2 on a usage
 # or repository error.
 
+# Bash only. Started with sh, the script would stop part-way with a syntax
+# error or an option error, so refuse at once with a clear message.
+if [ -z "${BASH_VERSION:-}" ] || (shopt -qo posix) 2>/dev/null; then
+    echo "check-boundary: run this script with bash or execute it directly; it does not run under sh" >&2
+    exit 2
+fi
+
 set -euo pipefail
 export LC_ALL=C
 export GIT_PAGER=cat

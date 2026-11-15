@@ -15,6 +15,13 @@
 #
 # Requires bash (3.2 or later) and rustc, nothing else. Read-only.
 
+# Bash only. Refuse at once with a clear message when started with sh, as the
+# other check tools do.
+if [ -z "${BASH_VERSION:-}" ] || (shopt -qo posix) 2>/dev/null; then
+    echo "FAIL toolchain  run this script with bash or execute it directly; it does not run under sh" >&2
+    exit 2
+fi
+
 set -u
 export LC_ALL=C
 

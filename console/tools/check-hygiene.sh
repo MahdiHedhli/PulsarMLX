@@ -37,6 +37,13 @@
 #
 # Requires bash (3.2 or later), git, grep, sed, awk and tr. Read-only.
 
+# Bash only. Started with sh, the script would stop part-way with a syntax
+# error or an option error, so refuse at once with a clear message.
+if [ -z "${BASH_VERSION:-}" ] || (shopt -qo posix) 2>/dev/null; then
+    echo "check-hygiene: run this script with bash or execute it directly; it does not run under sh" >&2
+    exit 2
+fi
+
 set -euo pipefail
 export LC_ALL=C
 export GIT_PAGER=cat
