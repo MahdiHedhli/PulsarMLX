@@ -15,10 +15,13 @@
 //! `handle_error` prints the traceback and the connection closes with no answer.
 //!
 //! [`InferenceError`] carries the class; [`InferenceError::before_start`] and
-//! [`InferenceError::after_start`] say what it answers. Two classes have no donor
-//! counterpart and follow `contracts/backend-seam.md` section 10: an engine protocol
-//! violation (500 before the first byte, a stream error after) and an engine that failed
-//! to start or was refused by the synthetic-only guard (503 before, a stream error after).
+//! [`InferenceError::after_start`] say what it answers. Two classes follow
+//! `contracts/backend-seam.md` section 10 and not the donor. An engine protocol violation
+//! has no donor counterpart: 500 before the first byte, a stream error after. An engine
+//! that failed to start, or that the synthetic-only guard refused, answers 503 before the
+//! first byte and a stream error after. The donor has no guard, and its failed start is the
+//! plain `RuntimeError` of serve/server.py:947, which its handler does not catch, so it
+//! answers nothing: the 503 is proposal P-26, awaiting the owner.
 //!
 //! Behavior reference: project-maya serve/server.py:412-428, 6152-6158, 6283-6297,
 //! 6607-6624, 6692-6710 and 6732-6734 at 7e68a30f.
@@ -368,8 +371,8 @@ impl From<EngineFailure> for InferenceError {
     /// death; `Reported`, `NeverAnswered`, a negative token id and `Unsupported` are the
     /// donor's `ValueError`s; an id outside the vocabulary is the tokenizer's `IndexError`
     /// (section 12.1, rule 10); `NotReady` is the 503 "the model is starting"; `Protocol`
-    /// is 500 and `StartFailed` 503 `server_error`, both stream errors after the first
-    /// byte.
+    /// is 500 and `StartFailed` 503 `server_error` (proposal P-26), both stream errors
+    /// after the first byte.
     fn from(f: EngineFailure) -> Self {
         let message = f.message.as_str().to_owned();
         match f.kind {

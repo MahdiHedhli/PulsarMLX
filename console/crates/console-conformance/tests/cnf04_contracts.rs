@@ -5,7 +5,7 @@
 //! - the reader of `contracts/deviations.md` finds exactly the approved ids: the SEC,
 //!   PRIV, BRAND, LIC, POL, PLAT, FIX and PLAN ids with their sub-items and the approved
 //!   proposals P-1 to P-4, P-6 to P-11 and P-13 to P-16; it keeps P-12 and P-17 as
-//!   declined and P-5 and P-18 to P-25 as awaiting the owner;
+//!   declined and P-5 and P-18 to P-27 as awaiting the owner;
 //! - an entry with a location the normalizer cannot apply refuses to build it.
 //!
 //! No donor test method is re-expressed here: CNF-04 owns none.
@@ -276,11 +276,11 @@ fn the_register_index_gives_the_approved_ids() {
         assert_eq!(ids.status(declined), IdStatus::Declined, "{declined}");
     }
     for waiting in [
-        "P-5", "P-18", "P-19", "P-20", "P-21", "P-22", "P-23", "P-24", "P-25",
+        "P-5", "P-18", "P-19", "P-20", "P-21", "P-22", "P-23", "P-24", "P-25", "P-26", "P-27",
     ] {
         assert_eq!(ids.status(waiting), IdStatus::AwaitingOwner, "{waiting}");
     }
-    assert_eq!(ids.status("P-26"), IdStatus::Unknown);
+    assert_eq!(ids.status("P-28"), IdStatus::Unknown);
 }
 
 #[test]

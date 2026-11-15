@@ -1236,7 +1236,7 @@ fn annotations_citing_ids_that_are_not_approved_fail() {
     c.http[0].headers[2].1 = "text/json".into();
     for id in [
         "P-5", "P-12", "P-17", "P-18", "P-19", "P-20", "P-21", "P-22", "P-23", "P-24", "P-25",
-        "P-26", "SEC-8",
+        "P-26", "P-27", "P-28", "SEC-8",
     ] {
         // (CNF-04F: a well-shaped annotation, so that only the approval check refuses it)
         let r = check_cl(

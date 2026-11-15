@@ -21,7 +21,7 @@
 //! pointer alone never suppresses every kind of difference at it. A text difference shows
 //! excerpts, so only an annotation of kind text covers one, and its expected values are
 //! compared with the whole texts, never with the excerpts. An annotation that
-//! cites a declined proposal, a proposal still awaiting the owner (P-5 and P-18 to P-25 at
+//! cites a declined proposal, a proposal still awaiting the owner (P-5 and P-18 to P-27 at
 //! the time of writing) or an id the register does not hold is an error that fails the
 //! comparison, and suppresses nothing.
 //! An annotation that suppresses nothing is reported as unused.

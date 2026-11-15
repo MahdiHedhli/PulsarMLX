@@ -64,6 +64,8 @@ exits 0. Not reproduced: the colors Python 3.14 gives a terminal's usage errors,
 terminal width read from the terminal itself (only `COLUMNS` is read), the wrapping of the
 `--help` option list at `COLUMNS` (it is laid out for 80 columns; its usage line does follow
 `COLUMNS`), and non-ASCII decimal digits in `--port` and in the negative-number test.
+These four differences are proposal P-27 in [deviations.md](deviations.md), awaiting the
+owner's decision.
 
 The other options of the donor (`--engine`, `--gpu`, `--tokenizer`, `--open`,
 `--idle-unload`, `--fit-max-tokens`, `--mcp-config`, `--parent-pipe` and the dashboard's
@@ -101,11 +103,10 @@ In the donor's order (`serve/server.py:7115-7392`), up to the ready line:
 Signals keep their default behavior in M1; the shutdown order, the second `SIGINT`, the
 parent pipe, the log tee and its time stamps are API-17's and API-16's (M4). The scripted
 engine's start reads no `sampling` block from the run config, as the donor's mock path
-does not (`serve/server.py:7285-7289`). The binding follow-up of tasks.md (API-08: a
-refused `sampling` block prints its notes on standard output and its message on standard
-error before a non-zero exit) is therefore not wired into the M1 start: the helper
-`pulsar_console::report_sampling_error` exists, and whether the M1 start calls it or the
-follow-up moves to the line engine's start of API-17 awaits the lead's ruling.
+does not (`serve/server.py:7285-7289`). A refused `sampling` block, which prints its notes
+on standard output and its message on standard error before a non-zero exit, therefore
+belongs to the line engine's start of API-17 (lead decision LD52, 2026-11-15); the helper
+`pulsar_console::report_sampling_error` exists for it and has no caller in M1.
 
 ## 2. The ready line
 
