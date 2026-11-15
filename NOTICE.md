@@ -35,3 +35,26 @@ small pure utilities) from:
 
 ssd-llm is **not** a runtime dependency of PulsarMLX. Its authors do not
 endorse this project. See `docs/upstream/SSD_LLM.md`.
+
+## Donor: project-maya
+
+The PulsarMLX Console serving layer and dashboard (under `console/`) are planned
+with project-maya as the donor: its Python server is to be reimplemented in
+Rust and its JavaScript dashboard adapted. The source is:
+
+- Repository: <https://github.com/mw00/project-maya>
+- Pinned commit: `7e68a30f2f208056195352129188661fb6b94445` (version 1.1.63)
+- License: MIT
+- Copyright (c) 2026 Peasant Smith and the Project Maya contributors
+- Copyright (c) 2026 Niko1221 and the Strata contributors
+
+The full license text is kept in `console/LICENSES/project-maya-MIT.txt`, and
+each file derived from project-maya will carry a provenance header. License
+texts for third-party components inside the donor ship in `console/LICENSES/`;
+`console/LICENSES/README.md` lists each one and when it arrives.
+
+project-maya is **not** a runtime dependency of PulsarMLX, and its engines are
+not used. Its authors and contributors, and the Strata authors and
+contributors, do not endorse PulsarMLX and are not responsible for its
+modifications, behavior, support, or releases. See
+`docs/upstream/PROJECT_MAYA.md`.
