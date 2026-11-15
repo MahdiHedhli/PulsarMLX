@@ -30,6 +30,7 @@
 
 use std::fmt;
 
+use console_core::turn::log_safe;
 use console_pyjson::dumps::dumps_str;
 use console_pyjson::loads::LoadsError;
 
@@ -476,24 +477,6 @@ pub fn fail(state: &AnswerState, error: &ApiError) -> FailAction {
     } else {
         FailAction::Respond(error.to_response())
     }
-}
-
-/// The text with every C0 control, DEL, C1 control, U+2028 and U+2029 escaped (`\n`, `\r`,
-/// `\t`, any other as `\u{..}`), so that it stays on one log line. Other text is unchanged.
-fn log_safe(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    for c in text.chars() {
-        match c {
-            '\n' => out.push_str("\\n"),
-            '\r' => out.push_str("\\r"),
-            '\t' => out.push_str("\\t"),
-            c if c.is_control() || c == '\u{2028}' || c == '\u{2029}' => {
-                out.push_str(&format!("\\u{{{:x}}}", u32::from(c)));
-            }
-            c => out.push(c),
-        }
-    }
-    out
 }
 
 #[cfg(test)]

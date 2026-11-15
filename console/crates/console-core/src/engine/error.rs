@@ -138,8 +138,9 @@ impl EngineFailure {
         )
     }
 
-    /// A token id at or beyond the vocabulary. New: the donor has no such check. Not
-    /// poisoned.
+    /// A token id at or beyond the vocabulary. The donor has no check of its own at this
+    /// level: its tokenizer raises an `IndexError` when the id is decoded, and the turn
+    /// driver maps this failure to that error (`console_core::turn`). Not poisoned.
     pub fn out_of_vocabulary(id: u32, vocab_size: u32) -> Self {
         Self::new(
             FailureKind::InvalidToken,
@@ -148,6 +149,22 @@ impl EngineFailure {
             ),
             false,
         )
+    }
+
+    /// The token id and the vocabulary size of an [`EngineFailure::out_of_vocabulary`]
+    /// failure, and `None` for any other failure. They are read back from the message,
+    /// which this file alone writes, and are accepted only when they rebuild it.
+    pub fn out_of_vocabulary_parts(&self) -> Option<(u32, u32)> {
+        if self.kind != FailureKind::InvalidToken {
+            return None;
+        }
+        let text = self.message.as_str();
+        let rest = text.strip_prefix("the engine wrote the token id ")?;
+        let (id, rest) = rest.split_once(", outside its vocabulary of ")?;
+        let vocab = rest.strip_suffix(" ids")?;
+        let id: u32 = id.parse().ok()?;
+        let vocab: u32 = vocab.parse().ok()?;
+        (Self::out_of_vocabulary(id, vocab).message.as_str() == text).then_some((id, vocab))
     }
 
     /// The request needs something the engine does not offer. Not poisoned.
@@ -198,6 +215,17 @@ impl std::error::Error for EngineFailure {}
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn out_of_vocabulary_parts_round_trip() {
+        let f = EngineFailure::out_of_vocabulary(300, 262);
+        assert_eq!(f.out_of_vocabulary_parts(), Some((300, 262)));
+        assert_eq!(
+            EngineFailure::unsupported("x").out_of_vocabulary_parts(),
+            None
+        );
+        assert_eq!(EngineFailure::not_ready().out_of_vocabulary_parts(), None);
+    }
 
     #[test]
     fn donor_texts_are_reproduced() {
