@@ -782,7 +782,7 @@ pub enum FailureKind {
 | `Reported` | `reported(text)` | no | `ERR` line, `serve/server.py:1448-1452` | 400 invalid_request_error before the first byte; a stream error after it. The non-finite retry (an `ERR` containing "non-finite" before the first token is retried once) is a server rule applied to the message, as in the donor |
 | `NotReady` | `not_ready()`: "the model is starting; try again in a moment" | no | `max_context <= 0`, `serve/server.py:3680-3681` | 503 |
 | `NeverAnswered` | `never_answered(quiet_s)`: "the engine never answered this request (N s without a line of its own); it was stopped" | no | multi quiet timeout, `serve/server.py:1597-1610` | As the donor; detail in ENG-07 |
-| `InvalidToken` | `negative_token(id)`: the donor's "the engine could not pick a token (it wrote the id N: its sampling failed - the engine's log says why)"; `out_of_vocabulary(id, n)`: new | no | negative `T` id (`engine_token`, `serve/server.py:560-568`) | As the donor's message |
+| `InvalidToken` | `negative_token(id)`: the donor's "the engine could not pick a token (it wrote the id N: its sampling failed - the engine's log says why)"; `out_of_vocabulary(id, n)`: the console's own text, with the id and size readable through `out_of_vocabulary_parts` | no | negative `T` id (`engine_token`, `serve/server.py:560-568`) | A negative id: as the donor's message. An id outside the vocabulary: the donor's tokenizer `IndexError`, "token id N is outside the vocabulary (V)", answered 400 `invalid_request_error` "malformed request (IndexError: ...)" before the first byte and only logged after it, with finish `length` (section 12.1, rule 10) |
 | `Unsupported` | `unsupported(what)`: "unsupported: <what>" | no | `Service.check_request` refusals, missing optional members | 400 before anything is sent |
 | `Protocol` | `protocol(detail)`: "engine protocol violation: <detail>" | yes | none: new, from the ledger | 500 before the first byte; a stream error after; the instance is poisoned |
 | `StartFailed` | `exited_before_ready(log)`: "the engine exited before it was ready (see <log>)"; `ProvenanceRefused::to_failure` | yes | `serve/server.py:941-947`; section 5.1 | Start-up error; 503 for requests while no engine runs |
@@ -903,8 +903,8 @@ pub struct TurnTerminal {
 }
 ```
 
-These types are not part of `console_core::engine`; the turn driver (ENG-10) and the
-parser packages define them.
+These types are not part of `console_core::engine`; the parser packages define them over
+the items of the turn driver (ENG-10, section 12.1), which supplies the timings.
 
 Rules:
 
@@ -915,6 +915,152 @@ Rules:
    dialects (CNF-14).
 3. The event names and fields of the parser are defined by PRM-09 and PRM-12; this
    contract fixes only the ordering rules above.
+
+### 12.1 The turn driver (ENG-10)
+
+The turn driver, `console_core::turn`, sits between the token level and the event level.
+It drives one request's turn on the engine and yields token-level items; the parser
+packages build the `TurnEvent`s of section 12 over them. Every name below is exported from
+`console_core::turn`.
+
+```rust
+pub struct TurnDriver { /* Clone; owns the driver thread through a job channel */ }
+impl TurnDriver {
+    pub async fn start(factory: Arc<dyn EngineFactory>, fifo: EngineFifo,
+        settings: TurnSettings, observer: Arc<dyn TurnObserver>, log: FifoLog)
+        -> Result<TurnDriver, EngineFailure>;           // the first start, through the guard
+    pub fn context_budget(&self, prompt_tokens: usize, max_new: Option<&PyInt>)
+        -> Result<u32, TurnError>;                      // the context rule
+    pub fn turn(&self, req: TurnRequest) -> TurnStream; // spawns the turn's task
+    pub async fn restart(&self) -> Result<(), TurnError>;
+    pub async fn reload_context(&self, context: u32) -> Result<(), TurnError>;
+    pub async fn switch_engine(&self, factory: Arc<dyn EngineFactory>,
+        cfg: EngineStartConfig) -> Result<(), TurnError>;   // the model switch's entry point
+    pub async fn unload(&self) -> Result<(), TurnError>;
+    pub async fn close(&self);
+    pub fn set_stopping(&self, stopping: bool);
+    pub fn max_context(&self) -> u32;
+    pub fn descriptor(&self) -> Option<EngineDescriptor>;
+    pub fn fifo(&self) -> &EngineFifo;
+}
+
+pub struct TurnRequest {
+    pub generation: GenerationRequest,     // the driver assigns rid and caps max_new per call
+    pub units: Units,                      // Units::ONE for a request
+    pub alone: Option<AloneReason>,        // passed to use_layout before the first call
+    pub vocab_size: Option<u32>,           // the tokenizer's vocabulary
+    pub continuation: Box<dyn ContinuationPolicy>,
+}
+
+pub struct TurnStream { /* the consumer's side */ }
+impl TurnStream {
+    pub async fn next(&mut self) -> Option<TurnItem>;
+    pub fn finish(&mut self, why: CallerFinish);   // the server decided the answer is finished
+    pub fn cancel(&self);                          // the client went away, or shutdown
+    pub fn control(&self) -> &ControlHandle;       // pause and wrap
+}
+
+pub enum TurnItem { Ping(Option<PingProgress>), Token(CommittedToken), Done(Box<TurnOutcome>) }
+pub struct PingProgress { pub total: u32, pub cache: u32, pub processed: u32, pub time_ms: i64 }
+pub struct TurnOutcome {
+    pub end: TurnEnd, pub finish: &'static str, pub prompt_tokens: u32,
+    pub completion_tokens: u32, pub figures: Option<SegmentFigures>,
+    pub timings: Option<RequestTimings>, pub cancelled: bool,
+}
+pub enum TurnEnd { Ended(EngineStop), NonFiniteCut, CancelledBeforeEngine, Failed(TurnError) }
+pub enum TurnError { ContextOverflow { message: String }, Starting, Request(RequestError),
+    Engine(EngineFailure) }
+
+pub trait TurnObserver: Send + Sync + 'static {   // every method has an empty default
+    fn queued(&self); fn dequeued(&self); fn active(&self, start: &TurnStart);
+    fn generated(&self, tokens: u32); fn sample(&self, sample: &EngineSample);
+    fn place_released(&self); fn inactive(&self); fn finished(&self, record: &TurnRecord);
+}
+
+pub trait ContinuationPolicy: Send + 'static {
+    fn after_call(&mut self, call: &CallSummary<'_>) -> Continuation;
+}
+pub enum Continuation {
+    Finish,
+    Again { prompt: Arc<[u32]>, max_new: u32 },        // a fair slice: same attempt
+    NextSegment { prompt: Arc<[u32]>, max_new: u32 },  // after a blocked loop-guard call
+}
+```
+
+Rules:
+
+1. **Threading.** The engine instance is created on the driver thread and never leaves
+   it (section 4). Each turn runs in a spawned task that holds the FIFO place; the place
+   travels with each job to the driver thread and comes back with the job's reply, so it
+   is given back only after `generate` has returned (section 4, rule 4), even when the
+   turn's task is gone. Engine events reach the task over a bounded channel; a full
+   channel holds the engine (backpressure), a closed one answers `ConsumerGone`.
+2. **The consumer.** Dropping a `TurnStream` sets the turn's cancel and nothing else. The
+   task stops forwarding, the engine reads the cancel at its next step (STOP), the call
+   returns (the drain), and then the place is given back, in that order.
+   `TurnStream::finish` is the server's own cancel (a stop id or string, the loop guard):
+   later tokens are not handed out and do not count. `completion_tokens` counts the tokens
+   the consumer took, a stop token included, and an id outside the vocabulary that ended
+   the turn (rule 10). A failure the engine call returns once the cancel is set, and a
+   failure that reaches the stream after the server's finish or after the stream was
+   dropped, is part of the drain (the donor's drain swallows an `ERR` or the engine's end
+   read after STOP): the turn ends as a cancelled stop, and the server's finish, `cancel`
+   or `disconnect` decides the word. A poisoned failure is still recorded, so the next
+   turn restarts the engine (rule 6).
+3. **Admission.** Every path that starts an engine (first start, `restart`,
+   `reload_context`, `switch_engine`, and the start after an idle unload or a death that
+   a turn makes) goes through one admission step on the driver thread, which calls
+   `require_synthetic` before the instance is kept (section 5.1). A refused instance is
+   shut down at once, the operation fails with `ProvenanceRefused::to_failure`, and
+   nothing is served from it; the next turn tries the start again, through the guard.
+   Exclusive operations hold every FIFO place, and never resize the FIFO: the FIFO follows
+   the engine's places at the first start and in a turn's preparation (the donor's
+   `ensure_engine`), where the turn holds one place. `max_context` reads 0 while a start
+   runs; an idle unload leaves the last context, and a start that fails or is refused puts
+   back the context from before it (the donor's #351), so the next request passes the
+   context rule (rule 4) and reaches the turn that starts the engine again.
+4. **Context rule.** `context_budget` applies the donor's rule before any engine call:
+   `room = max_context - 8 - prompt_tokens`; an unset, zero or negative budget means the
+   room; a budget over the room is `ContextOverflow` unless `fit_max_tokens` clamps it to
+   `max(1, room)`; no room is `ContextOverflow`; `max_context == 0` is `Starting`. Each
+   engine call's `max_new` is also capped by the room its own prompt leaves.
+5. **Retry.** An attempt is the donor's `attempts`, run afresh for the request's first
+   segment and for each `Continuation::NextSegment`; the calls of a
+   `Continuation::Again` (fair slices) belong to the current attempt. An engine failure
+   whose text contains `non-finite` (`Reported` or `InvalidToken`) before the attempt's
+   first token runs the attempt once more from its own first prompt and budget (token 0 of
+   that prompt); after tokens were sent the answer ends there (`NonFiniteCut`, finish
+   `length`); a second one in the same attempt is the error. No other failure is retried.
+6. **Restart.** A poisoned failure, or `health()` reporting `Ended`, makes the next turn
+   restart the engine through the admission step before its call. A panic in engine code
+   on the driver thread (start, `health`, `use_layout`, `generate`, `shutdown`) is caught:
+   the operation fails with `Died` "the engine panicked" (poisoned), the instance is
+   dropped without being called again, the place goes back once the call has unwound, and
+   the next turn starts the engine again through the admission step.
+7. **Keep-alives.** A `Ping(None)` while queued (the queue-ping interval); a
+   `Ping(Some(..))` for each `PromptProgress`; and a `Ping` with the call's latest
+   progress when the engine has been quiet for the heartbeat interval (10 s).
+8. **Figures.** The figures of the calls of one attempt merge as the donor merges its
+   slices (`merge_segments`); a new segment's figures replace the earlier segment's; then
+   `own_prompt_figures` applies when the prompt they count is longer than the request's.
+   `request_timings` gives llama.cpp's `timings`; an engine without a clock gives no
+   timings and no cached tokens.
+9. **Cancel deadline (Q6, the turn's half).** The turn sets no deadline on the drain: it
+   waits for the engine call to return, holding the place, as the donor's
+   single-conversation drain does. Only the stall watchdog (ENG-08) ends a stuck engine.
+10. **An id outside the vocabulary.** The donor has no engine-side check: its tokenizer
+    raises `IndexError("token id N is outside the vocabulary (V)")` when the server decodes
+    the token, which its handler answers 400 `malformed request (IndexError: ...)` before
+    the first byte and only logs after it, and its `run` leaves the finish at `length`. The
+    driver checks each token against `TurnRequest::vocab_size` and ends the turn with that
+    error (`TurnError::Request`, class `IndexError`), stopping and draining the engine; the
+    token is counted, as the donor counts it (`n += 1`) before its tokenizer raises, but not
+    handed out. The ledger's own failure for an id beyond `EngineDescriptor::vocab_size`
+    (`EngineFailure::out_of_vocabulary`) is mapped to the same error. An id outside the
+    vocabulary after the consumer's stop is never reached, as in the donor (rule 2).
+11. **Not built in M1.** Several generations at once on an engine with more than one
+    place (the driver thread runs one call at a time; ENG-07 builds the pump), and the
+    continuations of ENG-11 beyond the `ContinuationPolicy` hook.
 
 ## 13. Implementations in this increment
 
