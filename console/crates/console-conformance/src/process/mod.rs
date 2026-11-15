@@ -19,6 +19,8 @@
 //!   a [`ServerProcess`] stops it, so a failing test leaves no process behind, and a drop
 //!   whose report nobody took panics when that stop was not clean;
 //! - [`lifecycle_lock`] serializes the process-lifecycle tests of one test binary;
+//! - [`spawn_locked`] starts every child of the harness under one process-wide lock, so a
+//!   child cannot inherit a pipe end that another thread is creating;
 //! - [`ScenarioFiles`] writes the generated `bpe-bytes` tokenizer directory, the run
 //!   config and the data-directory files of a scenario.
 //!
@@ -49,6 +51,8 @@ mod server;
 pub mod table;
 mod workdir;
 
+use std::io;
+use std::process::{Child, Command};
 use std::sync::{Mutex, MutexGuard};
 
 pub use error::ProcessError;
@@ -77,9 +81,48 @@ pub fn lifecycle_lock() -> MutexGuard<'static, ()> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
+static SPAWN: Mutex<()> = Mutex::new(());
+
+/// The spawn lock's guard. A spawn that panicked while holding it does not poison it for
+/// the others.
+fn spawn_guard() -> MutexGuard<'static, ()> {
+    SPAWN
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// Starts `command` while holding the harness's process-wide spawn lock.
+///
+/// On macOS the standard library creates each pipe for a child's standard streams with
+/// `pipe` and marks it close-on-exec with a second call, because the platform has no
+/// `pipe2`. A child that another thread starts between those two calls inherits the
+/// parent's end of that pipe and keeps it open, so the first child's reader sees no end
+/// of file for as long as the other child or a descendant of it lives. `Command::spawn`
+/// creates the pipes and starts the child, so one lock held across every spawn of a test
+/// binary closes the window. [`Launch::spawn`] uses this function; a test that also starts
+/// a child with `Command` directly starts it through this function too, since a spawn
+/// that bypasses the lock reopens the window. On Linux the pipes are created close-on-exec
+/// in one call and the lock only orders the spawns.
+pub fn spawn_locked(command: &mut Command) -> io::Result<Child> {
+    let _guard = spawn_guard();
+    command.spawn()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn spawn_lock_survives_a_panicking_holder() {
+        let result = std::thread::spawn(|| {
+            let _guard = spawn_guard();
+            panic!("a spawn panicked while holding the lock");
+        })
+        .join();
+        assert!(result.is_err());
+        drop(spawn_guard());
+        drop(spawn_guard());
+    }
 
     #[test]
     fn lifecycle_lock_survives_a_panicking_holder() {

@@ -4,7 +4,9 @@
 //! cleared environment, and check its exit status and both output streams. They start no
 //! server, open no socket and need no network.
 
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
+
+use console_conformance::process::spawn_locked;
 
 /// The subcommands later packages build, with their owning package, as `cnf help` must
 /// list them.
@@ -17,11 +19,21 @@ const PLANNED: &[(&str, &str)] = &[
 ];
 
 fn cnf(args: &[&str]) -> Output {
-    match Command::new(env!("CARGO_BIN_EXE_cnf"))
-        .args(args)
-        .env_clear()
-        .output()
-    {
+    let mut command = Command::new(env!("CARGO_BIN_EXE_cnf"));
+    command.args(args).env_clear();
+    run(command)
+}
+
+/// Runs `command` to its end as `Command::output` does (standard input closed, both
+/// output streams captured), but starts it through the harness's spawn lock: the tests of
+/// this binary run in parallel, and a child started without the lock can inherit a pipe
+/// end of another test's child, which delays that test's end of file.
+fn run(mut command: Command) -> Output {
+    command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    match spawn_locked(&mut command).and_then(|child| child.wait_with_output()) {
         Ok(output) => output,
         Err(err) => panic!("cannot run cnf: {err}"),
     }
@@ -142,14 +154,9 @@ fn an_oversized_argument_list_is_refused() {
 fn a_non_utf8_argument_is_a_usage_error() {
     use std::ffi::OsStr;
     use std::os::unix::ffi::OsStrExt;
-    let out = match Command::new(env!("CARGO_BIN_EXE_cnf"))
-        .arg(OsStr::from_bytes(b"\xff\xfe"))
-        .env_clear()
-        .output()
-    {
-        Ok(output) => output,
-        Err(err) => panic!("cannot run cnf: {err}"),
-    };
+    let mut command = Command::new(env!("CARGO_BIN_EXE_cnf"));
+    command.arg(OsStr::from_bytes(b"\xff\xfe")).env_clear();
+    let out = run(command);
     assert_eq!(out.status.code(), Some(2));
     assert!(text(&out.stderr).starts_with("cnf: USAGE: argument 1 is not valid UTF-8\n"));
 }

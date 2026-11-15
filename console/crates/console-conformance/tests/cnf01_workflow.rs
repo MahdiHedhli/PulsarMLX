@@ -517,15 +517,25 @@ impl Drop for Scratch {
 }
 
 /// Runs `call` after loading the library, in `dir`, and returns (status, stdout).
+///
+/// The child runs as `Command::output` runs it (standard input closed, both output
+/// streams captured), but starts through the harness's spawn lock: the tests of this
+/// binary run in parallel, and a child started without the lock can inherit a pipe end of
+/// another test's child, which delays that test's end of file.
 fn run_lib(dir: &Path, call: &str) -> (Option<i32>, String) {
     let script = format!("{}\n{call}\n", ci_lib());
-    let out = std::process::Command::new("bash")
+    let mut command = std::process::Command::new("bash");
+    command
         .arg("-c")
         .arg(script)
         .current_dir(dir)
         .env("CONSOLE_RUST_TOOLCHAIN", "1.97.1")
         .env("RUSTUP_AUTO_INSTALL", "0")
-        .output()
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    let out = console_conformance::process::spawn_locked(&mut command)
+        .and_then(|child| child.wait_with_output())
         .expect("bash runs");
     (
         out.status.code(),

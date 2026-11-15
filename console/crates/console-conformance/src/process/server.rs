@@ -261,8 +261,7 @@ impl Launch {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .process_group(0);
-        let mut child = cmd
-            .spawn()
+        let mut child = super::spawn_locked(&mut cmd)
             .map_err(|e| ProcessError::io(format!("start {}", self.program.display()), e))?;
         let pid = child.id();
         let stdin = child.stdin.take();

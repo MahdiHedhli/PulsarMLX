@@ -15,6 +15,10 @@
 //! at most [`MAX_SEEN_LINES`] lines: a child that prints faster than the test reads waits
 //! on its pipe instead of filling the test's memory (the donor's queue has no bound).
 //!
+//! [`spawn_locked`] starts a child under one process-wide lock, so that a child started by
+//! one test thread cannot inherit a pipe end that another test thread is creating;
+//! [`Proc::spawn`] and every direct spawn in a test binary that uses the kit go through it.
+//!
 //! [`fake_config`] writes the donor's `fake_config` set-up: a byte-level tokenizer folder
 //! (GPT-2's byte map plus `<|im_end|>` and `</think>`) and a run config naming a fake
 //! engine executable. [`ServerCommand`] builds the `pulsar-console` command line for it.
@@ -39,7 +43,7 @@ use std::collections::VecDeque;
 use std::io::{self, BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
-use std::sync::mpsc;
+use std::sync::{mpsc, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 use serde_json::{Map, Value};
@@ -76,6 +80,35 @@ const REAP_WAIT: Duration = Duration::from_secs(30);
 enum Line {
     Text(String),
     End,
+}
+
+/// The lock held across every child spawn of the kit; see [`spawn_locked`].
+static SPAWN: Mutex<()> = Mutex::new(());
+
+/// The spawn lock's guard. A test that panicked while holding it does not poison it for
+/// the others.
+fn spawn_guard() -> MutexGuard<'static, ()> {
+    SPAWN
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// Starts `command` while holding the kit's process-wide spawn lock.
+///
+/// On macOS the standard library creates each pipe for a child's standard streams with
+/// `pipe` and marks it close-on-exec with a second call, because the platform has no
+/// `pipe2`. A child that another thread starts between those two calls inherits the
+/// parent's end of that pipe and keeps it open. A reader of the first child's standard
+/// input then sees no end of file after [`Proc::close_stdin`], and a reader of its output
+/// sees no end of file after it exits, for as long as the other child or a descendant of
+/// it lives. `Command::spawn` creates the pipes and starts the child, so one lock held
+/// across every spawn of a test binary closes the window. [`Proc::spawn`] uses this
+/// function; a test that also starts a child with `Command` directly starts it through
+/// this function too, since a spawn that bypasses the lock reopens the window. On Linux
+/// the pipes are created close-on-exec in one call and the lock only orders the spawns.
+pub fn spawn_locked(command: &mut Command) -> io::Result<Child> {
+    let _guard = spawn_guard();
+    command.spawn()
 }
 
 /// A free loopback port: bound and released at once, as the donor's `free_port`. Another
@@ -186,7 +219,7 @@ impl Proc {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
-        let mut child = command.spawn()?;
+        let mut child = spawn_locked(&mut command)?;
         let (tx, rx) = mpsc::sync_channel(MAX_SEEN_LINES);
         let mut streams_open = 0;
         if let Some(out) = child.stdout.take() {
@@ -575,6 +608,22 @@ mod tests {
         assert_eq!(rest, "next\n");
         let mut endless = BufReader::with_capacity(8192, &[b'y'; 20_000][..]);
         assert!(!skip_line(&mut endless), "the stream ended inside the line");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_spawn_lock_survives_a_panicking_holder() {
+        let result = std::thread::spawn(|| {
+            let _guard = spawn_guard();
+            panic!("a spawn panicked while holding the lock");
+        })
+        .join();
+        assert!(result.is_err());
+        drop(spawn_guard());
+        let mut command = Command::new("/bin/sh");
+        command.arg("-c").arg("exit 0").stdin(Stdio::null());
+        let status = spawn_locked(&mut command).and_then(|mut child| child.wait());
+        assert!(status.is_ok_and(|s| s.success()));
     }
 
     #[test]

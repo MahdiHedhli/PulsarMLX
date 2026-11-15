@@ -12,7 +12,7 @@ use std::net::{TcpListener, TcpStream};
 use std::process::{Command, ExitStatus, Stdio};
 use std::time::{Duration, Instant};
 
-use console_testkit::process::{parse_ready, Proc};
+use console_testkit::process::{parse_ready, spawn_locked, Proc};
 
 /// The binary under test.
 const BIN: &str = env!("CARGO_BIN_EXE_pulsar-console");
@@ -40,7 +40,9 @@ impl Exited {
     /// running after the deadline.
     fn run(mut command: Command) -> Self {
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
-        let mut child = match command.spawn() {
+        // Through the kit's spawn lock, as `Proc::spawn` in the other tests of this binary:
+        // a child started without it can inherit a pipe end of another test's child.
+        let mut child = match spawn_locked(&mut command) {
             Ok(c) => c,
             Err(e) => panic!("spawn: {e}"),
         };

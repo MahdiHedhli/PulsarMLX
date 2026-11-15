@@ -19,7 +19,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use console_engine::fake::doubles::NotSyntheticEngine;
-use console_testkit::process::free_port;
+use console_testkit::process::{free_port, spawn_locked};
 
 /// Set by the parent test to the child mode: `declared` or `undeclared`.
 const CHILD: &str = "API08_REFUSAL_CHILD";
@@ -70,7 +70,9 @@ fn child(mode: &str, port: u16) -> (ExitStatus, String, String) {
     .stdin(Stdio::null())
     .stdout(Stdio::piped())
     .stderr(Stdio::piped());
-    let mut proc = match c.spawn() {
+    // Through the kit's spawn lock: the two refusal tests run in parallel, and a child
+    // started without it can inherit a pipe end of the other test's child.
+    let mut proc = match spawn_locked(&mut c) {
         Ok(p) => p,
         Err(e) => panic!("spawn: {e}"),
     };
