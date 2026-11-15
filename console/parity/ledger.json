@@ -735,7 +735,11 @@
       "class": "Detok",
       "method": "test_constant_cost",
       "subsystem": "console-prompt (tokenizer abstraction)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "PRM-04",
+      "rust_tests": [
+        "console-tokenizer::prm04_detok::detok_constant_cost"
+      ]
     },
     {
       "id": "serve/test_detok.py::Detok::test_random_ids_and_broken_bytes",
@@ -743,7 +747,11 @@
       "class": "Detok",
       "method": "test_random_ids_and_broken_bytes",
       "subsystem": "console-prompt (tokenizer abstraction)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "PRM-04",
+      "rust_tests": [
+        "console-tokenizer::prm04_detok::detok_random_ids_and_broken_bytes"
+      ]
     },
     {
       "id": "serve/test_detok.py::Detok::test_text_with_split_characters",
@@ -751,7 +759,11 @@
       "class": "Detok",
       "method": "test_text_with_split_characters",
       "subsystem": "console-prompt (tokenizer abstraction)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "PRM-04",
+      "rust_tests": [
+        "console-tokenizer::prm04_detok::detok_text_with_split_characters"
+      ]
     },
     {
       "id": "serve/test_ds41_conformance.py::Images::test_a_video_is_refused_with_or_without_a_picture",
@@ -1263,7 +1275,11 @@
       "class": "FairLockOrder",
       "method": "test_a_place_survives_its_wakeups",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_order_a_place_survives_its_wakeups"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockOrder::test_a_timeout_gives_up_its_place",
@@ -1271,7 +1287,11 @@
       "class": "FairLockOrder",
       "method": "test_a_timeout_gives_up_its_place",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_order_a_timeout_gives_up_its_place"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockOrder::test_waiters_get_it_in_arrival_order",
@@ -1279,7 +1299,11 @@
       "class": "FairLockOrder",
       "method": "test_waiters_get_it_in_arrival_order",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_order_waiters_get_it_in_arrival_order"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockYields::test_a_request_for_all_places_takes_all",
@@ -1287,7 +1311,11 @@
       "class": "FairLockYields",
       "method": "test_a_request_for_all_places_takes_all",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_yields_a_request_for_all_places_takes_all"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockYields::test_nobody_waiting_or_a_place_free_nobody_yields",
@@ -1295,7 +1323,11 @@
       "class": "FairLockYields",
       "method": "test_nobody_waiting_or_a_place_free_nobody_yields",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_yields_nobody_waiting_or_a_place_free_nobody_yields"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockYields::test_one_waiter_takes_one_place",
@@ -1303,7 +1335,11 @@
       "class": "FairLockYields",
       "method": "test_one_waiter_takes_one_place",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_yields_one_waiter_takes_one_place"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockYields::test_two_waiters_take_two",
@@ -1311,7 +1347,11 @@
       "class": "FairLockYields",
       "method": "test_two_waiters_take_two",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_yields_two_waiters_take_two"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairLockYields::test_yielding_frees_the_place_and_ends_the_claim",
@@ -1319,7 +1359,11 @@
       "class": "FairLockYields",
       "method": "test_yielding_frees_the_place_and_ends_the_claim",
       "subsystem": "console-core (scheduler)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::fair_lock_yields_yielding_frees_the_place_and_ends_the_claim"
+      ]
     },
     {
       "id": "serve/test_fair.py::FairSlices::test_a_client_gone_while_queued_again_leaves_the_line",
@@ -2263,7 +2307,11 @@
       "class": "Fields",
       "method": "test_asking",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::logprobs_asking"
+      ]
     },
     {
       "id": "serve/test_logprobs.py::Fields::test_gen_key",
@@ -2287,7 +2335,11 @@
       "class": "Fields",
       "method": "test_refused",
       "subsystem": "console-http / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::logprobs_refused"
+      ]
     },
     {
       "id": "serve/test_logprobs.py::OneConversation::test_another_tokens_line_is_not_taken",
@@ -3991,7 +4043,11 @@
       "class": "Places",
       "method": "test_a_waiter_for_all_holds_back_later_ones",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::places_a_waiter_for_all_holds_back_later_ones"
+      ]
     },
     {
       "id": "serve/test_multi.py::Places::test_n_requests_hold_n_places_and_a_whole_waits_for_all",
@@ -3999,7 +4055,11 @@
       "class": "Places",
       "method": "test_n_requests_hold_n_places_and_a_whole_waits_for_all",
       "subsystem": "console-engine (adapter, supervision)",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "ENG-09",
+      "rust_tests": [
+        "console-core::eng09_fair_lock::places_n_requests_hold_n_places_and_a_whole_waits_for_all"
+      ]
     },
     {
       "id": "serve/test_pdf.py::Extract::test_long_text_cut_at_the_pages_limit",
@@ -5191,7 +5251,11 @@
       "class": "CorsOptIn",
       "method": "test_the_config_value",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-15",
+      "rust_tests": [
+        "console-core::api15_donor::cors_opt_in_the_config_value"
+      ]
     },
     {
       "id": "serve/test_server.py::CorsOptIn::test_without_the_setting_nothing_changes",
@@ -5575,7 +5639,12 @@
       "class": "NoDelayStreaming",
       "method": "test_sse_sets_tcp_nodelay",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-02",
+      "rust_tests": [
+        "console-http::transport::response::tests::sse_sets_tcp_nodelay",
+        "console-http::api02_donor::sse_answers_set_tcp_nodelay"
+      ]
     },
     {
       "id": "serve/test_server.py::NoRoomOrNoToken::test_engine_token",
@@ -5679,7 +5748,11 @@
       "class": "RequestBodies",
       "method": "test_a_bad_content_length",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-02",
+      "rust_tests": [
+        "console-http::api02_donor::a_bad_content_length"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_a_body_over_the_limit_is_refused_unread",
@@ -5687,7 +5760,11 @@
       "class": "RequestBodies",
       "method": "test_a_body_over_the_limit_is_refused_unread",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-02",
+      "rust_tests": [
+        "console-http::api02_donor::a_body_over_the_limit_is_refused_unread"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestBodies::test_a_chunked_body",
@@ -5719,7 +5796,12 @@
       "class": "RequestBodies",
       "method": "test_the_listen_backlog",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-02",
+      "rust_tests": [
+        "console-http::api02_donor::the_listen_backlog",
+        "console-http::transport::config::tests::backlog_follows_the_donor"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_ablate",
@@ -5727,7 +5809,12 @@
       "class": "RequestChecks",
       "method": "test_ablate",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "deviation",
+      "package": "API-04",
+      "deviation": "POL-1",
+      "asserted_by": [
+        "console-core::api04_request::ablate_is_recognized_and_refused_unless_advertised"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_engine_must_apply_it",
@@ -5735,7 +5822,11 @@
       "class": "RequestChecks",
       "method": "test_engine_must_apply_it",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::engine_must_apply_it"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_ignore_eos",
@@ -5751,7 +5842,11 @@
       "class": "RequestChecks",
       "method": "test_llama_cpp_names",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::llama_cpp_names"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_logit_bias",
@@ -5759,7 +5854,12 @@
       "class": "RequestChecks",
       "method": "test_logit_bias",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::logit_bias",
+        "console-core::api04_request::logit_bias_quirks"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_numeric_strings",
@@ -5767,7 +5867,12 @@
       "class": "RequestChecks",
       "method": "test_numeric_strings",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::numeric_strings",
+        "console-core::api04_request::python_numeric_coercions"
+      ]
     },
     {
       "id": "serve/test_server.py::RequestChecks::test_wrong_types_name_the_field",
@@ -5775,7 +5880,11 @@
       "class": "RequestChecks",
       "method": "test_wrong_types_name_the_field",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-04",
+      "rust_tests": [
+        "console-core::api04_request::wrong_types_name_the_field"
+      ]
     },
     {
       "id": "serve/test_server.py::SamplingKeys::test_logit_bias_key",
@@ -5975,7 +6084,11 @@
       "class": "StallWatchdog",
       "method": "test_the_config_env_reaches_the_server",
       "subsystem": "console-http / console-core / console-engine",
-      "disposition": "pending"
+      "disposition": "rust-test",
+      "package": "API-15",
+      "rust_tests": [
+        "console-core::api15_donor::stall_watchdog_the_config_env_reaches_the_server"
+      ]
     },
     {
       "id": "serve/test_server.py::StallWatchdog::test_without_psutil_nothing_is_ended",
