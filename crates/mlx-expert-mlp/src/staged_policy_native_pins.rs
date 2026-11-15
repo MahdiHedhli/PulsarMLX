@@ -1,5 +1,5 @@
 //! Generated from the complete qualified input closure.
-pub const SEAL: &str = "staged-policy-native-build-v1.e00fa63fe2ce812ec39e195afe0ac82669ae202083e6067cb47df1ea111d7558";
+pub const SEAL: &str = "staged-policy-native-build-v1.821daf52d60d82cc1a22768fe552023fa11876d94c59fa465ba80b32c67c70e7";
 pub const REFERENCE: &str = "6ab6d2d0cc17f95eb18f25ed6230b4e281df7026b446845c60788892e87b587e";
 pub const MODULES: &[(&str, &str)] = &[
     ("f020_policy_native_bootstrap", "ae5a255a93da21e7c9f9a4c0b1c5148fb40856b99413283d868cfbd16d0d9025"),
@@ -20,6 +20,6 @@ pub const MODULES: &[(&str, &str)] = &[
     ("f020_resident_mlp_supervise", "4816ac694c21b1a07e5cd8f47f18476942fb4aa7ab1005c01e161f41cf8e22b1"),
     ("f020_staged_weighted_bootstrap", "38a3bcf6c337528e7f5621ffcf3d78fa76e6e58a7a999719e524b93a365b02e6"),
     ("f020_staged_weighted_supervise", "8ca180966fd78ef8849183dcbd2964b1ae153a6031bc3f95b0b5beb1c4f7439b"),
-    ("f020_policy_native_custody", "cd189f7001b48201654f5db67b561dde1ccfdca4132e99256c4cf2ee62ad0253"),
+    ("f020_policy_native_custody", "18db46f825fe0fc7367dd930357ecbed1d7b8b12f8ba9e7aa85cb356827e5e38"),
     ("f020_policy_native_supervise", "e54d5fedc4458fab21585c04d19ffe5e24a50b2c0bfbf892e7f39762fc33d053"),
 ];

@@ -5,7 +5,6 @@ import hashlib
 import os
 import re
 import selectors
-import shutil
 import signal
 import stat
 import subprocess
@@ -286,18 +285,68 @@ def _artifact(paths):
     return selected[0], sha(raw)
 
 
+_RUSTUP_SYSTEM_DIRS = (Path("/opt/homebrew/bin"), Path("/usr/local/bin"))
+_TOOLCHAIN_TARGET = "aarch64-apple-darwin"
+_TOOLCHAIN_PINS = {
+    "cargo": ("cargo 1.95.0 (f2d3ce0bd 2026-03-21)",
+              "c512bff73c86143b557463f021d0c3d5b0490d97d65040ba59ea2b3427784758"),
+    "rustc": (RUSTC, "b829b733131d4e1673eeebd1f34d06ae1e9ff4977b051313cf42e2a9e79ecf1c"),
+}
+
+
+def _rustup_manager(home):
+    for directory in (home / ".cargo/bin", *_RUSTUP_SYSTEM_DIRS):
+        candidate = directory / "rustup"
+        try:
+            candidate.lstat()
+        except FileNotFoundError:
+            continue
+        require(candidate.is_file() and os.access(candidate, os.X_OK), "unusable installed Rust toolchain manager")
+        return candidate
+    return None
+
+
+def _tool_stamp(path):
+    require(path.resolve(strict=True) == path, "noncanonical pinned tool path")
+    st = path.lstat()
+    require(stat.S_ISREG(st.st_mode) and os.access(path, os.X_OK) and 16 <= st.st_size <= 128 << 20,
+            "pinned executable type, access or size")
+    return st.st_dev, st.st_ino, st.st_mode, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+
+
 def _toolchain():
-    rustup = shutil.which("rustup", path=str(Path.home() / ".cargo/bin") + ":/opt/homebrew/bin:/usr/local/bin")
-    require(rustup is not None, "installed Rust toolchain manager")
-    env = {"HOME": str(Path.home()), "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"}
-    tools = {}
-    for name in ("cargo", "rustc"):
-        path = Path(subprocess.check_output([rustup, "which", "--toolchain", "1.95.0", name],
-                    env=env, timeout=30).decode().strip()).resolve(strict=True)
-        version = subprocess.check_output([path, "-V"], env=env, timeout=30).decode().strip()
-        require((name == "rustc" and version == RUSTC) or (name == "cargo" and version.startswith("cargo 1.95.0 ")),
-                "approved installed compiler/toolchain")
-        tools[name] = dict(path=str(path), sha256=prior.old.hashed(path), version=version)
+    home = Path.home()
+    host = os.uname()
+    require((host.sysname, host.machine) == ("Darwin", "arm64"), "pinned Rust toolchain target")
+    directory = home / ".rustup/toolchains" / ("1.95.0-" + _TOOLCHAIN_TARGET) / "bin"
+    manager = _rustup_manager(home)
+    env = {"HOME": str(home), "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"}
+    tools, stamps = {}, {}
+    # Authenticate both original executables before asking either to report its version.
+    for name, (version, expected_sha) in _TOOLCHAIN_PINS.items():
+        path = directory / name
+        stamps[name] = _tool_stamp(path)
+        with path.open("rb") as stream:
+            header = stream.read(16)
+        # MH_MAGIC_64, CPU_TYPE_ARM64 and MH_EXECUTE, in little-endian order.
+        require(header[:8] == bytes.fromhex("cffaedfe0c000001") and header[12:16] == b"\x02\x00\x00\x00",
+                "pinned Darwin arm64 executable")
+        digest = prior.old.hashed(path)
+        require(digest == expected_sha and _tool_stamp(path) == stamps[name], "pinned tool bytes or identity")
+        tools[name] = dict(path=str(path), version=version, sha256=digest, target=_TOOLCHAIN_TARGET,
+                           discovery="rustup" if manager is not None else "direct-installed")
+    # If present, the manager has to select this exact qualified pair. A manager refusal is terminal.
+    if manager is not None:
+        for name, tool in tools.items():
+            selected = subprocess.check_output([manager, "which", "--toolchain", "1.95.0", name], env=env, timeout=30)
+            require(selected == os.fsencode(tool["path"]) + b"\n", "manager selected a different pinned tool")
+    for name, tool in tools.items():
+        path = Path(tool["path"])
+        require(_tool_stamp(path) == stamps[name], "pinned tool changed before version check")
+        reported = subprocess.check_output([path, "-V"], env=env, timeout=30)
+        require(reported == (tool["version"] + "\n").encode("ascii"), "pinned tool version")
+    for name, tool in tools.items():
+        require(_tool_stamp(Path(tool["path"])) == stamps[name], "pinned tool changed during discovery")
     return tools
 
 
