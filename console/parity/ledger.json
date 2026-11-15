@@ -6352,8 +6352,10 @@
       "disposition": "rust-test",
       "package": "API-15",
       "rust_tests": [
-        "console-core::api15_donor::stall_watchdog_the_config_env_reaches_the_server"
-      ]
+        "console-core::api15_donor::stall_watchdog_the_config_env_reaches_the_server",
+        "pulsar-console::api08f_settings::a_run_config_env_block_reaches_the_bound_listener_over_the_environment"
+      ],
+      "notes": "The donor asserts the two values production code reads. The listen backlog is asserted on the listener the entry point binds, by the follow-up to API-08 (the pulsar-console test named here), since the transport now takes its settings from the resolved EnvSettings. The stall seconds have no reader until the stall watchdog of ENG-08 (M3), which must read EnvSettings::engine_stall_s, the field API-15's test asserts."
     },
     {
       "id": "serve/test_server.py::StallWatchdog::test_without_psutil_nothing_is_ended",
