@@ -1,0 +1,201 @@
+name: console
+
+# Gate for PulsarMLX Console (spec 022), the standalone Cargo workspace under
+# console/. The root workspace does not build console/, and macos.yml neither
+# builds it nor includes this workflow in its aggregate, so this file is the
+# only CI that compiles or tests it.
+#
+# Lessons from the reverted synthetic serving workflow (serving-synthetic.yml,
+# kept at tag archive/2026-09-21/feat/openai-serving; reverted by 005867d8):
+#
+# 1. It ran cargo from the repository root with --manifest-path and pinned no
+#    toolchain, so the runner's moving toolchain was used. A nested
+#    rust-toolchain.toml would not have helped from there, because rustup reads
+#    it from the current directory upward. Here every Rust job runs from
+#    console/, installs the pinned toolchain explicitly and asserts the exact
+#    rustc version before anything else.
+# 2. Its required job wrapped cargo in a Python mutation campaign that rebuilt
+#    a copied crate offline in a scrubbed environment. That harness, not the
+#    crate, went red when the runner image moved to a newer toolchain. Here the
+#    blocking jobs run plain cargo commands only: no pip, no offline or
+#    scrubbed rebuilds, no third-party code, no orchestration layer.
+# 3. It had no path filter, so after a merge it would run, and could go red,
+#    on every engine-track push. This workflow is path-filtered to console
+#    paths, so an engine push never triggers it. Console edits to the shared
+#    README.md, NOTICE.md, CONTRIBUTING.md and PULSARMLX_STRATEGY.md are
+#    checked only when the same push or pull request also changes a console
+#    path; run both tools locally for them.
+# 4. It was merged while its own gate was red. The summary job below is the
+#    single result to check: no console change merges unless it is green on
+#    the exact head. Whether it becomes a required check, and how a required
+#    check behaves when the path filter skips this workflow, is open for the
+#    owner (OPEN-13 in specs/022-console-serving-parity/checklists/analysis.md).
+# 5. One long job mixed concerns. Here each job has one responsibility and
+#    can be reproduced locally with the command it prints.
+#
+# Heavy or network-dependent checks (reference capture and the live
+# differential, the shim runs of the donor test files serve/test_engine_contract.py
+# and serve/test_stop.py, vendor-template render checks, SDK client tests, the
+# toolchain drift canary and browser end-to-end tests) are manual
+# workflow_dispatch jobs that arrive with their own work packages; none of them
+# is in a blocking job. For the shim and vendor-template runs, the blocking
+# ledger checker (planned) reads only their committed records.
+#
+# Actions are pinned by full commit SHA. actions/checkout v7.0.1 resolves to
+# the SHA below (read with `gh api repos/actions/checkout/git/ref/tags/v7.0.1`
+# on 2026-11-14); macos.yml uses the same major version by tag.
+
+on:
+  push:
+    paths:
+      - "console/**"
+      - "specs/022-console-serving-parity/**"
+      - "docs/console/**"
+      - "docs/roadmap/CONSOLE_ROADMAP.md"
+      - "docs/upstream/PROJECT_MAYA.md"
+      - "docs/upstream/PROJECT_MAYA_SYNC.md"
+      - "docs/architecture/decisions/0008-console-serving-ahead-of-stage-f.md"
+      - ".github/workflows/console.yml"
+  pull_request:
+    paths:
+      - "console/**"
+      - "specs/022-console-serving-parity/**"
+      - "docs/console/**"
+      - "docs/roadmap/CONSOLE_ROADMAP.md"
+      - "docs/upstream/PROJECT_MAYA.md"
+      - "docs/upstream/PROJECT_MAYA_SYNC.md"
+      - "docs/architecture/decisions/0008-console-serving-ahead-of-stage-f.md"
+      - ".github/workflows/console.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CONSOLE_RUST_TOOLCHAIN: "1.97.1"
+
+jobs:
+  preflight:
+    name: preflight (boundary and hygiene)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Select the base branch
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          BASE_BRANCH="${PR_BASE_REF:-${DEFAULT_BRANCH:-main}}"
+          git rev-parse --verify --quiet "refs/remotes/origin/${BASE_BRANCH}" >/dev/null
+          echo "CONSOLE_BASE=origin/${BASE_BRANCH}" >> "$GITHUB_ENV"
+          echo "base: origin/${BASE_BRANCH}"
+          echo "merge base: $(git merge-base "origin/${BASE_BRANCH}" HEAD)"
+
+      - name: Boundary check (reproduce with console/tools/check-boundary.sh)
+        run: bash console/tools/check-boundary.sh --base "$CONSOLE_BASE" --committed
+
+      - name: Hygiene check, files and commit range (reproduce with console/tools/check-hygiene.sh)
+        run: bash console/tools/check-hygiene.sh --base "$CONSOLE_BASE" --committed
+
+  rust-linux:
+    name: rust (ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the pinned toolchain
+        run: |
+          set -euo pipefail
+          grep -qx "channel = \"${CONSOLE_RUST_TOOLCHAIN}\"" rust-toolchain.toml
+          rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update
+
+      - name: Assert the toolchain version (reproduce with console/tools/check-toolchain.sh)
+        run: |
+          set -euo pipefail
+          rustup show active-toolchain
+          rustc -V
+          cargo -V
+          test "$(rustc -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+          test "$(cargo -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+
+      - name: cargo fetch
+        run: cargo fetch --locked
+
+      - name: cargo fmt
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --locked
+
+  rust-macos:
+    name: rust (macos-15 arm64)
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: console
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the pinned toolchain
+        run: |
+          set -euo pipefail
+          grep -qx "channel = \"${CONSOLE_RUST_TOOLCHAIN}\"" rust-toolchain.toml
+          rustup toolchain install "${CONSOLE_RUST_TOOLCHAIN}" --profile minimal --component rustfmt,clippy --no-self-update
+
+      - name: Assert toolchain and architecture (reproduce with console/tools/check-toolchain.sh)
+        run: |
+          set -euo pipefail
+          uname -m
+          test "$(uname -m)" = arm64
+          rustup show active-toolchain
+          rustc -V
+          cargo -V
+          test "$(rustc -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+          test "$(cargo -V | cut -d' ' -f2)" = "${CONSOLE_RUST_TOOLCHAIN}"
+
+      - name: cargo fetch
+        run: cargo fetch --locked
+
+      - name: cargo test
+        run: cargo test --locked
+
+  summary:
+    name: console summary
+    needs: [preflight, rust-linux, rust-macos]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every console job to succeed
+        env:
+          PREFLIGHT: ${{ needs.preflight.result }}
+          RUST_LINUX: ${{ needs.rust-linux.result }}
+          RUST_MACOS: ${{ needs.rust-macos.result }}
+        run: |
+          echo "preflight=$PREFLIGHT rust-linux=$RUST_LINUX rust-macos=$RUST_MACOS"
+          test "$PREFLIGHT" = success
+          test "$RUST_LINUX" = success
+          test "$RUST_MACOS" = success
