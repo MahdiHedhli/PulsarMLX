@@ -13,8 +13,10 @@ sections 3, 5, 9 and 10 the four packages of wave 3 of M1, merged on 2026-11-15 
 ENG-10, CNF-03 and CNF-07), and sections 3, 5, 9 and 10 the four packages of wave 4 of M1,
 merged on 2026-11-15 (API-07, API-19, CNF-04 and a follow-up to API-03), and sections 3,
 5, 9 and 10 the two packages of wave 5 of M1, merged on 2026-11-15 (API-08 and a follow-up
-to CNF-04), with the lead's M1 demonstration of the same day (section 5). Every other
-command is planned. At M0 the only runnable
+to CNF-04), with the lead's M1 demonstration of the same day (section 5), and sections 3,
+5 and 10 the end-of-milestone review of M1 of 2026-11-15 (section 5) and its three
+follow-up fixes, merged the same day (the follow-ups to API-02, API-08 and API-19). Every
+other command is planned. At M0 the only runnable
 content is the empty `console/` workspace skeleton and its check tools (GOV-06). Each
 command is marked **Available from** with the work package that makes it real. When a
 package lands, it updates its entries here in the same change: it replaces "planned"
@@ -171,6 +173,40 @@ support of P-11 needs a transport extension (WEB-02); and Python's
 error page for a refused request head when `cors_origins` is set is proposal P-22,
 awaiting the owner's decision
 ([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
+
+**Observed (the follow-up to API-02: the client watcher polls as the donor does)**: merged
+on 2026-11-15 at commit `c8e02d3e`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http --test api02f_watch
+nice -n 10 cargo test --locked -p console-http --lib transport::watch
+```
+
+The end-of-milestone review of M1 (section 5) found that a client that sent its request
+and then closed only its writing side got 200 with an empty answer (content null,
+`finish_reason` `stop`, 0 completion tokens): the watcher saw end of file at once and
+cancelled the request before the first token, where the donor's `watch_client` first looks
+0.5 s after the watch starts and every 0.5 s after that (`serve/server.py:5019-5044`). No
+approved deviation or proposal covered the difference. `console-http/src/transport/watch.rs`
+now waits `WATCH_INTERVAL` (0.5 s) before each check, the first included, and a check
+never waits for the socket; end of file or a reset means the client is gone, and unread
+client data does not. The first command runs 4 tests on loopback sockets and the real
+clock (about 1.1 s); the second the 3 unit tests of the module. In the package clone
+before the merge all passed, with 1,213 tests in the workspace, and with the earlier
+`watch.rs` put back the first two tests failed; the lead's run at `906b12dc`, below,
+confirmed them. Observed: through the assembled chat route with the scripted engine, a
+half-closed request whose answer is ready within the first interval gets the same bytes as
+without the half-close, collected and streamed (`finish_reason` `stop`, 4 completion
+tokens, content `Hi!`); a half-closed request held by the handler is cancelled no earlier
+than 0.5 s and before 1.25 s after its watch starts; a client that closes or resets while
+its request waits is noticed within 1 s of the close; and bytes sent after the request,
+with or without a half-close, give no verdict over 1.1 s, which spans two checks. The
+kit's probe route `/ping` (`console-testkit/src/server/probe.rs`) now waits for the watch's
+verdict after a failed keep-alive write; no existing test file was changed. The fix
+removes a difference from the donor and adds none, and no ledger row changes. In a 50-run
+loop over the timing-sensitive suites made for this package, 49 runs passed; the one
+failure was the kit's process test that the follow-up to API-19 fixed (section 5).
+Qualified on synthetic backends only.
 
 **Observed (API-04, request validation and sampling in `console-core::request` and
 `console-core::sampling`)**: merged on 2026-11-15 at commit `89d40258`. From `console/`:
@@ -433,6 +469,53 @@ built (the line engine, `--engine`, `--gpu`, `--tokenizer`, `--open`, `--idle-un
 log tee, and the lines of a non-loopback bind); the panic hook's one-line write has no
 automated test; and proposals P-25 and P-27 await the owner.
 
+**Observed (the follow-up to API-08: the transport's settings from the resolved
+settings)**: merged on 2026-11-15 at commit `8a602eb7`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p pulsar-console --test api08f_settings
+nice -n 10 cargo test --locked -p console-testkit --test api19_server a_run_config_env_value
+nice -n 10 cargo test --locked -p console-http --lib transport::config
+```
+
+The end-of-milestone review of M1 (section 5) found that the ledger row
+`StallWatchdog::test_the_config_env_reaches_the_server` was resolved by a test of the
+`EnvSettings` fields, while the binary built its transport settings on a second parse path
+(`TransportConfig::from_raw` on the raw text): the rules existed twice and had drifted
+(only the transport's path applied Python's limit of 4300 digits to an integer), and no
+test showed a run config's `env` block reaching the listener the binary binds.
+`pulsar_console::start` and the test kit's server builder now build the transport's
+settings from the resolved settings (`EnvSettings`: `http_backlog`, `max_body_mib`,
+`request_timeout_s`) with `TransportConfig::from_settings`. The text rules are written once
+in `console-core` (`EnvSettings::http_backlog_from`, `::max_body_mib_from` and
+`::request_timeout_s_from`) and the conversion once in `console-http`
+(`TransportConfig::from_values`); `from_raw` and the `parse_` functions delegate to the
+same code, and the unit test `the_raw_text_and_the_resolved_settings_agree` pins the two
+paths to the same results. `EnvSettings` now applies the 4300-digit limit to the backlog
+and the body limit, as the transport's own path already did and as the donor's `int()`
+does. `pulsar_console::Started::transport` gives the bound listener's settings, read-only.
+The first command runs 3 tests of `pulsar_console::start` in process (about 1 s); the
+second the kit test `a_run_config_env_value_reaches_the_kit_servers_backlog`; the third the
+transport's settings unit tests. In the package clone before the merge all passed, with
+1,213 tests in the workspace, and the first two passed 50 runs in a loop; the lead's run at
+`906b12dc`, below, confirmed them. Observed: with a run config whose `env` block sets
+`PULSAR_CONSOLE_HTTP_BACKLOG` 64, `PULSAR_CONSOLE_MAX_BODY_MIB` 1 and
+`PULSAR_CONSOLE_REQUEST_TIMEOUT_S` 30, and an environment that sets 300, 8 and 1, the bound
+listener has backlog 64, a 2 MiB `Content-Length` is answered 413 "larger than 1 MiB", and
+a half-sent request head is closed unanswered after about 1 s. This is the donor's
+precedence: the run config's `env` block wins for the backlog and the body limit, and the
+request timeout is read from the process environment only, because the donor's
+server-side list of config `env` names does not hold it (`serve/server.py:6737-6741`); a
+null config entry leaves the environment's value in force. The kit's server backlog is 64
+from the config over 300 injected. Commit `906b12dc` names
+`pulsar-console::api08f_settings::a_run_config_env_block_reaches_the_bound_listener_over_the_environment`
+in the ledger row beside API-15's test and notes that the stall seconds have no reader
+until ENG-08; the ledger's figures do not change. Qualified on synthetic backends only.
+Not done: `py_int` in `console-core/src/config/py.rs` still lacks the 4300-digit limit, so
+the other integer settings saturate where the donor's `int()` raises (a follow-up recorded
+under API-15 in [tasks.md](tasks.md)); and the stall seconds get their reader with ENG-08
+(M3).
+
 **Observed (lead's gate run after wave 5 of M1)**: on 2026-11-15 at commit `df01fec5`, on
 macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
 1.97.1); `cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings`
@@ -453,6 +536,29 @@ of its 21 are still `pending` (five were resolved by ENG-10 in wave 3 and two by
 for ENG-09, one is still `pending` (QueuedKeepAlives); and the five rows of API-07's
 seven that were `pending` are still `pending`. No Linux run and no CI run covers this
 commit (section 10).
+
+**Observed (lead's gate run after the review's fixes)**: on 2026-11-15, on macOS on Apple
+Silicon, from `console/`. At commit `906b12dc` (the follow-ups to API-02 and API-08):
+`bash tools/check-toolchain.sh` printed its `ok` line (`rustc` 1.97.1);
+`cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings` passed;
+`cargo test --locked` gave 1,220 passed, 0 failed and 1 ignored; and 25 of 25 repeated
+runs of the client-gone and queue suites of `console-http` passed (`api02_donor`,
+`api02_transport`, `api02f_watch`, `api07_lifecycle`, `api07_errors`, `api08_donor`,
+`api08_goldens`). At commit `a42587e9` (with the follow-up to API-19): the same checks
+passed; `cargo test --locked` gave 1,222 passed, 0 failed and 1 ignored, the ignored test
+being the real-pack tokenizer round trip, which reports unverified without a pack; 15 of
+15 repeated runs of
+the process suites passed (`api19_process`, `api08_process`, `api08_refusal`, `cnf01_cli`,
+`cnf01_workflow`); and both check scripts of section 4 passed. The ledger's figures are
+those of `df01fec5`: 50 of 913 rows resolved (48 `rust-test`, 2 `deviation`) and 863
+`pending`, 248 of them with an owning package and 615 without. Against the binary rebuilt
+at `906b12dc`, with raw sockets on loopback, the lead observed the half-close fix: with the
+default engine, a request followed by a half-close got the full answer, the same 56
+completion tokens as without the half-close; with a slow engine
+(`PULSAR_CONSOLE_MOCK_TOK_S=5`), a half-closed request was answered 200 after about 0.54 s
+with 3 completion tokens and `finish_reason` `stop`, which is the cancel at the first
+check, as in the donor. That is one local run on synthetic input; nothing is qualified by
+it. No Linux run and no CI run covers these commits (section 10).
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -629,6 +735,90 @@ qualified by them, and no CI run covers them.
 Owner checkpoint 2 (this demonstration and the next push) is not held yet: the lead
 reports M1 to the owner next.
 
+**Observed (end-of-milestone review of M1)**: on 2026-11-15, at commit `df01fec5`, the lead
+had the assembled M1 server reviewed as a whole: four independent reviewers, one lens
+each, and for each finding a second reviewer who tried to refute it. The reviewers changed
+nothing and ran no `cargo` command; they worked black-box against a binary built with
+`cargo build --locked -p pulsar-console`, on loopback only, and by reading the code, the
+contracts and the donor's text. The lenses were: (1) the security of the HTTP surface;
+(2) the synthetic-only rule end to end; (3) the honesty of the parity ledger, with all 50
+resolved rows audited against the donor test methods they name; and (4) the live behavior
+of the chat route against the donor. This entry is recorded here, beside the M1
+demonstration of the same commit, because three of the four lenses examined the binary
+this section builds and runs; the ledger lens is kept with them so that the review reads
+as one record.
+
+Result: no blocker was found. Nine findings were reported. Six were confirmed, all minor
+after the recheck; two of the six are the same defect seen through two lenses, so they
+make five distinct points. Two were refuted, and one was already known. The five points
+and what became of each:
+
+- Half-close. A client that sent its request and then closed only its writing side got
+  HTTP 200 with an empty answer (content null, `finish_reason` `stop`, 0 completion
+  tokens): the watcher saw end of file at once and cancelled the request before the first
+  token, where the donor's `watch_client` first looks 0.5 s after the watch starts and
+  every 0.5 s after that (`serve/server.py:5019-5044`). No approved deviation or proposal
+  covered the difference. Fixed by the follow-up to API-02, commit `c8e02d3e` (section 3).
+- Transport settings. The ledger row `StallWatchdog::test_the_config_env_reaches_the_server`
+  was resolved by a test of the `EnvSettings` fields, but the binary built its transport
+  settings on a second parse path (`TransportConfig::from_raw` on the raw text), so the
+  rules existed twice and had drifted (only the transport's path applied Python's limit of
+  4300 digits to an integer), and no test showed a run config's `env` block reaching the
+  listener the binary binds. Fixed by the follow-up to API-08, commit `8a602eb7`
+  (section 3); the ledger row now also names the new test and carries a note (commit
+  `906b12dc`).
+- The note on non-synthetic engines
+  ([ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md))
+  still said that the refusal at process start was planned and that no binary existed.
+  That was true of `df01fec5` and was corrected by the record of wave 5 (commit
+  `09d3c477`).
+- Lead decision LD53 and owner item OPEN-62 (a run config's `model_name` can replace the
+  default name) were not yet recorded where the code cited them. Recorded by commit
+  `09d3c477`.
+- The note said that the refused test engine sits behind a Cargo feature "that only tests
+  enable". That holds for the build that ships (`cargo build --locked -p pulsar-console`),
+  but a build of the whole workspace, and every test build, compiles that engine into
+  `console-engine` through `console-testkit`'s dependency; it is unreachable there,
+  because `main` names only the scripted factory, and the guard would refuse it. The note
+  now says so (commit `09d3c477`). Nothing in the build prevents a workspace-wide build
+  from being shipped by mistake; [tasks.md](tasks.md) records a check of the shipped
+  build under API-17.
+
+The two refuted findings: a CORS preflight echoes a folded
+`Access-Control-Request-Headers` value into `Access-Control-Allow-Headers` as the donor
+does, byte for byte; no header line can be forged, and unfolding it would be a new
+deviation, which the lead does not propose. And the RequestBodies rows for a body over the
+limit and a bad `Content-Length` are resolved by tests on the transport probe, which run
+the same read function the chat route calls. The finding already known: an image part in
+a message is answered 200 in M1, because the stand-in prompt of LD45 ignores media parts,
+where the donor refuses with 400 on a server without the vision encoder; the refusal
+arrives with RSP-17 (M6).
+
+What the review checked and found right:
+
+- HTTP surface. The `Host` allowlist in its forms (case, ports, IPv6 and malformed forms,
+  a missing `Host`, `allowed_hosts` entries), the `Origin` rule on every route, the
+  content-type rule, API keys (compared in constant time; the key reaches no log line or
+  error body), CORS, request framing and smuggling cases, body limits and stalled clients,
+  JSON abuse within P-19 and P-20, underscore keys (SEC-6), log injection (LD35), and 30
+  requests at once with clients closing early, with no panic and no lost request.
+- Synthetic-only rule. One definition of the guard; every engine start in non-test code
+  goes through the one admission step, `Host::admit`; no command-line option, environment
+  variable or run-config key selects, loads or spawns an engine (the config keys `exe`,
+  `args`, `cwd`, `tokenizer`, `gpu`, `vision`, `log` and `engine` are ignored in M1); and
+  the refusal tests would fail if the guard call were removed.
+- Parity ledger. All 50 resolved rows are equivalent to or stronger than the donor
+  methods they name, apart from the transport-settings point above.
+- Chat route. Its frames, limits, stops, sampling checks and message shapes match the
+  donor in status, headers and bytes, collected and streamed, with queueing and
+  disconnects included.
+
+Not covered: a slow-client run at the default 300 s timeout, with no cap on connections
+(the donor's design); a bind that is not loopback; a streaming client that stops reading;
+engine faults, which a client cannot cause on the shipped binary; any Linux run. The
+reviewers ran no tests. These are reviewers' observations of one commit on synthetic
+input; nothing is qualified by them, and no CI run covers them.
+
 **Observed (API-19, the HTTP test kit in `console-testkit`)**: merged on 2026-11-15 at
 commit `b1f4709a`. Until API-08's binary existed, tests started an in-process server from
 the kit, and many still do: `TestServer::builder()` binds 127.0.0.1 port 0 over the API-02
@@ -659,6 +849,40 @@ and API-17 (since wave 5 the tests of API-08, `pulsar-console::api08_process`, u
 M3's); the chat-template fixture is M2's; the ledger checks are a source-level
 approximation that ignores `cfg` and `ignore` attributes, and the exact listing comparison
 waits for CNF-12; and the kit's own tests run on the real clock, not paused time.
+
+**Observed (the follow-up to API-19: one lock around every child spawn of a test
+binary)**: merged on 2026-11-15 at commit `a42587e9`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-testkit --test api19_process
+nice -n 10 cargo test --locked -p pulsar-console --test api08_process --test api08_refusal
+nice -n 10 cargo test --locked -p console-conformance --test cnf01_cli --test cnf01_workflow
+```
+
+In a 50-run loop made for the follow-up to API-02 (section 3),
+`console-testkit::api19_process::closing_standard_input_ends_a_reader` failed once: it
+gave up after 20 s waiting for `cat` to see end of file. The cause is a rare flake in the
+kit's process tests. On macOS the standard library sets close-on-exec on a child's pipes
+with a second call after `pipe()`, so a child that another test thread starts inside that
+window inherits a sibling test's pipe ends; here an orphaned `sleep 30` of a sibling test
+held the write end of the reader's standard input (seen with `lsof`). Measured on the
+unfixed test binary: 2 failures and 42 slow passes in 1,600 runs with four loops in
+parallel, and none in 500 runs one at a time. Every spawn in a test binary now goes
+through one process-wide lock held across the spawn call:
+`console_testkit::process::spawn_locked`, used by `Proc::spawn` and by the tests
+`api08_process` and `api08_refusal` of `pulsar-console`, and, separately,
+`console_conformance::process::spawn_locked`, used by the harness's `Launch` and by the
+tests `cnf01_cli` and `cnf01_workflow`; a poisoned lock is recovered. No assertion or
+timeout changed. Observed with the fix: 1,600 of 1,600 runs of `api19_process` passed with
+no slow run, and 100 of 100 for each other test binary touched; the lead's run at
+`a42587e9` (section 3) confirmed them, with 15 of 15 repeated runs of the process suites.
+Linux creates the pipes close-on-exec in one call, so the flake is expected on macOS only;
+no Linux run was made. Not done: sockets that a test creates while another thread spawns
+can leak into the child the same way on macOS. No test breaks on that today; a fix would
+need children spawned with close-on-exec by default, which the standard library does not
+offer, or one lock around descriptor creation. The unit test of
+`console-conformance::observe` that runs `mkfifo` spawns outside the lock, harmlessly,
+because it creates no pipes and nothing else in that binary spawns.
 
 An Anthropic message:
 
@@ -1012,7 +1236,9 @@ M1 code, CNF-07's process harness included, is unobserved. The same holds at com
 `f5400931` (2026-11-15) for the four packages of wave 4, and at commit `df01fec5`
 (2026-11-15) for the two packages of wave 5 and the `pulsar-console` binary: nothing has
 been pushed since `0f4bc320`, no CI run covers any M1 package or the revised workflow of
-CNF-01, and the Linux behavior of the M1 code is unobserved.
+CNF-01, and the Linux behavior of the M1 code is unobserved. The same holds at commit
+`a42587e9` (2026-11-15): no CI run covers the three follow-up fixes of the
+end-of-milestone review of M1 (the follow-ups to API-02, API-08 and API-19).
 
 CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
 rust-linux and rust-macos run from `console/`. Every failing step prints one

@@ -240,10 +240,10 @@ confirms the details LD30 and LD43 record with the owner at checkpoint 2.
 | Deviation sub-items | deviations.md | 64, no duplicate; every sub-item cited elsewhere is defined | — | yes |
 | Proposals | deviations.md | P-1 to P-18, all under "Proposed, awaiting owner decision" before checkpoint 1; every `P-` reference elsewhere is in range. Decided by the owner on 2026-11-14: 14 approved, 2 declined (P-12, P-17), 2 deferred (P-5, P-18). P-19 to P-21 were raised by M1 packages on 2026-11-14, and P-22 to P-27 on 2026-11-15; all nine await the owner at checkpoint 2, so eleven proposals await the owner (P-5, P-18 and P-19 to P-27) | — | yes |
 | Contracts | contracts/README.md | 4 written in M0 (backend-seam, naming, parity-ledger, deviations) plus the index; added by M1 packages since: `cli.md` (a draft, CNF-07, with the M1 command line, start-up order, port-in-use error and exit codes settled by API-08) and the scenario schema, the rename map and the volatile-field list (CNF-02; the list has 73 fields since the follow-up to CNF-04); later contracts listed as planned with their packages | — | yes |
-| Ledger rows | ledger.json | 913 rows, sorted by id, 44 donor files, fields exactly `id`, `file`, `class`, `method`, `subsystem`, `disposition`; all `pending`; no null class. At commit `df01fec5` (2026-11-15), 50 rows are resolved (48 `rust-test`, 2 `deviation`) and 863 are `pending`; 248 of the pending rows name their owning package, and 615 have no owner recorded yet | 913 rows, all pending (GOV-06); schema in parity-ledger 3 and 3.1 | yes for the M0 ledger; the resolved rows are re-derived at the next rerun |
+| Ledger rows | ledger.json | 913 rows, sorted by id, 44 donor files, fields exactly `id`, `file`, `class`, `method`, `subsystem`, `disposition`; all `pending`; no null class. At commit `df01fec5` (2026-11-15), and with the same figures at `a42587e9`, 50 rows are resolved (48 `rust-test`, 2 `deviation`) and 863 are `pending`; 248 of the pending rows name their owning package, and 615 have no owner recorded yet | 913 rows, all pending (GOV-06); schema in parity-ledger 3 and 3.1 | yes for the M0 ledger; the resolved rows are re-derived at the next rerun |
 | Donor test methods | pinned donor, listed independently | 913 unique in 44 files; the same id set as the ledger | 913 and 44 everywhere they appear | yes |
 | Open-item ids | all M0 files | OPEN-01 to OPEN-62 each cited at least once; none out of range; 46 open (24 owner, 22 lead), 16 settled | — | yes; OPEN-56 was added by this analysis and OPEN-57 by the polish pass; seven ids moved to settled on 2026-11-14; OPEN-61 and OPEN-62 were added on 2026-11-15 |
-| Lead-decision labels | all M0 files | LD1 to LD27: none outside this file, except LD1 and LD17 in tasks.md R29; LD28 to LD30: cited by label in spec, research, data-model, tasks, backend-seam and deviations; LD31 to LD33: cited by label in tasks.md; LD34 to LD36: cited by label in tasks.md, and LD34 also in research.md and LD35 in naming.md; LD37 to LD43: cited by label in tasks.md, LD39, LD40 and LD43 also in deviations.md, LD40, LD41 and LD43 also in naming.md, and LD41 also in rename-map.json; LD44 to LD50: cited by label in tasks.md, LD44 also in quickstart.md, parity-ledger.md, volatile-fields.json and the console README, LD45 also in quickstart.md, naming.md and the console README, and LD46 also in cli.md, naming.md, deviations.md, the note on allowing non-synthetic engines and the console README; LD51 to LD55: cited by label in tasks.md and quickstart.md, LD52 also in cli.md, LD53 also in deviations.md, naming.md and the note on allowing non-synthetic engines, LD54 also in naming.md and the console README, and LD55 also in parity-ledger.md; LD56: cited by label in tasks.md and naming.md | — | yes |
+| Lead-decision labels | all M0 files | LD1 to LD27: none outside this file, except LD1 and LD17 in tasks.md R29; LD28 to LD30: cited by label in spec, research, data-model, tasks, backend-seam and deviations; LD31 to LD33: cited by label in tasks.md; LD34 to LD36: cited by label in tasks.md, and LD34 also in research.md and LD35 in naming.md and quickstart.md; LD37 to LD43: cited by label in tasks.md, LD39, LD40 and LD43 also in deviations.md, LD40, LD41 and LD43 also in naming.md, and LD41 also in rename-map.json; LD44 to LD50: cited by label in tasks.md, LD44 also in quickstart.md, parity-ledger.md, volatile-fields.json and the console README, LD45 also in quickstart.md, naming.md and the console README, and LD46 also in cli.md, naming.md, deviations.md, the note on allowing non-synthetic engines and the console README; LD51 to LD55: cited by label in tasks.md and quickstart.md, LD52 also in cli.md, LD53 also in deviations.md, naming.md and the note on allowing non-synthetic engines, LD54 also in naming.md and the console README, and LD55 also in parity-ledger.md; LD56: cited by label in tasks.md and naming.md | — | yes |
 
 ## 5. Coverage: requirement groups and tasks
 
@@ -593,7 +593,8 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   3 (commit `6faf815b`), 37 are resolved and 876 are `pending`; since wave 4 (commit
   `f5400931`), 39 are resolved and 874 are `pending`, 259 of them with an owning package;
   since wave 5 (commit `df01fec5`), 50 are resolved (48 `rust-test`, 2 `deviation`) and
-  863 are `pending`, 248 of them with an owning package (section 11).
+  863 are `pending`, 248 of them with an owning package, with the same figures at commit
+  `a42587e9` after the end-of-milestone review's fixes (section 11).
 - [x] CHK004 Counts stated across documents agree (913, 44, 131, 125, 17 plus 6).
 
 ### Coverage
@@ -660,7 +661,12 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   holds for the plain-content subset of the OpenAI dialect and the minimal binary
   (API-08) and for the follow-up to CNF-04. The lead's M1 demonstration of the binary
   (quickstart section 5) is recorded as one local run on synthetic input, not as a
-  qualification, and no CI run covers it.
+  qualification, and no CI run covers it. Since the end-of-milestone review of M1
+  (2026-11-15), the same holds for the follow-ups to API-02 (the watcher's polling),
+  API-08 (the transport's settings from the resolved settings) and API-19 (the spawn
+  lock of the test helpers); the review itself is recorded as reviewers' observations of
+  one commit, in which no blocker was found, not as a qualification, and the lead's check
+  of the half-close fix as one local run on synthetic input.
 - [x] CHK023 Non-interference holds on the working tree: both check scripts pass, and the
   root `Cargo.toml`, `Cargo.lock` and `macos.yml` equal the merge base.
 - [x] CHK024 The analysis exists before any M1 code (plan exception E5, GOV-03).
@@ -890,3 +896,59 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   `console.yml`, and the Linux behavior of the M1 code is unobserved. Owner checkpoint 2
   (the M1 demonstration and the next push) is not held yet: the lead reports M1 to the
   owner next. The cross-document checks and link check were not rerun for this change.
+- End-of-milestone review of M1, 2026-11-15. Commit `09d3c477` recorded wave 5. At
+  `df01fec5` the lead had the assembled M1 server reviewed as a whole: four independent
+  reviewers, one lens each (the security of the HTTP surface; the synthetic-only rule end
+  to end; the honesty of the parity ledger, with all 50 resolved rows audited against the
+  donor test methods they name; the live behavior of the chat route against the donor),
+  and for each finding a second reviewer who tried to refute it. The reviewers changed
+  nothing, ran no `cargo` command, and worked black-box against a binary built with
+  `cargo build --locked -p pulsar-console`, on loopback only, and by reading the code, the
+  contracts and the donor's text. No blocker was found. Of nine findings, six were
+  confirmed, all minor after the recheck, two of them the same defect seen through two
+  lenses, so five distinct points; two were refuted (the CORS preflight's echo of a folded
+  header value, which matches the donor byte for byte, and the RequestBodies rows resolved
+  on the transport probe, which runs the chat route's read function); and one was already
+  known (an image part is answered 200 in M1, where the donor answers 400 without the
+  vision encoder; RSP-17 brings the refusal). The five points: (a) a client that
+  half-closed after its request got 200 with an empty answer, because the watcher
+  cancelled at once where the donor first looks after 0.5 s, a difference no deviation or
+  proposal covered; (b) the ledger row
+  `StallWatchdog::test_the_config_env_reaches_the_server` was resolved by a test of the
+  `EnvSettings` fields while the binary parsed its transport settings a second time from
+  the raw text, the two paths had drifted on Python's 4300-digit limit, and no test showed
+  a run config's `env` block reaching the bound listener; (c) the note on non-synthetic
+  engines still called the refusal at process start planned; (d) LD53 and OPEN-62 were not
+  yet recorded where the code cited them; and (e) the note's "only tests enable" held for
+  the build that ships but not for a workspace-wide build, which compiles the refused test
+  engine in as unreachable code. Points (c), (d) and (e) were corrected by `09d3c477`.
+  Three follow-up fixes were merged the same day: the follow-up to API-02 (`c8e02d3e`, cited
+  as API-02: the watcher waits 0.5 s before each check, the first included, as the donor
+  does) for (a); the follow-up to API-08 (`8a602eb7`, cited as API-08: the entry point and
+  the test kit build the transport's settings from the resolved `EnvSettings`, the raw-text
+  path delegates to the same rules, and `EnvSettings` applies the 4300-digit limit to the
+  backlog and the body limit) for (b), with `906b12dc` naming its test in the ledger row,
+  whose figures do not change; and the follow-up to API-19 (`a42587e9`, cited as API-19:
+  one process-wide lock around every child spawn of a test binary, for a macOS flake in
+  which a child inherited a sibling test's pipe ends). Nothing in the build prevents a
+  workspace-wide build from being shipped; tasks.md records a check of the shipped build
+  under API-17. At `906b12dc` the lead observed, on macOS on Apple Silicon:
+  `bash tools/check-toolchain.sh` ok (`rustc` 1.97.1); `cargo fmt --check` and
+  `cargo clippy --locked --all-targets -- -D warnings` passed; `cargo test --locked` gave
+  1,220 passed, 0 failed and 1 ignored; and 25 of 25 repeated runs of the client-gone and
+  queue suites of `console-http` passed. At `a42587e9` the same checks passed;
+  `cargo test --locked` gave 1,222 passed, 0 failed and 1 ignored (the real-pack tokenizer
+  round trip, which reports unverified); 15 of 15 repeated runs of the process suites
+  passed; and `console/tools/check-boundary.sh` and `console/tools/check-hygiene.sh`
+  passed. The lead's local check of the half-close fix against the rebuilt binary is
+  recorded in quickstart section 3; it is one local run on synthetic input. The review did
+  not cover a slow-client run at the default 300 s timeout, with no cap on connections
+  (the donor's design), a bind that is not loopback, a streaming client that stops
+  reading, engine faults, which a client cannot cause on the shipped binary, or any Linux
+  run, and the reviewers ran no tests. No lead decision and no open item is added: the
+  counts stay 56 decisions and 62 open-item ids (46 open: 24 owner, 22 lead; 16 settled),
+  and eleven proposals await the owner. No task box changes: three of the 18 M1 tasks are
+  ticked (CNF-02, CNF-03, CNF-04). Nothing has been pushed since `0f4bc320`, so no CI run
+  covers any M1 package, the fixes included, and the Linux behavior of the M1 code is
+  unobserved. Owner checkpoint 2 is not held yet. The cross-document checks and link check
+  were not rerun for this change.

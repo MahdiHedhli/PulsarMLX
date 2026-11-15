@@ -129,8 +129,10 @@ Notes on section 3.1, recorded by the packages that ported these settings (merge
   constants `ENV_HTTP_BACKLOG`, `ENV_MAX_BODY_MIB` and `ENV_REQUEST_TIMEOUT_S` of
   `console_http::transport`. The transport reads no environment: its parse functions
   (`parse_backlog`, `parse_max_body_bytes`, `parse_request_timeout`) take the raw text, and
-  API-08 (commit `5b327fa8`) wires the variables at start: `pulsar_console::start` builds
-  `TransportConfig` from the environment with the run config's `env` block laid over it.
+  API-08 (commit `5b327fa8`) wires the variables at start. Since the follow-up to API-08
+  (commit `8a602eb7`), `pulsar_console::start` builds `TransportConfig` from the resolved
+  settings (`EnvSettings`) with `TransportConfig::from_settings`, and the parse functions
+  delegate to the same rules of `console-core`.
   Under BRAND-1 the 413 message names the new variable:
   `the request body is larger than N MiB (PULSAR_CONSOLE_MAX_BODY_MIB raises the limit)`,
   where the donor names `MAYA_MAX_BODY_MIB`. The test
@@ -461,7 +463,9 @@ prose, outside the machine-read tables.
   temporary folder (the ledger helper's own unit tests use
   `pulsar-console-testkit-ledger-<pid>-<n>`). The kit reads no environment variable of its
   own: `TestServerBuilder::env` injects values and never reads the process environment.
-  The kit's run config is listed under section 3.6.
+  The kit's run config is listed under section 3.6. The test helper that starts a child
+  under one process-wide lock is `spawn_locked`, in both `console_testkit::process` and
+  `console_conformance::process` (the follow-up to API-19, commit `a42587e9`).
 - **Turn-driver names.** Fixed by ENG-10 (commit `4e7c438a`) in `console_core::turn`: the
   engine's driver thread is named `console-engine-driver`, and the death text of an engine
   that panicked is `the engine panicked` (`ENGINE_PANICKED`). ENG-10 adds no environment

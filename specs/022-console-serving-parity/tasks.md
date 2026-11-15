@@ -837,7 +837,9 @@ over `curl` from the scripted engine, and the decision on the first push. The ow
 authorized the first push of the feature branch on 2026-11-14, ahead of this checkpoint;
 each later push remains a checkpoint decision. On 2026-11-15 the lead ran the M1
 demonstration at commit `df01fec5`, with the minimal binary of API-08 and the scripted
-engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not held yet.
+engine ([quickstart.md](quickstart.md), section 5). On 2026-11-15 the lead also had the
+assembled server reviewed and merged three follow-up fixes (`c8e02d3e`, `8a602eb7`,
+`a42587e9`; [quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not held yet.
 
 - [ ] API-01 [P] [M1] Wire foundations: Python-compatible JSON, error model, ids (absorbs
   PRM-01 and the JSON writer of OPS-01) — console-pyjson (new crate) and console-http::error
@@ -907,6 +909,12 @@ engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not he
     `::test_a_malformed_body_is_a_400`; API-07 had resolved GoneClients. One row this task
     named, `QueuedKeepAlives::test_keep_alives_while_queued`, is still `pending` (owner
     API-09). The checkbox stays open for P-22 and that row.
+  - Note: Follow-up to API-02 (2026-11-15, commit `c8e02d3e`): the end-of-milestone review
+    found that the watcher cancelled a half-closed request at once, so its client got 200
+    with an empty answer; the watcher now waits 0.5 s before each check, the first
+    included, as the donor's `watch_client` does (serve/server.py:5019-5044), pinned by
+    `console-http` `tests/api02f_watch.rs`. This removes a difference from the donor and
+    adds none.
   - Detail: [tasks/api.md#api-02](tasks/api.md#api-02).
 - [ ] API-03 [M1] Router, authentication, CORS and cross-site guards — console-http::router
   and console-http::guard; console-core::digest (the SHA-256 helper, LD32)
@@ -1006,6 +1014,15 @@ engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not he
     `backend`, `installer`, `vision`, `vision_off`, `ablate`, `turbo`, `sampling`, `port`)
     go to the packages that consume them: ENG-15 and the OPS packages of M7 (lead,
     2026-11-15). Until then they are read through the untyped `RunConfig::get`.
+  - Note: Since commit `906b12dc` its row
+    `StallWatchdog::test_the_config_env_reaches_the_server` also names the entry point's
+    test,
+    `pulsar-console::api08f_settings::a_run_config_env_block_reaches_the_bound_listener_over_the_environment`.
+    Follow-up (lead, 2026-11-15): `py_int` in `console-core/src/config/py.rs` still lacks
+    Python's 4300-digit limit, so the other integer settings (the restore-point and
+    loop-guard counts, the think reserve and the video frame limit) saturate where the
+    donor's `int()` raises; the next package that touches console-core's config fixes it,
+    which brings the code closer to the donor and needs no deviation.
   - Detail: [tasks/api.md#api-15](tasks/api.md#api-15);
     [tasks/ops.md#ops-01](tasks/ops.md#ops-01).
 - [ ] ENG-01 [P] [M1] Backend seam: engine trait, event model, capabilities, facts and
@@ -1248,6 +1265,13 @@ engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not he
     for some rows; P-25 and P-27 await the owner (OPEN-15). Lead decisions LD51 to LD54
     record what it built (R29); whether a run config's `model_name` may rename the
     synthetic engine is owner item OPEN-62.
+  - Note: Follow-up to API-08 (2026-11-15, commit `8a602eb7`): `pulsar_console::start` and
+    the test kit's server builder build the transport's settings from the resolved
+    `EnvSettings` (`TransportConfig::from_settings`), and `TransportConfig::from_raw`
+    delegates to the same rules of console-core; a run config's `env` block wins for the
+    backlog and the body limit, and the request timeout is read from the environment only,
+    as in the donor. Pinned by `pulsar-console` `tests/api08f_settings.rs` and
+    `console-testkit::api19_server::a_run_config_env_value_reaches_the_kit_servers_backlog`.
   - Detail: [tasks/api.md#api-08](tasks/api.md#api-08).
 - [ ] PRM-04 [M1] Byte-level BPE tokenizer, ByteTokenizer and incremental detokenizer —
   console-tokenizer (new crate)
@@ -1300,6 +1324,14 @@ engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not he
     use the kit's process helper (`Proc` and `parse_ready`) against the M1 binary, and the
     kit's comments were brought in line with it at commit `7e4613e2`. The checkbox stays
     open until the fake engine binaries of M3 and the chat-template fixture of M2 exist.
+  - Note: Follow-up to API-19 (2026-11-15, commit `a42587e9`): a rare flake in the kit's
+    process tests on macOS, where the standard library sets close-on-exec on a child's
+    pipes with a second call after `pipe()`, so a child that another test thread started in
+    that window inherited a sibling test's pipe ends. Every spawn in a test binary now goes
+    through one process-wide lock (`console_testkit::process::spawn_locked` and, separately,
+    `console_conformance::process::spawn_locked`). What remains: sockets that a test creates
+    while another thread spawns can leak into the child the same way; no test breaks on
+    that today.
   - Detail: [tasks/api.md#api-19](tasks/api.md#api-19).
 - [ ] CNF-01 [P] [M1] Conformance crate scaffold and the console.yml preflight and summary
   jobs — console-conformance (lib and cnf binary skeleton); .github/workflows/console.yml
@@ -1779,6 +1811,10 @@ points; fake engine binaries; engine conformance suite; coordinator-shaped adapt
   - Note: Owner decision 2026-11-14: implements approved deviation P-10: the frozen-engine
     watchdog uses native samplers on macOS and Linux without `psutil`, and on macOS fires
     only when a GPU-busy signal exists.
+  - Note: Follow-up to API-08 (lead, 2026-11-15): the stall watchdog reads
+    `EnvSettings::engine_stall_s`, the field the donor row
+    `StallWatchdog::test_the_config_env_reaches_the_server` asserts; until then the field
+    has no reader.
   - Detail: [tasks/engine.md#eng-08](tasks/engine.md#eng-08).
 - [ ] ENG-11 [P] [M3] Server-side continuations: fair slices, soft thinking close,
   loop-guard and penalty continuation hooks — console-core::turn::continuations
@@ -2045,6 +2081,10 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
     over what API-08 lists as not built: the line engine, `--engine`, `--gpu`,
     `--tokenizer`, `--open`, `--idle-unload`, `--fit-max-tokens`, `--mcp-config`,
     `--parent-pipe`, signals and the shutdown order, and the log tee.
+  - Note: Before any binary is distributed (lead, 2026-11-15): check that the build that
+    ships, `cargo build --locked -p pulsar-console`, holds no test double, for example by
+    searching the binary for the doubles' names, because nothing in the workspace stops a
+    workspace-wide build, which compiles them in, from being shipped.
   - Detail: [tasks/api.md#api-17](tasks/api.md#api-17).
 - [ ] API-20 [M4] HTTP API contract documents and route inventory gate —
   specs/022-console-serving-parity/contracts/http/ and a console-http test
@@ -2284,6 +2324,9 @@ DeepSeek picture preprocessor.
   - Done when: the ported tests pass with fake backends, no temp file survives any failure
     path, capability flags appear in /health, /v1/models and /v1/status, source-policy
     refusals are tested, and the vision backend trait is documented in contracts/media.md.
+  - Note: Lead, 2026-11-15: this task brings the donor's 400 for an image part on a server
+    without the vision encoder; M1 answers such a request 200, because the stand-in prompt
+    of LD45 ignores media parts.
   - Detail: [tasks/responses.md#rsp-17](tasks/responses.md#rsp-17).
 - [ ] RSP-16 [M6] Inline file parts in the three dialects and the /attach and /pdf routes —
   console-attach::parts and ::routes
