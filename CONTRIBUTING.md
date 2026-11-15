@@ -61,6 +61,32 @@ not perform repository-wide formatting or unrelated warning cleanup in a
 feature contribution. Fix failures introduced by your change, and document
 pre-existing failures accurately.
 
+### The console workspace
+
+`console/` is a separate, standalone Cargo workspace with its own `Cargo.lock`
+and pinned toolchain. It is not a member of the root workspace, so the root
+commands above do not build or test it. When a change touches `console/`, run
+these from inside `console/`; the first fails unless `rustc -V` reports the
+pinned version, which matters on hosts without `rustup`:
+
+```sh
+bash tools/check-toolchain.sh
+cargo fmt --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+```
+
+Then run the boundary and hygiene checks from the repository root. The boundary
+check confirms that the change stays within the console's allowed paths and leaves
+unchanged the files that the native engine work (the engine track) edits or
+hash-binds. The hygiene check scans the change for content the repository must not
+contain. See `console/README.md` for details:
+
+```sh
+console/tools/check-boundary.sh
+console/tools/check-hygiene.sh
+```
+
 Before committing, also run:
 
 ```sh

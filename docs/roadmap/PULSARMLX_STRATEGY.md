@@ -222,6 +222,15 @@ eight. Numerical gates must be frozen before performance collection.
 - Streaming output, cancellation, recovery, and reproducible safe defaults.
 - OpenAI-compatible serving only after the local runtime is stable.
 
+**2026-11-14:** The PulsarMLX Console serving layer and dashboard are planned ahead of this
+stage, in the standalone `console/` workspace and on synthetic backends only; see
+[ADR 0008](../architecture/decisions/0008-console-serving-ahead-of-stage-f.md) and the
+[console roadmap](CONSOLE_ROADMAP.md). ADR 0008, once accepted, is the specific
+authorization for that work, as an exception to the statement above that this roadmap does
+not authorize serving. project-maya is the console's ADR 0004 donor
+([record](../upstream/PROJECT_MAYA.md)). The console serves no real model and does not
+change the engine sequence; real-model serving acceptance remains gated here.
+
 ## Correctness gates
 
 ### Exact gates
@@ -345,6 +354,8 @@ mapping and independent numerical qualification, not a renamed GLM-5.2 plugin.
 [Colibri](../upstream/COLIBRI.md) are qualified design references, not assumed
 dependencies or performance evidence. Any adaptation requires an explicit
 license review, independently written tests, attribution, and measured benefit.
+project-maya is the donor for the PulsarMLX Console serving layer and dashboard
+under ADR 0008 ([record](../upstream/PROJECT_MAYA.md)).
 
 ## Active research and intended native boundary
 

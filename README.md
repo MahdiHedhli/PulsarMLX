@@ -69,6 +69,7 @@ This is a feasibility and systems-engineering thesis, not a claim that a Mac out
 | **GLM-5.3 Flash paged research** | Practical expert paging and persistent residency | 📏 Measured Python/MLX research path |
 | **Native Safetensors + MLX affine** | Native checkpoint-format foundation for current targets | ✅ Slices 1, 2B and 2C qualified on synthetic fixtures |
 | **Native GLM-5.3 Flash runtime** | Intended shipping path | 🔨 In development / planned boundaries |
+| **PulsarMLX Console** | Serving layer and dashboard, planned ahead of the native runtime on synthetic backends ([roadmap](docs/roadmap/CONSOLE_ROADMAP.md)) | 🔨 Planned / in development; synthetic backends only; serves no model |
 
 None of this is a production runtime. The Python/MLX Flash implementation is a research reference and performance vehicle. The intended shipping architecture is Rust-native.
 
