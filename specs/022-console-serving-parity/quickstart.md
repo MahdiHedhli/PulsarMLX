@@ -11,7 +11,9 @@ and the first CI runs. Sections 3 and 9 also record the seven packages of wave 2
 merged on 2026-11-15 (API-02, API-04, API-15, ENG-02, ENG-09, PRM-04 and CNF-02), and
 sections 3, 5, 9 and 10 the four packages of wave 3 of M1, merged on 2026-11-15 (API-03,
 ENG-10, CNF-03 and CNF-07), and sections 3, 5, 9 and 10 the four packages of wave 4 of M1,
-merged on 2026-11-15 (API-07, API-19, CNF-04 and a follow-up to API-03). Every other
+merged on 2026-11-15 (API-07, API-19, CNF-04 and a follow-up to API-03), and sections 3,
+5, 9 and 10 the two packages of wave 5 of M1, merged on 2026-11-15 (API-08 and a follow-up
+to CNF-04), with the lead's M1 demonstration of the same day (section 5). Every other
 command is planned. At M0 the only runnable
 content is the empty `console/` workspace skeleton and its check tools (GOV-06). Each
 command is marked **Available from** with the work package that makes it real. When a
@@ -114,8 +116,9 @@ byte for byte, 81 `json.loads(str)` outcomes with CPython's messages and positio
 the console refuses: a string holding an unpaired surrogate, and nesting deeper than 1000
 levels. These are proposals P-19 and P-20, awaiting the owner's decision
 ([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)); the
-behavior changes if the owner declines either. Not done here: `json_from_text` (API-08,
-PRM-16) and the product wording of the overloaded message (API-07).
+behavior changes if the owner declines either. Not done here: `json_from_text` (API-08
+built it in wave 5, below; lead decision LD51) and the product wording of the overloaded
+message (API-07).
 
 **Observed (ENG-01, the backend seam in `console-core::engine`)**: merged on 2026-11-14 at
 commit `6200f4ac`. From `console/`:
@@ -132,7 +135,8 @@ tests passed, 0 failed, and 50 consecutive runs of the `console-core` suite had 
 failure; the lead's run at `fb87f8a2`, below, confirmed them. Everything runs offline,
 with synthetic test engines only; nothing here is qualified beyond synthetic backends. Not
 done at that commit: no admission path called the guard yet (ENG-10 has called it since
-wave 3, below; the process-start refusal is API-08's); the seam contract stays
+wave 3, below, and the process start of API-08 goes through it since wave 5); the seam
+contract stays
 draft 0.2 until the engine track's review is recorded (FR-039, OPEN-30); and the four
 parse differences on engine `INFO` and `DONE` values are proposal P-21, awaiting the
 owner's decision.
@@ -162,7 +166,8 @@ CPython's rules, without `httparse` (lead decision LD34 in
 `RequestBodies::test_a_chunked_body` and `RequestBodies::test_a_malformed_body_is_a_400`
 need the router, validation and the chat route (API-03, API-04, API-08), and only their
 transport parts are tested; API-08 wires the three environment settings into the
-transport; the `HEAD` support of P-11 needs a transport extension (WEB-02); and Python's
+transport (API-08 resolved both rows and wired the settings in wave 5, below); the `HEAD`
+support of P-11 needs a transport extension (WEB-02); and Python's
 error page for a refused request head when `cors_origins` is set is proposal P-22,
 awaiting the owner's decision
 ([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
@@ -223,8 +228,9 @@ In the package clone before the merge, 52 unit tests and 9 integration tests (mo
 row. The scripted engine and every test engine built on it report synthetic provenance,
 except the test-only `NotSyntheticEngine`, which the guard refuses. Qualified on synthetic
 backends only. Not done: none of its 21 listed donor rows is re-expressed yet (they need
-ENG-10, API-07, API-08 or the line-protocol client of M3), and two timing differences on
-a context reload are left to ENG-12.
+ENG-10, API-07, API-08 or the line-protocol client of M3; ENG-10 resolved five in wave 3
+and API-08 two in wave 5, so 14 are still pending), and two timing differences on a
+context reload are left to ENG-12.
 
 **Observed (ENG-09, the engine FIFO in `console-core::fifo`)**: merged on 2026-11-15 at
 commit `5880f298`. From `console/`:
@@ -245,7 +251,8 @@ line and no yield claim outstanding. With capacity changes, the run reports mome
 more places are held than the capacity: an exclusive release is worked out against the
 capacity at release time, as the donor does, which the lead kept (LD36). Not done: the
 GoneClients and QueuedKeepAlives rows need the HTTP layer (API-07 on API-02's transport,
-with ENG-10); API-07 resolved the GoneClients row in wave 4 (below).
+with ENG-10); API-07 resolved the GoneClients row in wave 4 (below), and API-08 left
+QueuedKeepAlives `pending` in wave 5 for API-09.
 
 **Observed (PRM-04, the byte-level BPE tokenizer in `console-tokenizer`)**: merged on
 2026-11-15 at commit `7b58580f`. From `console/`:
@@ -306,7 +313,8 @@ context reload, model switch and the start after an idle unload or a death, each
 through the context rule as a request is; the refused engine is shut down and never
 generates. Qualified on synthetic backends only. Not done: 29 of its 35 donor rows need
 the HTTP layer (API-07, API-08), the line-protocol client (ENG-04, ENG-05, ENG-06) or the
-continuations (ENG-11), and only their driver halves are tested; the driver runs one
+continuations (ENG-11), and only their driver halves are tested (API-08 resolved five of
+them in wave 5, below, so 24 are still pending); the driver runs one
 engine call at a time, so several generations at once on an engine with several places
 are left to ENG-07; the continuations of fair slices, the thinking budget and the loop
 guard are ENG-11's, over the driver's `ContinuationPolicy` hook; and the wrap, shutdown
@@ -342,17 +350,22 @@ first byte: a malformed request (P-3), a token id outside the vocabulary include
 of P-8 answer 400 through the mapping point `PromptFailure`, tested with stand-ins; the
 stopping refusal answers 400 (LD42); an engine that fails to start during a request
 answers 503, as contracts/backend-seam.md section 10 says, where the donor answers
-nothing (no approved deviation covers this difference yet; the lead registers it as a
-proposal for the owner with wave 5); and an error the donor's handler does not catch
-closes the connection with nothing written. These tests use a probe dialect in place of API-08, API-09 and the
-Responses dialect, and ENG-02's synthetic engines; nothing here is qualified beyond
-synthetic backends, and no route serves a client dialect yet. Not done: five of its seven
-donor rows stay `pending` (LD37): the two EngineDeath rows, QueuedKeepAlives and the
-MaxTokens debug-line row wait for API-08 and API-09, and the Dashboard 503-while-reloading
-row for ENG-12; the seams to ENG-12, OPS-22, RSP-16, PRM-11 and PRM-12 keep their M1
-defaults; the turn trace marks only what the handler sees, so the donor's `http` and
-`body` marks wait for a change in API-08; and the line written after the first byte goes
-to standard error, where the tests cannot capture it.
+nothing (no approved deviation covers this difference yet; the lead registered it as
+proposal P-26 with wave 5, awaiting the owner); and an error the donor's handler does not
+catch closes the connection with nothing written. These tests use a probe dialect in place
+of API-08, API-09 and the Responses dialect, and ENG-02's synthetic engines; nothing here is
+qualified beyond synthetic backends, and at this merge no route served a client dialect
+(API-08's chat route does since wave 5, below). Not done: five of its seven donor rows stay
+`pending` (LD37): the two EngineDeath rows, QueuedKeepAlives and the MaxTokens debug-line
+row wait for API-08 and API-09, and the Dashboard 503-while-reloading row for ENG-12 (API-08
+left those four `pending` in wave 5, below); the seams to ENG-12, OPS-22, RSP-16, PRM-11 and
+PRM-12 keep their M1 defaults; the turn trace marks only what the handler sees, so the
+donor's `http` and `body` marks wait for a change in API-08 (since commit `87d96406` of wave
+5 the driver places the `http`, `body` and `json` marks at the instants the router records
+in `RouteRequest::marks`, and
+`console-http::api07_lifecycle::the_turn_trace_prints_its_marks_at_the_first_token` expects
+them); and the line written after the first byte goes to standard error, where the tests
+cannot capture it.
 
 **Observed (lead's gate run after wave 4 of M1)**: on 2026-11-15 at commit `f5400931`, on
 macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
@@ -364,6 +377,82 @@ rows resolved (37 `rust-test`, 2 `deviation`; wave 4 added API-07 2) and 874 `pe
 Of the pending rows, 259 name the package that owns them (API-19's assignment for the
 API-reader files) and the other 615 have no owner recorded yet. No Linux run and no CI run
 covers this commit (section 10).
+
+**Observed (API-08, the OpenAI Chat Completions dialect in `console-http::dialect::openai`
+and the minimal entry point `pulsar-console`)**: merged on 2026-11-15 at commit
+`5b327fa8`. It builds the plain-content subset of the dialect and, under lead decision
+LD31, the M1 entry point (`console/crates/pulsar-console`: `src/lib.rs`, `src/cli.rs`,
+`src/main.rs`); it also adds `RouteRequest::marks` to the router. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-http --lib dialect::openai
+nice -n 10 cargo test --locked -p console-http \
+  --test api08_goldens --test api08_donor --test api08_router
+nice -n 10 cargo test --locked -p pulsar-console
+```
+
+The first command runs the 23 unit tests of `console_http::dialect::openai`, among them
+the unit goldens of the chunk renderings for reasoning and tool-call events; the second
+runs 12 golden tests, 11 translated donor methods and 1 router test; the third runs the
+unit tests of `pulsar_console` and its three integration files, `api08_process` (4 tests
+against the built binary), `api08_refusal` (the 2 spawned-process refusal tests and their
+child mode, `refusal_child`, which does nothing when run on its own) and `api08_start` (13
+tests of `pulsar_console::start` in process). In the package clone before the merge all
+passed, and the API-08 test targets of `console-http` and every target of `pulsar-console`
+passed 50 runs in a loop with no process left behind; the lead's run at `df01fec5`,
+below, confirmed them. The golden SSE transcripts cover plain text, a stop string, a
+budget cut, a context refusal, JSON mode (the answer held and sent as its JSON), logprobs,
+prompt progress, a client that leaves and an engine that dies or reports an error after
+the stream began; the collector matches its JSON goldens. Every chunk and body names the
+model `pulsar-console-synthetic` (PLAN-2) unless a run config's `model_name` names another
+(LD53). The command line was compared in the package clone with the standard-library
+`argparse` of CPython 3.14, set up with the donor's options, on 30 cases (`--` handling,
+ambiguous prefixes, combined short flags, the negative-number test and usage wrapping at
+several `COLUMNS` widths): text and exit status matched; the differences that remain are
+proposal P-27, awaiting the owner. The refusal of an engine that is not synthetic at
+process start is pinned by
+`pulsar-console::api08_refusal::process_start_refuses_an_engine_that_is_not_synthetic` and
+`::process_start_refuses_an_engine_that_declares_no_provenance` (exit status 1, exactly
+the guard's line on standard error, no ready line) and, in process, by
+`pulsar-console::api08_start::an_engine_that_is_not_synthetic_is_refused_in_process_too`
+and `::nothing_listens_while_the_refused_engine_is_admitted`. The package resolved 11
+donor rows (section 3, below) and left 34 `pending` with reasons in its ledger record.
+Qualified on synthetic backends only; the lead's demonstration of the binary is in section
+5. Not done: the checkbox stays open, because the full definition of done needs the
+output parsers and prompt packages of M2 (reasoning, streamed and whole tool calls and the
+JSON-mode prompt instruction; PRM-06, PRM-09, PRM-12, PRM-16) and, for some rows, API-09
+and API-06; the prompt is the stand-in of LD45, so prompt token counts are not parity
+figures; under the M1 output stage all text is content, so the `</think>` of the default
+script shows in the answer (LD54); the loop guard, the thinking budget and the internal
+`_prefill`, `_blocked` and `_think_*` flags of the token loop are M2's and ENG-11's;
+`strata_mcp` is RSP-11's; `strata_resume` with a stream is API-10's; the shared Chat
+settings file is not loaded at start (API-13, API-17); a refused `sampling` block belongs
+to the line engine's start of API-17 (LD52); the API-17 parts of the entry point are not
+built (the line engine, `--engine`, `--gpu`, `--tokenizer`, `--open`, `--idle-unload`,
+`--fit-max-tokens`, `--mcp-config`, `--parent-pipe`, signals and the shutdown order, the
+log tee, and the lines of a non-loopback bind); the panic hook's one-line write has no
+automated test; and proposals P-25 and P-27 await the owner.
+
+**Observed (lead's gate run after wave 5 of M1)**: on 2026-11-15 at commit `df01fec5`, on
+macOS on Apple Silicon: `bash tools/check-toolchain.sh` printed its `ok` line (`rustc`
+1.97.1); `cargo fmt --check` and `cargo clippy --locked --all-targets -- -D warnings`
+passed; `cargo test --locked` gave 1,206 passed, 0 failed and 1 ignored, the ignored test
+being the real-pack tokenizer round trip, which reports unverified without a pack; and
+both check scripts of section 4 passed. The parity ledger at this commit has 50 of 913
+rows resolved (48 `rust-test`, 2 `deviation`; wave 5 added API-08 11) and 863 `pending`.
+Of the pending rows, 248 name the package that owns them and the other 615 have no owner
+recorded yet. Rows that earlier packages had left `pending` and that are now resolved:
+for API-02, `RequestBodies::test_a_chunked_body` and `::test_a_malformed_body_is_a_400`
+(by API-08) and GoneClients (by API-07), so one row it named,
+`QueuedKeepAlives::test_keep_alives_while_queued`, is still `pending` (owner API-09); for
+API-03, `CorsOptIn::test_another_page_cannot_post_without_a_preflight` and
+`RequestBodies::test_several_api_keys` (by API-08), so 8 of its 10 are still `pending`;
+for ENG-10, the UsageAndStatus rows `test_openai` and `test_openai_stream` and the three
+PromptProgressStream rows (by API-08), so 24 of its 29 are still `pending`; for ENG-02, 14
+of its 21 are still `pending` (five were resolved by ENG-10 in wave 3 and two by API-08);
+for ENG-09, one is still `pending` (QueuedKeepAlives); and the five rows of API-07's
+seven that were `pending` are still `pending`. No Linux run and no CI run covers this
+commit (section 10).
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -446,13 +535,21 @@ part-way with a syntax error.
 
 ## 5. Run the server with the scripted engine
 
-The first end-to-end target of M1 is a streamed answer over `curl`. The command-line
-interface is defined by API-17; until then the server is started from the test kit
-(API-19). Once available, start the server with the scripted engine and a
-PulsarMLX-authored synthetic chat template, read the bound port from its ready line, and:
+The first end-to-end target of M1 is a streamed answer over `curl`. The minimal entry
+point of M1 is API-08's (lead decision LD31); the full command-line interface is defined
+by API-17 (M4). Build the binary, start it with the scripted engine, read the bound port
+from its ready line, and send a chat completion. From `console/`:
 
 ```sh
-curl -N http://127.0.0.1:<port>/v1/chat/completions \
+nice -n 10 cargo build --locked -p pulsar-console
+"$CARGO_TARGET_DIR"/debug/pulsar-console --port 0
+```
+
+(Set `CARGO_TARGET_DIR` outside the repository first, as console/README.md says.) Then, in
+another shell, with the port the ready line names:
+
+```sh
+curl -N -i http://127.0.0.1:<port>/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{"messages":[{"role":"user","content":"hello"}],"stream":true}'
 ```
@@ -461,20 +558,83 @@ Check the frames (`data:` chunks, a final chunk with `finish_reason` and `usage`
 `data: [DONE]`) and that the server reports a synthetic engine with the default model name
 `pulsar-console-synthetic`.
 
-Planned (ENG-01, ENG-10 and API-08): the server refuses to start an engine that does not
-report synthetic provenance, and `pulsar-console` exits with a non-zero status after one
+The server refuses to start an engine that does not report synthetic provenance (ENG-01,
+ENG-10 and API-08): the entry function of `pulsar-console` exits with status 1 after one
 line on standard error that names the engine kind, what it reported, and the note
-[ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
+[ALLOWING_NON_SYNTHETIC_ENGINES.md](../../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md),
+as the spawned-process tests of API-08 show; the shipped binary cannot select such an
+engine (below).
 
-**Available from**: API-08 with API-07, ENG-02 and ENG-10 (M1); the documented CLI from
-API-17 (M4). Not yet available.
+**Available from**: API-08 with API-07, ENG-02 and ENG-10 (M1), for the plain-content
+subset of the chat route only; the documented CLI from API-17 (M4).
+
+**Observed (M1 demonstration)**: run by the lead on 2026-11-15 at commit `df01fec5`, on
+macOS on Apple Silicon, from `console/` on the pinned toolchain, with the commands above
+and `curl` against the port the ready line named; the lead kept the transcript outside the
+repository. These are observations of one local run on synthetic input: nothing is
+qualified by them, and no CI run covers them.
+
+- Building the package alone leaves the test-only engine out: the text
+  `NotSyntheticEngine` does not occur in the binary (`strings`, count 0).
+- At start, standard output showed
+  `[console] engine: scripted, synthetic provenance - no real model is served`, then the
+  ready line `ready: http://127.0.0.1:<port>/v1  (OpenAI: /v1/chat/completions,
+  /v1/responses, Anthropic: /v1/messages, context 32768 tokens)` with the bound port, then
+  the browser hint.
+- The streamed chat completion (`curl -N -i`, a body with `"stream": true` and one user
+  message) answered `HTTP/1.0 200 OK` with `Server: pulsar-console/0.0.0`, a `Date` header,
+  `Content-Type: text/event-stream` and `Cache-Control: no-cache`, then 56 chunks with one
+  id (`chatcmpl-` and 24 hexadecimal digits), object `chat.completion.chunk` and model
+  `pulsar-console-synthetic`: the first with the delta `{"role": "assistant", "content":
+  ""}`; 54 content chunks that spell the 55 characters of the default script,
+  `Thinking about it.</think>`, two newlines, then `Hello from the mock engine.` (one
+  byte-level token per chunk, except that `</` arrives as one chunk); and the last with an
+  empty delta, `finish_reason` `stop` and `usage` `prompt_tokens` 80, `completion_tokens`
+  56, `total_tokens` 136 and `prompt_tokens_details.cached_tokens` 0; then `data: [DONE]`.
+- The same request without `"stream"` answered 200 with `Content-Type: application/json`
+  and `Content-Length: 415`: object `chat.completion`, the same text as the message
+  content, `finish_reason` `stop` and the same usage.
+- Under the M1 stand-in output stage all text is content, so the `</think>` of the default
+  script shows in the answer; with the output parsers of M2 the text before it becomes
+  reasoning (LD54). The `prompt_tokens` figure comes from the stand-in prompt of LD45 and
+  is not a parity figure.
+- Refusals: `Origin: http://evil.example` got 403 `permission_error` "requests from other
+  web pages are refused (the config's cors_origins lists the pages allowed)";
+  `Host: evil.example` got 403 `permission_error` "requests for other host names are
+  refused (the config's allowed_hosts lists the names allowed)"; `Content-Type:
+  text/plain` got 415 with `{"error": {"message": "send application/json"}}`; a body that
+  is `[]` got 400 `invalid_request_error` "the request body must be a JSON object";
+  `POST /v1/messages` got 404 `{"error": {"message": "not found"}}` (M1 serves only
+  `/v1/chat/completions`, although the ready line names the other routes, as the donor's
+  line does); and `PUT` got the 501 error page "Unsupported method ('PUT')".
+- Started with `--script "Hello from the scripted engine."` and `--api-key <a key>`, the
+  ready line ended `, API key required)`; a request without the key got 401
+  `authentication_error` "missing or wrong API key", and one with
+  `Authorization: Bearer <the key>` got 200 with the content
+  `Hello from the scripted engine.` and usage 80, 32 and 112.
+- Command line: `--engine maya` exited 2 with the usage and
+  `pulsar-console: error: unrecognized arguments: --engine maya`; `--port x` exited 2 with
+  `argument --port: invalid int value: 'x'`; `--help` exited 0.
+- Stopping: `SIGTERM` ended the process by the signal (M1 keeps the default signal
+  behavior; the shutdown order is API-17's).
+- The refusal of an engine that is not synthetic at process start cannot be shown with the
+  shipped binary, by design. It is pinned by
+  `pulsar-console::api08_refusal::process_start_refuses_an_engine_that_is_not_synthetic`
+  and `::process_start_refuses_an_engine_that_declares_no_provenance` (exit status 1,
+  exactly one line on standard error, the guard's line, and no ready line), and in process
+  by `pulsar-console::api08_start::an_engine_that_is_not_synthetic_is_refused_in_process_too`
+  and `::nothing_listens_while_the_refused_engine_is_admitted`. All four passed in the
+  lead's gate run at `df01fec5` (section 3).
+
+Owner checkpoint 2 (this demonstration and the next push) is not held yet: the lead
+reports M1 to the owner next.
 
 **Observed (API-19, the HTTP test kit in `console-testkit`)**: merged on 2026-11-15 at
-commit `b1f4709a`. Until API-08's binary exists, tests start an in-process server from the
-kit: `TestServer::builder()` binds 127.0.0.1 port 0 over the API-02 transport and the
-API-03 router, and can run the scripted engine behind the ENG-10 turn driver, which
-applies the synthetic-only guard. A router given to the builder keeps its own guards, and
-separate guard settings given with it are refused at start. From `console/`:
+commit `b1f4709a`. Until API-08's binary existed, tests started an in-process server from
+the kit, and many still do: `TestServer::builder()` binds 127.0.0.1 port 0 over the API-02
+transport and the API-03 router, and can run the scripted engine behind the ENG-10 turn
+driver, which applies the synthetic-only guard. A router given to the builder keeps its own
+guards, and separate guard settings given with it are refused at start. From `console/`:
 
 ```sh
 nice -n 10 cargo test --locked -p console-testkit
@@ -494,7 +654,9 @@ API-reader files. The package resolves no donor row; it assigned the owning pack
 pending rows of those files (section 3). Qualified on synthetic backends only. Not done:
 the process helper is proven against shell-script stand-ins only, until the binary of
 API-08 and the fake engine binaries of M3 exist, and the flags it passes wait for API-08
-and API-17; the chat-template fixture is M2's; the ledger checks are a source-level
+and API-17 (since wave 5 the tests of API-08, `pulsar-console::api08_process`, use its
+`Proc` and `parse_ready` against the built binary; the fake engine binaries are still
+M3's); the chat-template fixture is M2's; the ledger checks are a source-level
 approximation that ignores `cfg` and `ignore` attributes, and the exact listing comparison
 waits for CNF-12; and the kit's own tests run on the real clock, not paused time.
 
@@ -513,8 +675,10 @@ non-JSON content type, is refused; a request whose `Host` is not a loopback name
 listed in the run-config key `allowed_hosts` is refused with 403 when bound to loopback
 (SEC-1.1).
 
-**Available from**: API-03 (M1) as a library; by hand once API-08 wires the router and
-`allowed_hosts` into `pulsar-console`. Not yet available by hand.
+**Available from**: API-03 (M1) as a library; by hand since API-08 (commit `5b327fa8`,
+2026-11-15) wires the router and `allowed_hosts` into `pulsar-console`. The lead's M1
+demonstration (above) refused a foreign `Origin`, a foreign `Host` and a non-JSON content
+type by hand.
 
 **Observed (API-03, the router and guards in `console-http::router` and
 `console-http::guard`)**: merged on 2026-11-15 at commit `60fa1461`. From `console/`:
@@ -542,8 +706,7 @@ routing. The
 transport's own 431 pages are answered before the `Host` check. At this merge so were its
 501 page for an unserved method and its P-2 400 page; the follow-up to API-03 at
 `50179f0d`, below, closed that gap. These are claims about the router with test handlers,
-on synthetic inputs only. By hand, once the
-binary exists:
+on synthetic inputs only. By hand, against the binary of section 5 (above):
 
 ```sh
 curl -i -H 'Host: attacker.invalid' http://127.0.0.1:<port>/health     # 403
@@ -557,7 +720,9 @@ API-08, API-09, API-11, API-12, API-13), and only their router halves are tested
 `Host` matching details (LD43) and the reading of `allowed_hosts` on a loopback bind
 (LD30) await the owner's confirmation at checkpoint 2; and API-08 wires the guard at
 start, including the refusal to start on an `allowed_hosts` entry that cannot be parsed
-(LD40).
+(LD40). Since wave 5, API-08 (commit `5b327fa8`) wires them, pinned by
+`pulsar-console::api08_start::an_allowed_hosts_entry_that_cannot_match_stops_the_start`,
+and resolved two of the ten rows, so eight are still `pending`.
 
 **Observed (the follow-up to API-03: the `Host` check before the transport's own
 pages)**: merged on 2026-11-15 at commit `50179f0d`. From `console/`:
@@ -719,8 +884,10 @@ process or run directory was left afterwards; the lead's run at `6faf815b` (sect
 confirmed them. The leak check is proven with a child that forks a grandchild, inside and
 outside its process group. The ready line and the harness are specified in
 [contracts/cli.md](contracts/cli.md) (draft). Not done: the Linux paths (the `/proc`
-walk, `waitid` with `WNOWAIT`, process groups) are unverified until a CI run; no
-`pulsar-console` binary exists yet, so the harness has started only `cnf_child`; and
+walk, `waitid` with `WNOWAIT`, process groups) are unverified until a CI run; at this
+merge no `pulsar-console` binary existed, so the harness has started only `cnf_child`
+(the M1 binary of API-08 exists since wave 5, but this harness has not been run against
+it yet); and
 that the server's ready line names the bound port under `--port 0` is proposal P-25,
 awaiting the owner's decision
 ([deviation register](contracts/deviations.md#deferred-awaiting-owner-decision)).
@@ -745,23 +912,76 @@ run, JSON key order, white space and escapes, an event, an id cross-reference, a
 replaced by a fresh one, a tape entry, a file field, a log line or its token count, wire
 bytes after a half-close, and the exit status. Header names, their case and positions and
 JSON key order are differences, as contracts/parity-ledger.md section 1.1 says; only the
-values `contracts/volatile-fields.json` lists (71 fields, each with a donor citation) are
-replaced, and decided and mechanical renames are applied to the reference side only. A
-difference is suppressed only by an annotation that cites an approved deviation. A
-donor-shaped reference and a candidate that differ only in listed volatile values and
-decided names compare clean apart from `Content-Length`: under the shipped list, each
-`Content-Length`-framed answer whose body changes length under normalization differs in
-that header, its raw head and its framing length. Lead decision LD44 makes the header's
-value derived; a follow-up to CNF-04 builds it in wave 5. Use:
+values `contracts/volatile-fields.json` lists (71 fields at this merge, each with a donor
+citation; 73 since the follow-up below) are replaced, and decided and mechanical renames
+are applied to the reference side only. A difference is suppressed only by an annotation
+that cites an approved deviation. At this merge, a donor-shaped reference and a candidate
+that differed only in listed volatile values and decided names compared clean apart from
+`Content-Length`: under the list then shipped, each `Content-Length`-framed answer whose
+body changes length under normalization differed in that header, its raw head and its
+framing length. Lead decision LD44 makes the header's value derived; a follow-up to CNF-04
+built it in wave 5 (commit `55e81f27`, below). Use:
 `Normalizer::new(&load_volatile_fields(..)?, load_rename_map(..)?)`, then
 `compare_documents(..)` with the annotations and `ApprovedIds::from_register(..)` read
 from contracts/deviations.md, then `Report::passed()`; a reference stored in normalized
-form is replayed with `compare(&Normalized::stored(doc), ..)`. Qualified on synthetic
-inputs only. Not done: nothing runs a scenario end to end yet (CNF-08, CNF-09); a stored
-reference is not yet checked as a fixed point of normalization, and an annotation does
-not yet name the kind of difference it covers (both with LD44's follow-up); the engine
-tape is compared exactly until a location kind for it arrives with the vision packages of
-M6; and how hardware and machine readings are compared is open item OPEN-61.
+form is replayed with `compare(&Normalized::stored(doc), ..)` (since the follow-up below,
+`Normalized::stored(doc, &normalizer, &ctx)`). Qualified on synthetic inputs only. Not
+done: nothing runs a scenario end to end yet (CNF-08, CNF-09); a stored reference is not
+yet checked as a fixed point of normalization, and an annotation does not yet name the
+kind of difference it covers (both with LD44's follow-up; both closed by the follow-up at
+`55e81f27`, below, as is the `Content-Length` difference above); the engine tape is
+compared exactly until a location kind for it arrives with the vision packages of M6; and
+how hardware and machine readings are compared is open item OPEN-61.
+
+**Observed (the follow-up to CNF-04: the derived `Content-Length` and three tightenings of
+the comparator)**: merged on 2026-11-15 at commit `55e81f27`. From `console/`:
+
+```sh
+nice -n 10 cargo test --locked -p console-conformance --test cnf04f_followup
+nice -n 10 cargo test --locked -p console-conformance \
+  --test cnf04_negative --test cnf04_contracts --test cnf02_contracts
+```
+
+The first command runs the follow-up's 16 tests; the second the earlier negative
+self-tests and contract checks, four of which the follow-up changed: two in
+`cnf04_negative` now use well-formed annotations, one in `cnf04_contracts` expects the
+donor list of `header-content-length` and `live-elapsed` back, and one in `cnf02_contracts`
+adds an assertion for `Content-Length`. Two unit tests of `compare/mod.rs`, which these
+commands do not run, now assert the specific refusal reason. None is timing-sensitive; the
+new test file passed 50 runs in a loop in the package clone before the merge, and the
+lead's run at `df01fec5` (section 3) confirmed them. What changed, each with negative tests
+that fail if its rule is widened:
+
+- `Content-Length` is a derived value (lead decision LD44): `volatile-fields.json` lists
+  `header-content-length` under the new class `body-length`, citing
+  `serve/server.py:5461` and the handlers that write their own length. The normalizer
+  writes the length of the normalized body in its place only when the read was complete,
+  the framing is `Content-Length`, the header appears once and its value is exactly the
+  number of body bytes received; otherwise the value is compared as sent. The header's
+  name, case and position stay observable, and `VolatileFields::header_value_is_volatile`
+  answers false for it.
+- A stored reference must be a fixed point of normalization under the context it was
+  recorded with: `Normalized::stored(document, &Normalizer, &SideContext)` refuses any
+  other document, naming the pointer of the offending value (`Normalizer::check_stored`,
+  in `normalize/stored.rs`). A committed golden therefore keeps its recording context (run
+  window, port, temporary folders) beside it (lead decision LD55); CNF-09 fixes the file
+  form. The raw wire of an exchange the normalizer found inconsistent stays as received,
+  as contracts/parity-ledger.md section 1.1 records.
+- An annotation names the kind of difference it covers (`CoveredKind`: value, missing,
+  extra, key-order, text) or carries both expected values; anything else is an annotation
+  error and suppresses nothing, and a wildcard annotation with one value needs a kind too
+  (LD55).
+- A `json-key` location can be limited to the root object (`"top_level": true`), and
+  `status-elapsed`, `status-tokens-per-s`, `status-tokens-per-s-mean` and `answer-done`
+  are; `live-elapsed` is back, for the `live` block of `GET /metrics`. The list now has 73
+  fields.
+
+The package resolves no donor row. Qualified on synthetic inputs only. Not done: nothing
+runs a scenario end to end yet; the engine-tape location (M6), the hardware and machine
+readings (OPEN-61, M4) and log lines that repeat a timing-dependent number of times
+(CNF-09) are unchanged; and `Normalized` is `#[non_exhaustive]`, so outside the
+conformance crate it is built only by `Normalizer::normalize` or `Normalized::stored`,
+but inside the crate its public fields still allow one to be built without the check.
 
 ## 10. CI jobs
 
@@ -789,7 +1009,10 @@ has been pushed since `0f4bc320` either: no CI run covers the seven packages of 
 the Linux behavior of the M1 code is unobserved. The same holds at commit `6faf815b`
 (2026-11-15): no CI run covers the four packages of wave 3, and the Linux behavior of the
 M1 code, CNF-07's process harness included, is unobserved. The same holds at commit
-`f5400931` (2026-11-15) for the four packages of wave 4.
+`f5400931` (2026-11-15) for the four packages of wave 4, and at commit `df01fec5`
+(2026-11-15) for the two packages of wave 5 and the `pulsar-console` binary: nothing has
+been pushed since `0f4bc320`, no CI run covers any M1 package or the revised workflow of
+CNF-01, and the Linux behavior of the M1 code is unobserved.
 
 CNF-01 (M1, merged on 2026-11-14 at commit `fb87f8a2`) revises the workflow. preflight,
 rust-linux and rust-macos run from `console/`. Every failing step prints one

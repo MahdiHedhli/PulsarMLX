@@ -148,7 +148,7 @@ a key.**
   `console-core::api15_settings::allowed_hosts_is_absent_by_default_and_read_as_a_list` and
   `console-core::config::document::tests::allowed_hosts_absent_by_default` pin it. The
   guard that enforces the list is API-03's (below); API-08 passes the list from the run
-  config into it at start.
+  config into it at start (below).
 - **Affected donor tests, confirmed by API-03 (commit `60fa1461`, 2026-11-15).**
   `serve/test_server.py::CorsOptIn::test_without_the_setting_nothing_changes` takes the
   SEC-1.2 deviation: its `GET /v1/models` with a foreign `Origin` is answered 403, asserted
@@ -164,9 +164,10 @@ a key.**
   confirmed by them.
 - **Implementation (API-03, commit `60fa1461`, 2026-11-15).** The guards are in
   `console_http::guard` and are applied by the router, `console_http::router` (the
-  dispatch table `ROUTES`, in the donor's order, and `Router`), on every route. No binary
-  serves the router until API-08 wires it at start (LD31), so the posture is shown by the
-  tests only, on synthetic inputs. The tests are `console-http::api03_dispatch` (every
+  dispatch table `ROUTES`, in the donor's order, and `Router`), on every route. At this
+  merge no binary served the router, so the posture was shown by the tests only, on
+  synthetic inputs; the M1 binary of API-08 (commit `5b327fa8`, 2026-11-15) serves it
+  (LD31, below). The tests are `console-http::api03_dispatch` (every
   donor route without and with a key, and with no `Origin`, the server's own page, a
   foreign page and `Origin: null`), `console-http::api03_security`,
   `console-http::api03_donor`, and the unit tests of `console-http::router` and
@@ -179,7 +180,7 @@ a key.**
     normalization and no forgiveness of a trailing dot. An `allowed_hosts` entry that
     cannot be parsed stops the server at start, with a message that names the entry and
     the accepted forms (LD40; `GuardConfig::rejected_allowed_hosts` gives the entries, and
-    API-08 wires the check). The refusal is 403 `permission_error` with
+    API-08 wires the check at start, below). The refusal is 403 `permission_error` with
     `HOST_REFUSED_MESSAGE` and no CORS header. The check runs in the router, so at this
     merge the transport's own pages were answered before it: the 431 header-limit pages,
     the 501 for an unserved method and the P-2 400 for conflicting framing. Since the
@@ -242,6 +243,19 @@ a key.**
   `::the_early_403_is_the_route_403_and_carries_no_cors_header`,
   `::the_hook_runs_once_per_request`, `::the_431_page_is_answered_without_the_host_check`
   and `console-http::router::tests::the_early_refusal_is_the_host_refusal`.
+- **Implementation (SEC-1 at start; API-08, commit `5b327fa8`, 2026-11-15).** The M1
+  binary of API-08 serves the router (LD31). `pulsar_console::start` passes `allowed_hosts`,
+  the API key and `cors_origins` from `ServerSettings` into `GuardConfig`. An entry that
+  `invalid_allowed_hosts` rejects stops the start with `config: allowed_hosts: <repr> is
+  not a host name the server can match; the accepted forms are name, name:port, [v6] or
+  [v6]:port` and exit status 1 (LD40). Configured CORS origins are announced at start with
+  the donor's line, `[console] browser pages allowed to call /v1/* (CORS): ...`. Pinned by
+  `pulsar-console::api08_start::an_allowed_hosts_entry_that_cannot_match_stops_the_start`,
+  `::the_run_config_gives_the_model_name_and_the_allowed_hosts` and
+  `::the_cors_origins_line_comes_before_the_engine_line`. In the lead's local demonstration
+  of 2026-11-15 (quickstart section 5) the binary refused a foreign `Origin` and a foreign
+  `Host` with 403 `permission_error` and a POST without a JSON content type with 415, on
+  synthetic input only.
 - **Note on proposal P-22.** The router adds its CORS headers through the transport's
   end-headers hook, so they also reach the pages the transport writes itself
   (`api03_security::cors_headers_reach_the_transports_own_pages`). On the 431 pages the
@@ -403,7 +417,10 @@ typed and never read from client input.**
   three chat routes, in `console_http::inference` (after the overloaded gate, before the
   attachment planner and the dialect); the test
   `console-http::api07_lifecycle::internal_keys_are_stripped_before_the_dialect` pins it.
-  No route serves a client dialect through it until API-08 lands.
+  Since API-08 (commit `5b327fa8`, 2026-11-15) the chat route `/v1/chat/completions` serves
+  the OpenAI dialect through it: the inference driver of API-07 strips the keys before the
+  dialect, and the dialect builds its sampling through `effective_sampling`, which strips
+  them again.
 - **Packages.** API-04 (request boundary), API-07 (the boundary strip of the chat routes),
   PRM-11 (prompt-side flags), ENG-03 (typed engine parameters).
 
@@ -755,6 +772,25 @@ fix is marked "proposed", as elsewhere in this register.
   may suggest a real model is served.
 - **Approval basis.** Plan section 7, item 5; for the refusal at start, the owner's
   decision of 2026-11-14 on OPEN-29 (seam question Q9).
+- **Implementation (the refusal at process start; API-08, commit `5b327fa8`,
+  2026-11-15).** `pulsar_console::run` and `pulsar_console::start`
+  (`console/crates/pulsar-console/src/lib.rs`) start the engine only through
+  `console_core::turn::TurnDriver::start`, whose admission step `Host::admit` (ENG-10)
+  calls the guard `require_synthetic` (ENG-01). A refused engine makes the process print
+  the guard's one line on standard error and exit with status 1 before the listener is
+  bound, so nothing is served. The binary's `main` passes only
+  `pulsar_console::scripted_factory`, and nothing in the library reads a flag, an
+  environment variable or a configuration key that selects an engine. Pinned in a child
+  process by
+  `pulsar-console::api08_refusal::process_start_refuses_an_engine_that_is_not_synthetic`
+  and `::process_start_refuses_an_engine_that_declares_no_provenance`, and in process by
+  `pulsar-console::api08_start::an_engine_that_is_not_synthetic_is_refused_in_process_too`
+  and `::nothing_listens_while_the_refused_engine_is_admitted`. Before the ready line the
+  binary prints `[console] engine: scripted, synthetic provenance - no real model is
+  served` (`pulsar_console::SYNTHETIC_ENGINE_LINE`, lead decision LD46). That line is a
+  log line on standard output, not the ready-line suffix proposed above: the ready line
+  carries no synthetic marker, because the marker is only proposed (OPEN-35). The badge
+  and the `/health` fields are not built yet (WEB-07, API-06).
 - **Packages.** API-06 (`/health`), WEB-07 (badge), ENG-01 (the provenance type and the
   synthetic-only guard), ENG-10 (the guard on every engine admission path), API-08 (the
   refusal at process start).
@@ -771,8 +807,20 @@ fix is marked "proposed", as elsewhere in this register.
 - **Implementation.** ENG-02 (commit `c86cf84f`, 2026-11-15) defines
   `console_engine::fake::DEFAULT_MODEL_NAME` as `pulsar-console-synthetic`. The tests
   `console-engine::fake::tests::fake_default_model_name_is_the_decided_one` and
-  `console-engine::eng02_seam::fake::the_decided_names_hold` pin it. The API-08 tests that
-  assert it in the `model` field are not built yet.
+  `console-engine::eng02_seam::fake::the_decided_names_hold` pin it. API-08 (commit
+  `5b327fa8`, 2026-11-15) asserts it in the `model` field of every chunk and body: the
+  goldens of `console-http::api08_goldens` (for example
+  `a_plain_stream_is_the_golden_transcript`),
+  `console-http::api08_donor::usage_and_status_openai`,
+  `pulsar-console::api08_process::a_streamed_answer_end_to_end_over_a_real_socket` and
+  `pulsar-console::api08_start::the_default_start_prints_the_engine_line_then_the_ready_line`.
+  As in the donor (`cfg.get` of `model_name` with a default), a run config's `model_name`
+  names the model when it is present, and `pulsar-console-synthetic` is the default only
+  (lead decision LD53); the test
+  `pulsar-console::api08_start::the_run_config_gives_the_model_name_and_the_allowed_hosts`
+  pins it. A configured name can therefore remove the word `synthetic` from the `model`
+  field of answers. Whether it may is owner item OPEN-62; the start-up line of LD46 says
+  that the engine is synthetic whatever the name.
 - **Packages.** ENG-02 (the scripted engine's default model name), asserted by the tests of
   API-08; API-17 keeps it when the full command line lands.
 
@@ -912,7 +960,13 @@ later and await the owner (the two sections that follow).
   byte; after it the line is logged and the stream is cut. The tests
   `console-http::inference::error::tests::every_error_class_maps_to_its_status_and_body`
   and `console-http::api07_errors::an_id_outside_the_vocabulary_is_a_400_before_and_a_cut_after`
-  pin it.
+  pin it. API-08 (commit `5b327fa8`, 2026-11-15) answers the same way in the OpenAI
+  dialect: the M1 stand-in prompt walks the messages as the donor's conversion loop does,
+  so a message list the donor refuses gets the donor's `TypeError` or `AttributeError` as a
+  malformed request (`console_http::dialect::openai::SyntheticPrompt`), and arguments for a
+  tool call that was never opened are the donor's `KeyError` (`ChunkWriter`). The test
+  `console-http::api08_donor::request_bodies_a_malformed_body_is_a_400` pins the first, and
+  the unit tests of `console_http::dialect::openai::chunks` the second.
 - **Packages.** API-01, API-07, PRM-06.
 
 ### P-4

@@ -7,11 +7,13 @@
 **Date**: 2026-11-14
 
 **Status**: In progress. Milestone M0 is committed and was accepted at owner checkpoint 1 on
-2026-11-14. Milestone M1 is being built: each task that has landed carries a dated note
-with its merge commit, and its checkbox is ticked only when its full definition of done
-holds, so a task that is built can still be open. Every later milestone is planned. The
-strongest claim any task can support is "qualified on synthetic backends": no real model is
-served, no donor engine runs, and hardware readers are verified only against fixtures.
+2026-11-14. Milestone M1 is built on the feature branch: its 18 tasks were merged by
+2026-11-15, and owner checkpoint 2 is not held yet. Each task that has landed carries a
+dated note with its merge commit, and its checkbox is ticked only when its full definition
+of done holds, so a task that is built can still be open. Every later milestone is
+planned. The strongest claim any task can support is "qualified on synthetic backends": no
+real model is served, no donor engine runs, and hardware readers are verified only against
+fixtures.
 
 **Input**: the owner's approved plan of 2026-11-14, the lead decisions of the same day
 recorded in this file, and the seven planner records of the same day, which broke the
@@ -624,6 +626,47 @@ keeps the donor's behavior where an approved proposal now applies.
     past the recorded body after a disconnect). Renames are applied to the reference side
     scope by scope, as contracts/naming.md section 4 records. Number placeholders keep the
     shape of the token they replace, and ISO time stamps must have Python's form.
+  - LD51 (2026-11-15, with API-08): the OpenAI chat shapes have one renderer. `ChunkWriter`
+    and `collect` of `console_http::dialect::openai`, with `json_from_text` (the ports of
+    the donor's `openai_chunks`, `openai_collect` and `json_from_text`,
+    `serve/server.py:4933-5008`, `5204-5246` and `4909-4930`), stay the single renderer of
+    chat completion chunks and bodies. PRM-16 builds no second renderer for them in
+    `console-prompt::shapes`: together with PRM-09 and PRM-12 it supplies what the renderer
+    consumes through the `OutputPipeline` seam (the answer events), owns the
+    fold-equals-collect property test, and publishes the chunk and event schemas. In which
+    crate the event type finally lives is settled by those M2 packages. The same question
+    for the Anthropic shapes is decided when API-09 is built.
+  - LD52 (2026-11-15, with API-08): the start of the scripted engine reads no `sampling`
+    block from the run config, as the donor's mock path does not
+    (`serve/server.py:7285-7289`). Printing a refused block (its notes on standard output,
+    its message on standard error, then a non-zero exit) belongs to the line engine's start
+    of API-17; the helper `pulsar_console::report_sampling_error` exists for it and has no
+    caller in M1. This supersedes the follow-up note of wave 2 on API-08 that put it in the
+    M1 start.
+  - LD53 (2026-11-15, with API-08): a run config's `model_name` names the model when it is
+    present, as in the donor (`cfg.get` of `model_name` with a default); PLAN-2 fixes the
+    default only, `pulsar-console-synthetic`. Because a configured name can remove the word
+    "synthetic" from the `model` field of answers, the lead puts the question to the owner
+    as OPEN-62. The start-up line of LD46 says that the engine is synthetic whatever the
+    name.
+  - LD54 (2026-11-15, with API-08): accepted as built. The M1 ready line keeps the donor's
+    text, which names `/v1/responses` and `/v1/messages` although M1 serves only
+    `/v1/chat/completions` (a request to a route not served yet is answered 404). The panic
+    hook writes one log-safe line, `[console] panic at <file:line>: <message>`, on standard
+    error in place of Rust's multi-line report. Under the M1 output stage all text is
+    content, so the `</think>` of the default script appears in the answer until the output
+    parsers of M2 land.
+  - LD55 (2026-11-15, with the follow-up to CNF-04): accepted as built. A stored reference
+    is checked under the context it was recorded with (its run window, its port and its
+    temporary folders), so a committed golden keeps that context beside it, and CNF-09
+    fixes the file form. An annotation without a kind needs both expected values, and a
+    wildcard annotation with only one value needs a kind, which is stricter than LD44
+    asked.
+  - LD56 (2026-11-15, with API-08): a variable that a test passes only to a child process
+    of its own test executable is internal plumbing, not a test-harness switch in the
+    sense of contracts/naming.md section 3.10. It is named after its test file and does
+    not carry the `PULSAR_CONSOLE_` prefix, so that it cannot be taken for a setting the
+    product reads. First case: `API08_REFUSAL_CHILD` and `API08_REFUSAL_PORT`.
 - **Not decided.** Who on the engine track reviews the seam draft, and in what form (FR-039,
   seam question Q12, OPEN-30). ENG-01's code may land; the seam stays a draft and ENG-01
   stays unticked until that review is recorded. Reaching the engine track goes through the
@@ -644,7 +687,7 @@ the named task closes. The register is authoritative where the two differ.
 | OPEN-01 | Whether the donor's sealed-reasoning prefix is accepted on input (B2) | Owner | RSP-03 |
 | OPEN-06 | The default run-config directory when no config is given, and whether an importer for project-maya run configs exists | Owner | OPS-11 |
 | OPEN-09 | An untagged ERR in multi-conversation mode: reproduce the donor's wait, or deliver it to the single in-flight request (FIX-1 covers only the untagged stop) | Owner | ENG-07 |
-| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); P-19 (refusal of an unpaired surrogate inside a JSON string), P-20 (the nesting bound of 1000 levels in the JSON reader and writer) and P-21 (four parse differences on engine `INFO` and `DONE` values), raised by API-01 and ENG-01 on 2026-11-14; P-22 (Python's error page for a refused request head also when `cors_origins` is set), P-23 (five differences in the run-config store) and P-24 (refusals and size limits in tokenizer pack loading), raised by API-02, API-15 and PRM-04 on 2026-11-15; P-25 (under `--port 0` the server's ready line names the port the operating system bound), raised by CNF-07 on 2026-11-15; P-19 to P-25 are put to the owner at checkpoint 2; also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); API-01 (P-19, P-20); ENG-01 (P-21); API-02 (P-22); API-15 (P-23); PRM-04 (P-24); CNF-07, API-08, API-17 (P-25); RSP-02; OPS-21 |
+| OPEN-15 | The proposals still awaiting the owner after checkpoint 1: P-5 (picture decoding and resampling) and P-18 (an explicit model-family override); P-19 (refusal of an unpaired surrogate inside a JSON string), P-20 (the nesting bound of 1000 levels in the JSON reader and writer) and P-21 (four parse differences on engine `INFO` and `DONE` values), raised by API-01 and ENG-01 on 2026-11-14; P-22 (Python's error page for a refused request head also when `cors_origins` is set), P-23 (five differences in the run-config store) and P-24 (refusals and size limits in tokenizer pack loading), raised by API-02, API-15 and PRM-04 on 2026-11-15; P-25 (under `--port 0` the server's ready line names the port the operating system bound), raised by CNF-07 on 2026-11-15; P-26 (a request during which the engine fails to start is answered 503 `server_error` with the failure's message, where the donor answers nothing) and P-27 (four differences from CPython's `argparse` on the command line), raised by API-07 and API-08 on 2026-11-15; P-19 to P-27 are put to the owner at checkpoint 2; also the JSON Schema meta-validation wording (PLAN-5) and the advisory savings lock (R29) | Owner | RSP-18, RSP-19 (P-5); PRM-05 (P-18); API-01 (P-19, P-20); ENG-01 (P-21); API-02 (P-22); API-15 (P-23); PRM-04 (P-24); CNF-07, API-08, API-17 (P-25); API-07 (P-26); API-08, API-17 (P-27); RSP-02; OPS-21 |
 | OPEN-24 | Whether launching refuses known project-maya engine names | Owner | ENG-15 |
 | OPEN-25 | Which names Turbo and the settings profiles write into a run-config `env` block (the donor writes `MAYA_GLM_*` and `MAYA_DS4_*`), and the engine variable names shown in the dashboard; B2 fixes only that such names pass through verbatim | Owner | OPS-05, OPS-06, WEB-09 |
 | OPEN-30 | Seam design details ENG-01 settles before freezing the seam (R27) | Lead | ENG-01 |
@@ -792,7 +835,9 @@ comparator.
 **Checkpoint**: Owner checkpoint 2: the first end-to-end demonstration, a streamed answer
 over `curl` from the scripted engine, and the decision on the first push. The owner
 authorized the first push of the feature branch on 2026-11-14, ahead of this checkpoint;
-each later push remains a checkpoint decision.
+each later push remains a checkpoint decision. On 2026-11-15 the lead ran the M1
+demonstration at commit `df01fec5`, with the minimal binary of API-08 and the scripted
+engine ([quickstart.md](quickstart.md), section 5); owner checkpoint 2 is not held yet.
 
 - [ ] API-01 [P] [M1] Wire foundations: Python-compatible JSON, error model, ids (absorbs
   PRM-01 and the JSON writer of OPS-01) — console-pyjson (new crate) and console-http::error
@@ -856,6 +901,12 @@ each later push remains a checkpoint decision.
     chat route (API-03, API-04, API-08), and only their transport parts are tested; and
     Python's error page for a refused request head when `cors_origins` is set is proposal
     P-22, awaiting the owner's decision (OPEN-15).
+  - Note: Wave 5 of M1 (2026-11-15): API-08 (commit `5b327fa8`) wires this task's
+    environment settings at start (`TransportConfig` from the environment with the run
+    config's `env` block laid over it) and resolved `RequestBodies::test_a_chunked_body` and
+    `::test_a_malformed_body_is_a_400`; API-07 had resolved GoneClients. One row this task
+    named, `QueuedKeepAlives::test_keep_alives_while_queued`, is still `pending` (owner
+    API-09). The checkbox stays open for P-22 and that row.
   - Detail: [tasks/api.md#api-02](tasks/api.md#api-02).
 - [ ] API-03 [M1] Router, authentication, CORS and cross-site guards — console-http::router
   and console-http::guard; console-core::digest (the SHA-256 helper, LD32)
@@ -893,6 +944,12 @@ each later push remains a checkpoint decision.
     transport hook `Handler::early_refusal`; the 431 pages have no usable headers and stay
     as they are. This closes the gap the note above records. The checkbox stays open for
     the ten pending donor rows and the owner's confirmation of LD30 and LD43.
+  - Note: Wave 5 of M1 (2026-11-15): API-08 (commit `5b327fa8`) wires the guard, the API
+    key, the CORS origins and `allowed_hosts` at start, including the stop on an entry that
+    cannot be parsed (LD40), and resolved
+    `CorsOptIn::test_another_page_cannot_post_without_a_preflight` and
+    `RequestBodies::test_several_api_keys`. The checkbox stays open for the eight of the ten
+    rows that are still `pending` and the owner's confirmation of LD30 and LD43.
   - Detail: [tasks/api.md#api-03](tasks/api.md#api-03).
 - [ ] API-04 [M1] Request validation, sampling normalization and shared defaults —
   console-core::request and console-core::sampling
@@ -989,6 +1046,10 @@ each later push remains a checkpoint decision.
     contract (FR-039; contract draft 0.2, section "Review request to the engine track") and
     for the owner's decision on proposal P-21, the four parse differences on engine `INFO`
     and `DONE` values (OPEN-15).
+  - Note: Wave 5 of M1 (2026-11-15): the refusal at process start exists. API-08 (commit
+    `5b327fa8`) starts the engine only through the turn driver's admission step, which
+    calls this task's guard, and its spawned-process tests pin the refusal. The checkbox
+    stays open for the engine-track review of the seam (FR-039) and P-21.
   - Detail: [tasks/engine.md#eng-01](tasks/engine.md#eng-01).
 - [ ] ENG-02 [M1] In-process fake engine (MockEngine parity) and scriptable test engines —
   console-engine::fake
@@ -1013,6 +1074,8 @@ each later push remains a checkpoint decision.
     The checkbox stays open: none of its 21 listed donor rows is re-expressed yet; they need
     the turn driver (ENG-10), the HTTP layer (API-07, API-08) or the line-protocol client
     (ENG-04, ENG-06), and ENG-02 delivers the doubles they use.
+  - Note: As of wave 5 of M1 (2026-11-15), 14 of its 21 rows are still `pending`: ENG-10
+    resolved five in wave 3 and API-08 (commit `5b327fa8`) two. The checkbox stays open.
   - Detail: [tasks/engine.md#eng-02](tasks/engine.md#eng-02).
 - [ ] ENG-09 [M1] EngineFifo: FairLock parity with places, exclusive holders, yields, queue
   keep-alives and watchdog — console-core::fifo
@@ -1033,6 +1096,9 @@ each later push remains a checkpoint decision.
   - Note: API-07 resolved the GoneClients row on 2026-11-15 (commit `f6c42bb4`; the ledger
     at `f5400931` names this task's two FIFO tests beside API-07's). QueuedKeepAlives still
     waits for the chat dialects (API-08, API-09), so the checkbox stays open.
+  - Note: API-08 (commit `5b327fa8`, 2026-11-15) left QueuedKeepAlives `pending`: the donor
+    counts keep-alives on both chat dialects, so API-09 completes it. The checkbox stays
+    open.
   - Detail: [tasks/engine.md#eng-09](tasks/engine.md#eng-09).
 - [ ] ENG-10 [M1] Engine turn driver: place, ensure_engine, engine calls, drain, context
   rule, errors, non-finite retry, figures — console-core::turn
@@ -1071,6 +1137,9 @@ each later push remains a checkpoint decision.
     (ENG-04, ENG-05, ENG-06) or the continuation packages (ENG-11), and only their driver
     halves are tested; several generations at once on an engine with several places are
     left to ENG-07, and the continuations to ENG-11.
+  - Note: API-08 (commit `5b327fa8`, 2026-11-15) resolved five of those rows, the
+    UsageAndStatus rows `test_openai` and `test_openai_stream` and the three
+    PromptProgressStream rows, so 24 of the 29 are still `pending`. The checkbox stays open.
   - Detail: [tasks/engine.md#eng-10](tasks/engine.md#eng-10).
 - [ ] API-07 [M1] Inference request lifecycle driver (dialect-agnostic) —
   console-http::inference
@@ -1108,6 +1177,15 @@ each later push remains a checkpoint decision.
     donor's handler does not catch the `RuntimeError` of `serve/server.py:947` and answers
     nothing. No approved deviation covers this difference yet: the lead registers it as a
     proposal for the owner with wave 5 of M1.
+  - Note: Wave 5 of M1 (2026-11-15): the turn trace now carries the donor's `http`, `body`
+    and `json` marks at the instants the router records in `RouteRequest::marks` (commit
+    `87d96406`, the lead's application of API-08's request);
+    `console-http::api07_lifecycle::the_turn_trace_prints_its_marks_at_the_first_token`
+    expects them. The 503 for a start that fails during a request is proposal P-26, awaiting
+    the owner (OPEN-15). Five of its seven donor rows are still `pending`: API-08 left four
+    of them `pending` (the two EngineDeath rows, QueuedKeepAlives and the MaxTokens
+    debug-line row), and the Dashboard 503-while-reloading row waits for ENG-12; the
+    checkbox stays open for them and for P-26.
   - Detail: [tasks/api.md#api-07](tasks/api.md#api-07).
 - [ ] API-08 [M1] OpenAI Chat Completions adapter and SSE stream —
   console-http::dialect::openai; pulsar-console (the minimal M1 entry point, LD31)
@@ -1143,6 +1221,9 @@ each later push remains a checkpoint decision.
     the API-03 guard; prints a `ConfigSamplingError`'s notes on standard output and its
     message on standard error before a non-zero exit; and decides whether the binary
     installs a one-line panic hook (the transport already logs one line per failed request).
+    Superseded in part by LD52 (2026-11-15): the scripted engine's start reads no
+    `sampling` block, and printing a refused block belongs to the line engine's start of
+    API-17.
   - Note: Follow-ups from wave 3 of M1 (lead, 2026-11-15): the binary prints the ready line
     of contracts/cli.md section 2 on standard output, flushed, once the server accepts
     connections; under `--port 0` it names the bound port (proposal P-25); it carries no
@@ -1154,6 +1235,19 @@ each later push remains a checkpoint decision.
     says the engine is synthetic). It may let `RouteRequest` carry the instants the
     request head arrived and the body was read, for API-07's turn trace, and may add a way
     to read the engine's context outside a turn's preparation.
+  - Note: Built and merged on 2026-11-15 at commit `5b327fa8`: the plain-content subset of
+    the dialect in `console_http::dialect::openai` and the minimal entry point in
+    `console/crates/pulsar-console` (LD31), with `RouteRequest::marks` in the router. The
+    golden transcripts for plain text, JSON mode's hold, logprobs, prompt progress, cancel
+    and engine death and the collector's JSON goldens pass; the tests assert the model name
+    `pulsar-console-synthetic` (PLAN-2); and the spawned-process refusal tests pass (LD28).
+    11 donor rows are resolved and 34 stay `pending` with reasons. The lead ran the M1
+    demonstration with this binary at `df01fec5`. The checkbox stays open: its full
+    definition of done needs the output parsers and prompt packages of M2 (reasoning,
+    streamed and whole tool calls, the JSON-mode prompt instruction) and API-09 and API-06
+    for some rows; P-25 and P-27 await the owner (OPEN-15). Lead decisions LD51 to LD54
+    record what it built (R29); whether a run config's `model_name` may rename the
+    synthetic engine is owner item OPEN-62.
   - Detail: [tasks/api.md#api-08](tasks/api.md#api-08).
 - [ ] PRM-04 [M1] Byte-level BPE tokenizer, ByteTokenizer and incremental detokenizer —
   console-tokenizer (new crate)
@@ -1195,13 +1289,17 @@ each later push remains a checkpoint decision.
   - Note: Built and merged on 2026-11-15 at commit `b1f4709a`; the lead applied its owner
     assignments at `f5400931`, where 259 pending rows name their owning package. The tests
     of API-02 and API-03 now use the kit. The checkbox stays open: the process helper is
-    proven against shell scripts only, until the server binary of API-08 and the fake
-    engine binaries of M3 exist, and the chat-template fixture is M2's.
+    proven against shell scripts only, until the server binary of API-08 (built in wave 5,
+    below) and the fake engine binaries of M3 exist, and the chat-template fixture is M2's.
   - Note: Follow-ups from wave 4 of M1 (lead, 2026-11-15): the detail file's
     `serve-api.tsv` and its statuses are superseded; the ledger is
     `console/parity/ledger.json`, with the dispositions of contracts/parity-ledger.md (R19
     and the contract win). The kit's process helper and CNF-07's harness stay separate for
     now (LD47). The owning packages it recorded are working assignments (LD49).
+  - Note: Wave 5 of M1 (2026-11-15): the tests of API-08, `pulsar-console::api08_process`,
+    use the kit's process helper (`Proc` and `parse_ready`) against the M1 binary, and the
+    kit's comments were brought in line with it at commit `7e4613e2`. The checkbox stays
+    open until the fake engine binaries of M3 and the chat-template fixture of M2 exist.
   - Detail: [tasks/api.md#api-19](tasks/api.md#api-19).
 - [ ] CNF-01 [P] [M1] Conformance crate scaffold and the console.yml preflight and summary
   jobs — console-conformance (lib and cnf binary skeleton); .github/workflows/console.yml
@@ -1254,7 +1352,7 @@ each later push remains a checkpoint decision.
     sockets, and its self-tests use `std::net` servers. A scenario cannot yet say that a
     step half-closes or disconnects right after its request (CNF-09).
   - Detail: [tasks/conformance.md#cnf-03](tasks/conformance.md#cnf-03).
-- [ ] CNF-04 [M1] Normalizer and comparator with deviation annotations —
+- [x] CNF-04 [M1] Normalizer and comparator with deviation annotations —
   console-conformance::normalize and ::compare
   - Depends on: CNF-03.
   - Donor sources: id generation in serve/responses.py (354, 412-418), serve/server.py
@@ -1279,6 +1377,15 @@ each later push remains a checkpoint decision.
     tape arrives with the vision packages of M6; until then the tape is compared exactly.
     What the comparison document leaves out, where renames are applied and the shape of
     the placeholders are accepted as built (LD50).
+  - Note: The follow-up was merged on 2026-11-15 at commit `55e81f27`, and the task is done:
+    the value of `Content-Length` is derived from the normalized body (LD44); a stored
+    reference must be a fixed point of normalization under the context it was recorded
+    with; an annotation names the kind of difference it covers or carries both expected
+    values; and `status-elapsed`, `status-tokens-per-s`, `status-tokens-per-s-mean` and
+    `answer-done` apply to the root object only, with `live-elapsed` back for `GET
+    /metrics`. contracts/parity-ledger.md section 1.1 records the first three in the same
+    change. What it built beyond LD44's request is accepted (LD55). Its definition of done
+    holds, so the checkbox is ticked.
   - Detail: [tasks/conformance.md#cnf-04](tasks/conformance.md#cnf-04).
 - [ ] CNF-07 [M1] Process harness for pulsar-console and the fakes —
   console-conformance::process
@@ -1298,9 +1405,13 @@ each later push remains a checkpoint decision.
     `ScenarioFiles`, `lifecycle_lock`), the test-only child `src/bin/cnf_child.rs` and the
     draft contract contracts/cli.md (the ready line and the process harness). It holds the
     `env` block of a run config it writes to the reserved-name rule. The checkbox stays open: the leak check is proven on
-    macOS with the test-only child, and the Linux paths are unverified until a CI run; no
-    `pulsar-console` binary exists yet. That the ready line names the bound port under
-    `--port 0` is proposal P-25, awaiting the owner (OPEN-15).
+    macOS with the test-only child, and the Linux paths are unverified until a CI run; at
+    that merge no `pulsar-console` binary existed. That the ready line names the bound port
+    under `--port 0` is proposal P-25, awaiting the owner (OPEN-15).
+  - Note: Wave 5 of M1 (2026-11-15): the M1 binary of API-08 now exists (commit
+    `5b327fa8`), and the test kit's helper starts it; this task's own harness has not been
+    run against it yet, and its Linux paths are still unverified. The checkbox stays open;
+    P-25 awaits the owner.
   - Detail: [tasks/conformance.md#cnf-07](tasks/conformance.md#cnf-07).
 
 ## Phase M2: Prompt and output
@@ -1523,6 +1634,10 @@ Messages.
   - Risk: low. Ownership boundary with console-http and console-responses.
   - Done when: all shape tests pass, fold-equals-collect is property-tested, and the chunk
     and event schemas are published in the contracts as part of the UI-to-server contract.
+  - Note: Lead decision LD51 (2026-11-15): API-08's `ChunkWriter` and `collect`, with
+    `json_from_text`, stay the single renderer of the OpenAI chat shapes; this task builds
+    no second one, and supplies the answer events through the `OutputPipeline` seam with
+    PRM-09 and PRM-12, owns the fold-equals-collect property test and publishes the schemas.
   - Detail: [tasks/prompt.md#prm-16](tasks/prompt.md#prm-16).
 - [ ] API-09 [M2] Anthropic Messages adapter and event stream —
   console-http::dialect::anthropic
@@ -1536,6 +1651,10 @@ Messages.
   - Done when: golden event transcripts for thinking then text, thinking then tool_use
     (streamed and whole), two consecutive tool calls, stop_sequence, max_tokens and engine
     death match byte for byte, and the collector output matches its JSON goldens.
+  - Note: Follow-up from wave 5 of M1 (lead, 2026-11-15): this task completes the row
+    `QueuedKeepAlives::test_keep_alives_while_queued` and the Anthropic halves of the rows
+    API-08 left `pending`, and the question of LD51 for the Anthropic shapes is decided with
+    it.
   - Detail: [tasks/api.md#api-09](tasks/api.md#api-09).
 
 ## Phase M3: Engine supervision
@@ -1792,6 +1911,10 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
   - Done when: all 9 donor methods pass, a kill-and-restart test shows the restart note and
     a replayable stream, and a generated .jsonl holds one chunk per line plus the done line;
     the file-backed tests run with disk persistence explicitly enabled (PRIV-1).
+  - Note: Follow-up from wave 5 of M1 (lead, 2026-11-15): the request lifecycle driver of
+    API-07 cannot serve `strata_resume` as built, because a failed write cancels the turn;
+    this task needs its own path or a hook in that driver (from the not-done lists of
+    API-07 and API-08).
   - Detail: [tasks/api.md#api-10](tasks/api.md#api-10).
 - [ ] API-11 [P] [M4] llama.cpp-compatible discovery and utility routes —
   console-http::routes::llama
@@ -1913,6 +2036,15 @@ logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silico
     of contracts/cli.md section 2 on standard output, flushed, once the server accepts
     connections; under `--port 0` it names the bound port (proposal P-25); it carries no
     synthetic marker unless the owner approves the one proposed under PLAN-1.
+  - Note: Follow-ups from wave 5 of M1 (lead, 2026-11-15): a refused `sampling` block is
+    printed at the line engine's start (its notes on standard output, its message on
+    standard error, then a non-zero exit), with `pulsar_console::report_sampling_error`
+    (LD52). This task builds the start-up line of LD46 from the engine descriptor once a
+    second engine kind exists; in M1 it is the constant
+    `pulsar_console::SYNTHETIC_ENGINE_LINE`, which names the scripted engine. It also takes
+    over what API-08 lists as not built: the line engine, `--engine`, `--gpu`,
+    `--tokenizer`, `--open`, `--idle-unload`, `--fit-max-tokens`, `--mcp-config`,
+    `--parent-pipe`, signals and the shutdown order, and the log tee.
   - Detail: [tasks/api.md#api-17](tasks/api.md#api-17).
 - [ ] API-20 [M4] HTTP API contract documents and route inventory gate —
   specs/022-console-serving-parity/contracts/http/ and a console-http test
@@ -2811,6 +2943,9 @@ go-ahead.
     carries the idle limit, so that the harness can extend the run window for the
     `expires_at` of `/api/ps`, which lies after the run by that limit; until then a
     scenario extends the window itself (`SideContext::extend_window`).
+  - Note: A committed golden keeps its recording context (run window, port and temporary
+    folders) beside it, because `Normalized::stored` checks it under that context; this
+    task fixes the file form (LD55; lead, 2026-11-15).
   - Detail: [tasks/conformance.md#cnf-09](tasks/conformance.md#cnf-09).
 - [ ] CNF-10 [M10] Shim tier: donor tests run as-is against Rust artifacts (manual job only)
   — console/conformance/oracle/ shim scripts invoked from the manual differential job

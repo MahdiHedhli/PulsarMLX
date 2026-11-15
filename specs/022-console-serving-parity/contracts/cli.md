@@ -95,7 +95,7 @@ In the donor's order (`serve/server.py:7115-7392`), up to the ready line:
 6. the turn driver, which admits the engine through the synthetic-only guard (section 4,
    last row); then, when the run config lists CORS origins, the donor's line
    `[console] browser pages allowed to call /v1/* (CORS): <origin>, <origin>` on standard
-   output (`serve/server.py:7330-7331`, with the product's prefix under BRAND-1);
+   output (`serve/server.py:7332-7333`, with the product's prefix under BRAND-1);
 7. the router with its guards, the inference driver and the OpenAI Chat Completions
    dialect on `/v1/chat/completions` (the only route M1 serves);
 8. the listener, then the lines of section 2.1, on standard output, each flushed.

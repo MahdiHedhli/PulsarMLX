@@ -129,7 +129,9 @@ Notes on section 3.1, recorded by the packages that ported these settings (merge
   constants `ENV_HTTP_BACKLOG`, `ENV_MAX_BODY_MIB` and `ENV_REQUEST_TIMEOUT_S` of
   `console_http::transport`. The transport reads no environment: its parse functions
   (`parse_backlog`, `parse_max_body_bytes`, `parse_request_timeout`) take the raw text, and
-  API-08 wires the variables. Under BRAND-1 the 413 message names the new variable:
+  API-08 (commit `5b327fa8`) wires the variables at start: `pulsar_console::start` builds
+  `TransportConfig` from the environment with the run config's `env` block laid over it.
+  Under BRAND-1 the 413 message names the new variable:
   `the request body is larger than N MiB (PULSAR_CONSOLE_MAX_BODY_MIB raises the limit)`,
   where the donor names `MAYA_MAX_BODY_MIB`. The test
   `console-http::api02_donor::a_body_over_the_limit_is_refused_unread` pins it.
@@ -298,6 +300,8 @@ file names written into a user's data directory are not tracked and are not affe
 | "Project Maya is updating and starts again in a few minutes" (the 503 `overloaded_error` message of the chat routes while the updater is busy) | "PulsarMLX Console is updating and starts again in a few minutes" | Rename decided, value proposed: fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::OVERLOADED_UPDATING`, awaiting the lead's review | `serve/server.py:6258` | API | API-07 |
 | `[maya] req <api>: msgs=... max_new=... last=...` (the debug line that `MAYA_DEBUG` turns on) | `[console] req <api>: ...`, with the same fields and Python reprs | Decided (B2, rule 7); fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::DebugRequest::line` | `serve/server.py:4796-4808` | API | API-07 |
 | `[maya] trace n=<n> <mark>=<ms>... t0=<ms>` (the turn-trace line that `MAYA_TURN_TRACE` turns on) | `[console] trace n=<n> ...`; printed, as the donor's, only at the first token of a turn that is not cancelled and only once the engine-side `gen_start` mark exists, so not before the line-protocol client of M3; `t0` counts milliseconds from the process's first trace, not the absolute monotonic clock | Decided (B2, rule 7); fixed by API-07 (commit `f6c42bb4`) in `console_http::inference::TurnTrace` | `serve/server.py:2093-2110`, `:1413-1417` | API | API-07 |
+| `[maya] browser pages allowed to call /v1/* (CORS): <origins>` (printed at start when the run config lists CORS origins) | `[console] browser pages allowed to call /v1/* (CORS): <origins>` | Decided (B2, rule 7); fixed by API-08 (commit `5b327fa8`) in `pulsar_console::cors_line` | `serve/server.py:7332-7333` | API | API-08 |
+| "port <N> is already in use - is Maya (or another server) already running? Close it, or start this one with a different --port" (the usage error of a busy port, exit 2) | "port <N> is already in use - is PulsarMLX Console (or another server) already running? Close it, or start this one with a different --port" | Rename decided, value proposed: fixed by API-08 (commit `5b327fa8`) in `pulsar_console::port_in_use_message`, awaiting the lead's review | `serve/server.py:7170-7171` | API | API-08 |
 | Death notes pointing to the upstream issue tracker and naming quant names | same meaning, no upstream URL or quant name | Rename decided, value proposed | as cited by ENG | ENG | ENG-08 |
 | `/api/report` "System: ..., Python ..." and "Project Maya <version>" | OS identification and `pulsar-console <version>` | Rename decided, value proposed | as cited by API | API | API-13 |
 | "Support Maya" sponsor link | none | Removed (BRAND-1) | `serve/web/sidebar.js:280`, `serve/web/lib.js:6` | WEB | WEB-10 |
@@ -328,6 +332,12 @@ Notes on section 3.8, recorded by the packages that fixed these texts (merged on
   whose `text` is not a string makes the request fail with the donor's 400
   `malformed request (TypeError: sequence item N: expected str instance, X found)`, a
   quirk ported as the donor has it.
+- **The entry point's start-up lines.** API-08 (commit `5b327fa8`) prints the donor's
+  CORS line of the table above, with the `[console] ` prefix, once the engine is up and
+  before the server binds, and the usage error of a busy port with the product name in
+  place of the donor's. The program name in its usage lines is `pulsar-console`
+  (`pulsar_console::cli::PROG`; BRAND-1.1). The lines it adds that have no donor
+  counterpart are listed in section 3.11.
 
 ### 3.9 Wire identifiers
 
@@ -351,7 +361,7 @@ Notes on section 3.8, recorded by the packages that fixed these texts (merged on
 | HTTP `User-Agent: maya` (MCP over HTTP, image fetch) | product name | Rename decided, value proposed | `serve/server.py:1824` | RSP | RSP-10, RSP-17 |
 | CLI `--engine maya` | proposed `--engine line` | Rename decided, value proposed | as cited by API | API | API-17 |
 | Quant labels `Maya-XS`, `Maya-S`, `Maya-M`, `Maya-L` and keys `maya-xs`, `maya-s`, `maya-m`, `maya-l` | neutral labels | Decided that they go (BRAND-1); labels proposed by OPS-03 | as cited by R-ops | OPS, PRM, WEB, R-ops | OPS-03 |
-| Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | ENG-02 (delivers the value, commit `c86cf84f`); API-17 |
+| Default scripted-engine model name `qwen3.8-flash-next` | `pulsar-console-synthetic` | Decided (plan section 12, deviation PLAN-2; the exact value by the owner on 2026-11-14, N6) | `serve/server.py:2383` | API | ENG-02 (delivers the value, commit `c86cf84f`); API-08 (asserts it, commit `5b327fa8`; a run config's `model_name` names the model when present, as in the donor, LD53 and OPEN-62); API-17 |
 | `Server: BaseHTTP/0.6 Python/3.x` (HTTP response header value) | `pulsar-console/<version>` | Decided (approved deviation P-1, owner decision of 2026-11-14) | Python `http.server` default; no line in `serve/` | API | API-02 |
 | `chatcmpl-`, `msg_`, `call_`, `resp_`, `item_`, `rs_`, `fc_` (id prefixes) | unchanged | Kept: wire identifiers; fixed by API-01 (commit `c2392605`) in `console_pyjson::ids` | `serve/server.py:4936`, `:5251`; `serve/frontend.py:805`; `serve/responses.py:133`, `:354`, `:412-418` | API, PRM, R-api | API-01 |
 
@@ -384,6 +394,15 @@ as the path of a real pack's tokenizer directory. The test is marked ignored, an
 when it is run with `--ignored` and the variable is unset. PRM-04 introduces no other
 environment variable, file name or wire name.
 
+API-08 (commit `5b327fa8`) uses two test-only variables, never read by the product:
+`API08_REFUSAL_CHILD` and `API08_REFUSAL_PORT`, the child mode of
+`console/crates/pulsar-console/tests/api08_refusal.rs`. The test sets them on a child
+process of its own test executable, which then runs the entry function with the engine
+that is not synthetic. They are not test-harness switches in the sense of this section: nobody sets them by
+hand, and the product never reads them. The lead decided on 2026-11-15 (LD56) that such a
+variable is named after its test file and does not carry the `PULSAR_CONSOLE_` prefix, so
+that it cannot be taken for a setting the product reads.
+
 ### 3.11 Names with no donor counterpart
 
 These names are new in PulsarMLX Console and have no old name, so they are listed here in
@@ -396,8 +415,9 @@ prose, outside the machine-read tables.
   absent or null gives none, and a list of non-blank strings is kept, each entry stripped;
   anything else stops start-up with the console's own message, `ALLOWED_HOSTS_MESSAGE`
   (`"allowed_hosts" must be a list of host names like "pulsar.local"`). API-03 (commit
-  `60fa1461`, 2026-11-15) enforces it in `console_http::guard::HostPolicy`; no binary
-  passes the list to the guard until API-08 wires it at start (LD31). The matching, as
+  `60fa1461`, 2026-11-15) enforces it in `console_http::guard::HostPolicy`, and the M1
+  binary of API-08 (commit `5b327fa8`, 2026-11-15) passes the list from the run config to
+  the guard at start (LD31). The matching, as
   API-03 built it (lead decision LD43, to be confirmed with the owner together with LD30):
   a request carries exactly one `Host` header, and none, or two, is refused; the value is
   used as it arrives, with no trimming, no removal of a trailing dot and no IPv6
@@ -408,11 +428,14 @@ prose, outside the machine-read tables.
   reported by `console_http::guard::invalid_allowed_hosts` and
   `GuardConfig::rejected_allowed_hosts`; under lead decision LD40 such an entry stops the
   server at start, with a message that names the entry and the accepted forms, which
-  API-08 wires. The refusal is 403 `permission_error` with `HOST_REFUSED_MESSAGE` (below),
-  and it carries no CORS header. The transport's 431 header-limit pages are answered
-  before the `Host` check. Since the follow-up to API-03 (commit `50179f0d`, 2026-11-15)
-  the check also runs before the transport's 501 for an unserved method and its 400 for
-  conflicting framing under P-2, through `Handler::early_refusal` (below).
+  API-08 wires: `config: allowed_hosts: <repr> is not a host name the server can match;
+  the accepted forms are name, name:port, [v6] or [v6]:port`, then exit status 1
+  (`pulsar_console::ALLOWED_HOSTS_FORMS`). The refusal is 403 `permission_error` with
+  `HOST_REFUSED_MESSAGE` (below), and it carries no CORS header. The transport's 431
+  header-limit pages are answered before the `Host` check. Since the follow-up to API-03
+  (commit `50179f0d`, 2026-11-15) the check also runs before the transport's 501 for an
+  unserved method and its 400 for conflicting framing under P-2, through
+  `Handler::early_refusal` (below).
 - **Refusal texts of SEC-1.** Fixed by API-03 (commit `60fa1461`) in
   `console_http::guard`, and accepted as written by the lead (LD41): the SEC-1.1 refusal
   `HOST_REFUSED_MESSAGE`, "requests for other host names are refused (the config's
@@ -457,6 +480,20 @@ prose, outside the machine-read tables.
   following rule 7. The failure kinds, as written in logs: `died`, `reported`,
   `not_ready`, `never_answered`, `invalid_token`, `unsupported`, `protocol`, `start_failed`
   (`FailureKind::as_str`). The guard function is `require_synthetic`.
+- **Entry-point names.** Fixed by API-08 (commit `5b327fa8`, 2026-11-15) in the crate
+  `pulsar-console`. The start-up line printed before the ready line, `[console] engine:
+  scripted, synthetic provenance - no real model is served` (lead decision LD46;
+  `pulsar_console::SYNTHETIC_ENGINE_LINE`). The line of the panic hook, `[console] panic
+  at <file:line>: <message>`, written on standard error in place of Rust's multi-line
+  report, with the message made log-safe (LD35, LD54). The header line of the M1 stand-in
+  prompt, `pulsar-console synthetic prompt (not a chat template)`, and its last line,
+  `assistant:` (lead decision LD45; `console_http::dialect::openai::SYNTHETIC_PROMPT_HEADER`
+  and `SYNTHETIC_PROMPT_TAIL`). The M1 command line accepts the donor's option names
+  `--config`, `--host`, `--script`, `--port` and `--api-key`, unchanged, with `-h` and
+  `--help`; every other donor option, `--engine` among them, is a usage error until
+  API-17. API-08 adds no `PULSAR_CONSOLE_` variable and no configuration key; it reads
+  `COLUMNS` for the width of its usage lines, as `argparse` does (proposal P-27), and its
+  test-only variables are listed in section 3.10.
 
 ## 4. Maintenance and checking
 

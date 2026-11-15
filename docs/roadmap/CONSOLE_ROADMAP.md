@@ -1,6 +1,6 @@
 # PulsarMLX Console roadmap
 
-**Updated 2026-11-14. Planning, not execution authorization beyond Phase 1.**
+**Updated 2026-11-15. Planning, not execution authorization beyond Phase 1.**
 
 PulsarMLX Console is the planned serving layer and browser dashboard for PulsarMLX: a
 Rust server, binary `pulsar-console`, rebuilt from the `serve/` directory of the donor
@@ -31,9 +31,9 @@ requires Phase 3 and the qualification that Stage F requires.
 
 ## Phases at a glance
 
-| Phase | What it delivers | Status on 2026-11-14 |
+| Phase | What it delivers | Status on 2026-11-15 |
 | --- | --- | --- |
-| 1 | Rust server and the adapted JavaScript dashboard, at full behavioral parity with project-maya's `serve/`, on synthetic backends | In development: the M0 governance documents were reviewed by the owner at checkpoint 1 on 2026-11-14 and M1 may start; no serving behavior is implemented yet. Target: qualified on synthetic backends. |
+| 1 | Rust server and the adapted JavaScript dashboard, at full behavioral parity with project-maya's `serve/`, on synthetic backends | In development: the 18 work packages of M1 are built on the feature branch, and their tests pass on the build host against synthetic engines; the minimal binary answered a streamed chat completion from the scripted synthetic engine in a local demonstration on 2026-11-15. No CI run covers any M1 package, so nothing is claimed as qualified. Owner checkpoint 2 is not held yet. Target: qualified on synthetic backends. |
 | 2 | Complete rewrite of the front end in Rust compiled to WebAssembly, against the written UI-to-server contract, served beside Phase 1 until cutover | Not started; planned only at the level of this outline |
 | 3 | A real engine attached to the console through the backend seam | Not started; needs its own approval |
 
@@ -65,7 +65,7 @@ Work package ids are those of the feature's `tasks.md`.
 | Milestone | Delivers | Work packages | Status |
 | --- | --- | --- | --- |
 | M0 Governance and skeleton | Spec Kit artifacts, ADR 0008, this roadmap, donor qualification, `NOTICE.md` and the project-maya license text; empty `console/` workspace, boundary and hygiene tools, `console.yml`, parity ledger skeleton, cross-cutting contracts | GOV-01 to GOV-06 | In development |
-| M1 Core pipeline | Python-compatible JSON; HTTP/1.0 transport, router and security posture; request validation; backend seam, scripted engine, FIFO scheduler and turn driver; byte tokenizer and detokenizer; chat completions for plain content; run-config store; test kit and scenario comparator. First end-to-end goal: a streamed answer over `curl` from the scripted engine | API-01, API-02, API-03, API-04, API-07, API-08, API-15, API-19, ENG-01, ENG-02, ENG-09, ENG-10, PRM-04, CNF-01, CNF-02, CNF-03, CNF-04, CNF-07 | In development |
+| M1 Core pipeline | Python-compatible JSON; HTTP/1.0 transport, router and security posture; request validation; backend seam, scripted engine, FIFO scheduler and turn driver; byte tokenizer and detokenizer; chat completions for plain content; run-config store; test kit and scenario comparator. First end-to-end goal: a streamed answer over `curl` from the scripted engine | API-01, API-02, API-03, API-04, API-07, API-08, API-15, API-19, ENG-01, ENG-02, ENG-09, ENG-10, PRM-04, CNF-01, CNF-02, CNF-03, CNF-04, CNF-07 | In development: built on 2026-11-14 and 2026-11-15, three of 18 tasks ticked, owner checkpoint 2 not held yet |
 | M2 Prompt and output | Template runtime after a compatibility spike; request normalization; BPE tokenizer; special-literal protection; streaming parser for all tool-call syntaxes; DeepSeek encoder; thinking levels and budget; stop strings; both loop guards; Anthropic Messages | PRM-02, PRM-03, PRM-05 to PRM-16, API-09 | Planned |
 | M3 Engine supervision | Line-protocol codec, client and supervisor; request-key encoder; multi-conversation mode; fair slices; restart, unload and shutdown; prompt memo and restore points; fake engine binaries; engine conformance suite; coordinator-shaped adapter | ENG-03 to ENG-08, ENG-11, ENG-12, ENG-15, ENG-17, ENG-18, ENG-19 | Planned |
 | M4 Monitoring and admin | `/health`, `/status`, `/metrics` and Prometheus output; discovery and tokenizer routes; settings, context, thinking-budget, port and report routes; resumable web streams; logging, signals, CLI and graceful shutdown; telemetry core and the Apple Silicon reader | API-05, API-06, API-10, API-11, API-13, API-14, API-16, API-17, API-20, OPS-17, OPS-18 | Planned |

@@ -55,6 +55,40 @@ order is deterministic, JSON key order and stream framing are observable. The no
 and comparator of package CNF-04 implement this rule; each volatile field it normalizes is
 listed in `contracts/volatile-fields.json` with a donor citation.
 
+One value is derived, not replaced: the value of the `Content-Length` header (lead
+decision LD44, 2026-11-15; donor `serve/server.py:5461`, and `:5665`, `:5999`, `:6084` and
+`:6264`, where a handler writes its own body length). A body's length changes with the
+volatile values inside it, so the raw value cannot be compared. The normalizer writes the
+length of the normalized body in its place only when four conditions hold: the read was
+complete, the framing is `Content-Length`, the header appears once, and its value is
+exactly the number of body bytes received (field `header-content-length`, class
+`body-length`, in `contracts/volatile-fields.json`). In every other case the value is
+compared as sent. This value is not volatile: `VolatileFields::header_value_is_volatile`
+answers false for it. The header's name, its case and its position stay observable. The
+follow-up to CNF-04 (commit `55e81f27`, 2026-11-15) builds it.
+
+A committed golden is a comparison document: the `document` of a normalized reference
+side. It is replayed with `Normalized::stored` (outside the conformance crate, the only way
+besides `Normalizer::normalize` to build a `Normalized`), then compared with `compare()`,
+and never passed to the normalizer again. `Normalized::stored` refuses the document,
+naming the pointer of the offending value, unless it is a fixed point of normalization
+under the context its run was recorded with: its run window, its port and its temporary
+folders. A committed golden therefore keeps that recording context beside it (lead
+decision LD55); CNF-09 fixes the file form. Being a fixed point means: no raw volatile
+value and no pending decided rename is left in it; it is in the shape the normalizer
+writes (UTF-8 bytes as text, never base64; each content kind the one the head gives the
+body; no wire byte count in a disconnect); and its derived members match the text beside
+them. One exception: the wire of an exchange the normalizer found inconsistent (chunked
+framing, or bytes past the body) stays as received, raw header values included, because
+the comparator compares it exactly and a raw value there can only make a difference.
+
+A deviation annotation says what it covers: the kind of difference (value, missing,
+extra, key-order or text), or both the reference and the candidate value. An exact pointer
+alone suppresses nothing. A text difference shows only excerpts, so only an annotation of
+kind text covers one, and its expected values, when given, are compared with the whole
+texts, never with the excerpts. A wildcard annotation that gives only one of the two
+values must also name a kind (LD55).
+
 ## 2. Four sources of evidence, and where each runs
 
 | Evidence | What it is | Where it runs |
@@ -258,8 +292,9 @@ ledger, the register and the evidence listings, and fails the build when any rul
 
 ## 6. Relation to other checks
 
-- The comparator that replays references suppresses a difference only with an approved
-  register id as its annotation, and flags unused annotations (CNF-04). Approved proposal
+- The comparator that replays references suppresses a difference only with an annotation
+  that cites an approved register id and says what it covers (section 1.1), and flags
+  unused annotations (CNF-04). Approved proposal
   ids are valid annotations; an annotation citing a deferred or declined proposal fails
   the check, as in section 5, rule 3.
 - The inventory extractor (CNF-12) lists environment names, routes and written files from

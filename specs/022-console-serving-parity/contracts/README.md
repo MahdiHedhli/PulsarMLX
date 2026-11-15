@@ -62,7 +62,7 @@ in [`../checklists/analysis.md`](../checklists/analysis.md).
 | Error conventions | Error body shapes, status mapping, messages before and after the first byte of a stream | API-01 with API-20 | planned |
 | OpenAI Chat Completions stream grammar | SSE chunk sequence, finish reasons, usage chunk, `[DONE]` | API-08 | planned |
 | Anthropic Messages stream grammar | `message_start` through `message_stop`, thinking and tool blocks | API-09 | planned |
-| [`cli.md`](cli.md) | `pulsar-console` command line, the ready line, exit codes, the process harness | CNF-07 (draft, 2026-11-15, commit `d270f113`: the ready line, section 2, and the process harness, section 5); API-08 and API-17 settle the command line, the port-in-use error and the exit codes (sections 1, 3 and 4) | written (draft) |
+| [`cli.md`](cli.md) | `pulsar-console` command line, the ready line, exit codes, the process harness | CNF-07 (draft, 2026-11-15, commit `d270f113`: the ready line, section 2, and the process harness, section 5); API-08 settled the M1 options, the start-up order, the line before the ready line, the port-in-use error and the M1 exit codes on 2026-11-15 (commit `5b327fa8`; sections 1.1, 1.2, 2.1, 3 and 4); API-17 settles the rest of the command line (M4) | written (draft) |
 | Monitoring routes | `/health`, `/status`, `/v1/status`, `/metrics`, Prometheus names | API-06 | planned |
 | Resumable web streams | `strata_resume`, `/v1/strata/stream`, `/v1/strata/cancel`, answer retention (PRIV-1) | API-10 | planned |
 
