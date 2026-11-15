@@ -1,0 +1,16 @@
+[package]
+name = "console-conformance"
+description = "Conformance harness for PulsarMLX Console (test only)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+httparse.workspace = true
+sha2.workspace = true
+libc.workspace = true

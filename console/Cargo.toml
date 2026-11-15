@@ -9,9 +9,18 @@
 [workspace]
 resolver = "2"
 # Members are listed explicitly, never by glob, so that adding a crate is a
-# reviewed change to this file.
+# reviewed change to this file. These are the crates the M1 work packages write
+# into (specs/022-console-serving-parity/plan.md, Project Structure). Crates
+# that only later milestones need are added by the package that creates them.
 members = [
     "crates/console-pyjson",
+    "crates/console-core",
+    "crates/console-tokenizer",
+    "crates/console-engine",
+    "crates/console-http",
+    "crates/console-testkit",
+    "crates/console-conformance",
+    "crates/pulsar-console",
 ]
 
 [workspace.package]
@@ -23,10 +32,41 @@ rust-version = "1.97.1"
 publish = false
 
 [workspace.dependencies]
-# Empty in the skeleton. Every third-party dependency is pinned with an exact
-# `=` version here, inherited by crates with `workspace = true`, and recorded
-# with its license in specs/022-console-serving-parity/research.md before it is
-# added. No path dependency may leave console/.
+# Every third-party dependency is pinned with an exact `=` version here,
+# inherited by crates with `workspace = true`, and recorded with its license in
+# specs/022-console-serving-parity/research.md. Features are the minimum the M1
+# packages need; a member crate adds a feature only where its package needs it.
+# Excluded by binding decision: hyper, axum, reqwest, any TLS crate, uuid,
+# jsonschema, rmcp. minijinja and minijinja-contrib arrive with PRM-03 (M2).
+#
+# serde_json: `preserve_order` and `arbitrary_precision` are enabled for the
+# whole workspace (binding decision B3). Feature unification means every crate
+# sees an insertion-ordered map and exact number text, so the one
+# Python-compatible writer in console-pyjson gives the same bytes everywhere.
+serde = { version = "=1.0.229", default-features = false, features = ["std", "derive"] }
+serde_json = { version = "=1.0.151", default-features = false, features = ["std", "preserve_order", "arbitrary_precision"] }
+# OS randomness for ids (API-01) and process groups and signals (CNF-07, API-19).
+libc = "=0.2.189"
+# Async runtime under the hand-written HTTP/1.0 transport (B1); members choose
+# their features.
+tokio = { version = "=1.53.1", default-features = false }
+# Request-head parsing for the transport (API-02) and the raw client (CNF-03).
+httparse = "=1.10.1"
+# SHA-256: response owner ids (API-03) and vendor-file checks (CNF-02).
+sha2 = { version = "=0.10.9", default-features = false }
+# Tokenizer pre-tokenizers, literal alternation and NFC (PRM-04).
+fancy-regex = { version = "=0.20.2", default-features = false, features = ["std", "unicode"] }
+regex = { version = "=1.12.4", default-features = false, features = ["std", "unicode"] }
+unicode-normalization = "=0.1.26"
+
+# Internal crates. Paths stay inside console/.
+console-pyjson = { path = "crates/console-pyjson" }
+console-core = { path = "crates/console-core" }
+console-tokenizer = { path = "crates/console-tokenizer" }
+console-engine = { path = "crates/console-engine" }
+console-http = { path = "crates/console-http" }
+console-testkit = { path = "crates/console-testkit" }
+pulsar-console = { path = "crates/pulsar-console" }
 
 [profile.release]
 lto = "thin"

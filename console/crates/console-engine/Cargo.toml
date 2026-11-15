@@ -1,0 +1,20 @@
+[package]
+name = "console-engine"
+description = "Synthetic engines behind the PulsarMLX Console backend seam"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+# Exposes the test doubles of ENG-02 (`fake::doubles`) to console-testkit, console-core
+# and console-http tests, and to this crate's own tests.
+test-support = []
+
+[dependencies]
+console-core.workspace = true
+
+[dev-dependencies]
+console-engine = { path = ".", features = ["test-support"] }

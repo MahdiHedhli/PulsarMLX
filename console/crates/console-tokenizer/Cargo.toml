@@ -1,0 +1,16 @@
+[package]
+name = "console-tokenizer"
+description = "Byte-level BPE tokenizer and detokenizer for PulsarMLX Console"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+console-pyjson.workspace = true
+serde_json.workspace = true
+fancy-regex.workspace = true
+regex.workspace = true
+unicode-normalization.workspace = true

@@ -1,0 +1,20 @@
+[package]
+name = "console-core"
+description = "Backend seam, scheduler, turn driver and run config for PulsarMLX Console"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+console-pyjson.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tokio = { workspace = true, features = ["rt", "sync", "time", "macros"] }
+
+[dev-dependencies]
+console-engine = { workspace = true, features = ["test-support"] }
+tokio = { workspace = true, features = ["rt", "sync", "time", "macros", "test-util"] }

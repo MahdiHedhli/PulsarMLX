@@ -10,6 +10,15 @@
 //! read these bodies.
 //!
 //! Nothing is implemented yet, so nothing here may be described as working.
+//!
+//! Every module below belongs to API-01, which writes inside it without editing this file.
+//! Its integration tests go in `tests/api01_*.rs`.
+
+pub mod dumps;
+pub mod float_repr;
+pub mod ids;
+pub mod loads;
+pub mod pystr;
 
 #[cfg(test)]
 mod tests {

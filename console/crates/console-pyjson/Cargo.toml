@@ -1,6 +1,6 @@
 [package]
 name = "console-pyjson"
-description = "Python-compatible JSON and string output for PulsarMLX Console (skeleton)"
+description = "Python-compatible JSON and string output for PulsarMLX Console"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,3 +9,6 @@ rust-version.workspace = true
 publish.workspace = true
 
 [dependencies]
+serde.workspace = true
+serde_json.workspace = true
+libc.workspace = true

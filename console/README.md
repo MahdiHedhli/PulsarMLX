@@ -13,7 +13,7 @@ decision to build it ahead of strategy Stage F is recorded in
 
 | Item | Status |
 | --- | --- |
-| Cargo workspace with one member, `console-pyjson` | Present. The crate is empty apart from one test that proves the workspace builds and its test harness runs. |
+| Cargo workspace with eight members: `console-pyjson`, `console-core`, `console-tokenizer`, `console-engine`, `console-http`, `console-testkit`, `console-conformance` and the `pulsar-console` binary | Present as skeletons for the M1 work packages. Each crate declares its planned modules and implements nothing; `console-pyjson` keeps one test that proves the workspace builds and its test harness runs. |
 | Python-compatible JSON writer (package API-01) | Planned (milestone M1). Not implemented. |
 | HTTP server, dialects, engines, dashboard | Planned (milestones M1 to M9). Not implemented. |
 | Parity ledger, [`parity/ledger.json`](parity/ledger.json) | Present. 913 rows, one per donor test method, every row `pending`. |
@@ -23,6 +23,15 @@ decision to build it ahead of strategy Stage F is recorded in
 
 Nothing here may be described as working until its command, environment, input and
 result are recorded, as constitution principle III requires.
+
+## Synthetic engines only
+
+The server refuses to start an engine that does not report synthetic provenance, on every
+path that admits an engine; the owner decided this on 2026-11-14. The guard is planned
+(ENG-01, ENG-10 and API-08) and is not implemented yet. No command-line flag, environment
+variable, configuration key or Cargo feature bypasses the refusal.
+[`../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`](../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md)
+is the one place that says what must be done before the server may start a real engine.
 
 ## A separate workspace
 
@@ -107,6 +116,28 @@ What the rules guarantee: no file the engine track edits or hashes changes. What
 not guarantee: the tree identity of `main` changes when this work merges, like any commit,
 so the merge order is decided with the owner (OPEN-14 in the open-item register,
 [`checklists/analysis.md`](../specs/022-console-serving-parity/checklists/analysis.md)).
+
+## Picking this work up
+
+A maintainer new to this work reads, in this order:
+
+1. The feature specification,
+   [`spec.md`](../specs/022-console-serving-parity/spec.md).
+2. The plan, [`plan.md`](../specs/022-console-serving-parity/plan.md).
+3. The tasks, [`tasks.md`](../specs/022-console-serving-parity/tasks.md), including its
+   [per-task gate](../specs/022-console-serving-parity/tasks.md#per-task-gate-before-commit).
+4. The register of open items in
+   [`checklists/analysis.md`](../specs/022-console-serving-parity/checklists/analysis.md#9-register-of-open-items).
+5. The deviation register,
+   [`contracts/deviations.md`](../specs/022-console-serving-parity/contracts/deviations.md).
+6. The parity ledger contract,
+   [`contracts/parity-ledger.md`](../specs/022-console-serving-parity/contracts/parity-ledger.md).
+7. [ADR 0008](../docs/architecture/decisions/0008-console-serving-ahead-of-stage-f.md).
+8. The [console roadmap](../docs/roadmap/CONSOLE_ROADMAP.md).
+9. [`../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`](../docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md).
+
+Progress is read from the checkboxes in `tasks.md` and from the parity ledger,
+[`parity/ledger.json`](parity/ledger.json), not from this README.
 
 ## Layout
 

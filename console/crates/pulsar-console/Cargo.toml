@@ -1,0 +1,15 @@
+[package]
+name = "pulsar-console"
+description = "Server entry point for PulsarMLX Console"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+console-core.workspace = true
+console-engine.workspace = true
+console-tokenizer.workspace = true
+console-http.workspace = true
