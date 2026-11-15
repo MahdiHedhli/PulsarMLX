@@ -2,7 +2,8 @@
 import json
 import os
 import re
-import resource
+import hashlib
+import struct
 import signal
 import stat
 import subprocess
@@ -53,11 +54,17 @@ def census(d):
             else:ev+=size
     return ev,build
 def pressure():
-    st=cmd('/usr/bin/vm_stat');pages=lambda k:int(re.search(r'^'+k+r':\s+(\d+)\.',st,re.M)[1])
-    free=pages('Pages free')+pages('Pages speculative')+min(pages('Pages inactive'),pages('File-backed pages'))
+    # Kernel system-wide memory estimate and a separate reclaimable-file cap,
+    # never the intersection of two overlapping vm_stat categories.
+    pct=int(cmd('/usr/sbin/sysctl','-n','kern.memorystatus_level'))
+    total=int(cmd('/usr/sbin/sysctl','-n','hw.memsize'))
+    pageable=int(cmd('/usr/sbin/sysctl','-n','vm.page_pageable_external_count'))
+    free=int(cmd('/usr/sbin/sysctl','-n','vm.page_free_count'))
+    need(0<=pct<=100 and pageable>=0 and free>=0,'kernel memory observation')
+    estimated=min(max(0,pct-1)*total//100,(free+pageable//2)*os.sysconf('SC_PAGE_SIZE'))
     v=cmd('/usr/sbin/sysctl','-n','vm.swapusage')
     used=re.search(r'used\s*=\s*([\d.]+)([KMGT])',v)
-    return dict(headroom=free*os.sysconf('SC_PAGE_SIZE'),pressure=int(cmd('/usr/sbin/sysctl','-n','kern.memorystatus_vm_pressure_level')),
+    return dict(headroom=estimated,kernel_available_percent=pct,pageable_external_pages=pageable,pressure=int(cmd('/usr/sbin/sysctl','-n','kern.memorystatus_vm_pressure_level')),
                 swap=int(float(used[1])*1024**('KMGT'.index(used[2])+1)))
 def basic(d):
     need(d.is_absolute() and d.resolve(strict=True)==d and d.stat().st_uid==os.getuid() and stat.S_IMODE(d.stat().st_mode)==0o700,'private directory')
@@ -108,31 +115,61 @@ def verified(d):
     need(fetch(ptr['commit'],ptr['path'])==enc(grant) and fetch(ptr['commit'],ptr['path']+'.sha256').decode().split()==[ptr['sha256'],name],'published grant or sidecar')
     return grant,ptr
 
-def active(d,kind,worker):
+def file_receipt(f):
+    st=os.fstat(f.fileno());need(stat.S_ISREG(st.st_mode) and st.st_size<=16<<20,'bounded output')
+    f.seek(0);dg=hashlib.file_digest(f,'sha256').hexdigest()
+    return dict(dev=st.st_dev,ino=st.st_ino,bytes=st.st_size,mtime_ns=st.st_mtime_ns,sha256=dg)
+
+def sealed(d,kind,prior):
+    p=d/(kind+'.json')
+    need(p.resolve(strict=True)==p,'output alias')
+    with p.open('rb') as f:
+        r=file_receipt(f);need(r==prior[kind] and r==doc(d/(kind+'-seal.json')) and os.path.samestat(os.fstat(f.fileno()),p.lstat()),'original output changed')
+        f.seek(0);raw=f.read(r['bytes']+1)
+        need(len(raw)==r['bytes'] and sha(raw)==r['sha256'],'consumed bytes changed')
+    return parse(raw)
+
+def active(d,kind,worker,exe=None):
     grant,ptr=verified(d);claim=doc(ANCHOR);intent=doc(d/(kind+'-intent.json'))
     need(claim==dict(dir=str(d),run=grant['run'],grant=ptr,supervisor=intent['supervisor'],limits=LIMITS),'original claim')
     leader=int(cmd('/bin/ps','-p',str(worker),'-o','ppid='))
     need(leader==claim['supervisor'] and intent['kind']==kind and intent['claim_sha256']==digest(ANCHOR),'owned process')
+    if kind=='native':
+        actual=d/'target/release/qualify-real-flash-expert'
+        need(Path(exe)==actual and digest(actual)==grant['binary_sha256'],'executable binding')
     record(d/(kind+'-start.json'),dict(worker=worker,supervisor=leader,grant_sha256=ptr['sha256']))
     return grant
 
 def work(d,kind,exe=None):
     cfg,root,src=basic(d)
-    ident=active(d,kind,os.getppid() if kind=='native' else os.getpid())
+    prior=parse(os.environ['STUDIO016_ORIGINAL_OUTPUTS'].encode())
+    need(set(prior)==set({'reference':(), 'native':('reference',),'grade':('reference','native')}[kind]),'predecessor outputs')
+    originals={k:sealed(d,k,prior) for k in prior}
+    ident=active(d,kind,os.getppid() if kind=='native' else os.getpid(),exe)
     if kind=='native':
-        actual=d/'target/release/qualify-real-flash-expert'
-        need(Path(exe)==actual and digest(actual)==ident['binary_sha256'],'executable binding')
-        return dict(root=str(root),prefix=cfg["prefix"],identity=ident)
+        # Consume the actual independent wire grammar before candidate evaluation.
+        deserialize(originals['reference'])
+        st=src['witnesses']['model-00001.safetensors']
+        stamp=b'buffered-window-descriptor/1'+struct.pack('<QQQqqqq',*st[:3],*divmod(st[3],10**9),*divmod(st[4],10**9))
+        lib=Path(cfg['prefix'])/'lib';names=('libmlx.dylib','libmlxc.dylib','libjaccl.dylib')
+        return dict(root=str(root),prefix=cfg["prefix"],identity=ident,libs={n:digest((lib/n).resolve(strict=True)) for n in names},stamp=list(hashlib.sha256(stamp).digest()))
     _,parts=bind(root,previous=src,payload=True)
     if kind=='reference':return serialize(references(parts,vector()))
-    return compare(doc(d/'native.json'),deserialize(doc(d/'reference.json')),parts,ident)
+    return compare(originals['native'],deserialize(originals['reference']),parts,ident)
 
-def observe(d,kind,argv,deadline,swap):
+def observe(d,kind,argv,deadline,swap,prior):
     start=time.monotonic();base=doc(ANCHOR)
     record(d/(kind+'-intent.json'),dict(kind=kind,supervisor=base['supervisor'],claim_sha256=digest(ANCHOR),argv=[str(v) for v in argv]))
     env=dict(PATH='/usr/bin:/bin:/usr/sbin:/sbin',HOME=str(Path.home()),MLX_ENABLE_TF32='0',PYTHONDONTWRITEBYTECODE='1')
-    with (d/(kind+'.json')).open('xb') as out,(d/(kind+'.stderr')).open('xb') as err,(d/(kind+'.monitor')).open('xb') as log:
+    env['STUDIO016_ORIGINAL_OUTPUTS']=enc(prior).decode()
+    if kind=='native':
+        prefix=Path(doc(d/'config.json')['prefix'])
+        env.update(MLX_C_PREFIX=str(prefix),DYLD_LIBRARY_PATH=str(prefix/'lib'))
+    with (d/(kind+'.json')).open('x+b') as out,(d/(kind+'.stderr')).open('xb') as err,(d/(kind+'.monitor')).open('xb') as log:
         child=subprocess.Popen(argv,stdout=out,stderr=err,stdin=subprocess.DEVNULL,env=env,cwd=ROOT,start_new_session=True)
+        def alarm(signum,frame):raise TimeoutError('campaign watchdog')
+        old=signal.signal(signal.SIGALRM,alarm)
+        signal.setitimer(signal.ITIMER_REAL,max(.001,min(deadline,start+1800)-time.monotonic()))
         try:
             bad=0
             while child.poll() is None:
@@ -144,24 +181,39 @@ def observe(d,kind,argv,deadline,swap):
                 need(p['pressure']==1 and bad<3 and group<=LIMITS['combined_bytes'] and direct<=LIMITS['job_rss']
                      and ev<LIMITS['evidence'] and build<=LIMITS['build'] and time.monotonic()<min(deadline,start+1800),'observed resource/time gate')
                 time.sleep(1)
-            need(child.returncode==0,'failed '+kind)
+            need(time.monotonic()<min(deadline,start+1800) and child.returncode==0,'failed or expired '+kind)
+            out.flush();os.fsync(out.fileno());os.fchmod(out.fileno(),0o400)
+            receipt=file_receipt(out)
+            need(os.path.samestat(os.fstat(out.fileno()),(d/(kind+'.json')).lstat()),'replaced output')
+            record(d/(kind+'-seal.json'),receipt);prior[kind]=receipt
+            produced=sealed(d,kind,prior)
+            if kind=='reference':deserialize(produced)
+            if kind=='native':need(produced['outcome']=='executed','incomplete native result')
+            if kind=='grade':need(produced['status']=='PASS','grade result')
+            need(time.monotonic()<min(deadline,start+1800),'terminal time bound')
         finally:
-            if child.poll() is None:
-                os.killpg(child.pid,signal.SIGKILL);child.wait()
-            record(d/(kind+'-exit.json'),dict(pid=child.pid,exit=child.returncode,seconds=time.monotonic()-start))
+            signal.setitimer(signal.ITIMER_REAL,0);signal.signal(signal.SIGALRM,old)
+            # A surviving process group after its leader exits is a failed cleanup.
+            try:os.killpg(child.pid,signal.SIGKILL);survived=True
+            except ProcessLookupError:survived=False
+            child.wait()
+            record(d/(kind+'-exit.json'),dict(pid=child.pid,exit=child.returncode,seconds=time.monotonic()-start,residual_group_killed=survived))
+            need(not survived,'owned residual group terminated')
 def launch(d):
     need(not os.path.lexists(ANCHOR),'initial claim occupied')
     deadline=time.monotonic()+7200
     grant,ptr=verified(d);p=pressure()
     need(p['headroom']>=16<<30 and p['pressure']==1,'host headroom')
     for k in ('reference','native','grade'):
-        need(not any(d.glob(k+'-*.json')) and not (d/(k+'.json')).exists(),'existing operation')
+        need(not any(d.glob(k+'-*.json')) and not any(os.path.lexists(d/(k+suffix)) for suffix in ('.json','.stderr','.monitor')),'existing operation')
     ev,build=census(d);need(ev+64*2**20<=LIMITS['evidence'] and build<=LIMITS['build'],'disk envelope')
     record(ANCHOR,dict(dir=str(d),run=grant['run'],grant=ptr,supervisor=os.getpid(),limits=LIMITS))
+    prior={}
     for kind in ('reference','native','grade'):
         argv=[PYTHON,*OPTS,__file__,kind,d] if kind!='native' else [d/'target/release/qualify-real-flash-expert',d]
-        observe(d,kind,argv,deadline,p['swap'])
-    return dict(grade=doc(d/'grade.json'),claim_sha256=digest(ANCHOR))
+        observe(d,kind,argv,deadline,p['swap'],prior)
+    for k in prior:sealed(d,k,prior)
+    return dict(grade=sealed(d,'grade',prior),originals=prior,claim_sha256=digest(ANCHOR))
 
 if __name__=='__main__':
     os.umask(0o077)
@@ -169,6 +221,10 @@ if __name__=='__main__':
     if mode=='describe':result=envelope(d)
     elif mode=='launch':result=launch(d)
     elif mode=='verify-child':result=work(d,'native',sys.argv[3])
-    elif mode in ('reference','grade'):result=work(d,mode)
+    elif mode in ('reference','grade'):
+        try:result=work(d,mode)
+        except Exception as error:
+            if hasattr(error,'evidence'):record(d/(mode+'-refusal.json'),dict(reason=str(error),evidence=error.evidence))
+            raise
     else:raise ValueError('unknown mode')
     sys.stdout.buffer.write(enc(result))

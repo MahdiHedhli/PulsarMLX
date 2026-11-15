@@ -8,9 +8,9 @@ import unittest
 from fractions import Fraction as F
 from pathlib import Path
 from studio016_source import geometry, parse, read, opened, vector, sha
-from studio016_compare import serialize, deserialize, affine_gate
+from studio016_compare import serialize, deserialize, affine_gate, compare
 from studio016_reference import affine, units, X_EXP, W_EXP, hidden_admission
-from studio016_campaign import record
+from studio016_campaign import record, sealed, file_receipt, enc
 
 class Tests(unittest.TestCase):
     def test_wire(self):
@@ -35,6 +35,38 @@ class Tests(unittest.TestCase):
         self.assertEqual(y,[2]);affine_gate(F(2),y[0],b[0])
         for wrong in (3,1): # swapped nibble; omitted bias
             with self.assertRaises(ValueError):affine_gate(wrong,y[0],b[0])
+    def test_full_report_consumer(self):
+        # Synthetic all-zero planes; production codec and real local-down decoder.
+        zero=F(0);h=[(zero,zero)]*2048
+        ref=dict(g=[zero]*2048,u=[zero]*2048,bg=[zero]*2048,bu=[zero]*2048,bh=[zero]*2048,h=h,y=h*2,propagated=[zero]*4096)
+        parts={r:(bytes(4194304),bytes(262144),bytes(262144)) for r in ('gate','up','down')}
+        outputs=lambda n:dict(shape=[1,n],dtype='F32',sha256=sha(bytes(4*n)),f32_bits=[0]*n)
+        ident={'input_sha256':sha(vector())};report=dict(outcome='executed',identity=ident,source=dict(logical_bytes=14155776,logical_calls=9),
+            cleanup=dict(live=0,double_frees=0,handler_messages=0,cleanup_errors=0),staging=[])
+        for r,n,N in [('gate',2048,273),('up',2048,273),('down',4096,145)]:
+            rss=dict(active_bytes=0,allocator_peak_bytes=0,process_peak_rss_bytes=0)
+            report[r]=dict(output=outputs(n),bound_exponent=N,preflight_calls=0,calls_before=[0,0],calls_after=[5,4],
+                packed_sha256=sha(parts[r][0]),input_sha256=(ident['input_sha256'] if r!='down' else sha(bytes(8192))),
+                resources_before=rss,resources_after=rss)
+            report['staging'].append(dict(reader=dict(published=True,setup=dict(policy='BufferedRequested',live=1)),logical=dict(role=r,actual_sha256=[sha(a) for a in parts[r]]),retired=dict(live=0,released=1)))
+        report['activation']=dict(status=0,elements=2048,stats=[2,0,9,4,13,1,9,0],gate_clamp_bits=[0]*2048,up_clamp_bits=[0]*2048,output=outputs(2048))
+        report['down_admission']=dict(decision='admitted',before=[10,8],after=[10,8],input_sha256=sha(bytes(8192)))
+        self.assertEqual(compare(report,deserialize(serialize(ref)),parts,ident)['status'],'PASS')
+        # Change the reported final word with a self-consistent digest. The
+        # independent ideal/local contracts must reject it despite valid framing.
+        report['down']['output']['f32_bits'][-1]=0x3f800000
+        report['down']['output']['sha256']=sha(bytes(4095*4)+struct.pack('<f',1.))
+        with self.assertRaisesRegex(ValueError,'down local'):compare(report,ref,parts,ident)
+
+    def test_output_replacement(self):
+        with tempfile.TemporaryDirectory() as t:
+            root=Path(t).resolve();p=root/'native.json';p.write_bytes(enc({'n':1}))
+            with p.open('rb') as f:expected=file_receipt(f)
+            record(root/'native-seal.json',expected)
+            self.assertEqual(sealed(root,'native',{'native':expected}),{'n':1})
+            q=root/'replacement';q.write_bytes(p.read_bytes());os.replace(q,p)
+            with self.assertRaises(ValueError):sealed(root,'native',{'native':expected})
+
     def test_admission(self):
         self.assertEqual(len(vector()),16384)
         self.assertEqual(sha(vector()),'0cf0ff9cfc811e69f72f31bf7279d66b03720a63f136d71a2d81ab3e6aff6a38')

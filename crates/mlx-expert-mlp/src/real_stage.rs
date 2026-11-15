@@ -1,7 +1,7 @@
 use mlx_native_affine::{
     dtype::Dtype,
     family,
-    fixture::{sha256_hex, HostTensor},
+    fixture::HostTensor,
     refusal::{check_qmm, DeviceFacts},
 };
 

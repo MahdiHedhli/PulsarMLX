@@ -55,7 +55,12 @@ The finite allowance here is one reference, one candidate and one grade.
 Each lasts at most 1800 s, campaign 7200 s, monitored combined 2 GiB (1 GiB
 job, 256 MiB supervisor, 256 MiB helpers, 64 MiB allocator and 448 MiB
 reserve); no process-wide allocation cap is claimed from RSS sampling alone.
-At launch require 16 GiB conservative reclaimable headroom and normal
+The original reference and candidate output descriptors are sealed before the next
+stage; their identities stay in the parent until final grading. The native child
+confirms all three loaded dylibs and its admitted shard descriptor stamp.
+At launch require 16 GiB estimated reclaimable headroom (the smaller of the
+kernel availability estimate less one point and free pages plus half the pageable
+external pages), and normal
 pressure. Stop on abnormal pressure, or swap growth over 256 MiB on three
 consecutive samples. Artifact budget 10 GiB; private evidence 512 MiB.
 The selected staging uses 14,155,776 destination bytes, one reusable-role

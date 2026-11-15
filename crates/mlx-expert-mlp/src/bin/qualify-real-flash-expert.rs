@@ -47,6 +47,7 @@ fn child(report: &mut serde_json::Value) -> Result<(), String> {
     }
     let exe = env::current_exe().map_err(|e| e.to_string())?;
     let v = Command::new("/opt/homebrew/bin/python3")
+        .env_remove("DYLD_LIBRARY_PATH")
         .args(["-I", "-B"])
         .arg(verifier)
         .arg("verify-child")
@@ -77,16 +78,21 @@ fn child(report: &mut serde_json::Value) -> Result<(), String> {
             .map_err(|_| "image path encoding")?;
         let image = std::path::Path::new(name);
         let leaf = image.file_name().and_then(|x| x.to_str()).unwrap_or("");
-        if leaf.to_ascii_lowercase().contains("mlx") && leaf.ends_with(".dylib") {
-            if !matches!(leaf, "libmlx.dylib" | "libmlxc.dylib")
-                || image.canonicalize().map_err(|e| e.to_string())? != lib.join(leaf)
+        if (leaf.to_ascii_lowercase().contains("mlx") || leaf == "libjaccl.dylib")
+            && leaf.ends_with(".dylib")
+        {
+            if !matches!(leaf, "libmlx.dylib" | "libmlxc.dylib" | "libjaccl.dylib")
+                || image.canonicalize().map_err(|e| e.to_string())?
+                    != lib.join(leaf).canonicalize().map_err(|e| e.to_string())?
+                || image.metadata().map_err(|e| e.to_string())?.len() > 32 << 20
+                || sha256_hex(&fs::read(image).map_err(|e| e.to_string())?) != info["libs"][leaf]
                 || !seen.insert(leaf.to_owned())
             {
                 return Err("unbound loaded MLX image".into());
             }
         }
     }
-    if seen.len() != 2 {
+    if seen.len() != 3 {
         return Err("missing original image".into());
     }
     report["loaded_libraries"] = json!(seen);
@@ -144,18 +150,34 @@ fn child(report: &mut serde_json::Value) -> Result<(), String> {
             return Err("policy budget".into());
         }
         let mut scratch = Scratch::new(&wp, budget).map_err(|e| e.to_string())?;
-        let policy = PreparedPolicy::prepare(&wp, Policy::BufferedRequested, budget)
-            .map_err(|e| format!("{e:?}"))?;
+        let policy =
+            PreparedPolicy::prepare(&wp, Policy::BufferedRequested, budget).map_err(|e| {
+                report["failed_setup"] = json!(e.setup);
+                e.cause.to_string()
+            })?;
+        let observed = policy.observation();
+        if observed
+            .original_stamps
+            .iter()
+            .any(|stamp| json!(stamp) != info["stamp"])
+        {
+            report["refused_retirement"] = json!(policy.retire());
+            return Err("original descriptor stamp mismatch".into());
+        }
         let mut data = plane.ranges.each_ref().map(|r| vec![0; r.len as usize]);
         let [w, s, b] = &mut data;
-        let (filled, receipt) = policy
-            .read(
-                &mut scratch,
-                PlaneDestination::new(w, s, b, expected),
-                budget,
-            )
-            .map_err(|e| format!("{e:?}"))?
-            .into_parts();
+        let (filled, receipt) = match policy.read(
+            &mut scratch,
+            PlaneDestination::new(w, s, b, expected),
+            budget,
+        ) {
+            Ok(v) => v.into_parts(),
+            Err(e) => {
+                report["failed_read"] = json!(e.receipt);
+                report["refused_retirement"] = json!(policy.retire());
+                return Err(e.cause.to_string());
+            }
+        };
         let logical = filled.into_receipt();
         let retired = policy.retire();
         transport += receipt.components.iter().map(|v| v.bytes).sum::<u64>();
@@ -197,7 +219,12 @@ fn child(report: &mut serde_json::Value) -> Result<(), String> {
             bytes: inputs,
         },
     };
-    real_execute::run(adapter, report)
+    let result = real_execute::run(adapter, report);
+    let (live, freed) = native::handle_census();
+    report["final_native"] = json!({"calls":ffi::call_counts(),"live":live,"freed":freed,
+        "double_frees":native::double_free_attempts(),"handler_messages":native::handler_messages(),
+        "cleanup_errors":native::cleanup_errors().len()});
+    result
 }
 fn main() {
     #[cfg(pulsar_native_mlx)]
