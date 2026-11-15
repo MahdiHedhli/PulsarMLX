@@ -2,11 +2,12 @@
 
 **Date**: 2026-11-14
 
-**Status**: The toolchain check of section 2, the three `cargo` commands of section 3 and
-the two check scripts of section 4 have been run on 2026-11-14, on the uncommitted M0
-working tree, against the empty skeleton. Section 4 records the negative cases observed
-then. Every other command is planned. At M0 the only runnable content is the empty `console/` workspace skeleton
-and its two check scripts (GOV-06). Each command is marked **Available from** with the work
+**Status**: The toolchain check of section 2, the `cargo` commands of section 3 and the
+two check scripts of section 4 were run on 2026-11-14 at commit `1a2db9b9`, with a clean
+working tree, against the empty skeleton. Section 4 also records the negative cases, which
+were observed earlier the same day on the uncommitted working tree. Every other command is
+planned. At M0 the only runnable content is the empty `console/` workspace skeleton and
+its check tools (GOV-06). Each command is marked **Available from** with the work
 package that makes it real. When a package lands, it updates its entries here in the same
 change: it replaces "planned" with the observed result, the date, the commit and any
 excluded or failing coverage, as constitution principle III and XII require. Treat any
@@ -78,9 +79,12 @@ These are the forms `.github/workflows/console.yml` runs, except the toolchain s
 keeps its own `rustc -V` assertion. `cargo fetch --locked` fetches crates that are not
 already cached; nothing is vendored (a lead decision of 2026-11-14). **Available from**:
 GOV-06 (M0), on the empty skeleton. Each later package adds its tests to the same
-commands. Observed on 2026-11-14 on the uncommitted M0 working tree: all three commands
-passed, with one skeleton test. That says nothing about any console behavior, because
-none is implemented.
+commands. Observed on 2026-11-14 at commit `1a2db9b9`, on the owner's build host (macOS,
+Apple Silicon): the toolchain script printed its `ok` line, `cargo fetch --locked` had
+nothing to fetch because the skeleton has no dependencies, and `cargo fmt --check`,
+`cargo clippy` and `cargo test` passed, with one skeleton test. No Linux run and no CI run
+is recorded yet, because nothing has been pushed. That says nothing about any console
+behavior, because none is implemented.
 
 The root commands in `CONTRIBUTING.md` (`cargo check --workspace --all-targets`,
 `cargo test --workspace --no-fail-fast`) do not build `console/` (plan exception E1); run
@@ -140,8 +144,26 @@ reverted before the next, and each made the named check fail with a non-zero exi
 The staged submodule case did not fire at first: in working-tree mode `check-boundary.sh`
 listed only working-tree and untracked changes, so a staged gitlink with no checked-out
 directory was never scanned. The script now lists staged changes as well, and the case
-fires. The positive runs (both scripts passing) are recorded here at the M0 commit, with
-the exact commands, the commit and the number of changed paths.
+fires.
+
+**Observed (positive runs)**: on 2026-11-14 at commit `1a2db9b9`, eight commits after the
+merge base `aaf076f1`, with a clean working tree, in the form the workflow uses:
+
+```sh
+bash console/tools/check-boundary.sh --base origin/main --committed
+bash console/tools/check-hygiene.sh --base origin/main --committed
+```
+
+Both passed: 44 changed paths and all five boundary checks; every hygiene gate over 44
+files, 22,455 added lines and 8 commit messages. Neither script changed the working tree
+or the index. The repository's own `scripts/research/check_staged.sh` also passed on the
+staged content of each of the eight commits.
+
+**Observed (interpreter)**: the check tools are bash scripts. At the same commit, each of
+the three (`check-boundary.sh`, `check-hygiene.sh`, `check-toolchain.sh`), started with
+`sh`, `dash` or `bash --posix`, stopped at once with exit status 2 and a message that says
+to use bash. Before that guard was added, `sh console/tools/check-hygiene.sh` stopped
+part-way with a syntax error.
 
 ## 5. Run the server with the scripted engine
 

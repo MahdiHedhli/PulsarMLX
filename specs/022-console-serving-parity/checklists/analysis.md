@@ -561,6 +561,15 @@ CONSOLE_ROADMAP.md; PM = PROJECT_MAYA.md; SYNC = PROJECT_MAYA_SYNC.md.
   `cargo test --locked` passed (1 unit test); a link check kept outside the repository
   resolved all 364 relative links and their anchors in the 31 new and changed
   Markdown files. These are runs on an uncommitted tree, not evidence for a commit.
+- Committed later on 2026-11-14 as eight commits, `a713aecd` to `1a2db9b9`. At `1a2db9b9`,
+  with a clean working tree: `check-boundary.sh --committed` passed (44 changed paths,
+  every check ok); `check-hygiene.sh --committed` passed (44 files, 22,455 added lines, 8
+  commit messages, every gate ok); `check-toolchain.sh` printed its `ok` line; from
+  `console/`, the same three `cargo` commands passed (1 unit test). The eighth commit adds
+  an interpreter guard to the three check tools, after `sh console/tools/check-hygiene.sh`
+  was found to stop part-way with a syntax error; the tools are bash scripts and the
+  workflow starts them with bash, so no result above changes. Nothing has been pushed, so
+  no CI run exists for these commits.
 - The donor checkout was read only as text, with `ast` from a script kept outside it. No
   donor code was imported or executed, and nothing was fetched from the network.
 - Rerun this analysis when tasks.md or a contract changes materially, after the owner's
