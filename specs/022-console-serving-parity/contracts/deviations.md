@@ -892,15 +892,21 @@ ledger row or comparator annotation that cites one fails the checker.
 
 ## Deferred, awaiting owner decision
 
-The owner deferred the proposals below on 2026-11-14, at checkpoint 1. They are **not
-approved**. Until the owner decides, the implementing package reproduces the donor's
-behavior where it can, and records the row as `pending` where it cannot. The register of
-open items tracks them as OPEN-15.
+The owner deferred P-5 and P-18 on 2026-11-14, at checkpoint 1. P-19, P-20 and P-21 were
+raised by the M1 packages on 2026-11-14 and have not been put to the owner yet; they are
+put at checkpoint 2. None of the five is **approved**. Until the owner decides, the
+implementing package reproduces the donor's behavior where it can, and records the row as
+`pending` where it cannot. For P-19 to P-21 it cannot: the code ships the proposed
+behavior, says so where it does, and changes if the owner declines. The register of open
+items tracks all five as OPEN-15.
 
 | Ref | Proposed difference | Donor behavior | Planner and reason | Decide before |
 | --- | --- | --- | --- | --- |
 | P-5 | Decode and resample pictures with Rust code (Catmull-Rom for bicubic, in-house pad, EXIF orientation); formats PNG, JPEG, GIF, BMP, WebP; pixel values labeled not bit-exact with Pillow | Pillow decode, `ImageOps.pad`, bicubic | RSP: Pillow is unavailable and no real vision tower makes pixel differences observable. | The picture packages of M6 (RSP-18, RSP-19) |
 | P-18 | An optional, explicit model-family override in configuration, beside the substring-based family detection | The template family is detected only from marker substrings in the chat template's source (`serve/frontend.py`, class `ChatTemplate`); there is no override | PRM (PRM-05): detection by substrings is brittle; the override is additive and leaves detection unchanged when unset. | PRM-05 in M2 |
+| P-19 | Refuse a JSON document that holds an unpaired UTF-16 surrogate inside a string (an escape from `\uD800` to `\uDFFF` without its pair, or such a surrogate in the body bytes), with the reader's own message in Python's position format; a request body that does so is answered 400 | CPython's `json.loads` accepts it and builds a `str` that holds the lone surrogate | API-01: a Rust `String` cannot hold a lone surrogate. Outside a string a lone surrogate fails exactly as in CPython. | Checkpoint 2 (the behavior ships with API-01) |
+| P-20 | Refuse a JSON document nested deeper than 1000 levels, in the reader and the writer, with CPython's `RecursionError` wording; a request body that deep is answered 400 | CPython has no fixed limit: far deeper documents parse, and one deep enough to exhaust its stack raises an uncaught `RecursionError`, so the client gets no answer | API-01: an explicit bound keeps the reader, the writer and the recursive drop of a parsed value within the stack. | Checkpoint 2 (the behavior ships with API-01) |
+| P-21 | Four parse differences on engine output that no working engine produces: an `INFO` value with more than one leading minus sign stays a string; a value in non-ASCII decimal digits stays a string; an integer beyond 64 bits stays a string; and a `DONE` count that is negative or above 32 bits is refused | The donor's `int()` raises on the first, so the engine start fails; reads the second; keeps the third as a Python integer; and accepts the fourth (`serve/server.py:927-930`, `:1192-1199`) | ENG-01: typed, bounded figures in the seam; each case is a malformed line from an engine. | Checkpoint 2 (the behavior ships with ENG-01) |
 
 Two further items are still open under OPEN-15 and await the owner in the same way: the
 JSON Schema meta-validation wording of PLAN-5 (the `invalid JSON Schema: ` prefix and the
