@@ -16,7 +16,6 @@ serde_json.workspace = true
 tokio = { workspace = true, features = [
     "rt", "rt-multi-thread", "net", "io-util", "time", "sync", "macros",
 ] }
-httparse.workspace = true
 
 [dev-dependencies]
 console-engine = { workspace = true, features = ["test-support"] }

@@ -27,13 +27,13 @@ fn strip_digit_underscores(s: &str) -> Option<String> {
 /// decimal or exponent form with single underscores between digits, or `inf`,
 /// `infinity` and `nan` in any case. Non-ASCII digits, which Python also reads, give
 /// `None`.
-pub(crate) fn py_float(s: &str) -> Option<f64> {
+pub fn py_float(s: &str) -> Option<f64> {
     strip_digit_underscores(s.trim())?.parse::<f64>().ok()
 }
 
 /// Python's `int()` on a string, limited to `i64`: surrounding whitespace ignored, an
 /// optional sign, ASCII digits with single underscores between them.
-pub(crate) fn py_int(s: &str) -> Option<i64> {
+pub fn py_int(s: &str) -> Option<i64> {
     let cleaned = strip_digit_underscores(s.trim())?;
     let digits = cleaned
         .strip_prefix('-')

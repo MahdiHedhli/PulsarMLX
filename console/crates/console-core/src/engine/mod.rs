@@ -43,6 +43,7 @@ pub use instance::{
 };
 pub use ledger::{Checked, EventLedger, LedgerCounts, LedgeredSink, Verdict};
 pub use multi::{generate_one, Finished, LedgerSet, LedgeredTaggedSink, MultiEngine};
+pub use pyparse::{py_float, py_int};
 pub use request::{
     EmbeddingsKind, EmbeddingsRef, GenerationRequest, Penalties, RequestId, RestoreHints, Sampling,
     SoftClose, ThinkingHints, TuneKnobs, TuneValue, TUNE_MAX_KNOBS,

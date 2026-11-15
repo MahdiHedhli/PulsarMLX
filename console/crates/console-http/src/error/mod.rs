@@ -33,26 +33,9 @@ use std::fmt;
 use console_pyjson::dumps::dumps_str;
 use console_pyjson::loads::LoadsError;
 
-/// The margin the engine keeps between prompt plus answer and the context size: a request is
-/// refused when `prompt + max_new + CTX_SLACK > context`.
-///
-/// Behavior reference: project-maya serve/server.py:163 at 7e68a30f.
-pub const CTX_SLACK: i64 = 8;
-
-/// The smallest text-file limit the chat page uses (512 KiB).
-pub const TEXT_FILE_MIN: i64 = 512 * 1024;
-
-/// The largest text-file limit the chat page uses (16 MiB).
-pub const TEXT_FILE_MAX: i64 = 16 * 1024 * 1024;
-
-/// The largest text file the chat page attaches for a context of `context` tokens: about four
-/// bytes a token, at least 512 KiB and at most 16 MiB (`max(TEXT_FILE_MIN, min(TEXT_FILE_MAX,
-/// context * 4))`; a negative or zero context gives the minimum).
-///
-/// Behavior reference: project-maya serve/server.py:167-171 at 7e68a30f.
-pub fn text_file_limit(context: i64) -> i64 {
-    TEXT_FILE_MIN.max(TEXT_FILE_MAX.min(context.saturating_mul(4)))
-}
+/// The context margin and the text-file limits are defined once, in `console_core::request`
+/// (API-04), and re-exported here for the routes that answer with them.
+pub use console_core::request::{text_file_limit, CTX_SLACK, TEXT_FILE_MAX, TEXT_FILE_MIN};
 
 /// The message of the overloaded answer while the model reloads with a new context size.
 ///

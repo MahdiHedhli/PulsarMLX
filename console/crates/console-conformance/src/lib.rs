@@ -2,11 +2,11 @@
 //! product binary, and it depends on no other console crate, so it observes the server
 //! only from outside.
 //!
-//! This crate is a skeleton created for CNF-01, which owns the `cnf` binary in
-//! `src/bin/cnf.rs`. Each module below has one owning work package, which writes inside
-//! the module without editing this file. Integration tests go in `tests/<package>_*.rs`,
-//! for example `tests/cnf03_client.rs`. Nothing is implemented yet, so nothing here may be
-//! described as working.
+//! CNF-01 owns the `cnf` binary in `src/bin/cnf.rs`. Each module below has one owning work
+//! package, which writes inside the module without editing this file. Integration tests go
+//! in `tests/<package>_*.rs`, for example `tests/cnf03_client.rs`. A module that still holds only its header comment is not
+//! implemented; `tasks.md` of feature 022 records which packages are done. Nothing here may
+//! be described as more than qualified on synthetic backends.
 
 pub mod client;
 pub mod compare;

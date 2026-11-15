@@ -6,9 +6,8 @@
 //! input CPython rejects. Two inputs CPython accepts are refused here, each with its own
 //! [`LoadsError`] case: a string holding an unpaired UTF-16 surrogate, which a Rust `String`
 //! cannot hold ([`LoadsError::LoneSurrogate`]), and nesting deeper than [`MAX_DEPTH`]
-//! ([`LoadsError::TooDeep`]). Neither refusal has a deviation id yet: API-01 has asked the
-//! lead to register both in contracts/deviations.md for owner approval (the next free P-
-//! number, rule 4), and they stay unregistered differences until then. As in CPython:
+//! ([`LoadsError::TooDeep`]). The two refusals are proposals P-19 and P-20 in the deviation
+//! register of feature 022 and await the owner's decision. As in CPython:
 //!
 //! - `NaN`, `Infinity` and `-Infinity` are accepted.
 //! - Integers of any size up to Python's 4300-digit conversion limit are kept exactly; a float

@@ -87,7 +87,6 @@ dependencies = [
  "console-pyjson",
  "console-testkit",
  "console-tokenizer",
- "httparse",
  "serde_json",
  "tokio",
 ]
