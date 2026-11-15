@@ -30,8 +30,10 @@
 //!    the head with its status, after it as the dialect's error event or the mid-answer
 //!    log line ([`InferenceError::before_start`], [`InferenceError::after_start`]).
 //!
-//! The turn trace (`PULSAR_CONSOLE_TURN_TRACE`, [`TurnTrace`]) marks `json` when the
-//! handler receives the parsed body; the dialect marks `prepare_start` and `prepared`.
+//! The turn trace (`PULSAR_CONSOLE_TURN_TRACE`, [`TurnTrace`]) marks `http`, `body` and
+//! `json` at the instants the router received the request, read its body and parsed it
+//! (`RouteRequest::marks`, added by API-08); the dialect marks `prepare_start` and
+//! `prepared`.
 //! The line is printed at the first token of a turn that is not cancelled, and only once
 //! the engine-side `gen_start` mark exists, as the donor's (M3's line-protocol client adds
 //! that mark, so M1 prints no trace line).

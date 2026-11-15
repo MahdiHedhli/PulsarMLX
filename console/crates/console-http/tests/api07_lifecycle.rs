@@ -644,7 +644,7 @@ async fn the_turn_trace_prints_its_marks_at_the_first_token() {
     assert_eq!(lines.len(), 1, "{lines:?}");
     let line = &lines[0];
     assert!(
-        line.starts_with("[console] trace n=2 json=0.0 prepare_start="),
+        line.starts_with("[console] trace n=2 http=0.0 body="),
         "{line}"
     );
     let names: Vec<&str> = line
@@ -655,6 +655,8 @@ async fn the_turn_trace_prints_its_marks_at_the_first_token() {
         names,
         [
             "n",
+            "http",
+            "body",
             "json",
             "prepare_start",
             "prepared",

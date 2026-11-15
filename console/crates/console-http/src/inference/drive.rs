@@ -40,11 +40,20 @@ pub(crate) async fn serve(inference: Arc<Inference>, dialect: Arc<dyn Dialect>, 
         body,
         guard,
         route: rq_route,
+        marks,
         ..
     } = rq;
     let mut trace = TurnTrace::new(inference.settings().turn_trace);
-    // The router has read and parsed the body by now.
-    trace.mark("json");
+    // The router received the request, then read and parsed its body (the donor's
+    // `http`, `body` and `json` marks; the router keeps their instants).
+    trace.mark_at("http", marks.received);
+    if let Some(at) = marks.body {
+        trace.mark_at("body", at);
+    }
+    match marks.json {
+        Some(at) => trace.mark_at("json", at),
+        None => trace.mark("json"),
+    }
     if let Some(message) = inference.hooks().overloaded_message() {
         let _ = exchange
             .responder()

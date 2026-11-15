@@ -496,9 +496,8 @@ pub struct RouteRequest {
 
 /// The instants of one request before its handler, added by API-08 for the turn trace of
 /// API-07: the donor's `turn_mark("http")`, `turn_mark("body")` and `turn_mark("json")`.
-/// The inference driver still marks `json` itself when its handler starts; reading these
-/// instants there changes the trace line that API-07's own test pins, so it is left to a
-/// change of that test.
+/// The inference driver reads them when its handler starts (`console_http::inference`),
+/// and marks `json` itself only for a route whose body the router did not parse.
 ///
 /// Behavior reference: project-maya serve/server.py:6161-6162 and 6242-6244 at 7e68a30f.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
