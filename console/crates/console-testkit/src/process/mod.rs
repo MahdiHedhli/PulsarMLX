@@ -21,8 +21,9 @@
 //!
 //! # Seams
 //!
-//! The binary `pulsar-console` is API-08's (M1, next wave) and the fake engine binaries
-//! are ENG-05's (M3): neither exists yet, so this module takes both paths as arguments and
+//! The M1 binary `pulsar-console` exists since API-08, whose process tests start it through
+//! [`Proc`]; it has no `--engine` option until API-17 (M4). The fake engine binaries are
+//! ENG-05's (M3) and do not exist yet, so this module takes both paths as arguments and
 //! its own tests drive `/bin/sh` scripts instead. The tests that spawn the server with the
 //! fake engine (the donor's `ServerStops`) belong to API-17 and ENG-05, which use this
 //! helper when they land. The process-group bookkeeping and leak checks of the conformance
@@ -430,9 +431,10 @@ fn path_text(path: &Path) -> io::Result<String> {
 
 /// The `pulsar-console` command line for a test: the binary, an engine choice, a run
 /// config, a port, and any further arguments, in that order, as the donor's `server_cmd`
-/// orders `--engine`, `--config` and `--port`. The flag names follow contracts/cli.md and
-/// are settled by API-08 and API-17 (`--engine`, `--config`, `--port`); until that binary
-/// exists this is a seam. The donor names its engine (`--engine maya` with a fake engine,
+/// orders `--engine`, `--config` and `--port`. The flag names follow contracts/cli.md:
+/// API-08 settled `--config` and `--port` (section 1.1), and `--engine` is API-17's, which
+/// the M1 binary refuses as an unrecognized argument, so a command that names an engine is
+/// a seam until then. The donor names its engine (`--engine maya` with a fake engine,
 /// `--engine mock` without); a test names its own with [`engine`](Self::engine).
 ///
 /// Behavior reference: project-maya serve/test_stop.py:68-70 at 7e68a30f (`server_cmd`).
