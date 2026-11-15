@@ -1,13 +1,14 @@
 //! Core of PulsarMLX Console: the request model, the backend seam, the engine FIFO, the
 //! turn driver and the run-config store.
 //!
-//! This crate is a skeleton. It depends on no HTTP, prompt or template crate, so every
-//! engine implementation and every route can build on it. Nothing is implemented yet, so
-//! nothing here may be described as working.
+//! It depends on no HTTP, prompt or template crate, so every engine implementation and
+//! every route can build on it.
 //!
 //! Each module has one owning work package, which writes inside the module without editing
 //! this file. Integration tests go in `tests/<package>_*.rs`, for example
-//! `tests/eng09_fifo.rs`.
+//! `tests/eng09_fifo.rs`. A module that still holds only its header comment is not
+//! implemented; `tasks.md` of feature 022 records which packages are done. Nothing here may
+//! be described as more than qualified on synthetic backends.
 
 pub mod config;
 pub mod digest;
