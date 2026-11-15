@@ -48,6 +48,7 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
+use std::time::Instant;
 
 use console_pyjson::loads::loads_bytes;
 use serde_json::{Map, Value};
@@ -488,6 +489,37 @@ pub struct RouteRequest {
     /// [`Guard::response_owner`], [`Guard::own_page`], [`Guard::attach_page`],
     /// [`Guard::local_or_keyed`]).
     pub guard: Arc<Guard>,
+    /// When the request reached the router, and when the router read and parsed its body
+    /// (the turn trace's `http`, `body` and `json` marks).
+    pub marks: RequestMarks,
+}
+
+/// The instants of one request before its handler, added by API-08 for the turn trace of
+/// API-07: the donor's `turn_mark("http")`, `turn_mark("body")` and `turn_mark("json")`.
+/// The inference driver still marks `json` itself when its handler starts; reading these
+/// instants there changes the trace line that API-07's own test pins, so it is left to a
+/// change of that test.
+///
+/// Behavior reference: project-maya serve/server.py:6161-6162 and 6242-6244 at 7e68a30f.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RequestMarks {
+    /// The router received the request (its head has been read).
+    pub received: Instant,
+    /// The body was read (a [`BodyMode::Json`] route only).
+    pub body: Option<Instant>,
+    /// The body was parsed as a JSON object (a [`BodyMode::Json`] route only).
+    pub json: Option<Instant>,
+}
+
+impl RequestMarks {
+    /// Marks of a request received now, with no body read yet.
+    pub fn now() -> Self {
+        Self {
+            received: Instant::now(),
+            body: None,
+            json: None,
+        }
+    }
 }
 
 /// What a later package registers for a [`Route`]: one trait object per slot.
@@ -639,6 +671,7 @@ impl Router {
     }
 
     async fn serve(&self, mut exchange: Exchange) {
+        let mut marks = RequestMarks::now();
         let guard = self.guard();
         let decision = Self::decide(&guard, exchange.head(), exchange.peer_addr().ip());
         match decision {
@@ -666,13 +699,13 @@ impl Router {
                 let _ = exchange.responder().error(&ApiError::NotFound).await;
             }
             Decision::PostFallback => {
-                if read_object(&mut exchange).await.is_some() {
+                if read_object(&mut exchange, &mut marks).await.is_some() {
                     let _ = exchange.responder().error(&ApiError::NotFound).await;
                 }
             }
             Decision::Dispatch(spec) => {
                 let body = if spec.body == BodyMode::Json {
-                    match read_object(&mut exchange).await {
+                    match read_object(&mut exchange, &mut marks).await {
                         Some(map) => Some(map),
                         None => return,
                     }
@@ -688,6 +721,7 @@ impl Router {
                             path,
                             body,
                             guard,
+                            marks,
                         };
                         handler.serve(request).await;
                     }
@@ -744,8 +778,13 @@ fn gate_refusal(guard: &Guard, gate: Gate, peer: std::net::IpAddr) -> Option<Ref
 /// object. On failure the error is answered (or the client is gone) and `None` returned.
 ///
 /// Behavior reference: project-maya serve/server.py:6241-6246 and 6283-6288 at 7e68a30f.
-async fn read_object(exchange: &mut Exchange) -> Option<Map<String, Value>> {
-    let raw = match exchange.read_body().await {
+async fn read_object(
+    exchange: &mut Exchange,
+    marks: &mut RequestMarks,
+) -> Option<Map<String, Value>> {
+    let read = exchange.read_body().await;
+    marks.body = Some(Instant::now());
+    let raw = match read {
         Ok(raw) => raw,
         Err(BodyError::Refused(e)) => {
             let _ = exchange.responder().error(&e).await;
@@ -755,7 +794,10 @@ async fn read_object(exchange: &mut Exchange) -> Option<Map<String, Value>> {
     };
     let text: &[u8] = if raw.is_empty() { b"{}" } else { &raw };
     let error = match loads_bytes(text) {
-        Ok(Value::Object(map)) => return Some(map),
+        Ok(Value::Object(map)) => {
+            marks.json = Some(Instant::now());
+            return Some(map);
+        }
         Ok(_) => ApiError::validation(NOT_AN_OBJECT),
         Err(e) => ApiError::from(e),
     };

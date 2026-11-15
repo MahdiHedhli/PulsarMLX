@@ -1,10 +1,13 @@
 # Command Line and Ready Line Contract
 
 **Status**: draft. CNF-07 wrote the ready-line contract (section 2) and the process
-harness contract (section 5) on 2026-11-15. The command line itself (section 1), the
-port-in-use error (section 3) and the exit codes (section 4) are restated from the API-17
-detail and are settled by API-08 (the minimal M1 entry point, lead decision LD31) and
-API-17 (the full command line, M4), which update this file in the same change.
+harness contract (section 5) on 2026-11-15. API-08 (the minimal M1 entry point, lead
+decision LD31) settled on 2026-11-15 what M1 builds: the M1 options and their argparse
+conventions (section 1.1), the start-up order up to the ready line (section 1.2), the
+line before the ready line (section 2.1), the port-in-use error (section 3) and the exit
+codes of M1 (section 4). What is marked "API-17 settles" is still restated from the
+API-17 detail and is settled by API-17 (the full command line, M4), which updates this
+file in the same change.
 
 **Scope**: how `pulsar-console` is started, how it says it is ready, how it ends, and how
 the conformance harness (`console_conformance::process`) starts and stops it. Like every
@@ -14,7 +17,7 @@ contract of this feature, it describes a server qualified on synthetic backends 
 `serve/server.py:7385-7390` (the ready line), `serve/server.py:7166-7171` (the port check),
 and `serve/test_stop.py:70-145` (the donor's process helpers).
 
-## 1. Command line (restated; API-17 settles)
+## 1. Command line
 
 The command line follows Python `argparse` conventions, as the donor's does: long options,
 the `--opt=value` form, unique-prefix abbreviations (`allow_abbrev` stays on), a repeatable
@@ -24,11 +27,85 @@ standard error, and `--help`. The options planned by API-17 are `--engine`, `--c
 `--idle-unload SECONDS`, `--fit-max-tokens`, `--api-key` (default from the environment),
 `--mcp-config`, `--parent-pipe` and a development flag for the asset directory. The engine
 names, and how the donor's `maya` and `strata` names are treated, are API-17's
-(BRAND-1.6). API-08's minimal entry point offers the subset M1 needs: the scripted engine,
-the listen address and the port.
+(BRAND-1.6). API-08's minimal entry point offers the subset M1 needs (section 1.1); the
+rest of the list above is API-17's to build and settle.
 
 The harness depends on two options only: `--port` (it always passes `--port 0`) and
 `--config` (it passes the run config it generated, when there is one).
+
+### 1.1 The M1 options (settled by API-08)
+
+`pulsar-console` of M1 (`console/crates/pulsar-console`: `pulsar_console::run`, with the
+parser in `pulsar_console::cli`) takes, in the donor's order: `--config CONFIG`, `--host
+HOST`, `--script SCRIPT` (repeatable: each request takes the next script and the last one
+repeats; none gives the donor's default greeting), `--port PORT` (an integer as Python's
+`int()` reads it, default 8095) and `--api-key API_KEY` (absent: the environment's
+`PULSAR_CONSOLE_API_KEY`, then the run config's `api_key`), and `-h`/`--help`.
+
+The argparse conventions built, following CPython 3.14 (LD38): `--opt value` and
+`--opt=value`; unique prefixes of a long option (`--po 0`), and `ambiguous option: --h could
+match --help, --host` for a prefix that is not unique; the last of a repeated option wins,
+except `--script`, which appends; a value that looks like an option is refused (`argument
+--host: expected one argument`), while an argument that starts with `-` and a digit, or
+`-.` and a digit, is a value (`--host -1x` is accepted; `--port -5x` is `argument --port:
+invalid int value: '-5x'`); an ambiguous prefix is refused only when the parse reaches it
+(`-h --h` prints the help; `--port z --h` is the `--port` error); `-h` with text attached
+is read as combined short flags (`-hh` and `-hx` print the help), while `-h=1`, `-h-x` and
+`--help=1` are `argument -h/--help: ignored explicit argument '...'`; this command line has
+no positional arguments, so `--` and everything after it are unrecognized arguments,
+listed with the `--` (`--port 0 --` exits 2 with `unrecognized arguments: --`; `-- --port`
+gives `unrecognized arguments: -- --port`), and an unknown option or extra argument is
+`unrecognized arguments: ...`; a bad integer is `argument --port: invalid int value:
+'<text>'`. Every usage error prints the usage on standard error, wrapped as argparse wraps
+it at `COLUMNS` (80 when unset; below 30 columns the program name stands alone on the
+first line and the options follow, indented by seven spaces), then `pulsar-console: error:
+<message>`, and exits 2. `--help` prints the usage and the options on standard output and
+exits 0. Not reproduced: the colors Python 3.14 gives a terminal's usage errors, the
+terminal width read from the terminal itself (only `COLUMNS` is read), the wrapping of the
+`--help` option list at `COLUMNS` (it is laid out for 80 columns; its usage line does follow
+`COLUMNS`), and non-ASCII decimal digits in `--port` and in the negative-number test.
+
+The other options of the donor (`--engine`, `--gpu`, `--tokenizer`, `--open`,
+`--idle-unload`, `--fit-max-tokens`, `--mcp-config`, `--parent-pipe` and the dashboard's
+development flag) are API-17's; until it lands they are unrecognized arguments. The M1
+binary has one engine, the scripted engine (`pulsar_console::scripted_factory`, the only
+factory `main` names), with the model name `pulsar-console-synthetic` unless the run config
+names one (`model_name`); no flag, environment variable or configuration key selects
+another engine.
+
+### 1.2 Start-up order of M1 (settled by API-08)
+
+In the donor's order (`serve/server.py:7115-7392`), up to the ready line:
+
+1. the command line (usage errors, exit 2);
+2. the run config of `--config` and the environment with the config's server entries laid
+   over it (API-15); an unreadable or invalid config prints `config: <message>` on standard
+   error and exits 1;
+3. the host (`--host`, else the config's `host`, else `127.0.0.1`), then the port probe
+   (section 3), before anything is started;
+4. the server settings: API key, CORS origins and `allowed_hosts` (`config: <message>` and
+   exit 1 for a bad value); an `allowed_hosts` entry that can never match stops the start
+   with `config: allowed_hosts: '<entry>' is not a host name the server can match; the
+   accepted forms are name, name:port, [v6] or [v6]:port` and exit 1 (LD40); the
+   transport's backlog, body limit and socket timeout come from the same environment;
+5. the byte tokenizer and the scripted engine (a bad `PULSAR_CONSOLE_MOCK_TOK_S` prints the
+   engine's message and exits 1);
+6. the turn driver, which admits the engine through the synthetic-only guard (section 4,
+   last row); then, when the run config lists CORS origins, the donor's line
+   `[console] browser pages allowed to call /v1/* (CORS): <origin>, <origin>` on standard
+   output (`serve/server.py:7330-7331`, with the product's prefix under BRAND-1);
+7. the router with its guards, the inference driver and the OpenAI Chat Completions
+   dialect on `/v1/chat/completions` (the only route M1 serves);
+8. the listener, then the lines of section 2.1, on standard output, each flushed.
+
+Signals keep their default behavior in M1; the shutdown order, the second `SIGINT`, the
+parent pipe, the log tee and its time stamps are API-17's and API-16's (M4). The scripted
+engine's start reads no `sampling` block from the run config, as the donor's mock path
+does not (`serve/server.py:7285-7289`). The binding follow-up of tasks.md (API-08: a
+refused `sampling` block prints its notes on standard output and its message on standard
+error before a non-zero exit) is therefore not wired into the M1 start: the helper
+`pulsar_console::report_sampling_error` exists, and whether the M1 start calls it or the
+follow-up moves to the line engine's start of API-17 awaits the lead's ruling.
 
 ## 2. The ready line
 
@@ -61,7 +138,21 @@ The next line is the browser hint, in the donor's text:
 When the bind address is not a loopback name, one line per LAN address follows
 (`       from other devices: http://<ip>:<port>/   (API: http://<ip>:<port>/v1)`), as the
 API-17 detail describes. Whether the hint's wording changes under BRAND-1 or PLAN-1 is
-API-17's to settle; the harness does not read it.
+API-17's to settle; the harness does not read it. The M1 entry point prints the ready line
+and the hint only: the LAN addresses, the no-API-key warning and the firewall hint of a
+non-loopback bind are API-17's.
+
+Right before the ready line, the M1 entry point prints one line that says the engine is
+synthetic and that no real model is served (lead decision LD46):
+
+```text
+[console] engine: scripted, synthetic provenance - no real model is served
+```
+
+It is a log line of the server (with the `[console]` prefix), not part of the ready line,
+and it is not the proposed synthetic marker of section 2.3. In M1 the ready line names
+`/v1/responses` and `/v1/messages`, as the donor's does, although only
+`/v1/chat/completions` is served until those packages land.
 
 ### 2.2 The port
 
@@ -103,24 +194,32 @@ caller asks for it (`ReadyExpect::Oracle` or `ReadyExpect::Either`).
   closes its standard output, before it is an error that carries the output seen; it
   is reported as soon as it is known, not at the deadline.
 
-## 3. Port in use (restated; API-17 settles)
+## 3. Port in use (settled by API-08)
 
 Before any model or engine work, the server binds and closes the address once. When that
-fails it exits through the usage-error path (status 2, `usage: ...` then `error: ...` on
-standard error) with the donor's message, rebranded under BRAND-1:
-`port <N> is already in use - is Maya (or another server) already running? Close it, or
-start this one with a different --port` (`serve/server.py:7170-7171`). The product's
-wording of the server's name in that message is API-17's to fix.
+fails (for any operating-system error, as the donor catches `OSError`), it exits through
+the usage-error path (status 2, the usage then `pulsar-console: error: ...` on standard
+error) with the donor's message, rebranded under BRAND-1:
 
-## 4. Exit codes (restated; API-16, API-17 and API-08 settle)
+```text
+port <N> is already in use - is PulsarMLX Console (or another server) already running? Close it, or start this one with a different --port
+```
+
+(`serve/server.py:7166-7171`). A port outside 0 to 65535 is not a usage error: the donor's
+`bind` raises an `OverflowError` it does not catch, so the M1 entry point prints
+`OverflowError: bind(): port must be 0-65535.` on standard error and exits 1. API-17 keeps
+this wording unless it changes this section.
+
+## 4. Exit codes (API-08 settles the M1 rows; API-16 and API-17 the others)
 
 | Status | When |
 | --- | --- |
-| 0 | A requested stop (signal, parent pipe) that completed: the line `[console] stopping (<why>): the engine ends` was printed and the engine closed. |
-| 2 | A usage error, including the port-in-use error. |
+| 0 | `--help` (M1). A requested stop (signal, parent pipe) that completed: the line `[console] stopping (<why>): the engine ends` was printed and the engine closed (API-17; in M1 a signal ends the process with the operating system's default behavior). |
+| 1 | A start-up failure before the ready line (M1): a run config or setting the server refuses (`config: ...`), an `allowed_hosts` entry that can never match, a port outside 0 to 65535, an engine that did not start, a listener that could not be bound after the probe, and the synthetic-only refusal below. |
+| 2 | A usage error, including the port-in-use error (M1). |
 | 76 | A restart requested through the admin routes (API-13, API-14). |
-| 130 | A second `SIGINT` while stopping (`[console] stopped at once: ...`). |
-| non-zero | At process start, an engine that does not report synthetic provenance is refused after one line on standard error that names the engine kind, what the engine reported and `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md` (R29, LD28; API-08 pins it). |
+| 130 | A second `SIGINT` while stopping (`[console] stopped at once: ...`; API-17). |
+| 1 | At process start, an engine that does not report synthetic provenance is refused after one line on standard error that names the engine kind, what the engine reported and `docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`, and nothing is served (R29, LD28). The line is the `Display` of `ProvenanceRefused`: `[console] refusing to start: engine <kind> reports provenance <reported>; this build serves synthetic engines only. See docs/console/ALLOWING_NON_SYNTHETIC_ENGINES.md`. Pinned by `pulsar-console::api08_refusal::process_start_refuses_an_engine_that_is_not_synthetic` and `::process_start_refuses_an_engine_that_declares_no_provenance` (API-08; API-17 keeps them). |
 
 ## 5. Process harness contract (CNF-07)
 
