@@ -1,0 +1,97 @@
+{
+  "id": "strata-tune-request-body",
+  "description": "A request's strata_tune reaches the engine unchanged over the OpenAI and the Anthropic API.",
+  "donor": [
+    "serve/test_glm_dsa_tune.py::RequestBody::test_openai_and_anthropic"
+  ],
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\nhello"
+    ],
+    "max_context": 4096
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "model": "m",
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ],
+          "temperature": 0,
+          "strata_tune": {
+            "promote_min": 6,
+            "prefetch_n": 1,
+            "prefetch_at": "fetch",
+            "prefetch_rank": 2,
+            "prefetch_blocks": 4,
+            "mtp_keep": 4,
+            "cpu_split": 2,
+            "vram_evict": "lru",
+            "ngram": true,
+            "lane_row4": 1,
+            "graphs": false,
+            "pcie_frac_head": 0.35
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/messages",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "model": "m",
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ],
+          "max_tokens": 16,
+          "temperature": 0,
+          "strata_tune": {
+            "promote_min": 6,
+            "prefetch_n": 1,
+            "prefetch_at": "fetch",
+            "prefetch_rank": 2,
+            "prefetch_blocks": 4,
+            "mtp_keep": 4,
+            "cpu_split": 2,
+            "vram_evict": "lru",
+            "ngram": true,
+            "lane_row4": 1,
+            "graphs": false,
+            "pcie_frac_head": 0.35
+          }
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true,
+    "engine_tape": true
+  }
+}

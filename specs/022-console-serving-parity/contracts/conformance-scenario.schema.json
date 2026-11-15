@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "conformance-scenario.schema.json",
+  "title": "PulsarMLX Console conformance scenario",
+  "description": "One conformance case, written once and run against either target on synthetic engines only: the engine behind the server, the chat template, how the server starts, the steps the harness takes and what it records. This file documents the format; the loader in console-conformance::scenario enforces it in code (binding decision B6: no jsonschema crate). A test checks that the members and required members of every object below equal the loader's table (console-conformance::scenario::schema). Rules this schema cannot state are listed under x-loader-rules and enforced by the loader. Package CNF-02.",
+  "$comment": "x-loader-rules is an annotation of this file: the rules the loader enforces beyond the keywords below.",
+  "x-loader-rules": [
+    "Strict reading: a key repeated in one object is refused; every error names its JSON pointer.",
+    "Limits: the file is at most 262144 bytes; each list and string has the limit the loader names in console-conformance::scenario::limits.",
+    "Substitution tokens: every string value may hold {{loopback}}, {{port}}, {{tmp}} or {{key_short}}; any other {{name}} made of lower-case letters and underscores is refused. Object keys are never expanded. The runner expands tokens once their values are known and checks the expanded scenario again.",
+    "The file stem of a scenario file equals its id.",
+    "engine_line: the tokenizer must be bpe-bytes, because the donor refuses a line engine whose tokenizer directory has no vocab.json (serve/server.py:7180-7181 at 7e68a30f).",
+    "tokenizer_byte: an extra special may not repeat a base special (<|im_start|>, <|im_end|>, <|endoftext|>, <|vision_start|>, <|image_pad|>, <|vision_end|>) or another extra special.",
+    "tokenizer_bpe_bytes: an added token may not be one of the 256 byte characters, and no two added tokens share an id.",
+    "script: all scripts together, repeats expanded, are at most 1048576 bytes.",
+    "server.flags: --port, --config, --engine, --script and --tokenizer (alone or with =value) are set by the harness and refused, and so is every abbreviation of them (a flag of -- and at least one more character that is a prefix of one of them, such as --eng or --po=1), because the donor's parser keeps argparse's default allow_abbrev=True (serve/server.py:7116 at 7e68a30f).",
+    "server.flags: --host, or an abbreviation of it, is accepted only with the value {{loopback}}, after = or as the next flag (the donor reads it at serve/server.py:7120 and 7166 at 7e68a30f).",
+    "server.config: the key host is accepted only with the value {{loopback}}, for every engine kind (serve/server.py:7166 at 7e68a30f).",
+    "server.config: with a line engine, exe, args and tokenizer are written by the harness from the engine spec and refused.",
+    "server.env and engine_line.env: PATH, HOME, TZ, LC_ALL, LANG, TMPDIR, PULSAR_CONSOLE_VENDOR_DIR, FAKE_ENGINE_GATE and every name starting with XDG_, LD_, DYLD_ or PYTHON are set by the harness (or would load other code into the server or a fake) and refused.",
+    "step: request and signal exclude each other; disconnect_after_events and disconnect_after_bytes exclude each other; a disconnect needs a request in the same step; a concurrent_group step needs a request, wait_for_engine_step or release_engine_step; a step without a request needs wait_for_engine_step, release_engine_step or signal.",
+    "steps: the steps of one concurrent_group are contiguous.",
+    "Run semantics (for the runner): engine steps are counted per generate call of the engine, from 0; step n is the point before that call yields its n-th token. A generate call blocks before step n when the scenario names n in any wait_for_engine_step or release_engine_step, until a step releases n; a released gate stays open for the rest of the run, for every call.",
+    "Run semantics (for the runner): inside one step, wait_for_engine_step comes first (wait until some generate call is blocked at that gate), then the request is started (or the signal sent), then release_engine_step. A request outside a concurrent group is read to the end (or to its disconnect) before the step's release and the next step. The requests of a group are started in step order without waiting; the group is joined at the first step after it, or at the end of the steps. A gate-only step may sit inside a group, so hold A, send B, release is written as [A in g], [wait n, B in g], [release n in g].",
+    "request: body, body_text and body_file exclude each other.",
+    "observe: at least one of http, engine_tape or exit is true, or files or log is present."
+  ],
+  "$ref": "#/$defs/scenario",
+  "$defs": {
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "engine", "template", "steps", "observe"],
+      "properties": {
+        "id": {
+          "description": "Lower-case letters, digits and hyphens; starts with a letter or digit and does not end with a hyphen. Equals the file stem.",
+          "type": "string",
+          "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$",
+          "maxLength": 64
+        },
+        "description": {
+          "description": "One line on what the scenario shows.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "donor": {
+          "description": "The donor test methods whose setup this scenario transcribes, keyed as in the parity ledger.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^serve/test_[a-z0-9_]+\\.py::[A-Za-z_][A-Za-z0-9_]*(::[A-Za-z_][A-Za-z0-9_]*)?$",
+            "maxLength": 256
+          }
+        },
+        "notes": {
+          "description": "Free text for the reviewer, for example where a transcription departs from the donor setup.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "engine": {
+          "oneOf": [
+            {"$ref": "#/$defs/engine_mock"},
+            {"$ref": "#/$defs/engine_line"}
+          ]
+        },
+        "template": {
+          "description": "A project-authored template name, resolved as <templates dir>/<name>.jinja, or vendor:<path>, a vendor template read at test time from the hash-verified pinned donor checkout named by PULSAR_CONSOLE_VENDOR_DIR (never committed: deviation LIC-1). Without that variable a vendor scenario reports skipped, never passed; a hash mismatch is a failure.",
+          "type": "string",
+          "maxLength": 256,
+          "oneOf": [
+            {"pattern": "^[a-z0-9][a-z0-9._-]*$", "not": {"anyOf": [{"pattern": "\\.\\."}, {"pattern": "\\.jinja$"}]}},
+            {"pattern": "^vendor:[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*\\.jinja$", "not": {"pattern": "(^vendor:|/)\\.{1,2}(/|$)"}}
+          ]
+        },
+        "server": {"$ref": "#/$defs/server"},
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "items": {"$ref": "#/$defs/step"}
+        },
+        "observe": {"$ref": "#/$defs/observe"}
+      }
+    },
+    "engine_mock": {
+      "description": "The in-process scripted engine: it replays its scripts as token ids, one per step, then the end-of-turn token; with several scripts the k-th generate call gets the k-th and the last repeats. When logprobs are asked every token gets logprob 0.0. Behavior reference: project-maya serve/server.py:199-240 at 7e68a30f.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "tokenizer", "script"],
+      "properties": {
+        "kind": {"const": "mock"},
+        "tokenizer": {
+          "oneOf": [
+            {"$ref": "#/$defs/tokenizer_byte"},
+            {"$ref": "#/$defs/tokenizer_bpe_bytes"}
+          ]
+        },
+        "script": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "oneOf": [
+              {"type": "string"},
+              {"$ref": "#/$defs/script_repeat"}
+            ]
+          }
+        },
+        "max_context": {"type": "integer", "minimum": 1, "maximum": 16777216, "default": 32768},
+        "info": {"description": "Members merged over the engine's info.", "type": "object"},
+        "delay_ms": {"description": "A delay before each step. Scenarios order events with engine gates, never with delays.", "type": "integer", "minimum": 0, "maximum": 60000, "default": 0},
+        "tok_s": {"description": "The donor's pacing rate in tokens per second.", "type": "number", "exclusiveMinimum": 0, "maximum": 1000000}
+      }
+    },
+    "engine_line": {
+      "description": "A line-protocol fake engine run as a child process: glm (the donor's glm_dsa_fake_engine.py) or multi (fake_multi_engine.py). Its environment is passed verbatim (naming.md rule 3); the fakes' control variables keep the donor fakes' names (FAKE_ENGINE_*, FAKE_MULTI_INTERLEAVE).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "fake", "tokenizer"],
+      "properties": {
+        "kind": {"const": "line"},
+        "fake": {"enum": ["glm", "multi"]},
+        "tokenizer": {"$ref": "#/$defs/tokenizer_bpe_bytes"},
+        "args": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {"type": "string", "maxLength": 1024}
+        },
+        "env": {"$ref": "#/$defs/env"}
+      }
+    },
+    "tokenizer_byte": {
+      "description": "One id per UTF-8 byte; the specials <|im_start|>, <|im_end|>, <|endoftext|>, <|vision_start|>, <|image_pad|>, <|vision_end|> take ids 256 to 261 and extra_specials follow from 262. Behavior reference: project-maya serve/server.py:2061-2100 at 7e68a30f.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {"const": "byte"},
+        "extra_specials": {
+          "type": "array",
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 64}
+        }
+      }
+    },
+    "tokenizer_bpe_bytes": {
+      "description": "A byte-level BPE vocabulary generated at run time: the 256 byte tokens mapped to characters as GPT-2 maps them, plus the added tokens with their ids, and a one-merge merges.txt. No tokenizer file is committed. Behavior reference: project-maya serve/test_stop.py:44-64 at 7e68a30f.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {"const": "bpe-bytes"},
+        "added": {
+          "type": "object",
+          "maxProperties": 1024,
+          "propertyNames": {"minLength": 1, "maxLength": 64},
+          "additionalProperties": {"type": "integer", "minimum": 256, "maximum": 1048576}
+        }
+      }
+    },
+    "script_repeat": {
+      "description": "A script written as one string repeated, so a donor setup such as \"a\" * 2000 stays a tiny file.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repeat", "times"],
+      "properties": {
+        "repeat": {"type": "string", "minLength": 1},
+        "times": {"type": "integer", "minimum": 1, "maximum": 1048576}
+      }
+    },
+    "server": {
+      "description": "How the server under test starts. The harness always binds port 0 on loopback, clears the environment to an allowlist and writes the run config itself; a scenario cannot override the bind address, the port or the harness's environment (see x-loader-rules).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "flags": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {"type": "string", "maxLength": 1024, "not": {"pattern": "^--(p(o(r(t)?)?)?|c(o(n(f(i(g)?)?)?)?)?|e(n(g(i(n(e)?)?)?)?)?|s(c(r(i(p(t)?)?)?)?)?|t(o(k(e(n(i(z(e(r)?)?)?)?)?)?)?)?)(=|$)"}}
+        },
+        "env": {"$ref": "#/$defs/env"},
+        "config": {"description": "The run config written for the server. Product names only (naming.md). Its bind address may only be the loopback token.", "type": "object", "properties": {"host": {"const": "{{loopback}}"}}},
+        "data_dir": {
+          "description": "Files written into the data directory before start, by relative path: a string is written as text, an object or array as JSON.",
+          "type": "object",
+          "maxProperties": 32,
+          "propertyNames": {"$ref": "#/$defs/relative_path"},
+          "additionalProperties": {"type": ["string", "object", "array"]}
+        }
+      }
+    },
+    "step": {
+      "description": "One step: a request (with an optional disconnect), an engine gate, a signal, or a request with a gate.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "request": {
+          "oneOf": [
+            {"$ref": "#/$defs/request"},
+            {"$ref": "#/$defs/request_raw"}
+          ]
+        },
+        "disconnect_after_events": {"description": "Drop the connection after this many stream events.", "type": "integer", "minimum": 1, "maximum": 1000000},
+        "disconnect_after_bytes": {"description": "Drop the connection after this many response bytes.", "type": "integer", "minimum": 1, "maximum": 67108864},
+        "wait_for_engine_step": {"description": "First in the step: wait until a generate call is blocked at the gate before this engine step number (counted per generate call, from 0).", "type": "integer", "minimum": 0, "maximum": 1000000},
+        "release_engine_step": {"description": "Last in the step, after its request is started: open the gate before this engine step number; it stays open.", "type": "integer", "minimum": 0, "maximum": 1000000},
+        "concurrent_group": {"description": "Contiguous steps with the same group run concurrently: their requests are started in order and joined at the first step after the group. A gate-only step may belong to a group.", "type": "string", "pattern": "^[a-z0-9._-]+$", "maxLength": 64},
+        "signal": {"description": "A signal sent to the server process.", "enum": ["SIGTERM", "SIGHUP", "SIGINT"]}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "path"],
+      "properties": {
+        "method": {"type": "string", "pattern": "^[A-Z]+$", "maxLength": 32},
+        "path": {"type": "string", "pattern": "^(/[^\\s\\u0000-\\u001f\\u007f]*|\\*)$", "maxLength": 8192},
+        "headers": {
+          "description": "[name, value] pairs in order; a name may repeat. Pairs keep header order observable and keep committed files free of host-shaped keys.",
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {"type": "string", "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$", "maxLength": 256},
+              {"type": "string", "pattern": "^[^\\r\\n\\u0000]*$", "maxLength": 8192}
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "body": {"description": "A JSON value, serialized by the runner."},
+        "body_text": {"description": "Text sent as is.", "type": "string", "maxLength": 131072},
+        "body_file": {"description": "A file next to the scenario file.", "$ref": "#/$defs/relative_path"},
+        "http_version": {"enum": ["1.0", "1.1"], "default": "1.1"}
+      }
+    },
+    "request_raw": {
+      "description": "A request written out whole, sent as is after token expansion: for malformed-input tests.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw"],
+      "properties": {
+        "raw": {"type": "string", "minLength": 1, "maxLength": 131072}
+      }
+    },
+    "observe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "http": {"description": "Status, headers and body of every response.", "type": "boolean"},
+        "engine_tape": {"description": "Every input the engine sees: prompt ids, max_new and sampling for the scripted engine; every stdin line for a line fake.", "type": "boolean"},
+        "files": {
+          "description": "Globs relative to the data directory: segments of [A-Za-z0-9._-*?] or a whole ** segment.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"type": "string", "maxLength": 256, "pattern": "^([A-Za-z0-9._?*-]+|\\*\\*)(/([A-Za-z0-9._?*-]+|\\*\\*))*$"}
+        },
+        "log": {
+          "description": "Ids of contracted log lines.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {"type": "string", "pattern": "^[a-z0-9._-]+$", "maxLength": 64}
+        },
+        "exit": {"description": "The server's exit status.", "type": "boolean"}
+      }
+    },
+    "env": {
+      "description": "Environment entries in order; names match [A-Z_][A-Z0-9_]*. Names the harness sets, and loader or interpreter variables, are refused.",
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": {"pattern": "^[A-Z_][A-Z0-9_]*$", "maxLength": 128, "not": {"pattern": "^(PATH|HOME|TZ|LC_ALL|LANG|TMPDIR|PULSAR_CONSOLE_VENDOR_DIR|FAKE_ENGINE_GATE)$|^(XDG_|LD_|DYLD_|PYTHON)"}},
+      "additionalProperties": {"type": "string", "maxLength": 4096}
+    },
+    "relative_path": {
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*$",
+      "not": {"pattern": "(^|/)\\.{1,2}(/|$)"}
+    }
+  }
+}

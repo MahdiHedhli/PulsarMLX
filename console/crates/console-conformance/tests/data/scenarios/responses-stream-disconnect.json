@@ -1,0 +1,69 @@
+{
+  "id": "responses-stream-disconnect",
+  "description": "A client that drops a stored Responses stream at its first text delta stops generation, and the next request is served.",
+  "donor": [
+    "serve/test_responses.py::Responses::test_disconnect_stops_generation_and_next_request_works"
+  ],
+  "notes": "The donor swaps in a new engine with the script \"Ready\" before the last request; a script list expresses the same order. The fifth event is the first response.output_text.delta (created, in_progress, output_item.added, content_part.added, delta). The donor's lookup of the dropped response by id (404) needs a value captured from the stream, which the format does not express; it is left to the test that re-expresses this method.",
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      {
+        "repeat": "a",
+        "times": 2000
+      },
+      "Ready"
+    ],
+    "max_context": 8192,
+    "delay_ms": 2
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/responses",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "input": "hi",
+          "stream": true,
+          "store": true,
+          "reasoning": {
+            "effort": "none"
+          }
+        }
+      },
+      "disconnect_after_events": 5
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/responses",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "input": "hi",
+          "reasoning": {
+            "effort": "none"
+          }
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true,
+    "engine_tape": true
+  }
+}

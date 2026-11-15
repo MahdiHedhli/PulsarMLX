@@ -1,0 +1,103 @@
+{
+  "id": "thinking-budget-larger-limits",
+  "description": "A max_tokens above the tiny limit keeps the configured thinking budget over the three APIs.",
+  "donor": [
+    "serve/test_server.py::ThinkingBudget::test_larger_limits_keep_the_configured_budget"
+  ],
+  "notes": "The donor sets the service's thinking budget to 32768 directly; the run-config key thinking_budget sets it at start (serve/server.py:7311). The donor loops over the limits 1025, 2048, 4096 and 8192; this sample keeps 2048.",
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte",
+      "extra_specials": [
+        "<think>",
+        "</think>"
+      ]
+    },
+    "script": [
+      "</think>8"
+    ],
+    "max_context": 32768
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "server": {
+    "config": {
+      "thinking_budget": 32768
+    }
+  },
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 3 + 5?"
+            }
+          ],
+          "max_tokens": 2048,
+          "reasoning_effort": "low",
+          "model": "m"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/messages",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "messages": [
+            {
+              "role": "user",
+              "content": "What is 3 + 5?"
+            }
+          ],
+          "max_tokens": 2048,
+          "thinking": {
+            "type": "enabled",
+            "budget_tokens": 2048
+          },
+          "model": "m"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/responses",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "input": "What is 3 + 5?",
+          "max_output_tokens": 2048,
+          "reasoning": {
+            "effort": "low"
+          },
+          "model": "m"
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true,
+    "engine_tape": true
+  }
+}

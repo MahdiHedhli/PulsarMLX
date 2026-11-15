@@ -1,0 +1,47 @@
+{
+  "id": "responses-text-and-instructions",
+  "description": "A Responses request with instructions, metadata and temperature 0 completes with the scripted text.",
+  "donor": [
+    "serve/test_responses.py::Responses::test_text_and_instructions"
+  ],
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "Hello"
+    ],
+    "max_context": 8192
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/responses",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "input": "hi",
+          "reasoning": {
+            "effort": "none"
+          },
+          "instructions": "Answer briefly",
+          "metadata": {
+            "job": "test"
+          },
+          "temperature": 0
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true,
+    "engine_tape": true
+  }
+}

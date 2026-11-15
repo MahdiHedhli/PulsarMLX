@@ -1,0 +1,70 @@
+{
+  "id": "queued-request-behind-held-engine",
+  "description": "A request sent while another holds the engine waits in the queue and is served once the engine is released.",
+  "donor": [
+    "serve/test_server.py::GoneClients::test_a_queued_request_leaves_when_its_client_goes"
+  ],
+  "notes": "The donor's HeldEngine holds its first generate call until released; an engine gate before step 0 expresses the same hold. Order: start A, wait until A is held, start B, release, and join the group at the status request. The donor then closes B's client while it is queued and checks the queue count; the format has no step that closes a connection without reading, so here B is served and the engine tape shows its call after A's.",
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\nhello"
+    ]
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "body": {
+          "model": "m",
+          "max_tokens": 8,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      },
+      "concurrent_group": "queue"
+    },
+    {
+      "wait_for_engine_step": 0,
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "body": {
+          "model": "m",
+          "max_tokens": 8,
+          "stream": true,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      },
+      "concurrent_group": "queue"
+    },
+    {
+      "release_engine_step": 0,
+      "concurrent_group": "queue"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/status"
+      }
+    }
+  ],
+  "observe": {
+    "http": true,
+    "engine_tape": true
+  }
+}

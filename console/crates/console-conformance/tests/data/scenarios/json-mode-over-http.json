@@ -1,0 +1,47 @@
+{
+  "id": "json-mode-over-http",
+  "description": "response_format json_object returns the JSON object found in a fenced answer.",
+  "donor": [
+    "serve/test_tools.py::JsonMode::test_over_http"
+  ],
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\nSure! ```json\n{\"city\": \"Paris\"}\n```"
+    ],
+    "max_context": 8192
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ]
+        ],
+        "body": {
+          "model": "m",
+          "response_format": {
+            "type": "json_object"
+          },
+          "messages": [
+            {
+              "role": "user",
+              "content": "json"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true
+  }
+}

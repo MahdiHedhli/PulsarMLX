@@ -1,0 +1,127 @@
+{
+  "id": "client-shapes-query-string",
+  "description": "A query string on a dialect path is ignored; an unknown path with one is 404.",
+  "donor": [
+    "serve/test_server.py::ClientShapes::test_query_string"
+  ],
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\n2"
+    ],
+    "max_context": 4096
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/messages?beta=true",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "anthropic-version",
+            "2023-06-01"
+          ]
+        ],
+        "body": {
+          "model": "x",
+          "max_tokens": 20,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/chat/completions?api-version=1",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "anthropic-version",
+            "2023-06-01"
+          ]
+        ],
+        "body": {
+          "model": "x",
+          "max_tokens": 20,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/messages/?beta=true",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "anthropic-version",
+            "2023-06-01"
+          ]
+        ],
+        "body": {
+          "model": "x",
+          "max_tokens": 20,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "path": "/v1/nothing?beta=true",
+        "headers": [
+          [
+            "Content-Type",
+            "application/json"
+          ],
+          [
+            "anthropic-version",
+            "2023-06-01"
+          ]
+        ],
+        "body": {
+          "model": "x",
+          "max_tokens": 20,
+          "messages": [
+            {
+              "role": "user",
+              "content": "hi"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "observe": {
+    "http": true
+  }
+}

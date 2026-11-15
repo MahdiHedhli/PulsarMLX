@@ -1,0 +1,51 @@
+{
+  "id": "cors-preflight-without-setting",
+  "description": "Without cors_origins a foreign page's preflight is refused and no CORS header is sent.",
+  "donor": [
+    "serve/test_server.py::CorsOptIn::test_without_the_setting_nothing_changes"
+  ],
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\nhello"
+    ],
+    "max_context": 4096
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "steps": [
+    {
+      "request": {
+        "method": "OPTIONS",
+        "path": "/v1/chat/completions",
+        "headers": [
+          [
+            "Origin",
+            "http://{{loopback}}:8090"
+          ],
+          [
+            "Access-Control-Request-Method",
+            "POST"
+          ]
+        ]
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "path": "/v1/models",
+        "headers": [
+          [
+            "Origin",
+            "http://{{loopback}}:8090"
+          ]
+        ]
+      }
+    }
+  ],
+  "observe": {
+    "http": true
+  }
+}

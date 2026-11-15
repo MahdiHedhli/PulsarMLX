@@ -1,0 +1,48 @@
+{
+  "id": "dashboard-health-version",
+  "description": "GET /health reports the server's version.",
+  "donor": [
+    "serve/test_dashboard.py::Dashboard::test_health_has_the_version"
+  ],
+  "notes": "The donor writes its run config to maya-test.json and points the service at it; the harness writes the run config under the product prefix (pulsar-, naming.md section 3.6). The donor sets MAYA_MOCK_RELOAD_S; the product name is PULSAR_CONSOLE_MOCK_RELOAD_S (naming.md section 3.1).",
+  "engine": {
+    "kind": "mock",
+    "tokenizer": {
+      "kind": "byte"
+    },
+    "script": [
+      "</think>\n\nhello"
+    ],
+    "max_context": 32768
+  },
+  "template": "vendor:serve/chat_template.jinja",
+  "server": {
+    "env": {
+      "PULSAR_CONSOLE_MOCK_RELOAD_S": "0.3"
+    },
+    "config": {
+      "exe": "strata",
+      "args": [
+        "--glm-pack",
+        "/x/pack",
+        "--max-context",
+        "32768"
+      ],
+      "env": {
+        "MAYA_GLM_RAM_GB": "20",
+        "MY_API_KEY": "secret"
+      }
+    }
+  },
+  "steps": [
+    {
+      "request": {
+        "method": "GET",
+        "path": "/health"
+      }
+    }
+  ],
+  "observe": {
+    "http": true
+  }
+}
