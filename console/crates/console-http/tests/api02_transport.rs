@@ -14,15 +14,13 @@
 //! Behavior reference: project-maya serve/server.py:5346-5372, 5403-5455, 5019-5044,
 //! 6463-6474 and 6715-6734 at 7e68a30f.
 
-#[path = "api02_kit.rs"]
-mod kit;
-
 use std::time::Duration;
 
 use console_http::transport::{
     bind_host, probe_port, BodyError, ClientGone, TransportConfig, CONFLICTING_FRAMING,
 };
-use kit::*;
+use console_testkit::raw::*;
+use console_testkit::server::probe::{ProbeServer, Seen};
 use tokio::io::AsyncWriteExt;
 use tokio::time::Instant;
 
@@ -48,7 +46,7 @@ fn python_error_head(code: u16, reason: &str, length: usize) -> String {
 
 #[tokio::test]
 async fn transport_errors_are_pythons_pages() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     let long_uri = format!("GET /{} HTTP/1.1\r\n\r\n", "a".repeat(65536)).into_bytes();
     let long_header = format!("GET / HTTP/1.1\r\nX: {}\r\n\r\n", "v".repeat(65536)).into_bytes();
     let mut many = b"GET / HTTP/1.1\r\n".to_vec();
@@ -128,7 +126,7 @@ async fn transport_errors_are_pythons_pages() {
 
 #[tokio::test]
 async fn a_head_request_gets_the_501_head_only() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     let r = exchange(server.addr, b"HEAD / HTTP/1.1\r\n\r\n").await;
     let page = python_page(
         501,
@@ -144,7 +142,7 @@ async fn a_head_request_gets_the_501_head_only() {
 
 #[tokio::test]
 async fn the_end_headers_hook_reaches_the_501_page() {
-    let server = TestServer::with(
+    let server = ProbeServer::with(
         TransportConfig::default(),
         vec![("Access-Control-Allow-Origin".into(), "*".into())],
     )
@@ -171,7 +169,7 @@ async fn the_end_headers_hook_reaches_the_431_pages_only_of_the_head_errors() {
     // The donor's end_headers override runs inside send_error. For a 431 page Python has set
     // self.command and self.path, so a wildcard cors_origins adds its header; for the 400,
     // 414 and 505 pages of the request line self.path is not set and the hook is not run.
-    let server = TestServer::with(
+    let server = ProbeServer::with(
         TransportConfig::default(),
         vec![("Access-Control-Allow-Origin".into(), "*".into())],
     )
@@ -220,7 +218,7 @@ async fn the_end_headers_hook_reaches_the_431_pages_only_of_the_head_errors() {
 
 #[tokio::test]
 async fn http09_answers_carry_the_body_only() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     let r = exchange(server.addr, b"GET /head\r\n").await;
     assert_eq!(r.raw, b"ok");
     // A three-word request line whose version is exactly HTTP/0.9 is answered the same way.
@@ -237,14 +235,14 @@ async fn http09_answers_carry_the_body_only() {
 
 #[tokio::test]
 async fn an_empty_request_line_closes_without_an_answer() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     assert!(exchange(server.addr, b"\r\n").await.raw.is_empty());
     assert!(exchange_with_eof(server.addr, b"").await.raw.is_empty());
 }
 
 #[tokio::test]
 async fn one_request_per_connection_without_keep_alive_or_chunking() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let two = b"GET /head HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: keep-alive\r\n\r\n\
                 GET /head HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n";
     let r = exchange(server.addr, two).await;
@@ -277,7 +275,7 @@ async fn one_request_per_connection_without_keep_alive_or_chunking() {
 
 #[tokio::test]
 async fn the_request_head_reaches_the_handler_as_python_parses_it() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let request =
         b"GET //head/?a=1&force=1 HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Folded: one\r\n two\r\n\
                     x-folded: second\r\nBad line\r\nAfter: lost\r\n\r\n";
@@ -302,7 +300,7 @@ async fn both_content_length_and_chunked_are_refused() {
     // Approved deviation P-2 (owner decision of 2026-11-14): the donor would decode the
     // chunked body; the console answers 400 before reading anything, before the handler is
     // called.
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let r = exchange(
         server.addr,
         &donor_post(
@@ -323,7 +321,7 @@ async fn both_content_length_and_chunked_are_refused() {
     assert_eq!(r.text(), body);
     // On a route that never reads a body, for any served method, with chunked in a second
     // Transfer-Encoding header, and with the end-headers hook's headers on the answer.
-    let hooked = TestServer::with(
+    let hooked = ProbeServer::with(
         TransportConfig::default(),
         vec![("Access-Control-Allow-Origin".into(), "*".into())],
     )
@@ -364,7 +362,7 @@ async fn both_content_length_and_chunked_are_refused() {
 
 #[tokio::test]
 async fn chunked_bodies_with_extensions_and_trailers_decode() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let body = b"4;name=value\r\nWiki\r\n5\r\npedia\r\n0\r\nExpires: never\r\nX-Sum: 1\r\n\r\n";
     let r = exchange(
         server.addr,
@@ -383,7 +381,7 @@ async fn chunked_bodies_over_the_limit_in_total_are_refused() {
         max_body_bytes: 1 << 20,
         ..TransportConfig::default()
     };
-    let server = TestServer::with(config, Vec::new()).await;
+    let server = ProbeServer::with(config, Vec::new()).await;
     let mut stream = connect(server.addr).await;
     write(
         &mut stream,
@@ -403,7 +401,10 @@ async fn chunked_bodies_over_the_limit_in_total_are_refused() {
             }
         }
     }
-    let r = parse_response(&read_to_eof(&mut stream).await);
+    // The server closes with body bytes still unread, so the system may reset the
+    // connection after the answer: the read allows it (as the helper this test used before
+    // the kit did); the answer's bytes are still pinned below.
+    let r = parse_response(&read_to_eof_allowing_reset(&mut stream).await);
     assert_eq!(r.status, 413);
     assert_eq!(
         r.text(),
@@ -419,7 +420,7 @@ async fn chunked_bodies_over_the_limit_in_total_are_refused() {
 /// is five), not the archived crate's parser.
 #[tokio::test]
 async fn declared_lengths_follow_the_donor() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let over = (256u64 << 20) + 1;
     let r = exchange_with_eof(
         server.addr,
@@ -453,7 +454,7 @@ async fn declared_lengths_follow_the_donor() {
 /// client as it arrived (the router then refuses it as JSON, in API-03).
 #[tokio::test]
 async fn repeated_lengths_and_short_bodies_follow_the_donor() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let r = exchange(
         server.addr,
         &donor_post("Content-Length: 1\r\nContent-Length: 2\r\n", b"{}"),
@@ -485,7 +486,7 @@ async fn a_stalled_head_is_dropped_after_the_timeout() {
     // Per socket operation, then the connection closes unanswered (the donor's default is
     // 300 s; the rule is the same for any value).
     let config = TransportConfig::from_raw(None, None, Some("1"));
-    let server = TestServer::with(config, Vec::new()).await;
+    let server = ProbeServer::with(config, Vec::new()).await;
     let mut stream = connect(server.addr).await;
     write(&mut stream, b"POST /echo HTTP/1.1\r\nHost: 127.0.0.1\r\n").await;
     let start = Instant::now();
@@ -502,7 +503,7 @@ async fn a_stalled_head_is_dropped_after_the_timeout() {
 async fn the_timeout_is_per_operation_not_per_request() {
     let config = TransportConfig::from_raw(None, None, Some("2"));
     assert_eq!(config.request_timeout, Duration::from_secs(2));
-    let mut server = TestServer::with(config, Vec::new()).await;
+    let mut server = ProbeServer::with(config, Vec::new()).await;
     let mut stream = connect(server.addr).await;
     let start = Instant::now();
     let request = donor_post("Content-Length: 4\r\n", b"abcd");
@@ -523,7 +524,7 @@ async fn the_timeout_is_per_operation_not_per_request() {
 #[tokio::test]
 async fn a_stalled_body_is_dropped_after_the_timeout() {
     let config = TransportConfig::from_raw(None, None, Some("1"));
-    let mut server = TestServer::with(config, Vec::new()).await;
+    let mut server = ProbeServer::with(config, Vec::new()).await;
     let mut stream = connect(server.addr).await;
     write(&mut stream, &donor_post("Content-Length: 10\r\n", b"ab")).await;
     let start = Instant::now();
@@ -542,7 +543,7 @@ async fn a_stalled_body_is_dropped_after_the_timeout() {
 
 #[tokio::test]
 async fn data_from_the_client_is_not_an_end() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let release = server.arm_release();
     let mut stream = connect(server.addr).await;
     write(
@@ -566,7 +567,7 @@ async fn data_from_the_client_is_not_an_end() {
 
 #[tokio::test]
 async fn a_reset_or_a_half_close_is_a_gone_client() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let hold = |path: &str| {
         let body = b"{}";
         let mut out = format!(
@@ -593,7 +594,7 @@ async fn a_reset_or_a_half_close_is_a_gone_client() {
 
 #[tokio::test]
 async fn a_panicking_handler_closes_only_its_connection() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     // In the future, in the call that builds it, and in the end-headers hook (also when
     // the hook runs for a 431 page).
     let mut many = b"GET /panic-hook HTTP/1.1\r\n".to_vec();
@@ -616,7 +617,7 @@ async fn a_panicking_handler_closes_only_its_connection() {
 
 #[tokio::test]
 async fn a_graceful_stop_lets_requests_in_flight_finish() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let addr = server.addr;
     let release = server.arm_release();
     let mut held = connect(addr).await;

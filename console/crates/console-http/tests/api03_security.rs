@@ -12,14 +12,13 @@
 //! The tests choose the guard's bind address independently of the socket, so a
 //! non-loopback bind is tested while the server listens on loopback.
 
-#[path = "api03_kit.rs"]
-mod kit;
-
 use std::net::{IpAddr, Ipv4Addr};
 
 use console_http::guard::{GuardConfig, HOST_REFUSED_MESSAGE};
 use console_http::router::Router;
-use kit::*;
+use console_testkit::raw::*;
+use console_testkit::server::probe::probed;
+use console_testkit::server::{TestServer, LOOPBACK};
 use serde_json::Value;
 
 const ANY: IpAddr = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
@@ -29,14 +28,14 @@ fn host_refused_body() -> String {
     format!("{{\"error\": {{\"type\": \"permission_error\", \"message\": \"{HOST_REFUSED_MESSAGE}\"}}}}")
 }
 
-async fn health_with_host(server: &Server, host: &str) -> RawResponse {
+async fn health_with_host(server: &TestServer, host: &str) -> RawResponse {
     server.call("GET", "/health", &[("Host", host)], None).await
 }
 
 // SEC-1.1: on a loopback bind only the loopback names, with any port, pass by default.
 #[tokio::test]
 async fn rebinding_a_loopback_bind_serves_only_loopback_names() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let port = server.addr.port();
     for host in [
         format!("127.0.0.1:{port}"),
@@ -79,7 +78,7 @@ async fn rebinding_a_loopback_bind_serves_only_loopback_names() {
 // header is required, and a missing one is refused too.
 #[tokio::test]
 async fn rebinding_exactly_one_host_header() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let port = server.addr.port();
     let raw = |hosts: &[String]| {
         let mut text = String::from("GET /health HTTP/1.1\r\n");
@@ -116,7 +115,8 @@ async fn rebinding_exactly_one_host_header() {
 #[tokio::test]
 async fn rebinding_allowed_hosts_extend_a_loopback_bind() {
     let hosts = Some(vec!["pulsar.local".to_owned(), "Box.LAN:8095".to_owned()]);
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK).with_allowed_hosts(hosts))).await;
+    let server =
+        TestServer::with_router(probed(GuardConfig::new(LOOPBACK).with_allowed_hosts(hosts))).await;
     for (host, want) in [
         ("pulsar.local", 200),
         ("pulsar.local:8095", 200),
@@ -136,7 +136,7 @@ async fn rebinding_allowed_hosts_extend_a_loopback_bind() {
 #[tokio::test]
 async fn rebinding_a_non_loopback_bind_is_unrestricted_without_a_list() {
     for bind in [ANY, LAN] {
-        let server = Server::start(probed(GuardConfig::new(bind))).await;
+        let server = TestServer::with_router(probed(GuardConfig::new(bind))).await;
         for host in ["evil.example", "192.0.2.1:8095", "localhost", "[fe80::1]:1"] {
             assert_eq!(
                 health_with_host(&server, host).await.status,
@@ -155,7 +155,8 @@ async fn rebinding_a_non_loopback_bind_is_unrestricted_without_a_list() {
 #[tokio::test]
 async fn rebinding_a_non_loopback_bind_with_a_list() {
     let hosts = Some(vec!["box.lan".to_owned()]);
-    let server = Server::start(probed(GuardConfig::new(ANY).with_allowed_hosts(hosts))).await;
+    let server =
+        TestServer::with_router(probed(GuardConfig::new(ANY).with_allowed_hosts(hosts))).await;
     for (host, want) in [
         ("box.lan:8095", 200),
         ("127.0.0.1:8095", 200),
@@ -166,7 +167,7 @@ async fn rebinding_a_non_loopback_bind_with_a_list() {
         assert_eq!(health_with_host(&server, host).await.status, want, "{host}");
     }
     server.stop().await;
-    let server = Server::start(probed(
+    let server = TestServer::with_router(probed(
         GuardConfig::new(LAN).with_allowed_hosts(Some(Vec::new())),
     ))
     .await;
@@ -185,7 +186,7 @@ async fn rebinding_the_host_check_comes_first() {
     let config = GuardConfig::new(LOOPBACK)
         .with_api_key(&Value::String("k1".into()))
         .with_cors_origins(vec!["*".to_owned()]);
-    let server = Server::start(probed(config)).await;
+    let server = TestServer::with_router(probed(config)).await;
     let evil = ("Host", "attacker.invalid:8095");
     for (method, path) in [
         ("GET", "/v1/models"),
@@ -224,7 +225,7 @@ async fn rebinding_the_host_check_comes_first() {
 // SEC-1.2: Origin is checked on every route, GET included, and Origin: null is foreign.
 #[tokio::test]
 async fn origin_is_checked_on_every_route() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let own = format!("http://{}", server.host());
     for path in [
         "/",
@@ -263,7 +264,7 @@ async fn origin_is_checked_on_every_route() {
     // unless "*" allows every page.
     let config =
         GuardConfig::new(LOOPBACK).with_cors_origins(vec!["http://127.0.0.1:8090".to_owned()]);
-    let server2 = Server::start(probed(config)).await;
+    let server2 = TestServer::with_router(probed(config)).await;
     let page = [("Origin", "http://127.0.0.1:8090")];
     assert_eq!(
         server2.call("GET", "/v1/models", &page, None).await.status,
@@ -289,7 +290,7 @@ async fn origin_is_checked_on_every_route() {
 // charset parameter is accepted.
 #[tokio::test]
 async fn every_post_needs_a_json_content_type() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let body = b"{\"model\": \"m\"}";
     for path in [
         "/v1/chat/completions",
@@ -347,7 +348,7 @@ async fn every_post_needs_a_json_content_type() {
     assert_eq!(r.status, 413);
     // The key and the foreign page are checked before the content type, as the donor's
     // do_POST checks them first.
-    let keyed = Server::start(probed(
+    let keyed = TestServer::with_router(probed(
         GuardConfig::new(LOOPBACK).with_api_key(&Value::String("k1".into())),
     ))
     .await;
@@ -381,7 +382,7 @@ async fn every_post_needs_a_json_content_type() {
 // (a wrong bearer key is 401) and the donor's forms (bearer in any case, x-api-key).
 #[tokio::test]
 async fn api_keys_in_their_accepted_forms() {
-    let server = Server::start(Router::new(
+    let server = TestServer::with_router(Router::new(
         GuardConfig::new(LOOPBACK).with_api_key(&Value::String("k1".into())),
     ))
     .await;
@@ -416,7 +417,7 @@ async fn api_keys_in_their_accepted_forms() {
 // the transport writes itself: here the 501 page of an unserved method.
 #[tokio::test]
 async fn cors_headers_reach_the_transports_own_pages() {
-    let server = Server::start(Router::new(
+    let server = TestServer::with_router(Router::new(
         GuardConfig::new(LOOPBACK).with_cors_origins(vec!["http://127.0.0.1:8090".to_owned()]),
     ))
     .await;

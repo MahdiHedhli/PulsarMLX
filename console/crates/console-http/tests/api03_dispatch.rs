@@ -5,18 +5,17 @@
 //!
 //! The rows of [`TABLE`] are in the donor's dispatch order (serve/server.py 5934-6139 for
 //! GET, 6160-6297 for POST, 5923-5933 for DELETE, 5799-5809 for OPTIONS at 7e68a30f), so a
-//! reviewer can diff them against it. The probe handler of the kit stands in for the route
+//! reviewer can diff them against it. The test kit's `RouteProbe` stands in for the route
 //! handlers of later packages: it answers 200 and names its slot, and on `/models/sse` and
 //! `/v1/responses/*` it asks for the key itself, as those donor handlers do.
 //!
 //! Behavior reference: project-maya serve/server.py:5923-6297 at 7e68a30f.
 
-#[path = "api03_kit.rs"]
-mod kit;
-
 use console_http::guard::GuardConfig;
 use console_http::router::{Router, ROUTES};
-use kit::*;
+use console_testkit::raw::*;
+use console_testkit::server::probe::probed;
+use console_testkit::server::{TestServer, LOOPBACK};
 use serde_json::Value;
 
 /// One route: method, path as sent, status without a key, status with the key, and the
@@ -230,7 +229,7 @@ fn foreign_status(method: &str, with_key: bool) -> u16 {
 }
 
 async fn send(
-    server: &Server,
+    server: &TestServer,
     method: &str,
     path: &str,
     key: bool,
@@ -251,7 +250,7 @@ async fn send(
     }
 }
 
-async fn run_table(server: &Server, key_configured: bool) -> Vec<String> {
+async fn run_table(server: &TestServer, key_configured: bool) -> Vec<String> {
     let mut failures = Vec::new();
     let own = format!("http://{}", server.host());
     for &(method, path, without, with, slot) in TABLE {
@@ -294,7 +293,7 @@ async fn run_table(server: &Server, key_configured: bool) -> Vec<String> {
 #[tokio::test]
 async fn every_donor_route_with_and_without_a_key_and_each_origin() {
     let config = GuardConfig::new(LOOPBACK).with_api_key(&Value::String("k1".into()));
-    let server = Server::start(probed(config)).await;
+    let server = TestServer::with_router(probed(config)).await;
     let failures = run_table(&server, true).await;
     assert!(
         failures.is_empty(),
@@ -307,7 +306,7 @@ async fn every_donor_route_with_and_without_a_key_and_each_origin() {
 
 #[tokio::test]
 async fn with_no_key_configured_every_route_is_reached() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let failures = run_table(&server, false).await;
     assert!(
         failures.is_empty(),
@@ -336,7 +335,7 @@ fn the_table_covers_every_row_of_the_dispatch_table() {
 #[tokio::test]
 async fn unregistered_slots_answer_as_unknown_routes_after_their_guards() {
     let config = GuardConfig::new(LOOPBACK).with_api_key(&Value::String("k1".into()));
-    let server = Server::start(Router::new(config)).await;
+    let server = TestServer::with_router(Router::new(config)).await;
     let key = [("Authorization", "Bearer k1")];
     for path in ["/v1/models", "/status", "/metrics", "/settings"] {
         assert_eq!(
@@ -392,7 +391,7 @@ async fn unregistered_slots_answer_as_unknown_routes_after_their_guards() {
 
 #[tokio::test]
 async fn json_routes_receive_the_parsed_object_and_others_the_unread_body() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let r = server
         .post_json(
             "/v1/messages?beta=true",

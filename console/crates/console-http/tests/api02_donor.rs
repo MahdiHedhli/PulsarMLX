@@ -1,28 +1,25 @@
-//! Donor tests of work package API-02, re-expressed against the transport with a test
-//! handler.
+//! Donor tests of work package API-02, re-expressed against the transport with the test
+//! kit's transport probe (`console_testkit::server::probe`).
 //!
 //! Provenance: translated from project-maya serve/test_server.py::RequestBodies, serve/test_server.py::GoneClients::test_a_queued_request_leaves_when_its_client_goes and serve/test_server.py::QueuedKeepAlives::test_keep_alives_while_queued at 7e68a30f (MIT); license text in console/LICENSES/project-maya-MIT.txt.
 //!
 //! The donor's methods send raw bytes to `/v1/chat/completions` of a full server. Here the
-//! router, the validation and the engine do not exist yet, so a test handler stands behind
-//! the transport. Methods whose assertions need those later packages are re-expressed only
+//! router, the validation and the engine do not exist yet, so the kit's `TransportProbe`
+//! stands behind the transport and the kit's raw client writes the donor's bytes. Methods whose assertions need those later packages are re-expressed only
 //! in their transport part, and their ledger rows stay pending (each test says so).
-
-#[path = "api02_kit.rs"]
-mod kit;
 
 use std::time::Instant;
 
 use console_http::transport::{BodyError, TransportConfig};
-use kit::*;
-use tokio::io::AsyncReadExt;
+use console_testkit::raw::*;
+use console_testkit::server::probe::{ProbeServer, Seen};
 
 const MSG: &[u8] = b"{\"model\": \"m\", \"messages\": [{\"role\": \"user\", \"content\": \"hi\"}]}";
 
 // Donor: serve/test_server.py::RequestBodies::test_a_body_over_the_limit_is_refused_unread
 #[tokio::test]
 async fn a_body_over_the_limit_is_refused_unread() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     // 300 MiB declared, no body byte ever sent: the answer still arrives.
     let r = exchange(
         server.addr,
@@ -51,7 +48,7 @@ async fn a_body_over_the_limit_is_refused_unread() {
 // Donor: serve/test_server.py::RequestBodies::test_a_bad_content_length
 #[tokio::test]
 async fn a_bad_content_length() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     for value in ["abc", "-5"] {
         let r = exchange(
             server.addr,
@@ -68,7 +65,7 @@ async fn a_bad_content_length() {
 /// the engine's "hello" needs the chat route (API-08); that ledger row stays pending.
 #[tokio::test]
 async fn a_chunked_body_is_decoded_for_the_handler() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let mut body = format!("{:x}\r\n", MSG.len()).into_bytes();
     body.extend_from_slice(MSG);
     body.extend_from_slice(b"\r\n0\r\n\r\n");
@@ -96,7 +93,7 @@ async fn a_chunked_body_is_decoded_for_the_handler() {
 /// pending.
 #[tokio::test]
 async fn a_malformed_body_reaches_the_handler_intact() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let r = exchange(server.addr, &donor_post("Content-Length: 2\r\n", b"[]")).await;
     assert_eq!(r.status, 200);
     assert!(matches!(server.next_seen().await, Seen::Body(Ok(b)) if b == b"[]"));
@@ -113,7 +110,7 @@ async fn a_malformed_body_reaches_the_handler_intact() {
 // Donor: serve/test_server.py::RequestBodies::test_the_listen_backlog
 #[tokio::test]
 async fn the_listen_backlog() {
-    let server = TestServer::start().await;
+    let server = ProbeServer::start().await;
     assert!(server.backlog >= 256, "backlog {}", server.backlog);
     assert_eq!(TransportConfig::from_raw(None, None, None).backlog, 256);
     // The server answers with that listener.
@@ -131,12 +128,8 @@ async fn the_listen_backlog() {
 /// delimited by closing the connection.
 #[tokio::test]
 async fn sse_answers_set_tcp_nodelay() {
-    let mut server = TestServer::start().await;
-    let r = exchange(
-        server.addr,
-        &donor_post("Content-Length: 0\r\n", b"").replace_path("/sse"),
-    )
-    .await;
+    let mut server = ProbeServer::start().await;
+    let r = exchange(server.addr, &post_to("/sse", "Content-Length: 0\r\n", b"")).await;
     assert_eq!(
         r.head,
         format!(
@@ -158,11 +151,9 @@ async fn sse_answers_set_tcp_nodelay() {
 /// and API-07; that ledger row stays pending.
 #[tokio::test]
 async fn a_waiting_request_is_cancelled_when_its_client_goes() {
-    let mut server = TestServer::start().await;
+    let mut server = ProbeServer::start().await;
     let release = server.arm_release();
-    let hold = |path: &str| {
-        donor_post(&format!("Content-Length: {}\r\n", MSG.len()), MSG).replace_path(path)
-    };
+    let hold = |path: &str| json_post(path, MSG);
     let mut first = connect(server.addr).await;
     write(&mut first, &hold("/hold")).await;
     assert!(matches!(server.next_seen().await, Seen::Holding));
@@ -198,9 +189,8 @@ async fn a_waiting_request_is_cancelled_when_its_client_goes() {
 /// API-07; that ledger row stays pending.
 #[tokio::test]
 async fn keep_alives_reach_a_waiting_client() {
-    let mut server = TestServer::start().await;
-    let ping =
-        || donor_post(&format!("Content-Length: {}\r\n", MSG.len()), MSG).replace_path("/ping");
+    let mut server = ProbeServer::start().await;
+    let ping = || json_post("/ping", MSG);
     for _ in 0..2 {
         let mut s = connect(server.addr).await;
         write(&mut s, &ping()).await;
@@ -231,54 +221,4 @@ async fn keep_alives_reach_a_waiting_client() {
         text.ends_with("data: hello\n\ndata: [DONE]\n\n"),
         "{text:?}"
     );
-}
-
-async fn read_until(s: &mut tokio::net::TcpStream, done: impl Fn(&[u8]) -> bool) -> Vec<u8> {
-    let mut got = Vec::new();
-    let mut buf = [0u8; 4096];
-    let result = tokio::time::timeout(DEADLINE, async {
-        while !done(&got) {
-            match s.read(&mut buf).await {
-                Ok(0) | Err(_) => break,
-                Ok(n) => got.extend_from_slice(buf.get(..n).unwrap_or_default()),
-            }
-        }
-    })
-    .await;
-    assert!(
-        result.is_ok(),
-        "timed out with {:?}",
-        String::from_utf8_lossy(&got)
-    );
-    got
-}
-
-fn count(haystack: &[u8], needle: &[u8]) -> usize {
-    haystack
-        .windows(needle.len())
-        .filter(|w| *w == needle)
-        .count()
-}
-
-fn contains(haystack: &[u8], needle: &[u8]) -> bool {
-    count(haystack, needle) > 0
-}
-
-trait ReplacePath {
-    fn replace_path(self, path: &str) -> Vec<u8>;
-}
-
-impl ReplacePath for Vec<u8> {
-    /// The donor's request with another path in its request line.
-    fn replace_path(self, path: &str) -> Vec<u8> {
-        let from = b"POST /v1/chat/completions ";
-        match self.strip_prefix(&from[..]) {
-            Some(rest) => {
-                let mut out = format!("POST {path} ").into_bytes();
-                out.extend_from_slice(rest);
-                out
-            }
-            None => self,
-        }
-    }
 }

@@ -3,19 +3,17 @@
 //! Provenance: translated from project-maya serve/test_server.py::CorsOptIn, serve/test_server.py::RequestBodies::test_several_api_keys, serve/test_server.py::WebApp::test_discovery_needs_the_api_key, serve/test_server.py::WebApp::test_metrics_need_the_key_when_one_is_set, serve/test_server.py::SharedSettings::test_only_strata_s_own_page_may_set_them, serve/test_server.py::SharedSettings::test_they_need_the_key_when_one_is_set, serve/test_server.py::ModelManagement::test_the_api_key_guards_them_and_status and serve/test_server.py::ClientShapes::test_query_string at 7e68a30f (MIT); license text in console/LICENSES/project-maya-MIT.txt.
 //!
 //! The donor's methods run against a full server. Here the route handlers of later packages
-//! do not exist yet, so the kit's probe handler stands in for them where a method needs a
+//! do not exist yet, so the test kit's `RouteProbe` stands in for them where a method needs a
 //! route to answer. A method whose assertions are all about the router and its guards is
 //! re-expressed in full; a method that also asserts what a later package's handler answers
 //! (a chat answer, a model listing, a settings value) is re-expressed in its router part,
 //! and its ledger row stays pending until that package lands (each test says so).
 
-#[path = "api03_kit.rs"]
-mod kit;
-
 use console_core::config::parse_cors_origins;
 use console_http::guard::{GuardConfig, FOREIGN_PAGE_MESSAGE};
 use console_http::router::Router;
-use kit::*;
+use console_testkit::server::probe::probed;
+use console_testkit::server::{TestServer, LOOPBACK};
 use serde_json::{json, Value};
 
 const PAGE: &str = "http://127.0.0.1:8090";
@@ -35,7 +33,7 @@ fn keyed(setting: Value) -> GuardConfig {
 // so the GET is 403. The other assertions are the donor's: no CORS header either way.
 #[tokio::test]
 async fn cors_without_the_setting_nothing_changes() {
-    let server = Server::start(probed(cors(&[]))).await;
+    let server = TestServer::with_router(probed(cors(&[]))).await;
     let r = server
         .call(
             "OPTIONS",
@@ -70,7 +68,7 @@ async fn cors_without_the_setting_nothing_changes() {
 // completion (API-07, API-08) come from the probe here; the ledger row stays pending.
 #[tokio::test]
 async fn cors_a_listed_page_gets_its_preflight_and_the_header() {
-    let server = Server::start(probed(cors(&[PAGE]))).await;
+    let server = TestServer::with_router(probed(cors(&[PAGE]))).await;
     let r = server
         .call(
             "OPTIONS",
@@ -132,7 +130,7 @@ async fn cors_a_listed_page_gets_its_preflight_and_the_header() {
 // Donor: serve/test_server.py::CorsOptIn::test_another_page_gets_nothing
 #[tokio::test]
 async fn cors_another_page_gets_nothing() {
-    let server = Server::start(probed(cors(&[PAGE]))).await;
+    let server = TestServer::with_router(probed(cors(&[PAGE]))).await;
     for origin in ["http://evil.example", "http://127.0.0.1:8091"] {
         let r = server
             .call("OPTIONS", "/v1/models", &[("Origin", origin)], None)
@@ -157,7 +155,7 @@ async fn cors_a_trailing_slash_in_the_config_is_forgiven() {
         Err(e) => panic!("parse_cors_origins: {e}"),
     };
     assert_eq!(origins, vec![PAGE.to_owned()]);
-    let server = Server::start(probed(
+    let server = TestServer::with_router(probed(
         GuardConfig::new(LOOPBACK).with_cors_origins(origins),
     ))
     .await;
@@ -172,7 +170,7 @@ async fn cors_a_trailing_slash_in_the_config_is_forgiven() {
 // Router part only: the 200 of /v1/models is API-11's; the ledger row stays pending.
 #[tokio::test]
 async fn cors_star_allows_every_page() {
-    let server = Server::start(probed(cors(&["*"]))).await;
+    let server = TestServer::with_router(probed(cors(&["*"]))).await;
     let r = server
         .call(
             "GET",
@@ -192,7 +190,7 @@ async fn cors_star_allows_every_page() {
 // Donor: serve/test_server.py::CorsOptIn::test_settings_and_the_page_itself_stay_closed
 #[tokio::test]
 async fn cors_settings_and_the_page_itself_stay_closed() {
-    let server = Server::start(probed(cors(&[PAGE]))).await;
+    let server = TestServer::with_router(probed(cors(&[PAGE]))).await;
     let r = server
         .call("OPTIONS", "/settings", &[("Origin", PAGE)], None)
         .await;
@@ -221,7 +219,7 @@ async fn cors_settings_and_the_page_itself_stay_closed() {
 // probe answers); the ledger row stays pending.
 #[tokio::test]
 async fn cors_another_page_cannot_post_without_a_preflight() {
-    let server = Server::start(probed(cors(&[]))).await;
+    let server = TestServer::with_router(probed(cors(&[]))).await;
     for origin in ["http://evil.example", "null"] {
         let r = server
             .call(
@@ -256,7 +254,7 @@ async fn cors_another_page_cannot_post_without_a_preflight() {
 // answers once the key passes. The ledger row stays pending.
 #[tokio::test]
 async fn several_api_keys() {
-    let server = Server::start(probed(keyed(json!("k1, k2")))).await;
+    let server = TestServer::with_router(probed(keyed(json!("k1, k2")))).await;
     for (key, want) in [("k1", 200), ("k2", 200), ("k3", 401), ("k1, k2", 401)] {
         let auth = format!("Bearer {key}");
         let r = server
@@ -266,7 +264,7 @@ async fn several_api_keys() {
     }
     server.stop().await;
     // A list in the config: a key with a comma in it.
-    let server = Server::start(probed(keyed(json!(["a,b"])))).await;
+    let server = TestServer::with_router(probed(keyed(json!(["a,b"])))).await;
     let r = server
         .post_json(
             "/v1/chat/completions",
@@ -291,7 +289,7 @@ async fn several_api_keys() {
 // pending.
 #[tokio::test]
 async fn discovery_needs_the_api_key() {
-    let server = Server::start(probed(keyed(json!("secret")))).await;
+    let server = TestServer::with_router(probed(keyed(json!("secret")))).await;
     for path in ["/models", "/v1/models", "/props", "/slots"] {
         assert_eq!(
             server.call("GET", path, &[], None).await.status,
@@ -311,7 +309,7 @@ async fn discovery_needs_the_api_key() {
 // ledger row stays pending.
 #[tokio::test]
 async fn metrics_need_the_key_when_one_is_set() {
-    let server = Server::start(probed(keyed(json!("secret")))).await;
+    let server = TestServer::with_router(probed(keyed(json!("secret")))).await;
     assert_eq!(server.call("GET", "/metrics", &[], None).await.status, 401);
     let r = server
         .call(
@@ -336,7 +334,7 @@ async fn metrics_need_the_key_when_one_is_set() {
 // message).
 #[tokio::test]
 async fn only_the_own_page_may_set_the_shared_settings() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let body = "{\"defaults\": {\"temperature\": 1}}";
     let r = server
         .call(
@@ -376,7 +374,7 @@ async fn only_the_own_page_may_set_the_shared_settings() {
 // Router part only: the 200 is API-13's settings handler; the ledger row stays pending.
 #[tokio::test]
 async fn shared_settings_need_the_key_when_one_is_set() {
-    let server = Server::start(probed(keyed(json!("secret")))).await;
+    let server = TestServer::with_router(probed(keyed(json!("secret")))).await;
     let body = "{\"defaults\": {\"temperature\": 1}}";
     assert_eq!(server.post_json("/settings", &[], body).await.status, 401);
     let r = server
@@ -396,7 +394,7 @@ async fn shared_settings_need_the_key_when_one_is_set() {
 // API-11's and API-06's; the ledger row stays pending.
 #[tokio::test]
 async fn the_api_key_guards_model_management_and_status() {
-    let server = Server::start(probed(keyed(json!("secret")))).await;
+    let server = TestServer::with_router(probed(keyed(json!("secret")))).await;
     let calls = [
         ("POST", "/models/load"),
         ("POST", "/models/unload"),
@@ -426,7 +424,7 @@ async fn the_api_key_guards_model_management_and_status() {
     );
     server.stop().await;
     // No key set: open, as before.
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     assert_eq!(server.call("GET", "/status", &[], None).await.status, 200);
     server.stop().await;
 }
@@ -437,7 +435,7 @@ async fn the_api_key_guards_model_management_and_status() {
 // API-08's and API-09's; the ledger row stays pending.
 #[tokio::test]
 async fn client_shapes_query_string() {
-    let server = Server::start(probed(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(probed(GuardConfig::new(LOOPBACK))).await;
     let body = "{\"model\": \"x\", \"max_tokens\": 20, \"messages\": [{\"role\": \"user\", \"content\": \"hi\"}]}";
     let anthropic = [("anthropic-version", "2023-06-01")];
     for (path, slot) in [
@@ -458,7 +456,7 @@ async fn client_shapes_query_string() {
     assert_eq!(r.status, 404);
     server.stop().await;
     // With no handler at all the unknown path is still 404 and the known ones are routed.
-    let server = Server::start(Router::new(GuardConfig::new(LOOPBACK))).await;
+    let server = TestServer::with_router(Router::new(GuardConfig::new(LOOPBACK))).await;
     assert_eq!(
         server
             .post_json("/v1/nothing?beta=true", &[], body)
