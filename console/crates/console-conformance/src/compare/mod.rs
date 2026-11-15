@@ -15,9 +15,15 @@
 //!
 //! A difference is suppressed only by an [`Annotation`] that names an approved id of the
 //! deviation register (read by [`ApprovedIds`]) and whose pointer pattern, and expected
-//! values when given, match it. An annotation that cites a declined proposal, a proposal
-//! still awaiting the owner (P-5 and P-18 to P-25 at the time of writing) or an id the
-//! register does not hold is an error that fails the comparison, and suppresses nothing.
+//! values when given, match it. An annotation must say what it covers: the kind of
+//! difference ([`CoveredKind`]), or both expected values; one that gives neither (or only
+//! one expected value and no kind) is refused and suppresses nothing, so that an exact
+//! pointer alone never suppresses every kind of difference at it. A text difference shows
+//! excerpts, so only an annotation of kind text covers one, and its expected values are
+//! compared with the whole texts, never with the excerpts. An annotation that
+//! cites a declined proposal, a proposal still awaiting the owner (P-5 and P-18 to P-25 at
+//! the time of writing) or an id the register does not hold is an error that fails the
+//! comparison, and suppresses nothing.
 //! An annotation that suppresses nothing is reported as unused.
 //!
 //! There is no header allowlist: every header is compared by name (with its case), value
@@ -49,6 +55,62 @@ pub const EXCERPT_CHARS: usize = 40;
 /// The most annotations one comparison takes.
 pub const MAX_ANNOTATIONS: usize = 4096;
 
+/// The kind of difference an annotation covers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CoveredKind {
+    /// The values differ ([`DiffKind::Value`]).
+    Value,
+    /// Present on the reference side only ([`DiffKind::Missing`]).
+    Missing,
+    /// Present on the candidate side only ([`DiffKind::Extra`]).
+    Extra,
+    /// The same members in another order ([`DiffKind::KeyOrder`]).
+    KeyOrder,
+    /// Two long texts differ ([`DiffKind::Text`], at any offset).
+    Text,
+}
+
+impl CoveredKind {
+    /// Every kind, in the order of [`DiffKind`].
+    pub const ALL: &'static [CoveredKind] = &[
+        CoveredKind::Value,
+        CoveredKind::Missing,
+        CoveredKind::Extra,
+        CoveredKind::KeyOrder,
+        CoveredKind::Text,
+    ];
+
+    /// The kind as a report and an annotation list write it (as [`Difference::to_json`]
+    /// writes the kind of a difference).
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CoveredKind::Value => "value",
+            CoveredKind::Missing => "missing",
+            CoveredKind::Extra => "extra",
+            CoveredKind::KeyOrder => "key-order",
+            CoveredKind::Text => "text",
+        }
+    }
+
+    /// The kind written `s`.
+    pub fn parse(s: &str) -> Option<Self> {
+        Self::ALL.iter().copied().find(|k| k.as_str() == s)
+    }
+
+    /// Whether a difference of kind `d` is of this kind. A normalization problem is of
+    /// no kind an annotation covers.
+    pub fn covers(self, d: &DiffKind) -> bool {
+        matches!(
+            (self, d),
+            (CoveredKind::Value, DiffKind::Value)
+                | (CoveredKind::Missing, DiffKind::Missing)
+                | (CoveredKind::Extra, DiffKind::Extra)
+                | (CoveredKind::KeyOrder, DiffKind::KeyOrder)
+                | (CoveredKind::Text, DiffKind::Text { .. })
+        )
+    }
+}
+
 /// A deviation annotation: a difference the register approves.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Annotation {
@@ -58,7 +120,11 @@ pub struct Annotation {
     /// segment other than the last, and a pointer with one needs `reference` or
     /// `candidate`. It matches a difference's pointer exactly, never a prefix of it.
     pub pointer: String,
-    /// When given, the reference value the difference must show.
+    /// The kind of difference it covers. Without it, both `reference` and `candidate`
+    /// are required, and it never covers a text difference.
+    pub kind: Option<CoveredKind>,
+    /// When given, the reference value the difference must show (for a text
+    /// difference, the whole text at the pointer, not the excerpt).
     pub reference: Option<Value>,
     /// When given, the candidate value the difference must show.
     pub candidate: Option<Value>,
@@ -67,15 +133,23 @@ pub struct Annotation {
 }
 
 impl Annotation {
-    /// An annotation without expected values.
+    /// An annotation without a kind or expected values: it is refused until
+    /// [`Annotation::covering`] or [`Annotation::expecting`] says what it covers.
     pub fn new(deviation: &str, pointer: &str) -> Self {
         Self {
             deviation: deviation.to_string(),
             pointer: pointer.to_string(),
+            kind: None,
             reference: None,
             candidate: None,
             note: None,
         }
+    }
+
+    /// Covering differences of `kind` only.
+    pub fn covering(mut self, kind: CoveredKind) -> Self {
+        self.kind = Some(kind);
+        self
     }
 
     /// With the values the difference must show.
@@ -86,7 +160,8 @@ impl Annotation {
     }
 
     /// Reads a list of annotations: an array of objects with `deviation` and `pointer`,
-    /// and optionally `reference`, `candidate` and `note`; no other member.
+    /// and optionally `kind` (one of the names of [`CoveredKind::as_str`]), `reference`,
+    /// `candidate` and `note`; no other member.
     pub fn list_from_json(v: &Value) -> Result<Vec<Annotation>, AnnotationError> {
         let bad = |index: usize, why: &str| AnnotationError {
             index,
@@ -103,7 +178,15 @@ impl Annotation {
         for (i, item) in items.iter().enumerate() {
             let o = item.as_object().ok_or_else(|| bad(i, "not an object"))?;
             if let Some(k) = o.keys().find(|k| {
-                !["deviation", "pointer", "reference", "candidate", "note"].contains(&k.as_str())
+                ![
+                    "deviation",
+                    "pointer",
+                    "kind",
+                    "reference",
+                    "candidate",
+                    "note",
+                ]
+                .contains(&k.as_str())
             }) {
                 return Err(bad(i, &format!("unknown member {k:?}")));
             }
@@ -111,6 +194,14 @@ impl Annotation {
             out.push(Annotation {
                 deviation: text("deviation").ok_or_else(|| bad(i, "deviation is not a string"))?,
                 pointer: text("pointer").ok_or_else(|| bad(i, "pointer is not a string"))?,
+                kind: match o.get("kind") {
+                    None => None,
+                    Some(k) => Some(
+                        k.as_str()
+                            .and_then(CoveredKind::parse)
+                            .ok_or_else(|| bad(i, "kind is not a kind of difference"))?,
+                    ),
+                },
                 reference: o.get("reference").cloned(),
                 candidate: o.get("candidate").cloned(),
                 note: match o.get("note") {
@@ -126,16 +217,27 @@ impl Annotation {
         Ok(out)
     }
 
-    fn matches(&self, d: &Difference) -> bool {
-        pointer_matches(&self.pointer, &d.pointer)
-            && self
-                .reference
-                .as_ref()
-                .is_none_or(|r| d.reference.as_ref() == Some(r))
-            && self
-                .candidate
-                .as_ref()
-                .is_none_or(|c| d.candidate.as_ref() == Some(c))
+    /// Whether it covers `d`, a difference between the documents `reference` and
+    /// `candidate`. A text difference shows excerpts, which do not identify a text: only
+    /// an annotation of kind text covers one, and its expected values, when given, are
+    /// compared with the whole texts at the difference's pointer, never with the
+    /// excerpts (so that values written for one change do not hide a later one).
+    fn matches(&self, d: &Difference, reference: &Value, candidate: &Value) -> bool {
+        if !pointer_matches(&self.pointer, &d.pointer) {
+            return false;
+        }
+        let (r_shown, c_shown) = match d.kind {
+            DiffKind::Text { .. } => {
+                if self.kind != Some(CoveredKind::Text) {
+                    return false;
+                }
+                (reference.pointer(&d.pointer), candidate.pointer(&d.pointer))
+            }
+            _ => (d.reference.as_ref(), d.candidate.as_ref()),
+        };
+        self.kind.is_none_or(|k| k.covers(&d.kind))
+            && self.reference.as_ref().is_none_or(|r| r_shown == Some(r))
+            && self.candidate.as_ref().is_none_or(|c| c_shown == Some(c))
     }
 }
 
@@ -151,11 +253,21 @@ fn pointer_matches(pattern: &str, pointer: &str) -> bool {
     ps.len() == qs.len() && ps.iter().zip(&qs).all(|(a, b)| *a == "*" || a == b)
 }
 
-/// Why a wildcard annotation is refused: a `*` segment may stand for an exchange, a
-/// header or an element, never for the last segment (which would name any member), and
-/// a pointer with a `*` must give the value the difference shows on at least one side, so
-/// that one approved id cannot suppress unrelated differences.
-fn wildcard_problem(a: &Annotation) -> Option<&'static str> {
+/// Why an annotation is refused for its shape. Every annotation says what it covers: the
+/// kind of difference, or both expected values (an exact pointer alone would suppress a
+/// missing member, an extra one, a key-order change and any value at once). Without a
+/// kind, it never covers a text difference, whose values are excerpts: a text is covered
+/// only by kind text, with the whole texts as its expected values when given. A `*`
+/// segment may stand for an exchange, a header or an element, never for the last segment
+/// (which would name any member), and a pointer with a `*` must give the value the
+/// difference shows on at least one side, so that one approved id cannot suppress
+/// unrelated differences.
+fn shape_problem(a: &Annotation) -> Option<&'static str> {
+    if a.kind.is_none() && (a.reference.is_none() || a.candidate.is_none()) {
+        return Some(
+            "an annotation names the kind of difference it covers, or gives both the reference and the candidate value",
+        );
+    }
     let segments: Vec<&str> = a.pointer.split('/').skip(1).collect();
     if !segments.contains(&"*") {
         return None;
@@ -422,7 +534,7 @@ pub fn compare(
                 deviation: a.deviation.clone(),
                 problem: AnnotationProblem::BadPointer,
             });
-        } else if let Some(why) = wildcard_problem(a) {
+        } else if let Some(why) = shape_problem(a) {
             report.annotation_errors.push(AnnotationError {
                 index: i,
                 deviation: a.deviation.clone(),
@@ -444,7 +556,7 @@ pub fn compare(
         let by = annotations.iter().enumerate().find(|(i, a)| {
             valid.get(*i).copied().unwrap_or(false)
                 && !matches!(d.kind, DiffKind::Normalization(_))
-                && a.matches(&d)
+                && a.matches(&d, &reference.document, &candidate.document)
         });
         match by {
             Some((i, a)) => {
@@ -712,14 +824,16 @@ mod tests {
     fn annotations_need_an_approved_id_and_an_exact_pointer() {
         let a = json!({"h": "BaseHTTP/0.6 Python/3.14.7", "k": 1});
         let b = json!({"h": "pulsar-console/0.1.0", "k": 1});
-        // approved, exact pointer: suppressed
-        let r = run(a.clone(), b.clone(), &[Annotation::new("P-1", "/h")]);
+        // approved, exact pointer, the kind it covers: suppressed (CNF-04F: an annotation
+        // names its kind or both values)
+        let value = |id: &str, p: &str| Annotation::new(id, p).covering(CoveredKind::Value);
+        let r = run(a.clone(), b.clone(), &[value("P-1", "/h")]);
         assert!(r.clean(), "{:?}", r.to_json());
         // a prefix pointer does not match
         let r = run(
             json!({"o": a.clone()}),
             json!({"o": b.clone()}),
-            &[Annotation::new("P-1", "/o")],
+            &[value("P-1", "/o")],
         );
         assert!(!r.passed());
         assert_eq!(r.unused_annotations, [0]);
@@ -727,35 +841,49 @@ mod tests {
         let r = run(
             json!({"o": a.clone()}),
             json!({"o": b.clone()}),
-            &[Annotation::new("P-1", "/*/h").expecting(None, Some(json!("pulsar-console/0.1.0")))],
+            &[value("P-1", "/*/h").expecting(None, Some(json!("pulsar-console/0.1.0")))],
         );
         assert!(r.clean());
         // a wildcard without an expected value, or in the last segment, is refused and
-        // suppresses nothing
-        for bad in [
-            Annotation::new("P-1", "/*/h"),
-            Annotation::new("P-1", "/o/*").expecting(None, Some(json!("pulsar-console/0.1.0"))),
+        // suppresses nothing; each annotation names its kind, so that the wildcard rule is
+        // the only reason left to refuse it
+        for (bad, why) in [
+            (value("P-1", "/*/h"), "wildcard pointer needs"),
+            (
+                value("P-1", "/o/*").expecting(None, Some(json!("pulsar-console/0.1.0"))),
+                "may not end in *",
+            ),
         ] {
             let r = run(json!({"o": a.clone()}), json!({"o": b.clone()}), &[bad]);
             assert!(!r.passed());
             assert_eq!(r.differences.len(), 1);
-            assert!(matches!(
-                r.annotation_errors[0].problem,
-                AnnotationProblem::Shape(_)
-            ));
+            assert!(
+                matches!(&r.annotation_errors[0].problem, AnnotationProblem::Shape(s) if s.contains(why)),
+                "{:?}",
+                r.annotation_errors
+            );
         }
         // expected values must match
-        let wrong = Annotation::new("P-1", "/h").expecting(None, Some(json!("other")));
-        assert!(!run(a.clone(), b.clone(), &[wrong]).passed());
+        let wrong = value("P-1", "/h").expecting(None, Some(json!("other")));
+        let r = run(a.clone(), b.clone(), &[wrong]);
+        assert!(!r.passed() && r.annotation_errors.is_empty());
         // not approved ids fail and suppress nothing
+        // (a well-shaped annotation, so that only the approval check can refuse it)
         for id in ["P-19", "P-12", "P-99", "SEC-1.2"] {
-            let r = run(a.clone(), b.clone(), &[Annotation::new(id, "/h")]);
+            let r = run(a.clone(), b.clone(), &[value(id, "/h")]);
             assert!(!r.passed(), "{id}");
             assert_eq!(r.differences.len(), 1, "{id}");
             assert_eq!(r.annotation_errors.len(), 1, "{id}");
+            assert!(
+                matches!(
+                    r.annotation_errors[0].problem,
+                    AnnotationProblem::NotApproved(_)
+                ),
+                "{id}"
+            );
         }
         // an unused annotation is reported, and does not fail
-        let r = run(a.clone(), a.clone(), &[Annotation::new("SEC-1.1", "/k")]);
+        let r = run(a.clone(), a.clone(), &[value("SEC-1.1", "/k")]);
         assert!(r.passed() && !r.clean());
         assert_eq!(r.unused_annotations, [0]);
         // a bad pointer
@@ -767,16 +895,166 @@ mod tests {
     }
 
     #[test]
+    fn an_exact_pointer_alone_suppresses_nothing() {
+        // CNF-04F: without a kind and without both values, an annotation is refused; were
+        // it accepted, it would swallow each of these differences at /o
+        let cases = [
+            (json!({"o": 1}), json!({"o": 2})),
+            (json!({"o": {"x": 1}}), json!({"o": {}})),
+            (json!({"o": {}}), json!({"o": {"x": 1}})),
+            (
+                json!({"o": {"x": 1, "y": 2}}),
+                json!({"o": {"y": 2, "x": 1}}),
+            ),
+        ];
+        for (a, b) in &cases {
+            for bare in [
+                Annotation::new("P-1", "/o"),
+                Annotation::new("P-1", "/o").expecting(Some(a["o"].clone()), None),
+                Annotation::new("P-1", "/o").expecting(None, Some(b["o"].clone())),
+            ] {
+                let r = run(a.clone(), b.clone(), &[bare]);
+                assert!(!r.passed(), "{a} {b}");
+                assert!(r.suppressed.is_empty(), "{a} {b}");
+                assert!(matches!(
+                    &r.annotation_errors[0].problem,
+                    AnnotationProblem::Shape(s) if s.contains("names the kind of difference")
+                ));
+            }
+        }
+        // both values: suppresses the value difference that shows them
+        let both = Annotation::new("P-1", "/o").expecting(Some(json!(1)), Some(json!(2)));
+        assert!(run(
+            json!({"o": 1}),
+            json!({"o": 2}),
+            std::slice::from_ref(&both)
+        )
+        .clean());
+        // ... and nothing else at that pointer
+        let r = run(json!({"o": 1}), json!({"o": 3}), &[both]);
+        assert!(!r.passed() && r.unused_annotations == [0]);
+    }
+
+    #[test]
+    fn an_excerpt_valued_annotation_does_not_hide_a_later_difference() {
+        // a text difference shows excerpts; values copied from them must not cover a
+        // second change past the excerpt
+        let base = "x".repeat(LONG_TEXT_CHARS + 200);
+        let mut approved_change = base.clone();
+        approved_change.replace_range(10..11, "A");
+        let r0 = run(json!({"o": base}), json!({"o": approved_change}), &[]);
+        let d = &r0.differences[0];
+        assert!(matches!(d.kind, DiffKind::Text { offset: 10 }));
+        let mut more = approved_change.clone();
+        more.replace_range(150..151, "Z");
+        // without a kind, both excerpt values: never a text difference
+        let no_kind =
+            Annotation::new("P-1", "/o").expecting(d.reference.clone(), d.candidate.clone());
+        let r = run(
+            json!({"o": base}),
+            json!({"o": more}),
+            std::slice::from_ref(&no_kind),
+        );
+        assert!(!r.passed(), "{}", r.to_json());
+        assert!(r.suppressed.is_empty());
+        // ... not even the one the excerpts were taken from
+        let r = run(
+            json!({"o": base}),
+            json!({"o": approved_change}),
+            &[no_kind],
+        );
+        assert!(!r.passed() && r.unused_annotations == [0]);
+        // kind text with the excerpts: compared with the whole texts, so nothing matches
+        let text_excerpts = Annotation::new("P-1", "/o")
+            .covering(CoveredKind::Text)
+            .expecting(d.reference.clone(), d.candidate.clone());
+        let r = run(
+            json!({"o": base}),
+            json!({"o": approved_change}),
+            &[text_excerpts],
+        );
+        assert!(!r.passed());
+        // kind text with the whole texts: covers exactly that change, not the wider one
+        let whole = Annotation::new("P-1", "/o")
+            .covering(CoveredKind::Text)
+            .expecting(Some(json!(base)), Some(json!(approved_change)));
+        let r = run(
+            json!({"o": base}),
+            json!({"o": approved_change}),
+            std::slice::from_ref(&whole),
+        );
+        assert!(r.clean(), "{}", r.to_json());
+        let r = run(json!({"o": base}), json!({"o": more}), &[whole]);
+        assert!(!r.passed() && r.unused_annotations == [0]);
+    }
+
+    #[test]
+    fn an_annotation_covers_only_its_kind() {
+        let missing = Annotation::new("P-1", "/o/x").covering(CoveredKind::Missing);
+        // the member is missing: suppressed
+        let r = run(
+            json!({"o": {"x": 1}}),
+            json!({"o": {}}),
+            std::slice::from_ref(&missing),
+        );
+        assert!(r.clean(), "{:?}", r.to_json());
+        // the member is there with another value, or only on the candidate side: reported
+        for (a, b) in [
+            (json!({"o": {"x": 1}}), json!({"o": {"x": 2}})),
+            (json!({"o": {}}), json!({"o": {"x": 1}})),
+        ] {
+            let r = run(a.clone(), b.clone(), std::slice::from_ref(&missing));
+            assert!(!r.passed(), "{a} {b}");
+            assert_eq!(r.differences.len(), 1);
+            assert_eq!(r.unused_annotations, [0]);
+        }
+        // a key-order annotation does not cover a value under that object, nor a text
+        // annotation a short value
+        let order = Annotation::new("P-1", "/o").covering(CoveredKind::KeyOrder);
+        let r = run(
+            json!({"o": {"x": 1, "y": 2}}),
+            json!({"o": {"y": 2, "x": 1}}),
+            std::slice::from_ref(&order),
+        );
+        assert!(r.clean());
+        let r = run(json!({"o": 1}), json!({"o": 2}), &[order]);
+        assert!(!r.passed());
+        let text = Annotation::new("P-1", "/o").covering(CoveredKind::Text);
+        assert!(!run(
+            json!({"o": "a"}),
+            json!({"o": "b"}),
+            std::slice::from_ref(&text)
+        )
+        .passed());
+        let long = |c: char| format!("{}{c}", "x".repeat(LONG_TEXT_CHARS));
+        assert!(run(json!({"o": long('a')}), json!({"o": long('b')}), &[text]).clean());
+        // a kind with one value: both must match
+        let one = Annotation::new("P-1", "/o")
+            .covering(CoveredKind::Value)
+            .expecting(None, Some(json!(2)));
+        assert!(run(json!({"o": 1}), json!({"o": 2}), std::slice::from_ref(&one)).clean());
+        assert!(!run(json!({"o": 1}), json!({"o": 3}), &[one]).passed());
+        for k in CoveredKind::ALL {
+            assert_eq!(CoveredKind::parse(k.as_str()), Some(*k));
+        }
+        assert_eq!(CoveredKind::parse("normalization"), None);
+    }
+
+    #[test]
     fn annotation_lists_are_read_strictly() {
-        let ok = json!([{"deviation": "P-1", "pointer": "/h", "candidate": "x", "note": "why"}]);
+        let ok = json!([{"deviation": "P-1", "pointer": "/h", "kind": "value", "candidate": "x", "note": "why"}]);
         let list = Annotation::list_from_json(&ok).unwrap_or_default();
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].candidate, Some(json!("x")));
+        assert_eq!(list[0].kind, Some(CoveredKind::Value));
         for bad in [
             json!({}),
             json!([{"deviation": "P-1"}]),
             json!([{"deviation": "P-1", "pointer": "/h", "why": 1}]),
             json!([{"deviation": 1, "pointer": "/h"}]),
+            json!([{"deviation": "P-1", "pointer": "/h", "kind": "any"}]),
+            json!([{"deviation": "P-1", "pointer": "/h", "kind": "normalization"}]),
+            json!([{"deviation": "P-1", "pointer": "/h", "kind": 1}]),
         ] {
             assert!(Annotation::list_from_json(&bad).is_err(), "{bad}");
         }

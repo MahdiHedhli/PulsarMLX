@@ -4,10 +4,11 @@
 //! renamed model in a Content-Length-framed body, time and rate figures of different
 //! widths), and a candidate observation that differs from it only in values the volatile
 //! list names (ids, time stamps, figures, the `Date` and `Server` header values, the
-//! port, the temporary directory) and in names the rename map decides, compare clean
-//! apart from `Content-Length`: under the shipped list each Content-Length-framed answer
-//! differs in that header, its raw head and its framing length, and with a derived
-//! Content-Length entry the two compare clean. Each test then mutates
+//! port, the temporary directory) and in names the rename map decides, compare clean:
+//! the shipped list derives the `Content-Length` value from the normalized body (lead
+//! decision LD44, added by the CNF-04 follow-up); without that entry each
+//! Content-Length-framed answer differs in that header, its raw head and its framing
+//! length. Each test then mutates
 //! one observable thing on the candidate side (a status, a header name, value, position,
 //! a missing or an extra header, an event, an id cross-reference, a tape entry, a file
 //! field, a log line, the exit status) and requires a difference at the expected pointer.
@@ -23,8 +24,8 @@
 use std::path::PathBuf;
 
 use console_conformance::compare::{
-    compare, compare_documents, Annotation, AnnotationProblem, ApprovedIds, DiffKind, IdStatus,
-    Report,
+    compare, compare_documents, Annotation, AnnotationProblem, ApprovedIds, CoveredKind, DiffKind,
+    IdStatus, Report,
 };
 use console_conformance::normalize::{Normalized, Normalizer, RunWindow, Side, SideContext};
 use console_conformance::observe::{
@@ -32,7 +33,7 @@ use console_conformance::observe::{
     ResponseHead, SseParser,
 };
 use console_conformance::scenario::{
-    load_rename_map, load_volatile_fields, Location, VolatileClass, VolatileField, VolatileFields,
+    load_rename_map, load_volatile_fields, Location, VolatileClass, VolatileFields,
 };
 use serde_json::{json, Value};
 
@@ -460,18 +461,23 @@ fn cand() -> Spec {
     spec(&CAND, false)
 }
 
-/// The shipped list with one more header entry for Content-Length.
+/// The shipped list, which holds the derived Content-Length entry since the CNF-04
+/// follow-up (LD44): checked here, so that the tests that rely on it fail if it goes.
 fn with_content_length() -> VolatileFields {
+    let list = volatile();
+    assert!(
+        list.fields.iter().any(|f| f.id == "header-content-length"
+            && f.class == VolatileClass::BodyLength
+            && matches!(&f.location, Location::Header { name } if name == "Content-Length")),
+        "the shipped list has no derived Content-Length entry"
+    );
+    list
+}
+
+/// The shipped list without its Content-Length entry: the value is compared as sent.
+fn without_content_length() -> VolatileFields {
     let mut list = volatile();
-    list.fields.push(VolatileField {
-        id: "header-content-length".into(),
-        class: VolatileClass::HeaderValue,
-        location: Location::Header {
-            name: "Content-Length".into(),
-        },
-        donor: vec!["serve/server.py:5461".into()],
-        note: None,
-    });
+    list.fields.retain(|f| f.id != "header-content-length");
     list
 }
 
@@ -479,17 +485,23 @@ fn cl_normalizer() -> Normalizer {
     normalizer_with(&with_content_length())
 }
 
-/// Compares with the shipped list plus a derived Content-Length entry, under which the
-/// unmutated fixture compares clean.
+/// Compares with the shipped list, whose derived Content-Length entry makes the
+/// unmutated fixture compare clean.
 fn check_cl(candidate: &Spec, annotations: &[Annotation]) -> Report {
     check_with(&cl_normalizer(), candidate, annotations)
+}
+
+/// Compares with the shipped list less its Content-Length entry.
+fn check_without_cl(candidate: &Spec) -> Report {
+    check_with(&normalizer_with(&without_content_length()), candidate, &[])
 }
 
 /// The exchanges framed by Content-Length whose length differs between the sides.
 const CL_EXCHANGES: [usize; 3] = [0, 3, 4];
 
-/// What the unmutated fixture differs in under the shipped list: the Content-Length
-/// value, the raw head that holds it and the framing length of each such exchange.
+/// What the unmutated fixture differs in without the Content-Length entry: the
+/// Content-Length value, the raw head that holds it and the framing length of each such
+/// exchange. A mutation test must not rely on a difference there.
 fn baseline_pointers() -> Vec<String> {
     let mut out = Vec::new();
     for i in CL_EXCHANGES {
@@ -538,9 +550,11 @@ fn replace_body(s: &mut Spec, i: usize, from: &str, to: &str) {
 
 #[test]
 fn observations_that_differ_only_in_volatile_values_compare_clean_apart_from_content_length() {
-    // under the shipped list, Content-Length is compared exactly: a renamed model and
-    // figures of other widths change the length of each Content-Length-framed answer
-    let r = check(&cand(), &[]);
+    // changed by the CNF-04 follow-up: the shipped list now derives Content-Length, so
+    // the exact comparison of that value is shown with the entry removed. Without it, a
+    // renamed model and figures of other widths change the length of each
+    // Content-Length-framed answer
+    let r = check_without_cl(&cand());
     let mut got = pointers(&r);
     got.sort();
     let mut want = baseline_pointers();
@@ -551,8 +565,9 @@ fn observations_that_differ_only_in_volatile_values_compare_clean_apart_from_con
         "{}",
         serde_json::to_string_pretty(&r.to_json()).unwrap_or_default()
     );
-    // with a Content-Length entry derived from the normalized body, they compare clean
-    let r = check_cl(&cand(), &[]);
+    // with the shipped list, whose Content-Length entry is derived from the normalized
+    // body, they compare clean
+    let r = check(&cand(), &[]);
     assert!(
         r.clean(),
         "{}",
@@ -1203,7 +1218,8 @@ fn an_approved_annotation_suppresses_exactly_its_difference() {
     // the raw head still differs: an annotation covers one pointer
     assert_eq!(r.suppressed.len(), 1);
     expect_diff_anywhere(&r, "/http/0/head/raw/text");
-    let raw = Annotation::new("SEC-1.3", "/http/0/head/raw/text");
+    // (CNF-04F: an annotation without both values names the kind it covers)
+    let raw = Annotation::new("SEC-1.3", "/http/0/head/raw/text").covering(CoveredKind::Text);
     let r = check_cl(&c, &[a, raw]);
     assert!(
         r.clean(),
@@ -1222,7 +1238,11 @@ fn annotations_citing_ids_that_are_not_approved_fail() {
         "P-5", "P-12", "P-17", "P-18", "P-19", "P-20", "P-21", "P-22", "P-23", "P-24", "P-25",
         "P-26", "SEC-8",
     ] {
-        let r = check_cl(&c, &[Annotation::new(id, "/http/0/head/headers/2/1")]);
+        // (CNF-04F: a well-shaped annotation, so that only the approval check refuses it)
+        let r = check_cl(
+            &c,
+            &[Annotation::new(id, "/http/0/head/headers/2/1").covering(CoveredKind::Value)],
+        );
         assert!(!r.passed(), "{id}");
         assert_eq!(r.annotation_errors.len(), 1, "{id}");
         assert!(r.suppressed.is_empty(), "{id}");
@@ -1239,7 +1259,7 @@ fn annotations_citing_ids_that_are_not_approved_fail() {
 fn an_unused_annotation_is_reported() {
     let r = check_cl(
         &cand(),
-        &[Annotation::new("P-1", "/http/0/head/headers/0/1")],
+        &[Annotation::new("P-1", "/http/0/head/headers/0/1").covering(CoveredKind::Value)],
     );
     assert!(r.passed());
     assert!(!r.clean());
@@ -1285,7 +1305,7 @@ fn a_listed_content_length_is_derived_from_the_normalized_body_only() {
     replace_body(&mut c, 0, &ms, "\"prompt_ms\": 123456.75");
     assert!(check_with(&n, &c, &[]).clean());
     // without the entry the lengths differ: the header shows the two lengths received
-    let r = check(&c, &[]);
+    let r = check_without_cl(&c);
     let d = r
         .differences
         .iter()
@@ -1518,16 +1538,19 @@ fn bytes_past_the_body_after_a_close_disconnect_are_client_timing() {
 fn a_wildcard_annotation_cannot_suppress_unrelated_header_values() {
     let mut c = cand();
     c.http[0].headers[2].1 = "text/json".into();
-    let wide = Annotation::new("P-1", "/http/*/head/headers/*/1");
+    // (CNF-04F: it names its kind, so that the wildcard rule is the only reason left to
+    // refuse it)
+    let wide = Annotation::new("P-1", "/http/*/head/headers/*/1").covering(CoveredKind::Value);
     let r = check_cl(&c, &[wide]);
     expect_diff(&r, "/http/0/head/headers/2/1");
     assert!(r.suppressed.is_empty());
     assert!(matches!(
-        r.annotation_errors[0].problem,
-        AnnotationProblem::Shape(_)
+        &r.annotation_errors[0].problem,
+        AnnotationProblem::Shape(s) if s.contains("wildcard pointer needs")
     ));
     // with the value it expects, it suppresses only a difference that shows it
     let scoped = Annotation::new("P-1", "/http/*/head/headers/*/1")
+        .covering(CoveredKind::Value)
         .expecting(None, Some(json!("pulsar-console/0.1.0")));
     let r = check_cl(&c, &[scoped]);
     expect_diff(&r, "/http/0/head/headers/2/1");
@@ -1565,8 +1588,12 @@ fn a_reference_stored_in_its_normalized_form_replays() {
         n.normalize(&build(c), Side::Candidate, &ctx(&CAND))
             .unwrap_or_else(|e| panic!("{e}"))
     };
+    // (CNF-04F: a stored reference is checked against the normalizer and the context
+    // it was recorded with)
+    let stored =
+        |v: &Value| Normalized::stored(v.clone(), &n, &ctx(&REF)).unwrap_or_else(|e| panic!("{e}"));
     let r = compare(
-        &Normalized::stored(read.clone()),
+        &stored(&read),
         &fresh(&cand()),
         &[],
         &approved(),
@@ -1580,7 +1607,7 @@ fn a_reference_stored_in_its_normalized_form_replays() {
     let mut c = cand();
     c.http[0].code = 201;
     let r = compare(
-        &Normalized::stored(read.clone()),
+        &stored(&read),
         &fresh(&c),
         &[],
         &approved(),

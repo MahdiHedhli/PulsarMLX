@@ -7,7 +7,9 @@
 //! observable unless it is on the volatile list. The HTTP version token, the status line,
 //! header names, header positions, header values other than `Date` and `Server`, JSON key
 //! order, white space and escapes, stream framing, events, comments, files, log lines,
-//! the engine tape and the exit status all stay as observed. An over-lenient normalizer
+//! the engine tape and the exit status all stay as observed. The one derived value is the
+//! `Content-Length` value (lead decision LD44): when it described the body received
+//! exactly, it becomes the length of the normalized body. An over-lenient normalizer
 //! would create parity that is not real, so:
 //!
 //! - every replacement names the list entry (or the rename-map entry) that allows it, in
@@ -54,12 +56,15 @@
 //!
 //! [`Normalizer::normalize`] takes an observation document as recorded, never one that
 //! is already normalized: placeholder text in its input is reported as a problem. A
-//! reference stored in its normalized form (the `document` of a [`Normalized`]) is
-//! replayed with [`Normalized::stored`] and compared as it is.
+//! reference stored in its normalized form (the `document` of a [`Normalized`], a
+//! committed golden) is replayed with [`Normalized::stored`], which refuses it unless it
+//! is a fixed point of normalization (no raw volatile value left in it), and compared
+//! with [`crate::compare::compare`]; it is never passed to the normalizer again.
 
 mod classes;
 mod json_text;
 mod pattern;
+mod stored;
 
 use std::collections::BTreeMap;
 use std::fmt;
@@ -214,8 +219,11 @@ pub struct Issue {
     pub message: String,
 }
 
-/// A normalized side.
+/// A normalized side. Outside this crate it is built only by [`Normalizer::normalize`]
+/// and [`Normalized::stored`] (it is non-exhaustive), so that no caller can pass a stored
+/// document to the comparator without the fixed-point check.
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct Normalized {
     /// Which side it is.
     pub side: Side,
@@ -231,25 +239,38 @@ pub struct Normalized {
 
 impl Normalized {
     /// A reference stored in its normalized form: the `document` of an earlier
-    /// [`Normalizer::normalize`] of the reference side, read back. It is compared as it
-    /// is; nothing is normalized again, so no placeholder check applies to it.
-    pub fn stored(document: Value) -> Self {
-        Self {
+    /// [`Normalizer::normalize`] of the reference side, read back. `ctx` is the context
+    /// the reference was recorded with. The document is refused, with the pointer of the
+    /// offending value, unless it is a comparison document that is a fixed point of
+    /// `normalizer` under `ctx` ([`Normalizer::check_stored`]): no header value, body,
+    /// event, line, file or log line may hold a value that a list entry or a decided
+    /// rename would still replace. Accepted, it is compared as it is; nothing is
+    /// normalized again, so no placeholder check applies to it.
+    pub fn stored(
+        document: Value,
+        normalizer: &Normalizer,
+        ctx: &SideContext,
+    ) -> Result<Self, NormalizeError> {
+        normalizer.check_stored(&document, ctx)?;
+        Ok(Self {
             side: Side::Reference,
             document,
             applied: Vec::new(),
             applied_truncated: false,
             issues: Vec::new(),
-        }
+        })
     }
 }
 
 #[derive(Debug, Clone)]
 enum Loc {
     Header(String),
+    /// The `Content-Length` header, whose value is derived from the normalized body.
+    ContentLength,
     JsonKey {
         key: String,
         parent: Option<String>,
+        top_level: bool,
         value_type: Option<String>,
     },
     IdPrefix {
@@ -280,7 +301,9 @@ pub struct Normalizer {
 
 impl Normalizer {
     /// Builds a normalizer. Fails when an entry of `fields` has a location the
-    /// normalizer cannot apply with its class, or a pattern with an unknown hole.
+    /// normalizer cannot apply with its class, or a pattern with an unknown hole. The
+    /// class `body-length` applies to the `Content-Length` header only, and that header
+    /// takes no other class: its value is derived, never a free placeholder.
     pub fn new(fields: &VolatileFields, renames: RenameMap) -> Result<Self, NormalizeError> {
         let mut out = Vec::new();
         for (i, f) in fields.fields.iter().enumerate() {
@@ -288,19 +311,35 @@ impl Normalizer {
             let bad = |what: &str| err(&ptr, format!("{}: {what}", f.id));
             use VolatileClass as C;
             let loc = match (&f.location, f.class) {
-                (Location::Header { name }, C::HeaderValue) => Loc::Header(name.clone()),
+                (Location::Header { name }, C::HeaderValue)
+                    if !name.eq_ignore_ascii_case("content-length") =>
+                {
+                    Loc::Header(name.clone())
+                }
+                (Location::Header { name }, C::BodyLength)
+                    if name.eq_ignore_ascii_case("content-length") =>
+                {
+                    Loc::ContentLength
+                }
                 (
                     Location::JsonKey {
                         key,
                         parent,
+                        top_level,
                         value_type,
                     },
                     C::EpochS | C::EpochFloat | C::Iso | C::Num | C::Port | C::TmpPath,
-                ) => Loc::JsonKey {
-                    key: key.clone(),
-                    parent: parent.clone(),
-                    value_type: value_type.clone(),
-                },
+                ) => {
+                    if *top_level && parent.is_some() {
+                        return Err(bad("a top-level location has no parent"));
+                    }
+                    Loc::JsonKey {
+                        key: key.clone(),
+                        parent: parent.clone(),
+                        top_level: *top_level,
+                        value_type: value_type.clone(),
+                    }
+                }
                 (Location::IdPrefix { prefix, hex_digits }, C::Id) => Loc::IdPrefix {
                     prefix: prefix.clone(),
                     hex_digits: *hex_digits,
@@ -425,11 +464,10 @@ impl Normalizer {
         })
     }
 
-    fn header_field(&self, name: &str) -> Option<&Field> {
-        self.fields.iter().find(|f| match &f.loc {
-            Loc::Header(n) => n.eq_ignore_ascii_case(name),
-            _ => false,
-        })
+    fn content_length_field(&self) -> Option<&Field> {
+        self.fields
+            .iter()
+            .find(|f| matches!(f.loc, Loc::ContentLength))
     }
 }
 
@@ -831,10 +869,9 @@ impl<'a> Run<'a> {
         }
         let n: &'a Normalizer = self.n;
         for f in &n.fields {
+            // the Content-Length value is derived from the body (`content_length`), and
+            // `Normalizer::new` gives that header no other class
             let Loc::Header(name) = &f.loc else { continue };
-            if name.eq_ignore_ascii_case("content-length") {
-                continue; // derived from the body: see `content_length`
-            }
             let at: Vec<usize> = pairs
                 .iter()
                 .enumerate()
@@ -888,10 +925,15 @@ impl<'a> Run<'a> {
         Ok(Value::Object(out))
     }
 
-    /// The `Content-Length` value, when the list names it, is re-derived from the
-    /// normalized body: only when the read was complete, the framing says
-    /// Content-Length, the header is present once and its value is the decimal length
-    /// of the body received. Otherwise it is compared exactly.
+    /// The `Content-Length` value, when the list names it (class `body-length`, lead
+    /// decision LD44), is re-derived from the normalized body: only when the read was
+    /// complete, the framing says Content-Length with the length of the body received,
+    /// the header is present once and its value is exactly the decimal length of the
+    /// body received. Otherwise it is compared exactly. The header's name, case and
+    /// position are never touched.
+    ///
+    /// Behavior reference: project-maya serve/server.py:5457-5463 at 7e68a30f (`_json`
+    /// writes `str(len(body))` of the body it sends; so do 5665, 5999, 6084 and 6264).
     fn content_length(
         &mut self,
         head: &mut Value,
@@ -901,7 +943,7 @@ impl<'a> Run<'a> {
         complete: bool,
         ptr: &str,
     ) {
-        let Some(field) = self.n.header_field("content-length") else {
+        let Some(field) = self.n.content_length_field() else {
             return;
         };
         let id = field.id.clone();
@@ -1011,17 +1053,23 @@ impl<'a> Run<'a> {
             Node::Literal => {}
             leaf => {
                 let at = format!("{ptr}#/{}", path.join("/"));
-                if let Some(e) = self.leaf(leaf, text, key, parent, model_alias, &at) {
+                // a member of the document's root object: one segment, and that one a key
+                let top = path.len() == 1 && key.is_some();
+                if let Some(e) = self.leaf(leaf, text, key, parent, top, model_alias, &at) {
                     edits.push(e);
                 }
             }
         }
     }
 
+    /// The list entry for a member named `key`, a member of an object that is the value
+    /// of `parent` (when any), of the root object when `top`. An entry with a parent or
+    /// limited to the root object is preferred to one that applies at any depth.
     fn json_key_field(
         &self,
         key: &str,
         parent: Option<&str>,
+        top: bool,
         node: &Node,
         text: &str,
     ) -> Option<&'a Field> {
@@ -1030,50 +1078,48 @@ impl<'a> Run<'a> {
             Loc::JsonKey {
                 key: k,
                 parent: p,
+                top_level,
                 value_type,
             } => {
                 self.side_name("json-key", k) == key
                     && p.as_deref()
                         .is_none_or(|p| Some(self.side_name("json-key", p).as_str()) == parent)
+                    && (!*top_level || top)
                     && type_matches(value_type.as_deref(), node, text)
             }
             _ => false,
         });
-        let mut best: Option<&'a Field> = None;
-        for f in candidates {
-            let has_parent = matches!(
+        let specific = |f: &Field| {
+            matches!(
                 &f.loc,
                 Loc::JsonKey {
                     parent: Some(_),
                     ..
+                } | Loc::JsonKey {
+                    top_level: true,
+                    ..
                 }
-            );
+            )
+        };
+        let mut best: Option<&'a Field> = None;
+        for f in candidates {
             match best {
                 None => best = Some(f),
-                Some(b)
-                    if has_parent
-                        && !matches!(
-                            &b.loc,
-                            Loc::JsonKey {
-                                parent: Some(_),
-                                ..
-                            }
-                        ) =>
-                {
-                    best = Some(f)
-                }
+                Some(b) if specific(f) && !specific(b) => best = Some(f),
                 _ => {}
             }
         }
         best
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn leaf(
         &mut self,
         node: &Node,
         text: &str,
         key: Option<&str>,
         parent: Option<&str>,
+        top: bool,
         model_alias: bool,
         at: &str,
     ) -> Option<Edit> {
@@ -1083,7 +1129,7 @@ impl<'a> Run<'a> {
         };
         let quoted = |s: &str| format!("\"{s}\"");
         if let Some(k) = key {
-            if let Some(f) = self.json_key_field(k, parent, node, text) {
+            if let Some(f) = self.json_key_field(k, parent, top, node, text) {
                 let id = f.id.clone();
                 let ext = self.ctx.extension(&id);
                 let w = self.ctx.window;

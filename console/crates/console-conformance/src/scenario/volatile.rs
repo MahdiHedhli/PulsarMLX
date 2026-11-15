@@ -7,7 +7,10 @@
 //! uptime, process ids, ports and temporary paths. Header names and positions stay
 //! observable; of `Date` and `Server` only the values are volatile (tasks.md R29). The
 //! normalizer (CNF-04) reads the list and replaces each field by its class placeholder
-//! after the class check; this module only reads and checks the file.
+//! after the class check; this module only reads and checks the file. The value of the
+//! `Content-Length` header is a derived value (class `body-length`, lead decision LD44):
+//! the normalizer writes the length of the normalized body in its place, and only when
+//! the header described the body exactly.
 
 use serde_json::Value;
 
@@ -50,6 +53,10 @@ pub enum VolatileClass {
     Port,
     /// A path under the per-scenario temporary directory.
     TmpPath,
+    /// A value derived from the normalized body: the `Content-Length` header's value,
+    /// rewritten as the length of the normalized body when it was the length of the body
+    /// received (lead decision LD44).
+    BodyLength,
 }
 
 impl VolatileClass {
@@ -64,6 +71,7 @@ impl VolatileClass {
         VolatileClass::Pid,
         VolatileClass::Port,
         VolatileClass::TmpPath,
+        VolatileClass::BodyLength,
     ];
 
     /// The class as the file writes it.
@@ -78,6 +86,7 @@ impl VolatileClass {
             VolatileClass::Pid => "pid",
             VolatileClass::Port => "port",
             VolatileClass::TmpPath => "tmp-path",
+            VolatileClass::BodyLength => "body-length",
         }
     }
 
@@ -100,6 +109,10 @@ pub enum Location {
         key: String,
         /// When given, only a member of an object that is itself the value of this key.
         parent: Option<String>,
+        /// When true, only a member of the root object of a document (a body, one
+        /// event's data, one NDJSON line, a file or one line of it); a member of the same
+        /// name deeper in the document is compared as it is. Never true with `parent`.
+        top_level: bool,
         /// When given, only values of this JSON type: `integer`, `number` or `string`.
         value_type: Option<String>,
     },
@@ -210,11 +223,16 @@ impl VolatileFields {
         self.fields.iter().filter(move |f| f.class == class)
     }
 
-    /// Whether the value of header `name` is volatile (case-insensitive).
+    /// Whether the value of header `name` is volatile (case-insensitive): an entry of
+    /// class `header-value` names it. The derived `Content-Length` value (class
+    /// `body-length`, lead decision LD44) is not volatile: it is rewritten from the
+    /// normalized body only when it described the body exactly, and compared as sent
+    /// otherwise.
     pub fn header_value_is_volatile(&self, name: &str) -> bool {
-        self.fields.iter().any(
-            |f| matches!(&f.location, Location::Header { name: n } if n.eq_ignore_ascii_case(name)),
-        )
+        self.fields.iter().any(|f| {
+            f.class == VolatileClass::HeaderValue
+                && matches!(&f.location, Location::Header { name: n } if n.eq_ignore_ascii_case(name))
+        })
     }
 }
 
@@ -304,10 +322,28 @@ fn location(v: &Value, p: &str) -> Result<Location> {
             })
         }
         "json-key" => {
-            o.allow_only(&["kind", "key", "parent", "value_type"])?;
+            o.allow_only(&["kind", "key", "parent", "top_level", "value_type"])?;
             let parent = match o.get("parent") {
                 Some((v, p)) => Some(json::nonempty_string(v, &p, 256)?.to_string()),
                 None => None,
+            };
+            let top_level = match o.get("top_level") {
+                Some((Value::Bool(true), p)) => {
+                    if parent.is_some() {
+                        return Err(ScenarioError::invalid(
+                            p,
+                            "a top-level location has no parent",
+                        ));
+                    }
+                    true
+                }
+                Some((_, p)) => {
+                    return Err(ScenarioError::invalid(
+                        p,
+                        "must be true (leave it out for a member at any depth)",
+                    ))
+                }
+                None => false,
             };
             let value_type = match o.get("value_type") {
                 Some((v, p)) => {
@@ -325,6 +361,7 @@ fn location(v: &Value, p: &str) -> Result<Location> {
             Ok(Location::JsonKey {
                 key: text("key")?,
                 parent,
+                top_level,
                 value_type,
             })
         }
@@ -459,5 +496,58 @@ mod tests {
         )
         .unwrap_err();
         assert_eq!(err.pointer, "/fields/0/class");
+    }
+
+    #[test]
+    fn a_top_level_location_is_read_and_checked() {
+        let l = list(
+            r#"{"id": "a", "class": "num", "location": {"kind": "json-key", "key": "elapsed_s", "top_level": true},
+                "donor": ["serve/server.py:6095"]},
+               {"id": "b", "class": "num", "location": {"kind": "json-key", "key": "elapsed_s", "parent": "live"},
+                "donor": ["serve/server.py:3340"]}"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            &l.fields[0].location,
+            Location::JsonKey {
+                top_level: true,
+                parent: None,
+                ..
+            }
+        ));
+        assert!(matches!(
+            &l.fields[1].location,
+            Location::JsonKey {
+                top_level: false,
+                parent: Some(_),
+                ..
+            }
+        ));
+        // false, a string, or together with a parent: refused, so that a misspelt or
+        // contradictory location never silently widens to any depth
+        for (loc, at) in [
+            (
+                r#"{"kind": "json-key", "key": "k", "top_level": false}"#,
+                "/fields/0/location/top_level",
+            ),
+            (
+                r#"{"kind": "json-key", "key": "k", "top_level": "yes"}"#,
+                "/fields/0/location/top_level",
+            ),
+            (
+                r#"{"kind": "json-key", "key": "k", "parent": "p", "top_level": true}"#,
+                "/fields/0/location/top_level",
+            ),
+            (
+                r#"{"kind": "json-key", "key": "k", "toplevel": true}"#,
+                "/fields/0/location",
+            ),
+        ] {
+            let err = list(&format!(
+                r#"{{"id": "a", "class": "num", "location": {loc}, "donor": ["serve/server.py:1"]}}"#
+            ))
+            .unwrap_err();
+            assert_eq!(err.pointer, at, "{loc}");
+        }
     }
 }

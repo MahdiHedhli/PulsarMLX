@@ -414,20 +414,33 @@ fn volatile_fields_cover_every_category_of_the_rule() {
     // the Date header and the Server value (P-1) are volatile, by value only
     assert!(list.header_value_is_volatile("Date"));
     assert!(list.header_value_is_volatile("server"));
-    let headers: Vec<_> = list
+    // Three header fields, not two (changed by the CNF-04 follow-up): Content-Length is
+    // listed too, as a derived value (lead decision LD44, class body-length). Its value
+    // follows the length of a body whose volatile values differ between the sides, so
+    // the normalizer writes the length of the normalized body in its place; it is not a
+    // free placeholder like the values of Date and Server.
+    let headers: Vec<(&str, VolatileClass)> = list
         .fields
         .iter()
-        .filter(|f| matches!(f.location, Location::Header { .. }))
+        .filter_map(|f| match &f.location {
+            Location::Header { name } => Some((name.as_str(), f.class)),
+            _ => None,
+        })
         .collect();
     assert_eq!(
-        headers.len(),
-        2,
-        "only Date and Server values are volatile headers"
+        headers,
+        [
+            ("Date", VolatileClass::HeaderValue),
+            ("Server", VolatileClass::HeaderValue),
+            ("Content-Length", VolatileClass::BodyLength),
+        ],
+        "Date and Server values are volatile; the Content-Length value is derived"
     );
-    assert!(headers
-        .iter()
-        .all(|f| f.class == VolatileClass::HeaderValue));
+    assert_eq!(list.of_class(VolatileClass::BodyLength).count(), 1);
     assert!(!list.header_value_is_volatile("Content-Type"));
+    // the Content-Length value is derived (LD44), not volatile: compared as sent unless
+    // it described the body exactly
+    assert!(!list.header_value_is_volatile("Content-Length"));
     // generated ids of every donor id site
     let prefixes: BTreeSet<&str> = list
         .fields

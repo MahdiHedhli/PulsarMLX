@@ -67,8 +67,60 @@ fn every_volatile_field_is_applied_and_cited() {
     ] {
         assert!(ids.contains(&id), "{id}");
     }
-    // live-elapsed was made redundant by the parentless status-elapsed and removed
-    assert!(!ids.contains(&"live-elapsed"));
+    // CNF-04F: status-elapsed is limited to the root object, so the live block of
+    // GET /metrics has its own entry again; the derived Content-Length value is listed
+    assert!(ids.contains(&"live-elapsed"));
+    assert!(ids.contains(&"header-content-length"));
+}
+
+#[test]
+fn the_status_figures_and_the_done_stamp_are_top_level_only() {
+    // CNF-04F: these members are written at the top level only (project-maya
+    // serve/server.py:6095-6098 and 5095 at 7e68a30f), so a member of the same name
+    // deeper in a body is compared exactly
+    let list = volatile();
+    for id in [
+        "status-elapsed",
+        "status-tokens-per-s",
+        "status-tokens-per-s-mean",
+        "answer-done",
+    ] {
+        let f = list
+            .fields
+            .iter()
+            .find(|f| f.id == id)
+            .unwrap_or_else(|| panic!("no field {id}"));
+        assert!(
+            matches!(
+                &f.location,
+                Location::JsonKey {
+                    top_level: true,
+                    parent: None,
+                    ..
+                }
+            ),
+            "{id}: {:?}",
+            f.location
+        );
+    }
+    let f = list
+        .fields
+        .iter()
+        .find(|f| f.id == "header-content-length")
+        .unwrap_or_else(|| panic!("no header-content-length"));
+    assert_eq!(f.class, VolatileClass::BodyLength);
+    // the lead's citation (_json), and the handlers that write their own body length on a
+    // body the normalizer can rewrite
+    assert_eq!(
+        f.donor,
+        [
+            "serve/server.py:5461",
+            "serve/server.py:5665",
+            "serve/server.py:5999",
+            "serve/server.py:6084",
+            "serve/server.py:6264"
+        ]
+    );
 }
 
 #[test]
@@ -81,6 +133,39 @@ fn an_entry_the_normalizer_cannot_apply_refuses_to_build_it() {
             Location::JsonKey {
                 key: "id".into(),
                 parent: None,
+                top_level: false,
+                value_type: None,
+            },
+        ),
+        // CNF-04F: a top-level location never has a parent; the body-length class is
+        // the Content-Length header's only, and that header takes no other class
+        (
+            VolatileClass::Num,
+            Location::JsonKey {
+                key: "elapsed_s".into(),
+                parent: Some("live".into()),
+                top_level: true,
+                value_type: None,
+            },
+        ),
+        (
+            VolatileClass::BodyLength,
+            Location::Header {
+                name: "Content-Type".into(),
+            },
+        ),
+        (
+            VolatileClass::HeaderValue,
+            Location::Header {
+                name: "content-length".into(),
+            },
+        ),
+        (
+            VolatileClass::BodyLength,
+            Location::JsonKey {
+                key: "length".into(),
+                parent: None,
+                top_level: false,
                 value_type: None,
             },
         ),
