@@ -1,0 +1,14 @@
+# Allow-marker ids for console/tools/check-hygiene.sh.
+#
+# A line that legitimately matches one of the heuristic hygiene line gates
+# (credential-assignment, bearer-token, uuid, machine-id, identity-json) may
+# carry the token hygiene-allow:<id> in a comment on the same line. The id must
+# be listed here, one per line, followed by the reason and the review that
+# accepted it. Keep this list short: prefer rewriting the line (a shorter
+# example token, a value built at run time) over adding an id. Markers never
+# excuse the other line gates (private keys, service tokens, home paths, AI
+# attribution), any file gate or a commit-message finding.
+#
+# Format: <id>  <reason, reviewer, date>
+#
+# No ids are allowed yet (2026-11-14).

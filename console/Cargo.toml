@@ -1,0 +1,33 @@
+# PulsarMLX Console: a standalone Cargo workspace.
+#
+# This workspace is deliberately NOT a member of the repository's root
+# workspace, and the root `cargo ... --workspace` commands do not build it.
+# Run cargo from this directory so that console/rust-toolchain.toml applies.
+# No dependency may point by path outside console/ (checked by
+# console/tools/check-boundary.sh).
+
+[workspace]
+resolver = "2"
+# Members are listed explicitly, never by glob, so that adding a crate is a
+# reviewed change to this file.
+members = [
+    "crates/console-pyjson",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/MahdiHedhli/PulsarMLX"
+rust-version = "1.97.1"
+publish = false
+
+[workspace.dependencies]
+# Empty in the skeleton. Every third-party dependency is pinned with an exact
+# `=` version here, inherited by crates with `workspace = true`, and recorded
+# with its license in specs/022-console-serving-parity/research.md before it is
+# added. No path dependency may leave console/.
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

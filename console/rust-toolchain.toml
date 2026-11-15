@@ -1,0 +1,10 @@
+# Pinned toolchain for the PulsarMLX Console workspace. rustup reads this file
+# only when cargo runs from console/ or below; console.yml sets that working
+# directory for every job and asserts that `rustc -V` reports this version.
+# On a host without rustup, console/tools/check-toolchain.sh enforces it.
+# Changing the pin is a reviewed one-line change together with any new lint
+# fixes.
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
