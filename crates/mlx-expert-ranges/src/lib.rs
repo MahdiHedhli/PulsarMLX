@@ -441,3 +441,5 @@ pub mod admission_screen;
 
 #[cfg(feature = "studio017")]
 pub mod flash_tiles;
+#[cfg(feature = "studio017")]
+mod text_config;

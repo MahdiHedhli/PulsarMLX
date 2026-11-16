@@ -23,8 +23,16 @@ def dataset(path,role,changes=None):
     files={};routes=[];changes=changes or {}
     for name,(i,l,n,kind) in layout(TINY).items():
         a=np.zeros(n,dtype='<f4')
-        if kind=='one' or kind=='embedding':a+=1
-        if kind=='indexer':a[-1]=1
+        if kind=='one' or kind=='embedding' or kind=='decay':a+=1
+        if kind=='embedding':
+            a[0]=-0.0 if changes.get('negative_embedding_zero') else 0.0
+        if kind=='conv' and changes.get('negative_history_zero'):a[0]=-0.0
+        if kind=='indexer':
+            a[-1]=1
+            if changes.get('indexer_key_missing'):a[0]=.5
+        if kind=='mhc':a[:]=.25
+        if kind=='mhc' and changes.get('wrong_comb'):a[13]+=.01
+        if kind=='decay' and changes.get('wrong_decay'):a[0]=.9
         if kind=='corrected':
             a[:]=np.arange(n,dtype='<f4')*.125
             if changes.get('tie') and i==3:a[1]=a[2]
@@ -58,9 +66,9 @@ def dataset(path,role,changes=None):
 class Checks(unittest.TestCase):
     def test_exact_census(self):
         p=layout(REAL)
-        self.assertEqual(len(p),399)
+        self.assertEqual(len(p),557)
         self.assertEqual(sum(i[2] for i in p.values()),
-                         154880+4096*2+45*(4096*6+1)+
+                         154880+4096*2+45*(4096*6+1+48)+34*(4*8192+64)+
                          34*(64*128*128+9*64*128)+11*(512+257)+42*(288+2*4096))
 
     def run_case(self,ref={},native=None):
@@ -90,6 +98,9 @@ class Checks(unittest.TestCase):
         r=self.run_case(native={'state':True})
         self.assertEqual(r['outside'],1);self.assertFalse(r['qualified'])
         with self.assertRaises(Refusal):self.run_case(native={'leak':True})
+        for mutant in ('negative_embedding_zero','indexer_key_missing','wrong_comb','wrong_decay'):
+            m=self.run_case(native={mutant:True});self.assertFalse(m['qualified'],mutant)
+        with self.assertRaises(Refusal):self.run_case(native={'negative_history_zero':True})
         r=self.run_case(native={'bad_route':True})
         self.assertFalse(r['routes'][3]['membership_match']);self.assertFalse(r['qualified'])
 

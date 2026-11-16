@@ -155,6 +155,7 @@ fn layer_norm(x: &[f32], w: &[f32], bias: &[f32]) -> Vec<f32> {
         .collect()
 }
 struct Mix {
+    pre: [f32; 4],
     post: [f32; 4],
     comb: [[f32; 4]; 4],
     collapsed: Vec<f32>,
@@ -212,10 +213,30 @@ fn hyper(p: &mut impl Provider, base: &str, x: &[f32], d: usize) -> R<Mix> {
     }
     finite(&collapsed, "mHC collapsed")?;
     Ok(Mix {
+        pre,
         post,
         comb,
         collapsed,
     })
+}
+fn witness_mix(w: &mut impl Witness, i: usize, n: &str, m: &Mix) -> R<()> {
+    let mut c = Vec::with_capacity(24);
+    c.extend_from_slice(&m.pre);
+    c.extend_from_slice(&m.post);
+    for row in m.comb {
+        c.extend_from_slice(&row);
+    }
+    w.vector(i, n, &c)
+}
+fn append_cold(row: &[f32], width: usize, keep: usize) -> R<(Vec<f32>, usize)> {
+    if width == 0 || keep == 0 || row.len() != width {
+        return Err("bad cold cache append".into());
+    }
+    let mut image = vec![0.; (keep - 1) * width];
+    let before = image.len() / width;
+    image.extend_from_slice(row);
+    let advances = image.len() / width - before;
+    Ok((image, advances))
 }
 fn expand(x: &[f32], branch: &[f32], m: &Mix) -> R<Vec<f32>> {
     let d = branch.len();
@@ -356,9 +377,7 @@ fn kda(
     let cw = param(p, b, "conv1d.weight", 3 * qn * 4)?;
     // Three empty convolution slots before appending mixed; retention keeps two
     // empty slots and the current pre-convolution q,k,v. Original tensor [3Q,4,1].
-    let mut conv = vec![0.; 3 * mixed.len()];
-    let last = 2 * mixed.len();
-    conv[last..].copy_from_slice(&mixed);
+    let (conv, offset) = append_cold(&mixed, 3 * qn, 3)?;
     w.vector(i, "kda.conv_state", &conv)?;
     let conv_out: Vec<_> = mixed
         .iter()
@@ -371,6 +390,8 @@ fn kda(
     let wo = param(p, b, "o_norm.weight", hd)?;
     let mut state = vec![0.; s.kda_h * hd * hd];
     let mut out = Vec::with_capacity(qn);
+    let mut used_beta = Vec::with_capacity(s.kda_h);
+    let mut used_decay = Vec::with_capacity(qn);
     for h in 0..s.kda_h {
         let r = h * hd..(h + 1) * hd;
         normalized_l2(&mut q[r.clone()], (hd as f32).sqrt().recip());
@@ -384,12 +405,15 @@ fn kda(
             .map(|j| (-5. * sig(strength * (a[j] + dt[j]))).exp())
             .collect();
         finite(&decay, "KDA decay")?;
+        used_decay.extend_from_slice(&decay);
+        let beta_h = bf(sig(beta[h]));
+        used_beta.push(beta_h);
         let act = delta_step(
             &q[r.clone()],
             &k[r.clone()],
             &v[r.clone()],
             &decay,
-            bf(sig(beta[h])),
+            beta_h,
             &mut state[h * hd * hd..(h + 1) * hd * hd],
         );
         let inv = (dot(&act, &act) / hd as f32 + EPS).sqrt().recip();
@@ -399,7 +423,13 @@ fn kda(
     }
     finite(&state, "KDA state")?;
     w.vector(i, "kda.recurrent_state", &state)?;
-    w.vector(i, "state.offset", &[1.])?;
+    let mut qkvb = Vec::with_capacity(3 * qn + s.kda_h);
+    for data in [q.as_slice(), k.as_slice(), v, &used_beta] {
+        qkvb.extend_from_slice(data);
+    }
+    w.vector(i, "kda.qkv_beta", &qkvb)?;
+    w.vector(i, "kda.decay", &used_decay)?;
+    w.vector(i, "state.offset", &[offset as f32])?;
     proj(p, b, "o_proj", None, &out, s.d)
 }
 fn mla(
@@ -416,6 +446,7 @@ fn mla(
     let kv = proj(p, b, "kv_a_proj_with_mqa", None, x, s.latent)?;
     let kv = norm(p, b, "kv_a_layernorm.weight", &kv)?;
     // Latent K and V are the same finite vector; record one canonical image.
+    let (kv, lp) = append_cold(&kv, s.latent, 1)?;
     w.vector(i, "mla.latent", &kv)?;
     let ix = format!("{b}.indexer");
     let _iq = proj(p, &ix, "wq_b", None, &qr, s.index_h * s.index_d)?;
@@ -427,8 +458,12 @@ fn mla(
     indexer.extend(cg.chunks_exact(s.d).map(|row| bf(dot(row, x))));
     indexer.push(1.);
     finite(&indexer, "indexer cache")?;
+    let (indexer, ip) = append_cold(&indexer, 2 * s.index_d + 1, 1)?;
+    if lp != ip {
+        return Err("latent/indexer cache position".into());
+    }
     w.vector(i, "mla.indexer", &indexer)?;
-    w.vector(i, "state.offset", &[1.])?;
+    w.vector(i, "state.offset", &[ip as f32])?;
     // T=1 <= index_topk(2048) after the indexer cache append: canonical source bypasses pools.
     // L=1 uses embed_q(q), q·latent / sqrt(d), latent values, per-head unembed.
     // For a finite singleton score, stable softmax = exp(score-score)/exp(score-score) = 1.
@@ -474,6 +509,7 @@ fn cold(
         let att = format!("{root}.self_attn");
         let ffn = format!("{root}.mlp");
         let a = hyper(p, &format!("{root}.attn_hc"), &x, s.d)?;
+        witness_mix(w, i, "mhc.attn", &a)?;
         let y = norm(p, &root, "input_layernorm.weight", &a.collapsed)?;
         let branch = if i % 4 == 3 {
             mla(p, w, i, &att, &y, s)?
@@ -483,6 +519,7 @@ fn cold(
         w.vector(i, "attention.output", &branch)?;
         x = expand(&x, &branch, &a)?;
         let m = hyper(p, &format!("{root}.ffn_hc"), &x, s.d)?;
+        witness_mix(w, i, "mhc.ffn", &m)?;
         let y = norm(p, &root, "post_attention_layernorm.weight", &m.collapsed)?;
         let branch = if i < s.dense_layers {
             mlp(p, &ffn, None, &y, s.dense_ff)?
@@ -543,6 +580,7 @@ mod tests {
     #[test]
     fn residual_combination_uses_source_stream_rows() {
         let m = Mix {
+            pre: [0.; 4],
             post: [0., 0., 0., 0.],
             comb: [
                 [0., 1., 0., 0.],
@@ -814,6 +852,70 @@ mod tests {
 fn bf16_silu_rounds_sigmoid_before_multiplication() {
     assert_eq!(silu_b(0.06640625), 0.0341796875);
     assert_ne!(silu_b(0.06640625), bf(0.06640625 * sig(0.06640625)));
+}
+
+#[cfg(test)]
+mod studio017_coefficient_controls {
+    use super::*;
+
+    struct Controlled;
+    impl Provider for Controlled {
+        fn tensor(&mut self, key: &str) -> R<Vec<f32>> {
+            if key.ends_with(".fn") {
+                return Ok(vec![0.; 96]);
+            }
+            if key.ends_with(".scale") {
+                return Ok(vec![1.; 3]);
+            }
+            if key.ends_with(".base") {
+                let mut a = vec![0.; 8];
+                a.extend_from_slice(&[
+                    0., -12., -12., -12., 0., 0., -12., -12., -12., 0., 0., -12., -12., -12., 0.,
+                    0.,
+                ]);
+                return Ok(a);
+            }
+            Err(key.into())
+        }
+        fn linear(&mut self, _: &str, _: Option<usize>, _: &[f32]) -> R<Vec<f32>> {
+            unreachable!()
+        }
+        fn embedding(&mut self, _: &str, _: usize) -> R<Vec<f32>> {
+            unreachable!()
+        }
+        fn partition(&mut self, _: &[f32], _: usize) -> R<Vec<usize>> {
+            unreachable!()
+        }
+    }
+    #[test]
+    fn twenty_sinkhorn_rounds_match_decimal20_not_decimal19() {
+        let m = hyper(&mut Controlled, "tiny", &[1., 0., 0., 0.], 1).unwrap();
+        // Independent scalar decimal(60) control in test_studio017_scientific.
+        assert!((m.comb[2][1] - 0.10214507536130281_f32).abs() < 3e-7);
+        assert!((m.comb[2][1] - 0.10693918866237061_f32).abs() > 0.004);
+    }
+    #[test]
+    fn norm_weights_epsilons_and_cache_append() {
+        let h = 1.0f32 / 512.;
+        let z = 1.0f32 / 128.;
+        let w = [1., 2., 3., 4.];
+        let off = [0.5, 0.25, -0.25, 0.125];
+        let r = rms(&[h, -h, h, -h], &w);
+        let expected = [h, -2. * h, 3. * h, -4. * h].map(|a| bf(a / (h * h + 1e-5).sqrt()));
+        assert_eq!(r, expected);
+        let n = layer_norm(&[1., 1. + z, 1. - z, 1.], &w, &off);
+        let want = [0., 2. * z, -3. * z, 0.]
+            .iter()
+            .zip(off)
+            .map(|(v, b)| bf(v / (z * z * 0.5 + 1e-6).sqrt() + b))
+            .collect::<Vec<_>>();
+        assert_eq!(n, want);
+        assert!(append_cold(&[], 3, 1).is_err());
+        let (a, p) = append_cold(&[-1., 0., 1.], 3, 3).unwrap();
+        assert!(a[..6].iter().all(|x| x.to_bits() == 0));
+        assert_eq!(p, 1);
+        assert_eq!(&a[6..], &[-1., 0., 1.]);
+    }
 }
 
 #[cfg(all(test, pulsar_native_mlx))]

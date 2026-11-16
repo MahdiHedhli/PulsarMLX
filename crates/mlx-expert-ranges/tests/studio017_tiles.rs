@@ -47,6 +47,8 @@ fn binds_descriptor_and_plane_before_copy_and_refuses_mutated_source() {
     let mut bad = witness.clone();
     bad["model.safetensors"][1] = Value::from(0);
     assert!(FlashRows::new(&root, src.metadata_snapshot(), &bad).is_err());
+    // An internally consistent toy file must still fail real text-model metadata admission.
+    assert!(FlashRows::new_checked_text(&root, src.metadata_snapshot(), &witness).is_err());
     let reader = FlashRows::new(&root, src.metadata_snapshot(), &witness).unwrap();
     assert!(reader.matrix("vision_model.fixture.gate", Some(2)).is_err());
     assert!(reader

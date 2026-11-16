@@ -38,11 +38,14 @@ def layout(g):
         for name,mult in [('attention.output',1),('ffn.output',1),('layer.streams',4)]:
             add(i,name,d*mult,'bf')
         add(i,'state.offset',1,'one')
+        for b in ('attn','ffn'):add(i,'mhc.'+b,24,'mhc')
         if i%4==3:
             add(i,'mla.latent',latent,'bf')
             add(i,'mla.indexer',2*index+1,'indexer')
         else:
             add(i,'kda.recurrent_state',h*kd*kd,'state')
+            add(i,'kda.qkv_beta',3*h*kd+h,'bf')
+            add(i,'kda.decay',h*kd,'decay')
             add(i,'kda.conv_state',3*3*h*kd,'conv')
         if i>=3:
             add(i,'moe.corrected',e,'corrected')
@@ -179,7 +182,12 @@ def representation(x,kind):
     if kind in ('bf','conv','indexer','embedding','logits'):
         interval_bf16(x)
     if kind=='one':require(x.tolist()==[1.0],'wrong post-cold state offset')
-    if kind=='conv':require(not np.any(x[:2*(x.size//3)]),'nonzero cold pre-history')
+    if kind=='conv':require(not np.any(x[:2*(x.size//3)].view('<u4')),'initial history must be canonical positive zero')
+    if kind=='mhc':
+        require(x.size==24 and np.all(x[:4]>=0) and np.all(x[:4]<=1.000002) and
+                np.all(x[4:8]>=0) and np.all(x[4:8]<=2) and np.all(x[8:]>=0) and
+                np.all(x[8:]<=1),'invalid mHC coefficients')
+    if kind=='decay':require(np.all(x>=np.nextafter(np.float32(np.exp(-5.)),np.float32(0))) and np.all(x<=1),'invalid decay gates')
     if kind=='indexer':require(x[-1]==1.0,'invalid cold indexer key')
 
 
@@ -238,7 +246,11 @@ def _grade(ref_dir,native_dir,g):
             if kind=='one' or kind=='embedding':
                 # Direct affine row from the same represented inputs: exact
                 # BF16 coordinate identity; offset likewise must be exactly 1.
-                bad=x!=y
+                bad=x.view('<u4')!=y.view('<u4')
+            elif kind in ('mhc','decay'):
+                # Additional dimensionless-FP32 diagnostic uses the already frozen
+                # FP32 score tolerance. No earlier error criterion is widened.
+                bad=delta>(4e-5+4e-6*np.abs(x.astype('f8')))
             elif kind=='state':
                 bad=delta>STATE_ABS+STATE_REL*np.abs(x.astype('f8'))
             elif kind=='corrected':

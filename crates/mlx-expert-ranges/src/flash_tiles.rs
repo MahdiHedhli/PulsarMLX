@@ -38,6 +38,16 @@ impl FlashRows {
         }
         Ok(Self { src })
     }
+    /// Admit the full real text model while only immutable metadata has been read.
+    pub fn new_checked_text(
+        path: &Path,
+        snapshot: &str,
+        witness: &serde_json::Value,
+    ) -> Result<Self> {
+        let rows = Self::new(path, snapshot, witness)?;
+        super::text_config::admit(&rows.src)?;
+        Ok(rows)
+    }
     fn fetch(&self, s: ByteSlice, off: u64, n: u64) -> Result<Vec<u8>> {
         if n == 0 || n > MAX_READ as u64 || off.checked_add(n).is_none_or(|e| e > s.len) {
             return Err(refusal("BUDGET", "row range"));

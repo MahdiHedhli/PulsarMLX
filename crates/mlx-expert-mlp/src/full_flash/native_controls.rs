@@ -1,6 +1,6 @@
 //! Synthetic-only child of graph.rs. Does not open a checkpoint, read grants,
 //! run a real model, or supply golden routes/tensors to any candidate operation.
-//! Script make_native_fixture.py produces the comparison object independently.
+//! scripts/research/studio017_synthetic_fixture.py generates the independent comparison object.
 use super::*;
 use crate::{
     native::{self, DeviceKind, NativeContext},
@@ -272,6 +272,8 @@ fn check_bf(x: &[f32], v: &Value, label: &str) {
         );
     }
 }
+include!("native_controls_full_width.rs");
+
 fn packed_control(ctx: &NativeContext, bits: u32) -> R<()> {
     // Cross a group boundary: nonzero x samples nibble/byte order, two scales
     // and opposite biases. A wrong axis, word order or missing bias changes result.
@@ -369,6 +371,7 @@ fn copied_packed_native_and_five_layer_reference() {
     );
     packed_control(&ctx, 4).unwrap();
     packed_control(&ctx, 8).unwrap();
+    full_width_affine_controls(&ctx).unwrap();
     let (mut sg, mut si) = (0u16, 0u16);
     assert_eq!(
         unsafe { studio017_synthetic_silu_bits(0x3d88, &mut sg, &mut si) },

@@ -88,7 +88,7 @@ def collapse(store,s,prefix,h,eps=1e-5):
     pre=f(sigmoid(f(mixes[:n]*scale[0]+base[:n]))+h)
     post=f(2*sigmoid(f(mixes[n:2*n]*scale[1]+base[n:2*n])))
     comb=sinkhorn(f(mixes[2*n:]*scale[2]+base[2*n:]).reshape(n,n),h,20)
-    return bf(d(pre)@d(s)),post,comb
+    return bf(d(pre)@d(s)),post,comb,np.concatenate([pre,post,comb.reshape(-1)])
 
 
 def expand(s,branch,post,comb):
@@ -138,14 +138,28 @@ def cold_delta(q,k,v,forget,beta):
     return bf(r),finite(st)
 
 
+def cold_cache(rows,width,keep):
+    """Append actual rows to a cold cache; offset counts appended rows before retention."""
+    a=np.asarray(rows,dtype='<f4')
+    require(a.ndim==2 and a.shape==(1,width) and keep>0,'cold cache append')
+    finite(a)
+    history=np.zeros((keep-1,width),dtype='<f4')
+    image=np.concatenate((history,a),axis=0)
+    return image[-keep:],image.shape[0]-history.shape[0]
+
+
+def normalized_index_key(k,w,b,eps=1e-6):
+    u=d(k)-np.mean(d(k))
+    return bf(u/np.sqrt(np.mean(u*u)+eps)*d(w)+d(b))
+
+
 def linear(store,x,p,emit,layer,geo):
     H,K,D=geo.linear_heads,geo.linear_dim,geo.hidden
     def proj(s,v,n): return store.projection(p+'.'+s,v,n)
     raw=np.concatenate([proj(j+'_proj',x,H*K) for j in ('q','k','v')])
     taps=store.dense(p+'.conv1d.weight',(3*H*K,4,1))[:,:,0]
     # Suffix has 3 chronological rows; current element uses the last tap.
-    suffix=np.zeros((3,len(raw)),dtype=np.float32)
-    suffix[-1]=raw
+    suffix,pos=cold_cache(raw[None,:],3*H*K,3)
     conv=bf(d(raw)*d(taps[:,-1]))
     q,k,v=np.split(silu_bf(conv).reshape(3*H,K),3)
     q=bf(d(q)/np.sqrt(np.sum(d(q)**2,axis=-1,keepdims=True)+1e-6)/np.sqrt(K))
@@ -158,7 +172,7 @@ def linear(store,x,p,emit,layer,geo):
     out,state=cold_delta(q,k,v,decay,beta)
     gate=proj('g_b_proj',proj('g_a_proj',x,K),H*K).reshape(H,K)
     g=bf(rms(out,store.dense(p+'.o_norm.weight',(K,)),1e-5)*sigmoid(gate)).reshape(-1)
-    attach(emit,'kda',dict(state=state,suffix=suffix,decay=decay,beta=beta),layer=layer,position=1)
+    attach(emit,'kda',dict(state=state,suffix=suffix,decay=decay,qkv_beta=np.concatenate([q.ravel(),k.ravel(),v.ravel(),beta])),layer=layer,position=pos)
     return proj('o_proj',g,D)
 
 
@@ -172,11 +186,13 @@ def sparse(store,x,p,emit,layer,geo):
     # Its q projection is dead for one token; evaluate it to guard its shape.
     iq=proj('indexer.wq_b',qr,geo.index_heads*geo.index_dim).reshape(geo.index_heads,geo.index_dim)
     k=proj('indexer.wk',x,geo.index_dim)
-    u=d(k)-np.mean(d(k))
-    kn=bf(u/np.sqrt(np.mean(u*u)+1e-6)*d(store.dense(p+'.indexer.k_norm.weight',(geo.index_dim,)))+
-          d(store.dense(p+'.indexer.k_norm.bias',(geo.index_dim,))))
+    kn=normalized_index_key(k,store.dense(p+'.indexer.k_norm.weight',(geo.index_dim,)),
+                            store.dense(p+'.indexer.k_norm.bias',(geo.index_dim,)))
     cg=bf(d(store.dense(p+'.indexer.index_kpool_compress_gate',(geo.index_dim,D)))@d(x))
-    packed=np.concatenate([kn,cg,np.ones(1,dtype=np.float32)])
+    latent_cache,lp=cold_cache(latent[None,:],K,1)
+    index_cache,ip=cold_cache(np.concatenate([kn,cg,np.ones(1,dtype=np.float32)])[None,:],2*geo.index_dim+1,1)
+    require(lp==ip,'latent/indexer positions differ')
+    latent,packed=latent_cache[-1],index_cache[-1]
     # The publisher one-position branch embeds q into latent space; with
     # exactly one finite accessible key softmax(s)[0] is exactly 1. Evaluate
     # s to detect nonfinite inputs, and keep per-head scores as witnesses.
@@ -186,7 +202,7 @@ def sparse(store,x,p,emit,layer,geo):
         scores.append(float(d(eq)@d(latent))/np.sqrt(V))
         heads.append(store.projection(p+'.unembed_out',latent,V,(H,i),8))
     attach(emit,'mla',dict(latent_k=latent,latent_v=latent,indexer_cache=packed,
-                          index_query=iq,scores=f(scores)),layer=layer,position=1,
+                          index_query=iq,scores=f(scores)),layer=layer,position=ip,
            selected='short-context dense bypass',index_topk=2048)
     return proj('o_proj',np.concatenate(heads),D)
 
@@ -213,11 +229,13 @@ def _forward(store,token_id,emit,geo):
     s=np.repeat(embed[None,:],hc,axis=0)
     for i in range(geo.layers):
         p='language_model.model.layers.'+str(i)
-        x,post,comb=collapse(store,s,p+'.attn_hc',1e-6)
+        x,post,comb,coeff=collapse(store,s,p+'.attn_hc',1e-6)
+        attach(emit,'mhc',dict(coefficients=coeff),layer=i,branch='attn')
         x=bf(rms(x,store.dense(p+'.input_layernorm.weight',(hidden,)),1e-5))
         att=(sparse if i%4==3 else linear)(store,x,p+'.self_attn',emit,i,geo)
         s=expand(s,att,post,comb)
-        x,post,comb=collapse(store,s,p+'.ffn_hc',1e-6)
+        x,post,comb,coeff=collapse(store,s,p+'.ffn_hc',1e-6)
+        attach(emit,'mhc',dict(coefficients=coeff),layer=i,branch='ffn')
         x=bf(rms(x,store.dense(p+'.post_attention_layernorm.weight',(hidden,)),1e-5))
         if i<3:
             branch=ffn(store,x,p+'.mlp',geo.dense)

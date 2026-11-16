@@ -4,6 +4,7 @@ import os,select,socket,subprocess,sys,tempfile,time
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import studio017_supervise as sup
+from test_studio017_runtime_fixture import cfg
 from studio017_guard import digest,enc,procpath,put,sha
 def test():
  exe=Path(sys.executable).resolve();image=procpath(os.getpid());source=Path(__file__).resolve().parent
@@ -24,10 +25,12 @@ subprocess.run([sys.executable,"-I","-B","-c",*sys.argv[2:]],pass_fds=(fd,),chec
   v=dict(stage='native',operation='synthetic-only',run='unit',supervisor=os.getpid(),supervisor_image=image,expected_image=image,argv=argv,model_root='denied-fixture',checkpoint_receipt='fixture',inventory='fixture',witnesses='fixture',input='fixture',pins={},output=str(out),prefix='fixture',libs={})
   put(claim,dict(stage='native',run='unit',operation=v['operation'],supervisor=os.getpid()));put(cap,v)
   rs=dict(array_roots=['/opt/homebrew/Cellar','/opt/homebrew/opt','/opt/homebrew/lib','/opt/homebrew/bin'],program=str(exe),image=image,python=str(exe),library_prefix='/usr/lib')
-  policy=t/'sb';policy.write_bytes(sup.profile(dict(stages={'native':rs},repo=str(source),input=str(cap),checkpoint=str(t/'unused')),'native',cap,out,claim))
+  policy=t/'sb';policy.write_bytes(sup.profile(cfg(dict(stages={'native':rs},repo=str(source),input=str(cap),checkpoint=str(t/'unused')),t),'native',cap,out,claim))
   reader,writer=os.pipe();ps,cs=socket.socketpair(type=socket.SOCK_DGRAM);ps.settimeout(10);prior=sup.ANCHORS
-  proc=subprocess.Popen(['/usr/bin/sandbox-exec','-f',str(policy),str(exe),'-I','-B',str(source/'studio017_supervise.py'),'stage-exec',str(cap),str(reader)],pass_fds=(reader,cs.fileno()),start_new_session=True,env={'HOME':str(Path.home()),'PATH':'/usr/bin:/bin','STUDIO017_ADMIT_CHANNEL':str(cs.fileno())},stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-  os.close(reader);cs.close()
+  # This tests just the inherited pipe/ancestry; the separate prospective runtime control exercises CPython startup/census.
+  boot="import sys,os;sys.path.append(sys.argv[1]);import studio017_supervise as s;a=s.capsule_exec(sys.argv[2],int(sys.argv[3]));os.execv(a[0],a)"
+  proc=subprocess.Popen(['/usr/bin/sandbox-exec','-f',str(policy),str(exe),'-I','-B','-S','-c',boot,str(source),str(cap),str(reader)],pass_fds=(reader,cs.fileno()),process_group=0,env={'HOME':str(Path.home()),'PATH':'/usr/bin:/bin','STUDIO017_ADMIT_CHANNEL':str(cs.fileno())},stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+  os.close(reader);cs.close();assert os.getpgid(proc.pid)==proc.pid and os.getsid(proc.pid)==os.getsid(0) and os.getpgrp()!=proc.pid
   try:
    sup.ANCHORS={'native':claim};birth=subprocess.check_output(['/bin/ps','-p',str(proc.pid),'-o','lstart=']).decode().strip()
    put(d/'active.json',dict(operation=v['operation'],supervisor=os.getpid(),child=proc.pid,birth=birth,cap_sha256=digest(cap),claim_sha256=digest(claim)))

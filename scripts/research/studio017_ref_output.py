@@ -47,7 +47,11 @@ class Output:
         i=meta.get('layer')
         if kind=='embedding':
             self.vector(0,'input.embedding',row['embedding'])
+        elif kind=='mhc':
+            self.vector(i,'mhc.'+meta['branch'],row['coefficients'])
         elif kind=='kda':
+            self.vector(i,'kda.qkv_beta',row['qkv_beta'])
+            self.vector(i,'kda.decay',row['decay'])
             self.vector(i,'kda.conv_state',row['suffix'])
             self.vector(i,'kda.recurrent_state',row['state'])
             self.vector(i,'state.offset',[meta['position']])

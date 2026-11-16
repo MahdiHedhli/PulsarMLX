@@ -136,11 +136,27 @@ pub fn run() -> R<()> {
     {
         return Err("supervisor source changed".into());
     }
-    let v = Command::new("/opt/homebrew/bin/python3")
+    let gate = verify.with_file_name("studio017_py_gate.py");
+    if fs::read(&gate).map_err(err)? != include_bytes!("../../../../scripts/research/studio017_py_gate.py") {
+        return Err("Python gate source changed".into());
+    }
+    let cap_doc = read_json(&cap, 64 << 10)?;
+    let py = &cap_doc["python_gate"];
+    let parent = cap.parent().ok_or("missing cap parent")?;
+    let interpreter = Path::new("/opt/homebrew/bin/python3").canonicalize().map_err(err)?;
+    if interpreter != Path::new(field(py,"interpreter")?) {
+        return Err("pinned physical interpreter mismatch".into());
+    }
+    let v = Command::new(interpreter)
         .env_remove("DYLD_LIBRARY_PATH")
-        .args(["-I", "-B"])
-        .arg(&verify)
-        .arg("admit-child")
+        .args(["-I","-B","-S","-X"])
+        .arg(format!("pycache_prefix={}",parent.join("cache-helper").display()))
+        .arg(&gate)
+        .arg("helper")
+        .arg(field(py,"policy")?)
+        .arg(field(py,"sha256")?)
+        .arg(parent.join("python-helper.json"))
+        .arg(field(&cap_doc,"operation")?)
         .arg(&cap)
         .output()
         .map_err(err)?;

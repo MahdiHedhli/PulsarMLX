@@ -52,7 +52,7 @@ pub struct Metal {
 }
 impl Metal {
     pub fn open(root: &Path, snapshot: &str, w: &serde_json::Value) -> R<Self> {
-        let src = FlashRows::new(root, snapshot, w).map_err(err)?;
+        let src = FlashRows::new_checked_text(root, snapshot, w).map_err(err)?;
         native::ensure_error_handler();
         if !native::metal_available().map_err(err)? {
             return Err("Metal unavailable".into());
