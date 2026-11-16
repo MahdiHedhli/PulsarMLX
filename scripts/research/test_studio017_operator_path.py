@@ -19,10 +19,20 @@ import studio017_operator as op
 
 def require_fixture(d):
     d = s.path(d)
-    s.need(d.parent.parent == s.USER_HOME / 'LocalWorktrees/PulsarMLX-studio017-state'
-           and d.parent.name.startswith('operator-amendment-') and d.name == 'synthetic-operator',
+    base = d.parent.parent if d.parent.name in ('correction-01','correction-02') else d.parent
+    s.need(base.parent == s.USER_HOME / 'LocalWorktrees/PulsarMLX-studio017-state'
+           and base.name.startswith('operator-amendment-') and d.name == 'synthetic-operator',
            'only the designated synthetic fixture')
     return d
+
+
+def bootstrap(cap, fd):
+    d = require_fixture(cap.parent.parent)
+    s.need(cap == d/'campaign-reference/child-cap.json' and fd >= 3,'fixture bootstrap only')
+    payload = s.startup_barrier(cap, fd)
+    fixed = [str(Path(sys.executable).resolve()),'-I','-B','-S',__file__,'worker',str(cap),str(d/'peer-golden-sentinel')]
+    s.need(payload['argv']==fixed,'unexpected synthetic worker command')
+    os.execv(fixed[0],fixed)
 
 
 def worker(cap, peer):
@@ -76,13 +86,14 @@ def control(root, policy_file):
             array_roots=[],library_prefix=str(prefix))
     # GitHub, review and the payload are external to this fixture. No affirmative review is manufactured.
     for n in ('ci','unavailable','control'):s.put(d/(n+'.json'),{'id':1} if n=='ci' else {'fixture':n})
+    amendment=root/'amendment.txt' if (root/'amendment.txt').is_file() else root.parent/'amendment.txt'
     c=dict(schema='studio017-operator-config/1',mode=op.MODE,run=op.RUN,repo=str(repo),source=src,
            checkpoint=str(cr),build_root=str(d/'fixture-build'),input=str(real_state/'frozen-input.json'),
            criteria=str(SCRIPTS/'studio017_ref_criteria.py'),resource=str(real_resource),review=str(d/'unavailable.json'),
            ci=str(d/'ci.json'),controls=str(d/'control.json'),runtime_files=real_files,stages={'reference':rs,'native':
            dict(rs,program=native['binary'],image=native['binary'],driver=None)},prior_claims={},controls_runtime_sha256='0'*64,
            build=str(root/'release-build/artifact.json'),artifacts={'python-policy':polrow,'operator-amendment':
-           dict(path=str(root/'amendment.txt'),sha256=s.digest(root/'amendment.txt')),'operator-lifecycle':
+           dict(path=str(amendment),sha256=s.digest(amendment)),'operator-lifecycle':
            dict(path=str(d/'control.json'),sha256=s.digest(d/'control.json'))})
     (d/'fixture-build').mkdir(mode=0o700)
     f=d/'operator-campaign-config.json';s.put(f,c)
@@ -100,11 +111,16 @@ def control(root, policy_file):
     def acceptance_gate(cfg):
         # Exercise the real CPU/resource/lease checks below; review coverage is independently tested.
         s.need(cfg==c and cfg['checkpoint']==str(cr),'fixture lifecycle edge')
+    production_cli=s.pyg.cli
+    def fixture_cli(exe,cache,gate,role,policy,sha,receipt,operation,args):
+        if role!='bootstrap':return production_cli(exe,cache,gate,role,policy,sha,receipt,operation,args)
+        s.need(Path(args[0])==d/'campaign-reference/child-cap.json','synthetic bootstrap command')
+        return [py,'-I','-B','-S',__file__,'bootstrap',str(args[0]),str(args[1])]
     reasons={}
     with contextlib.ExitStack() as stack:
         for obj,attribute,value in [(s,'STATE',d),(op,'STATE',d),(s,'ROOT',ds),(s,'ANCHORS',names),
                 (s,'facts',facts),(op,'validate_ci',lambda *args,**kwargs:None),(s,'lifecycle_gate',acceptance_gate),
-                (s,'ref_entry',argv),(s,'checkpoint',proof_stop)]:
+                (s,'ref_entry',argv),(s.pyg,'cli',fixture_cli),(s,'checkpoint',proof_stop)]:
             stack.enter_context(patch.object(obj,attribute,value))
         reasons['explicit-mode']=refused(lambda:s.load_cfg(str(f)))
         s.need(s.load_cfg(str(f),True)==c,'operator mode')
@@ -123,6 +139,13 @@ def control(root, policy_file):
         s.need(end['exit']==0 and end['completed'] and end['clean_reap'] and end['child_admitted']
                and not end['residual_group_killed'] and end['guardian_exit']==0 and not s.members(end['pid']),
                'original synthetic monitor or reaping')
+        # The actual production bootstrap must still reject this alternate capability, before reading any gate.
+        cap=role_dir/'child-cap.json'
+        production=production_cli(py,role_dir/'cache-bootstrap',s.pyg.SELF,'bootstrap',policy_file,
+                                  polrow['sha256'],s.pyg.rolepath(role_dir,'bootstrap'),end['operation'],[cap,0])
+        denied=subprocess.run(production,stdin=subprocess.DEVNULL,capture_output=True,timeout=12)
+        s.need(denied.returncode!=0 and b'non-original numerical stage binding' in denied.stderr,'production path guard')
+        reasons['production-bootstrap']='non-original numerical stage binding'
         s.audit_consumed_stage(c,'reference')
         claim=s.doc(names['reference']);bytes_before=s.read(names['reference'])
         s.need(claim['authorization']==ref_id and claim['operation']==end['operation']==admit['operation']
@@ -152,12 +175,13 @@ def control(root, policy_file):
     s.put(d/'result.json',dict(head=src['head'],tree=src['tree'],real_claims=0,passed=True,
           checks={k:True for k in op.REQUIRED_ADMISSION},refusals=reasons,synthetic_role='reference',claim_sha256=s.digest(names['reference']),
           original_operation=end['operation'],original_pid=end['pid'],monitor_samples=len(samples),original_exit=end,
-          no_real_stage=True,scope='Real operator manifest/claim/ACK/monitor path under temporary roots. Review, CI and numerical payload substituted; isolated reference/native computations not run.'))
+          no_real_stage=True,scope='Real operator manifest/claim/ACK/monitor path under temporary roots. Review, CI, bootstrap entry and numerical payload substituted; original production bootstrap separately refused the synthetic cap; isolated reference/native computations not run.'))
 
 
 if __name__=='__main__':
     mode=sys.argv[1]
-    if mode=='worker':worker(Path(sys.argv[2]),sys.argv[3])
+    if mode=='bootstrap':bootstrap(Path(sys.argv[2]),int(sys.argv[3]))
+    elif mode=='worker':worker(Path(sys.argv[2]),sys.argv[3])
     elif mode=='helper':helper(Path(sys.argv[2]))
     elif mode=='control':control(Path(sys.argv[2]),Path(sys.argv[3]))
     else:raise ValueError('private control command')
