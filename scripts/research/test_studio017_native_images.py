@@ -1,5 +1,6 @@
 """Physical, pre-payload controls for the released candidate's Darwin image policy."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -7,9 +8,93 @@ import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from studio017_guard import digest, doc, put, sha
+import studio017_supervise as sup
 from studio017_supervise import native_image_policy
 
 LIBRARY_NAMES = ("libmlx.dylib", "libmlxc.dylib", "libjaccl.dylib")
+
+
+def exercise_owner(binary, library_prefix, pins, policy_file, runtime_files, profile, directory):
+    """Bind actual inherited stdout on this binary; all stage metadata below is local fixture data."""
+    directory.mkdir(mode=0o700)
+    op = uuid.uuid4().hex
+    dummy_run = uuid.uuid4().hex * 2
+    repo = Path(__file__).resolve().parents[2]
+    src = sup.source(repo)
+    stage = dict(program=str(binary), library_prefix=str(library_prefix))
+    python = doc(policy_file)
+    row = dict(path=str(policy_file), sha256=digest(policy_file))
+    config = dict(source=src, run=dummy_run, stages={'native': stage, 'reference': {'python': python['interpreter']}},
+                  artifacts={'python-policy': row}, runtime_files=runtime_files)
+    cap = directory/'child-cap.json'
+    put(cap, dict(schema='synthetic-owner-census-control/1', stage='native', expected_image=str(binary),
+                  python_gate=dict(interpreter=python['interpreter'], policy=str(policy_file), sha256=row['sha256']),
+                  native_image_policy=pins, native_image_source={k:src[k] for k in ('head','tree')},
+                  operation=op, run=dummy_run, supervisor=os.getpid()))
+    identity = directory/'fixture-identity.json'
+    put(identity, dict(schema='synthetic-owner-census-control/1', stage='native', operation=op, run=dummy_run,
+                       supervisor=os.getpid(), source=src['head'], cap_sha256=digest(cap)))
+    bindings = dict(operation=op, claim_sha256=digest(identity), cap_sha256=digest(cap))
+    args = ['/usr/bin/sandbox-exec', '-f', str(profile), str(binary), '--synthetic-image-observations',
+            str(profile.parent/'positive.json'), op]
+    put(directory/'intent.json', dict(operation=op, argv=args, synthetic_only=True, source=src))
+    stdout = directory/'stdout'
+    with os.fdopen(os.open(stdout, os.O_CREAT|os.O_EXCL|os.O_WRONLY, 0o600), 'wb') as out, (directory/'stderr').open('xb') as err:
+        st = os.fstat(out.fileno())
+        inode = [st.st_dev, st.st_ino]
+        process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=out, stderr=err, cwd=directory,
+                                   env={'PATH':'/usr/bin:/bin','LANG':'C','LC_ALL':'C'}, start_new_session=True)
+        try:
+            put(directory/'active.json', dict(**bindings, supervisor=os.getpid(), child=process.pid, native_stdout_inode=inode))
+            rc = process.wait(30)
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(5)
+    put(directory/'numeric-exit.json', dict(operation=op, claim_sha256=digest(identity), pid=process.pid, exit=rc,
+        child_admitted=True, completed=rc==0, clean_reap=True, residual_group_killed=False, fixture=True))
+    if rc != 0:
+        raise ValueError('synthetic native observation child refused')
+    put(directory/'admitted.json',dict(**bindings, stage='native', worker=process.pid, fixture=True))
+    seal = sup.owner_native_images(config, directory, identity)
+    if seal['stdout_sha256'] != digest(stdout) or set(seal['observations']) != {'before','after'}:
+        raise ValueError('native owner failed to bind original observations')
+    put(directory/'synthetic-seal.json', seal)
+    if doc(directory/'synthetic-seal.json') != sup.owner_native_images(config, directory, identity):
+        raise ValueError('cannot reproduce owner census seal')
+
+    observations = [sup.parse(line) for line in stdout.read_bytes().splitlines()]
+    before, after = observations
+    mutated_hashes = {**pins['noncache_images'],str(binary):'0'*64}
+    bad_after = {**after,'census':{**after['census'],'noncache_images':mutated_hashes}}
+    shared = sorted(after['census']['shared_cache_images'] + ['/System/Library/Studio017SyntheticMissing.dylib'])
+    bad_cache = {**after, 'census': {**after['census'], 'shared_cache_images': shared}}
+    scope_error = {**after,'phase':'before'}
+    trials = {'absent': [], 'no-after':[before], 'extra':[before,after,after], 'reversed':[after,before],
+              'changed-image':[before,bad_after], 'unknown-shared-image':[before,bad_cache], 'wrong-role-order':[before,scope_error],
+              'wrong-pid':[before,{**after,'pid':process.pid+1}],
+              'stale-operation':[before,{**after,'operation':uuid.uuid4().hex}]}
+    refusals = {}
+    for label, records in trials.items():
+        candidate = directory/(label+'.synthetic')
+        with os.fdopen(os.open(candidate,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600),'wb') as f:
+            for record in records:
+                f.write(sup.enc(record))
+        st = candidate.stat()
+        try:
+            sup.checked_observations(candidate,[st.st_dev,st.st_ino],pins,op,process.pid)
+        except ValueError as error:
+            refusals[label] = str(error)
+        else:
+            raise ValueError('owner accepted negative control '+label)
+    try:
+        sup.owner_native_images({**config,'source':{**src,'tree':'0'*40}},directory,identity)
+    except ValueError as error:
+        refusals['wrong-tree'] = str(error)
+    else:
+        raise ValueError('owner accepted observations from wrong source tree')
+    put(directory/'result.json', dict(operation=op, pid=process.pid, source=src,
+        seal_sha256=digest(directory/'synthetic-seal.json'), refusals=refusals, elapsed_scope='two loader samples around no model work'))
 
 
 def run(binary, build_hash, python_policy, runtime, output):
@@ -82,7 +167,8 @@ def run(binary, build_hash, python_policy, runtime, output):
                 raise ValueError("native census did not match prospectively pinned images")
         elif code != 1 or stdout or stderr.strip() != ("cold forward refused: unapproved non-cache image "+str(binary)).encode():
             raise ValueError("missing refusal for unapproved executable outside shared cache")
-    put(output/"result.json", dict(operation=op, controls=2, passed=2,
+    exercise_owner(binary, libs[0].parent.parent, pins, python_policy, runtime_files, spec, output/'owner')
+    put(output/"result.json", dict(operation=op, controls=2, passed=2, owner_result_sha256=digest(output/'owner/result.json'),
                                  pre_payload_census_only=True, stage_claims_consumed=0))
 
 

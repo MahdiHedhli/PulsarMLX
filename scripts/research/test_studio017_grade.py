@@ -67,6 +67,9 @@ class Checks(unittest.TestCase):
     def test_exact_census(self):
         p=layout(REAL)
         self.assertEqual(witness_scope(REAL[0])['unobserved_mla_layers'], list(range(3, 44, 4)))
+        scope=witness_scope(REAL[0])
+        self.assertIn('q_a_layernorm',scope['unobserved_mla_normalizations'])
+        self.assertEqual(scope['publisher_runtime_parity'],'not established by this comparison')
         self.assertEqual(len(p),557)
         self.assertEqual(sum(i[2] for i in p.values()),
                          154880+4096*2+45*(4096*6+1+48)+34*(4*8192+64)+

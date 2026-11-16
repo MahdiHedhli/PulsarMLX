@@ -80,11 +80,50 @@ impl graph::Witness for Sink {
         Ok(())
     }
 }
+/// Emit one flushed record into the supervisor's native stdout capture. A partial pair
+/// cannot support a successful seal. The snapshots cover dyld images only.
+fn observe_images(policy: &Value, operation: &str, phase: &str) -> R<Value> {
+    if operation.len() != 32
+        || !operation
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err("invalid observation operation".into());
+    }
+    let census = crate::native_images::census(policy)?;
+    let mut line = serde_json::to_vec(&json!({
+        "schema": "studio017-native-image-observation/1",
+        "phase": phase,
+        "pid": std::process::id(),
+        "operation": operation,
+        "census": &census,
+    }))
+    .map_err(err)?;
+    line.push(b'\n');
+    if line.len() > 256 << 10 {
+        return Err("native image observation exceeds byte limit".into());
+    }
+    let mut stdout = std::io::stdout().lock();
+    stdout
+        .write_all(&line)
+        .and_then(|_| stdout.flush())
+        .map_err(err)?;
+    Ok(census)
+}
+
 pub fn run() -> R<()> {
     let a: Vec<_> = std::env::args_os().skip(1).collect();
     if a.len() == 2 && a[0] == "--synthetic-image-census" {
         let policy = read_json(Path::new(&a[1]), 64 << 10)?;
         println!("{}", crate::native_images::census(&policy)?);
+        return Ok(());
+    }
+    if a.len() == 3 && a[0] == "--synthetic-image-observations" {
+        let policy = read_json(Path::new(&a[1]), 64 << 10)?;
+        let operation = a[2].to_str().ok_or("invalid observation operation")?;
+        // No device or payload is opened between the two control observations.
+        observe_images(&policy, operation, "before")?;
+        observe_images(&policy, operation, "after")?;
         return Ok(());
     }
     if a.len() != 2 {
@@ -142,12 +181,9 @@ pub fn run() -> R<()> {
     {
         return Err("stage/output custody".into());
     }
-    let census = crate::native_images::census(&info["native_image_policy"])?;
-    let loaded = info["libs"].as_object().ok_or("missing library pins")?;
-    let library_names: std::collections::BTreeSet<_> = loaded.keys().collect();
-    // The original numerical report schema carries these names. The owner's retained
-    // stderr also records the checked paths, file digests and shared cache identity.
-    eprintln!("{census}");
+    let policy = &info["native_image_policy"];
+    let operation = field(&info, "operation")?;
+    observe_images(policy, operation, "before")?;
     let source = Path::new(field(&info, "model_root")?);
     let witness = read_json(Path::new(field(&info, "witnesses")?), 64 << 10)?;
     let orig = read_json(Path::new(field(&info, "input")?), 65536)?;
@@ -174,6 +210,19 @@ pub fn run() -> R<()> {
     };
     let (logits, id) = graph::forward(&mut device, &mut w, 154820)?;
     let cleanup = device.finish()?;
+    let after = observe_images(policy, operation, "after")?;
+    let observed = after["noncache_images"]
+        .as_object()
+        .ok_or("missing observed images")?;
+    let program = field(policy, "program")?;
+    let mut library_names = std::collections::BTreeSet::new();
+    for image in observed.keys().filter(|image| image.as_str() != program) {
+        let name = Path::new(image)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or("image basename")?;
+        library_names.insert(name);
+    }
     if logits.len() != 154880 || w.routes.len() != 42 {
         return Err("incomplete full model".into());
     }

@@ -5,6 +5,7 @@ import contextlib,fcntl,socket,select,hashlib,json,math,os,re,resource,secrets,s
 if str(Path(__file__).resolve().parent) not in sys.path:sys.path.insert(0,str(Path(__file__).resolve().parent))
 import studio017_py_gate as pyg
 import studio017_authority as authority
+from studio017_image_receipt import checked_observations
 from studio017_lease import Lease
 from studio017_guard import *
 SELF=Path(__file__).resolve()
@@ -107,6 +108,8 @@ def grading_inputs(c,role):
        claim['operation']==seal['operation']==numeric['operation'] and seal['claim_sha256']==digest(ANCHORS[target]) and
        numeric['exit']==0 and numeric['completed'] and numeric['clean_reap'] and not numeric['residual_group_killed'] and
        seal['exit_sha256']==digest(directory/'numeric-exit.json'),'audit original process/claim')
+  if target=='native':
+   need('native_images' in seal and seal['native_images']==owner_native_images(c,directory,ANCHORS[target]),'sealed native image evidence changed or missing')
   actual=output_seal(out,doc(c['resource'])[target]['output_bytes'])
   need(actual==seal['files'],'different original output after seal')
   artifacts[target]=dict(seal_sha256=digest(directory/'sealed.json'),claim_sha256=digest(ANCHORS[target]),
@@ -201,6 +204,7 @@ def child(cap_path):
  result={k:v[k] for k in ('stage','operation','run','model_root','checkpoint_receipt','inventory','witnesses','input','pins','output','prefix','libs')}
  if role=='native':result['native_image_policy']=v['native_image_policy']
  return result
+HELPER_REPLY_SECONDS=20
 def acknowledge_child(cap,v,claim_path):
  claim=doc(claim_path);a=doc(cap.parent/'active.json');need(a['cap_sha256']==digest(cap) and claim['operation']==v['operation']==a['operation'] and claim['run']==v['run'] and a['claim_sha256']==digest(claim_path),'live cap/claim binding')
  pid=os.getppid();need(a['child']==pid==os.getpgid(pid) and os.getsid(pid)==os.getsid(claim['supervisor']) and os.getpid()!=pid,'direct active numerical parent')
@@ -208,9 +212,11 @@ def acknowledge_child(cap,v,claim_path):
  # Full birth/ppid checked by external owner on acknowledgement (set-id ps is not executable under SBPL).
  need(not os.path.lexists(cap.parent/'numeric-exit.json'),'ended attempt')
  # Only authenticated original capability is consumed; no golden paths, logits, routes or token expectation.
- channel=socket.socket(fileno=int(os.environ['STUDIO017_ADMIT_CHANNEL']));channel.settimeout(20)
+ channel=socket.socket(fileno=int(os.environ['STUDIO017_ADMIT_CHANNEL']));channel.settimeout(HELPER_REPLY_SECONDS)
  challenge=enc(dict(helper=os.getpid(),worker=pid,operation=v['operation'],cap_sha256=digest(cap),nonce=secrets.token_hex(16)))
- channel.sendall(challenge);reply=channel.recv(256);channel.close();need(reply==sha(challenge).encode(),'owner denied child admission')
+ sent=time.monotonic_ns();channel.sendall(challenge);reply=channel.recv(256);received=time.monotonic_ns()
+ channel.close();need(reply==sha(challenge).encode(),'owner denied child admission')
+ return sent,received
 def startup_barrier(cap,fd):
  # Trusted tiny bootstrap waits for durable active child identity before exec; not a grant.
  need(os.read(fd,1)==b'G','missing startup authorization');os.close(fd)
@@ -225,6 +231,35 @@ def native_image_policy(c,rs,python_policy):
  paths=[program,*[str(lib/n) for n in approved_libraries(c,rs)]]
  pins={row['path']:row['sha256'] for row in c['runtime_files'].values()}
  return dict(program=program,platform_cache_uuid=python_policy['platform_cache_uuid'],noncache_images={p:pins[p] for p in paths})
+def owner_native_images(c,d,claim_path):
+ # The owner rederives the image policy from its admission inputs after reap.
+ row,python=python_policy(c)
+ expected=native_image_policy(c,c['stages']['native'],python)
+ for filename,value in expected['noncache_images'].items():checked(path(filename),value)
+ def evidence(file):
+  raw=read(file);return parse(raw),sha(raw)
+ claim,claim_hash=evidence(claim_path);cap,cap_hash=evidence(d/'child-cap.json')
+ active,active_hash=evidence(d/'active.json');admitted,admitted_hash=evidence(d/'admitted.json')
+ end,end_hash=evidence(d/'numeric-exit.json')
+ op=hexid(claim['operation'],32);pid=end['pid']
+ src={k:hexid(c['source'][k],40) for k in ('head','tree')}
+ need(claim['stage']==cap['stage']==admitted['stage']=='native' and claim['run']==cap['run']==c['run']
+      and claim['source']==src['head'] and cap['native_image_source']==src, 'native census source or run')
+ need(op==cap['operation']==active['operation']==admitted['operation']==end['operation']
+      and claim['supervisor']==active['supervisor']==cap['supervisor'] and pid==active['child']==admitted['worker']
+      and end['child_admitted'] is True and end['completed'] is True and end['clean_reap'] is True
+      and end['residual_group_killed'] is False and end['exit']==0, 'native census process custody')
+ need(claim_hash==active['claim_sha256']==admitted['claim_sha256']==end['claim_sha256']
+      and cap_hash==claim['cap_sha256']==active['cap_sha256']==admitted['cap_sha256'], 'native census capability custody')
+ need(cap['expected_image']==expected['program'] and cap['native_image_policy']==expected
+      and cap['python_gate']==dict(interpreter=python['interpreter'],policy=row['path'],sha256=row['sha256']),
+      'native census differs from owner policy')
+ observed=checked_observations(d/'stdout',active['native_stdout_inode'],expected,op,pid)
+ return dict(schema='studio017-owner-native-images/1',source=src,run=c['run'],operation=op,pid=pid,
+             claim_sha256=claim_hash,cap_sha256=cap_hash,policy_sha256=sha(enc(expected)),
+             active_sha256=active_hash,admitted_sha256=admitted_hash,
+             numeric_exit_sha256=end_hash,scope='dyld images at both snapshots',
+             python_policy_sha256=row['sha256'],**observed)
 def ref_entry(c,rs,role,cap,out,op,b):
  if role=='native':return [rs['program'],str(cap),str(out)]
  return pyg.cli(b['interpreter'],cap.parent/'cache-reference',pyg.SELF,'reference',b['policy'],b['sha256'],pyg.rolepath(cap.parent,'reference'),op,[cap,out])
@@ -311,7 +346,9 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  profile_raw=profile(c,role,cap,out,claim)
  sp=d/'policy.sb';sp.write_bytes(profile_raw);sp.chmod(0o400)
  v=dict(schema='studio017-child-cap/1',stage=role,run=c['run'],operation=op,supervisor=os.getpid(),supervisor_image=supimg,expected_image=rs['image'],python_gate=pb,argv=ref_entry(c,rs,role,cap,out,op,pb),model_root=str(ROOT),checkpoint_receipt=str(Path(c['checkpoint'])/'receipt.json'),inventory=str(Path(c['checkpoint'])/'inventory.json'),witnesses=str(Path(c['checkpoint'])/'witnesses.json'),input=c['input'],pins=r,output=str(out),prefix=rs['library_prefix'],libs=approved_libraries(c,rs))
- if role=='native':v['native_image_policy']=native_image_policy(c,rs,p)
+ if role=='native':
+  v['native_image_policy']=native_image_policy(c,rs,p)
+  v['native_image_source']={k:c['source'][k] for k in ('head','tree')}
  put(cap,v);put(d/'intent.json',dict(operation=op,run=c['run'],stage=role,supervisor=os.getpid(),grant=ptr,config_sha256=g['config_sha256'],limits=r,profile_sha256=sha(profile_raw)))
  # Recheck every mutable admission after readback, before spending attempt.
  need(envelope(c,role)==g,'final renewed admission');before=admission(c,role,r)
@@ -330,7 +367,7 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  o=(d/'stdout').open('ab',buffering=0);e=(d/'stderr').open('ab',buffering=0);m=(d/'monitor.jsonl').open('ab',buffering=0)
  def limit_output():
   resource.setrlimit(resource.RLIMIT_FSIZE,(r['output_bytes'],r['output_bytes']))
- proc=None;lease=None;success=False;ok_ack=False;over=0;old={};reason='unknown';clean=False;left=False;endcode=None
+ proc=None;lease=None;monitor=None;success=False;ok_ack=False;old={};reason='unknown';clean=False;left=False;endcode=None
  def cancel(sig,fr):raise TimeoutError('owned stage cancelled or expired')
  try:
   for sig in (signal.SIGTERM,signal.SIGINT,signal.SIGHUP,signal.SIGALRM):old[sig]=signal.signal(sig,cancel)
@@ -339,23 +376,17 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
   os.close(gate_ro);gate_ro=-1;passed.close()
   lease=attach_guard(c,d,proc,deadline,op,'lease-numeric',e)
   born=cmd(['/bin/ps','-p',str(proc.pid),'-o','lstart=']).decode().strip()
-  put(d/'active.json',dict(guardian=lease.receipt(),operation=op,supervisor=os.getpid(),child=proc.pid,birth=born,cap_sha256=digest(cap),claim_sha256=digest(claim)))
+  active=dict(guardian=lease.receipt(),operation=op,supervisor=os.getpid(),child=proc.pid,birth=born,cap_sha256=digest(cap),claim_sha256=digest(claim))
+  if role=='native':
+   stdout_stat=os.fstat(o.fileno());active['native_stdout_inode']=[stdout_stat.st_dev,stdout_stat.st_ino]
+  put(d/'active.json',active)
   os.write(gate_wr,b'G');os.close(gate_wr);gate_wr=-1
-  last_source=started
+  monitor=StageMonitor(c,ROOT,out,m,r,before,started,deadline)
+  def check_ack():
+   return poll_ready_ack(parent,proc,v,role,cap,claim)
   while proc.poll() is None:
-   lease.pulse()
-   if time.monotonic()-last_source>=30:
-    # Check the held source and shard names while the child works, even if it is
-    # still in one long computation. Silence is not treated as a failed job.
-    need(git(c['repo'],'rev-parse','HEAD').decode().strip()==c['source']['head'] and not git(c['repo'],'status','--porcelain=v1','--untracked-files=all'),'source drift during numerical child')
-    for n,stamp in doc(Path(c['checkpoint'])/'witnesses.json').items():need(fdstamp((ROOT/n).lstat())==stamp,'checkpoint drift during numerical child')
-    last_source=time.monotonic()
-   if not ok_ack and select.select([parent],[],[],.1)[0]:poll_ack(parent,proc,v,role,cap);ok_ack=True
-   ph=pressure();rows=cohort();group=[q for q in rows if q[2]==proc.pid];direct=sum(q[3]*1024 for q in group if q[0]==proc.pid);rss=sum(q[3]*1024 for q in group)+sum(q[3]*1024 for q in rows if q[0]==os.getpid());elapsed=time.monotonic()-started
-   ev,bu=census(STATE,path(c['build_root']));progress=[f for f in out.iterdir() if f.is_file()];size=sum(f.lstat().st_size for f in progress);over=over+1 if ph['swap']-before['swap']>r['swap_growth'] else 0
-   m.write(enc(dict(seconds=elapsed,numeric_pid=proc.pid,rss_group_plus_supervisor=rss,job_rss=direct,job_children=len(group),output_bytes=size,produced_files=len(progress),latest_completed_file=max(progress,key=lambda f:f.lstat().st_mtime_ns).name if progress else None,**ph)))
-   need(ha_ok(ph,r,before,over,rss,direct) and ev<=8*GIB and bu<=20*GIB and size<=r['output_bytes'] and time.monotonic()<deadline and (ok_ack or elapsed<60),'observed resource/timeout/admission')
-   time.sleep(.5)
+   monitor.iteration(lease,proc,check_ack)
+   ok_ack=monitor.ack
   endcode=proc.returncode;need(ok_ack and endcode==0 and time.monotonic()<deadline,'numerical process failed or timed out')
   success=True;reason='returned'
  except BaseException as err:
@@ -367,13 +398,55 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
   for f in (o,e,m):f.close()
   if gate_ro>=0:os.close(gate_ro)
   if gate_wr>=0:os.close(gate_wr)
+  if monitor is not None:ok_ack=monitor.ack
   parent.close();passed.close();put(d/'numeric-exit.json',dict(operation=op,claim_sha256=digest(claim),pid=proc.pid if proc else None,exit=endcode,seconds=time.monotonic()-started,completed=success and clean and not left,guardian_exit=(lease.guard.returncode if lease is not None else None),clean_reap=clean,residual_group_killed=left,child_admitted=ok_ack,reason=reason))
  need(success and clean and not left,'unreaped group');need(source(c['repo'])==c['source'],'source drift after child');checkpoint(c['checkpoint']);pinset(c)
  # Reapply output budget to terminal samples including processes that exit between polls.
  ev,bu=census(STATE,path(c['build_root']));need(ev<=8*GIB and bu<=20*GIB,'terminal budgets')
  need(c['source']==source(c['repo']) and checkpoint(c['checkpoint'])['revision']==MODEL,'terminal source/checkpoint drift')
- sealed=output_seal(out,r['output_bytes'],True);put(d/'sealed.json',dict(operation=op,claim_sha256=digest(claim),files=sealed,runtime_receipts=python_originals(c,role,d,op),exit_sha256=digest(d/'numeric-exit.json')))
+ seal=dict(operation=op,claim_sha256=digest(claim),runtime_receipts=python_originals(c,role,d,op),exit_sha256=digest(d/'numeric-exit.json'))
+ if role=='native':seal['native_images']=owner_native_images(c,d,claim)
+ seal['files']=output_seal(out,r['output_bytes'],True);put(d/'sealed.json',seal)
  grade_original(c,role)
+def poll_ready_ack(parent,worker,payload,role,cap,claim):
+ if not select.select([parent],[],[],.1)[0]:return False
+ accept_ack(parent,worker,payload,role,cap,claim)
+ return True
+
+class StageMonitor:
+ """One complete supervised iteration, from guardian heartbeat through the next poll delay."""
+ def __init__(self,config,witness_root,out,stream,limits,before,started,deadline):
+  self.config=config;self.witness_root=witness_root;self.out=out;self.stream=stream
+  self.limits=limits;self.before=before;self.started=started;self.deadline=deadline
+  self.last_source=started;self.ack=False;self.over=0
+
+ def iteration(self,lease,worker,check_ack):
+  lease.pulse()
+  c=self.config;r=self.limits
+  if time.monotonic()-self.last_source>=30:
+   need(git(c['repo'],'rev-parse','HEAD').decode().strip()==c['source']['head'] and
+        not git(c['repo'],'status','--porcelain=v1','--untracked-files=all'),'source drift during numerical child')
+   for name,stamp in doc(Path(c['checkpoint'])/'witnesses.json').items():
+    need(fdstamp((self.witness_root/name).lstat())==stamp,'checkpoint drift during numerical child')
+   self.last_source=time.monotonic()
+  if not self.ack:self.ack=check_ack()
+  ph=pressure();rows=cohort();group=[x for x in rows if x[2]==worker.pid]
+  direct=sum(x[3]*1024 for x in group if x[0]==worker.pid)
+  rss=sum(x[3]*1024 for x in group)+sum(x[3]*1024 for x in rows if x[0]==os.getpid())
+  elapsed=time.monotonic()-self.started
+  ev,bu=census(STATE,path(c['build_root']))
+  progress=[f for f in self.out.iterdir() if f.is_file()]
+  size=sum(f.lstat().st_size for f in progress)
+  self.over=self.over+1 if ph['swap']-self.before['swap']>r['swap_growth'] else 0
+  self.stream.write(enc(dict(seconds=elapsed,numeric_pid=worker.pid,rss_group_plus_supervisor=rss,
+                 job_rss=direct,job_children=len(group),output_bytes=size,produced_files=len(progress),
+                 latest_completed_file=max(progress,key=lambda f:f.lstat().st_mtime_ns).name if progress else None,
+                 state_bytes=ev,build_bytes=bu,**ph)))
+  need(ha_ok(ph,r,self.before,self.over,rss,direct) and ev<=8*GIB and bu<=20*GIB and
+       size<=r['output_bytes'] and time.monotonic()<self.deadline and (self.ack or elapsed<60),
+       'observed resource/timeout/admission')
+  time.sleep(.5)
+
 def ha_ok(ph,r,before,over,rss,direct):
  return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss']
 def grade_original(c,role):

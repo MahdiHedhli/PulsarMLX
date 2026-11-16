@@ -34,6 +34,9 @@ def witness_scope(layers):
         position=0,
         unobserved_mla_layers=list(range(3, layers, 4)),
         unobserved_mla_projections=['q_a_proj', 'q_b_proj', 'embed_q', 'indexer.wq_b'],
+        unobserved_mla_normalizations=['q_a_layernorm'],
+        reference_target='ideal model equations with the specified rounding boundaries',
+        publisher_runtime_parity='not established by this comparison',
         state_offset='structural count only',
     )
 

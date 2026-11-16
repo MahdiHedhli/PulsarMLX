@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import sys
+import time
 
 import studio017_py_gate as pyg
 from studio017_ref_entry import query_helper
@@ -60,5 +61,17 @@ def enter(role, args, operation, policy, digest, receipt):
     spent = sup.doc(claim)
     sup.need(spent.get("stage") == STAGE and spent.get("grant_sha256") == data["grant_sha256"]
              and spent.get("cap_sha256") == sup.digest(cap), "fixture spend")
-    sup.acknowledge_child(cap, data, claim)
+    out = d / "out"
+    arrange_poll = (out / "measure-monitor.json").is_file()
+    if arrange_poll:
+        sup.put(out / "helper-ready.json", dict(operation=operation, pid=os.getpid()))
+        until = time.monotonic() + 20
+        while not (out / "poll-missed.json").exists():
+            sup.need(time.monotonic() < until, "fixture owner did not release helper after poll")
+            time.sleep(.005)
+    sent, received = sup.acknowledge_child(cap, data, claim)
+    if arrange_poll:
+        sup.need(sup.doc(out / "poll-missed.json")["operation"] == operation, "fixture poll operation")
+        sup.put(out / "helper-exchange.json", dict(operation=operation, pid=os.getpid(),
+                send_start_ns=sent, reply_received_ns=received))
     return dict(stage=STAGE, operation=operation, helper_acknowledged=True), None
