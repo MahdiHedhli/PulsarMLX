@@ -91,6 +91,26 @@ fn main() {
         );
         bins.push("qualify-real-flash-expert");
     }
+    if std::env::var_os("CARGO_FEATURE_FULL_FLASH_GOLDEN").is_some() {
+        println!("cargo:rerun-if-changed=src/full_flash/extra_ops.c");
+        println!("cargo:rerun-if-changed=src/full_flash/sigmoid_control.c");
+        println!("cargo:rerun-if-changed=src/full_flash/affine4.c");
+        cc::Build::new()
+            .file("src/full_flash/extra_ops.c")
+            .file("src/full_flash/sigmoid_control.c")
+            .file("src/full_flash/affine4.c")
+            .include(c.join("include"))
+            .flag("-std=c11")
+            .flag("-Wall")
+            .flag("-Werror")
+            .cargo_metadata(false)
+            .compile("studio017_ops");
+        println!(
+            "cargo:rustc-link-arg-bin=qualify-full-flash={}",
+            out.join("libstudio017_ops.a").display()
+        );
+        bins.push("qualify-full-flash");
+    }
     for bin in bins {
         for lib in ["expert_mlp_abi", "expert_mlp_activation"] {
             println!(

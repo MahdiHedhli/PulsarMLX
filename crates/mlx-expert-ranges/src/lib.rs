@@ -438,3 +438,6 @@ impl ExpertPlan<'_> {
 
 /// Bounded metadata-only comparison of two serial admission policies.
 pub mod admission_screen;
+
+#[cfg(feature = "studio017")]
+pub mod flash_tiles;

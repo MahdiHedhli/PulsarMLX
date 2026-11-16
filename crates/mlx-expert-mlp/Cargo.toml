@@ -14,6 +14,7 @@ weighted-native = []
 staged-weighted-native = []
 staged-policy-native = []
 real-flash-expert = []
+full-flash-golden = ["mlx-expert-ranges/studio017"]
 
 [dependencies]
 mlx-expert-ranges = { path = "../mlx-expert-ranges" }
@@ -58,3 +59,8 @@ name = "qualify-real-flash-expert"
 path = "src/bin/qualify-real-flash-expert.rs"
 required-features = ["real-flash-expert"]
 test = false
+
+[[bin]]
+name = "qualify-full-flash"
+path = "src/bin/qualify-full-flash.rs"
+required-features = ["full-flash-golden"]
