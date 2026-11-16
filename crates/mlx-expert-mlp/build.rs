@@ -7,7 +7,13 @@ fn main() {
     println!("cargo:rerun-if-changed=src/activation.cpp");
     println!("cargo:rerun-if-changed=../mlx-native-affine/src/abi_check.c");
     println!("cargo:rerun-if-changed=../../scripts/research/f020_fused_swiglu_cpu_guard_v2_4.h");
-    let rustc = std::process::Command::new("rustc")
+    let compiler = if std::env::var_os("CARGO_FEATURE_FULL_FLASH_GOLDEN").is_some() {
+        println!("cargo:rerun-if-env-changed=RUSTC");
+        std::env::var_os("RUSTC").expect("Cargo must identify the compiler for the Studio017 build")
+    } else {
+        std::ffi::OsString::from("rustc")
+    };
+    let rustc = std::process::Command::new(compiler)
         .arg("-V")
         .output()
         .expect("rustc");
