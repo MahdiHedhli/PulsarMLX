@@ -4,6 +4,7 @@ from pathlib import Path
 import contextlib,fcntl,socket,select,hashlib,json,math,os,re,resource,secrets,shutil,signal,stat,subprocess,sys,time
 if str(Path(__file__).resolve().parent) not in sys.path:sys.path.insert(0,str(Path(__file__).resolve().parent))
 import studio017_py_gate as pyg
+import studio017_authority as authority
 from studio017_lease import Lease
 from studio017_guard import *
 SELF=Path(__file__).resolve()
@@ -78,7 +79,7 @@ def facts(c,role):
  # Criteria, CI, resource and coverage originals must be among privately pinned artifacts.
  for k in ('input','criteria','review','ci','controls','resource','build'):
   need(str(path(c[k])) in {v['path'] for v in c['artifacts'].values()},'missing artifact '+k)
- return dict(schema='studio017-stage-grant/1',stage=role,run=c['run'],attempt='initial',source=src,revision=MODEL,source_custody_sha256=digest(Path(c['checkpoint'])/'receipt.json'),inventory_sha256=q['inventory_sha256'],input_sha256=digest(c['input']),criteria_sha256=digest(c['criteria']),review_sha256=digest(c['review']),ci_sha256=digest(c['ci']),controls_sha256=digest(c['controls']),resource_sha256=digest(c['resource']),config_sha256=digest(STATE/'campaign-config.json'),runtime_and_artifact_sha256=sha(enc(pins)),historical_claims_sha256=sha(enc(c['prior_claims'])),limits=r,one_cold_input=True,children=1)
+ return dict(schema=authority.GRANT_SCHEMA,authority=authority.authority_binding(role),stage=role,run=c['run'],attempt='initial',source=src,revision=MODEL,source_custody_sha256=digest(Path(c['checkpoint'])/'receipt.json'),inventory_sha256=q['inventory_sha256'],input_sha256=digest(c['input']),criteria_sha256=digest(c['criteria']),review_sha256=digest(c['review']),ci_sha256=digest(c['ci']),controls_sha256=digest(c['controls']),resource_sha256=digest(c['resource']),config_sha256=digest(STATE/'campaign-config.json'),runtime_and_artifact_sha256=sha(enc(pins)),historical_claims_sha256=sha(enc(c['prior_claims'])),limits=r,one_cold_input=True,children=1)
 def output_seal(out,cap,chmod=False):
  out=path(out);m={};nb=0;need(stat.S_IMODE(out.stat().st_mode)==(0o700 if chmod else 0o500) and len(list(out.iterdir()))<=1200,'output mode/count')
  for f in sorted(out.iterdir()):
@@ -119,7 +120,17 @@ def grade_content_verified(c,role,before,result):
       'grader read a different output population')
  return now
 
+def audit_consumed_stage(c,role):
+ d,_,_=layout(c,role);claim=doc(ANCHORS[role]);ptr=doc(STATE/(role+'-GRANT_POINTER'))
+ raw=read(STATE/(role+'-grant-request.json'));pointer_matches_role(ptr,c['run'],role,raw)
+ grant=parse(raw);remote_raw,side,sig=remote(ptr['commit'],ptr['path'])
+ need(remote_raw==raw==enc(grant) and side==(sha(raw)+'  '+Path(ptr['path']).name+'\n').encode(),'original signed grant readback')
+ need(grant['source']==c['source'] and grant['run']==c['run'] and grant['stage']==role,'original signed grant identity')
+ authority.verify_supervisor(raw,sig)
+ authority.original_spend(d,grant,ptr,claim)
+
 def original_reference(c):
+ audit_consumed_stage(c,'reference')
  d,out,_=layout(c,'reference');claim=doc(ANCHORS['reference'])
  need(claim['stage']=='reference' and claim['run']==c['run'] and claim['source']==c['source']['head'],'reference claim')
  end=doc(d/'numeric-exit.json');need(end['exit']==0 and end['clean_reap'] and end['completed'] and end['operation']==claim['operation'],'original reference process')
@@ -133,13 +144,11 @@ def original_reference(c):
  need(accepted['operation']==claim['operation'] and accepted['seal_sha256']==digest(d/'sealed.json') and accepted['eligible'] is True,'sealed independent favorable reference gate')
  return dict(seal_sha256=digest(d/'sealed.json'),eligibility_sha256=digest(d/'eligibility.json'),claim_sha256=digest(ANCHORS['reference']),full_logits_sha256=actual['logits.f32']['sha256'])
 def require_external_spend_authority(role):
- # The private repository currently accepts unsigned commits from this worker.
- # A matching blob and a local O_EXCL anchor do not prove independent issue or
- # prevent reuse after local state loss. No Studio017 grant is valid on this
- # revision. Replace this hold only with a separately reviewed trusted signer
- # AND independently irreversible, role-specific spend mechanism.
- need(role in ROLES,'role')
- raise ValueError('Studio017 external supervisor signing identity and independent spend registry are not bound')
+ # The supplied remote Page grants this worker write and delete privileges.
+ # Keep preparation and launch closed until independent custody for the issuer
+ # database is established and this protocol receives eligible source review.
+ authority.slot(role)
+ raise ValueError('independent spend registry custody and eligible protocol review outstanding')
 
 def envelope(c,role):
  require_external_spend_authority(role)
@@ -158,7 +167,10 @@ def verified(c,role):
  need(live['head_sha']==x['source']['head'] and live['id']==ci['id'] and live['run_attempt']==1 and live['event']=='push' and live['conclusion']=='success' and live['head_branch']=='codex/studio017-full-flash-golden-token','ordinary CI original API')
  local=STATE/(role+'-grant-request.json');raw=read(local);need(raw==enc(x),'changed original request')
  ptr=doc(STATE/(role+'-GRANT_POINTER'));pointer_matches_role(ptr,c['run'],role,raw)
- b,side=remote(ptr['commit'],ptr['path']);need(b==raw and side==(sha(raw)+'  '+Path(ptr['path']).name+'\n').encode(),'immutable grant/sidecar')
+ b,side,signature=remote(ptr['commit'],ptr['path'])
+ need(b==raw and side==(sha(raw)+'  '+Path(ptr['path']).name+'\n').encode(),'immutable grant/sidecar')
+ authority.grant_identity(x,ptr)
+ authority.verify_supervisor(raw,signature)
  return x,ptr
 def admission(c,role,r):
  ha=pressure();need(ha['pressure']==1 and ha['headroom']>=16*GIB+r['combined'],'host reserve')
@@ -267,7 +279,7 @@ def run_numeric(conf,stage):
   refx=doc(layout(c,'reference')[0]/'numeric-exit.json')
   available=doc(c['resource'])['whole_seconds']-refx['seconds'];need(available>=limits['timeout'],'remaining total numerical time')
  # Only one heavy owner: hold same physical lock through both admission and stage. The initial
- # stage-specific claim is the authoritative irreversible allowance, independent of run ID.
+ # remote slot is the irreversible allowance. The local anchor retains evidence.
  lock_path=STATE/'heavy.lock';lf=os.open(lock_path,os.O_CREAT|os.O_NOFOLLOW|os.O_RDWR,0o600)
  try:
   need(stat.S_ISREG(os.fstat(lf).st_mode) and os.fstat(lf).st_uid==os.getuid(),'lock role');fcntl.flock(lf,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -286,7 +298,12 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  put(cap,v);put(d/'intent.json',dict(operation=op,run=c['run'],stage=role,supervisor=os.getpid(),grant=ptr,config_sha256=g['config_sha256'],limits=r,profile_sha256=sha(profile_raw)))
  # Recheck every mutable admission after readback, before spending attempt.
  need(envelope(c,role)==g,'final renewed admission');before=admission(c,role,r)
- put(claim,dict(schema='studio017-initial-claim/1',stage=role,run=c['run'],source=c['source']['head'],operation=op,supervisor=os.getpid(),grant=ptr,cap_sha256=digest(cap),resource_sha256=g['resource_sha256']))
+ # An ambiguous receipt or later admission failure may already have spent the remote slot.
+ # Never submit a second challenge to recover this operation.
+ remote_spend=authority.consume_before_launch(d,g,ptr,op)
+ need(verified(c,role)==(g,ptr),'grant or admission drift after remote spend')
+ before=admission(c,role,r)
+ put(claim,dict(schema='studio017-initial-claim/2',stage=role,run=c['run'],source=c['source']['head'],operation=op,supervisor=os.getpid(),grant=ptr,remote_spend=remote_spend,cap_sha256=digest(cap),resource_sha256=g['resource_sha256']))
  started=time.monotonic();deadline=started+r['timeout'];gate_ro,gate_wr=os.pipe();parent,passed=socket.socketpair(type=socket.SOCK_DGRAM)
  env={'HOME':str(Path.home()),'PATH':'/usr/bin:/bin','LANG':'C','LC_ALL':'C','STUDIO017_ADMIT_CHANNEL':str(passed.fileno()),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','VECLIB_MAXIMUM_THREADS':'1','TMPDIR':str(out)}
  # Binding relies on installed rpaths. Do not inject global DYLD_ overrides; original path must pass controlled host linkage tests.
@@ -344,6 +361,7 @@ def ha_ok(ph,r,before,over,rss,direct):
  return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss']
 def grade_original(c,role):
  physical_lease_hold()
+ audit_consumed_stage(c,role)
  d,out,_=layout(c,role);seal=doc(d/'sealed.json');need(seal['files']==output_seal(out,doc(c['resource'])[role]['output_bytes']) and seal['claim_sha256']==digest(ANCHORS[role]),'sealed original')
  ex=doc(d/'numeric-exit.json');need(ex['completed'] and ex['clean_reap'] and ex['exit']==0 and not ex['residual_group_killed'] and ex['operation']==seal['operation'] and seal['exit_sha256']==digest(d/'numeric-exit.json'),'original numeric exit/seal')
  inputs_before=grading_inputs(c,role)

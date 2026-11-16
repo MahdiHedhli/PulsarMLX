@@ -110,7 +110,7 @@ def remote(c,p):
  def fetch(n):
   r=gh('/contents/'+n+'?ref='+c);need(r['path']==n and r['type']=='file' and r['encoding']=='base64' and r['size']<256<<10,'grant transport')
   b=base64.b64decode(r['content']);need(len(b)==r['size'] and r['sha']==hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest(),'Git blob readback');return b
- return fetch(p),fetch(p+'.sha256')
+ return fetch(p),fetch(p+'.sha256'),fetch(p+'.sshsig')
 def procpath(pid):
  lib=ctypes.CDLL('/usr/lib/libproc.dylib',use_errno=True);buf=ctypes.create_string_buffer(4096)
  n=lib.proc_pidpath(pid,buf,len(buf));need(n>0,'unknown executable image');return str(Path(os.fsdecode(buf.value)).resolve(strict=True))
