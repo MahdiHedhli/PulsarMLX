@@ -5,6 +5,7 @@ import contextlib,fcntl,socket,select,hashlib,json,math,os,re,resource,secrets,s
 if str(Path(__file__).resolve().parent) not in sys.path:sys.path.insert(0,str(Path(__file__).resolve().parent))
 import studio017_py_gate as pyg
 import studio017_authority as authority
+import studio017_operator as operator
 from studio017_image_receipt import checked_observations
 from studio017_lease import Lease
 from studio017_guard import *
@@ -12,10 +13,17 @@ SELF=Path(__file__).resolve()
 ROLES={'reference','native'}
 def layout(cfg,role):
  need(role in ROLES,'role');d=STATE/('campaign-'+role);return d,d/'output',d/'child-cap.json'
-def load_cfg(conf):
- p=path(conf);need(Path.home()==USER_HOME,'physical account');need(p==STATE/'campaign-config.json','original campaign-config')
- c=doc(p);need(set(c)=={'schema','run','repo','source','checkpoint','build_root','input','artifacts','runtime_files','stages','criteria','controls','review','ci','resource','prior_claims','controls_runtime_sha256','build'},'config fields')
- need(c['schema']=='studio017-stage-config/1' and set(c['stages'])==ROLES,'config roles')
+def local_mode(c):
+ return c.get('schema')=='studio017-operator-config/1' and c.get('mode')==operator.MODE
+def config_path(selected):
+ return STATE/('operator-campaign-config.json' if selected else 'campaign-config.json')
+def load_cfg(conf,selected=False):
+ p=path(conf);need(Path.home()==USER_HOME,'physical account');need(p==config_path(selected),'original campaign-config for selected mode')
+ c=doc(p)
+ fields={'schema','run','repo','source','checkpoint','build_root','input','artifacts','runtime_files','stages','criteria','controls','review','ci','resource','prior_claims','controls_runtime_sha256','build'}
+ need(set(c)==(fields|{'mode'} if selected else fields),'config fields')
+ need((local_mode(c) if selected else c['schema']=='studio017-stage-config/1') and set(c['stages'])==ROLES,'config roles/mode')
+ if selected:operator.validate_config(c)
  hexid(c['run'],64);need(path(c['repo'])!=STATE and not ROOT.is_relative_to(path(c['repo'])),'separate paths')
  need(path(c['build_root']).is_relative_to(STATE) and path(c['build_root'])!=STATE,'external build custody')
  for key in ('criteria','controls','review','ci','resource','input'):path(c[key])
@@ -42,8 +50,12 @@ def facts(c,role):
  need(source(c['repo'])==c['source'],'source closure drift');src=c['source'];pins=pinset(c);q=checkpoint(c['checkpoint']);policy_row,_=python_policy(c,True)
  fixed=doc(path(c['input']));need(fixed['id']==154820 and fixed['bytes_hex']=='c45c0200' and fixed['batch']==1 and fixed['position']==0 and fixed['empty_state'] is True and fixed['max_new_tokens']==1 and fixed['sampling'] is False and fixed['model']==MODEL,'frozen input')
  ci=doc(path(c['ci']));rev=doc(path(c['review']));control=doc(path(c['controls']))
- need(ci['head_sha']==src['head'] and ci['event']=='push' and ci['conclusion']=='success' and ci['run_attempt']==1,'ordinary CI receipt')
- need(rev['head']==src['head'] and rev['tree']==src['tree'] and rev['verdict']=='ACCEPT_FULL_FLASH_GOLDEN_SOURCE_SCOPE' and rev['method_accepted'] is True and rev['unresolved_blockers']==[] and rev['missing_coverage']==[] and rev['actual_model'] in ('claude-fable-5-2','gemini-4-carbon','gemini-4-astra') and rev['request_id'],'source/method review')
+ if local_mode(c):
+  operator.validate_ci(c,ci)
+  operator.validate_review(c,rev,control)
+ else:
+  need(ci['head_sha']==src['head'] and ci['event']=='push' and ci['conclusion']=='success' and ci['run_attempt']==1,'ordinary CI receipt')
+  need(rev['head']==src['head'] and rev['tree']==src['tree'] and rev['verdict']=='ACCEPT_FULL_FLASH_GOLDEN_SOURCE_SCOPE' and rev['method_accepted'] is True and rev['unresolved_blockers']==[] and rev['missing_coverage']==[] and rev['actual_model'] in ('claude-fable-5-2','gemini-4-carbon','gemini-4-astra') and rev['request_id'],'source/method review')
  need(control['head']==src['head'] and control['passed'] is True and control['failed']==0 and control['skipped_changed_controls']==0 and control['sandbox_golden_read_denied'] is True and control['resource_guard_verified'] is True and control['stage_admit_before_payload_verified'] is True and control['numerical_source_closure_pinned'] is True and control['runtime_sha256']==c['controls_runtime_sha256'],'composed host controls');need(control['python_policy_sha256']==policy_row['sha256'] and control['python_runtime_observed_controls_verified'] is True,'original prospectively observed controls')
  resources=doc(path(c['resource']));r=resources[role];need(set(r)=={'allocator','stage_model_ledger','harness','job_rss','combined','output_bytes','timeout','swap_growth','swap_samples','progress_seconds','evidence_reserve','transport','receipts'},'resource schema')
  need(all(type(x)is int and x>0 for x in r.values()) and r['combined']<=96*GIB and r['job_rss']+r['harness']<=r['combined'] and r['stage_model_ledger']<=r['job_rss'] and r['allocator']<=r['stage_model_ledger'] and r['transport']<=33734653 and r['receipts']<=2073600 and r['timeout']<=({'reference':28800,'native':7200}[role]) and r['swap_samples']<=3 and r['swap_growth']<=256<<20 and r['progress_seconds']<=300 and r['output_bytes']<=r['evidence_reserve']<=8*GIB,'resource limits')
@@ -80,7 +92,10 @@ def facts(c,role):
  # Criteria, CI, resource and coverage originals must be among privately pinned artifacts.
  for k in ('input','criteria','review','ci','controls','resource','build'):
   need(str(path(c[k])) in {v['path'] for v in c['artifacts'].values()},'missing artifact '+k)
- return dict(schema=authority.GRANT_SCHEMA,authority=authority.authority_binding(role),sshsig_verifier_sha256=digest(Path('/usr/bin/ssh-keygen')),stage=role,run=c['run'],attempt='initial',source=src,revision=MODEL,source_custody_sha256=digest(Path(c['checkpoint'])/'receipt.json'),inventory_sha256=q['inventory_sha256'],input_sha256=digest(c['input']),criteria_sha256=digest(c['criteria']),review_sha256=digest(c['review']),ci_sha256=digest(c['ci']),controls_sha256=digest(c['controls']),resource_sha256=digest(c['resource']),config_sha256=digest(STATE/'campaign-config.json'),runtime_and_artifact_sha256=sha(enc(pins)),historical_claims_sha256=sha(enc(c['prior_claims'])),limits=r,one_cold_input=True,children=1)
+ common=dict(stage=role,run=c['run'],attempt='initial',source=src,revision=MODEL,source_custody_sha256=digest(Path(c['checkpoint'])/'receipt.json'),inventory_sha256=q['inventory_sha256'],input_sha256=digest(c['input']),criteria_sha256=digest(c['criteria']),review_sha256=digest(c['review']),ci_sha256=digest(c['ci']),controls_sha256=digest(c['controls']),resource_sha256=digest(c['resource']),config_sha256=digest(config_path(local_mode(c))),runtime_and_artifact_sha256=sha(enc(pins)),historical_claims_sha256=sha(enc(c['prior_claims'])),limits=r,one_cold_input=True,children=1)
+ if local_mode(c):return common
+ return dict(schema=authority.GRANT_SCHEMA,authority=authority.authority_binding(role),
+             sshsig_verifier_sha256=digest(Path('/usr/bin/ssh-keygen')),**common)
 def output_seal(out,cap,chmod=False):
  out=path(out);m={};nb=0;need(stat.S_IMODE(out.stat().st_mode)==(0o700 if chmod else 0o500) and len(list(out.iterdir()))<=1200,'output mode/count')
  for f in sorted(out.iterdir()):
@@ -124,7 +139,16 @@ def grade_content_verified(c,role,before,result):
  return now
 
 def audit_consumed_stage(c,role):
- d,_,_=layout(c,role);claim=doc(ANCHORS[role]);ptr=doc(STATE/(role+'-GRANT_POINTER'))
+ d,_,cap=layout(c,role);claim=doc(ANCHORS[role])
+ if local_mode(c):
+  # After spend, re-read the actual admission and its original manifest. Do not create either again.
+  bound=bound_envelope(c,role);ptr=operator.verified_manifest(c,role,bound)
+  need(claim['schema']=='studio017-operator-local-claim/1' and claim['stage']==role and claim['authorization']==ptr
+       and claim['run']==c['run'] and claim['source']==c['source']['head'] and claim['cap_sha256']==digest(cap)
+       and claim['resource_sha256']==bound['resource_sha256'] and claim['operation']==doc(d/'intent.json')['operation']
+       and doc(d/'intent.json')['authorization']==ptr,'original operator claim/manifest')
+  return
+ ptr=doc(STATE/(role+'-GRANT_POINTER'))
  raw=read(STATE/(role+'-grant-request.json'));pointer_matches_role(ptr,c['run'],role,raw)
  grant=parse(raw);remote_raw,side,sig=remote(ptr['commit'],ptr['path'])
  need(remote_raw==raw==enc(grant) and side==(sha(raw)+'  '+Path(ptr['path']).name+'\n').encode(),'original signed grant readback')
@@ -153,12 +177,26 @@ def require_external_spend_authority(role):
  authority.slot(role)
  raise ValueError('independent spend registry custody and eligible protocol review outstanding')
 
-def envelope(c,role):
- require_external_spend_authority(role)
- x=facts(c,role);need(not os.path.lexists(ANCHORS[role]),'spent claim; reconcile original, no retry')
- if role=='native':x['golden']=original_reference(c)
- else:need(not os.path.lexists(ANCHORS['native']),'unexpected native claim')
+def bound_envelope(c,role):
+ if not local_mode(c):require_external_spend_authority(role)
+ x=facts(c,role)
+ golden=original_reference(c) if role=='native' else None
+ if local_mode(c):return operator.manifest(c,role,x,golden)
+ if golden is not None:x['golden']=golden
  return x
+def envelope(c,role):
+ if not local_mode(c):require_external_spend_authority(role)
+ need(role in ROLES and not os.path.lexists(ANCHORS[role]),'spent claim; reconcile original, no retry')
+ if role=='reference':need(not os.path.lexists(ANCHORS['native']),'unexpected native claim')
+ return bound_envelope(c,role)
+def freeze_operator(c,role):
+ need(local_mode(c),'explicit operator config required')
+ # put uses O_EXCL, no-follow, fsync(file) and fsync(directory). An existing manifest is only read back.
+ lifecycle_gate(c);x=envelope(c,role);operator.validate_ci(c,doc(c['ci']),live=True)
+ f=operator.manifest_path(role)
+ need(not os.path.lexists(layout(c,role)[0]),'stage directory already exists; reconcile')
+ if not os.path.lexists(f):put(f,x)
+ return operator.verified_manifest(c,role,x)
 def request_name(run,role):return STEM+'__'+run+'__'+role+'-initial-grant.json'
 def pointer_matches_role(ptr,run,role,raw):
  # Check field and role binding only. This helper never authorizes publication or spend.
@@ -166,6 +204,9 @@ def pointer_matches_role(ptr,run,role,raw):
 
 def verified(c,role):
  x=envelope(c,role);ci=doc(c['ci']);need(type(ci.get('id'))is int and ci['id']>0,'ordinary CI run ID')
+ if local_mode(c):
+  operator.validate_ci(c,ci,live=True)
+  return x,operator.verified_manifest(c,role,x)
  live=parse(cmd(['/opt/homebrew/bin/gh','api','repos/MahdiHedhli/PulsarMLX/actions/runs/'+str(ci['id'])+'/attempts/1'],timeout=40))
  need(live['head_sha']==x['source']['head'] and live['id']==ci['id'] and live['run_attempt']==1 and live['event']=='push' and live['conclusion']=='success' and live['head_branch']=='codex/studio017-full-flash-golden-token','ordinary CI original API')
  local=STATE/(role+'-grant-request.json');raw=read(local);need(raw==enc(x),'changed original request')
@@ -322,9 +363,16 @@ def end_owned(proc,lease,success):
   proc.wait(8);return False,False
  return lease.finish(proc,success,members)
 
-def run_numeric(conf,stage):
- physical_lease_hold()
- c=load_cfg(conf);g,ptr=verified(c,stage);limits=g['limits'];before=admission(c,stage,limits)
+def lifecycle_gate(c):
+ if not local_mode(c):physical_lease_hold()
+ else:
+  operator.validate_config(c)
+  operator.validate_lifecycle(c,doc(c['review']),doc(c['controls']))
+
+def run_numeric(conf,stage,selected=False):
+ if not selected:physical_lease_hold()
+ c=load_cfg(conf,selected);lifecycle_gate(c)
+ g,ptr=verified(c,stage);limits=g['limits'];before=admission(c,stage,limits)
  d,out,cap=layout(c,stage);need(not os.path.lexists(d),'existing original operation directory; reconcile')
  if stage=='native':
   refx=doc(layout(c,'reference')[0]/'numeric-exit.json')
@@ -338,6 +386,11 @@ def run_numeric(conf,stage):
   before=admission(c,stage,limits)
   run_locked(c,stage,g,ptr,before,limits,d,out,cap)
  finally:os.close(lf)
+def spend_operator(c,role,bound,identity,op,cap):
+ need(local_mode(c) and operator.verified_manifest(c,role,bound)==identity,'operator manifest changed at spend')
+ put(ANCHORS[role],dict(schema='studio017-operator-local-claim/1',stage=role,run=c['run'],
+      source=c['source']['head'],operation=hexid(op,32),supervisor=os.getpid(),authorization=identity,
+      cap_sha256=digest(cap),resource_sha256=bound['resource_sha256']))
 def run_locked(c,role,g,ptr,before,r,d,out,cap):
  rs=c['stages'][role];op=secrets.token_hex(16);d.mkdir(mode=0o700);out.mkdir(mode=0o700)
  exe=Path(sys.executable).resolve(strict=True);supimg=procpath(os.getpid());need(image_pin(c,exe) and image_pin(c,supimg),'supervisor interpreter and image bound');claim=ANCHORS[role]
@@ -349,15 +402,24 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  if role=='native':
   v['native_image_policy']=native_image_policy(c,rs,p)
   v['native_image_source']={k:c['source'][k] for k in ('head','tree')}
- put(cap,v);put(d/'intent.json',dict(operation=op,run=c['run'],stage=role,supervisor=os.getpid(),grant=ptr,config_sha256=g['config_sha256'],limits=r,profile_sha256=sha(profile_raw)))
+ binding={'authorization':ptr} if local_mode(c) else {'grant':ptr}
+ put(cap,v);put(d/'intent.json',dict(operation=op,run=c['run'],stage=role,supervisor=os.getpid(),
+             config_sha256=g['config_sha256'],limits=r,profile_sha256=sha(profile_raw),**binding))
  # Recheck every mutable admission after readback, before spending attempt.
  need(envelope(c,role)==g,'final renewed admission');before=admission(c,role,r)
- # An ambiguous receipt or later admission failure may already have spent the remote slot.
- # Never submit a second challenge to recover this operation.
- remote_spend=authority.consume_before_launch(d,g,ptr,op)
- need(verified(c,role)==(g,ptr),'grant or admission drift after remote spend')
- before=admission(c,role,r)
- put(claim,dict(schema='studio017-initial-claim/2',stage=role,run=c['run'],source=c['source']['head'],operation=op,supervisor=os.getpid(),grant=ptr,remote_spend=remote_spend,cap_sha256=digest(cap),resource_sha256=g['resource_sha256']))
+ if local_mode(c):
+  # No network transaction or signature is represented. Recheck all inputs under the
+  # owner's heavy lock; exclusive creation at the original fixed path spends the local attempt.
+  need(verified(c,role)==(g,ptr),'direct authorization or admission drift')
+  lifecycle_gate(c);before=admission(c,role,r)
+  spend_operator(c,role,g,ptr,op,cap)
+ else:
+  # An ambiguous receipt or later admission failure may already have spent the remote slot.
+  # Never submit a second challenge to recover this operation.
+  remote_spend=authority.consume_before_launch(d,g,ptr,op)
+  need(verified(c,role)==(g,ptr),'grant or admission drift after remote spend')
+  before=admission(c,role,r)
+  put(claim,dict(schema='studio017-initial-claim/2',stage=role,run=c['run'],source=c['source']['head'],operation=op,supervisor=os.getpid(),grant=ptr,remote_spend=remote_spend,cap_sha256=digest(cap),resource_sha256=g['resource_sha256']))
  started=time.monotonic();deadline=started+r['timeout'];gate_ro,gate_wr=os.pipe();parent,passed=socket.socketpair(type=socket.SOCK_DGRAM)
  env={'HOME':str(Path.home()),'PATH':'/usr/bin:/bin','LANG':'C','LC_ALL':'C','STUDIO017_ADMIT_CHANNEL':str(passed.fileno()),'OMP_NUM_THREADS':'1','OPENBLAS_NUM_THREADS':'1','VECLIB_MAXIMUM_THREADS':'1','TMPDIR':str(out)}
  # Binding relies on installed rpaths. Do not inject global DYLD_ overrides; original path must pass controlled host linkage tests.
@@ -450,7 +512,7 @@ class StageMonitor:
 def ha_ok(ph,r,before,over,rss,direct):
  return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss']
 def grade_original(c,role):
- physical_lease_hold()
+ lifecycle_gate(c)
  audit_consumed_stage(c,role)
  d,out,_=layout(c,role);seal=doc(d/'sealed.json');need(seal['files']==output_seal(out,doc(c['resource'])[role]['output_bytes']) and seal['claim_sha256']==digest(ANCHORS[role]),'sealed original')
  ex=doc(d/'numeric-exit.json');need(ex['completed'] and ex['clean_reap'] and ex['exit']==0 and not ex['residual_group_killed'] and ex['operation']==seal['operation'] and seal['exit_sha256']==digest(d/'numeric-exit.json'),'original numeric exit/seal')
@@ -491,16 +553,21 @@ def grade_original(c,role):
  graded_inputs=grade_content_verified(c,role,inputs_before,result)
  put(d/(tag+'.json'),dict(operation=seal['operation'],grading_operation=identity,graded_inputs=graded_inputs,guardian_runtime_sha256=watchdog_hash,grader_runtime_sha256=gradehash,seal_sha256=digest(d/'sealed.json'),result=result,**{key:result[key]}));return result
 def main(args):
+ selected=args[:1]==['--operator-supervised']
+ if selected:args=args[1:]
+ need(len(args)==3,'command CONFIG STAGE required')
  mode=args[0]
  need(mode not in ('admit-child','stage-exec'),'only isolated attested child entry')
- need(mode in ('describe','verify','launch','reconcile-grade') and len(args)==3 and args[2] in ROLES,'operator mode/role')
- os.umask(0o077);cfg=load_cfg(args[1]);role=args[2]
- if mode=='describe':print(enc(envelope(cfg,role)).decode(),end='')
+ need((mode in ('describe','verify','launch','reconcile-grade') or (selected and mode=='freeze-authorization'))
+      and args[2] in ROLES,'operator mode/role')
+ os.umask(0o077);cfg=load_cfg(args[1],selected);role=args[2]
+ if mode=='freeze-authorization':print(enc(freeze_operator(cfg,role)).decode(),end='')
+ elif mode=='describe':print(enc(envelope(cfg,role)).decode(),end='')
  elif mode=='verify':g,ptr=verified(cfg,role);admission(cfg,role,g['limits']);print(enc(ptr).decode(),end='')
  elif mode=='reconcile-grade':
   # No replacement grade after an uncertain grade submission. Recovery only if the initial stage
   # exited cleanly AND was sealed, but grading was never submitted. Never re-enter launch().
   with (STATE/'heavy.lock').open('ab') as lock:
    fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);grade_original(cfg,role)
- else:run_numeric(args[1],role)
+ else:run_numeric(args[1],role,selected)
 if __name__=='__main__':main(sys.argv[1:])
