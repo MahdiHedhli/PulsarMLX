@@ -3,6 +3,7 @@ import base64
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import hashlib
+import time
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -11,7 +12,7 @@ import unittest
 
 import studio017_authority as auth
 import studio017_issuer_spend as issuer
-from studio017_guard import enc, sha
+from studio017_guard import doc, enc, sha
 
 
 class ExternalSpend(unittest.TestCase):
@@ -27,8 +28,8 @@ class ExternalSpend(unittest.TestCase):
         self.grant, self.pointer = self.binding("reference")
         self.db = self.root / "custodian.sqlite"
         with closing(sqlite3.connect(self.db)) as conn:
-            conn.execute(issuer.TABLE)
-            conn.execute("INSERT INTO attempts VALUES (?, ?, NULL)",
+            conn.executescript(issuer.ledger_schema())
+            conn.execute("INSERT INTO enrollments VALUES (?, ?)",
                          (auth.slot("reference"), self.pointer["sha256"]))
             conn.commit()
 
@@ -49,7 +50,14 @@ class ExternalSpend(unittest.TestCase):
         return auth.live_challenge(self.grant, self.pointer, operation)
 
     def consume(self, challenge):
-        return issuer.commit_spend(self.db, self.grant, self.pointer, challenge)
+        return self.consume_with(self.grant, self.pointer, challenge)
+
+    def verify_fixture(self, message, signature):
+        auth._verify_ssh(message, signature, self.public)
+
+    def consume_with(self, grant, pointer, challenge):
+        return issuer._consume_and_sign(self.db, grant, pointer, challenge,
+                                        self.sign_fixture, self.verify_fixture)
 
     def test_pinned_identity_and_unsigned_or_worker_grants(self):
         wire_key = base64.b64decode(auth.PUBLIC_KEY.split()[1], validate=True)
@@ -79,22 +87,21 @@ class ExternalSpend(unittest.TestCase):
         # The issuer DB lives outside both simulated worker lifetimes.
         with tempfile.TemporaryDirectory(dir=self.root) as first_worker:
             first = self.query()
-            statement = self.consume(first)
-            signature = self.sign_fixture(statement)
-            auth._verify_ssh(auth.spend_statement(first), signature, self.public)
-            (Path(first_worker)/"spent").write_bytes(signature)
+            receipt = self.consume(first)
+            auth.check_receipt(first, receipt, self.verify_fixture)
+            (Path(first_worker)/"spent").write_bytes(enc(receipt))
         with tempfile.TemporaryDirectory(dir=self.root):
             second = self.query(operation=first["operation"])  # same run, source, role and operation
             self.assertNotEqual(first["nonce"], second["nonce"])
-            with self.assertRaisesRegex(ValueError, "signature"):
-                auth._verify_ssh(auth.spend_statement(second), signature, self.public)
-            for request in (first, second):
-                with self.assertRaisesRegex(ValueError, "already spent"):
-                    self.consume(request)
+            with self.assertRaisesRegex(ValueError, "differs from live challenge"):
+                auth.check_receipt(second, receipt, self.verify_fixture)
+            self.assertEqual(self.consume(first),receipt)  # redelivery of original bytes only
+            with self.assertRaisesRegex(ValueError, "already spent"):
+                self.consume(second)
             for args in [dict(run="0"*64), dict(source="9"*40)]:
                 grant, pointer = self.binding("reference", **args)
-                with self.assertRaisesRegex(ValueError,"already spent"):
-                    issuer.commit_spend(self.db, grant, pointer, auth.live_challenge(grant,pointer,"4"*32))
+                with self.assertRaisesRegex(ValueError,"differs from enrolled digest"):
+                    self.consume_with(grant, pointer, auth.live_challenge(grant,pointer,"4"*32))
 
     def test_concurrent_distinct_requests_consume_only_once(self):
         def arrive(_):
@@ -108,10 +115,10 @@ class ExternalSpend(unittest.TestCase):
 
     def test_missing_store_unenrolled_stage_and_lost_reply(self):
         with self.assertRaises(FileNotFoundError):
-            issuer.commit_spend(self.root/"missing", self.grant, self.pointer, self.query())
+            issuer.consume_and_sign(self.root/"missing", self.grant, self.pointer, self.query(), self.sign_fixture)
         native, pointer = self.binding("native")
-        with self.assertRaisesRegex(ValueError,"attempt unavailable"):
-            issuer.commit_spend(self.db,native,pointer,auth.live_challenge(native,pointer,"2"*32))
+        with self.assertRaisesRegex(ValueError,"unenrolled slot"):
+            self.consume_with(native,pointer,auth.live_challenge(native,pointer,"2"*32))
         self.consume(self.query())  # discard reply after commit
         with self.assertRaisesRegex(ValueError,"already spent"):
             self.consume(self.query())
@@ -119,3 +126,73 @@ class ExternalSpend(unittest.TestCase):
             auth.consume_before_launch(self.root,self.grant,self.pointer,"7"*32,timeout=0)
         self.assertTrue((self.root/"remote-spend-challenge.json").exists())
         self.assertFalse((self.root/"remote-spend-verified.json").exists())
+
+    def test_changed_grant_does_not_consume_unspent_slot(self):
+        other, pointer = self.binding("reference", source="1"*40)
+        with self.assertRaisesRegex(ValueError,"differs from enrolled digest"):
+            self.consume_with(other, pointer, auth.live_challenge(other,pointer,"9"*32))
+        self.consume(self.query())
+
+    def test_write_once_ledger_and_loss_before_signature(self):
+        request = self.query()
+        signing_calls = []
+
+        def unavailable(message):
+            with closing(sqlite3.connect(self.db)) as observer:
+                row = observer.execute("SELECT challenge FROM spends").fetchone()
+            self.assertEqual(row, (enc(request),))  # signer observed committed bytes from another connection
+            signing_calls.append(message)
+            raise RuntimeError("synthetic signer offline")
+
+        with self.assertRaisesRegex(RuntimeError, "signer offline"):
+            issuer.consume_and_sign(self.db, self.grant, self.pointer, request, unavailable)
+        with self.assertRaisesRegex(ValueError, "spent without a released signature"):
+            self.consume(request)
+        self.assertEqual(len(signing_calls),1)
+        with self.assertRaisesRegex(ValueError, "already spent"):
+            self.consume(self.query())
+        with closing(sqlite3.connect(self.db)) as conn:
+            for sql in ("DELETE FROM spends", "UPDATE spends SET challenge=x'00'",
+                        "INSERT OR REPLACE INTO spends SELECT * FROM spends",
+                        "INSERT OR REPLACE INTO spends SELECT sequence,'another-slot',challenge,committed_ns FROM spends",
+                        "DELETE FROM enrollments"):
+                with self.subTest(sql=sql), self.assertRaises(sqlite3.IntegrityError):
+                    conn.execute(sql)
+        with self.assertRaisesRegex(ValueError, "spent without a released signature"):
+            issuer.recover_reply(self.db,request)
+
+    def test_synthetic_delivery_and_audit(self):
+        operation = "3"*32
+        worker = self.root/"worker"
+        worker.mkdir()
+        def sender():
+            deadline = time.monotonic()+5
+            while not (worker/"remote-spend-challenge.json").exists():
+                if time.monotonic() > deadline:
+                    raise TimeoutError("test worker did not post challenge")
+                time.sleep(0.01)
+            received = doc(worker/"remote-spend-challenge.json")
+            receipt = self.consume(received)
+            auth.deliver_reply(worker, issuer.recover_reply(self.db, received))
+            with self.assertRaises(FileExistsError):
+                auth.deliver_reply(worker, receipt)
+            return receipt
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            delivery = pool.submit(sender)
+            challenge = auth.live_challenge(self.grant, self.pointer, operation)
+            fact = auth._await_spend(worker,challenge,self.verify_fixture,6)
+            receipt = delivery.result()
+        claim = dict(operation=operation,grant=self.pointer,remote_spend=fact)
+        auth._original_spend(worker,self.grant,self.pointer,claim,self.verify_fixture)
+        with self.assertRaisesRegex(ValueError, "signature"):
+            auth.original_spend(worker,self.grant,self.pointer,claim)  # pinned issuer rejects fixture
+        self.assertEqual(receipt,doc(worker/"supervisor-spend.json"))
+        self.assertEqual(receipt["statement"]["sequence"],1)
+
+    def test_custodian_will_not_release_worker_signed_spend(self):
+        request = self.query()
+        with self.assertRaisesRegex(ValueError, "signature"):
+            issuer.consume_and_sign(self.db,self.grant,self.pointer,request,self.sign_fixture)
+        with self.assertRaisesRegex(ValueError, "spent without a released signature"):
+            issuer.recover_reply(self.db,request)

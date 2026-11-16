@@ -1,4 +1,6 @@
 """Wire format and public-key verification for the two Studio017 initial stages."""
+import base64
+import hashlib
 import os
 from pathlib import Path
 import secrets
@@ -6,7 +8,7 @@ import subprocess
 import tempfile
 import time
 
-from studio017_guard import doc, enc, hexid, need, put, read, sha
+from studio017_guard import doc, enc, hexid, need, parse, put, read, sha
 
 
 PRINCIPAL = "pulsarmlx-studio017-supervisor"
@@ -24,8 +26,15 @@ def slot(stage):
 
 
 def authority_binding(stage):
-    return dict(protocol="studio017-supervisor-spend/1", slot=slot(stage),
+    return dict(protocol="studio017-supervisor-spend/2", slot=slot(stage),
                 issuer=FINGERPRINT, principal=PRINCIPAL, namespace=NAMESPACE)
+
+
+def fingerprint(public_key):
+    algorithm, body = public_key.split()
+    need(algorithm == "ssh-ed25519", "unexpected issuer algorithm")
+    wire = base64.b64decode(body, validate=True)
+    return "SHA256:" + base64.b64encode(hashlib.sha256(wire).digest()).decode().rstrip("=")
 
 
 def _verify_ssh(message, signature, public_key):
@@ -41,10 +50,13 @@ def _verify_ssh(message, signature, public_key):
             ["/usr/bin/ssh-keygen", "-Y", "verify", "-f", str(allowed), "-I", PRINCIPAL,
              "-n", NAMESPACE, "-s", str(sigfile)], input=message, capture_output=True,
             env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"}, timeout=10)
-    need(result.returncode == 0, "invalid independent supervisor signature")
+    expected = f'Good "{NAMESPACE}" signature for {PRINCIPAL} with ED25519 key {fingerprint(public_key)}'
+    need(result.returncode == 0 and result.stdout.decode("ascii").strip() == expected,
+         "invalid independent supervisor signature")
 
 
 def verify_supervisor(message, signature):
+    need(fingerprint(PUBLIC_KEY) == FINGERPRINT, "mismatched issuer key or fingerprint")
     _verify_ssh(message, signature, PUBLIC_KEY)
 
 
@@ -65,43 +77,90 @@ def live_challenge(grant, pointer, operation):
                 operation=hexid(operation, 32), nonce=secrets.token_hex(32))
 
 
-def spend_statement(challenge):
-    """Canonical bytes the external custodian signs only after committing the slot."""
-    return enc(dict(schema="studio017-consumed/1", disposition="spent-before-launch",
-                    slot=challenge["slot"], challenge_sha256=sha(enc(challenge))))
+def spend_statement(challenge, sequence, committed_ns):
+    for value in (sequence, committed_ns):
+        need(type(value) is int and 0 < value < 2**63, "invalid issuer sequence or time")
+    return dict(schema="studio017-consumed/2", disposition="spent-before-launch",
+                slot=challenge["slot"], challenge_sha256=sha(enc(challenge)),
+                sequence=sequence, committed_ns=committed_ns)
 
 
+def signed_receipt(statement, signature):
+    need(isinstance(signature, bytes) and 0 < len(signature) <= SIGNATURE_LIMIT,
+         "invalid issuer signature size")
+    return dict(statement=statement, signature=base64.b64encode(signature).decode("ascii"))
 
-def original_spend(directory, grant, pointer, claim):
-    """Audit the retained signed consumption without requesting another attempt."""
+
+def check_receipt(challenge, receipt, verify):
+    need(set(receipt) == {"statement", "signature"}, "invalid spend receipt fields")
+    statement = receipt["statement"]
+    expected = spend_statement(challenge, statement["sequence"], statement["committed_ns"])
+    need(statement == expected, "signed spend differs from live challenge")
+    signature = base64.b64decode(receipt["signature"], validate=True)
+    verify(enc(expected), signature)
+    return dict(operation=challenge["operation"], slot=expected["slot"],
+                challenge_sha256=expected["challenge_sha256"], receipt_sha256=sha(enc(receipt)),
+                sequence=expected["sequence"], committed_ns=expected["committed_ns"])
+
+
+def _publish(directory, name, message):
+    directory = Path(directory).resolve(strict=True)
+    pending = directory / (".spend-message-" + secrets.token_hex(16))
+    put(pending, message)
+    try:
+        os.link(pending, directory / name)
+    finally:
+        pending.unlink()
+    fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def deliver_reply(directory, receipt):
+    """Atomically deliver an already recorded signed reply received from the custodian."""
+    _publish(directory, "supervisor-spend.json", receipt)
+
+
+def _read_reply(path):
+    raw = read(path,8192)
+    receipt = parse(raw)
+    need(raw == enc(receipt), "noncanonical signed spend receipt")
+    return receipt
+
+
+def _original_spend(directory, grant, pointer, claim, verify):
     challenge = doc(directory / "remote-spend-challenge.json")
-    operation = hexid(claim["operation"], 32)
     expected = dict(schema="studio017-live-consume/1", **grant_identity(grant, pointer),
-                    operation=operation, nonce=hexid(challenge["nonce"], 64))
+                    operation=hexid(claim["operation"],32), nonce=hexid(challenge["nonce"],64))
     need(challenge == expected and claim["grant"] == pointer, "original spend identity differs")
-    signature = read(directory / "supervisor-spend.sshsig", SIGNATURE_LIMIT)
-    verify_supervisor(spend_statement(expected), signature)
-    receipt = dict(operation=operation, challenge_sha256=sha(enc(expected)),
-                   signature_sha256=sha(signature), slot=expected["slot"])
-    need(receipt == claim["remote_spend"] == doc(directory / "remote-spend-verified.json"),
+    receipt = _read_reply(directory / "supervisor-spend.json")
+    fact = check_receipt(expected, receipt, verify)
+    need(fact == claim["remote_spend"] == doc(directory / "remote-spend-verified.json"),
          "original signed consumption receipt differs")
 
 
-def consume_before_launch(directory, grant, pointer, operation, timeout=180):
-    # Only the in-memory challenge can authorize this invocation. Never restore it on restart.
-    challenge = live_challenge(grant, pointer, operation)
-    response = directory / "supervisor-spend.sshsig"
+def original_spend(directory, grant, pointer, claim):
+    _original_spend(directory, grant, pointer, claim, verify_supervisor)
+
+
+def _await_spend(directory, challenge, verify, timeout):
+    response = directory / "supervisor-spend.json"
     need(not os.path.lexists(response), "unexpected pre-existing spend response")
-    put(directory / "remote-spend-challenge.json", challenge)
+    _publish(directory, "remote-spend-challenge.json", challenge)
     end = time.monotonic() + timeout
     while time.monotonic() < end:
         if os.path.lexists(response):
-            signature = read(response, SIGNATURE_LIMIT)
-            verify_supervisor(spend_statement(challenge), signature)
+            fact = check_receipt(challenge, _read_reply(response), verify)
             need(time.monotonic() < end, "expired supervisor spend response")
-            receipt = dict(operation=operation, challenge_sha256=sha(enc(challenge)),
-                           signature_sha256=sha(signature), slot=challenge["slot"])
-            put(directory / "remote-spend-verified.json", receipt)
-            return receipt
+            put(directory / "remote-spend-verified.json", fact)
+            return fact
         time.sleep(min(0.25, max(0, end - time.monotonic())))
     raise TimeoutError("unconfirmed remote spend: reconcile supervisor ledger and original challenge")
+
+
+def consume_before_launch(directory, grant, pointer, operation, timeout=180):
+    # This process never loads an old challenge to authorize a new invocation.
+    challenge = live_challenge(grant, pointer, operation)
+    return _await_spend(directory, challenge, verify_supervisor, timeout)
