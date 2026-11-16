@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 import numpy as np
-from studio017_ref_grade import _inspect,_grade,layout,REAL,STATE_ABS
+from studio017_ref_grade import _inspect,_grade,layout,REAL,STATE_ABS,witness_scope
 from studio017_ref_store import Refusal,bf
 
 
@@ -66,6 +66,7 @@ def dataset(path,role,changes=None):
 class Checks(unittest.TestCase):
     def test_exact_census(self):
         p=layout(REAL)
+        self.assertEqual(witness_scope(REAL[0])['unobserved_mla_layers'], list(range(3, 44, 4)))
         self.assertEqual(len(p),557)
         self.assertEqual(sum(i[2] for i in p.values()),
                          154880+4096*2+45*(4096*6+1+48)+34*(4*8192+64)+
@@ -92,7 +93,11 @@ class Checks(unittest.TestCase):
             with self.assertRaises(Refusal,msg=problem):self.run_case({problem:True})
 
     def test_pair_with_same_token_and_different_content(self):
-        self.assertTrue(self.run_case(native={})['qualified'])
+        result=self.run_case(native={})
+        self.assertTrue(result['qualified'])
+        self.assertEqual(result['witness_scope'], self.run_case()['witness_scope'])
+        self.assertEqual(result['witness_scope']['unobserved_mla_layers'], [3])
+        self.assertEqual(result['witness_scope']['state_offset'], 'structural count only')
         r=self.run_case(native={'wrong_nonwinner':True})
         self.assertEqual(r['outside'],1);self.assertFalse(r['qualified']);self.assertEqual(r['native_token']['winner'],1)
         r=self.run_case(native={'state':True})

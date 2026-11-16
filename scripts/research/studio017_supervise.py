@@ -187,14 +187,22 @@ def runtime_dirs(c,role,cap,out,claim):
  return rd,files
 def profile(c,role,cap,out,claim):
  rd,files=runtime_dirs(c,role,cap,out,claim)
+ roles=('bootstrap','helper','reference') if role=='reference' else ('bootstrap','helper')
+ return child_profile(rd,files,out,[pyg.rolepath(cap.parent,n) for n in roles])
+def child_profile(rd,files,out,receipt_paths):
  def literal(x):return json.dumps(str(x),ensure_ascii=False)
  ancestors={str(y) for f in [*rd,*files,out] for y in Path(f).parents};allow=' '.join('(literal '+literal(y)+')' for y in sorted(ancestors))+' '+' '.join('(subpath '+literal(x)+')' for x in rd)+' '+' '.join('(literal '+literal(x)+')' for x in files)
  # Each dedicated original attestation is the only writable named path outside numerical outputs.
- writes=' '.join('(literal '+literal(pyg.rolepath(cap.parent,n))+')' for n in (('bootstrap','helper','reference') if role=='reference' else ('bootstrap','helper')))
+ writes=' '.join('(literal '+literal(p)+')' for p in receipt_paths)
  return ('(version 1)\n(allow default)\n(deny network*)\n(deny file-read*)\n(deny file-write*)\n(allow file-read-metadata)\n(import "dyld-support.sb")\n(allow file-read* '+allow+')\n(allow file-read* file-write* (subpath '+literal(out)+'))\n(allow file-read* file-write* '+writes+')\n(allow file-write-data (literal "/dev/null"))\n').encode()
 def child(cap_path):
  cap=path(cap_path);v=doc(cap);role=v['stage'];need(role in ROLES and cap==STATE/('campaign-'+role)/'child-cap.json','stage cap location')
- claim=doc(ANCHORS[role]);a=doc(cap.parent/'active.json');need(a['cap_sha256']==digest(cap) and claim['operation']==v['operation']==a['operation'] and claim['run']==v['run'] and a['claim_sha256']==digest(ANCHORS[role]),'live cap/claim binding')
+ acknowledge_child(cap,v,ANCHORS[role])
+ result={k:v[k] for k in ('stage','operation','run','model_root','checkpoint_receipt','inventory','witnesses','input','pins','output','prefix','libs')}
+ if role=='native':result['native_image_policy']=v['native_image_policy']
+ return result
+def acknowledge_child(cap,v,claim_path):
+ claim=doc(claim_path);a=doc(cap.parent/'active.json');need(a['cap_sha256']==digest(cap) and claim['operation']==v['operation']==a['operation'] and claim['run']==v['run'] and a['claim_sha256']==digest(claim_path),'live cap/claim binding')
  pid=os.getppid();need(a['child']==pid==os.getpgid(pid) and os.getsid(pid)==os.getsid(claim['supervisor']) and os.getpid()!=pid,'direct active numerical parent')
  need(claim['supervisor']==a['supervisor'] and os.getpgid(claim['supervisor'])!=pid and procpath(pid)==v['expected_image'] and procpath(claim['supervisor'])==v['supervisor_image'],'process identity')
  # Full birth/ppid checked by external owner on acknowledgement (set-id ps is not executable under SBPL).
@@ -203,14 +211,20 @@ def child(cap_path):
  channel=socket.socket(fileno=int(os.environ['STUDIO017_ADMIT_CHANNEL']));channel.settimeout(20)
  challenge=enc(dict(helper=os.getpid(),worker=pid,operation=v['operation'],cap_sha256=digest(cap),nonce=secrets.token_hex(16)))
  channel.sendall(challenge);reply=channel.recv(256);channel.close();need(reply==sha(challenge).encode(),'owner denied child admission')
- return {k:v[k] for k in ('stage','operation','run','model_root','checkpoint_receipt','inventory','witnesses','input','pins','output','prefix','libs')}
-def capsule_exec(cap,fd):
+def startup_barrier(cap,fd):
  # Trusted tiny bootstrap waits for durable active child identity before exec; not a grant.
  need(os.read(fd,1)==b'G','missing startup authorization');os.close(fd)
  v=doc(path(cap));need(os.getpid()==os.getpgrp() and os.getsid(0)==os.getsid(v['supervisor']) and os.getpgid(v['supervisor'])!=os.getpgrp() and v['supervisor']==os.getppid(),'detached/stale worker')
- return v['argv'] # py_gate writes the original bootstrap census immediately before exec.
+ return v
+def capsule_exec(cap,fd):
+ return startup_barrier(cap,fd)['argv'] # py_gate writes the original bootstrap census immediately before exec.
 def approved_libraries(c,rs):
  pref=path(rs['library_prefix']);w={v['path']:v['sha256'] for v in c['runtime_files'].values()};return {n:w[str(pref/'lib'/n)] for n in ['libmlx.dylib','libmlxc.dylib','libjaccl.dylib']}
+def native_image_policy(c,rs,python_policy):
+ program=str(path(rs['program']));lib=path(rs['library_prefix'])/'lib'
+ paths=[program,*[str(lib/n) for n in approved_libraries(c,rs)]]
+ pins={row['path']:row['sha256'] for row in c['runtime_files'].values()}
+ return dict(program=program,platform_cache_uuid=python_policy['platform_cache_uuid'],noncache_images={p:pins[p] for p in paths})
 def ref_entry(c,rs,role,cap,out,op,b):
  if role=='native':return [rs['program'],str(cap),str(out)]
  return pyg.cli(b['interpreter'],cap.parent/'cache-reference',pyg.SELF,'reference',b['policy'],b['sha256'],pyg.rolepath(cap.parent,'reference'),op,[cap,out])
@@ -228,12 +242,14 @@ def cleanup(child):
   time.sleep(.05)
  return left,not exists
 def poll_ack(parent,p,c,role,cap):
+ accept_ack(parent,p,c,role,cap,ANCHORS[role])
+def accept_ack(parent,p,c,role,cap,claim_path):
  parent.settimeout(3);msg=parent.recv(4096);q=parse(msg);need(len(msg)<1024 and set(q)=={'helper','worker','operation','cap_sha256','nonce'} and hexid(q['nonce'],32) and q['worker']==p.pid and q['operation']==c['operation'] and q['cap_sha256']==digest(cap),'worker ack fields')
  helper=q['helper'];need(type(helper)is int and helper>1 and os.getpgid(helper)==p.pid and os.getsid(helper)==os.getsid(p.pid)==os.getsid(0) and int(cmd(['/bin/ps','-p',str(helper),'-o','ppid=']))==p.pid,'helper ancestry')
  need(procpath(p.pid)==c['expected_image'] and procpath(helper)==c['supervisor_image'],'live helper/worker executable')
  a=doc(cap.parent/'active.json')
  need(int(cmd(['/bin/ps','-p',str(p.pid),'-o','ppid=']))==os.getpid()==a['supervisor'] and cmd(['/bin/ps','-p',str(p.pid),'-o','lstart=']).decode().strip()==a['birth'],'actual worker ancestry/birth')
- put(cap.parent/'admitted.json',dict(stage=role,operation=c['operation'],worker=p.pid,helper=helper,challenge_sha256=sha(msg),cap_sha256=q['cap_sha256'],claim_sha256=digest(ANCHORS[role])))
+ put(cap.parent/'admitted.json',dict(stage=role,operation=c['operation'],worker=p.pid,helper=helper,challenge_sha256=sha(msg),cap_sha256=q['cap_sha256'],claim_sha256=digest(claim_path)))
  parent.sendall(sha(msg).encode());parent.close()
 def physical_lease_hold():
  # No numerical admission via NEW code until combined BLK1 bootstraps, orphan/timeout,
@@ -295,6 +311,7 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  profile_raw=profile(c,role,cap,out,claim)
  sp=d/'policy.sb';sp.write_bytes(profile_raw);sp.chmod(0o400)
  v=dict(schema='studio017-child-cap/1',stage=role,run=c['run'],operation=op,supervisor=os.getpid(),supervisor_image=supimg,expected_image=rs['image'],python_gate=pb,argv=ref_entry(c,rs,role,cap,out,op,pb),model_root=str(ROOT),checkpoint_receipt=str(Path(c['checkpoint'])/'receipt.json'),inventory=str(Path(c['checkpoint'])/'inventory.json'),witnesses=str(Path(c['checkpoint'])/'witnesses.json'),input=c['input'],pins=r,output=str(out),prefix=rs['library_prefix'],libs=approved_libraries(c,rs))
+ if role=='native':v['native_image_policy']=native_image_policy(c,rs,p)
  put(cap,v);put(d/'intent.json',dict(operation=op,run=c['run'],stage=role,supervisor=os.getpid(),grant=ptr,config_sha256=g['config_sha256'],limits=r,profile_sha256=sha(profile_raw)))
  # Recheck every mutable admission after readback, before spending attempt.
  need(envelope(c,role)==g,'final renewed admission');before=admission(c,role,r)

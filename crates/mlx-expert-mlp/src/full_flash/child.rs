@@ -2,7 +2,6 @@ use crate::{ffi, graph, provider};
 use mlx_native_affine::fixture::sha256_hex;
 use serde_json::{json, Value};
 use std::{
-    collections::BTreeSet,
     fs,
     io::Write,
     os::unix::fs::{MetadataExt, OpenOptionsExt},
@@ -23,42 +22,6 @@ fn read_json(p: &Path, limit: u64) -> R<Value> {
         return Err("unbounded private JSON".into());
     }
     serde_json::from_slice(&fs::read(p).map_err(err)?).map_err(err)
-}
-fn images(info: &Value) -> R<BTreeSet<String>> {
-    let lib = Path::new(field(info, "prefix")?).join("lib");
-    let mut seen = BTreeSet::new();
-    let count = unsafe { libc::_dyld_image_count() };
-    if count > 4096 {
-        return Err("image census".into());
-    }
-    for i in 0..count {
-        let p = unsafe { libc::_dyld_get_image_name(i) };
-        if p.is_null() {
-            return Err("image path".into());
-        }
-        let im = Path::new(
-            unsafe { std::ffi::CStr::from_ptr(p) }
-                .to_str()
-                .map_err(err)?,
-        );
-        let n = im.file_name().and_then(|s| s.to_str()).unwrap_or("");
-        if n.ends_with(".dylib")
-            && (n.to_ascii_lowercase().contains("mlx") || n == "libjaccl.dylib")
-        {
-            if !matches!(n, "libmlx.dylib" | "libmlxc.dylib" | "libjaccl.dylib")
-                || im.canonicalize().map_err(err)? != lib.join(n)
-                || im.metadata().map_err(err)?.len() > 32 << 20
-                || sha256_hex(&fs::read(im).map_err(err)?) != info["libs"][n]
-                || !seen.insert(n.to_string())
-            {
-                return Err("loaded image binding".into());
-            }
-        }
-    }
-    if seen.len() != 3 {
-        return Err("missing MLX image".into());
-    }
-    Ok(seen)
 }
 struct Sink {
     out: PathBuf,
@@ -119,6 +82,11 @@ impl graph::Witness for Sink {
 }
 pub fn run() -> R<()> {
     let a: Vec<_> = std::env::args_os().skip(1).collect();
+    if a.len() == 2 && a[0] == "--synthetic-image-census" {
+        let policy = read_json(Path::new(&a[1]), 64 << 10)?;
+        println!("{}", crate::native_images::census(&policy)?);
+        return Ok(());
+    }
     if a.len() != 2 {
         return Err("expected stage capability and fresh output directory".into());
     }
@@ -174,7 +142,12 @@ pub fn run() -> R<()> {
     {
         return Err("stage/output custody".into());
     }
-    let loaded = images(&info)?;
+    let census = crate::native_images::census(&info["native_image_policy"])?;
+    let loaded = info["libs"].as_object().ok_or("missing library pins")?;
+    let library_names: std::collections::BTreeSet<_> = loaded.keys().collect();
+    // The original numerical report schema carries these names. The owner's retained
+    // stderr also records the checked paths, file digests and shared cache identity.
+    eprintln!("{census}");
     let source = Path::new(field(&info, "model_root")?);
     let witness = read_json(Path::new(field(&info, "witnesses")?), 64 << 10)?;
     let orig = read_json(Path::new(field(&info, "input")?), 65536)?;
@@ -215,7 +188,7 @@ pub fn run() -> R<()> {
                     j
                 }
             });
-    let report = json!({"schema":"studio017-native/1","layer_count":45,"position":0,"generated_token_count":1,"input_id":154820,"token_id":id,"runner_up":runner,"margin":logits[id] as f64-logits[runner] as f64,"routes":w.routes,"files":w.files,"native":cleanup,"libraries":loaded});
+    let report = json!({"schema":"studio017-native/1","layer_count":45,"position":0,"generated_token_count":1,"input_id":154820,"token_id":id,"runner_up":runner,"margin":logits[id] as f64-logits[runner] as f64,"routes":w.routes,"files":w.files,"native":cleanup,"libraries":library_names});
     w.file("report.json", &serde_json::to_vec(&report).map_err(err)?)?;
     fs::File::open(out)
         .and_then(|f| f.sync_all())

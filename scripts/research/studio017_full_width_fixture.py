@@ -109,5 +109,44 @@ def case(bits, cols):
                 digest(u16le(scales)),digest(u16le(biases))],mutant_rows_rejected=changed)
 
 
+DISPATCH_COLS = (128, 256, 512, 1536, 2048, 8192)
+
+
+def embedding_case():
+    """Decode logical, unpacked 8-bit codes; exact dyadics before one BF16 round."""
+    cols = 4096
+    codes = [3 if j % 64 == 0 else (37*j + 11*(j//64) + 3) % 256 for j in range(cols)]
+    scales = [(129/128, -129/128, 65/64, -65/64)[g % 4] for g in range(cols//64)]
+    biases = [(-95/32, 95/32, -31/8, 31/8)[g % 4] for g in range(cols//64)]
+    assert all(frombf(bfword(v)) == v for v in scales+biases)
+    expected = []
+    changed = dict(nonfused=0, reverse_in_word=0, wrong_group=0)
+    for j, q in enumerate(codes):
+        group = j//64
+        scale, bias = scales[group], biases[group]
+        total = q*scale + bias
+        integer_units = q*int(scale*128) + int(bias*128)
+        assert total == math.ldexp(integer_units, -7)
+        word = bfword(total)
+        expected.append(word)
+        changed['nonfused'] += bfword(frombf(bfword(q*scale)) + bias) != word
+        changed['reverse_in_word'] += bfword(codes[(j//4)*4+3-j%4]*scale + bias) != word
+        g = (group+1) % len(scales)
+        changed['wrong_group'] += bfword(q*scales[g]+biases[g]) != word
+    assert all(changed.values()) and expected[0] == 0x3d60
+    return dict(bits=8,rows=1,cols=cols,expected_bf16=expected,mutant_lanes_rejected=changed,
+                sha256=[digest(bytes(codes)),digest(u16le(map(bfword,scales))),
+                        digest(u16le(map(bfword,biases)))])
+
+
+def uncovered_dispatch_cases():
+    return [case(8, k) for k in DISPATCH_COLS] + [embedding_case()]
+
+
 if __name__ == '__main__':
-    print(json.dumps([case(*args) for args in CASES], sort_keys=True, separators=(',',':')))
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--uncovered-eight-bit', action='store_true')
+    args = parser.parse_args()
+    cases = uncovered_dispatch_cases() if args.uncovered_eight_bit else [case(*args) for args in CASES]
+    print(json.dumps(cases, sort_keys=True, separators=(',',':')))

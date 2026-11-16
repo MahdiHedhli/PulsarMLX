@@ -22,7 +22,7 @@ else: raise RuntimeError("unexpected read")
 subprocess.run([sys.executable,"-I","-B","-c",*sys.argv[2:]],pass_fds=(fd,),check=True,timeout=12)
 '''
   argv=[str(exe),'-I','-B','-c',host,str(forbidden),helper,str(source),str(s),str(claim),str(cap)]
-  v=dict(stage='native',operation='synthetic-only',run='unit',supervisor=os.getpid(),supervisor_image=image,expected_image=image,argv=argv,model_root='denied-fixture',checkpoint_receipt='fixture',inventory='fixture',witnesses='fixture',input='fixture',pins={},output=str(out),prefix='fixture',libs={})
+  v=dict(stage='native',operation='synthetic-only',run='unit',supervisor=os.getpid(),supervisor_image=image,expected_image=image,argv=argv,model_root='denied-fixture',checkpoint_receipt='fixture',inventory='fixture',witnesses='fixture',input='fixture',pins={},output=str(out),prefix='fixture',libs={},native_image_policy={'scope':'synthetic-lineage-only'})
   put(claim,dict(stage='native',run='unit',operation=v['operation'],supervisor=os.getpid()));put(cap,v)
   rs=dict(array_roots=['/opt/homebrew/Cellar','/opt/homebrew/opt','/opt/homebrew/lib','/opt/homebrew/bin'],program=str(exe),image=image,python=str(exe),library_prefix='/usr/lib')
   policy=t/'sb';policy.write_bytes(sup.profile(cfg(dict(stages={'native':rs},repo=str(source),input=str(cap),checkpoint=str(t/'unused')),t),'native',cap,out,claim))

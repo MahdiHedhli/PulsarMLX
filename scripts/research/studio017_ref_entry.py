@@ -4,12 +4,15 @@ from pathlib import Path
 SCRIPTS=Path(__file__).resolve().parent
 def require(v,why):
  if not v:raise ValueError(why)
+def query_helper(command,fd):
+ try:return json.loads(subprocess.check_output(command,pass_fds=(fd,),timeout=30))
+ finally:os.close(fd)
 def main(args):
  require(len(args)==2 and sys.flags.isolated,'private role/isolated interpreter')
  cap,out=map(Path,args);fd=int(os.environ['STUDIO017_ADMIT_CHANNEL'])
  from studio017_py_gate import cap_cli
  command=cap_cli(cap,'helper')
- role=json.loads(subprocess.check_output(command,pass_fds=(fd,),timeout=30));os.close(fd)
+ role=query_helper(command,fd)
  require(role['stage']=='reference' and Path(role['output'])==out==out.resolve(strict=True),'reference admission')
  require(str(SCRIPTS) in sys.path,'approved source root')
  from studio017_guard import doc,opened,fdstamp,digest

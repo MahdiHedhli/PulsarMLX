@@ -28,6 +28,16 @@ STATE_REL=(1+2.**-7)**3-1+2.**-22
 STATE_ABS=16*2.**-24
 
 
+def witness_scope(layers):
+    """Interpret the position-zero comparison independently of its numerical outcome."""
+    return dict(
+        position=0,
+        unobserved_mla_layers=list(range(3, layers, 4)),
+        unobserved_mla_projections=['q_a_proj', 'q_b_proj', 'embed_q', 'indexer.wq_b'],
+        state_offset='structural count only',
+    )
+
+
 def layout(g):
     n,d,v,e,k,h,kd,latent,index=g
     result={}
@@ -227,7 +237,8 @@ def _inspect(path,g):
         seal=o.finish()
     return dict(schema='studio017-reference-eligibility/1',
                 eligible=bool(token['eligible'] and all(r['eligible'] for r in routes.values())),
-                source=seal,token=token,route_gates=routes,layers=g[0],vocabulary=g[2])
+                source=seal,token=token,route_gates=routes,layers=g[0],vocabulary=g[2],
+                witness_scope=witness_scope(g[0]))
 
 
 def grade_pair(ref_dir,native_dir):
@@ -248,8 +259,7 @@ def _grade(ref_dir,native_dir,g):
                 # BF16 coordinate identity; offset likewise must be exactly 1.
                 bad=x.view('<u4')!=y.view('<u4')
             elif kind in ('mhc','decay'):
-                # Additional dimensionless-FP32 diagnostic uses the already frozen
-                # FP32 score tolerance. No earlier error criterion is widened.
+                # mHC and decay discrepancies count toward the frozen qualifying gate.
                 bad=delta>(4e-5+4e-6*np.abs(x.astype('f8')))
             elif kind=='state':
                 bad=delta>STATE_ABS+STATE_REL*np.abs(x.astype('f8'))
@@ -270,4 +280,4 @@ def _grade(ref_dir,native_dir,g):
     return dict(schema='studio017-full-vector-grade/1',qualified=bool(ok),layers=g[0],vocabulary=g[2],
                 reference=rs,native=cs,reference_token=rt,native_token=ct,
                 checked_values=sum(m['values'] for m in stages.values()),outside=outside,
-                routes=routes,stages=stages)
+                routes=routes,stages=stages,witness_scope=witness_scope(g[0]))

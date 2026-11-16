@@ -2,17 +2,15 @@
 // No IO, external arguments, model, grant or reference-as-input. Five production
 // copied_tile dispatches, one per frozen geometry. Stable scalar CPU FP64 expected
 // outputs are generated independently by studio017_full_width_fixture.py.
-fn full_width_affine_controls(ctx: &NativeContext) -> R<()> {
+type WidthObservation = (u32, usize, [String; 4], Vec<u16>);
+fn full_width_observations(
+    ctx: &NativeContext,
+    geometries: &[(u32, usize)],
+) -> R<Vec<WidthObservation>> {
     use mlx_native_affine::fixture::sha256_hex;
     const ROWS: usize = 64;
     let mut observations = Vec::new();
-    for (bits, cols) in [
-        (4u32, 2048usize),
-        (4, 4096),
-        (8, 4096),
-        (8, 12288),
-        (8, 16384),
-    ] {
+    for &(bits, cols) in geometries {
         let x: Vec<f32> = (0..cols)
             .map(|j| {
                 let q = (j / 4) % 4;
@@ -68,15 +66,29 @@ fn full_width_affine_controls(ctx: &NativeContext) -> R<()> {
         ];
         let out = copied_tile(ctx, cols, bits, ROWS, &packed, &sc, &bi, Some(&x))?;
         if out.len() != ROWS
-            || out
-                .iter()
-                .any(|v| !v.is_finite() || v.to_bits() & 0xffff != 0)
+            || out.iter().any(|v| !v.is_finite() || v.to_bits() & 0xffff != 0)
         {
             return Err("full-width QMM output count or BF16 domain".into());
         }
         let out_bits: Vec<u16> = out.iter().map(|v| (v.to_bits() >> 16) as u16).collect();
         observations.push((bits, cols, binds, out_bits));
     }
+    Ok(observations)
+}
+
+fn full_width_affine_controls(ctx: &NativeContext) -> R<()> {
+    use mlx_native_affine::fixture::sha256_hex;
+    const ROWS: usize = 64;
+    let observations = full_width_observations(
+        ctx,
+        &[
+            (4u32, 2048usize),
+            (4, 4096),
+            (8, 4096),
+            (8, 12288),
+            (8, 16384),
+        ],
+    )?;
     // All five native outputs returned before reading the independent expected values.
     let golden: Value =
         serde_json::from_str(include_str!("full-width-affine-golden.json")).unwrap();
@@ -112,4 +124,94 @@ fn full_width_affine_controls(ctx: &NativeContext) -> R<()> {
         }
     }
     Ok(())
+}
+
+#[test]
+#[ignore = "physical Studio017 synthetic 8-bit QMM and dequantize controls"]
+fn uncovered_eight_bit_dispatches() {
+    use mlx_native_affine::fixture::sha256_hex;
+
+    native::ensure_error_handler();
+    assert!(native::metal_available().unwrap());
+    native::set_default_device_gpu().unwrap();
+    let ctx = NativeContext::new(DeviceKind::Gpu).unwrap();
+    assert_eq!(unsafe { studio017_limits() }, 0);
+
+    // Freeze the geometries separately from the oracle. The expected values never
+    // supply inputs to copied_tile. The production selector owns kernel dispatch.
+    let geometries = [
+        (8, 128),
+        (8, 256),
+        (8, 512),
+        (8, 1536),
+        (8, 2048),
+        (8, 8192),
+    ];
+    let mut observations: Vec<_> = full_width_observations(&ctx, &geometries)
+        .unwrap()
+        .into_iter()
+        .map(|(_, k, binds, actual)| (64usize, k, binds.to_vec(), actual))
+        .collect();
+
+    let cols = 4096;
+    let codes: Vec<u8> = (0..cols)
+        .map(|j| {
+            if j % 64 == 0 {
+                3
+            } else {
+                ((37 * j + 11 * (j / 64) + 3) % 256) as u8
+            }
+        })
+        .collect();
+    let scales: Vec<f32> = (0..cols / 64)
+        .map(|g| [129., -129., 130., -130.][g % 4] / 128.)
+        .collect();
+    let biases: Vec<f32> = (0..cols / 64)
+        .map(|g| [-95., 95., -124., 124.][g % 4] / 32.)
+        .collect();
+    let (packed, scales, biases) = (words(&codes, 8), halves(&scales), halves(&biases));
+    let binds = vec![
+        sha256_hex(&packed),
+        sha256_hex(&scales),
+        sha256_hex(&biases),
+    ];
+    let decoded = copied_tile(&ctx, cols, 8, 1, &packed, &scales, &biases, None).unwrap();
+    let words = decoded.iter().map(|x| (x.to_bits() >> 16) as u16).collect();
+    observations.push((1, cols, binds, words));
+
+    let golden: Value =
+        serde_json::from_str(include_str!("dispatch-eight-bit-golden.json")).unwrap();
+    let cases = golden.as_array().unwrap();
+    assert_eq!(cases.len(), observations.len());
+    let mut failures = Vec::new();
+    for ((rows, k, binds, actual), expected) in observations.iter().zip(cases) {
+        let words: Vec<u16> = serde_json::from_value(expected["expected_bf16"].clone()).unwrap();
+        let first_difference = actual
+            .iter()
+            .zip(&words)
+            .position(|(&a, &b)| a != b && !(*rows == 64 && a & 0x7fff == 0 && b & 0x7fff == 0));
+        let identity_ok = expected["bits"] == 8
+            && expected["cols"] == *k
+            && expected["rows"] == *rows
+            && expected["sha256"] == serde_json::json!(binds);
+        let passed = identity_ok && first_difference.is_none() && words.len() == actual.len();
+        let raw: Vec<u8> = actual.iter().flat_map(|w| w.to_le_bytes()).collect();
+        eprintln!(
+            "studio017_dispatch_eight_bit={}",
+            serde_json::json!({
+                "rows": rows, "cols": k, "input_sha256": binds, "observed_bf16": actual,
+                "observed_bf16_sha256": sha256_hex(&raw), "expected_count": words.len(),
+                "identity_ok": identity_ok, "first_difference": first_difference.map(|i|
+                    serde_json::json!({"coordinate":i,"expected":words[i],"actual":actual[i]})),
+                "passed":passed
+            })
+        );
+        if !passed {
+            failures.push((*rows, *k));
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "8-bit production geometries refused: {failures:?}"
+    );
 }

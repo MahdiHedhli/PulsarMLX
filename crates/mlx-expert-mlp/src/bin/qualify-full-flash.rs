@@ -2,6 +2,9 @@
 #[cfg(all(pulsar_native_mlx, not(test)))]
 #[path = "../full_flash/child.rs"]
 mod child;
+#[cfg(all(pulsar_native_mlx, not(test)))]
+#[path = "../full_flash/native_images.rs"]
+mod native_images;
 #[cfg(pulsar_native_mlx)]
 #[path = "../../../mlx-native-affine/src/bin/qualify/ffi.rs"]
 mod ffi;

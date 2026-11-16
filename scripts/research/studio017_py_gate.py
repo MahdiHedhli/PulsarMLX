@@ -152,7 +152,7 @@ def snapshot(p):
 def binding(spec,sha):
     b=raw(spec,4<<20);need(h(b)==sha,"policy digest");return json.loads(b)
 def rolepath(d,role):
-    need(role in ("bootstrap","reference","helper","eligibility","grade","control","lease-numeric","lease-grade"),"role name")
+    need(role in ("bootstrap","reference","helper","eligibility","grade","control","lease-numeric","lease-grade","fixture-bootstrap","fixture-worker","fixture-helper"),"role name")
     return Path(d)/("python-"+role+".json")
 def cli(interpreter,cache_dir,gate,role,policy,sha,receipt,operation,args):
     return [str(interpreter),"-I","-B","-S","-X","pycache_prefix="+str(cache_dir),str(gate),role,str(policy),sha,str(receipt),operation,*map(str,args)]
@@ -166,6 +166,16 @@ def gate(args):
         need(cap in [basedir/("campaign-"+r)/"child-cap.json" for r in stage] and Path(receipt)==rolepath(cap.parent,role),"non-original numerical stage binding")
         payload=json.loads(raw(cap));stage=payload["stage"]
         need(cap.parent.name=="campaign-"+stage and payload["operation"]==op and payload["python_gate"]["policy"]==spec and payload["python_gate"]["sha256"]==sha and payload["python_gate"]["interpreter"]==str(Path(sys.executable).resolve(strict=True)),"issued Python capability mismatch")
+    if role in ("fixture-bootstrap","fixture-worker","fixture-helper"):
+        # Reject an incorrectly addressed control before opening its policy or writing a receipt.
+        import pwd
+        basedir=Path(pwd.getpwuid(os.getuid()).pw_dir)/"LocalWorktrees/PulsarMLX-studio017-state"
+        cap=real(av[0]);d=cap.parent
+        need(len(op)==32 and all(x in "0123456789abcdef" for x in op) and d.is_relative_to(basedir)
+             and not any(d.is_relative_to(basedir/("campaign-"+n)) for n in ("native","reference"))
+             and d.name=="synthetic-admission-"+op and cap.name=="fixture-cap.json"
+             and Path(receipt)==rolepath(d,role) and Path(sys.pycache_prefix)==d/("cache-"+role),
+             "non-original synthetic role binding")
     c=real(sys.pycache_prefix);flags(c);p=binding(spec,sha);validate(p,True);need(str(SELF)==str(Path(p["roots"][3])/SELF.name),"entry not in approved source")
     finder=install(p);snapshot(p)
     result=None;replace=None
@@ -176,6 +186,9 @@ def gate(args):
                 need(len(av)==1,"helper arguments");result=s.child(av[0])
             else:
                 need(len(av)==2,"bootstrap arguments");replace=s.capsule_exec(av[0],int(av[1]))
+        elif role in ("fixture-bootstrap","fixture-worker","fixture-helper"):
+            import studio017_ack_fixture as fixture
+            result,replace=fixture.enter(role,av,op,spec,sha,receipt)
         elif role=="reference":
             import studio017_ref_entry as ref
             ref.main(av)
@@ -220,6 +233,9 @@ def checked_receipt(d,role,op,pid,sha,p,ppid=None):
     cache(r["cache"])
     need(r["shared_cache_uuid"]==p["platform_cache_uuid"] and r["shared_cache_images"] and r["noncache_images"] and all(p["images"].get(n)==v for n,v in r["noncache_images"].items()),"observed image mismatch")
     mm=r["module_origins"];need("__main__" in mm and all(p["modules"].get(n)==v for n,v in mm.values()) and r["builtin_or_frozen"],"observed module mismatch")
+    if role in ("bootstrap","helper","fixture-bootstrap","fixture-worker","fixture-helper"):
+        origin=str(Path(p["roots"][3])/"studio017_authority.py")
+        need(origin in p["modules"] and mm.get("studio017_authority")==[origin,p["modules"][origin]],"authority module missing from actual child")
     if role in ("reference","eligibility","grade","control"):
         need("numpy" in mm and any("openblas" in n.lower() for n in r["noncache_images"]),"missing observed NumPy/BLAS")
     return h(b)
