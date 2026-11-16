@@ -2,6 +2,7 @@
 Ancestry registration uses EVFILT_PROC/NOTE_EXIT, not an unguarded PID poll.
 This test deliberately kills only its own supervisor fixture after readiness.
 """
+from contextlib import closing
 from pathlib import Path
 import json
 import os
@@ -49,7 +50,7 @@ def parent_death():
             rec=json.loads(outer.stdout.readline());pids={rec['worker_pgid'],rec['watcher_pid']}
             assert len(pids)==2 and rec['owner_pid']==outer.pid
             assert all(os.getpgid(p)==rec['worker_pgid'] and os.getsid(p)==outer.pid for p in pids)
-            with select.kqueue() as queue:
+            with closing(select.kqueue()) as queue:
                 queue.control([select.kevent(p,filter=select.KQ_FILTER_PROC,flags=select.KQ_EV_ADD|select.KQ_EV_ONESHOT,
                                 fflags=select.KQ_NOTE_EXIT) for p in pids],0,0)
                 outer.kill();assert outer.wait(2)==-signal.SIGKILL
@@ -58,6 +59,7 @@ def parent_death():
                     for ev in queue.control([],2,max(0,end-time.monotonic())):
                         assert ev.ident in pids and ev.fflags & select.KQ_NOTE_EXIT;seen.add(ev.ident)
                 assert seen==pids, 'watchdog and worker failed to exit promptly on supervisor SIGKILL'
+                print(json.dumps({'owner_pid':outer.pid,'owner_exit':outer.returncode,'worker_pgid':rec['worker_pgid'],'watcher_pid':rec['watcher_pid'],'verified_kernel_exit_events':sorted(seen)}),flush=True)
         finally:
             if outer.poll() is None:outer.kill()
             outer.wait(2)
