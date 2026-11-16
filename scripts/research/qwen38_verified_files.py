@@ -49,6 +49,11 @@ def _identity(info: os.stat_result) -> tuple[int, ...]:
             info.st_mtime_ns, info.st_ctime_ns)
 
 
+def is_dataless(info: os.stat_result) -> bool:
+    """Recognize a macOS File Provider placeholder before requesting bytes."""
+    return bool(getattr(info, "st_flags", 0) & getattr(stat, "SF_DATALESS", 0))
+
+
 def _entries(entries: list[dict]):
     if type(entries) is not list or not entries:
         raise VerificationError("nonempty trusted manifest entries required")
@@ -92,11 +97,21 @@ class VerifiedFiles:
             self.root_fd = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY |
                                    os.O_NOFOLLOW | os.O_CLOEXEC)
             self.root_identity = _identity(os.fstat(self.root_fd))
+            # Check every entry before hashing any large shard. Opening a
+            # dataless File Provider file can start an unbounded hydration.
+            for name, entry in self.entries.items():
+                info = os.stat(name, dir_fd=self.root_fd, follow_symlinks=False)
+                if is_dataless(info):
+                    raise VerificationError(f"dataless checkpoint file: {name}")
+                if not stat.S_ISREG(info.st_mode) or info.st_size != entry["size_bytes"]:
+                    raise VerificationError(f"file type or size mismatch: {name}")
             for name, entry in self.entries.items():
                 fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK |
                              os.O_CLOEXEC, dir_fd=self.root_fd)
                 try:
                     info = os.fstat(fd)
+                    if is_dataless(info):
+                        raise VerificationError(f"dataless checkpoint file: {name}")
                     if not stat.S_ISREG(info.st_mode) or info.st_size != entry["size_bytes"]:
                         raise VerificationError(f"file type or size mismatch: {name}")
                     identity = _identity(info)

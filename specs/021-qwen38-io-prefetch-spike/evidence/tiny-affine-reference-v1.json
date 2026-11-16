@@ -1,0 +1,29 @@
+{
+  "schema": "pulsarmlx.qwen38.tiny-affine-reference/1",
+  "scope": "synthetic affine matrix arithmetic only; not upstream Qwen model parity",
+  "source": {
+    "formula": "dequantized = scale * unsigned_code + bias, one scale/bias per group",
+    "published_by": "MLX Contributors",
+    "url": "https://ml-explore.github.io/mlx/build/html/python/_autosummary/mlx.core.dequantize.html",
+    "installed_api_version": "mlx==0.32.0",
+    "installed_wheel_sha256": "4192a2d02014a13a6a1030bf13dfb4e4fe05ec3ffa47678ee37da29111e25cb1",
+    "installed_docstring_confirmed_formula": "w_i = s * q_i + beta",
+    "captured_date_utc": "2026-10-15",
+    "derivation": "Literal endpoint and sparse-product values independently evaluated with Python Decimal; no candidate MLX output supplied the values."
+  },
+  "input": "Two generated rows per mode from qwen38_affine_probe.fixtures; sparse x[0]=1 and x[last]=-2; dense x[i]=2**-(i%4).",
+  "cases": {
+    "4:32": {
+      "columns": 64,
+      "samples": [[0, 0, -1.0], [0, 31, 2.75], [0, 32, 2.0], [0, 63, 9.5], [1, 0, 9.5], [1, 31, 2.0], [1, 32, -7.75], [1, 63, -4.0]],
+      "sparse_product": [-20.0, 17.5],
+      "dense_product": [90.75, 1.0]
+    },
+    "8:64": {
+      "columns": 128,
+      "samples": [[0, 0, -4.0], [0, 63, 19.625], [0, 64, 40.0], [0, 127, 23.25], [1, 0, -51.75], [1, 63, -20.25], [1, 64, 64.5], [1, 127, 1.5]],
+      "sparse_product": [-50.5, -54.75],
+      "dense_product": [893.25, -78.5]
+    }
+  }
+}

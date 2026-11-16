@@ -1,0 +1,6 @@
+# Exact two-wheel offline lock for macOS 26 arm64 / CPython 3.13.
+# Artifacts: PyPI mlx-0.32.0-cp313-cp313-macosx_26_0_arm64.whl and
+# mlx_metal-0.32.0-py3-none-macosx_26_0_arm64.whl.
+# This is a tiny GPU fixture environment, not the full Qwen model runtime lock.
+mlx==0.32.0 --hash=sha256:4192a2d02014a13a6a1030bf13dfb4e4fe05ec3ffa47678ee37da29111e25cb1
+mlx-metal==0.32.0 --hash=sha256:3af76a498d84804f66119800499f9d143d7dffb0878a0dd0d7c2846e58565fd7

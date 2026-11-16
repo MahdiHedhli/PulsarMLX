@@ -16,7 +16,8 @@ from pathlib import Path
 
 from admit_qwen38_static import DTYPE_BYTES, MANIFEST, inspect_shard, inspect_shard_data
 from qwen38_verified_files import (MAX_METADATA_BYTES, PINNED_REPO,
-                                   PINNED_REVISION, VerifiedFiles, open_pinned_files)
+                                   PINNED_REVISION, VerifiedFiles, is_dataless,
+                                   open_pinned_files)
 
 
 class CatalogError(ValueError):
@@ -24,6 +25,17 @@ class CatalogError(ValueError):
 
 
 _BOUND_TOKEN = object()
+
+
+def _validate_pageable_overrides(quant: dict, *, ple_layer: int, ple_shards: int) -> None:
+    """Bind the pinned 4/32 PLE overrides to their actual shard keys."""
+    expected = {f"model.layers.{ple_layer}.ple.ple_embedding.ngram_embedding.shard_{i}"
+                for i in range(ple_shards)}
+    actual = {key for key in quant if ".ple.ple_embedding.ngram_embedding.shard_" in key}
+    if actual != expected or any(quant[key] != {"bits": 4, "group_size": 32} for key in expected):
+        raise CatalogError("PLE quantization override does not match pinned shards")
+    if any(".mlp.switch_mlp." in key for key in quant):
+        raise CatalogError("expert quantization override changes pinned default")
 
 
 @dataclass(frozen=True, order=True)
@@ -132,7 +144,30 @@ class PageCatalog:
             raise CatalogError(f"unsupported affine dtypes: {prefix}")
         if any(len(ref.shape) < 2 or ref.row_bytes <= 0 for ref in refs):
             raise CatalogError(f"empty or scalar affine tensor: {prefix}")
+        if refs[1].shape != refs[2].shape:
+            raise CatalogError(f"affine partner shape differs: {prefix}")
         return refs
+
+    def require_packed_geometry(self, *, expert_bits: int, expert_group_size: int,
+                                ple_bits: int, ple_group_size: int) -> None:
+        """Validate MLX uint32 packing and one affine scale/bias per group."""
+        def check(prefix: str, bits: int, group_size: int) -> None:
+            if (type(bits) is not int or bits not in (4, 8) or
+                    type(group_size) is not int or group_size not in (32, 64, 128) or
+                    group_size % (32 // bits)):
+                raise CatalogError("unsupported packed affine geometry")
+            weight, scales, _biases = self._triple(prefix)
+            if (weight.shape[:-1] != scales.shape[:-1] or
+                    weight.shape[-1] * (32 // bits) != scales.shape[-1] * group_size):
+                raise CatalogError(f"packed affine geometry differs: {prefix}")
+
+        for layer in range(self.layers):
+            for projection in ("gate_proj", "up_proj", "down_proj"):
+                check(f"language_model.model.layers.{layer}.mlp.switch_mlp.{projection}",
+                      expert_bits, expert_group_size)
+        for shard in range(self.ple_shards):
+            check(f"language_model.model.layers.{self.ple_layer}.ple.ple_embedding."
+                  f"ngram_embedding.shard_{shard}", ple_bits, ple_group_size)
 
     def page(self, key: PageKey) -> PageSpec:
         if (type(key) is not PageKey or type(key.kind) is not str or
@@ -275,8 +310,15 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
             raise CatalogError(f"unsafe or changed file: {filename}")
         if verified_files is not None:
             verified_files.check(filename)
-        elif (root / filename).is_symlink() or (root / filename).stat().st_size != size:
-            raise CatalogError(f"unsafe or changed file: {filename}")
+        else:
+            path = root / filename
+            if path.is_symlink():
+                raise CatalogError(f"unsafe or changed file: {filename}")
+            info = path.stat()
+            if is_dataless(info):
+                raise CatalogError(f"dataless checkpoint file: {filename}")
+            if info.st_size != size:
+                raise CatalogError(f"unsafe or changed file: {filename}")
     config = json.loads(verified_files.read_metadata("config.json") if verified_files else
                         (root / "config.json").read_text())
     index = json.loads(verified_files.read_metadata("model.safetensors.index.json") if verified_files else
@@ -297,6 +339,7 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
                                     for item in quant.values() if isinstance(item, dict))
     if overrides != {(8, 64): 498, (4, 32): 128}:
         raise CatalogError("unexpected quantization overrides")
+    _validate_pageable_overrides(quant, ple_layer=1, ple_shards=128)
     tensors = {}
     for filename in sorted(set(index.values())):
         if filename not in expected_files or not filename.endswith(".safetensors"):
@@ -313,6 +356,8 @@ def admit_checkpoint(root: Path, *, manifest_path: Path = MANIFEST,
         raise CatalogError("expected pinned PLE layer 1")
     catalog = PageCatalog(tensors, layers=48, experts=512, ple_layer=ple_layers.pop(),
                           ple_shards=128, ple_rows_per_page=ple_rows_per_page)
+    catalog.require_packed_geometry(expert_bits=4, expert_group_size=64,
+                                    ple_bits=4, ple_group_size=32)
     if verified_files is not None:
         catalog._verified_files = verified_files
     return catalog

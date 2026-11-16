@@ -1,0 +1,43 @@
+{
+  "schema": "pulsarmlx.qwen38.tiny-gpu-environment/1",
+  "scope": "isolated tiny synthetic GPU fixture only; not full Qwen runtime",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "interpreter": {
+    "version": "3.13.13",
+    "origin": "pre-existing uv-managed CPython 3.13.13 macOS arm64; installer signature not separately verified",
+    "binary_sha256": "d22a09ce45166ee066022909e071bba239c263ba090ed8f0884f7f21ae922ac3"
+  },
+  "resolver": "uv 0.11.6 against actual host; generic Darwin target rejected by wheel tags",
+  "installer": {
+    "name": "pip",
+    "version": "26.0.1",
+    "mode": "offline --no-index --only-binary=:all: --require-hashes --force-reinstall",
+    "pip_check": "no broken requirements"
+  },
+  "registry": "https://pypi.org/simple",
+  "lock_sha256": "0b3aa958ff17db62363bfb84557f82ff3a541662e724cbe5bbaf7807f0c80a5f",
+  "wheels": [
+    {
+      "project": "mlx",
+      "filename": "mlx-0.32.0-cp313-cp313-macosx_26_0_arm64.whl",
+      "size": 558786,
+      "sha256": "4192a2d02014a13a6a1030bf13dfb4e4fe05ec3ffa47678ee37da29111e25cb1",
+      "origin": "https://pypi.org/pypi/mlx/0.32.0/json",
+      "installed_version": "0.32.0",
+      "installed_wheel_tag": "cp313-cp313-macosx_26_0_arm64",
+      "installed_metadata_sha256": "d41601d7dc5acdd43978f4afedacae9cf825b872cd82ff4012ee19a9eb1d19f8"
+    },
+    {
+      "project": "mlx-metal",
+      "filename": "mlx_metal-0.32.0-py3-none-macosx_26_0_arm64.whl",
+      "size": 56511379,
+      "sha256": "3af76a498d84804f66119800499f9d143d7dffb0878a0dd0d7c2846e58565fd7",
+      "origin": "https://pypi.org/pypi/mlx-metal/0.32.0/json",
+      "installed_version": "0.32.0",
+      "installed_wheel_tag": "py3-none-macosx_26_0_arm64",
+      "installed_metadata_sha256": "1fdec01bdce98317a426f5fa15a8d2bc60d651c305d6aa550be3bfeed53adf92"
+    }
+  ],
+  "global_python_modified": false,
+  "model_data_downloaded": false
+}

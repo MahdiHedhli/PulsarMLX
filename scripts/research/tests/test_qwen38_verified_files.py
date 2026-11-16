@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -17,7 +18,7 @@ from qwen38_page_catalog import (  # noqa: E402
     admit_checkpoint, admit_checkpoint_bound,
     _verified_shard,
 )
-from qwen38_verified_files import VerifiedFiles, VerificationError  # noqa: E402
+from qwen38_verified_files import VerifiedFiles, VerificationError, is_dataless  # noqa: E402
 from test_qwen38_bounded_pager import E0, synthetic_catalog  # noqa: E402
 
 
@@ -61,6 +62,15 @@ class VerifiedFileTests(unittest.TestCase):
         with self.assertRaisesRegex(VerificationError, "closed"):
             files.readinto("tiny.bin", memoryview(bytearray(1)), 0)
 
+    def test_dataless_file_fails_before_any_digest_read(self):
+        with mock.patch.object(stat, "SF_DATALESS", 1 << 30, create=True):
+            self.assertTrue(is_dataless(SimpleNamespace(st_flags=1 << 30)))
+            self.assertFalse(is_dataless(SimpleNamespace(st_flags=0)))
+        with mock.patch("qwen38_verified_files.is_dataless", return_value=True), \
+             mock.patch("qwen38_verified_files.os.pread", side_effect=AssertionError("must not read")):
+            with self.assertRaisesRegex(VerificationError, "dataless checkpoint file"):
+                VerifiedFiles(self.root, self.entries)
+
     def test_changed_content_same_size_fails_closed(self):
         with VerifiedFiles(self.root, self.entries) as files:
             (self.root / "tiny.bin").write_bytes(bytes(reversed(self.content)))
@@ -80,7 +90,7 @@ class VerifiedFileTests(unittest.TestCase):
         (self.root / "tiny.bin").unlink()
         (self.root / "target.bin").write_bytes(self.content)
         (self.root / "tiny.bin").symlink_to(self.root / "target.bin")
-        with self.assertRaises(OSError):
+        with self.assertRaisesRegex(VerificationError, "file type or size mismatch"):
             VerifiedFiles(self.root, self.entries)
         linked_root = self.root.parent / (self.root.name + "-link")
         linked_root.symlink_to(self.root)
@@ -223,22 +233,22 @@ class VerifiedFileTests(unittest.TestCase):
         tensors = {}
         names = {}
         cursor = 0
-        def affine(prefix, rows):
+        def affine(prefix, rows, packed_words_per_row):
             nonlocal cursor
-            for suffix, dtype, row_bytes in (("weight", "U32", 4),
-                                             ("scales", "BF16", 2),
-                                             ("biases", "BF16", 2)):
+            for suffix, dtype, row_bytes, last in (("weight", "U32", 4, packed_words_per_row),
+                                                   ("scales", "BF16", 2, 1),
+                                                   ("biases", "BF16", 2, 1)):
                 name = f"{prefix}.{suffix}"
-                length = rows * row_bytes
-                tensors[name] = {"dtype": dtype, "shape": [rows, 1],
+                length = rows * row_bytes * last
+                tensors[name] = {"dtype": dtype, "shape": [rows, last],
                                  "data_offsets": [cursor, cursor + length]}
                 names[name] = "model-00001.safetensors"
                 cursor += length
         for layer in range(48):
             for projection in ("gate_proj", "up_proj", "down_proj"):
-                affine(f"language_model.model.layers.{layer}.mlp.switch_mlp.{projection}", 512)
+                affine(f"language_model.model.layers.{layer}.mlp.switch_mlp.{projection}", 512, 8)
         for shard in range(128):
-            affine(f"language_model.model.layers.1.ple.ple_embedding.ngram_embedding.shard_{shard}", 1)
+            affine(f"language_model.model.layers.1.ple.ple_embedding.ngram_embedding.shard_{shard}", 1, 4)
         header = json.dumps(tensors).encode()
         shard_bytes = len(header).to_bytes(8, "little") + header + bytes(cursor)
         config = {"model_type": "qwen4_exp", "model_file": "qwen4_exp.py",
@@ -247,7 +257,8 @@ class VerifiedFileTests(unittest.TestCase):
                   "quantization": {"bits": 4, "group_size": 64}}
         config["quantization"].update({f"eight_{i}": {"bits": 8, "group_size": 64}
                                        for i in range(498)})
-        config["quantization"].update({f"four_{i}": {"bits": 4, "group_size": 32}
+        config["quantization"].update({f"model.layers.1.ple.ple_embedding.ngram_embedding.shard_{i}":
+                                       {"bits": 4, "group_size": 32}
                                        for i in range(128)})
         contents = {"model-00001.safetensors": shard_bytes,
                     "config.json": json.dumps(config).encode(),
@@ -265,12 +276,19 @@ class VerifiedFileTests(unittest.TestCase):
         manifest_path.write_text(json.dumps(manifest))
         with _admit_checkpoint_bound_from_manifest(self.root, manifest_path=manifest_path) as bound:
             spec = bound.catalog.page(E0)
-            self.assertEqual(spec.size_bytes, 24)
+            self.assertEqual(spec.size_bytes, 108)
             target = bytearray(spec.size_bytes)
             bound.read_page_into(E0, memoryview(target))
-            self.assertEqual(target, bytes(24))
+            self.assertEqual(target, bytes(108))
             self.assertIs(bound.catalog._verified_files, bound.files)
         self.assertTrue(bound.files.closed)
+        (self.root / "acquisition-receipt.json").write_text(json.dumps({
+            "complete": True, "repo": manifest["repo"], "revision": manifest["revision"],
+            "verified_files": [item["path"] for item in entries]}))
+        with mock.patch("qwen38_page_catalog.is_dataless", return_value=True), \
+             mock.patch("qwen38_page_catalog.inspect_shard", side_effect=AssertionError("must not open")):
+            with self.assertRaisesRegex(CatalogError, "dataless"):
+                admit_checkpoint(self.root, manifest_path=manifest_path)
 
     def test_verified_header_parser_rejects_replacement(self):
         header = {"x": {"dtype": "U8", "shape": [4], "data_offsets": [0, 4]}}

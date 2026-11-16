@@ -2,6 +2,69 @@
 
 ## MacBook affine fixture continuation, 2026-10-15
 
+The [2026-10-16 host snapshot](evidence/host-memory-snapshot-2026-10-16.md)
+records 27,037.31 MiB allocated swap with no swap I/O in two short intervals,
+active memory compression, and no demonstrated capacity for a full-model run.
+It defines a provisional single-page model-data gate for later review, not
+permission to execute that gate now.
+
+A [synthetic affine partner regression](evidence/affine-partner-shape-regression-2026-10-16.md)
+now rejects scales/biases shape mismatch even when byte lengths match. It was
+red before the fix and green with 77 focused catalog/verified-file/adapter
+tests. The subsequent [packed geometry regression](evidence/packed-affine-geometry-regression-2026-10-16.md)
+binds PLE override keys and checks packed words against MLX affine groups at
+pinned admission; 79 affected synthetic tests pass. The original checkpoint
+directory cannot pass this gate while four files are dataless. The new
+durable local full root passed both header-only geometry and strict bound
+admission. These code changes remain local and unpublished pending review.
+
+The [read-only storage diagnosis](evidence/checkpoint-dataless-header-diagnosis-2026-10-16.md)
+found that shards 6, 9 and 11, plus `LICENSE`, are File Provider `dataless`
+placeholders with zero allocated blocks (23.938 GiB for the three shards).
+Eight resident shard headers initially passed the new geometry equation for
+94 expert and 128 PLE triples. The user authorized local hydration of the
+existing files, but the supported File Provider request for the 3,235-byte
+`LICENSE` made no progress and later cleared without local bytes. The three
+large original shards were not requested from File Provider. The
+[separate recovery and durable full-root admission](evidence/checkpoint-dataless-header-diagnosis-2026-10-16.md)
+downloaded the four exact pinned public files into `/tmp`, verified their
+full-file digests, then APFS-cloned them and the 21 resident originals into
+`~/Models/PulsarMLX/Qwen3.8-Flash-Next-MLX-mixed-4_8bit-b2c422f3`.
+`fileproviderctl` reports no managed item at the local destination. The
+strict bound verifier passed on this final root: 25/25 files,
+106,218,444,193 freshly verified bytes and all 3,215 tensor headers. The
+original four placeholders remain dataless and untouched. A future runtime
+session must repeat bound admission and retain live handles; no model graph,
+real I/O adapter, MLX fence, memory sampler, parity or performance gate was
+qualified by this storage pass. Do not open the original dataless shards.
+A local unpublished preflight now fails fast on dataless manifest entries;
+the real checkout returns that expected error in about 0.06 seconds instead
+of hanging on a shard open.
+
+Reviewer preference for future authorized Gemini reviews: use Gemini 4 Argon,
+with Gemini 3.8 Flash as fallback. Read-only discovery on 2026-10-15 found
+`agy` 1.3.6 already advertises `gemini-4-argon-{low,medium,high}` and
+`gemini-3.8-flash-{low,medium,high}`; no Agy update is currently needed to
+select Argon. This preference does not change the denied Claude packet's
+authorization boundary or select another reviewer for it.
+
+The earlier CPU-only probe now has an independent Gemini review and correction
+record in [the review disposition](evidence/tiny-affine-review-disposition-2026-10-15.md).
+Its final verdict accepts publication for the narrow CPU fixture scope. The
+initial rejection relied on two incorrect API/rounding claims that the same
+reviewer withdrew after checking the installed MLX signatures and fixture
+values. This does not advance checkpoint or production runtime qualification.
+
+An unpublished [tiny Metal continuation](evidence/tiny-gpu-validation-2026-10-15.md)
+uses an isolated Python 3.13.13 environment with hash-pinned MLX/MLX-Metal
+0.32.0 wheels, independently calculated literal affine values, and sampled
+host/MLX gates. The reviewed draft's material source findings were applied,
+and 147 Qwen stdlib tests plus the revised bounded tiny GPU run pass. Automatic
+approval review blocked transmission of the revised five-file packet to Claude;
+the revised slice stays unpublished pending independent review. No full-model
+runtime lock, Qwen checkpoint parity, production fence ownership, or throughput
+qualification follows from this fixture run.
+
 The [tiny affine probe](evidence/affine-probe-macbook-2026-10-15.md) checks
 4-bit/group-32 and 8-bit/group-64 BF16 affine partner geometry against an
 independent scalar decoder on CPU MLX 0.31.2/Python 3.14.6. It reads no
@@ -46,8 +109,8 @@ The future host budget starts at **40 GiB for all model weights**, including the
 | Build header-only expert and PLE page mapping | Complete in this slice | Set `QWEN38_MODEL_DIR` to the pinned, verified local copy and run `python3 -B scripts/research/qwen38_page_catalog.py --dest "$QWEN38_MODEL_DIR"`. |
 | Exercise scheduler with adversarial synthetic spans | Complete in this slice | Run `python3 -B -m unittest discover -s scripts/research/tests -p 'test_qwen38_bounded_pager.py' -v`. |
 | Bind tickets to bounded synchronous host I/O | Complete for synthetic fixtures only | Run `python3 -B -m unittest discover -s scripts/research/tests -p 'test_qwen38_fixture_io.py' -v`; includes exact expert/PLE/cross-file reads, short-read cleanup, pressure stop, and retained-buffer reconciliation. |
-| Independent design/source review | Completed for the frozen source packet; remediation in progress | Mahdi explicitly authorized external reviews. Claude Opus reviewed the [frozen source packet](independent-review-packet.md); see the [raw report](evidence/claude-opus-source-review-2026-10-04.md) and [local disposition](evidence/source-review-disposition-2026-10-04.md). Earlier rejected attempts sent no payload. This review is source-only and does not approve checkpoint or MLX execution. |
-| Repeat full-file digest and file-identity binding | One local file-admission pass completed, 2026-10-05 | [Exact runner/result and assessment](evidence/bound-admission-local-verification-2026-10-05.md): 25 files, 106,218,444,193 bytes, 3,215 tensors, descriptor cleanup passed. Production page reads remain unqualified. |
+| Independent design/source review | Completed for the frozen source packet; remediation in progress | The owner explicitly authorized external reviews. Claude Opus reviewed the [frozen source packet](independent-review-packet.md); see the [raw report](evidence/claude-opus-source-review-2026-10-04.md) and [local disposition](evidence/source-review-disposition-2026-10-04.md). Earlier rejected attempts sent no payload. This review is source-only and does not approve checkpoint or MLX execution. |
+| Repeat full-file digest and file-identity binding | Local passes completed 2026-10-05 and on the new non-synced final root 2026-10-16 | [Original assessment](evidence/bound-admission-local-verification-2026-10-05.md) and [durable recovery result](evidence/checkpoint-dataless-header-diagnosis-2026-10-16.md): 25 files, 106,218,444,193 bytes, 3,215 tensors, descriptor cleanup passed. Runtime must repeat and retain its own live binding; production page reads remain unqualified. |
 | Checkpoint I/O admission, MLX residency/fence integration, real macOS sampler, and numerical parity | Future slice | Requires separate implementation and review. No current full-checkpoint execution command. |
 | First real-model execution and latency comparison | Blocked | Requires resolved hashed environment, source-review approval, actual enforceable/monitored pager gate, and explicit authorization. |
 

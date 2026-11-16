@@ -11,7 +11,8 @@ from qwen38_bounded_pager import (  # noqa: E402
     BoundedPager, Limits, Observation, PagerProtocolError, PagerStop,
 )
 from qwen38_page_catalog import (  # noqa: E402
-    ByteSpan, CatalogError, PageCatalog, PageKey, PageSpec, TensorRef, admit_checkpoint,
+    ByteSpan, CatalogError, PageCatalog, PageKey, PageSpec, TensorRef,
+    _validate_pageable_overrides, admit_checkpoint,
 )
 
 
@@ -137,6 +138,63 @@ class CatalogTests(unittest.TestCase):
                                      shape, original.start, original.end)
             with self.subTest(shape=shape), self.assertRaises(CatalogError):
                 PageCatalog(broken, layers=2, experts=3, ple_layer=1, ple_shards=2)
+
+    def test_affine_partner_shapes_must_match_even_when_byte_lengths_do(self):
+        catalog = synthetic_catalog()
+        name = "language_model.model.layers.0.mlp.switch_mlp.gate_proj.biases"
+        original = catalog.tensors[name]
+        broken = dict(catalog.tensors)
+        # [experts, 1, 2] has the same BF16 byte count as [experts, 2],
+        # but MLX cannot treat it as the same affine partner geometry.
+        broken[name] = TensorRef(original.filename, original.data_start, original.dtype,
+                                 (original.shape[0], 1, 2), original.start, original.end)
+        with self.assertRaisesRegex(CatalogError, "affine partner shape"):
+            PageCatalog(broken, layers=2, experts=3, ple_layer=1, ple_shards=2)
+
+    def test_packed_word_count_must_match_affine_group_count(self):
+        tensors = {}
+        offset = 0
+        def triple(prefix, rows, words):
+            nonlocal offset
+            for suffix, dtype, width, last in (("weight", "U32", 4, words),
+                                               ("scales", "BF16", 2, 1),
+                                               ("biases", "BF16", 2, 1)):
+                size = rows * last * width
+                tensors[f"{prefix}.{suffix}"] = TensorRef(
+                    "synthetic.safetensors", 8, dtype, (rows, last), offset, offset + size)
+                offset += size
+        for projection in ("gate_proj", "up_proj", "down_proj"):
+            triple(f"language_model.model.layers.0.mlp.switch_mlp.{projection}", 1, 8)
+        triple("language_model.model.layers.0.ple.ple_embedding.ngram_embedding.shard_0", 2, 4)
+        def catalog_with(refs):
+            return PageCatalog(refs, layers=1, experts=1, ple_layer=0, ple_shards=1)
+        catalog_with(tensors).require_packed_geometry(expert_bits=4, expert_group_size=64,
+                                                      ple_bits=4, ple_group_size=32)
+        # The existing catalog accepts this same-byte-count partner pair, but
+        # eight packed words represent only one group of 64 four-bit values.
+        broken = dict(tensors)
+        prefix = "language_model.model.layers.0.mlp.switch_mlp.gate_proj"
+        for suffix in ("scales", "biases"):
+            old = broken[f"{prefix}.{suffix}"]
+            broken[f"{prefix}.{suffix}"] = TensorRef(
+                old.filename, old.data_start, old.dtype, (1, 2), old.start, old.end + 2)
+        with self.assertRaisesRegex(CatalogError, "packed affine geometry"):
+            catalog_with(broken).require_packed_geometry(expert_bits=4, expert_group_size=64,
+                                                         ple_bits=4, ple_group_size=32)
+
+    def test_pageable_overrides_must_bind_to_ple_shards(self):
+        quant = {"bits": 4, "group_size": 64,
+                 "model.layers.0.ple.ple_embedding.ngram_embedding.shard_0":
+                     {"bits": 4, "group_size": 32}}
+        _validate_pageable_overrides(quant, ple_layer=0, ple_shards=1)
+        wrong = dict(quant)
+        wrong["model.layers.0.ple.ple_embedding.ngram_embedding.shard_0"] = {"bits": 8, "group_size": 64}
+        with self.assertRaisesRegex(CatalogError, "PLE quantization override"):
+            _validate_pageable_overrides(wrong, ple_layer=0, ple_shards=1)
+        wrong = dict(quant)
+        wrong["model.layers.0.mlp.switch_mlp.gate_proj"] = {"bits": 8, "group_size": 64}
+        with self.assertRaisesRegex(CatalogError, "expert quantization override"):
+            _validate_pageable_overrides(wrong, ple_layer=0, ple_shards=1)
 
 
 class SchedulerTests(unittest.TestCase):
