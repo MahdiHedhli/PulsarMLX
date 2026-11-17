@@ -112,7 +112,12 @@ fn observe_images(policy: &Value, operation: &str, phase: &str) -> R<Value> {
 }
 
 pub fn run() -> R<()> {
-    let a: Vec<_> = std::env::args_os().skip(1).collect();
+    let mut a: Vec<_> = std::env::args_os().skip(1).collect();
+    // This opt-in selects admission bindings only; the numerical path below is shared.
+    let studio019 = a.first().is_some_and(|arg| arg == "--studio019-route-b");
+    if studio019 {
+        a.remove(0);
+    }
     if a.len() == 2 && a[0] == "--synthetic-image-census" {
         let policy = read_json(Path::new(&a[1]), 64 << 10)?;
         println!("{}", crate::native_images::census(&policy)?);
@@ -134,17 +139,32 @@ pub fn run() -> R<()> {
     if !cap.is_absolute() || out.canonicalize().map_err(err)? != out {
         return Err("noncanonical stage paths".into());
     }
+    let (supervisor_name, supervisor_bytes, gate_name, gate_bytes): (&str, &[u8], &str, &[u8]) =
+        if studio019 {
+            (
+                "studio019_supervise.py",
+                include_bytes!("../../../../scripts/research/studio019_supervise.py"),
+                "studio019_py_gate.py",
+                include_bytes!("../../../../scripts/research/studio019_py_gate.py"),
+            )
+        } else {
+            (
+                "studio017_supervise.py",
+                include_bytes!("../../../../scripts/research/studio017_supervise.py"),
+                "studio017_py_gate.py",
+                include_bytes!("../../../../scripts/research/studio017_py_gate.py"),
+            )
+        };
     let verify = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../scripts/research/studio017_supervise.py")
+        .join("../../scripts/research")
+        .join(supervisor_name)
         .canonicalize()
         .map_err(err)?;
-    if fs::read(&verify).map_err(err)?
-        != include_bytes!("../../../../scripts/research/studio017_supervise.py")
-    {
+    if fs::read(&verify).map_err(err)? != supervisor_bytes {
         return Err("supervisor source changed".into());
     }
-    let gate = verify.with_file_name("studio017_py_gate.py");
-    if fs::read(&gate).map_err(err)? != include_bytes!("../../../../scripts/research/studio017_py_gate.py") {
+    let gate = verify.with_file_name(gate_name);
+    if fs::read(&gate).map_err(err)? != gate_bytes {
         return Err("Python gate source changed".into());
     }
     let cap_doc = read_json(&cap, 64 << 10)?;
