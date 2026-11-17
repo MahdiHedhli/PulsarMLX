@@ -390,7 +390,21 @@ def end_owned(proc,lease,success):
   # Gate was never released. Signal only original direct unreaped worker, never an old PGID.
   if proc.poll() is None:proc.kill()
   proc.wait(8);return False,False
- return lease.finish(proc,success,members)
+ # The lease is authority for this direct worker only. A mismatched or failed
+ # lease cannot establish a reap fact for another process.
+ if lease.group!=proc.pid:return False,False
+ try:left,clean=lease.finish(proc,success,members)
+ except Exception:return False,False
+ if success or clean:return left,clean
+ # Lease.finish deliberately reports abort as unclean. Observe its completed
+ # cleanup here without adding signals or using a cached PGID as authority.
+ try:
+  worker_exit=proc.wait(0);watcher_exit=lease.guard.wait(0)
+  if type(worker_exit) is not int or worker_exit!=proc.returncode or watcher_exit!=-signal.SIGKILL:return left,False
+  until=time.monotonic()+2
+  while members(lease.group) and time.monotonic()<until:time.sleep(.02)
+  return left,not members(lease.group)
+ except Exception:return left,False
 
 def lifecycle_gate(c):
  if not local_mode(c):physical_lease_hold()
@@ -416,7 +430,8 @@ def run_numeric(conf,stage,selected=False):
   try:
    run_locked(c,stage,g,ptr,before,limits,d,out,cap)
   except BaseException as execution_error:
-   if os.path.lexists(ANCHORS['native']) and out.exists() and not (d/'sealed.json').exists():
+   if (os.path.lexists(ANCHORS['native']) and out.exists() and not (d/'sealed.json').exists()
+       and (d/'numeric-exit.json').exists() and doc(d/'numeric-exit.json')['clean_reap'] is True):
     files=output_seal(out,limits['output_bytes'],True,False)
     put(d/'partial-sealed.json',dict(operation=doc(ANCHORS['native'])['operation'],claim_sha256=digest(ANCHORS['native']),
         exit_sha256=digest(d/'numeric-exit.json') if (d/'numeric-exit.json').exists() else None,
@@ -566,10 +581,11 @@ def grade_original(c,role):
  need(path(grade).is_relative_to(c['repo']) and c['source']==source(c['repo']),'frozen grading code')
  # Child reads only two sealed roles (native grade) or original reference (eligibility),
  # has no need for checkpoint files and cannot generate model outputs.
- tag='eligibility' if role=='reference' else 'grade';identity=secrets.token_hex(16);row,pol=python_policy(c,True);pyg.fresh_cache(d/('cache-'+tag))
+ tag='eligibility' if role=='reference' else 'grade';identity=secrets.token_hex(16);row,pol=python_policy(c,True)
+ limits=doc(c['resource'])['native'];baseline=pressure();need(baseline['pressure']==1 and baseline['headroom']>=16*GIB+limits['combined'],'grade admission headroom')
+ pyg.fresh_cache(d/('cache-'+tag))
  args=pyg.cli(rs['python'],d/('cache-'+tag),pyg.SELF,tag,row['path'],row['sha256'],pyg.rolepath(d,tag),identity,[layout(c,'reference')[1]]+([out] if role=='native' else []))
  put(d/(tag+'-intent.json'),dict(operation=identity,numeric_operation=seal['operation'],seal_sha256=digest(seal_path),python_policy_sha256=row['sha256']))
- limits=doc(c['resource'])['native'];baseline=pressure();need(baseline['pressure']==1 and baseline['headroom']>=16*GIB+limits['combined'],'grade admission headroom')
  with (d/(tag+'.stdout')).open('xb') as so,(d/(tag+'.stderr')).open('xb') as se:
   r,w=os.pipe();proc=lease=None;success=False;deadline=time.monotonic()+300;bad=0
   try:

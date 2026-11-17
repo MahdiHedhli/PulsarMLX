@@ -41,6 +41,57 @@ def synthetic(path, role, changes=None):
 
 
 class RouteBGrade(unittest.TestCase):
+    def test_invalid_sizes_do_not_abort_partial_grade_of_other_coordinates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            reference, native = Path(tmp).resolve()/'reference', Path(tmp).resolve()/'native'
+            try:
+                synthetic(reference, 'reference'); synthetic(native, 'native')
+                native.chmod(0o700)
+                names = ['00.state.offset.f32', '00.attention.output.f32']
+                for name, size in zip(names, (0, (8 << 20) + 1)):
+                    file = native/name; file.chmod(0o600)
+                    with file.open('wb') as stream: stream.truncate(size)
+                    file.chmod(0o400)
+                native.chmod(0o500)
+                with patch.object(grade.original, 'REAL', GEOMETRY):
+                    result = grade.grade_pair(reference, native)
+                self.assertFalse(result['complete']); self.assertFalse(result['qualified'])
+                self.assertEqual(set(result['partial_errors']), set(names))
+                self.assertTrue(all(result['stages'][name] is None for name in names))
+                self.assertEqual(result['stages']['logits.f32']['outside'], 0)
+            finally:
+                for directory in (reference, native):
+                    if directory.exists(): directory.chmod(0o700)
+
+    def test_invalid_partial_sizes_are_hashed_errors_without_array_allocation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp).resolve() / 'partial'; directory.mkdir(mode=0o700)
+            names = list(grade.original.layout(GEOMETRY))[:2]
+            (directory / names[0]).write_bytes(b'')
+            payload = b'x' * ((8 << 20) + 1)
+            (directory / names[1]).write_bytes(payload)
+            for file in directory.iterdir(): file.chmod(0o400)
+            directory.chmod(0o500)
+            try:
+                with patch.object(grade.np, 'frombuffer', side_effect=AssertionError('oversized allocation')):
+                    arrays, records, errors = grade.bounded_partial(directory, GEOMETRY)
+                self.assertEqual(arrays, {})
+                self.assertEqual(set(errors), set(names))
+                for name, raw in zip(names, (b'', payload)):
+                    self.assertEqual(records[name], dict(bytes=len(raw), sha256=grade.hashlib.sha256(raw).hexdigest()))
+            finally: directory.chmod(0o700)
+
+    def test_partial_aggregate_budget_still_refuses_oversized_population(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp).resolve() / 'partial'; directory.mkdir(mode=0o700)
+            file = directory / next(iter(grade.original.layout(GEOMETRY)))
+            with file.open('wb') as stream: stream.truncate((256 << 20) + 1)
+            file.chmod(0o400); directory.chmod(0o500)
+            try:
+                with self.assertRaisesRegex(grade.original.Refusal, 'partial output byte budget'):
+                    grade.bounded_partial(directory, GEOMETRY)
+            finally: directory.chmod(0o700)
+
     def run_case(self, changes=None, missing=False):
         with tempfile.TemporaryDirectory() as tmp:
             reference, native = Path(tmp).resolve() / "reference", Path(tmp).resolve() / "native"

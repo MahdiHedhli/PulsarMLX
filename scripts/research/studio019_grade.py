@@ -78,17 +78,29 @@ def bounded_partial(directory, geometry):
             try:
                 st = os.fstat(item)
                 original.require(stat.S_ISREG(st.st_mode) and st.st_nlink == 1 and
-                                 not st.st_mode & 0o222 and st.st_uid == os.geteuid() and
-                                 0 < st.st_size <= 8 << 20, "partial file type/size")
+                                 not st.st_mode & 0o222 and st.st_uid == os.geteuid(),
+                                 "partial file type/ownership/mode")
                 total += st.st_size
                 original.require(total <= 256 << 20, "partial output byte budget")
+                valid_size = 0 < st.st_size <= 8 << 20
+                content_hash = hashlib.sha256()
+                chunks = [] if valid_size else None
+                size = 0
                 with os.fdopen(item, "rb", closefd=False) as stream:
-                    raw = stream.read(st.st_size + 1)
-                original.require(len(raw) == st.st_size and original.pair(st) ==
+                    while chunk := stream.read(min(1 << 20, st.st_size + 1 - size)):
+                        size += len(chunk)
+                        content_hash.update(chunk)
+                        if chunks is not None: chunks.append(chunk)
+                        original.require(size <= st.st_size, "partial file grew")
+                original.require(size == st.st_size and original.pair(st) ==
                                  original.pair(os.fstat(item)) ==
                                  original.pair(os.stat(name, dir_fd=fd, follow_symlinks=False)),
                                  "partial file changed")
-                records[name] = dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+                records[name] = dict(bytes=size, sha256=content_hash.hexdigest())
+                if not valid_size:
+                    errors[name] = "partial file size outside 1..8 MiB"
+                    continue
+                raw = b"".join(chunks)
                 if name in expected:
                     count = expected[name][2]
                     if len(raw) == count * 4:
