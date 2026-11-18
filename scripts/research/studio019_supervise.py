@@ -6,6 +6,7 @@ if str(Path(__file__).resolve().parent) not in sys.path:sys.path.insert(0,str(Pa
 import studio019_py_gate as pyg
 import studio017_authority as authority
 import studio019_operator as operator
+from studio019_progress import Witnesses, ProgressDeadline, abort_channel
 from studio017_image_receipt import checked_observations
 from studio017_lease import Lease
 from studio019_guard import *
@@ -488,7 +489,23 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
  def limit_output():
   resource.setrlimit(resource.RLIMIT_FSIZE,(r['output_bytes'],r['output_bytes']))
  proc=None;lease=None;monitor=None;success=False;ok_ack=False;old={};reason='unknown';clean=False;left=False;endcode=None
- def cancel(sig,fr):raise TimeoutError('owned stage cancelled or expired')
+ cleaning=False
+ watchdog=ProgressDeadline(deadline,r['progress_seconds'],abort=lambda:abort_channel(lease.channel) if lease is not None else None)
+ witnesses=Witnesses(out)
+ def rearm():
+  # A stale earlier timer is harmless: the handler rechecks the latched deadline.
+  signal.setitimer(signal.ITIMER_REAL,watchdog.remaining())
+  watchdog.check()
+ def cancel(sig,fr):
+  if sig==signal.SIGALRM:
+   try:watchdog.check()
+   except TimeoutError:
+    if not cleaning:raise
+    return
+   if not cleaning:rearm()
+   return
+  watchdog.cancel('termination signal '+str(sig))
+  if not cleaning:raise TimeoutError('owned stage cancelled')
  try:
   for sig in (signal.SIGTERM,signal.SIGINT,signal.SIGHUP,signal.SIGALRM):old[sig]=signal.signal(sig,cancel)
   signal.setitimer(signal.ITIMER_REAL,r['timeout'])
@@ -500,27 +517,38 @@ def run_locked(c,role,g,ptr,before,r,d,out,cap):
   if role=='native':
    stdout_stat=os.fstat(o.fileno());active['native_stdout_inode']=[stdout_stat.st_dev,stdout_stat.st_ino]
   put(d/'active.json',active)
+  # Empty output and pinned directory are checked before controlled release.
+  need(not any(out.iterdir()),'output populated before release')
+  watchdog.release();rearm()
   os.write(gate_wr,b'G');os.close(gate_wr);gate_wr=-1
-  monitor=StageMonitor(c,ROOT,out,m,r,before,started,deadline)
+  monitor=StageMonitor(c,ROOT,out,m,r,before,started,deadline,watchdog,witnesses,rearm)
   def check_ack():
    return poll_ready_ack(parent,proc,v,role,cap,claim)
   while proc.poll() is None:
    monitor.iteration(lease,proc,check_ack)
    ok_ack=monitor.ack
+  watchdog.check()
   endcode=proc.returncode;need(ok_ack and endcode==0 and time.monotonic()<deadline,'numerical process failed or timed out')
+  watchdog.stop()
   success=True;reason='returned'
  except BaseException as err:
+  watchdog.cancel(type(err).__name__+': '+str(err))
   reason=type(err).__name__+': '+str(err);raise
  finally:
+  # Keep cleanup and positive-reap records even when cancellation was raised mid-helper.
+  cleaning=True
+  try:watchdog.stop()
+  except TimeoutError:success=False
+  if watchdog.cancelled:success=False
   signal.setitimer(signal.ITIMER_REAL,0)
-  for sig,prev in old.items():signal.signal(sig,prev)
   if proc is not None:left,clean=end_owned(proc,lease,success);endcode=proc.returncode
+  for sig,prev in old.items():signal.signal(sig,prev)
   for f in (o,e,m):f.close()
   if gate_ro>=0:os.close(gate_ro)
   if gate_wr>=0:os.close(gate_wr)
   if monitor is not None:ok_ack=monitor.ack
-  parent.close();passed.close();put(d/'numeric-exit.json',dict(operation=op,claim_sha256=digest(claim),pid=proc.pid if proc else None,exit=endcode,seconds=time.monotonic()-started,completed=success and clean and not left,guardian_exit=(lease.guard.returncode if lease is not None else None),clean_reap=clean,residual_group_killed=left,child_admitted=ok_ack,reason=reason))
- need(success and clean and not left,'unreaped group');need(source(c['repo'])==c['source'],'source drift after child');checkpoint(c['checkpoint']);pinset(c)
+  parent.close();passed.close();put(d/'numeric-exit.json',dict(operation=op,claim_sha256=digest(claim),pid=proc.pid if proc else None,exit=endcode,seconds=time.monotonic()-started,completed=success and clean and not left and not watchdog.cancelled,guardian_exit=(lease.guard.returncode if lease is not None else None),clean_reap=clean,residual_group_killed=left,child_admitted=ok_ack,reason=reason))
+ need(success and clean and not left and not watchdog.cancelled,'unreaped group');need(source(c['repo'])==c['source'],'source drift after child');checkpoint(c['checkpoint']);pinset(c)
  # Reapply output budget to terminal samples including processes that exit between polls.
  ev,bu=census(STATE,path(c['build_root']));need(ev<=8*GIB and bu<=20*GIB,'terminal budgets')
  need(c['source']==source(c['repo']) and checkpoint(c['checkpoint'])['revision']==MODEL,'terminal source/checkpoint drift')
@@ -535,12 +563,14 @@ def poll_ready_ack(parent,worker,payload,role,cap,claim):
 
 class StageMonitor:
  """One complete supervised iteration, from guardian heartbeat through the next poll delay."""
- def __init__(self,config,witness_root,out,stream,limits,before,started,deadline):
+ def __init__(self,config,witness_root,out,stream,limits,before,started,deadline,watchdog=None,witnesses=None,rearm=lambda:None):
   self.config=config;self.witness_root=witness_root;self.out=out;self.stream=stream
   self.limits=limits;self.before=before;self.started=started;self.deadline=deadline
   self.last_source=started;self.ack=False;self.over=0
+  self.watchdog=watchdog;self.witnesses=witnesses;self.rearm=rearm
 
  def iteration(self,lease,worker,check_ack):
+  if self.watchdog is not None:self.watchdog.check()
   lease.pulse()
   c=self.config;r=self.limits
   if time.monotonic()-self.last_source>=30:
@@ -565,7 +595,10 @@ class StageMonitor:
   need(ha_ok(ph,r,self.before,self.over,rss,direct) and ev<=8*GIB and bu<=20*GIB and
        size<=r['output_bytes'] and time.monotonic()<self.deadline and (self.ack or elapsed<60),
        'observed resource/timeout/admission')
+  if self.watchdog is not None:
+   self.watchdog.observe(self.witnesses);self.rearm()
   time.sleep(.5)
+  if self.watchdog is not None:self.watchdog.check()
 
 def ha_ok(ph,r,before,over,rss,direct):
  return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss']
