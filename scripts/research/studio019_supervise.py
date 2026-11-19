@@ -601,7 +601,7 @@ class StageMonitor:
   if self.watchdog is not None:self.watchdog.check()
 
 def ha_ok(ph,r,before,over,rss,direct):
- return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss']
+ return ph['pressure']==1 and ph['headroom']>=16*GIB and over<r['swap_samples'] and rss<=r['combined'] and direct<=r['job_rss'] and rss-direct<=r['harness']
 def grade_original(c,role):
  lifecycle_gate(c)
  audit_consumed_stage(c,role)

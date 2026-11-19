@@ -135,7 +135,7 @@ class ProgressTests(unittest.TestCase):
             with self.subTest(blocked=blocked), ExitStack() as stack:
                 self.now=10.; self.guard.cancelled=False; self.guard.reason=None
                 cfg={'repo':'fixture','source':{'head':'head'},'checkpoint':str(self.out),'build_root':str(self.out)}
-                limits={'swap_growth':1,'output_bytes':1024,'combined':1<<30,'job_rss':1<<30,'swap_samples':2}
+                limits={'swap_growth':1,'output_bytes':1024,'combined':1<<30,'job_rss':1<<30,'harness':384<<20,'swap_samples':2}
                 ph={'swap':0,'pressure':1,'headroom':32*s.GIB}
                 begin=time.monotonic()
                 mon=s.StageMonitor(cfg,self.out,self.out,io.BytesIO(),limits,ph,begin,begin+7200,self.guard,self.w)
