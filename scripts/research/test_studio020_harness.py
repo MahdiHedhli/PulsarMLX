@@ -34,7 +34,8 @@ def run(policy_file,policy_sha,resource_file,op):
     with patch.object(synthetic,'GEOMETRY',grade.original.REAL):
         synthetic.synthetic(ref,'reference');synthetic.synthetic(native,'native')
     native.chmod(0o700);(native/'00.state.offset.f32').unlink();native.chmod(0o500)
-    cfg=dict(artifacts={'python-policy':dict(path=str(policy_file),sha256=policy_sha)})
+    cfg=dict(artifacts={'python-policy':dict(path=str(policy_file),sha256=policy_sha)},
+             source=pol['source'],stages={'reference':{'python':pol['interpreter']}})
     inputs=[str(ref),str(native)]
     intent=dict(operation=op,numeric_operation=s.OPERATIONS['native'],run=s.RUN,source=pol['source'],
                 python_policy=str(policy_file),python_policy_sha256=policy_sha,
