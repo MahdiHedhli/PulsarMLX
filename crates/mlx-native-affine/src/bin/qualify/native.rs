@@ -388,6 +388,19 @@ impl NativeContext {
         self.live_arrays.get()
     }
 
+    /// Borrow the owned stream for a synchronous native bridge.
+    ///
+    /// # Safety
+    /// The caller must keep this context alive throughout the call, use the
+    /// handle only on this thread, and neither retain nor free it. The bridge
+    /// must finish evaluation and synchronize before exposing host output.
+    /// Other operations on this context use this same stream, so sequential
+    /// bridge and quantized operations retain stream ordering. Drop remains
+    /// the sole owner of the stream and its final synchronization/free.
+    pub(crate) unsafe fn borrowed_stream(&self) -> ffi::mlx_stream {
+        self.stream
+    }
+
     /// R-DEVICE inputs, queried fresh (E1: asserted before every op).
     pub fn device_facts(&self) -> Result<DeviceFacts, NativeError> {
         let context_type = device_type_of(self.device)?;

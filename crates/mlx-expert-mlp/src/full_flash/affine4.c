@@ -6,11 +6,20 @@
 #include "mlx/c/mlx.h"
 #include <stdint.h>
 #include <string.h>
-int studio017_affine4(const uint16_t *x,const void *words,const void *scales,const void *biases,int cols,int rows,uint16_t *dst){
- if(!x||!words||!scales||!biases||!dst||cols<64||cols>4096||cols%64||rows<1||rows>64)return 1;
+/* s is borrowed from the caller's live, same-thread NativeContext. Never retain
+ * or free it. Sequential affine4 and 8-bit operations share its ordering; the
+ * existing eval + synchronize below completes successful host readback. */
+int studio017_affine4(const uint16_t *x,const void *words,const void *scales,const void *biases,int cols,int rows,uint16_t *dst,mlx_stream s){
+ if(!x||!words||!scales||!biases||!dst||!s.ctx||cols<64||cols>4096||cols%64||rows<1||rows>64)return 1;
+ /* Query only; this temporary device handle is not the caller-owned device. */
+ mlx_device d={0};mlx_device_type type=MLX_CPU;
+ int check=mlx_stream_get_device(&d,s);
+ if(!check&&d.ctx)check=mlx_device_get_type(&type,d);
+ if(!d.ctx)check=2;
+ if(d.ctx&&mlx_device_free(d))check=4;
+ if(check)return check;
+ if(type!=MLX_GPU)return 1;
  int rc=0;int packed[2]={rows,cols/8},meta[2]={rows,cols/64};
- mlx_device d=mlx_device_new_type(MLX_GPU,0);if(!d.ctx)return 2;
- mlx_stream s=mlx_stream_new_device(d);
  mlx_array args[4]={mlx_array_new_data(x,&cols,1,MLX_BFLOAT16),mlx_array_new_data(words,packed,2,MLX_UINT32),mlx_array_new_data(scales,meta,2,MLX_BFLOAT16),mlx_array_new_data(biases,meta,2,MLX_BFLOAT16)};
  const char* ins[4]={"act","packed","scale","bias"},*outs[1]={"answer"};
  mlx_vector_string in=mlx_vector_string_new_data(ins,4),out=mlx_vector_string_new_data(outs,1);
@@ -44,7 +53,5 @@ int studio017_affine4(const uint16_t *x,const void *words,const void *scales,con
  if(mlx_vector_string_free(in))rc=4;
  if(mlx_vector_string_free(out))rc=4;
  for(int i=0;i<4;i++)if(mlx_array_free(args[i]))rc=4;
- if(s.ctx&&mlx_stream_free(s))rc=4;
- if(mlx_device_free(d))rc=4;
  return rc;
 }

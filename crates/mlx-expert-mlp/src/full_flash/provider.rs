@@ -24,6 +24,7 @@ extern "C" {
         cols: i32,
         n: i32,
         out: *mut u16,
+        stream: crate::ffi::mlx_stream,
     ) -> i32;
 }
 fn err(e: impl std::fmt::Display) -> String {
@@ -191,6 +192,9 @@ pub(crate) fn copied_tile(
         }
         let input: Vec<u16> = x.iter().map(|y| (y.to_bits() >> 16) as u16).collect();
         let mut out = vec![0u16; n];
+        // SAFETY: ctx stays borrowed for this synchronous call on its owning
+        // thread. affine4 neither retains nor frees the stream, and evaluates
+        // and synchronizes it before copying output, including after 8-bit ops.
         let rc = unsafe {
             studio017_affine4(
                 input.as_ptr(),
@@ -200,6 +204,7 @@ pub(crate) fn copied_tile(
                 cols as i32,
                 n as i32,
                 out.as_mut_ptr(),
+                ctx.borrowed_stream(),
             )
         };
         if rc != 0 {

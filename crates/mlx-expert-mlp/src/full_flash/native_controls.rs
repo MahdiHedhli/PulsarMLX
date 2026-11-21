@@ -273,6 +273,7 @@ fn check_bf(x: &[f32], v: &Value, label: &str) {
     }
 }
 include!("native_controls_full_width.rs");
+include!("native_controls_stream_reuse.rs");
 
 fn packed_control(ctx: &NativeContext, bits: u32) -> R<()> {
     // Cross a group boundary: nonzero x samples nibble/byte order, two scales
