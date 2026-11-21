@@ -1,5 +1,5 @@
-/* Small native primitives missing from the existing affine wrapper. GPU device zero,
- * synchronous copied inputs/outputs. Each handle has exactly one owner and is freed on all paths. */
+/* Small native primitives missing from the existing affine wrapper.
+ * Synchronous copied inputs/outputs on the caller-owned, same-thread GPU stream. */
 #include "mlx/c/mlx.h"
 #include <stdint.h>
 #include <string.h>
@@ -9,10 +9,18 @@ int studio017_limits(void){
         mlx_get_memory_limit(&read) || read!=(512UL<<20);
 }
 int studio017_aux(const float *x,const float *weights,int n,int k,int is_rank,
-                  float *floats,uint32_t *ids) {
- if(!x || (is_rank ? (!ids || weights || n!=288 || k!=8):(!weights || !floats || n!=4096 || k!=288)))return 1;
- mlx_device d=mlx_device_new_type(MLX_GPU,0); if(!d.ctx)return 2;
- mlx_stream s=mlx_stream_new_device(d);int fail=!s.ctx;
+                  float *floats,uint32_t *ids,mlx_stream s) {
+ if(!x || !s.ctx || (is_rank ? (!ids || weights || n!=288 || k!=8):(!weights || !floats || n!=4096 || k!=288)))return 1;
+ /* Borrow s without retaining/freeing it. Only this queried device is temporary.
+  * Success eval/sync below is unchanged; failed calls can leave pending work. */
+ mlx_device d={0};mlx_device_type type=MLX_CPU;
+ int check=mlx_stream_get_device(&d,s);
+ if(!check&&d.ctx)check=mlx_device_get_type(&type,d);
+ if(!d.ctx)check=2;
+ if(d.ctx&&mlx_device_free(d))check=4;
+ if(check)return check;
+ if(type!=MLX_GPU)return 1;
+ int fail=0;
  mlx_array a=mlx_array_new(),b=mlx_array_new(),out=mlx_array_new();
  if(!fail){
    a=mlx_array_new_data(x,&n,1,MLX_FLOAT32);fail=!a.ctx;
@@ -34,7 +42,5 @@ int studio017_aux(const float *x,const float *weights,int n,int k,int is_rank,
  if(mlx_array_free(out))fail=4;
  if(mlx_array_free(b))fail=4;
  if(mlx_array_free(a))fail=4;
- if(s.ctx && mlx_stream_free(s))fail=4;
- if(mlx_device_free(d))fail=4;
  return fail;
 }

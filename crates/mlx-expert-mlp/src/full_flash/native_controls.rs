@@ -17,6 +17,7 @@ unsafe extern "C" {
         rank: i32,
         f: *mut f32,
         ids: *mut u32,
+        stream: crate::ffi::mlx_stream,
     ) -> i32;
     fn studio017_limits() -> i32;
     fn studio017_synthetic_silu_bits(x: u16, s: *mut u16, o: *mut u16) -> i32;
@@ -178,6 +179,7 @@ impl Provider for Fixture {
                     0,
                     out.as_mut_ptr(),
                     std::ptr::null_mut(),
+                    self.ctx.borrowed_stream(),
                 )
             } != 0
             {
@@ -232,6 +234,7 @@ impl Provider for Fixture {
                 1,
                 std::ptr::null_mut(),
                 ids.as_mut_ptr(),
+                self.ctx.borrowed_stream(),
             )
         } != 0
         {
@@ -274,6 +277,7 @@ fn check_bf(x: &[f32], v: &Value, label: &str) {
 }
 include!("native_controls_full_width.rs");
 include!("native_controls_stream_reuse.rs");
+include!("native_controls_aux_stream_reuse.rs");
 
 fn packed_control(ctx: &NativeContext, bits: u32) -> R<()> {
     // Cross a group boundary: nonzero x samples nibble/byte order, two scales

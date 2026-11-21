@@ -14,6 +14,7 @@ extern "C" {
         rank: i32,
         f: *mut f32,
         ids: *mut u32,
+        stream: crate::ffi::mlx_stream,
     ) -> i32;
     fn studio017_limits() -> i32;
     fn studio017_affine4(
@@ -101,6 +102,8 @@ impl Provider for Metal {
             }
             let weights = decode(&dt, &raw)?;
             let mut y = vec![0.; 288];
+            // SAFETY: self.ctx owns this same-thread stream for the synchronous
+            // call; aux borrows it without retaining or freeing it.
             if unsafe {
                 studio017_aux(
                     x.as_ptr(),
@@ -110,6 +113,7 @@ impl Provider for Metal {
                     0,
                     y.as_mut_ptr(),
                     std::ptr::null_mut(),
+                    self.ctx.borrowed_stream(),
                 )
             } != 0
             {
@@ -144,6 +148,7 @@ impl Provider for Metal {
         }
         let a: Vec<_> = c.iter().map(|x| -*x).collect();
         let mut out = [0u32; 8];
+        // SAFETY: self.ctx remains live on its owning thread throughout aux.
         if unsafe {
             studio017_aux(
                 a.as_ptr(),
@@ -153,6 +158,7 @@ impl Provider for Metal {
                 1,
                 std::ptr::null_mut(),
                 out.as_mut_ptr(),
+                self.ctx.borrowed_stream(),
             )
         } != 0
         {
