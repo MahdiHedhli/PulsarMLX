@@ -42,7 +42,7 @@ class Bindings(unittest.TestCase):
 
     def test_comparison_bytes_and_exact_limits(self):
         with tempfile.TemporaryDirectory() as tmp:
-            p=Path(tmp)/'comparison.json';g.put(p,g.COMPARISON_LIMITS)
+            p=Path(tmp).resolve()/'comparison.json';g.put(p,g.COMPARISON_LIMITS)
             c=dict(artifacts={'comparison-resource':dict(path=str(p),sha256=g.digest(p))})
             self.assertEqual(g.comparison_limits(c),g.COMPARISON_LIMITS)
             p.chmod(0o600);p.write_text('{}')
