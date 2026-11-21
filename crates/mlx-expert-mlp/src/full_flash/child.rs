@@ -115,7 +115,10 @@ pub fn run() -> R<()> {
     let mut a: Vec<_> = std::env::args_os().skip(1).collect();
     // This opt-in selects admission bindings only; the numerical path below is shared.
     let studio019 = a.first().is_some_and(|arg| arg == "--studio019-route-b");
+    let studio020 = a.first().is_some_and(|arg| arg == "--studio020-stream-reuse");
     if studio019 {
+        a.remove(0);
+    } else if studio020 {
         a.remove(0);
     }
     if a.len() == 2 && a[0] == "--synthetic-image-census" {
@@ -146,6 +149,13 @@ pub fn run() -> R<()> {
                 include_bytes!("../../../../scripts/research/studio019_supervise.py"),
                 "studio019_py_gate.py",
                 include_bytes!("../../../../scripts/research/studio019_py_gate.py"),
+            )
+        } else if studio020 {
+            (
+                "studio020_supervise.py",
+                include_bytes!("../../../../scripts/research/studio020_supervise.py"),
+                "studio020_py_gate.py",
+                include_bytes!("../../../../scripts/research/studio020_py_gate.py"),
             )
         } else {
             (
